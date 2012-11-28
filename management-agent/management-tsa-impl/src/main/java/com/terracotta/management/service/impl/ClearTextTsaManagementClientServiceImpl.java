@@ -24,6 +24,7 @@ import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.ThreadDumpEntity.NodeType;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 
@@ -118,12 +119,14 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
+          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
+          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntity.setDump("Unavailable");
           threadDumpEntities.add(threadDumpEntity);
         }
@@ -172,6 +175,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
             ThreadDumpEntity threadDumpEntity = threadDump(tcServerInfoMBean);
 
             threadDumpEntity.setSourceId(member.name());
+            threadDumpEntity.setNodeType(NodeType.SERVER);
             threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
@@ -181,6 +185,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
             threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             threadDumpEntity.setSourceId(member.name());
+            threadDumpEntity.setNodeType(NodeType.SERVER);
             threadDumpEntity.setDump("Unavailable");
             threadDumpEntities.add(threadDumpEntity);
           } finally {

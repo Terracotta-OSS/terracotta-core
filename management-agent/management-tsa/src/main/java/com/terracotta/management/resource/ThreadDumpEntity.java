@@ -11,9 +11,15 @@ package com.terracotta.management.resource;
  */
 public class ThreadDumpEntity extends AbstractTsaEntity {
 
+  public enum NodeType {
+    CLIENT, SERVER
+  }
+
   private String sourceId;
 
   private String dump;
+
+  private NodeType nodeType;
 
   public String getSourceId() {
     return sourceId;
@@ -23,11 +29,19 @@ public class ThreadDumpEntity extends AbstractTsaEntity {
     this.sourceId = sourceId;
   }
 
+  public void setNodeType(NodeType type) {
+    nodeType = type;
+  }
+
   public String getDump() {
     return dump;
   }
 
   public void setDump(String dump) {
     this.dump = dump;
+  }
+  
+  public NodeType getNodeType() {
+    return nodeType;
   }
 }
