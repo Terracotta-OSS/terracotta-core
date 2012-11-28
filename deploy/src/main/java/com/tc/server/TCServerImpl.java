@@ -642,7 +642,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
           public boolean accept(File dir, String name) {
-            return name.endsWith(".war");
+            return name.startsWith("management-tsa-war") && name.endsWith(".war");
           }
         });
 
