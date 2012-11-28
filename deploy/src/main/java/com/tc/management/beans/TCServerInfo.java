@@ -22,6 +22,7 @@ import com.tc.util.State;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -502,5 +503,20 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public Integer getSecurityServiceTimeout() {
     return server.getSecurityServiceTimeout();
+  }
+
+  @Override
+  public void backup(final String name) throws IOException {
+    server.backup(name);
+  }
+
+  @Override
+  public String getRunningBackup() {
+    return server.getRunningBackup();
+  }
+
+  @Override
+  public String getBackupStatus(final String name) throws IOException {
+    return server.getBackupStatus(name);
   }
 }

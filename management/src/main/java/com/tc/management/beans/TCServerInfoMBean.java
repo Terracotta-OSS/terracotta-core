@@ -9,6 +9,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
+import java.io.IOException;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
@@ -127,4 +128,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getSecurityHostname();
 
+  String getRunningBackup();
+
+  String getBackupStatus(String name) throws IOException;
+
+  void backup(String name) throws IOException;
 }

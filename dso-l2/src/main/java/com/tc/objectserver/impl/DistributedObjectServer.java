@@ -6,9 +6,6 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -149,6 +146,7 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.DSOApplicationEvents;
+import com.tc.objectserver.api.BackupManager;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -171,6 +169,7 @@ import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
+import com.tc.objectserver.handler.BackupHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
@@ -291,6 +290,9 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -327,6 +329,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private PersistentManagedObjectStore           objectStore;
   private GarbageCollectionManager               garbageCollectionManager;
   private Persistor persistor;
+  private BackupManager backupManager;
   private ServerTransactionManagerImpl           transactionManager;
 
   private L2Management                           l2Management;
@@ -510,6 +513,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath());
     persistor.start();
+
+    if (restartable) {
+      Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1, maxStageSize).getSink();
+      backupManager = new BackupManagerImpl(persistor, configSetupManager.commonl2Config()
+          .serverDbBackupPath(), backupSink);
+    }
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
@@ -1529,5 +1538,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.warn("Could not take Cluster dump, hence taking server dump only");
       dump();
     }
+  }
+
+  public BackupManager getBackupManager() {
+    return backupManager;
   }
 }

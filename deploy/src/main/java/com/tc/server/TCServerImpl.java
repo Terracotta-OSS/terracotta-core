@@ -795,6 +795,21 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
+  public String getRunningBackup() {
+    return dsoServer.getBackupManager().getRunningBackup();
+  }
+
+  @Override
+  public String getBackupStatus(final String name) throws IOException {
+    return dsoServer.getBackupManager().getBackupStatus(name).toString();
+  }
+
+  @Override
+  public void backup(final String name) throws IOException {
+    dsoServer.getBackupManager().backup(name);
+  }
+
+  @Override
   public boolean isProduction() {
     ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
     return configurationModel.equals(ConfigurationModel.PRODUCTION);
