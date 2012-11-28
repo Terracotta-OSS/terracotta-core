@@ -43,7 +43,8 @@ import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.service.impl.TsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
+import com.terracotta.management.web.utils.TSASslSocketFactory;
 
 import java.util.HashMap;
 import java.util.Map;

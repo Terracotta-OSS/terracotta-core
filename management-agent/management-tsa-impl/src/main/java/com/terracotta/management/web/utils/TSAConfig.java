@@ -1,12 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.terracotta.management.web.config;
+package com.terracotta.management.web.utils;
 
 import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.security.SSLContextFactory;
-import com.terracotta.management.security.impl.DfltSSLContextFactory;
 
 import java.lang.management.ManagementFactory;
 
@@ -50,7 +49,7 @@ public class TSAConfig {
     if (SSL_CONTEXT_FACTORY == null) {
       synchronized (SSL_CONTEXT_FACTORY_LOCK) {
         if (SSL_CONTEXT_FACTORY == null) {
-          SSL_CONTEXT_FACTORY = new DfltSSLContextFactory(getKeyChain(), null, null, false);
+          SSL_CONTEXT_FACTORY = new TSASslContextFactory();
         }
       }
     }

@@ -1,4 +1,4 @@
-package com.terracotta.management.web.config;
+package com.terracotta.management.web.utils;
 
 import com.tc.security.PwProviderUtil;
 import com.terracotta.management.keychain.KeyName;

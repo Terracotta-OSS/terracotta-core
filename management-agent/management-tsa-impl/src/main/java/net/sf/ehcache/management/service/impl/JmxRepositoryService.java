@@ -20,7 +20,7 @@ import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.user.UserInfo;
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;

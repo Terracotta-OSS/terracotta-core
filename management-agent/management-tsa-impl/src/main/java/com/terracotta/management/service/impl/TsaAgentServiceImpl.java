@@ -9,7 +9,7 @@ import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
 
 import com.terracotta.management.service.TsaManagementClientService;
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;

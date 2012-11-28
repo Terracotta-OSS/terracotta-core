@@ -1,9 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.terracotta.management.web.shiro;
-
-import com.terracotta.management.web.config.TSAConfig;
+package com.terracotta.management.web.utils;
 
 import java.io.IOException;
 import java.net.InetAddress;

@@ -5,7 +5,7 @@ package com.terracotta.management.web.shiro;
 
 import org.apache.shiro.web.env.IniWebEnvironment;
 
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
 
 /**
  * @author Ludovic Orban
