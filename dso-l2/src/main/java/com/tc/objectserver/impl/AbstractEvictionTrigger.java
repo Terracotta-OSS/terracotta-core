@@ -21,8 +21,8 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     boolean processed = false;
     private String name;
     private boolean pinned;
-    private long startTime;
-    private long endTime;
+    private long startTime = 0;
+    private long endTime = 0;
     private int count;
 
     public AbstractEvictionTrigger(ObjectID oid) {
@@ -33,6 +33,11 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public ObjectID getId() {
         return oid;
     }
+     
+    @Override
+    public String getName() {
+        return getClass().getName();
+    }   
     
     public int boundsCheckSampleSize(int sampled) {
         if ( sampled < 0 ) {
@@ -79,10 +84,24 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         return sample;
     }
     
+    @Override
     public long getRuntimeInSeconds() {
+        if ( startTime == 0 || endTime == 0 ) {
+            return 0;
+        }
         return ( endTime - startTime ) / 1000;
     }
     
+        
+    @Override
+    public long getRuntimeInMillis() {
+        if ( startTime == 0 || endTime == 0 ) {
+            return 0;
+        }
+        return ( endTime - startTime );
+    }
+    
+    @Override
     public int getCount() {
         return count;
     }

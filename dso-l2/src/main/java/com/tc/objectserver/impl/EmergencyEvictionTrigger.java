@@ -117,6 +117,11 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
+    public String getName() {
+        return "Emergency";
+    }
+    
+    @Override
     public String toString() {
         return "EmergencyEvictionTrigger{blowout=" + blowout + ", sample=" + sampleCount + ", size=" + sizeCount + ", parent=" + super.toString() + '}';
     }

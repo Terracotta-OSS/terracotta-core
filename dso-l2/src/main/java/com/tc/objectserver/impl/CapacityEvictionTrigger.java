@@ -120,6 +120,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             }
 
             @Override
+            public String getName() {
+                return "CapacityOnClientUpdate";
+            }
+        
+            @Override
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
                         + ", count=" + sampleCount
@@ -129,12 +134,14 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                         + ", parent=" + super.toString() 
                         + "}";
             }
-            
-            
-
         });
     }
-                 
+
+    @Override
+    public String getName() {
+        return "Capacity";
+    }
+
     @Override
     public String toString() {
         return "CapacityEvictionTrigger{"

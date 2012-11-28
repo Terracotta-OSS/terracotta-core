@@ -7,8 +7,7 @@ package com.tc.objectserver.api;
  *
  * @author mscott
  */
-public interface Transaction {
-    void commit();
-    void abort();
-    void addTransactionListener(TransactionListener l);
+public interface TransactionListener {
+    void committed(Transaction t);
+    void aborted(Transaction t);
 }

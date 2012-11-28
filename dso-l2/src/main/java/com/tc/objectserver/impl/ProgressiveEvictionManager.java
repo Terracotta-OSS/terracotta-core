@@ -76,8 +76,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final SampledRateCounter expirationStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
     private final SampledRateCounter evictionStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
     
-    private final static Future<Void> completedFuture = new Future<Void>() {
+    private final static Future<SampledRateCounter> completedFuture = new Future<SampledRateCounter>() {
 
+        private final SampledRateCounter zeroStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false)); 
+        
         @Override
             public boolean cancel(boolean bln) {
                 return true;
@@ -94,13 +96,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
             @Override
-            public Void get() throws InterruptedException, ExecutionException {
-                return null;
+            public SampledRateCounter get() throws InterruptedException, ExecutionException {
+                return zeroStats;
             }
 
             @Override
-            public Void get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
-                return null;
+            public SampledRateCounter get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
+                return zeroStats;
             }
             
     };
@@ -162,13 +164,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             scheduleEvictionRun();
     }
     
-    private Future<Void> scheduleEvictionRun() {
+    private Future<SampledRateCounter> scheduleEvictionRun() {
         try{
             resetStatistics();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-            return new FutureCallable<Void>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
+            return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
         } catch ( ShutdownError err ) {
-            //  is probably in shutodown, unregister
+            //  is probably in shutdown, unregister
             trigger.unregisterForMemoryEvents(responder);
         }
         agent.shutdown();
@@ -176,12 +178,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
     
     public void scheduleEvictionTrigger(final EvictionTrigger trigger) {    
-        agent.submit(new Runnable() {
+        final SampledRateCounter count = new AggregateSampleRateCounter();
+        final Future<SampledRateCounter> run = agent.submit(new Runnable() {
             @Override
             public void run()  {
                 doEvictionOn(trigger);
+                count.increment(trigger.getCount(), trigger.getRuntimeInMillis());
             }
-        });        
+        },count);        
+        print(trigger.getName(), run);
     }
     /*
      * return of false means the map is gone
@@ -233,9 +238,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             
             if (context != null) {
                 if ( trigger instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)trigger).isExpirationOnly() ) {
-                    expirationStats.increment(trigger.getCount(),trigger.getRuntimeInSeconds());
+                    expirationStats.increment(trigger.getCount(),trigger.getRuntimeInMillis());
                 } else {
-                    evictionStats.increment(trigger.getCount(),trigger.getRuntimeInSeconds());
+                    evictionStats.increment(trigger.getCount(),trigger.getRuntimeInMillis());
                 }
                 this.evictorSink.add(context);
             } 
@@ -268,25 +273,27 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
     }
 
-    Future<Void> emergencyEviction(final boolean blowout) {
+    Future<SampledRateCounter> emergencyEviction(final boolean blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-        List<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
+        List<Future<SampledRateCounter>> push = new ArrayList<Future<SampledRateCounter>>(evictableObjects.size());
         Random r = new Random();
         List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
         resetStatistics();
+        final AggregateSampleRateCounter rate = new AggregateSampleRateCounter();
         while ( !list.isEmpty() ) {
             final ObjectID mapID = list.remove(r.nextInt(list.size()));
-            push.add(agent.submit(new Callable<Void>() {
+            push.add(agent.submit(new Callable<SampledRateCounter>() {
                 @Override
-                public Void call() throws Exception {
+                public SampledRateCounter call() throws Exception {
                     EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
                     doEvictionOn(trigger);
-                    return null;
+                    rate.increment(trigger.getCount(), trigger.getRuntimeInMillis());
+                    return rate;
                 }
             }
             ));
         }
-        return new GroupFuture(push);
+        return new GroupFuture<SampledRateCounter>(push);
     }
 
     private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
@@ -315,6 +322,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
         return evictor.prettyPrint(out);
     }
+    
+        
+    private void print(final String name, final Future<SampledRateCounter> counter) {
+        agent.submit(new Runnable() {
+            public void run() {
+                try {
+                    log("Eviction Run:" + name + " " + counter.get());
+                } catch ( ExecutionException exp ) {
+                    logger.warn("eviction run", exp);
+                } catch ( InterruptedException it ) {
+                    logger.warn("eviction run", it);
+                }
+            }
+        });
+    }    
 
     class Responder implements MemoryEventsListener {
 
@@ -323,16 +345,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         long size = 0;
         volatile boolean isEmergency = false;
 
-        Future<Void> currentRun = completedFuture;
+        Future<SampledRateCounter> currentRun = completedFuture;
 
         @Override
         public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
             try {
                 int percent = usage.getUsedPercentage();
                 long current = System.currentTimeMillis();
-                if (evictor.isLogging()) {
-                    log("Percent usage:" + percent + " time:" + (current - last) + " msec.");
-                }
+                log("Percent usage:" + percent + " time:" + (current - last) + " msec.");
                 long max = usage.getMaxMemory();
                 long reserve = usage.getUsedMemory();
 
@@ -341,6 +361,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + (reserve*100/max));
                         currentRun.cancel(false);
+                        if (currentRun != completedFuture) {
+                            print("Emergency", currentRun);
+                        }
                         currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
                         isEmergency = true;
                     }
@@ -351,11 +374,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         currentRun.cancel(false);
                     }
                     if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
+                        if (currentRun != completedFuture) {
+                            print("Periodic", currentRun);
+                        }
                         currentRun = scheduleEvictionRun();
                     } 
                 }
                 last = current;
- 
                 resetEpocIfNeeded(current,reserve,max);
             } catch (UnsupportedOperationException us) {
                 if ( currentRun.isDone() ) {

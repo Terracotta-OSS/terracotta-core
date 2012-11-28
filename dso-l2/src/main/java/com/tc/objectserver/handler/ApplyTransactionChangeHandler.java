@@ -15,6 +15,7 @@ import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
@@ -44,6 +45,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private ServerTransactionManager       transactionManager;
   private LockManager                    lockManager;
+  private Sink                           recycleCommitSink;
   private Sink                           broadcastChangesSink;
   private Sink                           evictionInitiateSink;
   private final ObjectInstanceMonitor    instanceMonitor;
@@ -53,6 +55,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private int                            count                           = 0;
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
   private final TransactionProvider persistenceTransactionProvider;
+  private Transaction               currentTransaction;                      
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
                                        TransactionProvider persistenceTransactionProvider) {
@@ -65,22 +68,47 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   public void handleEvent(final EventContext context) {
     final ApplyTransactionContext atc = (ApplyTransactionContext) context;
     final ServerTransaction txn = atc.getTxn();
-
-    NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
-    final ServerTransactionID stxnID = txn.getServerTransactionID();
+    
+    if ( txn == null ) {
+        currentTransaction.commit();
+        return;
+    }
+      
+    final ServerTransactionID stxnID = txn.getServerTransactionID();  
     final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
-
+      
     if (atc.needsApply()) {
-      Transaction tx = persistenceTransactionProvider.newTransaction();
-      this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
-      tx.commit();
-      this.txnObjectMgr.applyTransactionComplete(applyInfo);
-      this.transactionManager.commit(null, applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(stxnID), applyInfo.getObjectIDsToDelete());
+    
+       if ( currentTransaction == null ) {
+            currentTransaction = persistenceTransactionProvider.newTransaction();
+            recycleCommitSink.add(new ApplyTransactionContext(null));
+       }
+       Transaction tx = currentTransaction;
+       this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
+       tx.addTransactionListener(new TransactionListener() {
+
+            @Override
+            public void committed(Transaction t) {
+                txnObjectMgr.applyTransactionComplete(applyInfo);
+                transactionManager.commit(null, applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(stxnID), applyInfo.getObjectIDsToDelete());
+                finishHandleEvent(atc, applyInfo, txn);
+                currentTransaction = null;
+            }
+
+            @Override
+            public void aborted(Transaction t) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        });
     } else {
       this.transactionManager.skipApplyAndCommit(txn);
-
+      finishHandleEvent(atc, applyInfo, txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
+  }
+  
+  private void finishHandleEvent(ApplyTransactionContext atc, ApplyTransactionInfo applyInfo, ServerTransaction txn) {
+    NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
 
     this.transactionManager.processMetaData(txn, atc.needsApply() ? applyInfo : null);
 
@@ -103,7 +131,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       }
       this.count = this.count++ % LOW_WATER_MARK_UPDATE_FREQUENCY;
       this.broadcastChangesSink.add(new BroadcastChangeContext(txn, this.lowWaterMark, notifiedWaiters, applyInfo));
-    }
+    } 
   }
 
   @Override
@@ -113,6 +141,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.transactionManager = scc.getTransactionManager();
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
     this.evictionInitiateSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE).getSink();
+    this.recycleCommitSink = scc.getStage(ServerConfigurationContext.APPLY_CHANGES_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
   }

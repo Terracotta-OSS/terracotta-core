@@ -220,6 +220,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
   }
+  
+  
+    @Override
+    public String getName() {
+        return "Periodic";
+    }
 
     @Override
     public String toString() {
