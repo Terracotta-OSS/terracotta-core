@@ -97,14 +97,6 @@
       <artifactId>jline</artifactId>
     </dependency>
     <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>treemap</groupId>
-      <artifactId>treemap</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>

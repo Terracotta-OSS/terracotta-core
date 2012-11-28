@@ -60,23 +60,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jcommon</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>jmxremote_optional-tc</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>treemap</groupId>
-      <artifactId>treemap</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
