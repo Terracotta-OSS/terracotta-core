@@ -47,6 +47,9 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
     if (afterRejoin != null) {
       this.notifier = afterRejoin;
+      if (listeners.size() > 0) {
+        notifier.addNotificationListener(this);
+      }
     } else {
       // didn't find backing clustered object after rejoin - must have been destroyed
       // apply destroy locally
