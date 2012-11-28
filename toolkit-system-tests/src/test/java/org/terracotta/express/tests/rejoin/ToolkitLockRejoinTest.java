@@ -85,6 +85,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
         testBarrier.await();
         doLockUnlock(lock);
       }
+
       testBarrier.await();
 
       for (int i = 0; i < LOCK_COUNT; i++) {
@@ -93,7 +94,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
           try {
             rwLock.writeLock().lock();
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
-            // startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
+            // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
           } finally {
             try {
               rwLock.writeLock().unlock();
@@ -111,16 +112,17 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
           testBarrier.await();
           doLockUnlock(rwLock.writeLock());
         }
-        testBarrier.await();
       }
+
+      testBarrier.await();
 
       for (int i = 0; i < LOCK_COUNT; i++) {
         ToolkitReadWriteLock rwLock = toolkit.getReadWriteLock("testRWLock" + i);
         if (index == 0) {
           try {
             rwLock.readLock().lock();
-            // startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
+            // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
           } finally {
             try {
               rwLock.readLock().unlock();
@@ -138,8 +140,8 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
           testBarrier.await();
           doLockUnlock(rwLock.readLock());
         }
-        testBarrier.await();
       }
+      testBarrier.await();
     }
 
     private void doLockUnlock(ToolkitLock lock) {
