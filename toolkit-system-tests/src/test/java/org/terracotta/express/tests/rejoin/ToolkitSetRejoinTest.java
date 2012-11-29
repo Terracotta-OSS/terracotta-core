@@ -14,19 +14,19 @@ import java.util.concurrent.BrokenBarrierException;
 
 import junit.framework.Assert;
 
-public class ToolkitSetMultipleNodeRejoinTest extends AbstractToolkitRejoinTest {
-  public ToolkitSetMultipleNodeRejoinTest(TestConfig testConfig) {
-    super(testConfig, ToolkitSetMultipleNodeRejoinTestClient.class, ToolkitSetMultipleNodeRejoinTestClient.class);
+public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
+  public ToolkitSetRejoinTest(TestConfig testConfig) {
+    super(testConfig, ToolkitSetRejoinTestClient.class, ToolkitSetRejoinTestClient.class);
     testConfig.getL2Config().setRestartable(false);
   }
 
-  public static class ToolkitSetMultipleNodeRejoinTestClient extends AbstractToolkitRejoinTestClient {
+  public static class ToolkitSetRejoinTestClient extends AbstractToolkitRejoinTestClient {
     private static final int              No_OF_PUTS                = 100;
     private final StringKeyValueGenerator keyValGr                  = new StringKeyValueGenerator();
     private final static int              START_INDEX_BEFORE_REJOIN = 0;
     private final static int              START_INDEX_AFTER_REJOIN  = 100;
 
-    public ToolkitSetMultipleNodeRejoinTestClient(String[] args) {
+    public ToolkitSetRejoinTestClient(String[] args) {
       super(args);
     }
 
