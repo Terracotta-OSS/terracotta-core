@@ -85,9 +85,9 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
       } else {
         toolkitListBarrier.await();
         doDebug("asserting fresh blocking queue after rejoin " + freshToolkitList.size());
-        // for (int i = 0; i < NUM_ELEMENTS; i++) {
-        // Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
-        // }
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
+        }
       }
     }
 
