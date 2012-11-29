@@ -16,11 +16,10 @@ import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.exception.TCRuntimeException;
+import com.tc.exception.TCServerRestartException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
-import com.tc.handler.CallbackDirtyDatabaseExceptionAdapter;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackDumpHandler;
 import com.tc.handler.CallbackGroupExceptionHandler;
@@ -45,6 +44,7 @@ import com.tc.l2.state.StateSyncManager;
 import com.tc.l2.state.StateSyncManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
@@ -417,6 +417,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     this.threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
+    threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class,
+                                                  new CallbackOnExitHandler() {
+                                                    @Override
+                                                    public void callbackOnExit(final CallbackOnExitState state) {
+                                                      state.setRestartNeeded();
+                                                    }
+                                                  });
 
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
     ThisServerNodeId.setThisServerNodeId(thisServerNodeID);
@@ -535,11 +542,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
 
-    this.threadGroup
-        .addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class,
-                                           new CallbackDirtyDatabaseExceptionAdapter(logger, consoleLogger,
-                                                                                     this.persistor
-                                                                                         .getPersistentStateStore()));
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
