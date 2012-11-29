@@ -223,9 +223,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
             EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
     // if size is zero or cache is pinned or already evicting, exit false
-            if ( ev.getSize() == 0 ||
-                 ev.getMaxTotalCount() == 0 ||
-                 !trigger.startEviction(ev) ) {
+            if ( !trigger.startEviction(ev) ) {
                 this.objectManager.releaseReadOnly(mo);
                 return true;
             }
