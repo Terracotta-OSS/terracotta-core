@@ -9,6 +9,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -31,10 +32,12 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
   private final WeakValueMap<T>                           localCache;
   private final PlatformService                           platformService;
+  private final String                                    rootName;
 
-  protected AggregateDistributedToolkitTypeRoot(ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
+  protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
                                                 PlatformService platformService) {
+    this.rootName = rootName;
     this.roots = roots;
     this.distributedTypeFactory = factory;
     this.localCache = weakValueMap;
@@ -168,11 +171,19 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
   @Override
   public void onRejoinComplete() {
+    lookupOrCreateRoots();
     for (String name : localCache.keySet()) {
       T wrapper = localCache.get(name);
       if (wrapper != null) {
         wrapper.rejoinCompleted();
       }
+    }
+  }
+
+  public void lookupOrCreateRoots() {
+    GroupID[] gids = platformService.getGroupIDs();
+    for (int i = 0; i < gids.length; i++) {
+      roots[i] = ToolkitTypeRootsStaticFactory.lookupOrCreateRootInGroup(platformService, gids[i], rootName);
     }
   }
 }

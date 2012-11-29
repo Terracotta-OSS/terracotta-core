@@ -9,6 +9,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -30,10 +31,12 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   private final IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory;
   private final WeakValueMap<T>                  isolatedTypes;
   private final PlatformService                  platformService;
+  private final String                           rootName;
 
-  protected AggregateIsolatedToolkitTypeRoot(ToolkitTypeRoot<S>[] roots,
+  protected AggregateIsolatedToolkitTypeRoot(String rootName, ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
                                              WeakValueMap weakValueMap, PlatformService platformService) {
+    this.rootName = rootName;
     this.roots = roots;
     this.isolatedTypeFactory = isolatedTypeFactory;
     this.isolatedTypes = weakValueMap;
@@ -127,6 +130,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
 
   @Override
   public void onRejoinComplete() {
+    lookupOrCreateRoots();
     for (String name : isolatedTypes.keySet()) {
       T wrapper = isolatedTypes.get(name);
       if (wrapper != null) {
@@ -138,6 +142,13 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   @Override
   public S lookupClusteredObject(String name) {
     return getToolkitTypeRoot(name).getClusteredObject(name);
+  }
+
+  public void lookupOrCreateRoots() {
+    GroupID[] gids = platformService.getGroupIDs();
+    for (int i = 0; i < gids.length; i++) {
+      roots[i] = ToolkitTypeRootsStaticFactory.lookupOrCreateRootInGroup(platformService, gids[i], rootName);
+    }
   }
 
 }

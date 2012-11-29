@@ -36,4 +36,5 @@ public interface AggregateToolkitTypeRoot<T extends ToolkitObject, S extends TCT
 
   void destroy(AbstractDestroyableToolkitObject obj, ToolkitObjectType type);
 
+  void lookupOrCreateRoots();
 }

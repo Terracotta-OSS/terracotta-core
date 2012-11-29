@@ -3,6 +3,7 @@
  */
 package org.terracotta.express.tests.rejoin;
 
+import org.terracotta.express.tests.util.LiteralKeyLiteralValueGenerator;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
@@ -13,11 +14,11 @@ import com.tc.test.jmx.TestHandlerMBean;
 public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest {
   public ToolkitListMultipleNodeRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitListMultipleNodeRejoinTestClient.class, ToolkitListMultipleNodeRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitListMultipleNodeRejoinTestClient extends AbstractToolkitRejoinTestClient {
-    private static final int              No_OF_PUTS                = 100;
-    private final StringKeyValueGenerator keyValGr                  = new StringKeyValueGenerator();
+    private static final int NUM_ELEMENTS              = 1000;
     private final static int              START_INDEX_BEFORE_REJOIN = 0;
     private final static int              START_INDEX_AFTER_REJOIN  = 100;
 
@@ -28,6 +29,7 @@ public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
       ToolkitInternal toolkit = createRejoinToolkit();
+      keyValueGenerator = new LiteralKeyLiteralValueGenerator();
       ToolkitList toolkitList = toolkit.getList("SomeList", String.class);
       ToolkitBarrier barrier = toolkit.getBarrier("SomeBarrier", 2);
 
@@ -35,14 +37,14 @@ public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest
 
       if (clientIndex == 0) {
         doDebug("Client 0 trying to Put values..");
-        doSomePuts(toolkitList, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+        doSomePuts(toolkitList, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       } else {
         doDebug("waiting while Client 0 trying to Put values");
       }
       doDebug("done");
       barrier.await();
 
-      assertAllKeyValuePairsExist(toolkitList, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitList, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       barrier.await();
       doDebug("Starting rejoin...");
 
@@ -53,19 +55,30 @@ public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest
       }
       doDebug("Came back to app code after rejoin completed");
       barrier.await();
-      assertAllKeyValuePairsExist(toolkitList, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitList, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
 
       if (clientIndex == 1) {
-        doSomePuts(toolkitList, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+        doSomePuts(toolkitList, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
       }
-      assertAllKeyValuePairsExist(toolkitList, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+      assertAllKeyValuePairsExist(toolkitList, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
+      barrier.await();
 
+      ToolkitList freshList = toolkit.getList("freshList", String.class);
+      if (clientIndex == 0) {
+        doSomePuts(freshList, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
+      }
+      barrier.await();
+      assertAllKeyValuePairsExist(freshList, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
+    }
+
+    private String getValue(int i) {
+      return (String) keyValueGenerator.getValue(i);
     }
 
     private boolean assertAllKeyValuePairsExist(ToolkitList toolkitList, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        if (!toolkitList.contains(keyValGr.getValue(i))) {
-          doDebug("toolkitList.contains(" + keyValGr.getValue(i) + ") = " + toolkitList.contains(keyValGr.getValue(i)));
+        if (!toolkitList.contains(getValue(i))) {
+          doDebug("toolkitList.contains(" + getValue(i) + ") = " + toolkitList.contains(getValue(i)));
           return false;
         }
       }
@@ -74,8 +87,8 @@ public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest
 
     private void doSomePuts(ToolkitList toolkitList, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        toolkitList.add(keyValGr.getValue(i));
-        doDebug("value =" + keyValGr.getValue(i));
+        toolkitList.add(getValue(i));
+        doDebug("value =" + getValue(i));
       }
     }
 

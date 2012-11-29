@@ -92,7 +92,6 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     protected void startRejoinAndWaitUntilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
         throws Exception {
       tk.waitUntilAllTransactionsComplete();
-
       doDebug("Crashing first active...");
       testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
       doDebug("Passive must have taken over as ACTIVE");

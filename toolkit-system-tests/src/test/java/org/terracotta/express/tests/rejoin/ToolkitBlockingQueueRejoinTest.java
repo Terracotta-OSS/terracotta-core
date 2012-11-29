@@ -25,7 +25,7 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
   }
 
   public static class ToolkitBlockingQueueRejoinTestClient extends AbstractToolkitRejoinTestClient {
-    private static final int NUM_ELEMENTS = 500;
+    private static final int NUM_ELEMENTS = 1000;
 
     public ToolkitBlockingQueueRejoinTestClient(String[] args) {
       super(args);

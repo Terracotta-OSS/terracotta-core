@@ -3,6 +3,7 @@
  */
 package org.terracotta.express.tests.rejoin;
 
+import org.terracotta.express.tests.util.LiteralKeyLiteralValueGenerator;
 import org.terracotta.toolkit.collections.ToolkitSortedSet;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
@@ -14,13 +15,13 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
   public ToolkitSortedSetMultipleNodeRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitSortedSetMultipleNodeRejoinTestClient.class,
           ToolkitSortedSetMultipleNodeRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitSortedSetMultipleNodeRejoinTestClient extends AbstractToolkitRejoinTestClient {
-    private static final int              No_OF_PUTS                = 100;
-    private final StringKeyValueGenerator keyValGr                  = new StringKeyValueGenerator();
+    private static final int NUM_ELEMENTS              = 1000;
     private final static int              START_INDEX_BEFORE_REJOIN = 0;
-    private final static int              START_INDEX_AFTER_REJOIN  = 100;
+    private final static int              START_INDEX_AFTER_REJOIN  = 1000;
 
     public ToolkitSortedSetMultipleNodeRejoinTestClient(String[] args) {
       super(args);
@@ -29,6 +30,7 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
       ToolkitInternal toolkit = createRejoinToolkit();
+      keyValueGenerator = new LiteralKeyLiteralValueGenerator();
       ToolkitSortedSet toolkitSortedSet = toolkit.getSortedSet("SomeSortedSet", String.class);
       ToolkitBarrier barrier = toolkit.getBarrier("SomeBarrier", 2);
 
@@ -36,14 +38,14 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
 
       if (clientIndex == 0) {
         doDebug("Client 0 trying to Put values..");
-        doSomePuts(toolkitSortedSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+        doSomePuts(toolkitSortedSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       } else {
         doDebug("waiting while Client 0 trying to Put values");
       }
       doDebug("done");
       barrier.await();
 
-      assertAllKeyValuePairsExist(toolkitSortedSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSortedSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       barrier.await();
       doDebug("Starting rejoin...");
 
@@ -54,20 +56,27 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
       }
       doDebug("Came back to app code after rejoin completed");
       barrier.await();
-      assertAllKeyValuePairsExist(toolkitSortedSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSortedSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
 
       if (clientIndex == 1) {
-        doSomePuts(toolkitSortedSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+        doSomePuts(toolkitSortedSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
       }
-      assertAllKeyValuePairsExist(toolkitSortedSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSortedSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
 
+      barrier.await();
+
+      ToolkitSortedSet freshSortedSet = toolkit.getSortedSet("freshSortedSet", String.class);
+      if (clientIndex == 0) {
+        doSomePuts(freshSortedSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
+      }
+      barrier.await();
+      assertAllKeyValuePairsExist(freshSortedSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
     }
 
     private boolean assertAllKeyValuePairsExist(ToolkitSortedSet toolkitSortedSet, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        if (!toolkitSortedSet.contains(keyValGr.getValue(i))) {
-          doDebug("toolkitSortedSet.contains(" + keyValGr.getValue(i) + ") = "
-                  + toolkitSortedSet.contains(keyValGr.getValue(i)));
+        if (!toolkitSortedSet.contains(getValue(i))) {
+          doDebug("toolkitSortedSet.contains(" + getValue(i) + ") = " + toolkitSortedSet.contains(getValue(i)));
           return false;
         }
       }
@@ -76,9 +85,13 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
 
     private void doSomePuts(ToolkitSortedSet toolkitSortedSet, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        toolkitSortedSet.add(keyValGr.getValue(i));
-        doDebug("value =" + keyValGr.getValue(i));
+        toolkitSortedSet.add(getValue(i));
+        doDebug("value =" + getValue(i));
       }
+    }
+
+    private String getValue(int i) {
+      return (String) keyValueGenerator.getValue(i);
     }
 
   }

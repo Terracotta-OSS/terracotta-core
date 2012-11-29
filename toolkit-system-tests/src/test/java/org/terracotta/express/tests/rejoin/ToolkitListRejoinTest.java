@@ -23,7 +23,7 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
 
   public static class ToolkitListRejoinTestClient extends AbstractToolkitRejoinTestClient {
 
-    private static final int NUM_ELEMENTS = 10;
+    private static final int NUM_ELEMENTS = 1000;
 
     public ToolkitListRejoinTestClient(String[] args) {
       super(args);
@@ -69,28 +69,22 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertTrue(toolkitList.contains(keyValueGenerator.getValue(i)));
       }
 
-      doDebug("getting a fresh list after rejoin");
+      toolkitListBarrier.await();
       ToolkitList<TCInt> freshToolkitList = tk.getList("freshToolkitList", TCInt.class);
-      if (index == 1) {
-        doDebug("adding values in fresh blocking queue after rejoin");
+      if (index == 0) {
+        doDebug("adding values in fresh list after rejoin");
         for (int i = 0; i < NUM_ELEMENTS; i++) {
           freshToolkitList.add((TCInt) keyValueGenerator.getValue(i));
         }
         tk.waitUntilAllTransactionsComplete();
-        doDebug("asserting fresh blocking queue after rejoin " + freshToolkitList.size());
-        for (int i = 0; i < NUM_ELEMENTS; i++) {
-          Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
-        }
-        toolkitListBarrier.await();
-      } else {
-        toolkitListBarrier.await();
-        doDebug("asserting fresh blocking queue after rejoin " + freshToolkitList.size());
-        for (int i = 0; i < NUM_ELEMENTS; i++) {
-          Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
-        }
+      }
+      toolkitListBarrier.await();
+      Assert.assertEquals("freshToolkitList size not correct ", NUM_ELEMENTS, freshToolkitList.size());
+      doDebug("asserting fresh blocking list after rejoin " + freshToolkitList.size());
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
       }
     }
-
   }
 
 }

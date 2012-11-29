@@ -3,6 +3,7 @@
  */
 package org.terracotta.express.tests.rejoin;
 
+import org.terracotta.express.tests.util.LiteralKeyLiteralValueGenerator;
 import org.terracotta.toolkit.collections.ToolkitSet;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
@@ -22,7 +23,6 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
 
   public static class ToolkitSetRejoinTestClient extends AbstractToolkitRejoinTestClient {
     private static final int              No_OF_PUTS                = 100;
-    private final StringKeyValueGenerator keyValGr                  = new StringKeyValueGenerator();
     private final static int              START_INDEX_BEFORE_REJOIN = 0;
     private final static int              START_INDEX_AFTER_REJOIN  = 100;
 
@@ -33,6 +33,7 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
       ToolkitInternal toolkit = createRejoinToolkit();
+      keyValueGenerator = new LiteralKeyLiteralValueGenerator();
       ToolkitSet toolkitSet = toolkit.getSet("SomeSet", String.class);
       ToolkitBarrier barrier = toolkit.getBarrier("SomeBarrier", 2);
 
@@ -116,35 +117,35 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
         throws Exception {
 
       for (int i = 0; i < No_OF_PUTS; i++) {
-        toolkitSet.add(keyValGr.getValue(i));
+        toolkitSet.add(getValue(i));
       }
 
       doDebug("Asserting values before rejoin");
       for (int i = 0; i < No_OF_PUTS; i++) {
-        Assert.assertTrue(toolkitSet.contains(keyValGr.getValue(i)));
+        Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
 
       startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
 
       doDebug("Asserting old values after rejoin");
       for (int i = 0; i < No_OF_PUTS; i++) {
-        Assert.assertTrue(toolkitSet.contains(keyValGr.getValue(i)));
+        Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
 
       doDebug("Adding new values after rejoin");
       for (int i = No_OF_PUTS; i < 2 * No_OF_PUTS; i++) {
-        toolkitSet.add(keyValGr.getValue(i));
+        toolkitSet.add(getValue(i));
       }
 
       for (int i = 0; i < toolkitSet.size(); i++) {
         doDebug("Got value for i: " + i + ", value: "
-                + (toolkitSet.contains(keyValGr.getValue(i)) ? keyValGr.getValue(i) : null));
+ + (toolkitSet.contains(getValue(i)) ? getValue(i) : null));
       }
 
       doDebug("Asserting new values inserted after rejoin");
       Assert.assertEquals(2 * No_OF_PUTS, toolkitSet.size());
       for (int i = 0; i < 2 * No_OF_PUTS; i++) {
-        Assert.assertTrue(toolkitSet.contains(keyValGr.getValue(i)));
+        Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
       doDebug("Asserted new values");
       doDebug("Single Node Test Passed");
@@ -160,8 +161,8 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
 
     private boolean assertAllKeyValuePairsExist(ToolkitSet toolkitSet, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        if (!toolkitSet.contains(keyValGr.getValue(i))) {
-          doDebug("toolkitSet.contains(" + keyValGr.getValue(i) + ") = " + toolkitSet.contains(keyValGr.getValue(i)));
+        if (!toolkitSet.contains(getValue(i))) {
+          doDebug("toolkitSet.contains(" + getValue(i) + ") = " + toolkitSet.contains(getValue(i)));
           return false;
         }
       }
@@ -170,9 +171,13 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
 
     private void doSomePuts(ToolkitSet toolkitSet, int noOfPuts, int startIndex) {
       for (int i = startIndex; i < noOfPuts; i++) {
-        toolkitSet.add(keyValGr.getValue(i));
-        doDebug("value =" + keyValGr.getValue(i));
+        toolkitSet.add(getValue(i));
+        doDebug("value =" + getValue(i));
       }
+    }
+
+    private String getValue(int i) {
+      return (String) keyValueGenerator.getValue(i);
     }
 
   }

@@ -7,12 +7,12 @@ import org.terracotta.express.tests.util.ClusteredStringBuilder;
 import org.terracotta.express.tests.util.ClusteredStringBuilderFactory;
 import org.terracotta.express.tests.util.ClusteredStringBuilderFactoryImpl;
 import org.terracotta.toolkit.Toolkit;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -185,12 +185,12 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       testBarrier.await();
 
       // testing lock boundaries
-      final ToolkitList list = toolkit.getList("samplelist", String.class);
+      ToolkitStore<String, String> toolkitStore = toolkit.getStore("toolkitStore", String.class);
+      String value = "dummyValue";
       if (index == 0) {
         lock.lock();
         try {
-          list.add("hello" + index);
-          ((ToolkitInternal) toolkit).waitUntilAllTransactionsComplete();
+          toolkitStore.put(lock.getName(), value);
           testBarrier.await();
         } finally {
           lock.unlock();
@@ -198,16 +198,15 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       } else {
         testBarrier.await();
         lock.lock();
-        Assert.assertTrue("hello0 not present in list", list.contains("hello0"));
+        Assert.assertEquals(value, toolkitStore.get(lock.getName()));
         try {
-          list.add("hello" + index);
+          toolkitStore.replace(lock.getName(), value + value);
         } finally {
           lock.unlock();
         }
-        list.clear();
+        Assert.assertEquals(value + value, toolkitStore.get(lock.getName()));
       }
       testBarrier.await();
-
     }
 
     private void testRWLock(Toolkit toolkit, int index) throws Throwable {
