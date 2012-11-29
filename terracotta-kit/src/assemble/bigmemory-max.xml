@@ -36,6 +36,10 @@
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/ehcache/lib</directory>
       <outputDirectory>/apis/ehcache/lib</outputDirectory>
+      <includes>
+        <include>ehcache-ee*.jar</include>
+        <include>slf4j*.jar</include>
+      </includes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/ehcache/javadoc</directory>
@@ -101,12 +105,14 @@
       <directory>${project.build.directory}/${kit.name}/lib</directory>
       <outputDirectory>/server/lib</outputDirectory>
       <excludes>
-      	<exclude>**/hamcrest*.jar</exclude>
+        <exclude>**/hamcrest*.jar</exclude>
+        <exclude>**/management-cli/*.jar</exclude>
+        <exclude>**/management-cli</exclude>
       </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/management</directory>
-      <outputDirectory>/server/management</outputDirectory>
+      <outputDirectory>/server/lib</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/bigmemory-max-samples-${bigmemory.version}</directory>
@@ -132,6 +138,7 @@
         <include>org.terracotta*:*toolkit*:jar</include>
       </includes>
       <excludes>
+        <exclude>*:terracotta-toolkit-api</exclude>
         <exclude>*:*:jar:javadoc</exclude>
       </excludes>
     </dependencySet>

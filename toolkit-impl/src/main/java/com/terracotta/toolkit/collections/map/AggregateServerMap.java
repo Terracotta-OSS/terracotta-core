@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
+
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -70,8 +72,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>, ToolkitCacheListener<K>, ConfigChangeListener, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
     SearchableEntity {
   private static final TCLogger                                 LOGGER                               = TCLogging
@@ -131,7 +131,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         .createConcurrentTransactionLock("bulkops-static-eventual-concurrent-lock", platformService);
 
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;
-    Preconditions.checkArgument(isValidType(type), "Type has to be one of " + VALID_TYPES + " - " + type);
+    Preconditions.checkArgument(isValidType(type), "Type has to be one of %s but was %s", VALID_TYPES, type);
 
     this.name = name;
     this.stripeObjects = stripeObjects;
