@@ -138,6 +138,7 @@
         <include>org.terracotta*:*toolkit*:jar</include>
       </includes>
       <excludes>
+        <exclude>*:terracotta-toolkit-api</exclude>
         <exclude>*:*:jar:javadoc</exclude>
       </excludes>
     </dependencySet>
