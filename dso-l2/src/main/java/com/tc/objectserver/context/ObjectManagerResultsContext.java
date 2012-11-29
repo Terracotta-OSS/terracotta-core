@@ -19,5 +19,4 @@ public interface ObjectManagerResultsContext extends EventContext {
 
   public void setResults(ObjectManagerLookupResults results);
 
-  public boolean updateStats();
 }

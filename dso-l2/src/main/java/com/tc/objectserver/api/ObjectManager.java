@@ -126,7 +126,13 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
 
-  public ManagedObject getObjectByIDOrNull(ObjectID id);
+  /**
+   * Check out an object read only
+   *
+   * @param id ObjectID of the object to be checked out
+   * @return ManagedObject if it exists; null otherwise
+   */
+  public ManagedObject getObjectByIDReadOnly(ObjectID id);
 
   /**
    * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.

@@ -209,7 +209,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             return true;
         }
 
-        final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+        final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
         try {
             if (mo == null) {
                 if (evictor.isLogging()) {
