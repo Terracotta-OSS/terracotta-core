@@ -105,7 +105,9 @@
       <directory>${project.build.directory}/${kit.name}/lib</directory>
       <outputDirectory>/server/lib</outputDirectory>
       <excludes>
-      	<exclude>**/hamcrest*.jar</exclude>
+        <exclude>**/hamcrest*.jar</exclude>
+        <exclude>**/management-cli/*.jar</exclude>
+        <exclude>**/management-cli</exclude>
       </excludes>
     </fileSet>
     <fileSet>
