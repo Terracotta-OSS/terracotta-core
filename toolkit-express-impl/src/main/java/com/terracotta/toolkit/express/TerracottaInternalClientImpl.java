@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.express;
 
-import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.terracotta.toolkit.express.loader.Util;
 
 import java.io.BufferedReader;
@@ -26,6 +25,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private static final String TOOLKIT_CONTENT_RESOURCE                                         = "/toolkit-content.txt";
   private static final String SPI_INIT                                                         = "com.terracotta.toolkit.express.SpiInit";
   public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";
+  public static final String  DSO_CONTEXT_IMPL                                                 = "com.tc.object.bytecode.hook.impl.DSOContextImpl";
 
   private static final String EE_SECRET_DELEGATE                                               = "com.terracotta.toolkit.DelegatingSecretProvider";
   private static final String SECRET_PROVIDER_CLASS                                            = "org.terracotta.toolkit.SecretProvider";
@@ -89,7 +89,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     if (isInitialized) { return; }
 
     try {
-      Class dsoContextClass = clusteredStateLoader.loadClass(DSOContextImpl.class.getName());
+      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
       Method method = dsoContextClass.getMethod("init");
       method.invoke(dsoContext);
 
@@ -106,7 +106,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   @Override
   public Object getPlatformService() {
     try {
-      Class dsoContextClass = clusteredStateLoader.loadClass(DSOContextImpl.class.getName());
+      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
       Method method = dsoContextClass.getMethod("getPlatformService");
       return method.invoke(dsoContext);
     } catch (Exception e) {

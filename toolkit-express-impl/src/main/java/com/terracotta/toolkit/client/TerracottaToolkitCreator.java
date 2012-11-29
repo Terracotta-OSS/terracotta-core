@@ -6,7 +6,6 @@ package com.terracotta.toolkit.client;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
 
@@ -21,6 +20,8 @@ public class TerracottaToolkitCreator {
   private static final String            NON_STOP_TOOLKIT_IMPL_CLASSNAME   = "com.terracotta.toolkit.NonStopToolkit";
 
   private static final String            TOOLKIT_DEFAULT_CM_PROVIDER       = "com.terracotta.toolkit.ToolkitCacheManagerProvider";
+
+  private static final String            PLATFORM_SERVICE                  = "com.tc.platform.PlatformService";
 
   private final TerracottaInternalClient internalClient;
   private final boolean                  enterprise;
@@ -96,7 +97,8 @@ public class TerracottaToolkitCreator {
   private ToolkitInternal instantiateNonStopToolkit(FutureTask<ToolkitInternal> futureTask) throws Exception {
     return internalClient.instantiate(NON_STOP_TOOLKIT_IMPL_CLASSNAME,
                                       new Class[] { FutureTask.class,
-                                          internalClient.loadClass(PlatformService.class.getName()) }, new Object[] {
+ internalClient.loadClass(PLATFORM_SERVICE) },
+                                      new Object[] {
                                           futureTask, internalClient.getPlatformService() });
   }
 
