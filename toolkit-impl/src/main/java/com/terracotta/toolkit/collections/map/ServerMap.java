@@ -17,6 +17,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.google.common.base.Preconditions;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -574,7 +575,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void assertNotNull(final Object value) {
-    if (null == value) { throw new NullPointerException(); }
+    Preconditions.checkNotNull(value);
   }
 
   private void assertNull(final Object value) {
