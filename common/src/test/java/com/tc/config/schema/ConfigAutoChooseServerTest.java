@@ -67,7 +67,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                                                                                               new FatalIllegalConfigurationChangeHandler());
 
       L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
-      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
+      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
 

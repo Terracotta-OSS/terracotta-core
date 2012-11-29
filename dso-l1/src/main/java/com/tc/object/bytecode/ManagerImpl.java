@@ -43,8 +43,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
-import com.tc.object.logging.RuntimeLogger;
-import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.tx.ClientTransactionManager;
@@ -91,7 +89,6 @@ public class ManagerImpl implements Manager {
   private final Thread                             shutdownAction;
   private final Portability                        portability;
   private final DsoClusterInternal                 dsoCluster;
-  private final RuntimeLogger                      runtimeLogger;
   private final LockIdFactory                      lockIdFactory;
   private final ClientMode                         clientMode;
   private final TCSecurityManager                  securityManager;
@@ -110,7 +107,7 @@ public class ManagerImpl implements Manager {
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
-    this(true, null, null, null, null, config, connectionComponents, true, null, null, false, securityManager);
+    this(true, null, null, null, null, config, connectionComponents, true, null, false, securityManager);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
@@ -119,14 +116,14 @@ public class ManagerImpl implements Manager {
                      final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
     this(startClient, objectManager, txManager, lockManager, searchRequestManager, config, connectionComponents, true,
-         null, null, false, securityManager);
+         null, false, securityManager);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
-                     final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger, final ClassLoader loader,
+                     final boolean shutdownActionRequired, final ClassLoader loader,
                      final boolean isExpressRejoinMode, final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
@@ -145,7 +142,6 @@ public class ManagerImpl implements Manager {
     } else {
       this.shutdownAction = null;
     }
-    this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
     this.classProvider = new SingleLoaderClassProvider(loader == null ? getClass().getClassLoader() : loader);
 
     this.lockIdFactory = new LockIdFactory(this);
@@ -232,8 +228,8 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.dso = clientFactory.createClient(ManagerImpl.this.config, group,
                                                           ManagerImpl.this.classProvider,
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
-                                                          ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
-                                                          ManagerImpl.this.clientMode, ManagerImpl.this.securityManager);
+                                                          ManagerImpl.this.dsoCluster, ManagerImpl.this.clientMode,
+                                                          ManagerImpl.this.securityManager);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
@@ -286,7 +282,6 @@ public class ManagerImpl implements Manager {
 
   private void shutdownClient(boolean fromShutdownHook, boolean forceImmediate) {
     Assert.eval(clientStopped.isSet());
-    this.runtimeLogger.shutdown();
     if (this.shutdownManager != null) {
       try {
         // XXX: This "fromShutdownHook" flag should be removed. It's only here temporarily to make shutdown behave
@@ -712,10 +707,6 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lock(lock, level);
       this.txManager.begin(lock, level);
-
-      if (this.runtimeLogger.getLockDebug()) {
-        this.runtimeLogger.lockAcquired(lock, level);
-      }
     }
   }
 
@@ -724,10 +715,6 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lockInterruptibly(lock, level);
       this.txManager.begin(lock, level);
-
-      if (this.runtimeLogger.getLockDebug()) {
-        this.runtimeLogger.lockAcquired(lock, level);
-      }
     }
   }
 
@@ -756,9 +743,6 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
         this.txManager.begin(lock, level);
-        if (this.runtimeLogger.getLockDebug()) {
-          this.runtimeLogger.lockAcquired(lock, level);
-        }
         return true;
       } else {
         return false;
@@ -773,9 +757,6 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeout)) {
         this.txManager.begin(lock, level);
-        if (this.runtimeLogger.getLockDebug()) {
-          this.runtimeLogger.lockAcquired(lock, level);
-        }
         return true;
       } else {
         return false;

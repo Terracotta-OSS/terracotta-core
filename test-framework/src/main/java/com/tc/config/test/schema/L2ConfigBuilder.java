@@ -15,7 +15,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private String            host;
   private String            name;
   private PortConfigBuilder jmxPortBuilder   = null;
-  private PortConfigBuilder dsoPortBuilder   = null;
+  private PortConfigBuilder tsaPortBuilder   = null;
   private PortConfigBuilder groupPortBuilder = null;
   private boolean           offheapEnabled  = false;
   private String            offheapMaxDataSize;
@@ -60,18 +60,18 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", logs);
   }
 
-  public synchronized void setDSOPort(int data) {
-    if (this.dsoPortBuilder == null) {
-      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+  public synchronized void setTSAPort(int data) {
+    if (this.tsaPortBuilder == null) {
+      this.tsaPortBuilder = new PortConfigBuilder(PortType.TSAPORT);
     }
-    this.dsoPortBuilder.setBindPort(data);
+    this.tsaPortBuilder.setBindPort(data);
   }
 
-  public synchronized void setDSOBindAddress(String data) {
-    if (this.dsoPortBuilder == null) {
-      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+  public synchronized void setTSABindAddress(String data) {
+    if (this.tsaPortBuilder == null) {
+      this.tsaPortBuilder = new PortConfigBuilder(PortType.TSAPORT);
     }
-    this.dsoPortBuilder.setBindAddress(data);
+    this.tsaPortBuilder.setBindAddress(data);
   }
 
   public synchronized void setJMXPort(int data) {
@@ -251,8 +251,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private String getPortsConfig() {
     String out = "";
 
-    if (this.dsoPortBuilder != null) {
-      out += this.dsoPortBuilder.toString() + "\n";
+    if (this.tsaPortBuilder != null) {
+      out += this.tsaPortBuilder.toString() + "\n";
     }
     if (this.jmxPortBuilder != null) {
       out += this.jmxPortBuilder.toString() + "\n";

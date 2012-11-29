@@ -24,7 +24,7 @@ public class L2Config {
   private int                     maxOffHeapDataSize    = 128;
   private final ArrayList<String> extraServerJvmArgs;
   private boolean                 isProxyL2groupPorts   = false;
-  private boolean                 isProxyDsoPorts       = false;
+  private boolean                 isProxyTsaPorts       = false;
   private int                     minHeap               = 256;
   private int                     maxHeap               = 256;
   private int                     directMemorySize      = -1;
@@ -176,21 +176,21 @@ public class L2Config {
   }
 
   /**
-   * is L2 started with a proxy port in bertween the server and client
+   * is L2 started with a proxy port in between the server and client
    * 
    * @return
    */
-  public boolean isProxyDsoPorts() {
-    return isProxyDsoPorts;
+  public boolean isProxyTsaPorts() {
+    return isProxyTsaPorts;
   }
 
   /**
-   * Enable/Disable l2 proxy for dso port
+   * Enable/Disable l2 proxy for tsa port
    * 
-   * @param isProxyDsoPorts
+   * @param isProxyTsaPorts
    */
-  public void setProxyDsoPorts(boolean isProxyDsoPorts) {
-    this.isProxyDsoPorts = isProxyDsoPorts;
+  public void setProxyTsaPorts(boolean isProxyTsaPorts) {
+    this.isProxyTsaPorts = isProxyTsaPorts;
   }
 
   /**

@@ -73,8 +73,8 @@ public class MonitoringServerControl implements ServerControl {
   }
 
   @Override
-  public int getDsoPort() {
-    return serverControl.getDsoPort();
+  public int getTsaPort() {
+    return serverControl.getTsaPort();
   }
 
   @Override

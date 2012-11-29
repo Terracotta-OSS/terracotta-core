@@ -62,16 +62,16 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
   @Override
   public void setUp() throws Exception {
     final PortChooser pc = new PortChooser();
-    final int dsoPort = pc.chooseRandomPort();
+    final int tsaPort = pc.chooseRandomPort();
     final int jmxPort = pc.chooseRandomPort();
     L2ConfigBuilder l2Config = tcConfigBuilder.getServers().getL2s()[0];
-    l2Config.setDSOPort(dsoPort);
+    l2Config.setTSAPort(tsaPort);
     l2Config.setJMXPort(jmxPort);
     tcConfig = getTempFile("tc-config-testFakeL2sName.xml");
     writeConfigFile(tcConfigBuilder.toString());
 
     this.tcserver = startupServer();
-    configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
+    configFactory().addServerToL1Config("127.0.0.1", tsaPort, jmxPort);
   }
 
   @Override
@@ -111,6 +111,7 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       return server;
     }
 
+    @Override
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();
@@ -133,8 +134,8 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       l2Builder.setName("server" + i);
       l2Builder.setJMXPort(pc.chooseRandomPort());
       l2Builder.setJMXBindAddress("127.0.0.1");
-      l2Builder.setDSOPort(pc.chooseRandomPort());
-      l2Builder.setDSOBindAddress("127.0.0.1");
+      l2Builder.setTSAPort(pc.chooseRandomPort());
+      l2Builder.setTSABindAddress("127.0.0.1");
       l2Builder.setL2GroupPort(pc.chooseRandomPort());
       l2Builder.setL2GroupPortBindAddress("127.0.0.1");
       l2Builders[i] = l2Builder;
@@ -174,6 +175,7 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       this.config = config;
     }
 
+    @Override
     public List<ActiveServerGroupConfig> getActiveServerGroups() {
       return this.config.getActiveServerGroups();
     }
@@ -182,6 +184,7 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
      * Run non-active-active mode but with 16 stripes. Hack this method to return 1 only if called by isActiveActive. So
      * that to avoid active-active stuffs. Such as license check, starting all stripes and etc.
      */
+    @Override
     public int getActiveServerGroupCount() {
       Throwable t = new Throwable();
       StackTraceElement[] js = t.getStackTrace();
@@ -193,18 +196,22 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       }
     }
 
+    @Override
     public ActiveServerGroupConfig getActiveServerGroupForL2(String l2Name) {
       return this.config.getActiveServerGroupForL2(l2Name);
     }
 
+    @Override
     public void changesInItemForbidden(ConfigItem item) {
       this.config.changesInItemForbidden(item);
     }
 
+    @Override
     public void changesInItemIgnored(ConfigItem item) {
       this.config.changesInItemIgnored(item);
     }
 
+    @Override
     public XmlObject getBean() {
       return this.config.getBean();
     }
@@ -219,80 +226,99 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     }
 
     // wrap here to provide hacked ActiveServerGroupsConfig for testing purpose
+    @Override
     public ActiveServerGroupsConfig activeServerGroupsConfig() {
       return new WrapActiveServerGroupsConfig(this.l2Config.activeServerGroupsConfig());
     }
 
+    @Override
     public String[] allCurrentlyKnownServers() {
       return this.l2Config.allCurrentlyKnownServers();
     }
 
+    @Override
     public String[] applicationNames() {
       return this.l2Config.applicationNames();
     }
 
+    @Override
     public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
       return this.l2Config.commonL2ConfigFor(name);
     }
 
+    @Override
     public CommonL2Config commonl2Config() {
       return this.l2Config.commonl2Config();
     }
 
+    @Override
     public String describeSources() {
       return this.l2Config.describeSources();
     }
 
+    @Override
     public L2DSOConfig dsoL2Config() {
       return this.l2Config.dsoL2Config();
     }
 
+    @Override
     public L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
       return this.l2Config.dsoL2ConfigFor(name);
     }
 
+    @Override
     public InputStream effectiveConfigFile() {
       return this.l2Config.effectiveConfigFile();
     }
 
+    @Override
     public ActiveServerGroupConfig getActiveServerGroupForThisL2() {
       return this.l2Config.getActiveServerGroupForThisL2();
     }
 
+    @Override
     public String getL2Identifier() {
       return this.l2Config.getL2Identifier();
     }
 
+    @Override
     public SecurityConfig getSecurity() {
       return this.l2Config.getSecurity();
     }
 
+    @Override
     public HaConfigSchema haConfig() {
       return this.l2Config.haConfig();
     }
 
+    @Override
     public String[] processArguments() {
       return this.l2Config.processArguments();
     }
 
+    @Override
     public InputStream rawConfigFile() {
       return this.l2Config.rawConfigFile();
     }
 
+    @Override
     public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
                                                     TerracottaOperatorEventLogger opEventLogger)
         throws ConfigurationSetupException {
       return this.l2Config.reloadConfiguration(serverConnectionValidator, opEventLogger);
     }
 
+    @Override
     public boolean isSecure() {
       return this.l2Config.isSecure();
     }
 
+    @Override
     public SystemConfig systemConfig() {
       return this.l2Config.systemConfig();
     }
 
+    @Override
     public UpdateCheckConfig updateCheckConfig() {
       return this.l2Config.updateCheckConfig();
     }

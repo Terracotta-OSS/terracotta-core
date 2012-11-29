@@ -21,7 +21,6 @@ import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
@@ -119,6 +118,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
     Runnable stoper = new Runnable() {
+      @Override
       public void run() {
         RemoteTransactionManagerTest.this.manager.stop();
         flushCalls.put(lockID1);
@@ -154,6 +154,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
     Runnable stoper = new Runnable() {
+      @Override
       public void run() {
         RemoteTransactionManagerTest.this.manager.stop();
         flushCalls.put(lockID1);
@@ -178,6 +179,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     this.manager.commit(tx1);
     final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
     Runnable flusher = new Runnable() {
+      @Override
       public void run() {
         RemoteTransactionManagerTest.this.manager.flush(lockID1);
         flushCalls.put(lockID1);
@@ -512,7 +514,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     int num = this.number.increment();
     LockID lid = new StringLockID("lock" + num);
     TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, TxnType.NORMAL);
-    ClientTransaction txn = new ClientTransactionImpl(new NullRuntimeLogger());
+    ClientTransaction txn = new ClientTransactionImpl();
     txn.setTransactionContext(tc);
     txn.fieldChanged(new MockTCObject(new ObjectID(num), this), "class", "class.field", new ObjectID(num), -1);
     return txn;
@@ -534,18 +536,22 @@ public class RemoteTransactionManagerTest extends TestCase {
       return "TestTransactionBatch[" + this.batchID + "] = Txn [ " + this.transactions + " ]";
     }
 
+    @Override
     public synchronized boolean isEmpty() {
       return this.transactions.isEmpty();
     }
 
+    @Override
     public synchronized int numberOfTxnsBeforeFolding() {
       return this.transactions.size();
     }
 
+    @Override
     public boolean isNull() {
       return false;
     }
 
+    @Override
     public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                                   TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
@@ -559,10 +565,12 @@ public class RemoteTransactionManagerTest extends TestCase {
       return new FoldedInfo(null, false);
     }
 
+    @Override
     public TransactionBuffer removeTransaction(TransactionID txID) {
       return Mockito.mock(TransactionBuffer.class);
     }
 
+    @Override
     public synchronized Collection addTransactionIDsTo(Collection c) {
       for (Iterator i = this.transactions.iterator(); i.hasNext();) {
         ClientTransaction txn = (ClientTransaction) i.next();
@@ -571,6 +579,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       return c;
     }
 
+    @Override
     public void send() {
       try {
         RemoteTransactionManagerTest.this.batchSendQueue.put(this);
@@ -579,22 +588,27 @@ public class RemoteTransactionManagerTest extends TestCase {
       }
     }
 
+    @Override
     public TCByteBuffer[] getData() {
       return null;
     }
 
+    @Override
     public TxnBatchID getTransactionBatchID() {
       return this.batchID;
     }
 
+    @Override
     public SequenceID getMinTransactionSequence() {
       throw new ImplementMe();
     }
 
+    @Override
     public void recycle() {
       return;
     }
 
+    @Override
     public synchronized Collection addTransactionSequenceIDsTo(Collection sequenceIDs) {
       for (Iterator i = this.transactions.iterator(); i.hasNext();) {
         ClientTransaction txn = (ClientTransaction) i.next();
@@ -603,10 +617,12 @@ public class RemoteTransactionManagerTest extends TestCase {
       return sequenceIDs;
     }
 
+    @Override
     public String dump() {
       return "TestTransactionBatch";
     }
 
+    @Override
     public int byteSize() {
       return 64000;
     }
@@ -617,6 +633,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     private long             idSequence;
     public final LinkedQueue newBatchQueue = new LinkedQueue();
 
+    @Override
     public ClientTransactionBatch nextBatch(GroupID groupID) {
       ClientTransactionBatch rv = new TestTransactionBatch(new TxnBatchID(++this.idSequence));
       try {

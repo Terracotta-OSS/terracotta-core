@@ -21,9 +21,9 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
   private final List<String> mainArgs;
   private final File         directory;
 
-  public ExtraL1ProcessControl(String l2Host, int dsoPort, Class mainClass, String configFileLoc,
+  public ExtraL1ProcessControl(String l2Host, int tsaPort, Class mainClass, String configFileLoc,
                                List<String> mainArgs, File directory, List extraJvmArgs) {
-    super(new DebugParams(), l2Host, dsoPort, 0, configFileLoc, true, extraJvmArgs);
+    super(new DebugParams(), l2Host, tsaPort, 0, configFileLoc, true, extraJvmArgs);
     this.mainClass = mainClass;
     this.mainArgs = mainArgs == null ? Collections.EMPTY_LIST : mainArgs;
     this.directory = directory;
@@ -31,9 +31,9 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     setJVMArgs();
   }
 
-  public ExtraL1ProcessControl(String l2Host, int dsoPort, Class mainClass, String configFileLoc,
+  public ExtraL1ProcessControl(String l2Host, int tsaPort, Class mainClass, String configFileLoc,
                                List<String> mainArgs, File directory, List extraJvmArgs, boolean mergeOutput) {
-    super(new DebugParams(), l2Host, dsoPort, 0, configFileLoc, mergeOutput, extraJvmArgs);
+    super(new DebugParams(), l2Host, tsaPort, 0, configFileLoc, mergeOutput, extraJvmArgs);
     this.mainClass = mainClass;
     this.mainArgs = mainArgs == null ? Collections.EMPTY_LIST : mainArgs;
     this.directory = directory;

@@ -3,8 +3,6 @@
  */
 package com.tc.config.schema.setup;
 
-import org.apache.xmlbeans.XmlObject;
-
 import com.tc.config.TcProperty;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.CommonL1ConfigObject;
@@ -14,8 +12,6 @@ import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.repository.ChildBeanFetcher;
-import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
@@ -24,8 +20,6 @@ import com.tc.object.config.schema.L1DSOConfigObject;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.terracottatech.config.Client;
-import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.TcProperties;
 
 import java.io.File;
@@ -58,40 +52,39 @@ public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     commonL1Config = new CommonL1ConfigObject(createContext(clientBeanRepository(), null));
     configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
-    dsoL1Config = new L1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
-                                                                              DsoClientData.class,
-                                                                              new ChildBeanFetcher() {
-                                                                                public XmlObject getChild(
-                                                                                                          XmlObject parent) {
-                                                                                  return ((Client) parent).getDso();
-                                                                                }
-                                                                              }), null));
+    dsoL1Config = new L1DSOConfigObject(createContext(clientBeanRepository(), null));
 
     overwriteTcPropertiesFromConfig();
   }
 
+  @Override
   public void setupLogging() {
     File logsPath = commonL1Config().logsPath();
     TCLogging.setLogDirectory(logsPath, TCLogging.PROCESS_TYPE_L1);
   }
 
+  @Override
   public String rawConfigText() {
     return configurationCreator().rawConfigText();
   }
 
+  @Override
   public boolean loadedFromTrustedSource() {
     return this.loadedFromTrustedSource;
   }
 
+  @Override
   public L2ConfigForL1 l2Config() {
     return new L2ConfigForL1Object(createContext(serversBeanRepository(), null), createContext(systemBeanRepository(),
                                                                                                null));
   }
 
+  @Override
   public CommonL1Config commonL1Config() {
     return this.commonL1Config;
   }
 
+  @Override
   public L1DSOConfig dsoL1Config() {
     return this.dsoL1Config;
   }
@@ -107,10 +100,12 @@ public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     tcProps.overwriteTcPropertiesFromConfig(propMap);
   }
 
+  @Override
   public void reloadServersConfiguration() throws ConfigurationSetupException {
     configurationCreator().reloadServersConfiguration(serversBeanRepository(), true, false);
   }
 
+  @Override
   public SecurityInfo getSecurityInfo() {
     return this.securityInfo;
   }

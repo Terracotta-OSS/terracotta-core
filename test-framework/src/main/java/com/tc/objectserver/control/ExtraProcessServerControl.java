@@ -65,65 +65,65 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public  Collection<String>  additionalArgs = new ArrayList<String>();
 
   // constructor 1: used by container tests
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput) {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
+  public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput) {
+    this(new DebugParams(), host, tsaPort, adminPort, configFileLoc, mergeOutput);
   }
 
   // constructor 2: used by ExtraL1ProceddControl and constructor 1
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int tsaPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput) {
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, mergeOutput, null, new ArrayList(), NOT_DEF, null,
+    this(debugParams, host, tsaPort, adminPort, configFileLoc, null, mergeOutput, null, new ArrayList(), NOT_DEF, null,
          false);
   }
 
-  public ExtraProcessServerControl(DebugParams params, String host, int dsoPort, int adminPort, String configFileLoc,
+  public ExtraProcessServerControl(DebugParams params, String host, int tsaPort, int adminPort, String configFileLoc,
                                    boolean mergeOutput, List jvmArgs) {
-    this(params, host, dsoPort, adminPort, configFileLoc, null, mergeOutput, null, jvmArgs, NOT_DEF, null, false);
+    this(params, host, tsaPort, adminPort, configFileLoc, null, mergeOutput, null, jvmArgs, NOT_DEF, null, false);
   }
 
   // constructor 3: used by ControlSetup, Setup, and container tests
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int tsaPort, int adminPort,
                                    String configFileLoc, File runningDirectory, boolean mergeOutput, List jvmArgs,
                                    String undefString) {
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, runningDirectory, mergeOutput, null, jvmArgs,
+    this(debugParams, host, tsaPort, adminPort, configFileLoc, runningDirectory, mergeOutput, null, jvmArgs,
          undefString, null, false);
   }
 
   // constructor 4: used by TransparentTestBase for single failure case
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+  public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput,
                                    File javaHome) {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput, javaHome);
+    this(new DebugParams(), host, tsaPort, adminPort, configFileLoc, mergeOutput, javaHome);
   }
 
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+  public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput,
                                    File javaHome, List jvmArgs) {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput, javaHome, jvmArgs);
+    this(new DebugParams(), host, tsaPort, adminPort, configFileLoc, mergeOutput, javaHome, jvmArgs);
   }
 
   // constructor 5: used by active-passive tests
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+  public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput,
                                    String servername, List additionalJvmArgs, File javaHome, boolean useIdentifier) {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, null, mergeOutput, servername, additionalJvmArgs,
+    this(new DebugParams(), host, tsaPort, adminPort, configFileLoc, null, mergeOutput, servername, additionalJvmArgs,
          NOT_DEF, javaHome, useIdentifier);
   }
 
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+  public ExtraProcessServerControl(String host, int tsaPort, int adminPort, String configFileLoc, boolean mergeOutput,
                                    String servername, List additionalJvmArgs, File javaHome, boolean useIdentifier,
                                    File runningDirectory) {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, runningDirectory, mergeOutput, servername,
+    this(new DebugParams(), host, tsaPort, adminPort, configFileLoc, runningDirectory, mergeOutput, servername,
          additionalJvmArgs, NOT_DEF, javaHome, useIdentifier);
   }
 
   // constructor 6: used by constructor 4, crash tests, and normal tests running in 1.4 jvm
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int tsaPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput, File javaHome) {
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, mergeOutput, null, new ArrayList(), NOT_DEF,
+    this(debugParams, host, tsaPort, adminPort, configFileLoc, null, mergeOutput, null, new ArrayList(), NOT_DEF,
          javaHome, false);
   }
 
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int tsaPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput, File javaHome, List jvmArgs) {
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, mergeOutput, null, jvmArgs, NOT_DEF, javaHome,
+    this(debugParams, host, tsaPort, adminPort, configFileLoc, null, mergeOutput, null, jvmArgs, NOT_DEF, javaHome,
          false);
   }
 
@@ -157,11 +157,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   // only called by constructors in this class
-  protected ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+  protected ExtraProcessServerControl(DebugParams debugParams, String host, int tsaPort, int adminPort,
                                       String configFileLoc, File runningDirectory, boolean mergeOutput,
                                       String serverName, List additionalJvmArgs, String undefString, File javaHome,
                                       boolean useIdentifier) {
-    super(host, dsoPort, adminPort);
+    super(host, tsaPort, adminPort);
     this.useIdentifier = useIdentifier;
     this.javaHome = javaHome;
     this.serverName = serverName;
@@ -169,7 +169,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
     this.configFileLoc = configFileLoc;
     this.mergeOutput = mergeOutput;
-    this.name = "DSO process @ " + getHost() + ":" + getDsoPort() + ", jmx-port:" + adminPort;
+    this.name = "DSO process @ " + getHost() + ":" + getTsaPort() + ", jmx-port:" + adminPort;
     this.runningDirectory = runningDirectory;
 
     addProductKeyIfExists(jvmArgs);
@@ -230,8 +230,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
-  private String getStreamIdentifier(int dsoPort, String streamType) {
-    String portString = "" + dsoPort;
+  private String getStreamIdentifier(int tsaPort, String streamType) {
+    String portString = "" + tsaPort;
     int numSpaces = 5 - portString.length();
     for (int i = 0; i < numSpaces; i++) {
       portString = " " + portString;
@@ -274,7 +274,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   @Override
   public void mergeSTDOUT() {
     if (useIdentifier) {
-      process.mergeSTDOUT(getStreamIdentifier(getDsoPort(), OUT_STREAM));
+      process.mergeSTDOUT(getStreamIdentifier(getTsaPort(), OUT_STREAM));
     } else {
       process.mergeSTDOUT();
     }
@@ -283,7 +283,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   @Override
   public void mergeSTDERR() {
     if (useIdentifier) {
-      process.mergeSTDERR(getStreamIdentifier(getDsoPort(), ERR_STREAM));
+      process.mergeSTDERR(getStreamIdentifier(getTsaPort(), ERR_STREAM));
     } else {
       process.mergeSTDERR();
     }
@@ -545,7 +545,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
       mbean.setThreadDumpCount(3);
       mbean.setThreadDumpInterval(500);
-      System.out.println("XXX Thread dumping server=[" + getDsoPort() + "]");
+      System.out.println("XXX Thread dumping server=[" + getTsaPort() + "]");
       mbean.doThreadDump();
     } catch (Exception e) {
       e.printStackTrace();

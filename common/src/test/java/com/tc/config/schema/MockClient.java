@@ -17,7 +17,6 @@ import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.Path;
 
 import java.io.File;
@@ -38,272 +37,280 @@ public class MockClient implements Client {
     super();
   }
 
+  @Override
   public String getLogs() {
     throw new ImplementMe();
   }
 
+  @Override
   public Path xgetLogs() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSetLogs() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setLogs(String arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void xsetLogs(Path arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void unsetLogs() {
     throw new ImplementMe();
   }
 
-  public DsoClientData getDso() {
-    throw new ImplementMe();
-  }
-
-  public boolean isSetDso() {
-    throw new ImplementMe();
-  }
-
-  public void setDso(DsoClientData arg0) {
-    throw new ImplementMe();
-
-  }
-
-  public DsoClientData addNewDso() {
-    throw new ImplementMe();
-  }
-
-  public void unsetDso() {
-    throw new ImplementMe();
-
-  }
-
+  @Override
   public SchemaType schemaType() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean validate() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean validate(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectPath(String arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectPath(String arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] execQuery(String arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] execQuery(String arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject changeType(SchemaType arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject substitute(QName arg0, SchemaType arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isNil() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setNil() {
     throw new ImplementMe();
 
   }
 
+  @Override
   public boolean isImmutable() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject set(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject copy() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean valueEquals(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public int valueHashCode() {
     throw new ImplementMe();
   }
 
+  @Override
   public int compareTo(Object arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public int compareValue(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(QName arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(String arg0, String arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(QNameSet arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject selectAttribute(QName arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject selectAttribute(String arg0, String arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectAttributes(QNameSet arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object monitor() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlDocumentProperties documentProperties() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlCursor newCursor() {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLInputStream newXMLInputStream() {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLStreamReader newXMLStreamReader() {
     throw new ImplementMe();
   }
 
+  @Override
   public String xmlText() {
     throw new ImplementMe();
   }
 
+  @Override
   public InputStream newInputStream() {
     throw new ImplementMe();
   }
 
+  @Override
   public Reader newReader() {
     throw new ImplementMe();
   }
 
+  @Override
   public Node newDomNode() {
     throw new ImplementMe();
   }
 
+  @Override
   public Node getDomNode() {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(ContentHandler arg0, LexicalHandler arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(File arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(OutputStream arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(Writer arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLInputStream newXMLInputStream(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLStreamReader newXMLStreamReader(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public String xmlText(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public InputStream newInputStream(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Reader newReader(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Node newDomNode(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(ContentHandler arg0, LexicalHandler arg1, XmlOptions arg2) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(File arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(OutputStream arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(Writer arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void dump() {
     throw new ImplementMe();
   }
 
-  public String getStatistics() {
-    throw new ImplementMe();
-  }
-
-  public boolean isSetStatistics() {
-    throw new ImplementMe();
-  }
-
-  public void setStatistics(String arg0) {
-    throw new ImplementMe();
-
-  }
-
-  public void unsetStatistics() {
-    throw new ImplementMe();
-
-  }
-
-  public Path xgetStatistics() {
-    throw new ImplementMe();
-  }
-
-  public void xsetStatistics(Path arg0) {
-    throw new ImplementMe();
-  }
 }

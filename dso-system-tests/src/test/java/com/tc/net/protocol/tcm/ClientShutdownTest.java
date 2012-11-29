@@ -22,7 +22,6 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
@@ -60,20 +59,20 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
   public void testClientShutdownNotFromHook() throws Exception {
     final PortChooser pc = new PortChooser();
-    final int dsoPort = pc.chooseRandomPort();
+    final int tsaPort = pc.chooseRandomPort();
     final int jmxPort = pc.chooseRandomPort();
 
-    final TCServerImpl server = (TCServerImpl) startupServer(dsoPort, jmxPort);
+    final TCServerImpl server = (TCServerImpl) startupServer(tsaPort, jmxPort);
     server.getDSOServer().getCommunicationsManager().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
 
-    configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
+    configFactory().addServerToL1Config("127.0.0.1", tsaPort, jmxPort);
     L1ConfigurationSetupManager manager = super.createL1ConfigManager();
     preparedComponentsFromL2Connection = new PreparedComponentsFromL2Connection(manager);
 
-    final DistributedObjectClient client1 = startupClient(dsoPort, jmxPort, manager, preparedComponentsFromL2Connection);
+    final DistributedObjectClient client1 = startupClient(tsaPort, jmxPort, manager, preparedComponentsFromL2Connection);
     runTaskAndShutDownClient(server, client1, true);
 
-    final DistributedObjectClient client2 = startupClient(dsoPort, jmxPort, manager, preparedComponentsFromL2Connection);
+    final DistributedObjectClient client2 = startupClient(tsaPort, jmxPort, manager, preparedComponentsFromL2Connection);
     runTaskAndShutDownClient(server, client2, false);
 
     server.stop();
@@ -171,14 +170,14 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
   }
 
-  protected TCServer startupServer(final int dsoPort, final int jmxPort) {
-    StartAction start_action = new StartAction(dsoPort, jmxPort);
+  protected TCServer startupServer(final int tsaPort, final int jmxPort) {
+    StartAction start_action = new StartAction(tsaPort, jmxPort);
     new StartupHelper(group, start_action).startUp();
     final TCServer server = start_action.getServer();
     return server;
   }
 
-  protected DistributedObjectClient startupClient(final int dsoPort, final int jmxPort,
+  protected DistributedObjectClient startupClient(final int tsaPort, final int jmxPort,
                                                   L1ConfigurationSetupManager manager,
                                                   PreparedComponentsFromL2Connection preparedComponentsFromL2Connection2)
       throws ConfigurationSetupException {
@@ -189,7 +188,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(),
                                                                  preparedComponentsFromL2Connection,
                                                                  NullManager.getInstance(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+ new DsoClusterImpl());
     client.start();
     return client;
   }
@@ -199,17 +198,17 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                               .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
-    private final int dsoPort;
+    private final int tsaPort;
     private final int jmxPort;
     private TCServer  server = null;
 
-    private StartAction(final int dsoPort, final int jmxPort) {
-      this.dsoPort = dsoPort;
+    private StartAction(final int tsaPort, final int jmxPort) {
+      this.tsaPort = tsaPort;
       this.jmxPort = jmxPort;
     }
 
-    public int getDsoPort() {
-      return dsoPort;
+    public int getTsaPort() {
+      return tsaPort;
     }
 
     public int getJmxPort() {
@@ -226,8 +225,8 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       TestConfigurationSetupManagerFactory factory = configFactory();
       L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
 
-      manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
-      manager.dsoL2Config().dsoPort().setBind("127.0.0.1");
+      manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
+      manager.dsoL2Config().tsaPort().setBind("127.0.0.1");
 
       manager.commonl2Config().jmxPort().setIntValue(jmxPort);
       manager.commonl2Config().jmxPort().setBind("127.0.0.1");

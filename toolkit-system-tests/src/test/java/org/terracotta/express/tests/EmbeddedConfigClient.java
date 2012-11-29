@@ -26,7 +26,7 @@ public class EmbeddedConfigClient extends ClientBase {
     String tcConfig = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">\n" +
       "<servers>\n" +
         "<server host=\"localhost\" name=\"testserver0\">\n" +
-          "<dso-port>DSO_PORT</dso-port>\n" +
+          "<tsa-port>TSA_PORT</tsa-port>\n" +
         "</server>\n" +
         "<mirror-groups>\n" +
           "<mirror-group group-name=\"testGroup0\">\n" +
@@ -38,8 +38,8 @@ public class EmbeddedConfigClient extends ClientBase {
       "</servers>\n" +
     "</tc:tc-config>";
 
-    String dsoPort = getTerracottaUrl().split(":")[1];
-    tcConfig = tcConfig.replace("DSO_PORT", dsoPort);
+    String tsaPort = getTerracottaUrl().split(":")[1];
+    tcConfig = tcConfig.replace("TSA_PORT", tsaPort);
 
     TerracottaClientConfig config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(tcConfig).isUrl(false)
         .newTerracottaClientConfig();

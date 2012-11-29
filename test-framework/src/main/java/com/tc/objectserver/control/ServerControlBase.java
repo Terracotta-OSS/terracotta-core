@@ -16,16 +16,17 @@ import java.util.concurrent.Callable;
 public abstract class ServerControlBase implements ServerControl {
   private final int                  adminPort;
   private final String               host;
-  private final int                  dsoPort;
+  private final int                  tsaPort;
   private final ServerMBeanRetriever serverMBeanRetriever;
 
-  public ServerControlBase(String host, int dsoPort, int adminPort) {
+  public ServerControlBase(String host, int tsaPort, int adminPort) {
     this.host = host;
-    this.dsoPort = dsoPort;
+    this.tsaPort = tsaPort;
     this.adminPort = adminPort;
     this.serverMBeanRetriever = new ServerMBeanRetriever(host, adminPort);
   }
 
+  @Override
   public boolean isRunning() {
     Socket socket = null;
     try {
@@ -45,12 +46,14 @@ public abstract class ServerControlBase implements ServerControl {
     }
   }
 
+  @Override
   public int getAdminPort() {
     return adminPort;
   }
 
-  public int getDsoPort() {
-    return dsoPort;
+  @Override
+  public int getTsaPort() {
+    return tsaPort;
   }
 
   protected String getHost() {
@@ -67,8 +70,10 @@ public abstract class ServerControlBase implements ServerControl {
     return serverMBeanRetriever.getTCServerInfoMBean();
   }
 
+  @Override
   public void waitUntilL2IsActiveOrPassive() throws Exception {
     WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+      @Override
       public Boolean call() throws Exception {
         TCServerInfoMBean tcServerInfo = getTCServerInfoMBean();
         return tcServerInfo.isActive() || tcServerInfo.isPassiveStandby();

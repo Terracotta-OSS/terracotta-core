@@ -10,7 +10,6 @@ import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.locks.Notify;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
 
@@ -27,7 +26,6 @@ import java.util.Map;
  * Client side transaction : Collects all changes by a single thread under a lock
  */
 public class ClientTransactionImpl extends AbstractClientTransaction {
-  private final RuntimeLogger                 runtimeLogger;
   private final Map<ObjectID, TCChangeBuffer> objectChanges = new LinkedHashMap<ObjectID, TCChangeBuffer>();
 
   private Map                                 newRoots;
@@ -37,41 +35,42 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   // used to keep things referenced until the transaction is completely ACKED
   private final Map                           referenced    = new IdentityHashMap();
 
-  public ClientTransactionImpl(RuntimeLogger logger) {
+  public ClientTransactionImpl() {
     super();
-    this.runtimeLogger = logger;
   }
 
+  @Override
   public boolean isConcurrent() {
     return this.getLockType().isConcurrent();
   }
 
+  @Override
   public boolean hasChangesOrNotifies() {
     return !(objectChanges.isEmpty() && getNewRoots().isEmpty() && getNotifies().isEmpty());
   }
 
+  @Override
   public boolean hasChanges() {
     return !(objectChanges.isEmpty() && getNewRoots().isEmpty());
   }
 
+  @Override
   public Map getNewRoots() {
     return newRoots == null ? Collections.EMPTY_MAP : newRoots;
   }
 
+  @Override
   public List getNotifies() {
     return notifies == null ? Collections.EMPTY_LIST : notifies;
   }
 
+  @Override
   public Map getChangeBuffers() {
     return this.objectChanges;
   }
 
   @Override
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
-    if (runtimeLogger.getFieldChangeDebug()) {
-      runtimeLogger.literalValueChanged(source, newValue);
-    }
-
     getOrCreateChangeBuffer(source).literalValueChanged(newValue);
     // To prevent it gcing on us.
     addReferenced(oldValue);
@@ -80,19 +79,11 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
 
   @Override
   protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-    if (runtimeLogger.getFieldChangeDebug()) {
-      runtimeLogger.fieldChanged(source, classname, fieldname, newValue, index);
-    }
-
     getOrCreateChangeBuffer(source).fieldChanged(classname, fieldname, newValue, index);
   }
 
   @Override
   protected void basicArrayChanged(TCObject source, int startPos, Object array, int length) {
-    if (runtimeLogger.getArrayChangeDebug()) {
-      runtimeLogger.arrayChanged(source, startPos, array);
-    }
-
     getOrCreateChangeBuffer(source).arrayChanged(startPos, array, length);
   }
 
@@ -133,10 +124,12 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     referenced.put(pojo, null);
   }
 
+  @Override
   public Collection getReferencesOfObjectsInTxn() {
     return Collections.unmodifiableCollection(referenced.keySet());
   }
 
+  @Override
   public void addNotify(Notify notify) {
     if (!notify.isNull()) {
       if (notifies == null) {
@@ -152,10 +145,12 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     return "ClientTransactionImpl@" + System.identityHashCode(this) + " [ " + getTransactionID() + " ]";
   }
 
+  @Override
   public int getNotifiesCount() {
     return getNotifies().size();
   }
 
+  @Override
   public void addDmiDescriptor(DmiDescriptor dd) {
     if (dmis == null) {
       dmis = new ArrayList();
@@ -168,6 +163,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     getOrCreateChangeBuffer(tco).addMetaDataDescriptor(md);
   }
 
+  @Override
   public List getDmiDescriptors() {
     return dmis == null ? Collections.EMPTY_LIST : dmis;
   }

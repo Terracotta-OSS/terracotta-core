@@ -8,58 +8,67 @@ public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
 
+  @Override
   public synchronized void attemptForceShutdown() throws Exception {
     isRunning = false;
   }
 
+  @Override
   public synchronized void shutdown() throws Exception {
     isRunning = false;
   }
 
+  @Override
   public synchronized void crash() throws Exception {
     isRunning = false;
   }
 
+  @Override
   public synchronized void start() throws Exception {
     this.isRunning = true;
   }
 
+  @Override
   public void startWithoutWait() throws Exception {
     this.isRunning = true;
   }
 
+  @Override
   public synchronized boolean isRunning() {
     return isRunning;
   }
 
-  public void clean() {
-    return;
-  }
-
+  @Override
   public void mergeSTDOUT() {
     return;
   }
 
+  @Override
   public void mergeSTDERR() {
     return;
   }
 
+  @Override
   public void waitUntilShutdown() {
     return;
   }
 
-  public int getDsoPort() {
+  @Override
+  public int getTsaPort() {
     return 0;
   }
 
+  @Override
   public int getAdminPort() {
     return 0;
   }
 
+  @Override
   public int waitFor() throws Exception {
     return 1;
   }
 
+  @Override
   public void waitUntilL2IsActiveOrPassive() throws Exception {
     //
   }

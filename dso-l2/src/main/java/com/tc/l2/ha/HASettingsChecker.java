@@ -58,7 +58,7 @@ public class HASettingsChecker {
     this.l2l2HealthCheckFailureTolerance = interNodeHealthCheckTime(l2l2PingIdleTime, l2l2SocketConnectCount,
                                                                     l2l2PingInterval, l2l2PingProbes,
                                                                     l2l2SocketConnectTimeout);
-    this.clientReconnectWindow = config.dsoL2Config().getDso().getClientReconnectWindow();
+    this.clientReconnectWindow = config.dsoL2Config().clientReconnectWindow();
     this.electionTime = config.getActiveServerGroupForThisL2().getHaHolder().getHa().getNetworkedActivePassive()
         .getElectionTime();
     this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);

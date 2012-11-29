@@ -22,7 +22,6 @@ import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.DsoServerData;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
@@ -63,17 +62,17 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    Assert.assertEquals(9510, server.getDsoPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
+    Assert.assertEquals(9510, server.getTsaPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaPort().getBind());
 
-    int tempGroupPort = 9510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = 9510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = 9510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = 9510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
@@ -101,19 +100,19 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
+    int tsaPort = 8513;
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaPort().getBind());
 
-    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = tsaPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
@@ -141,20 +140,20 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
-    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = tsaPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
@@ -184,14 +183,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     int jmxPort = 9513;
     String jmxBind = "4.3.2.1";
@@ -225,14 +224,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     int jmxPort = 9513;
     String jmxBind = "4.3.2.1";
@@ -253,8 +252,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(bind, server.getBind());
     Assert.assertEquals(name, server.getName());
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
@@ -360,11 +359,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertFalse(server.getDso().getPersistence().getRestartable().getEnabled());
-    Assert.assertEquals(120, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(3600, server.getDso().getGarbageCollection().getInterval());
+    Assert.assertFalse(server.getPersistence().getRestartable().getEnabled());
+    Assert.assertEquals(120, server.getClientReconnectWindow());
+    Assert.assertEquals(true, server.getGarbageCollection().getEnabled());
+    Assert.assertEquals(false, server.getGarbageCollection().getVerbose());
+    Assert.assertEquals(3600, server.getGarbageCollection().getInterval());
   }
 
   public void testDefaultPersistence() throws IOException, ConfigurationSetupException {
@@ -379,10 +378,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
-    Assert.assertTrue(server.isSetDso());
-    DsoServerData dsoServerData = server.getDso();
-    Assert.assertTrue(dsoServerData.isSetPersistence());
-    Persistence persistence = dsoServerData.getPersistence();
+    Assert.assertTrue(server.isSetPersistence());
+    Persistence persistence = server.getPersistence();
     Assert.assertFalse(persistence.isSetOffheap());
     Assert.assertFalse(persistence.getRestartable().getEnabled());
   }
@@ -403,12 +400,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
-
-    Assert.assertFalse(server.getDso().getPersistence().isSetOffheap());
+    Assert.assertEquals(9876, server.getClientReconnectWindow());
+    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
+    Assert.assertFalse(server.getPersistence().isSetOffheap());
   }
 
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
@@ -429,14 +425,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
+    Assert.assertEquals(9876, server.getClientReconnectWindow());
+    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
 
-    Assert.assertTrue(server.getDso().getPersistence().isSetOffheap());
-    Assert.assertEquals(true, server.getDso().getPersistence().getOffheap().getEnabled());
-    Assert.assertEquals("5628m", server.getDso().getPersistence().getOffheap().getMaxDataSize());
+    Assert.assertTrue(server.getPersistence().isSetOffheap());
+    Assert.assertEquals(true, server.getPersistence().getOffheap().getEnabled());
+    Assert.assertEquals("5628m", server.getPersistence().getOffheap().getMaxDataSize());
   }
 
   public void testOffHeap2() throws IOException {
@@ -476,11 +472,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
-    Assert.assertTrue(server.getDso().getPersistence().getRestartable().getEnabled());
+    Assert.assertEquals(9876, server.getClientReconnectWindow());
+    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
+    Assert.assertTrue(server.getPersistence().getRestartable().getEnabled());
   }
 
   public void testMirrorGroupDefaults() throws IOException, ConfigurationSetupException {

@@ -341,7 +341,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     // One by one add all the servers of a group and then add the group
     for (int i = 0; i < grpData.length; i++) {
       for (int j = 0; j < grpData[i].getServerCount(); j++)
-        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j],
+        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getTsaPorts()[j], grpData[i].getJmxPorts()[j],
                             false);
 
       addServerGroupToL1Config(i, grpData[i].getGroupName(), grpData[i].getServerNames());
@@ -385,11 +385,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   // This is needed for add-new-stripe test.
   // Allowing a new stripe be added to existing L1 config. Refer DEV-3989.
-  public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] dsoPorts, int[] jmxPorts)
+  public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] tsaPorts, int[] jmxPorts)
       throws ConfigurationSetupException, XmlException {
 
     for (int i = 0; i < name.length; i++) {
-      addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
+      addServerToL1Config(name[i], tsaPorts[i], jmxPorts[i], false);
     }
 
     addServerGroupToL1Config(gn, groupName, name);
@@ -406,18 +406,18 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     if (isConfigDone) throw new AssertionError("Config factory not used properly. Servers were added more than once.");
   }
 
-  public void addServerToL1Config(String bind, int dsoPort, int jmxPort) {
+  public void addServerToL1Config(String bind, int tsaPort, int jmxPort) {
     assertIfCalledBefore();
-    Assert.assertTrue(dsoPort >= 0);
+    Assert.assertTrue(tsaPort >= 0);
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServersIfNeeded(l2s);
     l2s.setServerArray(((Servers) this.sampleL2Manager.serversBeanRepository().bean()).getServerArray());
-    l2s.getServerArray(0).getDsoPort().setIntValue(dsoPort);
+    l2s.getServerArray(0).getTsaPort().setIntValue(tsaPort);
     if (jmxPort > 0) l2s.getServerArray(0).getJmxPort().setIntValue(jmxPort);
 
     if (bind != null) {
       l2s.getServerArray(0).setBind(bind);
-      l2s.getServerArray(0).getDsoPort().setBind(bind);
+      l2s.getServerArray(0).getTsaPort().setBind(bind);
       l2s.getServerArray(0).getJmxPort().setBind(bind);
     }
     isConfigDone = true;
@@ -429,14 +429,14 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     tcProps.setValue(propertyValue);
   }
 
-  private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {
-    Assert.assertTrue(dsoPort >= 0);
+  private void addServerToL1Config(String name, int tsaPort, int jmxPort, boolean cleanGroupsBeanSet) {
+    Assert.assertTrue(tsaPort >= 0);
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServersIfNeeded(l2s);
     Server server = l2s.addNewServer();
     server.setName(name);
     server.setHost("%i");
-    server.addNewDsoPort().setIntValue(dsoPort);
+    server.addNewTsaPort().setIntValue(tsaPort);
     server.addNewJmxPort().setIntValue(jmxPort);
 
     if (cleanGroupsBeanSet) cleanBeanSetServerGroupsIfNeeded(l2s);
@@ -677,7 +677,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       if (hostname == null) hostname = this.sampleL2DSO.serverName();
       Assert.assertNotBlank(hostname);
 
-      l2sSpec.append(hostname + ":" + this.sampleL2DSO.dsoPort().getIntValue());
+      l2sSpec.append(hostname + ":" + this.sampleL2DSO.tsaPort().getIntValue());
 
       System.setProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
     }

@@ -667,9 +667,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
-    final int serverPort = l2DSOConfig.dsoPort().getIntValue();
+    final int serverPort = l2DSOConfig.tsaPort().getIntValue();
 
-    final String dsoBind = l2DSOConfig.dsoPort().getBind();
+    final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(sessionManager,
                                                                 new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, this.httpSink);
@@ -1254,7 +1254,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.host();
     }
-    final Node node = new Node(host, l2DSOConfig.dsoPort().getIntValue());
+    final Node node = new Node(host, l2DSOConfig.tsaPort().getIntValue());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
@@ -1330,7 +1330,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
    */
   public int getListenPort() {
     final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.dsoPort().getIntValue();
+    final int configValue = l2DSOConfig.tsaPort().getIntValue();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {

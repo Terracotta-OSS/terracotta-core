@@ -11,7 +11,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.RuntimeLogger;
 import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.Map;
@@ -22,11 +21,10 @@ public class StandardClientFactory extends AbstractClientFactory {
   public DistributedObjectClient createClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                               final ClassProvider classProvider,
                                               final PreparedComponentsFromL2Connection connectionComponents,
-                                              final Manager manager,
-                                              final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                              final Manager manager, final DsoClusterInternal dsoCluster,
                                               final ClientMode clientMode, final TCSecurityManager securityManager) {
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
-                                       runtimeLogger, clientMode, securityManager);
+                                       clientMode, securityManager);
   }
 
   @Override

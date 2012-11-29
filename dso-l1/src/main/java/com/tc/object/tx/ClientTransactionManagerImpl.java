@@ -28,7 +28,6 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
@@ -79,8 +78,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ClientTransactionFactory txFactory, final ClientLockManager lockManager,
-                                      final RemoteTransactionManager remoteTxManager,
-                                      final RuntimeLogger runtimeLogger, final SampledCounter txCounter,
+                                      final RemoteTransactionManager remoteTxManager, final SampledCounter txCounter,
                                       TCObjectSelfStore store) {
     this.cidProvider = cidProvider;
     this.txFactory = txFactory;
@@ -93,6 +91,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     this.tcObjectSelfStore = store;
   }
 
+  @Override
   public void begin(final LockID lock, final LockLevel lockLevel) {
     logBegin0(lock, lockLevel);
 
@@ -135,6 +134,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void notify(final Notify notify) throws UnlockedSharedObjectException {
     final ClientTransaction currentTxn = getTransactionOrNull();
 
@@ -212,6 +212,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     return tx;
   }
 
+  @Override
   public void checkWriteAccess(final Object context) {
     if (isTransactionLoggingDisabled()) { return; }
 
@@ -232,6 +233,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
    * weird situations where reentrantLock is mixed with synchronized block will the TransactionContext to be removed be
    * found otherwise.
    */
+  @Override
   public void commit(final LockID lock, final LockLevel level) throws UnlockedSharedObjectException {
     logCommit0();
     if (isTransactionLoggingDisabled() || this.objectManager.isCreationInProgress()) { return; }
@@ -272,6 +274,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     return ttc.peekContext();
   }
 
+  @Override
   public boolean isLockOnTopStack(final LockID lock) {
     final TransactionContext tc = peekContext();
     if (tc == null) { return false; }
@@ -364,14 +367,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void receivedAcknowledgement(final SessionID sessionID, final TransactionID transactionID, final NodeID nodeID) {
     this.remoteTxManager.receivedAcknowledgement(sessionID, transactionID, nodeID);
   }
 
+  @Override
   public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {
     this.remoteTxManager.receivedBatchAcknowledgement(batchID, nodeID);
   }
 
+  @Override
   public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges, final Map newRoots) {
     try {
       disableTransactionLogging();
@@ -381,6 +387,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void literalValueChanged(final TCObject source, final Object newValue, final Object oldValue) {
     if (isTransactionLoggingDisabled()) { return; }
 
@@ -405,6 +412,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   }
 
+  @Override
   public void fieldChanged(final TCObject source, final String classname, final String fieldname,
                            final Object newValue, final int index) {
     if (isTransactionLoggingDisabled()) { return; }
@@ -446,6 +454,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void arrayChanged(final TCObject source, final int startPos, final Object array, final int length) {
     if (isTransactionLoggingDisabled()) { return; }
     try {
@@ -496,6 +505,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
     if (isTransactionLoggingDisabled()) { return; }
 
@@ -620,18 +630,22 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     getThreadTransactionContext().setCurrentTransaction(tx);
   }
 
+  @Override
   public void createObject(final TCObject source) {
     getTransaction().createObject(source);
   }
 
+  @Override
   public void createRoot(final String name, final ObjectID rootID) {
     getTransaction().createRoot(name, rootID);
   }
 
+  @Override
   public ClientTransaction getCurrentTransaction() {
     return getTransactionOrNull();
   }
 
+  @Override
   public void addReference(final TCObject tco) {
     final ClientTransaction txn = getTransactionOrNull();
     if (txn != null) {
@@ -639,10 +653,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public ClientIDProvider getClientIDProvider() {
     return this.cidProvider;
   }
 
+  @Override
   public void disableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     if (txnStack == null) {
@@ -652,6 +668,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     txnStack.increment();
   }
 
+  @Override
   public void enableTransactionLogging() {
     final ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     Assert.assertNotNull(txnStack);
@@ -660,11 +677,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     if (size < 0) { throw new AssertionError("size=" + size); }
   }
 
+  @Override
   public boolean isTransactionLoggingDisabled() {
     final Object txnStack = this.txnLogging.get();
     return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
   }
 
+  @Override
   public boolean isObjectCreationInProgress() {
     return this.objectManager.isCreationInProgress();
   }
@@ -685,15 +704,18 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  @Override
   public void addDmiDescriptor(final DmiDescriptor dd) {
     getTransaction().addDmiDescriptor(dd);
   }
 
+  @Override
   public void addMetaDataDescriptor(final TCObject tco, final MetaDataDescriptorInternal md) {
     md.setObjectID(tco.getObjectID());
     getTransaction().addMetaDataDescriptor(tco, md);
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(getClass().getName());
     return out;
@@ -707,6 +729,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                + "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:"
                                                + "\n" + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
 
+  @Override
   public void waitForAllCurrentTransactionsToComplete() {
     this.remoteTxManager.waitForAllCurrentTransactionsToComplete();
   }

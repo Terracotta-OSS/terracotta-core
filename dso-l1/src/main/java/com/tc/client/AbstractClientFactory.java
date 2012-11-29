@@ -11,7 +11,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.factory.AbstractFactory;
 import com.tcclient.cluster.DsoClusterInternal;
 
@@ -28,8 +27,7 @@ public abstract class AbstractClientFactory extends AbstractFactory {
   public abstract DistributedObjectClient createClient(DSOClientConfigHelper config, TCThreadGroup threadGroup,
                                                        ClassProvider classProvider,
                                                        PreparedComponentsFromL2Connection connectionComponents,
-                                                       Manager manager,
-                                                       DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
+                                                       Manager manager, DsoClusterInternal dsoCluster,
                                                        ClientMode clientMode, TCSecurityManager securityManager);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);

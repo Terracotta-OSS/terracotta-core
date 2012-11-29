@@ -5,22 +5,22 @@
 package com.tc.object.tx;
 
 import com.tc.object.locks.LockID;
-import com.tc.object.logging.RuntimeLogger;
 
 /**
  * Creates ClientTransactions
  */
 public class ClientTransactionFactoryImpl implements ClientTransactionFactory {
-  private final RuntimeLogger runtimeLogger;
 
-  public ClientTransactionFactoryImpl(RuntimeLogger runtimeLogger) {
-    this.runtimeLogger = runtimeLogger;
+  public ClientTransactionFactoryImpl() {
+    super();
   }
 
+  @Override
   public ClientTransaction newInstance() {
-    return new ClientTransactionImpl(runtimeLogger);
+    return new ClientTransactionImpl();
   }
 
+  @Override
   public ClientTransaction newNullInstance(final LockID id, final TxnType type) {
     ClientTransaction tc = new NullClientTransaction();
     tc.setTransactionContext(new TransactionContextImpl(id, type, type));

@@ -188,7 +188,7 @@ public class HaConfigImpl implements HaConfig {
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2.host();
     }
-    return new Node(host, l2.dsoPort().getIntValue(), l2.l2GroupPort().getIntValue());
+    return new Node(host, l2.tsaPort().getIntValue(), l2.l2GroupPort().getIntValue());
   }
 
   public boolean isActiveCoordinatorGroup() {

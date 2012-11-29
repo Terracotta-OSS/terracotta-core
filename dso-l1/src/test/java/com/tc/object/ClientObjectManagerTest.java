@@ -27,8 +27,6 @@ import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.TestLocksRecallService;
-import com.tc.object.logging.NullRuntimeLogger;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.MockTransactionManager;
@@ -49,7 +47,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   private TestRemoteObjectManager remoteObjectManager;
   private DSOClientConfigHelper   clientConfiguration;
   private ObjectIDProvider        idProvider;
-  private RuntimeLogger           runtimeLogger;
   private ClassProvider           classProvider;
   private TCClassFactory          classFactory;
   private TestObjectFactory       objectFactory;
@@ -67,7 +64,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.clientConfiguration = configHelper();
     this.classFactory = new TestClassFactory();
     this.objectFactory = new TestObjectFactory();
-    this.runtimeLogger = new NullRuntimeLogger();
     this.tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(), new MockSink(),
                                                                   new MockSink(), new MockSink());
 
@@ -79,7 +75,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.objectFactory.tcObject = this.tcObject;
 
     this.mgr = new ClientObjectManagerImpl(this.remoteObjectManager, this.clientConfiguration, this.idProvider,
-                                           this.runtimeLogger, new ClientIDProviderImpl(new TestChannelIDProvider()),
+                                           new ClientIDProviderImpl(new TestChannelIDProvider()),
                                            this.classProvider, this.classFactory, this.objectFactory,
                                            new PortabilityImpl(this.clientConfiguration), null, null,
                                            this.tcObjectSelfStore);
@@ -183,7 +179,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                                                                     this.remoteObjectManager,
                                                                                     this.clientConfiguration,
                                                                                     this.idProvider,
-                                                                                    this.runtimeLogger,
                                                                                     new ClientIDProviderImpl(
                                                                                                              new TestChannelIDProvider()),
                                                                                     this.classProvider,

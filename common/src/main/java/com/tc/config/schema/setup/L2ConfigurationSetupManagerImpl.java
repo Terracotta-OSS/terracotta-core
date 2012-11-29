@@ -129,7 +129,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
                                                                          new ChildBeanFetcher() {
-                                                                           public XmlObject getChild(XmlObject parent) {
+                                                                           @Override
+                                                                          public XmlObject getChild(XmlObject parent) {
                                                                              return ((Servers) serversBeanRepository()
                                                                                  .bean()).getMirrorGroups();
                                                                            }
@@ -164,7 +165,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       final Server s = server;
       ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Security.class,
                                                                    new ChildBeanFetcher() {
-                                                                     public XmlObject getChild(XmlObject parent) {
+                                                                     @Override
+                                                                    public XmlObject getChild(XmlObject parent) {
                                                                        return s.getSecurity();
                                                                      }
                                                                    });
@@ -186,6 +188,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     validateSecurityConfiguration();
   }
 
+  @Override
   public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
                                                   TerracottaOperatorEventLogger opEventLogger)
       throws ConfigurationSetupException {
@@ -204,7 +207,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
                                                                          new ChildBeanFetcher() {
-                                                                           public XmlObject getChild(XmlObject parent) {
+                                                                           @Override
+                                                                          public XmlObject getChild(XmlObject parent) {
                                                                              return ((Servers) serversBeanRepository()
                                                                                  .bean()).getMirrorGroups();
                                                                            }
@@ -219,14 +223,17 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }
 
+  @Override
   public boolean isSecure() {
     return secure;
   }
 
+  @Override
   public String getL2Identifier() {
     return this.thisL2Identifier;
   }
 
+  @Override
   public SecurityConfig getSecurity() {
     return this.securityConfig;
   }
@@ -263,7 +270,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
     String hostname = server.getHost();
-    if (server.isSetDsoPort()) verifyPortUsed(serverPorts, hostname, server.getDsoPort().getIntValue());
+    if (server.isSetTsaPort()) verifyPortUsed(serverPorts, hostname, server.getTsaPort().getIntValue());
     if (server.isSetJmxPort()) verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
     if (server.isSetL2GroupPort()) verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
   }
@@ -339,7 +346,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
                                                                  new ChildBeanFetcher() {
-                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                   @Override
+                                                                  public XmlObject getChild(XmlObject parent) {
                                                                      UpdateCheck updateCheck = ((Servers) parent)
                                                                          .getUpdateCheck();
 
@@ -437,6 +445,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
 
     private class BeanFetcher implements ChildBeanFetcher {
+      @Override
       public XmlObject getChild(XmlObject parent) {
         try {
           return findMyL2Bean();
@@ -498,6 +507,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return localAddresses;
   }
 
+  @Override
   public String describeSources() {
     return this.configurationCreator().describeSources();
   }
@@ -661,38 +671,47 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
   }
 
+  @Override
   public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).commonL2Config();
   }
 
+  @Override
   public CommonL2Config commonl2Config() {
     return this.myConfigData.commonL2Config();
   }
 
+  @Override
   public SystemConfig systemConfig() {
     return this.systemConfig;
   }
 
+  @Override
   public L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).dsoL2Config();
   }
 
+  @Override
   public L2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
   }
 
+  @Override
   public HaConfigSchema haConfig() {
     return haConfig;
   }
 
+  @Override
   public UpdateCheckConfig updateCheckConfig() {
     return updateCheckConfig;
   }
 
+  @Override
   public ActiveServerGroupsConfig activeServerGroupsConfig() {
     return activeServerGroupsConfig;
   }
 
+  @Override
   public String[] allCurrentlyKnownServers() {
     Servers serversBean = (Servers) serversBeanRepository().bean();
     Server[] l2s = serversBean == null ? null : serversBean.getServerArray();
@@ -705,6 +724,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
   }
 
+  @Override
   public InputStream rawConfigFile() {
     String text = configurationCreator().rawConfigText();
     try {
@@ -714,6 +734,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
   }
 
+  @Override
   public InputStream effectiveConfigFile() {
     // This MUST piece together the configuration from our currently-active
     // bean repositories. If we just read the
@@ -766,6 +787,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     tcProps.overwriteTcPropertiesFromConfig(propMap);
   }
 
+  @Override
   public ActiveServerGroupConfig getActiveServerGroupForThisL2() {
     return this.activeServerGroupsConfig.getActiveServerGroupForL2(this.thisL2Identifier);
   }

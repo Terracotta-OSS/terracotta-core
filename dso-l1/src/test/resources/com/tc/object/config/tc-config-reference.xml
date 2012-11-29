@@ -36,7 +36,7 @@
        it determines the servers configuration model and, if production, ensures
        that its configuration source was that server. A client can specify that its
        configuration come from server by setting the 'tc.config' system propery as
-       -Dtc.config=serverHost:dsoPort.
+       -Dtc.config=serverHost:tsaPort.
 
        Default: 'development'. -->
     <configuration-model>development</configuration-model>
@@ -64,7 +64,7 @@
 
     <!-- The host and symbolic name of the server; host defaults to the server name
     	if it is provided in the config else it defaults to "%i" (the machine's
-       IP address) and name defaults to "host:dso-port".  Expansion parameters may be
+       IP address) and name defaults to "host:tsa-port".  Expansion parameters may be
        used in both attributes. -->
     <server host="my.host.name" name="My Server Name">
 
@@ -116,7 +116,7 @@
 
          Default: 9510
       -->
-      <dso-port>9510</dso-port>
+      <tsa-port>9510</tsa-port>
 
       <!-- On what port should the server listen for connections from the
          Terracotta administration console? This can be any port you
@@ -137,59 +137,56 @@
       -->
       <l2-group-port>9530</l2-group-port>
 
-      <!-- Configuration data for DSO that's specific to the DSO server. -->
-      <dso>
-
-        <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
-             connected clients to reconnect?  After this period, clients will
-             not be allowed to reconnect.
-
-             Default: 120 seconds
-        --> 
-        <client-reconnect-window>120</client-reconnect-window>
-
-        <!-- Information about how DSO should persist data to disk. -->
-        <persistence>
-          <!-- Configure whether or not the L2 should be restartable.
-
+      <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
+           connected clients to reconnect?  After this period, clients will
+           not be allowed to reconnect.
+           
+           Default: 120 seconds
+      --> 
+      <client-reconnect-window>120</client-reconnect-window>
+      
+      <!-- Information about how DSO should persist data to disk. -->
+      <persistence>
+        <!-- Configure whether or not the L2 should be restartable.
+             
              enabled=true, the L2 will persist its state to disk.
-
+             
              enabled=false, the L2 will not persist state to disk.
-
+             
              Note: the L2 will keep everything in memory regardless of the restartable setting.
 
              Default: enabled=false
+        -->
+        <restartable enabled="false"/>
+        
+        <!-- Information about how servers use off-heap memory. -->
+        <offheap>
+          
+          <!-- If 'true', active servers spill cached data to off-heap memory
+               before persisting it to disk. Data that is cached  off-heap 
+               provides faster access than data stored on disk.
+               
+               Default: false
           -->
-          <restartable enabled="false"/>
+          <enabled>false</enabled>
           
-          <!-- Information about how servers use off-heap memory. -->
-          <offheap>
-          
-           	<!-- If 'true', active servers spill cached data to off-heap memory
-           	     before persisting it to disk. Data that is cached  off-heap 
-           	     provides faster access than data stored on disk.
-           	 
-          	     Default: false
-          	-->
-          	<enabled>false</enabled>
-          	
-          	<!-- Sets the maximum amount of off-heap memory that a server
-          	     can use. Values are given in k (Kilobytes), m (Megabytes)
-          	     or g (Gigabytes). 
-          	
-          	     Default: none
-          	-->
-          	<maxDataSize>5g</maxDataSize>
-          </offheap>
-          
-        </persistence>
-
-        <!-- Information about how DSO should perform distributed
+          <!-- Sets the maximum amount of off-heap memory that a server
+               can use. Values are given in k (Kilobytes), m (Megabytes)
+               or g (Gigabytes). 
+               
+               Default: none
+          -->
+          <maxDataSize>5g</maxDataSize>
+        </offheap>
+        
+      </persistence>
+      
+      <!-- Information about how DSO should perform distributed
            garbage collection on the data underneath your
            application's roots. -->
-        <garbage-collection>
-
-          <!-- If 'true', distributed garbage collection is enabled.
+      <garbage-collection>
+        
+        <!-- If 'true', distributed garbage collection is enabled.
              You should only set this to 'false' if you are
              absolutely certain that none of the data underneath
              your roots will ever become garbage; certain 
@@ -202,27 +199,25 @@
              with the 'run-dgc' script
 
              Default: true
-          -->
-          <enabled>true</enabled>
-
-          <!-- If 'true', the DSO server will emit extra information 
+        -->
+        <enabled>true</enabled>
+        
+        <!-- If 'true', the DSO server will emit extra information 
              to the log file when it performs distributed garbage
              collection; this can be useful when trying to
              performance-tune your application.
-
+             
              Default: false
-          -->
-          <verbose>false</verbose>
-
-          <!-- How often should the DSO server perform distributed 
+        -->
+        <verbose>false</verbose>
+        
+        <!-- How often should the DSO server perform distributed 
              garbage collection, in seconds?
-
+             
              Default: 3600 (60 minutes)
-          -->
-          <interval>3600</interval>
-        </garbage-collection>
-
-      </dso>
+        -->
+        <interval>3600</interval>
+      </garbage-collection>
     </server>
 
     <!-- This additional <server> element is just to illustrate 
@@ -232,19 +227,17 @@
       <data>/usr/local/tc/data</data>
       <logs>/usr/local/tc/logs</logs>
 
-      <dso-port>8510</dso-port>
+      <tsa-port>8510</tsa-port>
 
-      <dso>
-        <persistence>
-          <restartable enabled="false"/>
-        </persistence>
-
-        <garbage-collection>
-          <enabled>true</enabled>
-          <verbose>true</verbose>
-          <interval>3600</interval>
-        </garbage-collection>
-      </dso>
+      <persistence>
+        <restartable enabled="false"/>
+      </persistence>
+      
+      <garbage-collection>
+        <enabled>true</enabled>
+        <verbose>true</verbose>
+        <interval>3600</interval>
+      </garbage-collection>
     </server>
     
     <!-- This section lets you divide your servers in groups. Each 
@@ -359,44 +352,6 @@
   -->
   <clients>
 
-    <!--
-        This section lists any modules (currently pre-defined configurations)
-        for products you will be using.  These do not include the products themselves
-        (you must provide that) but rather configuration information for Terracotta
-        that describes what should be clustered.  Please check the 'modules'
-        directory in the Terracotta installation directory for a list of
-        supplied modules.
-
-        The <modules> section is optional.
-    -->
-    <modules>
-
-      <!--
-        The 'modules' directory in the Terracotta installation directory is implied
-        as the first reposository, however if you have other places to look for modules
-        you can optionally specify as many of them as you wish here; they can be any
-        valid URL.  Repositories are searched in the order defined here (after the
-        implicit repository) for modules by appending
-        "/<module-name>-<module-version>.jar" to each URL.  The first match succeeds.
-
-        The <repository> element(s) is optional.
-      -->
-      <repository>file:///my/modules/directory</repository>
-      <repository>http://webserver/my/modules</repository>
-
-      <!--
-        If you choose to use a module, define it here.  Distributed modules have the
-        file name "name-version.jar" where "name" and "version" are the <module>
-        element attributes.  You may define 0 or more modules to be used, they are
-        loaded in the order defined here.
-
-        The <module> element(s) is optional.
-      -->
-      <module name="tim-ehcache-1.3" version="1.0.0"/>
-      <module name="tim-hibernate-3.2.5" version="1.0.0"/>
-
-    </modules>
-
     <!-- Where should the client write its log files?
 
        This value undergoes parameter substitution before being used;
@@ -417,546 +372,6 @@
     -->
     <logs>logs-%i</logs>
 
-    <!-- This section contains data for Terracotta DSO that's specific to
-       the DSO client only. -->
-    <dso>
-
-      <!-- This section allows you to declare object fault count, which is 
-         the max number of reachable objects that are prefetched from DSO server 
-         to DSO client when an object is faulted from DSO server to DSO client. 
-         It has a default value of 500. 
-      -->
-      <fault-count>500</fault-count>
-
-      <!-- This section controls output from the DSO client that can help you
-         debug your program. -->
-      <debugging>
-
-        <!-- This section controls output from the DSO client related to
-           operations occurring at runtime; each individual element controls a
-           different kind of output. -->
-
-        <runtime-logging>
-          <non-portable-dump>true</non-portable-dump>
-          <lock-debug>false</lock-debug>
-          <wait-notify-debug>false</wait-notify-debug>
-          <distributed-method-debug>false</distributed-method-debug>
-          <new-object-debug>false</new-object-debug>
-        </runtime-logging>
-
-        <!-- This section controls the exact format of the output from
-           any options enabled under 'runtime-logging', above.
-           Each individual element controls a different kind of output. -->
-
-        <runtime-output-options>
-          <auto-lock-details>false</auto-lock-details>
-          <caller>false</caller>
-          <full-stack>false</full-stack>
-        </runtime-output-options>
-      </debugging>
-    </dso>
   </clients>
 
-  <!-- This section contains items that affect the core behavior of Terracotta
-     as it relates to your application. This data must be kept consistent
-     across clients and servers in order for Terracotta to function properly, and
-     so the system will enforce this; see the comments for the
-     'configuration-model' switch, above, for more details. -->
-  <application>
-
-    <!-- This section controls how Terracotta DSO behaves in your application. -->
-    <dso>
-
-      <!-- This section controls which classes are instrumented by
-         Terracotta DSO. In order for an object to be shared among
-         JVMs by DSO, or contain a root, its class must be instrumented.
-
-         You can define 'include' and 'exclude' patterns here; The patterns
-         are evaluated bottom up according to the order in this config file.
-         The first pattern that matches will determine whether the class will
-         or will not be instrumented. If no patterns match, the class will not
-         be instrumented
-
-         Patterns here are AspectWerkz-compatible class specification
-         expressions.
-
-         Default: none; no classes are instrumented. Thus for proper
-         DSO functionality, you must specify at least one 'include'
-         section here.
-      -->
-      <instrumented-classes>
-        <!-- This includes a certain set of classes for instrumentation. -->
-        <include>
-          <!-- The class(es) to include, as an AspectWerkz-compatible
-             class specification expression. (REQUIRED) -->
-          <class-expression>com.mycompany.pkga.*</class-expression>
-
-          <!-- If set to 'true', then any fields in the given class(es)
-             that have the Java 'transient' modifier are not shared
-             across JVMs. If set to 'false', they are.
-
-             Default: false -->
-          <honor-transient>true</honor-transient>
-          <on-load>
-            <!-- One of either <execute> or <method> is required within an <on-load> element -->
-
-            <!-- This (zero argument) method will be called on instances of the specified class
-               on load of the object. Used to intialize transient fields. You are free to use
-               whatever method name you please. -->
-            <!-- <method>initTransients</method> -->
-
-            <!-- This bean shell script is called right after an object is loaded -->
-            <execute><![CDATA[self.myTransientField = new ArrayList();]]></execute>
-          </on-load>  
-        </include>
-
-        <!-- The class(es) to exclude, as an AspectWerkz-compatible
-           class specification expression. -->
-        <exclude>com.mycompany.pkga.subpkg.*</exclude>
-
-        <include>
-          <class-expression>com.mycompany.pkgb.*</class-expression>
-        </include>
-      </instrumented-classes>
-
-      <!-- This section lets you specify certain fields as 'transient' to
-         Terracotta DSO. Note that this does not cause these fields
-         to behave as 'transient' for Java serialization; rather, it
-         simply means that the contents of these fields are not shared
-         across JVMs by DSO.
-
-         The expressions in 'field-name' must be fully qualified
-         field names (expressions are not permitted)
-
-         Default: no extra fields are specified as 'transient' -->
-      <transient-fields>
-        <field-name>com.mycompany.pkga.MyClassOne.fieldA</field-name>
-        <field-name>com.mycompany.pkgb.subpkg2.fieldB</field-name>
-      </transient-fields>
-
-      <!-- This section lets you specify locks to Terracotta DSO. Locks
-         are critical to correct functioning of DSO.
-
-         Two types of lock elements may be included here, in any order:
-         'autolock' and 'named-lock'. 
-
-         Autolocks extend normal Java 'synchronized' blocks and methods
-         across the entire cluster just as you'd expect, by locking on
-         the object you're synchronizing upon; Applying autolocks to
-         methods that contain no synchronization (method or block)
-         is ineffective. If the original definition of the method is not
-         synchronized, one could enable the "auto-synchronized" attribute.
-         When set to true, this attribute will add a synchronized modifier
-         to the method signature before autolocking on the method.
-         By default, "auto-synchronized" attribute is set to false.
-
-         Named locks are completely independent of Java synchronization.
-         Named locks create a lock with the specified name. Named locks
-         are always acquired when the methods to which they are applied
-         are invoked irrespective of whether the instance is shared or
-         not (additionally, the instance does not qualify the lock in
-         any way, named locks cause cluster-wide excecution serialization
-         to methods to which they applied).
-      -->
-      <locks>
-        <!-- Specifies an autolock (distributed synchronization). -->
-        <autolock auto-synchronized="false">
-          <!-- The expression of method(s) to lock. This is an
-             AspectWerkz-compatible method specification expression.
-             (REQUIRED) -->
-          <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
-
-          <!-- The level of the lock: 'write', 'synchronous-write', 'read', or
-	       'concurrent'. 
-
-             Write locks are used when the method(s) being locked
-             modify the data being protected. Only one thread in one
-             JVM, cluster-wide, may be inside the same write lock 
-             at once. Further, no threads may be inside a read lock
-             while one thread holds a write lock of the same identity.
-	     
-	     Synchronous-write locks add a further guarantee over write locks.
-	     Where a write lock guarantees that all changes made in the scope of
-	     that lock will be applied prior to a thread acquiring that lock,
-	     synchronous-write locks guarantee that the thread holding the lock
-	     will not release the lock until the changes made under that lock
-	     are fully ACKed by the server.
-
-             Read locks may be used only when the method(s) being
-             locked do not actually modify the data in question;
-             multiple threads in multiple JVMs may be inside the 
-             same read lock at the same time. However, if a thread 
-             is locked upon the same object but using a write lock,
-             then any threads that require a read lock must wait
-             until the write locks has been released.
-
-             Concurrent locks are a looser form of write lock, and
-             should be used with caution. Multiple threads can be
-             inside a concurrent lock at the same time, and can all
-             write to the data; This can easily lead to nondeterministic
-             program behavior and thus is generally used only with
-             considerable caution.
-          -->
-          <lock-level>write</lock-level>
-        </autolock>
-
-        <!-- Specifies a named lock. If you create multiple named-lock
-           sections in this file that share the same name, they are
-           the same lock, and will behave as such. -->
-        <named-lock>
-          <!-- The name of the lock. (REQUIRED) -->
-          <lock-name>lockOne</lock-name>
-
-          <!-- The expression of method(s) to lock. This is an
-             AspectWerkz-compatible method specification expression.
-             (REQUIRED) -->
-          <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
-
-          <!-- The level of the lock: 'read', 'write', or 'concurrent'.
-             See above for more details.
-          -->
-          <lock-level>read</lock-level>
-        </named-lock>
-      </locks>
-
-      <!-- This section specifies the roots for Terracotta DSO. Roots
-         are the 'share points' in DSO; they specify fields in a class,
-         such that DSO will make sure every instance of every class
-         in every VM always sees the same object in that field (and
-         in all fields of that object, and in all fields of those
-         objects, and so on; the transitive closure of this data is
-         shared, modulo transients). 
-
-         Roots are specified using the fully-qualified name of a
-         field. They can optionally be given a name.
-      -->
-      <roots>
-        <root>
-          <!-- One of either field-name or field-expression is REQUIRED,
-               but not BOTH -->
-
-          <!-- The name of the field to make a root. This must be
-             the fully-qualified name of a field. -->
-          <field-name>com.mycompany.pkgc.AnotherClass.field1</field-name>
-
-          <!-- A field expression to select fields to be roots. This must be
-               a valid AspectWerkz-compatible field expresion.-->
-          <!-- <field-expression>@com.example.MyRootAnnotation * *</field-expression> -->
-
-          <!-- The name for this root. This is optional, but can
-             help when debugging your system, or to declare that
-             two (or more) unique root field names should use the
-             same root instance. A common root name applied to more
-             than one field name implies that the same root object
-             will be used in both fields -->
-          <root-name>rootOne</root-name>
-        </root>
-
-        <root>
-          <field-name>com.mycompany.pkgc.ClassTwo.field3</field-name>
-          <root-name>rootTwo</root-name>
-        </root>
-      </roots>
-
-      <!-- This section specifies methods to invoke in a distributed 
-         fashion via Terracotta DSO. When a method matching one of the
-         patterns here is invoked on a *shared* object in one JVM,
-         Terracotta DSO will  cause it to be invoked simultaneously in
-         all JVMs throughout the Terracotta cluster. This is often used
-         for 'event listener' methods (for example, those used by Swing),
-         to make sure that all JVMs throughout the cluster are informed
-         when a particular event occurs. -->
-      <distributed-methods>
-        <!-- An AspectWerkz-compatible method specification expression
-           denoting which method(s) to distribute. -->
-        <method-expression>void com.mycompany.pkga.MyClass.somethingHappened(String, int)</method-expression>
-        <method-expression>String[] com.mycompany.pkgc.AnotherClass.eventOccurred(Boolean, Double)</method-expression>
-        <!-- An optional attribute run-on-all-nodes (default value "true") 
-           can be set to false to execute distributed only on those nodes
-           that already have a reference to the object on which the method
-           is called -->
-        <method-expression run-on-all-nodes="false">String[] com.mycompany.pkgc.SomeOtherClass.eventOccurred(Boolean, Double)</method-expression>
-
-      </distributed-methods>
-
-      <!-- The standard java runtime classes (typically anything in the
-           java.*, javax.*, sun.*, etc packages) are instrumented by
-         Terracotta DSO in a special fashion. Specifically, they are
-         instrumented and placed into a special "boot JAR", which is
-         included on the Java boot-classpath (which is, in turn,
-         a different thing from the normal Java classpath) by the
-         dso-java script.
-
-         This "boot JAR" can be rebuilt by the 'make-boot-jar' tool
-         included with the Terracotta distribution, and must be rebuilt
-         when transitioning from one vendor's JVM to another, or between
-         different releases of the JVM.
-
-         Many commonly-used classes are included by default in the
-         Terracotta boot JAR. However, if a class is not included by 
-         default in the Terracotta boot JAR, then you can place its
-         name here and specify this configuration file to the 
-         'make-boot-jar' tool; this will cause it to be included
-         when the boot JAR is rebuilt. Every class must be specified
-         individually (patterns are not supported here)
-
-         Note that Terracotta cannot guarantee that all runtime classes
-         can be safely added here, although many will work correctly.
-         If in doubt, consult Terracotta for details.
-
-         Default: no additional classes are included in the Terracotta
-         boot JAR.
-         -->
-      <additional-boot-jar-classes>
-        <include>java.awt.datatransfer.Clipboard</include>
-      </additional-boot-jar-classes>
-
-      <!-- When using Terracotta DSO within an application server, you
-         may wish to enabled DSO session management. To do so, list the 
-         context paths of the applications that should use DSO sessions.
-         For the default context path (ie. "/"), use the special value
-         'ROOT' (without the quotes)
-      -->
-      <web-applications>
-        <web-application>petstore</web-application>
-        <web-application>billing_app</web-application>
-        <web-application>ROOT</web-application>
-      </web-applications>
-
-      <!-- When enabled, the default, mutations to shared objects made
-         through reflection behave like normal shared object changes. When
-         disabled, changes made to shared objects via reflection are not
-         cluster-wide (disable only if reflection is not used to mutate
-         shared objects). -->
-      <dso-reflection-enabled>true</dso-reflection-enabled>      
-    </dso>
-
-    <!-- This section is a self-contained configuration that controls how 
-      Terracotta Spring behaves in your application. 
-    -->
-    <spring>
-
-      <!-- "jee-application" specifies the Spring application(s) that will be
-        potentially clustered/shared by Terracotta server; It is a required
-        element with minimum 1 occurence and can be repeated unbounded times;
-        Required attribute "name" is a pattern that will be matched against
-        the Spring application name; The JEE application name is in most cases
-        the name of the WAR, EAR or JAR file in which the Spring application
-        resides.
-        If you are using Spring in a stand-alone application then you can use
-        "*" as the name. The pattern matching supports wildcards of leading
-        and ending asterisk (*), which matches arbitrary number of characters;
-        Example patterns include "*foo", "foo*" and "*foo*"; "*" and "**" are
-        also legal, but NOT "fo*o"; The name of a Spring application is
-        evaluated as the web application name - more accurately the context
-        path pointing to the web application, if the Spring application was
-        deployed in a Web application; otherwise, it is evaluated to an
-        empty string. -->
-       <jee-application name="name-of-jee-application">
-
-         <!-- "fast-proxy" specifies a boolean indicator for using AspectWerkz
-           AOP Proxy as an optional performance enhancement to Spring AOP
-           ProxyFactoryBean; Default to false. -->
-        <fast-proxy>false</fast-proxy>
-
-        <!-- "session-support" specifies if HTTP session clustering should be
-          enabled for given web application. Default to false. Can be used,
-          for example, to cluster Spring WebFlow conversations. -->
-        <session-support>false</session-support>
-
-        <!-- "application-contexts" define configuration for clustering of
-          Spring-managed beans for specific Spring application context. If
-          bean clustering is not needed, element can be skipped. 
-        -->
-    <application-contexts>
-
-          <!-- Configuration for individual application context. Includes path
-            to bean definition file (e.g. applicationContext.xml), list of
-            beans and context events that should be clustered.
-            Optional; Internally, each "application-context" matches one
-            config helper instance. -->
-          <application-context>
-
-            <!-- Specifies the bean definition resource patterns; The matching
-              applys OR logic for individual path element. Required. -->
-            <paths>
-
-              <!-- Specifies a bean definition resource location pattern;
-                The pattern matching supports wildcards of leading and ending
-                asterisk (*), which is the same algorithm as of the
-                application name; Optional. -->
-              <path>*/beanfactory1.xml</path>
-              <path>*/beanfactory2.xml</path>
-            </paths>
-
-            <!-- Specifies list of clustered beans and their configuration for
-              this application context. Spring beans with the same name in
-              different contexts will be different logical beans. Required. -->
-            <beans>
-
-              <!-- Specifies a distributed bean; The bean name should be the
-                same name that the bean has in the Spring bean config file.
-                Matching has to be exact; Optional. -->
-              <bean name="clusteredBeanOne">
-
-                <!-- Specifies the names of non-distributed field references
-                  within a Spring bean instance. They are used for identifying
-                  the fields that need to maintain a local value (e.g. NOT be
-                  shared/clustered). Be aware that the hosting bean could be
-                  matched in multiple application context patterns, in which
-                  case "AND" logic will be applied; for example if the same
-                  bean is defined as shared/clustered in two different
-                  application contexts and has a field that in one place is
-                  defined as "non-distributed" but in the other place not
-                  (e.g. shared), then the field reference will be
-                  shared/clustered. -->
-                <non-distributed-field>myFieldOne</non-distributed-field>
-                <non-distributed-field>myFieldTwo</non-distributed-field>
-              </bean>
-
-              <bean name="clusteredBeanTwo"/>
-            </beans>
-
-            <!-- Specifies what event types published in this application
-              context should be distributed to other cluster nodes (but still
-              local within the same "logical" applicationcontext); Required. -->
-            <distributed-events>
-
-               <!-- Specifies the event classes, e.g. the type of the event;
-                 The pattern matching supports wildcards of leading and ending
-                 asterisk (*), which is the same as of the application name. -->
-              <distributed-event>com.mycompany.pkgb.*</distributed-event>
-            </distributed-events>
-
-          </application-context>
-        </application-contexts>
-
-        <!-- This section lets you specify locks to Terracotta DSO. Locks
-           are critical to correct functioning of DSO.
-
-           Two types of lock elements may be included here, in any order:
-           'autolock' and 'named-lock'. Autolocks extend normal Java
-           'synchronized' blocks across the entire cluster just as you'd
-           expect, by locking on the object you're synchronizing upon;
-           named locks are completely independent of Java synchronization.
-           Named locks create a lock with the name specified below; no
-           more than one thread in one VM, cluster-wide, can be inside
-           any method protected by a lock with a given name at one time.
-           This section is optional, and most of the time it does NOT present.
-        -->
-        <locks>
-          <!-- Specifies an autolock. -->
-          <autolock>
-            <!-- The expression of method(s) to lock. This is an
-               AspectWerkz-compatible method specification expression.
-               (REQUIRED) -->
-            <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
-
-          <!-- The level of the lock: 'write', 'synchronous-write', 'read', or
-	       'concurrent'. 
-
-             Write locks are used when the method(s) being locked
-             modify the data being protected. Only one thread in one
-             JVM, cluster-wide, may be inside the same write lock 
-             at once. Further, no threads may be inside a read lock
-             while one thread holds a write lock of the same identity.
-	     
-	     Synchronous-write locks add a further guarantee over write locks.
-	     Where a write lock guarantees that all changes made in the scope of
-	     that lock will be applied prior to a thread acquiring that lock,
-	     synchronous-write locks guarantee that the thread holding the lock
-	     will not release the lock until the changes made under that lock
-	     are fully ACKed by the server.
-
-             Read locks may be used only when the method(s) being
-             locked do not actually modify the data in question;
-             multiple threads in multiple JVMs may be inside the 
-             same read lock at the same time. However, if a thread 
-             is locked upon the same object but using a write lock,
-             then any threads that require a read lock must wait
-             until the write locks has been released.
-
-             Concurrent locks are a looser form of write lock, and
-             should be used with caution. Multiple threads can be
-             inside a concurrent lock at the same time, and can all
-             write to the data; This can easily lead to nondeterministic
-             program behavior and thus is generally used only with
-             considerable caution.
-          -->
-            <lock-level>write</lock-level>
-          </autolock>
-
-          <!-- Specifies a named lock. If you create multiple named-lock
-             sections in this file that share the same name, they are
-             the same lock, and will behave as such. -->
-          <named-lock>
-            <!-- The name of the lock. (REQUIRED) -->
-            <lock-name>lockOne</lock-name>
-
-            <!-- The expression of method(s) to lock. This is an
-               AspectWerkz-compatible method specification expression.
-               (REQUIRED) -->
-            <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
-
-            <!-- The level of the lock: 'read', 'write', or 'concurrent'.
-               See above for more details.
-            -->
-            <lock-level>read</lock-level>
-          </named-lock>
-        </locks>
-
-
-        <!-- This section controls which classes are instrumented by
-           Terracotta DSO. In order for an object to be shared among
-           JVMs by DSO, or contain a root, its class must be instrumented.
-
-           You can define 'include' and 'exclude' patterns here; 'exclude'
-           patterns take precedence over 'include'. In other words, for
-           a class to be instrumented, it must match at least one 'include'
-           pattern and no 'exclude' patterns.
-
-           Patterns here are AspectWerkz-compatible class specification
-           expressions.
-
-           Default: none; no classes are instrumented. Thus for proper
-           DSO functionality, you must specify at least one 'include'
-           section here.
-           This section is optional, and most of the time it does not present.
-        -->
-        <instrumented-classes>
-          <!-- This includes a certain set of classes for instrumentation. -->
-          <include>
-            <!-- The class(es) to include, as an AspectWerkz-compatible
-               class specification expression. (REQUIRED) -->
-            <class-expression>com.mycompany.pkga.*</class-expression>
-
-            <!-- If set to 'true', then any fields in the given class(es)
-               that have the Java 'transient' modifier are not shared
-               across JVMs. If set to 'false', they are.
-
-               Default: false -->
-            <honor-transient>true</honor-transient>
-            <on-load>
-              <!--This method will be called on instances of the specified class
-                  on load of the object. Used to rewire transients. -->
-              <!--<method>aMethod</method>-->
-
-                <!-- This bean shell script is called right after an object is loaded -->
-                <execute><![CDATA[self.myTransientField = new ArrayList();]]></execute>
-              </on-load>  
-          </include>
-
-          <!-- The class(es) to exclude, as an AspectWerkz-compatible
-             class specification expression. -->
-          <exclude>com.mycompany.pkga.subpkg.*</exclude>
-
-          <include>
-            <class-expression>com.mycompany.pkgb.*</class-expression>
-          </include>
-        </instrumented-classes>
-
-      </jee-application>
-    </spring>
-
-  </application>
 </tc:tc-config>

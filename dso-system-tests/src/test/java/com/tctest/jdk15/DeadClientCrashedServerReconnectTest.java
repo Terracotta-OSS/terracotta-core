@@ -18,7 +18,6 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -60,12 +59,12 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                      new RestartTestEnvironment(this.getTempDirectory(), portChooser,
                                                                                 RestartTestEnvironment.DEV_MODE),
                                                      jvmArgs);
-    int dsoPort = helper.getServerPort();
+    int tsaPort = helper.getServerPort();
     int jmxPort = helper.getAdminPort();
     ServerControl server = helper.getServerControl();
 
     ProxyConnectManager mgr = new ProxyConnectManagerImpl();
-    mgr.setDsoPort(dsoPort);
+    mgr.setTsaPort(tsaPort);
     mgr.setProxyPort(proxyPort);
     mgr.setupProxy();
 
@@ -85,7 +84,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components,
                                                                  NullManager.getInstance(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 new DsoClusterImpl());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 

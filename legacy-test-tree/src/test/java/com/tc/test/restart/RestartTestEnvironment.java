@@ -153,7 +153,7 @@ public class RestartTestEnvironment {
       l2.setSecurityAuthUrl(configFactory.getSecurityAuthUrl());
       l2.setSecurityAuthImpl(configFactory.getSecurityAuthImpl());
     }
-    l2.setDSOPort(serverPort);
+    l2.setTSAPort(serverPort);
     l2.setJMXPort(adminPort);
     l2.setL2GroupPort(groupPort);
     l2.setData(tempDirectory.getAbsolutePath());
@@ -327,67 +327,80 @@ public class RestartTestEnvironment {
 
   private final class ServerWrapper implements ServerControl {
 
+    @Override
     public void mergeSTDOUT() {
       assertServerOff();
       server.mergeSTDOUT();
     }
 
+    @Override
     public void mergeSTDERR() {
       assertServerOff();
       server.mergeSTDERR();
     }
 
+    @Override
     public void attemptForceShutdown() throws Exception {
       assertServerOn();
       server.attemptForceShutdown();
     }
 
+    @Override
     public void shutdown() throws Exception {
       assertServerOn();
       server.shutdown();
     }
 
+    @Override
     public void crash() throws Exception {
       assertServerOn();
       server.crash();
     }
 
+    @Override
     public void start() throws Exception {
       assertSetUp();
       assertServerNotNull();
       server.start();
     }
 
+    @Override
     public void startWithoutWait() throws Exception {
       assertSetUp();
       assertServerNotNull();
       server.startWithoutWait();
     }
 
+    @Override
     public boolean isRunning() {
       assertServerNotNull();
       return server.isRunning();
     }
 
+    @Override
     public void waitUntilShutdown() throws Exception {
       assertServerNotNull();
       server.waitUntilShutdown();
     }
 
-    public int getDsoPort() {
+    @Override
+    public int getTsaPort() {
       assertServerNotNull();
-      return server.getDsoPort();
+      return server.getTsaPort();
     }
 
+    @Override
     public int getAdminPort() {
       assertServerNotNull();
       return server.getAdminPort();
     }
 
+    @Override
     public int waitFor() throws Exception {
       return server.waitFor();
     }
 
+    @Override
     public void waitUntilL2IsActiveOrPassive() throws Exception {
       assertServerNotNull();
       server.waitUntilL2IsActiveOrPassive();

@@ -15,8 +15,6 @@ public class L1MBeanNames {
 
   public static final ObjectName CLUSTER_BEAN_PUBLIC;
   public static final ObjectName L1INFO_PUBLIC;
-  public static final ObjectName RUNTIME_LOGGING_PUBLIC;
-  public static final ObjectName RUNTIME_OUTPUT_OPTIONS_PUBLIC;
   public static final ObjectName ENTERPRISE_TC_CLIENT;
 
   static {
@@ -26,12 +24,6 @@ public class L1MBeanNames {
                                                                   TerracottaManagement.MBeanDomain.PUBLIC);
       L1INFO_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null, "L1 Info Bean",
                                                             TerracottaManagement.MBeanDomain.PUBLIC);
-      RUNTIME_LOGGING_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
-                                                                     "Terracotta Runtime Logging Bean",
-                                                                     TerracottaManagement.MBeanDomain.PUBLIC);
-      RUNTIME_OUTPUT_OPTIONS_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
-                                                                            "Terracotta Runtime Output Options Bean",
-                                                                            TerracottaManagement.MBeanDomain.PUBLIC);
       ENTERPRISE_TC_CLIENT = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
                                                                    "Terracotta Enterprise Bean",
                                                                    TerracottaManagement.MBeanDomain.PUBLIC);

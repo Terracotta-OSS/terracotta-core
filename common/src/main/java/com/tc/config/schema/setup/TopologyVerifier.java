@@ -38,7 +38,7 @@ public class TopologyVerifier {
   }
 
   /**
-   * 
+   *
    */
   public TopologyReloadStatus checkAndValidateConfig() {
     // first check if all existing servers config is not changed
@@ -207,24 +207,23 @@ public class TopologyVerifier {
    * check ports, persistence and mode
    */
   private boolean checkServer(Server oldServer, Server newServer) {
-    if (!validatePorts(oldServer.getDsoPort(), newServer.getDsoPort())
+    if (!validatePorts(oldServer.getTsaPort(), newServer.getTsaPort())
         || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
         || !validatePorts(oldServer.getL2GroupPort(), newServer.getL2GroupPort())) {
       logger.warn("Server port configuration was changed for server " + oldServer.getName()
-                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort() + "}, {"
+                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
                   + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
-                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort() + "}, {"
-                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {" + newServer.getDsoPort()
+                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
+                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {" + newServer.getTsaPort()
                   + "}, {" + newServer.getL2GroupPort() + "}, {" + newServer.getJmxPort() + "}]");
       return false;
     }
 
-    if (oldServer.isSetDso() && oldServer.getDso().isSetGarbageCollection()) {
-      if (!newServer.isSetDso() || !newServer.getDso().isSetGarbageCollection()) { return false; }
+    if (oldServer.isSetGarbageCollection()) {
+      if (!newServer.isSetGarbageCollection()) { return false; }
 
-      if ((oldServer.getDso().getGarbageCollection().getEnabled() != newServer.getDso().getGarbageCollection()
-          .getEnabled())
-          || oldServer.getDso().getGarbageCollection().getInterval() != newServer.getDso().getGarbageCollection()
+      if ((oldServer.getGarbageCollection().getEnabled() != newServer.getGarbageCollection().getEnabled())
+          || oldServer.getGarbageCollection().getInterval() != newServer.getGarbageCollection()
               .getInterval()) {
         logger.warn("Server Garbage Collection Info changed for server " + oldServer.getName());
         return false;

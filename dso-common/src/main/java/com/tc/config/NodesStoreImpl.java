@@ -70,7 +70,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
         if (TCSocketAddress.WILDCARD_IP.equals(host)) {
           host = l2Config.host();
         }
-        tempNodeNamesToServerNames.put(host + ":" + l2Config.dsoPort().getIntValue(), serverNames[i]);
+        tempNodeNamesToServerNames.put(host + ":" + l2Config.tsaPort().getIntValue(), serverNames[i]);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }

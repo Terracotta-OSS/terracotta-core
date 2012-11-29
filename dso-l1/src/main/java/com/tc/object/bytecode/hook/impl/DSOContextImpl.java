@@ -28,7 +28,6 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.Util;
@@ -77,10 +76,9 @@ public class DSOContextImpl implements DSOContext {
     }
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
-    RuntimeLoggerImpl runtimeLogger = new RuntimeLoggerImpl(configHelper);
 
-    Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
-                                      loader, expressRejoinClient, securityManager);
+    Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, loader,
+                                      expressRejoinClient, securityManager);
 
     DSOContextImpl context = createContext(configHelper, manager, expressRejoinClient);
 
@@ -159,7 +157,7 @@ public class DSOContextImpl implements DSOContext {
     Assert.assertNotNull(l2Data);
 
     if (false && !config.loadedFromTrustedSource()) {
-      String serverConfigMode = getServerConfigMode(l2Data[0].host(), l2Data[0].dsoPort(), config.getSecurityInfo());
+      String serverConfigMode = getServerConfigMode(l2Data[0].host(), l2Data[0].tsaPort(), config.getSecurityInfo());
 
       if (serverConfigMode != null && serverConfigMode.equals(ConfigurationModel.PRODUCTION)) {
         String text = "Configuration constraint violation: "

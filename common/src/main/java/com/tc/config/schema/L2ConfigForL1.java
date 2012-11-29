@@ -15,19 +15,19 @@ import com.tc.util.stringification.OurStringBuilder;
 public interface L2ConfigForL1 {
   public static class L2Data {
     private final String  host;
-    private final int     dsoPort;
+    private final int     tsaPort;
     private int           groupId = -1;
     private String        groupName;
     private final boolean secure;
 
-    public L2Data(String host, int dsoPort) {
-      this(host, dsoPort, false);
+    public L2Data(String host, int tsaPort) {
+      this(host, tsaPort, false);
     }
 
-    public L2Data(String host, int dsoPort, boolean secure) {
+    public L2Data(String host, int tsaPort, boolean secure) {
       Assert.assertNotBlank(host);
       this.host = host;
-      this.dsoPort = dsoPort;
+      this.tsaPort = tsaPort;
       this.secure = secure;
     }
 
@@ -35,8 +35,8 @@ public interface L2ConfigForL1 {
       return this.host;
     }
 
-    public int dsoPort() {
-      return this.dsoPort;
+    public int tsaPort() {
+      return this.tsaPort;
     }
 
     public boolean secure() {
@@ -64,18 +64,21 @@ public interface L2ConfigForL1 {
       return groupName;
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!(that instanceof L2Data)) return false;
       L2Data thatData = (L2Data) that;
-      return new EqualsBuilder().append(this.host, thatData.host).append(this.dsoPort, thatData.dsoPort).isEquals();
+      return new EqualsBuilder().append(this.host, thatData.host).append(this.tsaPort, thatData.tsaPort).isEquals();
     }
 
+    @Override
     public int hashCode() {
-      return new HashCodeBuilder().append(this.host).append(this.dsoPort).toHashCode();
+      return new HashCodeBuilder().append(this.host).append(this.tsaPort).toHashCode();
     }
 
+    @Override
     public String toString() {
-      return new OurStringBuilder(this).append("host", this.host).append("DSO port", this.dsoPort).toString();
+      return new OurStringBuilder(this).append("host", this.host).append("TSA port", this.tsaPort).toString();
     }
   }
 

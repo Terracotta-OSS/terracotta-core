@@ -49,22 +49,26 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     this.groupId = groupId;
   }
 
+  @Override
   public HaConfigSchema getHaHolder() {
     return this.haConfig;
   }
-  
+
   public void setGroupName(String groupName) {
     this.grpName = groupName;
   }
 
+  @Override
   public String getGroupName() {
     return grpName;
   }
 
+  @Override
   public MembersConfig getMembers() {
     return this.membersConfig;
   }
 
+  @Override
   public GroupID getGroupId() {
     return this.groupId;
   }
@@ -74,7 +78,8 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     if (isMembers) {
       ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,
                                                                    new ChildBeanFetcher() {
-                                                                     public XmlObject getChild(XmlObject parent) {
+                                                                     @Override
+                                                                    public XmlObject getChild(XmlObject parent) {
                                                                        return group.getMembers();
                                                                      }
                                                                    });
@@ -82,7 +87,8 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     } else {
       ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Ha.class,
                                                                    new ChildBeanFetcher() {
-                                                                     public XmlObject getChild(XmlObject parent) {
+                                                                     @Override
+                                                                    public XmlObject getChild(XmlObject parent) {
                                                                        return group.getHa();
                                                                      }
                                                                    });
@@ -90,10 +96,11 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     }
   }
 
+  @Override
   public boolean isMember(String l2Name) {
     String[] members = getMembers().getMemberArray();
-    for (int i = 0; i < members.length; i++) {
-      if (members[i].equals(l2Name)) { return true; }
+    for (String member : members) {
+      if (member.equals(l2Name)) { return true; }
     }
     return false;
   }
@@ -101,11 +108,11 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
   public static void createDefaultMirrorGroup(Servers servers, Ha ha) throws ConfigurationSetupException {
     Assert.assertTrue(servers.isSetMirrorGroups());
     Assert.assertEquals(0, servers.getMirrorGroups().getMirrorGroupArray().length);
-    
+
     MirrorGroup mirrorGroup = servers.getMirrorGroups().addNewMirrorGroup();
     mirrorGroup.setHa(ha);
     Members members = mirrorGroup.addNewMembers();
-    
+
     Server[] serverArray = servers.getServerArray();
 
     for (int i = 0; i < serverArray.length; i++) {
@@ -113,11 +120,11 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
       String name = serverArray[i].getName();
       if (name == null || name.equals("")) { throw new ConfigurationSetupException(
                                                                                    "server's name not defined... name=["
-                                                                                       + name + "] serverDsoPort=["
-                                                                                       + serverArray[i].getDsoPort()
+                                                                                       + name + "] serverTsaPort=["
+                                                                                       + serverArray[i].getTsaPort()
                                                                                        + "]"); }
       members.insertMember(i, serverArray[i].getName());
     }
   }
-  
+
 }
