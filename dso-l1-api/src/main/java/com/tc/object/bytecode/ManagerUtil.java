@@ -186,7 +186,7 @@ public class ManagerUtil {
    *
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
-   * @param type Lock level
+   * @param level Lock level
    */
   protected static void beginVolatile(final Object pojo, final long fieldOffset, final LockLevel level) {
     TCObject TCObject = lookupExistingOrNull(pojo);
@@ -209,7 +209,7 @@ public class ManagerUtil {
    *
    * @param TCObject TCObject to lock
    * @param fieldName Field name holding volatile object
-   * @param type Lock type
+   * @param level Lock type
    */
   protected static void beginVolatile(final TCObject TCObject, final String fieldName, final LockLevel level) {
     Manager mgr = getManager();
@@ -221,7 +221,7 @@ public class ManagerUtil {
    * Begin lock
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    */
   @Deprecated
   protected static void beginLock0(final String lockID, final LockLevel level) {
@@ -252,7 +252,7 @@ public class ManagerUtil {
    * Try to begin lock
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @return True if lock was successful
    */
   @Deprecated
@@ -277,7 +277,7 @@ public class ManagerUtil {
    * Try to begin lock within a specific timespan
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
@@ -579,7 +579,7 @@ public class ManagerUtil {
    * Enter synchronized monitor
    *
    * @param obj Object
-   * @param type Lock type
+   * @param level Lock type
    */
   @Deprecated
   protected static void monitorEnter0(final Object obj, final LockLevel level) {
@@ -634,7 +634,7 @@ public class ManagerUtil {
    * Check whether an object is locked at this lockLevel
    *
    * @param obj Lock
-   * @param lockLevel Lock level
+   * @param level Lock level
    * @return True if locked at this level
    * @throws NullPointerException If obj is null
    */
@@ -654,7 +654,7 @@ public class ManagerUtil {
    *
    * @param obj The object monitor
    * @param timeoutInNanos Timeout in nanoseconds
-   * @param type The lock level
+   * @param level The lock level
    * @return True if entered
    * @throws NullPointerException If obj is null
    */
@@ -668,7 +668,7 @@ public class ManagerUtil {
    * Enter synchronized monitor (interruptibly).
    *
    * @param obj The object monitor
-   * @param type The lock level
+   * @param level The lock level
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
    */
@@ -695,7 +695,7 @@ public class ManagerUtil {
    * Get number of locks held locally on this object
    *
    * @param obj The lock object
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return Lock count
    * @throws NullPointerException If obj is null
    */
@@ -709,7 +709,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param obj The lock
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    * @throws NullPointerException If obj is null
    */
@@ -723,7 +723,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param lockId The lock ID
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    */
   protected static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level) {
@@ -817,8 +817,8 @@ public class ManagerUtil {
   /**
    * Begin lock
    *
-   * @param Object lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    */
   protected static void beginLock(final Object lockID, final LockLevel level) {
     Manager mgr = getManager();
@@ -840,8 +840,8 @@ public class ManagerUtil {
   /**
    * Begin lock
    *
-   * @param long lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    */
   @Deprecated
   protected static void beginLock0(final long lockID, final LockLevel level) {
@@ -851,8 +851,8 @@ public class ManagerUtil {
   /**
    * Try to begin lock
    *
-   * @param long lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    * @return True if lock was successful
    */
   @Deprecated
@@ -864,7 +864,7 @@ public class ManagerUtil {
    * Try to begin lock within a specific timespan
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
@@ -877,7 +877,7 @@ public class ManagerUtil {
   /**
    * Commit lock
    *
-   * @param long lockID Lock name
+   * @param lockID Lock name
    */
   @Deprecated
   protected static void commitLock0(final long lockID, final LockLevel level) {
@@ -900,7 +900,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param lockId The lock ID
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    */
   protected static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level) {
@@ -958,5 +958,9 @@ public class ManagerUtil {
   protected static void addTransactionCompleteListener(TransactionCompleteListener listener) {
     Manager mgr = getManager();
     mgr.addTransactionCompleteListener(listener);
+  }
+
+  public static void throttlePutIfNecessary(ObjectID object) {
+    getManager().throttlePutIfNecessary(object);
   }
 }

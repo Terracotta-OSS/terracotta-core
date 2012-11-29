@@ -519,4 +519,9 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String getBackupStatus(final String name) throws IOException {
     return server.getBackupStatus(name);
   }
+
+  @Override
+  public boolean isRestrictedMode() {
+    return server.isRestrictedMode();
+  }
 }

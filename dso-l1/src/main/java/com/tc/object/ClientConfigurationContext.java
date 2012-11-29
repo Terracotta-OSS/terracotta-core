@@ -41,6 +41,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             RECEIVE_SERVER_MAP_EVICTION_BROADCAST_STAGE = "receive_server_map_eviction_broadcast_stage";
   public static final String             RECEIVE_INVALIDATE_OBJECTS_STAGE            = "receive_invalidate_objects_stage";
   public static final String             PINNED_ENTRY_FAULT_STAGE                    = "pinned_entry_fault_stage";
+  public static final String             RESOURCE_MANAGER_STAGE                      = "resource_manager_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

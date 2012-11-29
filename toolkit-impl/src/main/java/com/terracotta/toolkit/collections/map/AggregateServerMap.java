@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -70,6 +68,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>, ToolkitCacheListener<K>, ConfigChangeListener, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
     SearchableEntity {
@@ -399,9 +399,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V putIfAbsent(K key, V value) {
-    return getServerMapForKey(key).putIfAbsent(key, value, timeSource.nowInSeconds(),
-                                               ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    return getServerMapForKey(key).putIfAbsent(key, value);
   }
 
   @Override
@@ -563,7 +561,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         }
         return rv;
       case EVENTUAL:
-        return unlockedGetAll((Collection<K>) keys, quiet);
+        return unlockedGetAll((Collection<K>)keys, quiet);
     }
     throw new UnsupportedOperationException("Unknown consistency - " + consistency);
   }

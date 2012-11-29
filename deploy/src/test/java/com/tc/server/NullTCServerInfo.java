@@ -319,4 +319,9 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getBackupStatus(final String name) throws IOException {
     return BackupManager.BackupStatus.UNKNOWN.toString();
   }
+
+  @Override
+  public boolean isRestrictedMode() {
+    return false;
+  }
 }

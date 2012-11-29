@@ -810,6 +810,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
+  public boolean isRestrictedMode() {
+    return dsoServer.getResourceManager().isThrowException();
+  }
+
+  @Override
   public boolean isProduction() {
     ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
     return configurationModel.equals(ConfigurationModel.PRODUCTION);

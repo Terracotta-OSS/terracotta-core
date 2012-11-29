@@ -187,4 +187,9 @@ public class PlatformServiceImpl implements PlatformService {
   public void verifyCapability(String capability) {
     ManagerUtil.verifyCapability(capability);
   }
+
+  @Override
+  public void throttlePutIfNecessary(final ObjectID object) {
+    ManagerUtil.throttlePutIfNecessary(object);
+  }
 }

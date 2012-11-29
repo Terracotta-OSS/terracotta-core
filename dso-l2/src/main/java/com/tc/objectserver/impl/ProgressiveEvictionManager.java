@@ -3,7 +3,8 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.objectserver.api.EvictionTrigger;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.objectserver.ServerTransactionFactory;
@@ -12,7 +13,9 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ResourceManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.ServerMapEvictionContext;
@@ -30,7 +33,7 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
-//import java.lang.management.MemoryUsage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +47,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  *
@@ -75,6 +77,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final Responder responder =        new Responder();
     private final SampledRateCounter expirationStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
     private final SampledRateCounter evictionStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
+  private final ResourceManager resourceManager;
     
     private final static Future<SampledRateCounter> completedFuture = new Future<SampledRateCounter>() {
 
@@ -120,11 +123,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         expirationStats.setValue(0,0);
     }
     
-    public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp) {
+    public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp, final ResourceManager resourceManager) {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
-        this.evictor = new ServerMapEvictionEngine(mgr, trans);
+      this.resourceManager = resourceManager;
+      this.evictor = new ServerMapEvictionEngine(mgr, trans);
         //  assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
         this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
 
@@ -359,7 +363,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
                 if (reserve >= calculateThreshold(reserve,max)) {                    
                     if ( !isEmergency || currentRun.isDone() ) {
-                        log("Emergency Triggered - " + (reserve*100/max));
+                        log("Emergency Triggered - " + (reserve * 100 / max));
                         currentRun.cancel(false);
                         if (currentRun != completedFuture) {
                             print("Emergency", currentRun);

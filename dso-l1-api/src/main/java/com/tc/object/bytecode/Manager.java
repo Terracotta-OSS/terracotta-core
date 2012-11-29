@@ -81,7 +81,6 @@ public interface Manager extends TerracottaLocking {
    * Look up a new root object in the particular group
    * 
    * @param name Root name
-   * @param object Root object to use if none exists yet
    * @param gid group id
    * @return The root object actually used, may or may not == object
    */
@@ -396,4 +395,6 @@ public interface Manager extends TerracottaLocking {
   <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType);
 
   void addTransactionCompleteListener(TransactionCompleteListener listener);
+
+  void throttlePutIfNecessary(ObjectID object);
 }

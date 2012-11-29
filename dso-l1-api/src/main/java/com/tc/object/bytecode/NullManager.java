@@ -462,4 +462,8 @@ public class NullManager implements Manager {
     //
   }
 
+  @Override
+  public void throttlePutIfNecessary(final ObjectID object) {
+    //
+  }
 }

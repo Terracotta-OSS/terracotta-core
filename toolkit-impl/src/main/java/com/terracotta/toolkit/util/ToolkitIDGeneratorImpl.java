@@ -15,7 +15,19 @@ public class ToolkitIDGeneratorImpl implements ToolkitIDGenerator {
     this.name = name;
     this.map = map;
     this.lock = map.createLockForKey(name).writeLock();
-    map.putIfAbsent(name, new Long(1));
+    lock.lock();
+    try {
+      // Need to manually do a put if absent here so that we avoid calling putIfAbsent unconditionally. The problem
+      // is that putIfAbsent will trigger throttling (possibly throwing an exception) if the server is full. This would
+      // prevent toolkit from bootstrapping, thereby preventing the user from spinning up a new toolkit client in order
+      // to recover from the server full situation.
+      Long v = (Long) map.get(name);
+      if (v == null) {
+        map.put(name, 1L);
+      }
+    } finally {
+      lock.unlock();
+    }
   }
 
   public long getId() {

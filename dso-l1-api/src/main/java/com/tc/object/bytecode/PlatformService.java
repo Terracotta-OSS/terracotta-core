@@ -91,5 +91,5 @@ public interface PlatformService {
 
   void verifyCapability(String capability);
 
-
+  void throttlePutIfNecessary(ObjectID object);
 }

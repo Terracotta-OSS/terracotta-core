@@ -165,4 +165,6 @@ public interface DSOClientBuilder {
                                       final RemoteServerMapManager remoteServerMapManager);
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
+
+  RemoteResourceManager createRemoteResourceManager(final DSOClientMessageChannel dsoChannel);
 }
