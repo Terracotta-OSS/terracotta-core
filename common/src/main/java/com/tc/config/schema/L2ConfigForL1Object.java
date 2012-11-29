@@ -10,7 +10,6 @@ import com.tc.util.Assert;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 
 import java.util.ArrayList;
 import java.util.HashMap;

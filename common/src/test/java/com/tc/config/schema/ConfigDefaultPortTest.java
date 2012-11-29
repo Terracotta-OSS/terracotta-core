@@ -77,7 +77,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
       // case 2: just dso-port specified in the config; other port numbers are calculated
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
@@ -85,19 +85,19 @@ public class ConfigDefaultPortTest extends TCTestCase {
       Assert.assertEquals(8510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT, configSetupMgr.commonl2Config()
           .jmxPort().getIntValue());
       Assert.assertEquals(8510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT, configSetupMgr.dsoL2Config()
-          .l2GroupPort().getIntValue());
+          .tsaGroupPort().getIntValue());
 
       // case 3: dso-port and group-port specified; jmx-port calculated
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server3");
       Assert.assertEquals(7510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(7520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(7555, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+      Assert.assertEquals(7555, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
       // case 4: all ports are default
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server4");
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
       // case 5: ports range overflow
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server5");
@@ -107,7 +107,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
                         + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert
           .assertEquals(((65534 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT) % CommonL2Config.MAX_PORTNUMBER)
-                          + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+                          + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);

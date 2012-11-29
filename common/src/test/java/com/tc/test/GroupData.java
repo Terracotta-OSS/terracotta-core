@@ -8,19 +8,19 @@ public class GroupData {
   private final String   groupName;
   private int[]          tsaPorts;
   private final int[]    jmxPorts;
-  private final int[]    l2GroupPorts;
+  private final int[]    tsaGroupPorts;
   private final String[] serverNames;
 
-  public GroupData(int[] tsaPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames) {
-    this(null, tsaPorts, jmxPorts, l2GroupPorts, serverNames);
+  public GroupData(int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames) {
+    this(null, tsaPorts, jmxPorts, tsaGroupPorts, serverNames);
   }
 
-  public GroupData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames) {
+  public GroupData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames) {
     this.groupName = groupName;
     this.serverNames = serverNames;
     this.tsaPorts = tsaPorts;
     this.jmxPorts = jmxPorts;
-    this.l2GroupPorts = l2GroupPorts;
+    this.tsaGroupPorts = tsaGroupPorts;
   }
 
   public void setTsaPorts(int[] tsaPorts) {
@@ -39,8 +39,8 @@ public class GroupData {
     return jmxPorts;
   }
 
-  public int[] getL2GroupPorts() {
-    return l2GroupPorts;
+  public int[] getTsaGroupPorts() {
+    return tsaGroupPorts;
   }
 
   public String[] getServerNames() {

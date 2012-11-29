@@ -21,7 +21,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.ConfigurationModel;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
@@ -79,9 +78,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
-
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
   }
 
   public void testServerDefaults2() throws IOException, ConfigurationSetupException {
@@ -119,8 +117,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
 
   }
 
@@ -160,8 +158,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
 
   }
 
@@ -197,10 +195,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    int l2GroupPort = 7513;
-    String l2GroupBind = "5.6.7.8";
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    int tsaGroupPort = 7513;
+    String tsaGroupBind = "5.6.7.8";
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
   }
 
   public void testServerDefaults5() throws IOException, ConfigurationSetupException {
@@ -238,10 +236,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    int l2GroupPort = 7513;
-    String l2GroupBind = "5.6.7.8";
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    int tsaGroupPort = 7513;
+    String tsaGroupBind = "5.6.7.8";
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
 
     server = servers.getServerArray(1);
     String host = "testHost2";
@@ -258,8 +256,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
 
   }
 
@@ -710,37 +708,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("node123", client.getLogs());
-  }
-
-  public void testSystemDefaultConfigModel() throws IOException, ConfigurationSetupException {
-    this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "</tc:tc-config>";
-
-    writeConfigFile(config);
-
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
-
-    com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
-        .bean();
-
-    Assert.assertTrue(system.isSetConfigurationModel());
-    Assert.assertEquals(ConfigurationModel.DEVELOPMENT, system.getConfigurationModel());
-  }
-
-  public void testSystemConfigModel() throws IOException, ConfigurationSetupException {
-    this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<system>"
-                    + "<configuration-model>production</configuration-model>" + "</system>" + "</tc:tc-config>";
-
-    writeConfigFile(config);
-
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
-
-    com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
-        .bean();
-
-    Assert.assertTrue(system.isSetConfigurationModel());
-    Assert.assertEquals(ConfigurationModel.PRODUCTION, system.getConfigurationModel());
   }
 
   private BaseConfigurationSetupManager initializeAndGetBaseTVSConfigSetupManager(boolean isClient)

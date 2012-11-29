@@ -66,7 +66,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     for (int i = 0; i < serverNames.length; i++) {
       try {
         L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
-        String host = l2Config.l2GroupPort().getBind();
+        String host = l2Config.tsaGroupPort().getBind();
         if (TCSocketAddress.WILDCARD_IP.equals(host)) {
           host = l2Config.host();
         }

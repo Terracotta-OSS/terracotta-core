@@ -11,7 +11,6 @@ import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.SecurityConfig;
-import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -136,8 +135,8 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       l2Builder.setJMXBindAddress("127.0.0.1");
       l2Builder.setTSAPort(pc.chooseRandomPort());
       l2Builder.setTSABindAddress("127.0.0.1");
-      l2Builder.setL2GroupPort(pc.chooseRandomPort());
-      l2Builder.setL2GroupPortBindAddress("127.0.0.1");
+      l2Builder.setTSAGroupPort(pc.chooseRandomPort());
+      l2Builder.setTSAGroupPortBindAddress("127.0.0.1");
       l2Builders[i] = l2Builder;
 
       MembersConfigBuilder memberBuilder = new MembersConfigBuilder();
@@ -311,11 +310,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     @Override
     public boolean isSecure() {
       return this.l2Config.isSecure();
-    }
-
-    @Override
-    public SystemConfig systemConfig() {
-      return this.l2Config.systemConfig();
     }
 
     @Override

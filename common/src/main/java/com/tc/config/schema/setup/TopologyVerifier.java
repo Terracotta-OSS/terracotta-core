@@ -209,13 +209,14 @@ public class TopologyVerifier {
   private boolean checkServer(Server oldServer, Server newServer) {
     if (!validatePorts(oldServer.getTsaPort(), newServer.getTsaPort())
         || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
-        || !validatePorts(oldServer.getL2GroupPort(), newServer.getL2GroupPort())) {
+        || !validatePorts(oldServer.getTsaGroupPort(), newServer.getTsaGroupPort())) {
       logger.warn("Server port configuration was changed for server " + oldServer.getName()
                   + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
-                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
+                  + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
                   + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
-                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {" + newServer.getTsaPort()
-                  + "}, {" + newServer.getL2GroupPort() + "}, {" + newServer.getJmxPort() + "}]");
+                  + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {"
+                  + newServer.getTsaPort() + "}, {" + newServer.getTsaGroupPort() + "}, {" + newServer.getJmxPort()
+                  + "}]");
       return false;
     }
 

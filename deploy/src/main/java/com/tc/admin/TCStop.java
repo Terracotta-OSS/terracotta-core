@@ -244,7 +244,7 @@ public class TCStop {
     if (mbsc != null) {
       TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
           .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
-      if (!forceStop && tcServerInfo.isActive() && tcServerInfo.isProduction()) {
+      if (!forceStop && tcServerInfo.isActive()) {
         ServerGroupInfo currentServerGroup = getCurrentServerGroup(tcServerInfo);
         if (currentServerGroup != null) {
           boolean isPassiveStandByAvailable = false;

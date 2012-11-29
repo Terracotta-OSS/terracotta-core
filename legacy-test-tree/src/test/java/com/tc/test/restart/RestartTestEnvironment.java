@@ -155,7 +155,7 @@ public class RestartTestEnvironment {
     }
     l2.setTSAPort(serverPort);
     l2.setJMXPort(adminPort);
-    l2.setL2GroupPort(groupPort);
+    l2.setTSAGroupPort(groupPort);
     l2.setData(tempDirectory.getAbsolutePath());
     l2.setRestartable(restartable);
     if (configFactory != null) {

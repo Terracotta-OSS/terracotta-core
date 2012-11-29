@@ -62,9 +62,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   ServerGroupInfo[] getServerGroupInfo();
 
-  int getDSOListenPort();
+  int getTSAListenPort();
 
-  int getDSOGroupPort();
+  int getTSAGroupPort();
 
   boolean getRestartable();
 
@@ -119,8 +119,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void gc();
 
   boolean isEnterprise();
-
-  boolean isProduction();
 
   boolean isSecure();
 

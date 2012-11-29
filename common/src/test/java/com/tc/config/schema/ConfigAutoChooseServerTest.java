@@ -69,7 +69,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
       L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);

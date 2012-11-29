@@ -100,10 +100,10 @@ public class TcConfigBuilder {
     ensureServers();
     Server server = tcConfig.getServers().getServerArray(serverIndex);
     Assert.assertNotNull(server);
-    if (!server.isSetL2GroupPort()) {
-      server.addNewL2GroupPort();
+    if (!server.isSetTsaGroupPort()) {
+      server.addNewTsaGroupPort();
     }
-    server.getL2GroupPort().setIntValue(portNo);
+    server.getTsaGroupPort().setIntValue(portNo);
   }
 
   public int getTsaPort() {
@@ -123,7 +123,7 @@ public class TcConfigBuilder {
   public int getGroupPort(int serverIndex) {
     ensureServers();
     Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
-    return tcConfig.getServers().getServerArray(serverIndex).getL2GroupPort().getIntValue();
+    return tcConfig.getServers().getServerArray(serverIndex).getTsaGroupPort().getIntValue();
   }
 
   public void setJmxPort(int portNo) {
@@ -192,8 +192,8 @@ public class TcConfigBuilder {
       if (!server.isSetJmxPort()) server.addNewJmxPort();
       server.getJmxPort().setIntValue(pc.chooseRandomPort());
 
-      if (!server.isSetL2GroupPort()) server.addNewL2GroupPort();
-      server.getL2GroupPort().setIntValue(pc.chooseRandomPort());
+      if (!server.isSetTsaGroupPort()) server.addNewTsaGroupPort();
+      server.getTsaGroupPort().setIntValue(pc.chooseRandomPort());
     }
   }
 

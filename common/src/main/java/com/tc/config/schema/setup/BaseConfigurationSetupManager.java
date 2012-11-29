@@ -14,7 +14,6 @@ import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcProperties;
 
 import java.io.File;

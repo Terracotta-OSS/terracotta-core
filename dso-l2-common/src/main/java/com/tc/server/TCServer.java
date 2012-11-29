@@ -50,9 +50,9 @@ public interface TCServer {
 
   void startBeanShell(int port);
 
-  int getDSOListenPort();
+  int getTSAListenPort();
 
-  int getDSOGroupPort();
+  int getTSAGroupPort();
 
   void waitUntilShutdown();
 
@@ -61,8 +61,6 @@ public interface TCServer {
   void dumpClusterState();
 
   void reloadConfiguration() throws ConfigurationSetupException;
-
-  boolean isProduction();
 
   boolean isSecure();
 

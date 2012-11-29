@@ -52,7 +52,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
   private final BindPort          tsaPort;
-  private final BindPort          l2GroupPort;
+  private final BindPort          tsaGroupPort;
   private final String            host;
   private final String            serverName;
   private final String            bind;
@@ -76,7 +76,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
-    this.l2GroupPort = server.getL2GroupPort();
+    this.tsaGroupPort = server.getTsaGroupPort();
     if (server.getPersistence().isSetOffheap()) {
       this.offHeapConfig = server.getPersistence().getOffheap();
     } else {
@@ -108,8 +108,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   @Override
-  public BindPort l2GroupPort() {
-    return this.l2GroupPort;
+  public BindPort tsaGroupPort() {
+    return this.tsaGroupPort;
   }
 
   @Override
@@ -160,7 +160,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeServerBind(server, defaultValueProvider);
       initializeTsaPort(server, defaultValueProvider);
       initializeJmxPort(server, defaultValueProvider);
-      initializeL2GroupPort(server, defaultValueProvider);
+      initializeTsaGroupPort(server, defaultValueProvider);
       // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
       // and name is supposed to default to 'host:dso-port'
       initializeNameAndHost(server, defaultValueProvider);
@@ -216,18 +216,18 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
   }
 
-  private static void initializeL2GroupPort(Server server, DefaultValueProvider defaultValueProvider) {
-    XmlObject[] l2GroupPorts = server.selectPath("l2-group-port");
-    Assert.assertTrue(l2GroupPorts.length <= 1);
-    if (!server.isSetL2GroupPort()) {
-      BindPort l2GrpPort = server.addNewL2GroupPort();
+  private static void initializeTsaGroupPort(Server server, DefaultValueProvider defaultValueProvider) {
+    XmlObject[] tsaGroupPorts = server.selectPath("tsa-group-port");
+    Assert.assertTrue(tsaGroupPorts.length <= 1);
+    if (!server.isSetTsaGroupPort()) {
+      BindPort l2GrpPort = server.addNewTsaGroupPort();
       int tempGroupPort = server.getTsaPort().getIntValue() + DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
       int defaultGroupPort = ((tempGroupPort <= MAX_PORTNUMBER) ? (tempGroupPort) : (tempGroupPort % MAX_PORTNUMBER)
                                                                                     + MIN_PORTNUMBER);
       l2GrpPort.setIntValue(defaultGroupPort);
       l2GrpPort.setBind(server.getBind());
-    } else if (!server.getL2GroupPort().isSetBind()) {
-      server.getL2GroupPort().setBind(server.getBind());
+    } else if (!server.getTsaGroupPort().isSetBind()) {
+      server.getTsaGroupPort().setBind(server.getBind());
     }
   }
 

@@ -96,9 +96,9 @@ public class TSAConfig {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       Object securityHostnameAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityHostname");
-      Object dsoListenPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "DSOListenPort");
+      Object tsaListenPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "TSAListenPort");
 
-      return "https://" + securityHostnameAttribute + ":" + dsoListenPortAttribute + "/tc-management-api/assertIdentity";
+      return "https://" + securityHostnameAttribute + ":" + tsaListenPortAttribute + "/tc-management-api/assertIdentity";
     } catch (Exception e) {
       throw new RuntimeException("Error building SecurityCallbackUrl", e);
     }

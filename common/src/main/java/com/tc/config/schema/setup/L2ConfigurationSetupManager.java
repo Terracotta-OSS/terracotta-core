@@ -8,7 +8,6 @@ import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.SecurityConfig;
-import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
@@ -23,8 +22,6 @@ public interface L2ConfigurationSetupManager {
   String[] processArguments();
 
   CommonL2Config commonl2Config();
-
-  SystemConfig systemConfig();
 
   L2DSOConfig dsoL2Config();
 

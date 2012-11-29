@@ -21,8 +21,6 @@ import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SecurityConfigObject;
-import com.tc.config.schema.SystemConfig;
-import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -47,7 +45,6 @@ import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.UpdateCheck;
@@ -86,7 +83,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private final ConfigTCProperties          configTCProperties;
   private final Set<InetAddress>            localInetAddresses;
 
-  private SystemConfig                      systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
   private volatile SecurityConfig           securityConfig;
   private volatile boolean                  secure;
@@ -110,7 +106,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
 
-    this.systemConfig = null;
     this.l2ConfigData = new HashMap<String, L2ConfigData>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
@@ -272,7 +267,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     String hostname = server.getHost();
     if (server.isSetTsaPort()) verifyPortUsed(serverPorts, hostname, server.getTsaPort().getIntValue());
     if (server.isSetJmxPort()) verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
-    if (server.isSetL2GroupPort()) verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
+    if (server.isSetTsaGroupPort()) verifyPortUsed(serverPorts, hostname, server.getTsaGroupPort().getIntValue());
   }
 
   private void validateGroups() throws ConfigurationSetupException {
@@ -559,8 +554,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
-    this.systemConfig = new SystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
-        .directoryConfigurationLoadedFrom()));
     L2ConfigData serverConfigData = configDataFor(l2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
@@ -682,11 +675,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   @Override
-  public SystemConfig systemConfig() {
-    return this.systemConfig;
-  }
-
-  @Override
   public L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).dsoL2Config();
   }
@@ -749,11 +737,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     TcConfigDocument.TcConfig config = doc.addNewTcConfig();
 
     TcProperties tcProperties = (TcProperties) this.tcPropertiesRepository().bean();
-    System system = (System) this.systemBeanRepository().bean();
     Client client = (Client) this.clientBeanRepository().bean();
     Servers servers = (Servers) this.serversBeanRepository().bean();
 
-    if (system != null) config.setSystem(system);
     if (client != null) config.setClients(client);
     if (servers != null) config.setServers(servers);
     if (tcProperties != null) config.setTcProperties(tcProperties);

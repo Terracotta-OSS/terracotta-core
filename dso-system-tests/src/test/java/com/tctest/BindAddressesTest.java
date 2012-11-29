@@ -28,7 +28,7 @@ public class BindAddressesTest extends BaseDSOTestCase {
   private final ExternalDsoServer[] servers        = new ExternalDsoServer[NUM_OF_SERVERS];
   private final int[]               jmxPorts       = new int[NUM_OF_SERVERS];
   private final int[]               tsaPorts       = new int[NUM_OF_SERVERS];
-  private final int[]               l2GroupPorts   = new int[NUM_OF_SERVERS];
+  private final int[]               tsaGroupPorts  = new int[NUM_OF_SERVERS];
 
   @Override
   protected boolean cleanTempDir() {
@@ -53,7 +53,7 @@ public class BindAddressesTest extends BaseDSOTestCase {
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
       tsaPorts[i] = configBuilder.getTsaPort(i);
       jmxPorts[i] = configBuilder.getJmxPort(i);
-      l2GroupPorts[i] = configBuilder.getGroupPort(i);
+      tsaGroupPorts[i] = configBuilder.getGroupPort(i);
     }
 
     servers[0] = createServer("server-1");
@@ -74,19 +74,19 @@ public class BindAddressesTest extends BaseDSOTestCase {
   public void testBind() throws Exception {
     testSocketConnect("127.0.0.1", tsaPorts[0], true);
     testSocketConnect("0.0.0.0", jmxPorts[0], true);
-    testSocketConnect("0.0.0.0", l2GroupPorts[0], true);
+    testSocketConnect("0.0.0.0", tsaGroupPorts[0], true);
 
     testSocket("127.0.0.1", tsaPorts[1], true);
     testSocket("127.0.0.1", jmxPorts[1], false);
-    testSocket("127.0.0.1", l2GroupPorts[1], false);
+    testSocket("127.0.0.1", tsaGroupPorts[1], false);
 
     testSocket("127.0.0.1", tsaPorts[2], true);
     testSocket("127.0.0.1", jmxPorts[2], false);
-    testSocket("127.0.0.1", l2GroupPorts[2], false);
+    testSocket("127.0.0.1", tsaGroupPorts[2], false);
 
     testSocket("0.0.0.0", tsaPorts[3], true);
     testSocket("0.0.0.0", jmxPorts[3], false);
-    testSocket("0.0.0.0", l2GroupPorts[3], false);
+    testSocket("0.0.0.0", tsaGroupPorts[3], false);
   }
 
   private void testSocketConnect(String host, int port, boolean testNegative) throws Exception {

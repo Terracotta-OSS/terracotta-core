@@ -63,7 +63,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   private static final int ZIP_BUFFER_SIZE = 2048;
   private static final String[]  SERVER_ENTITY_ATTRIBUTE_NAMES      = new String[] { "Version", "BuildID",
-      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State",
+      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
       "StartTime", "ActivateTime", "Restartable", "RestrictedMode" };
 
   private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
@@ -602,7 +602,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           if (secure) {
             prefix = "https://";
           }
-          urls.add(prefix + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
+          urls.add(prefix + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
         } catch (ServiceExecutionException see) {
           urls.add("?");
         }

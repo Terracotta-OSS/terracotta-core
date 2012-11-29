@@ -1250,7 +1250,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final L2DSOConfig l2DSOConfig) {
-    String host = l2DSOConfig.l2GroupPort().getBind();
+    String host = l2DSOConfig.tsaGroupPort().getBind();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.host();
     }
@@ -1347,7 +1347,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public int getGroupPort() {
     final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.l2GroupPort().getIntValue();
+    final int configValue = l2DSOConfig.tsaGroupPort().getIntValue();
     if (configValue != 0) { return configValue; }
     return -1;
   }

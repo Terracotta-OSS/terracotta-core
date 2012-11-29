@@ -23,7 +23,7 @@ public class L2Config {
   private int                     clientReconnectWindow = 15;
   private int                     maxOffHeapDataSize    = 128;
   private final ArrayList<String> extraServerJvmArgs;
-  private boolean                 isProxyL2groupPorts   = false;
+  private boolean                 isProxyTsaGroupPorts  = false;
   private boolean                 isProxyTsaPorts       = false;
   private int                     minHeap               = 256;
   private int                     maxHeap               = 256;
@@ -162,17 +162,17 @@ public class L2Config {
   /**
    * @return true if proxy is enabled between two mirror groups communication
    */
-  public boolean isProxyL2groupPorts() {
-    return isProxyL2groupPorts;
+  public boolean isProxyTsaGroupPorts() {
+    return isProxyTsaGroupPorts;
   }
 
   /**
-   * Enable/Disable l2 group proxy between two mirror groups
+   * Enable/Disable tsa group proxy between two mirror groups
    * 
-   * @param isProxyL2groupPorts
+   * @param isProxyTsaGroupPorts
    */
-  public void setProxyL2groupPorts(boolean isProxyL2groupPorts) {
-    this.isProxyL2groupPorts = isProxyL2groupPorts;
+  public void setProxyTsaGroupPorts(boolean isProxyTsaGroupPorts) {
+    this.isProxyTsaGroupPorts = isProxyTsaGroupPorts;
   }
 
   /**

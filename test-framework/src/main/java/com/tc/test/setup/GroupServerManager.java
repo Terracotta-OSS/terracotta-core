@@ -125,11 +125,11 @@ public class GroupServerManager {
     seed = srandom.nextLong();
     random = new Random(seed);
     // setup proxy
-    if (isProxyL2GroupPort()) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers = new ProxyConnectManager[groupData.getServerCount()];
       System.out.println("trying to setUp Proxy");
       for (int i = 0; i < groupData.getServerCount(); ++i) {
-        proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getL2GroupPort(i), groupData.getProxyL2GroupPort(i));
+        proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getTsaGroupPort(i), groupData.getProxyTsaGroupPort(i));
         proxyL2Managers[i].setProxyWaitTime(this.testConfig.getL2Config().getProxyWaitTime());
         proxyL2Managers[i].setProxyDownTime(this.testConfig.getL2Config().getProxyDownTime());
         proxyL2Managers[i].setupProxy();
@@ -161,10 +161,10 @@ public class GroupServerManager {
     for (int i = 0; i < groupData.getServerCount(); i++) {
       ArrayList<String> perServerJvmArgs = new ArrayList<String>();
       perServerJvmArgs.addAll(testConfig.getL2Config().getExtraServerJvmArgs());
-      if (isProxyL2GroupPort()) {
+      if (isProxyTsaGroupPort()) {
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
-                             + groupData.getL2GroupPort(i));
+                             + groupData.getTsaGroupPort(i));
       }
       if (shouldDebugServer(i)) {
         int debugPort = 11000 + i;
@@ -214,7 +214,7 @@ public class GroupServerManager {
     verifyIndex(index);
     System.out.println("*** Starting server [" + serverControl[index].getTsaPort() + "] ... ");
     serverControl[index].start();
-    if (isProxyL2GroupPort()) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers[index].proxyUp();
       proxyL2Managers[index].startProxyTest();
       debugPrintln("***** Caching tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]");
@@ -347,7 +347,7 @@ public class GroupServerManager {
 
     if (index == activeIndex) {
       sc.shutdown();
-      stopL2GroupProxy(index);
+      stopTsaGroupProxy(index);
       stopL1Proxy(index);
       System.out.println("*** Server(active) stopped [" + serverControl[index].getTsaPort() + "]");
       return;
@@ -355,7 +355,7 @@ public class GroupServerManager {
 
     try {
       sc.crash();
-      stopL2GroupProxy(index);
+      stopTsaGroupProxy(index);
     } catch (Exception e) {
       if (DEBUG) {
         e.printStackTrace();
@@ -364,8 +364,8 @@ public class GroupServerManager {
     System.out.println("*** Server stopped [" + serverControl[index].getTsaPort() + "]");
   }
 
-  private void stopL2GroupProxy(int index) {
-    if (isProxyL2GroupPort()) {
+  private void stopTsaGroupProxy(int index) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers[index].proxyDown();
     }
   }
@@ -538,7 +538,7 @@ public class GroupServerManager {
     server.crash();
     debugPrintln("***** Sleeping after crashing active server ");
     waitForServerCrash(server);
-    stopL2GroupProxy(activeIndex);
+    stopTsaGroupProxy(activeIndex);
     stopL1Proxy(activeIndex);
     expectedServerRunning[activeIndex] = false;
     debugPrintln("***** Done sleeping after crashing active server ");
@@ -577,7 +577,7 @@ public class GroupServerManager {
     server.crash();
     debugPrintln("***** Sleeping after crashing passive server ");
     waitForServerCrash(server);
-    stopL2GroupProxy(passiveToCrash);
+    stopTsaGroupProxy(passiveToCrash);
     expectedServerRunning[passiveToCrash] = false;
     debugPrintln("***** Done sleeping after crashing passive server ");
 
@@ -697,8 +697,8 @@ public class GroupServerManager {
     }
   }
 
-  private boolean isProxyL2GroupPort() {
-    return testConfig.getL2Config().isProxyL2groupPorts();
+  private boolean isProxyTsaGroupPort() {
+    return testConfig.getL2Config().isProxyTsaGroupPorts();
   }
 
   private boolean isProxyTsaPort() {

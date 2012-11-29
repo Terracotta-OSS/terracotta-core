@@ -31,7 +31,6 @@ import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.ConfigurationModel;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.SecurityConfig;
@@ -345,13 +344,13 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public int getDSOListenPort() {
+  public int getTSAListenPort() {
     if (this.dsoServer != null) { return this.dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
   }
 
   @Override
-  public int getDSOGroupPort() {
+  public int getTSAGroupPort() {
     if (this.dsoServer != null) { return this.dsoServer.getGroupPort(); }
     throw new IllegalStateException("DSO Server not running");
   }
@@ -812,12 +811,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public boolean isRestrictedMode() {
     return dsoServer.getResourceManager().isThrowException();
-  }
-
-  @Override
-  public boolean isProduction() {
-    ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
-    return configurationModel.equals(ConfigurationModel.PRODUCTION);
   }
 
   @Override

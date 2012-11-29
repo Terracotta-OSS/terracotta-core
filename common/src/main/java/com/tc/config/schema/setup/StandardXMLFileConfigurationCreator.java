@@ -8,7 +8,6 @@ import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.xml.sax.SAXException;
 
-import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -432,7 +431,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       updateTcConfigFull(configDocument, descrip);
       setClientBean(clientBeanRepository, configDocument.getTcConfig(), descrip);
       setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
-      setSystemBean(systemBeanRepository, configDocument.getTcConfig(), descrip);
       setTcPropertiesBean(tcPropertiesRepository, configDocument.getTcConfig(), descrip);
     } catch (XmlException xmle) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
@@ -464,11 +462,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private void setServerBean(MutableBeanRepository serversBeanRepository, TcConfig config, String description)
       throws XmlException {
     serversBeanRepository.setBean(config.getServers(), description);
-  }
-
-  private void setSystemBean(MutableBeanRepository systemBeanRepository, TcConfig config, String description)
-      throws XmlException {
-    systemBeanRepository.setBean(config.getSystem(), description);
   }
 
   private void setTcPropertiesBean(MutableBeanRepository tcPropertiesRepository, TcConfig config, String description)
@@ -510,7 +503,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
       this.providedTcConfigDocument = (TcConfigDocument) beanWithErrors.bean().copy();
       TcConfig config = tcConfigDoc.getTcConfig();
-      SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
       L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
       // initialize client only while parsing for client
       if (isClient) {

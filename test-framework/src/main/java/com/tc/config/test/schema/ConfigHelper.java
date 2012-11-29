@@ -138,7 +138,7 @@ public class ConfigHelper {
       // set ports
       l2ConfigBuilders[serverIndex].setTSAPort(getTsaPort(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setJMXPort(getJmxPort(groupIndex, serverIndex));
-      l2ConfigBuilders[serverIndex].setL2GroupPort(getL2GroupPort(groupIndex, serverIndex));
+      l2ConfigBuilders[serverIndex].setTSAGroupPort(getTsaGroupPort(groupIndex, serverIndex));
 
       // set logs
       l2ConfigBuilders[serverIndex].setLogs(getLogDirectoryPath(groupIndex, serverIndex));
@@ -172,18 +172,18 @@ public class ConfigHelper {
       String groupName = getGroupName(groupIndex);
       int[] tsaPorts = new int[numOfServersPerGroup];
       int[] jmxPorts = new int[numOfServersPerGroup];
-      int[] l2GroupPorts = new int[numOfServersPerGroup];
+      int[] tsaGroupPorts = new int[numOfServersPerGroup];
       String[] serverNames = new String[numOfServersPerGroup];
       String[] dataDirectoryPath = new String[numOfServersPerGroup];
       String[] logDirectoryPath = new String[numOfServersPerGroup];
       String[] backupDirectoryPath = new String[numOfServersPerGroup];
-      int[] proxyL2GroupPorts = null;
+      int[] proxyTsaGroupPorts = null;
       int[] proxyTsaPorts = null;
       for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
         final int portNum = portChooser.chooseRandomPorts(3);
         jmxPorts[serverIndex] = portNum;
         tsaPorts[serverIndex] = portNum + 1;
-        l2GroupPorts[serverIndex] = portNum + 2;
+        tsaGroupPorts[serverIndex] = portNum + 2;
         String serverName = SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
         serverNames[serverIndex] = serverName;
         backupDirectoryPath[serverIndex] = new File(tempDir, serverName + File.separator + "backup").getAbsolutePath();
@@ -196,15 +196,16 @@ public class ConfigHelper {
           proxyTsaPorts[serverIndex] = portChooser.chooseRandomPort();
         }
       }
-      if (isProxyL2GroupPort()) {
-        proxyL2GroupPorts = new int[numOfServersPerGroup];
+      if (isProxyTsaGroupPort()) {
+        proxyTsaGroupPorts = new int[numOfServersPerGroup];
         for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
-          proxyL2GroupPorts[serverIndex] = portChooser.chooseRandomPort();
+          proxyTsaGroupPorts[serverIndex] = portChooser.chooseRandomPort();
         }
       }
 
-      groupData[groupIndex] = new GroupsData(groupName, tsaPorts, jmxPorts, l2GroupPorts, serverNames, proxyTsaPorts,
-                                             proxyL2GroupPorts, dataDirectoryPath, logDirectoryPath, backupDirectoryPath);
+      groupData[groupIndex] = new GroupsData(groupName, tsaPorts, jmxPorts, tsaGroupPorts, serverNames, proxyTsaPorts,
+                                             proxyTsaGroupPorts, dataDirectoryPath, logDirectoryPath,
+                                             backupDirectoryPath);
     }
   }
 
@@ -233,10 +234,10 @@ public class ConfigHelper {
 
   }
 
-  public int getL2GroupPort(final int groupIndex, final int serverIndex) {
+  public int getTsaGroupPort(final int groupIndex, final int serverIndex) {
     validateIndexes(groupIndex, serverIndex);
 
-    return groupData[groupIndex].getL2GroupPort(serverIndex);
+    return groupData[groupIndex].getTsaGroupPort(serverIndex);
 
   }
 
@@ -252,8 +253,8 @@ public class ConfigHelper {
     return groupData[groupIndex];
   }
 
-  private boolean isProxyL2GroupPort() {
-    return testConfig.getL2Config().isProxyL2groupPorts();
+  private boolean isProxyTsaGroupPort() {
+    return testConfig.getL2Config().isProxyTsaGroupPorts();
   }
 
   private boolean isProxyTsaPort() {

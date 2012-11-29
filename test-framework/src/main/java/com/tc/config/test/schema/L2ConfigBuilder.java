@@ -88,14 +88,14 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     this.jmxPortBuilder.setBindAddress(data);
   }
 
-  public synchronized void setL2GroupPort(int data) {
+  public synchronized void setTSAGroupPort(int data) {
     if (this.groupPortBuilder == null) {
       this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
     }
     this.groupPortBuilder.setBindPort(data);
   }
 
-  public synchronized void setL2GroupPortBindAddress(String data) {
+  public synchronized void setTSAGroupPortBindAddress(String data) {
     if (this.groupPortBuilder == null) {
       this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
     }

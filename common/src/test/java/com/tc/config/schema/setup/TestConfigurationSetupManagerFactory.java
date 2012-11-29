@@ -15,7 +15,6 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
-import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -154,7 +153,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   private final TestConfigurationCreator        configurationCreator;
 
-  private final SystemConfig                    sampleSystem;
   private final CommonL1Config                  sampleL1Common;
   private final L1DSOConfig                     sampleL1DSO;
   private final CommonL2Config                  sampleL2Common;
@@ -203,7 +201,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
         throw new RuntimeException(e);
       }
     }
-    this.sampleSystem = sampleL2Manager.systemConfig();
     this.sampleL2Common = sampleL2Manager.commonl2Config();
     this.sampleL2DSO = sampleL2Manager.dsoL2Config();
     this.sampleActiveServerGroups = sampleL2Manager.activeServerGroupsConfig();
@@ -284,10 +281,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private Set collectAllRepositories() {
     Set allRepositories = new HashSet();
     return allRepositories;
-  }
-
-  public SystemConfig systemConfig() {
-    return this.sampleSystem;
   }
 
   public CommonL1Config l1CommonConfig() {

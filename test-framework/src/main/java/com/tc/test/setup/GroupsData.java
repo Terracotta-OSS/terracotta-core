@@ -12,25 +12,25 @@ public class GroupsData implements Serializable {
   private final String   groupName;
   private int[]          tsaPorts;
   private final int[]    jmxPorts;
-  private final int[]    l2GroupPorts;
+  private final int[]    tsaGroupPorts;
   private final String[] serverNames;
-  private final int[]    proxyL2GroupPorts;
+  private final int[]    proxyTsaGroupPorts;
   private final int[]    proxyTsaPorts;
   private final String[] dataDirectoryPath;
   private final String[] logDirectoryPath;
   private final String[] backupDirectoryPath;
 
-  public GroupsData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames,
-                    int[] proxyTsaPorts, int[] proxyL2GroupPorts, String[] dataDirectoryPath,
+  public GroupsData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames,
+                    int[] proxyTsaPorts, int[] proxyTsaGroupPorts, String[] dataDirectoryPath,
                     String[] logDirectoryPath,
                     String[] backupDirectoryPath) {
     this.groupName = groupName;
     this.serverNames = serverNames;
     this.tsaPorts = tsaPorts;
     this.jmxPorts = jmxPorts;
-    this.l2GroupPorts = l2GroupPorts;
+    this.tsaGroupPorts = tsaGroupPorts;
     this.proxyTsaPorts = proxyTsaPorts;
-    this.proxyL2GroupPorts = proxyL2GroupPorts;
+    this.proxyTsaGroupPorts = proxyTsaGroupPorts;
     this.dataDirectoryPath = dataDirectoryPath;
     this.logDirectoryPath = logDirectoryPath;
     this.backupDirectoryPath = backupDirectoryPath;
@@ -56,17 +56,17 @@ public class GroupsData implements Serializable {
     return jmxPorts[serverIndex];
   }
 
-  public int getL2GroupPort(final int serverIndex) {
+  public int getTsaGroupPort(final int serverIndex) {
     Assert.assertTrue("server index > numOfServers, serverIndex: " + serverIndex + " numOfServers: "
-                      + this.l2GroupPorts.length, (serverIndex >= 0 && serverIndex < this.l2GroupPorts.length));
-    return l2GroupPorts[serverIndex];
+                      + this.tsaGroupPorts.length, (serverIndex >= 0 && serverIndex < this.tsaGroupPorts.length));
+    return tsaGroupPorts[serverIndex];
   }
 
-  public int getProxyL2GroupPort(final int serverIndex) {
+  public int getProxyTsaGroupPort(final int serverIndex) {
     Assert.assertTrue("server index > numOfServers, serverIndex: " + serverIndex + " numOfServers: "
-                          + this.proxyL2GroupPorts.length,
-                      (serverIndex >= 0 && serverIndex < this.proxyL2GroupPorts.length));
-    return proxyL2GroupPorts[serverIndex];
+                          + this.proxyTsaGroupPorts.length,
+                      (serverIndex >= 0 && serverIndex < this.proxyTsaGroupPorts.length));
+    return proxyTsaGroupPorts[serverIndex];
   }
 
   public int getProxyTsaPort(final int serverIndex) {
@@ -122,9 +122,9 @@ public class GroupsData implements Serializable {
       strBuilder.append(jmxPort + ", ");
     }
 
-    strBuilder.append("l2GroupPorts: ");
-    for (int l2GroupPort : l2GroupPorts) {
-      strBuilder.append(l2GroupPort + ", ");
+    strBuilder.append("tsaGroupPorts: ");
+    for (int tsaGroupPort : tsaGroupPorts) {
+      strBuilder.append(tsaGroupPort + ", ");
     }
 
     return strBuilder.toString();
