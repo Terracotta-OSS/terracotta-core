@@ -62,8 +62,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   private static final Logger LOG = LoggerFactory.getLogger(TsaManagementClientServiceImpl.class);
 
   private static final int ZIP_BUFFER_SIZE = 2048;
-  private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] {
-      "Version", "BuildID", "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State"};
+  private static final String[]  SERVER_ENTITY_ATTRIBUTE_NAMES      = new String[] { "Version", "BuildID",
+      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State",
+      "StartTime", "ActivateTime", "Restartable", "RestrictedMode" };
 
   private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
       "ObjectFlushRate", "TransactionRate"                         };
