@@ -36,6 +36,10 @@
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/ehcache/lib</directory>
       <outputDirectory>/apis/ehcache/lib</outputDirectory>
+      <includes>
+        <include>ehcache-ee*.jar</include>
+        <include>slf4j*.jar</include>
+      </includes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/ehcache/javadoc</directory>
