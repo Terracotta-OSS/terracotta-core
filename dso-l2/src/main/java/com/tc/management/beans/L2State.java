@@ -49,28 +49,27 @@ public class L2State implements StateChangeListener {
   }
 
   public boolean isActiveCoordinator() {
-    if (getState().equals(StateManager.ACTIVE_COORDINATOR)) { return true; }
-    return false;
+    return getState().equals(StateManager.ACTIVE_COORDINATOR);
   }
 
   public boolean isPassiveUninitialized() {
-    if (getState().equals(StateManager.PASSIVE_UNINITIALIZED)) { return true; }
-    return false;
+    return getState().equals(StateManager.PASSIVE_UNINITIALIZED);
   }
 
   public boolean isPassiveStandby() {
-    if (getState().equals(StateManager.PASSIVE_STANDBY)) { return true; }
-    return false;
+    return getState().equals(StateManager.PASSIVE_STANDBY);
   }
 
   public boolean isStartState() {
-    if (getState().equals(StateManager.START_STATE)) { return true; }
-    return false;
+    return getState().equals(StateManager.START_STATE);
   }
 
   public boolean isStopState() {
-    if (getState().equals(StateManager.STOP_STATE)) { return true; }
-    return false;
+    return getState().equals(StateManager.STOP_STATE);
+  }
+
+  public boolean isRecovering() {
+    return getState().equals(StateManager.RECOVERING);
   }
 
   public void registerStateChangeListener(StateChangeListener listener) {

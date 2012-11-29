@@ -127,6 +127,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public boolean isRecovering() {
+    return false;
+  }
+
+  @Override
   public void startBeanShell(int port) {
     //
   }

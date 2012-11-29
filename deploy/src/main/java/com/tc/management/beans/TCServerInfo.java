@@ -108,6 +108,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public boolean isRecovering() {
+    return l2State.isRecovering();
+  }
+
+  @Override
   public long getStartTime() {
     return server.getStartTime();
   }

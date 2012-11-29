@@ -22,30 +22,33 @@ public class StateChangeNotificationInfo {
       "jmx.terracotta.L2.start-state"               };
   private static final String[] STOP_INFO            = new String[] { "TCServer stop-state", "Stop-State",
       "jmx.terracotta.L2.stop-state"                };
+  private static final String[] RECOVERING_INFO        = new String[] { "TCServer recovering", "Recovering",
+      "jmx.terracotta.L2.recovering"                };
 
-  private final Map             map;
 
-  public StateChangeNotificationInfo() {
-    map = new HashMap();
+  private static final Map<String, String[]>             map;
+  static {
+    map = new HashMap<String, String[]>();
     map.put(StateManager.ACTIVE_COORDINATOR.getName(), ACTIVE_INFO);
     map.put(StateManager.PASSIVE_STANDBY.getName(), PASSIVE_STANDBY_INFO);
     map.put(StateManager.PASSIVE_UNINITIALIZED.getName(), PASSIVE_UNINIT_INFO);
     map.put(StateManager.START_STATE.getName(), START_INFO);
     map.put(StateManager.STOP_STATE.getName(), STOP_INFO);
+    map.put(StateManager.RECOVERING.getName(), RECOVERING_INFO);
   }
 
   public String getMsg(State state) {
-    String[] info = (String[]) map.get(state.getName());
+    String[] info = map.get(state.getName());
     return info[0];
   }
 
   public String getAttributeName(State state) {
-    String[] info = (String[]) map.get(state.getName());
+    String[] info = map.get(state.getName());
     return info[1];
   }
 
   public String getAttributeType(State state) {
-    String[] info = (String[]) map.get(state.getName());
+    String[] info = map.get(state.getName());
     return info[2];
   }
 

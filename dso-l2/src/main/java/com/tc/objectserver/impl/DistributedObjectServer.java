@@ -514,7 +514,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }
     }
 
-    persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath());
+    persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath(), l2State);
     persistor.start();
 
     if (restartable) {

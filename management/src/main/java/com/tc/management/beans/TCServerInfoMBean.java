@@ -24,6 +24,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   boolean isPassiveStandby();
 
+  boolean isRecovering();
+
   long getStartTime();
 
   long getActivateTime();

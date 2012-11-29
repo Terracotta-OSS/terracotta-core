@@ -18,6 +18,7 @@ import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
+import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -168,7 +169,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException;
+  Persistor createPersistor(final boolean persistent, final File l2DataPath, final L2State l2State) throws IOException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 
