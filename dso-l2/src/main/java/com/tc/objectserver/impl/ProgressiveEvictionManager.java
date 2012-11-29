@@ -24,6 +24,9 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.MemoryEventsListener;
@@ -330,7 +333,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         agent.submit(new Runnable() {
             public void run() {
                 try {
-                    log("Eviction Run:" + name + " " + counter.get());
+                    SampledRateCounter rate = counter.get();
+                    if ( rate == null ) {
+                        return;
+                    }
+                    if (rate.getValue()==0) {
+                        logger.debug("Eviction Run:" + name + " " + rate);
+                    } else {
+                        log("Eviction Run:" + name + " " + rate);
+                    }
                 } catch ( ExecutionException exp ) {
                     logger.warn("eviction run", exp);
                 } catch ( InterruptedException it ) {
@@ -342,10 +353,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
     class Responder implements MemoryEventsListener {
 
-        long last = System.currentTimeMillis();
-        long epoc = System.currentTimeMillis();
-        long size = 0;
-        volatile boolean isEmergency = false;
+        private long last = System.currentTimeMillis();
+        private long epoc = System.currentTimeMillis();
+        private long size = 0;
+        private boolean isEmergency = false;
+        private boolean isThrottling = false;
+        private boolean isCritical = false;
+        private boolean isStopped = false;
 
         Future<SampledRateCounter> currentRun = completedFuture;
 
@@ -354,22 +368,33 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             try {
                 int percent = usage.getUsedPercentage();
                 long current = System.currentTimeMillis();
-                log("Percent usage:" + percent + " time:" + (current - last) + " msec.");
+                logger.debug("Percent usage:" + percent + " time:" + (current - last) + " msec.");
                 long max = usage.getMaxMemory();
                 long reserve = usage.getUsedMemory();
+                long threshold = calculateThreshold(reserve,max);
 
-
-                if (reserve >= calculateThreshold(reserve,max)) {                    
+                if (reserve >= threshold ) {                    
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + (reserve * 100 / max));
                         currentRun.cancel(false);
                         if (currentRun != completedFuture) {
                             print("Emergency", currentRun);
                         }
+                        
+                        if ( isCritical ) {
+                            stop(reserve*100/max);
+                        } else if ( isThrottling ) {
+                            isCritical = true;
+                        } else if ( isEmergency ) {
+                            throttle(reserve*100/max);
+                        } 
                         currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
                         isEmergency = true;
                     }
                 } else {
+                    if ( isThrottling ) {
+                        clear(reserve*100/max);
+                    }
                     clientObjectReferenceSet.size();
                     if ( isEmergency ) {
                         isEmergency = false;
@@ -389,7 +414,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
-            }
+            } 
         }
         
         private long calculateThreshold(long reserve, long max) {
@@ -413,6 +438,38 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 epoc = currenTime;
                 size = maxSize;
             }
+        }
+        
+        private void throttle(long percent) {
+            isThrottling = true;
+            resourceManager.setThrottle(1);
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNearResourceCapacityEvent("pool",percent);
+            TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
+            log(event.extractAsText());
+        }
+        
+        private void stop(long percent) {
+            if ( isStopped ) {
+                return;
+            }
+            isStopped = true;
+            resourceManager.setThrowException();
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool",percent);
+            TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
+            log(event.extractAsText());
+        }
+        
+        public void clear(long percent) {
+            if ( !isThrottling ) {
+                return;
+            }
+            isStopped = false;
+            isThrottling = false;
+            isCritical = false;
+            resourceManager.clear();
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",percent);
+            TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
+            log(event.extractAsText());
         }
     }
 }

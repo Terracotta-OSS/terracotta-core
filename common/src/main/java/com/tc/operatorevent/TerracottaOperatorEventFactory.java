@@ -185,7 +185,7 @@ public class TerracottaOperatorEventFactory {
   }
 
   /**
-   * Cluste state events
+   * Cluster state events
    */
   public static TerracottaOperatorEvent createActiveServerWithOldDataBaseEvent(String serverName) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.SYSTEM_SETUP,
@@ -193,5 +193,28 @@ public class TerracottaOperatorEventFactory {
                                                .getActiveStartedWithOldDBMessage(), new Object[] { serverName }),
                                            "old db");
   }
-
+  
+  /**
+   * Resource Management
+   */
+  public static TerracottaOperatorEvent createNearResourceCapacityEvent(String rsrcName, long percent) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.RESOURCE,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getNearResourceCapacityLimit(), new Object[] { rsrcName,percent }),
+                                           "near capacity");
+  }
+  
+  public static TerracottaOperatorEvent createFullResourceCapacityEvent(String rsrcName, long percent){
+    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.RESOURCE,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getFullResourceCapacityLimit(), new Object[] { rsrcName,percent }),
+                                           "full capacity");
+  }
+  
+    public static TerracottaOperatorEvent createNormalResourceCapacityEvent(String rsrcName, long percent) {
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.RESOURCE,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getRestoredNormalResourceCapacity(), new Object[] { rsrcName,percent }),
+                                           "normal capacity restored");
+  }
 }
