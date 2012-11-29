@@ -79,32 +79,30 @@ import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.search.UnsupportedSearchFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 
-import java.util.UUID;
-
 public class TerracottaToolkit implements ToolkitInternal {
 
-  public static final String                                   TOOLKIT_SERIALIZER_REGISTRATION_NAME = "TOOLKIT_SERIALIZER";
-  private final ToolkitObjectFactory<DestroyableToolkitList>   clusteredListFactory;
+  public static final String                                      TOOLKIT_SERIALIZER_REGISTRATION_NAME = "TOOLKIT_SERIALIZER";
+  private final ToolkitObjectFactory<DestroyableToolkitList>      clusteredListFactory;
   private final ToolkitObjectFactory<ToolkitCacheImpl>            clusteredCacheFactory;
-  private final ToolkitObjectFactory<DestroyableToolkitMap>      clusteredMapFactory;
+  private final ToolkitObjectFactory<DestroyableToolkitMap>       clusteredMapFactory;
   private final ToolkitObjectFactory<DestroyableToolkitSortedMap> clusteredSortedMapFactory;
   private final ToolkitObjectFactory<ToolkitCacheImpl>            clusteredStoreFactory;
-  private final ToolkitObjectFactory<ToolkitAtomicLong>        clusteredAtomicLongFactory;
-  private final ToolkitObjectFactory<ToolkitBarrier>           clusteredBarrierFactory;
-  private final ToolkitObjectFactory<DestroyableToolkitNotifier> clusteredNotifierFactory;
-  private final ToolkitObjectFactory<ToolkitBlockingQueueImpl> clusteredBlockingQueueFactory;
-  private final ToolkitObjectFactory<ToolkitSortedSetImpl>     clusteredSortedSetFactory;
-  private final ToolkitObjectFactory<ToolkitSetImpl>           clusteredSetFactory;
-  private final ToolkitObjectFactory<ToolkitLockImpl>          lockFactory;
-  private final ToolkitObjectFactory<ToolkitReadWriteLockImpl> rwLockFactory;
-  private final CacheManager                                   defaultToolkitCacheManager;
-  private final TerracottaL1Instance                           tcClient;
-  private final WeakValueMapManager                            weakValueMapManager                  = new WeakValueMapManager();
-  private ToolkitProperties                                    toolkitProperties;
-  protected final PlatformService                              platformService;
-  private final ClusterInfo                                    clusterInfoInstance;
+  private final ToolkitObjectFactory<ToolkitAtomicLong>           clusteredAtomicLongFactory;
+  private final ToolkitObjectFactory<ToolkitBarrier>              clusteredBarrierFactory;
+  private final ToolkitObjectFactory<DestroyableToolkitNotifier>  clusteredNotifierFactory;
+  private final ToolkitObjectFactory<ToolkitBlockingQueueImpl>    clusteredBlockingQueueFactory;
+  private final ToolkitObjectFactory<ToolkitSortedSetImpl>        clusteredSortedSetFactory;
+  private final ToolkitObjectFactory<ToolkitSetImpl>              clusteredSetFactory;
+  private final ToolkitObjectFactory<ToolkitLockImpl>             lockFactory;
+  private final ToolkitObjectFactory<ToolkitReadWriteLockImpl>    rwLockFactory;
+  private final CacheManager                                      defaultToolkitCacheManager;
+  private final TerracottaL1Instance                              tcClient;
+  private final WeakValueMapManager                               weakValueMapManager                  = new WeakValueMapManager();
+  private ToolkitProperties                                       toolkitProperties;
+  protected final PlatformService                                 platformService;
+  private final ClusterInfo                                       clusterInfoInstance;
 
-  public TerracottaToolkit(TerracottaL1Instance tcClient) {
+  public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider) {
     this.tcClient = tcClient;
     this.platformService = PlatformServiceProvider.getPlatformService();
     clusterInfoInstance = new TerracottaClusterInfo(platformService);
@@ -117,7 +115,7 @@ public class TerracottaToolkit implements ToolkitInternal {
         throw new AssertionError("Another object registered instead of serialization strategy - " + old);
       }
     }
-    defaultToolkitCacheManager = createDefaultToolkitCacheManager();
+    this.defaultToolkitCacheManager = toolkitCacheManagerProvider.getDefaultCacheManager();
 
     ToolkitFactoryInitializationContextBuilder builder = new ToolkitFactoryInitializationContextBuilder();
     final ToolkitFactoryInitializationContext context = builder.weakValueMapManager(weakValueMapManager)
@@ -148,11 +146,6 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager);
 
     clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, context);
-  }
-
-  private CacheManager createDefaultToolkitCacheManager() {
-    String cacheManagerUniqueName = "toolkitDefaultCacheManager-" + UUID.randomUUID().toString();
-    return CacheManager.newInstance(new net.sf.ehcache.config.Configuration().name(cacheManagerUniqueName));
   }
 
   private SerializationStrategy createSerializationStrategy() {
