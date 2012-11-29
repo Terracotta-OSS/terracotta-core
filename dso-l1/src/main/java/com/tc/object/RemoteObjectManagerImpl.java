@@ -44,11 +44,15 @@ import java.util.TimerTask;
 public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrintable {
 
   private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
-  private static final int     REMOVE_OBJECTS_THRESHOLD                  = 1000;
   private static final long    REMOVED_OBJECTS_SEND_NOW                  = 0;
-  private static final long    REMOVED_OBJECTS_SEND_TIMER                = 3000;
   private static final long    CLEANUP_UNUSED_DNA_TIMER                  = 300000;
 
+  private static final int     REMOVE_OBJECTS_THRESHOLD                  = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD, 10000);
+  private static final long    REMOVED_OBJECTS_SEND_TIMER                = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getLong(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER, 5000);
   private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);

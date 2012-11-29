@@ -513,6 +513,8 @@ public interface TCPropertiesConsts {
    *                           new objects
    * flush.logging.enabled   : Enable/disable object's flush logging
    * fault.logging.enabled   : Enable/disable object's fault logging
+   * removed.objects.send.timer : Max interval in milliseconds before sending a batch of removed object ids
+   * removed.objects.threshold : Max number of removed objects before immediately sending a batch of removed ids.
    * </code>
    ********************************************************************************************************************/
   public static final String L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                        = "l1.objectmanager.remote.maxDNALRUSize";
@@ -522,6 +524,8 @@ public interface TCPropertiesConsts {
   public static final String L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                         = "l1.objectmanager.objectid.request.size";
   public static final String L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                         = "l1.objectmanager.flush.logging.enabled";
   public static final String L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                         = "l1.objectmanager.fault.logging.enabled";
+  public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER                    = "l1.objectmanager.removed.objects.send.timer";
+  public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD                     = "l1.objectmanager.removed.objects.threshold";
 
   /*********************************************************************************************************************
    * <code>
