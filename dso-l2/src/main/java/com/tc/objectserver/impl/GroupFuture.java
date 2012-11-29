@@ -53,11 +53,13 @@ public class GroupFuture<T> implements Future<T> {
     public T get() throws InterruptedException, ExecutionException {
         T val = null;
         for ( Future<T> f : list ) {
-            T check = f.get();
-            if ( val == null ) {
-                val = check;
-            } else  if ( check != null && !val.equals(check) ) {
-                throw new ExecutionException(new AssertionError(val + " != " + check));
+            if ( !f.isCancelled() ) {
+                T check = f.get();
+                if ( val == null ) {
+                    check = val;
+                } else  if ( check == null || !val.equals(check) ) {
+                    throw new ExecutionException(new AssertionError(val + " != " + check));
+                }
             }
         }
         return val;

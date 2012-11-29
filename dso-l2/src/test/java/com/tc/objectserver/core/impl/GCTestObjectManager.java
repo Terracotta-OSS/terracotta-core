@@ -165,7 +165,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     gcCollector.notifyNewObjectInitalized(id);
   }
 
-  public ManagedObject getObjectByIDReadOnly(ObjectID id) {
+  public ManagedObject getObjectByIDOrNull(ObjectID id) {
     ManagedObject mo = getObjectByID(id);
     if (mo != null && mo.isNew()) { return null; }
     return mo;
@@ -225,7 +225,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
   public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
     if (managed.containsKey(id)) {
-      return getObjectByIDReadOnly(id);
+      return getObjectByIDOrNull(id);
     } else {
       return null;
     }
@@ -242,7 +242,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
       releaseReadOnly(obj);
       return new ObjectIDSet(refs);
     } else {
-      ManagedObject obj = getObjectByIDReadOnly(id);
+      ManagedObject obj = getObjectByIDOrNull(id);
       if (obj == null) { return new ObjectIDSet(); }
       Set refs = obj.getObjectReferences();
       releaseReadOnly(obj);

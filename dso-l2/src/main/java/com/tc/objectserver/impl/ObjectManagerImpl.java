@@ -256,9 +256,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.DONT_UPDATE, AccessLevel.READ_WRITE);
   }
 
-  
-  public ManagedObject getObjectByIDReadOnly(final ObjectID id) {
-    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE, AccessLevel.READ);
+  public ManagedObject getObjectByIDOrNull(final ObjectID id) {
+    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE, AccessLevel.READ_WRITE);
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {

@@ -977,7 +977,7 @@ public class ObjectManagerTest extends TCTestCase {
           for (ObjectID oid : oids) {
             barrier.await(5, TimeUnit.SECONDS);
             logger.info("Looking up " + oid);
-            ManagedObject mo = objectManager.getObjectByIDReadOnly(oid);
+            ManagedObject mo = objectManager.getObjectByIDOrNull(oid);
             if (mo != null) {
               // Only need to release if we actually got it, since we're intentionally racing with the remove below,
               // it's possible that the ManagedObject was already gone before we got it.

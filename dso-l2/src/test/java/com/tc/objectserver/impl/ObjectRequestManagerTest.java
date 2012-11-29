@@ -965,7 +965,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public ManagedObject getObjectByIDReadOnly(final ObjectID id) {
+    public ManagedObject getObjectByIDOrNull(final ObjectID id) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 

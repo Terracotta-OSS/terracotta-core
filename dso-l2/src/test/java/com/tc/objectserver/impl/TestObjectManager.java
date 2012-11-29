@@ -215,7 +215,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
-  public ManagedObject getObjectByIDReadOnly(ObjectID id) {
+  public ManagedObject getObjectByIDOrNull(ObjectID id) {
     throw new ImplementMe();
   }
 

@@ -175,7 +175,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
       return Integer.MIN_VALUE;
     }
     final ObjectID oid = (ObjectID) value;
-    final ManagedObject mo = this.mgr.getObjectByIDReadOnly(oid);
+    final ManagedObject mo = this.mgr.getObjectByIDOrNull(oid);
     if (mo == null) { return 0; }
     try {
       final EvictableEntry ev = getEvictableEntryFrom(mo);

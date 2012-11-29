@@ -32,7 +32,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
@@ -68,28 +67,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     this.lockManager = mock(LockManager.class);
     this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
     TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
-    Transaction persistenceTransaction = new Transaction() {
-        LinkedList<TransactionListener> listeners = new LinkedList<TransactionListener>();
-          @Override
-          public void commit() {
-              for ( TransactionListener l : listeners ) {
-                  l.committed(this);
-              }
-          }
-
-          @Override
-          public void abort() {
-              for ( TransactionListener l : listeners ) {
-                  l.committed(this);
-              }
-          }
-
-          @Override
-          public void addTransactionListener(TransactionListener l) {
-             listeners.add(l);
-          }
-        
-    };
+    Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(), mock(ServerGlobalTransactionManager.class),
@@ -97,16 +75,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);
-    Stage recycle = mock(Stage.class);
     when(broadcastStage.getSink()).thenReturn(broadcastSink);
-    when(recycle.getSink()).thenReturn(mock(Sink.class));
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = mock(ServerTransactionManager.class);
     context.txnObjectManager = mock(TransactionalObjectManager.class);
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastStage);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, mock(Stage.class));
     context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, mock(Stage.class));
-    context.addStage(ServerConfigurationContext.APPLY_CHANGES_STAGE, recycle);
     context.lockManager = this.lockManager;
 
     this.handler.initializeContext(context);
@@ -121,7 +96,6 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   public void testLockManagerNotifyOnApply() throws Exception {
     ServerTransaction tx = createServerTransaction();
     this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.emptyMap()));
-    this.handler.handleEvent(new ApplyTransactionContext(null));
     verifyNotifies(tx);
   }
 
