@@ -623,7 +623,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
-
           isInterrupted = true;
         }
       }
@@ -646,9 +645,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     @Override
     public void run() {
       synchronized (RemoteTransactionManagerImpl.this.lock) {
-        if (status == REJOIN_IN_PROGRESS) {
-          RemoteTransactionManagerImpl.this.logger.info("Ignoring timerTask RemoteTransactionManagerTimerTask "
-                                                        + REJOIN_IN_PROGRESS);
+        if (status != RUNNING) {
+          RemoteTransactionManagerImpl.this.logger.info("Ignoring RemoteTransactionManagerTimerTask because status "
+                                                        + status);
           return;
         }
       }
@@ -669,8 +668,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
         this.cancel();
       } catch (final PlatformRejoinException e) {
-        RemoteTransactionManagerImpl.this.logger
-            .info("Ignoring RejoinInProgressException while sending Low water mark : ");
+        RemoteTransactionManagerImpl.this.logger.info("Ignoring " + e.getClass().getSimpleName()
+                                                      + " while sending Low water mark : ");
       } catch (final Exception e) {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);

@@ -5,7 +5,7 @@ package com.tc.exception;
 
 public class PlatformRejoinException extends TCRuntimeException {
   public PlatformRejoinException() {
-    this("can not perform operation because rejoin-in-progress");
+    this("can not perform operation because REJOIN-IN-PROGRESS");
   }
 
   public PlatformRejoinException(String message) {

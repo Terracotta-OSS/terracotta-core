@@ -9,12 +9,13 @@ import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TKStatefulClusterListener {
 
   private static final int  MAX_WAIT_SECONDS = 180;
-
   private final ClusterInfo clusterInfo;
   private final Status      status;
 
@@ -71,9 +72,10 @@ public class TKStatefulClusterListener {
 
   private static class Status {
 
-    private State               state = State.INIT;
+    private State                             state       = State.INIT;
     private ClusterEvent        lastReceivedEvent;
     private final ToolkitLogger logger;
+    private final BlockingQueue<State> eventsQueue = new LinkedBlockingQueue<State>();
 
     public Status(ToolkitLogger logger) {
       this.logger = logger;
@@ -94,6 +96,7 @@ public class TKStatefulClusterListener {
     private synchronized void update(State newState, ClusterEvent event) {
       this.state = newState;
       this.lastReceivedEvent = event;
+      eventsQueue.add(this.state);
       notifyAll();
     }
 
@@ -102,14 +105,16 @@ public class TKStatefulClusterListener {
       while (true) {
         logger.info("[W A I T E R] Waiting until " + expected + ", current: " + state + ", lastReceivedEvent: "
                     + lastReceivedEvent);
-        if (state == expected) {
-          break;
-        }
-        final long elapsedSeconds = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
-        if (elapsedSeconds > MAX_WAIT_SECONDS) { throw new AssertionError("Maximum wait time over, waiting for "
-                                                                          + expected + ", elapsed: " + elapsedSeconds
-                                                                          + " seconds"); }
         try {
+          State received = eventsQueue.take();
+          if (received == expected) {
+            break;
+          }
+          final long elapsedSeconds = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
+          if (elapsedSeconds > MAX_WAIT_SECONDS) { throw new AssertionError("Maximum wait time over, waiting for "
+                                                                            + expected + ", elapsed: " + elapsedSeconds
+                                                                            + " seconds"); }
+
           this.wait();
         } catch (InterruptedException e) {
           throw new RuntimeException();

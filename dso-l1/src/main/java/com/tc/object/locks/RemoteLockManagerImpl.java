@@ -256,6 +256,10 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
           this.cancel();
           return;
         }
+        if (rejoinInProgress) {
+          logger.info("Ignoring Batched Recall Requests Timer task as rejoin-in-progress.");
+          return;
+        }
         sendBatchedRequestsImmediately();
         batchRecallCommitsTimerTask = null;
       }

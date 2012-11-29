@@ -57,7 +57,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   /**
    * For lock recalls
    */
-  private TCConcurrentMultiMap<LockID, ServerMapLocalCache>                      lockIdsToLocalCache                  = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
+  private volatile TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache                  = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
 
   /**
    * All local caches

@@ -88,6 +88,7 @@ public class TransactionSequencer implements ClearableCallback {
 
   @Override
   public synchronized void cleanup() {
+    notifyAll();
     sequence = new SequenceGenerator(1);
     pendingBatches.clear();
     currentBatch = createNewBatch();

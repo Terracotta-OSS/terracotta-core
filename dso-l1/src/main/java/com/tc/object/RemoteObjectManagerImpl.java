@@ -606,6 +606,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
   }
@@ -616,8 +618,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       try {
         sendRemovedObjects();
       } catch (PlatformRejoinException e) {
-        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-        this.cancel();
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
@@ -631,8 +632,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       try {
         clearAllUnrequestedDNABatches();
       } catch (PlatformRejoinException e) {
-        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-        this.cancel();
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();

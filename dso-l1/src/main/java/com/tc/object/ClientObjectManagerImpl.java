@@ -82,11 +82,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback,
     PortableObjectProvider, Evictable, PrettyPrintable {
 
-  private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
+  private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
   private static final int                      REFERENCE_MAP_SEGS           = 32;
   private static final State                    PAUSED                       = new State("PAUSED");
@@ -198,16 +199,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from RemoteServerMapManagerImpl
     // remoteObjectManager will be cleanup from clientHandshakeCallbacks
 
-    // traverser discuss
-    // traverseTest discuss
-    // DSOClientMessageChannel discuss
-    // ToggleableReferenceManager discuss
-
     pojoToManaged.clear();
     objectStore.cleanup();
-    // clientTxManager.cleanup(); not needed because doing nothing
+    clientTxManager.cleanup();
     while (referenceQueue.poll() != null) {
       // cleanup the referenceQueue
+    }
+    for (ObjectLatchState latchState : objectLatchStateMap.values()) {
+      latchState.getLatch().release();
     }
     objectLatchStateMap.clear();
   }

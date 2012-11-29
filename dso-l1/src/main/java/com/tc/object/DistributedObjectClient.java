@@ -236,9 +236,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ClientLockManager                          lockManager;
   private ClientObjectManagerImpl                    objectManager;
   private RemoteSearchRequestManager                 searchRequestManager;
-  private ClientTransactionManagerImpl               txManager;
+  private ClientTransactionManagerImpl               clientTxnManager;
   private CommunicationsManager                      communicationsManager;
-  private RemoteTransactionManager                   rtxManager;
+  private RemoteTransactionManager                   remoteTxnManager;
   private ClientHandshakeManager                     clientHandshakeManager;
   private ClusterMetaDataManager                     clusterMetaDataManager;
   private CacheManager                               cacheManager;
@@ -476,7 +476,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Counter outstandingBatchesCounter = this.counterManager.createCounter(new SimpleCounterConfig(0));
     final Counter pendingBatchesSize = this.counterManager.createCounter(new SimpleCounterConfig(0));
 
-    this.rtxManager = this.dsoClientBuilder.createRemoteTransactionManager(this.channel.getClientIDProvider(),
+    this.remoteTxnManager = this.dsoClientBuilder.createRemoteTransactionManager(this.channel.getClientIDProvider(),
                                                                            encoding, FoldingConfig
                                                                                .createFromProperties(tcProperties),
                                                                            new TransactionIDGenerator(),
@@ -486,7 +486,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                            transactionsPerBatchCounter,
                                                                            abortableOperationManager);
 
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.rtxManager));
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.remoteTxnManager));
     final RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(
                                                                                                          this.channel
                                                                                                              .getObjectIDBatchRequestMessageFactory());
@@ -555,7 +555,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dumpHandler.registerForDump(remoteServerMgrDumpAdapter);
 
     final ClientGlobalTransactionManager gtxManager = this.dsoClientBuilder
-        .createClientGlobalTransactionManager(this.rtxManager, remoteServerMapManager);
+        .createClientGlobalTransactionManager(this.remoteTxnManager, remoteServerMapManager);
 
     final TCClassFactory classFactory = this.dsoClientBuilder.createTCClassFactory(this.config, this.classProvider,
                                                                                    encoding, this.manager,
@@ -633,11 +633,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dumpHandler.registerForDump(lockDumpAdapter);
 
     // Setup the transaction manager
-    this.txManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(), this.objectManager,
-                                                      txFactory, this.lockManager, this.rtxManager, this.runtimeLogger,
+    this.clientTxnManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(), this.objectManager,
+                                                             txFactory, this.lockManager, this.remoteTxnManager,
+                                                             this.runtimeLogger,
                                                       txnCounter, globalLocalCacheManager, abortableOperationManager);
 
-    final CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.txManager);
+    final CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.clientTxnManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(txnMgrDumpAdapter);
     this.dumpHandler.registerForDump(txnMgrDumpAdapter);
 
@@ -703,7 +704,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final Stage syncWriteBatchRecvdHandler = stageManager
         .createStage(ClientConfigurationContext.RECEIVED_SYNC_WRITE_TRANSACTION_ACK_STAGE,
-                     new ReceiveSyncWriteTransactionAckHandler(this.rtxManager), this.channel.getGroupIDs().length,
+                     new ReceiveSyncWriteTransactionAckHandler(this.remoteTxnManager), this.channel.getGroupIDs().length,
                      maxSize);
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
@@ -719,7 +720,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(remoteServerMapManager);
     clientHandshakeCallbacks.add(searchRequestManager);
-    clientHandshakeCallbacks.add(this.rtxManager);
+    clientHandshakeCallbacks.add(this.remoteTxnManager);
     clientHandshakeCallbacks.add(this.dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     clientHandshakeCallbacks.add(teh);
@@ -752,7 +753,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                                       tcMemManager);
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, this.lockManager,
-                                                                         remoteObjectManager, this.txManager,
+                                                                         remoteObjectManager, this.clientTxnManager,
                                                                          this.clientHandshakeManager,
                                                                          this.clusterMetaDataManager);
     stageManager.startAll(cc, Collections.EMPTY_LIST);
@@ -1043,7 +1044,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public ClientTransactionManager getTransactionManager() {
-    return this.txManager;
+    return this.clientTxnManager;
   }
 
   public ClientLockManager getLockManager() {
@@ -1059,7 +1060,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public RemoteTransactionManager getRemoteTransactionManager() {
-    return this.rtxManager;
+    return this.remoteTxnManager;
   }
 
   public CommunicationsManager getCommunicationsManager() {
@@ -1102,7 +1103,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       i.set("client", this);
       i.set("objectManager", this.objectManager);
       i.set("lockmanager", this.lockManager);
-      i.set("txManager", this.txManager);
+      i.set("txManager", this.clientTxnManager);
       i.set("portnum", port);
       i.eval("setAccessibility(true)"); // turn off access restrictions
       i.eval("server(portnum)");

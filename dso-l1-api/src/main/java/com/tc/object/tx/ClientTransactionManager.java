@@ -5,6 +5,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
@@ -22,7 +23,7 @@ import java.util.Map;
 /**
  * ThreadLocal based transaction manager interface. Changes go through here to the transaction for the current thread.
  */
-public interface ClientTransactionManager {
+public interface ClientTransactionManager extends ClearableCallback {
 
   /**
    * Begin a thread local transaction

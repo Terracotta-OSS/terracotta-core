@@ -26,7 +26,7 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
 
   @Override
   public void cleanup() {
-    // NOP
+    // nothing to do
   }
 
   @Override

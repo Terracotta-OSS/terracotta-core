@@ -69,8 +69,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     try {
       lockState.setrejoinInProgress(true);
       lockState.unpark();
-      it.remove(); // if unpark() fails (like LockHold), we do not remove item
-      // unlock() / release() of this item will remove it
+      it.remove(); // if unpark() fails (like LockHold), we do not remove item because unlock() / release() of this item
+                   // will remove it
     } catch (AssertionError e) {
       // some impl of LockStateNode (like LockHold) throws AssertionError
     }
@@ -176,7 +176,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     final Collection<LockWaiter> waiters = new ArrayList<LockWaiter>();
 
     synchronized (this) {
-      if (thread != null && !isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
+      if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
 
       if (this.greediness.isFree()) {
         // other L1s may be waiting (let server decide who to notify)
@@ -1112,6 +1112,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           abortAndRemove(remote, node);
           throw new InterruptedException();
         }
+        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
         final long now = System.currentTimeMillis();
         timeout -= now - lastTime;
         // possibility of changing node timeout here...

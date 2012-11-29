@@ -984,6 +984,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
   }
@@ -1023,6 +1025,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
             lockGCEventListener.fireLockGCEvent(gcCount);
           }
         }
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();

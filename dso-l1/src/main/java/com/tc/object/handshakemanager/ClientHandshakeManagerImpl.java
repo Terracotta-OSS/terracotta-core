@@ -39,7 +39,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final ClientIDProvider                    cidp;
   private final ClientHandshakeMessageFactory       chmf;
   private final TCLogger                            logger;
-  // private final Sink pauseSink;
   private final SessionManager                      sessionManager;
   private final String                              clientVersion;
   private final Map                                 groupStates          = new HashMap();
@@ -60,7 +59,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.logger = logger;
     this.cidp = channel.getClientIDProvider();
     this.chmf = chmf;
-    // this.pauseSink = pauseSink;
     this.sessionManager = sessionManager;
     this.dsoClusterEventsGun = dsoClusterEventsGun;
     this.clientVersion = clientVersion;

@@ -3,8 +3,10 @@
  */
 package org.terracotta.express.tests.rejoin;
 
-import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
+import org.terracotta.express.tests.util.NonLiteralKeyNonLiteralValueGenerator;
+import org.terracotta.express.tests.util.TCInt;
 import org.terracotta.toolkit.collections.ToolkitList;
+import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.test.config.model.TestConfig;
@@ -15,12 +17,13 @@ import junit.framework.Assert;
 public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitListRejoinTest(TestConfig testConfig) {
-    super(testConfig, ToolkitListRejoinTestClient.class);
+    super(testConfig, ToolkitListRejoinTestClient.class, ToolkitListRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitListRejoinTestClient extends AbstractToolkitRejoinTestClient {
 
-    private static final int NUM_ELEMENTS = 1000;
+    private static final int NUM_ELEMENTS = 10;
 
     public ToolkitListRejoinTestClient(String[] args) {
       super(args);
@@ -29,58 +32,63 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Exception {
       ToolkitInternal tk = createRejoinToolkit();
+      keyValueGenerator = new NonLiteralKeyNonLiteralValueGenerator();
+      ToolkitBarrier toolkitListBarrier = tk.getBarrier("toolkitListBarrier", 2);
 
-      doDebug("Adding values to list before rejoin");
-      ToolkitList<String> list = tk.getList("someList", null);
-      ToolkitBlockingQueue<String> queue = tk.getBlockingQueue("someTBQ", null);
-      for (int i = 0; i < NUM_ELEMENTS; i++) {
-        list.add("value-" + i);
-        queue.add("value-" + i);
-      }
-
-      doDebug("Asserting values before rejoin");
-      for (int i = 0; i < NUM_ELEMENTS; i++) {
-        Assert.assertEquals("value-" + i, list.get(i));
-        Assert.assertTrue(queue.contains("value-" + i));
-      }
-
-      startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
-      doDebug("Asserting old values after rejoin");
-
-      for (int i = 0; i < NUM_ELEMENTS; i++) {
-        Assert.assertEquals("value-" + i, list.get(i));
-        Assert.assertTrue(queue.contains("value-" + i));
-      }
-
-
-      doDebug("Adding new values after rejoin");
-      for (int i = 0; i < NUM_ELEMENTS; i++) {
-        list.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
-        queue.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
-      }
-
-
-      for (int i = 0; i < list.size(); i++) {
-        doDebug("Got value for i: " + i + ", value: " + list.get(i));
-        doDebug("Got value for i: " + i + ", value: " + (queue.contains("value-" + i) ? "value-" + i : null));
-      }
-
-      doDebug("Asserting new values inserted after rejoin");
-      Assert.assertEquals(2 * NUM_ELEMENTS, list.size());
-      Assert.assertEquals(2 * NUM_ELEMENTS, queue.size());
-      for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
-        final String expected;
-        if (i < NUM_ELEMENTS) {
-          expected = "value-" + i;
-        } else {
-          expected = "value-after-rejoin-" + i;
+      int index = toolkitListBarrier.await();
+      final ToolkitList<TCInt> toolkitList = tk.getList("toolkitList", TCInt.class);
+      doDebug("client " + index + " starting.. ");
+      if (index == 0) {
+        doDebug("Adding values before rejoin");
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          toolkitList.add((TCInt) keyValueGenerator.getValue(i));
         }
-        Assert.assertEquals(expected, list.get(i));
-        Assert.assertTrue(queue.contains(expected));
+        startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
+      } else {
+        waitUntilRejoinCompleted();
       }
-      doDebug("Asserted new values");
+      debug("client " + index + " done with rejoin");
+      toolkitListBarrier.await();
 
+      doDebug("Asserting old values after rejoin");
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        Assert.assertTrue(toolkitList.contains(keyValueGenerator.getValue(i)));
+      }
+      toolkitListBarrier.await();
 
+      if (index == 1) {
+        doDebug("Adding new values after rejoin");
+        for (int i = NUM_ELEMENTS; i < 2 * NUM_ELEMENTS; i++) {
+          toolkitList.add((TCInt) keyValueGenerator.getValue(i));
+        }
+      }
+      toolkitListBarrier.await();
+
+      doDebug("Asserting new values after rejoin");
+      for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
+        Assert.assertTrue(toolkitList.contains(keyValueGenerator.getValue(i)));
+      }
+
+      doDebug("getting a fresh list after rejoin");
+      ToolkitList<TCInt> freshToolkitList = tk.getList("freshToolkitList", TCInt.class);
+      if (index == 1) {
+        doDebug("adding values in fresh blocking queue after rejoin");
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          freshToolkitList.add((TCInt) keyValueGenerator.getValue(i));
+        }
+        tk.waitUntilAllTransactionsComplete();
+        doDebug("asserting fresh blocking queue after rejoin " + freshToolkitList.size());
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
+        }
+        toolkitListBarrier.await();
+      } else {
+        toolkitListBarrier.await();
+        doDebug("asserting fresh blocking queue after rejoin " + freshToolkitList.size());
+        // for (int i = 0; i < NUM_ELEMENTS; i++) {
+        // Assert.assertTrue(freshToolkitList.contains(keyValueGenerator.getValue(i)));
+        // }
+      }
     }
 
   }

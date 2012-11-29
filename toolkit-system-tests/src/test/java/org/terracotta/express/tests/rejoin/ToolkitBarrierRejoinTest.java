@@ -17,6 +17,7 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitBarrierRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitBarrierRejoinTestClient.class, ToolkitBarrierRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitBarrierRejoinTestClient extends AbstractToolkitRejoinTestClient {

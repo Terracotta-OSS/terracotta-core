@@ -21,6 +21,7 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitBlockingQueueRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitBlockingQueueRejoinTestClient.class, ToolkitBlockingQueueRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitBlockingQueueRejoinTestClient extends AbstractToolkitRejoinTestClient {
@@ -37,9 +38,10 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
       ToolkitBarrier toolkitBlockingQueueBarrier = tk.getBarrier("toolkitBlockingQueueBarrier", 2);
       int index = toolkitBlockingQueueBarrier.await();
       final ToolkitBlockingQueue<TCInt> toolkitBlockingQueue = tk.getBlockingQueue("toolkitBlockingQueue", TCInt.class);
+
       doDebug("client " + index + " starting.. ");
       if (index == 0) {
-        doDebug("Adding values to bq before rejoin");
+        doDebug("Adding values before rejoin");
         for (int i = 0; i < NUM_ELEMENTS; i++) {
           toolkitBlockingQueue.add((TCInt) keyValueGenerator.getValue(i));
         }
@@ -47,6 +49,7 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
       } else {
         waitUntilRejoinCompleted();
       }
+
       debug("client " + index + " done with rejoin");
       toolkitBlockingQueueBarrier.await();
 
@@ -67,6 +70,24 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
       doDebug("Asserting new values after rejoin");
       for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitBlockingQueue.contains(keyValueGenerator.getValue(i)));
+      }
+
+      doDebug("getting a fresh blocking queue after rejoin");
+      ToolkitBlockingQueue<TCInt> freshToolkitBlockingQueue = tk.getBlockingQueue("freshToolkitBlockingQueue",
+                                                                                  TCInt.class);
+      if (index == 1) {
+        doDebug("adding values in fresh blocking queue after rejoin");
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          freshToolkitBlockingQueue.add((TCInt) keyValueGenerator.getValue(i));
+        }
+        tk.waitUntilAllTransactionsComplete();
+        toolkitBlockingQueueBarrier.await();
+      } else {
+        toolkitBlockingQueueBarrier.await();
+        doDebug("asserting fresh blocking queue after rejoin " + freshToolkitBlockingQueue.size());
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+          Assert.assertTrue(freshToolkitBlockingQueue.contains(keyValueGenerator.getValue(i)));
+        }
       }
     }
 

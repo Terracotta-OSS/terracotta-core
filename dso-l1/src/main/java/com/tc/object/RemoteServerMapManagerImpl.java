@@ -286,6 +286,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
         logger.info("Ignoring " + e.getClass().getName()
                     + " while trying to send pending requests. Cancelling timer task.");
         this.cancel();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getClass().getName() + " while trying to send pending requests");
       }
     }
   }

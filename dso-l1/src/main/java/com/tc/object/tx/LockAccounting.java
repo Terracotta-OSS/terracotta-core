@@ -21,9 +21,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class LockAccounting implements ClearableCallback {
-  private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = 10 * 1000;
+  private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = TimeUnit.SECONDS
+                                                                                            .toMillis(10L);
 
   private final CopyOnWriteArrayList<TxnRemovedListener> listeners                      = new CopyOnWriteArrayList<TxnRemovedListener>();
 
@@ -39,6 +41,9 @@ public class LockAccounting implements ClearableCallback {
 
   @Override
   public synchronized void cleanup() {
+    for (TxnRemovedListener listner : listeners) {
+      listner.allTxnCompleted();
+    }
     listeners.clear();
     tx2Locks.clear();
     lock2Txs.clear();

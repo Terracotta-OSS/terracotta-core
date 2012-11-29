@@ -6,7 +6,6 @@ package org.terracotta.express.tests.rejoin;
 import org.terracotta.express.tests.util.ClusteredStringBuilder;
 import org.terracotta.express.tests.util.ClusteredStringBuilderFactory;
 import org.terracotta.express.tests.util.ClusteredStringBuilderFactoryImpl;
-import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
@@ -18,7 +17,7 @@ import org.terracotta.toolkit.rejoin.RejoinException;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
@@ -26,12 +25,13 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitLockRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitLockRejoinTestClient.class, ToolkitLockRejoinTestClient.class);
+    testConfig.getL2Config().setRestartable(false);
   }
 
   public static class ToolkitLockRejoinTestClient extends AbstractToolkitRejoinTestClient {
     private final int lockUnlockCount = 10;
     private static final int              CLIENT_COUNT    = 2;
-    private static final int              LOCK_COUNT      = 0;
+    private static final int              LOCK_COUNT      = 5;
     private ClusteredStringBuilderFactory csbFactory;
 
     public ToolkitLockRejoinTestClient(String[] args) {
@@ -47,15 +47,19 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       doDebug("client " + index + " starting.. ");
 
       // test before rejoin
-      // testLock(toolkit, index);
-      // testRWLock(toolkit, index);
-
+      testLock(toolkit, index);
+      testRWLock(toolkit, index);
+      doDebug("client " + index + " is going to do rejoin");
+      lockBarrier.await();
+      
       // test during rejoin
       testLockWithRejoin(testHandlerMBean, toolkit, index);
 
+      doDebug("client " + index + " is running after rejoin");
+      lockBarrier.await();
       // test after rejoin
-      // testLock(toolkit, index);
-      // testRWLock(toolkit, index);
+      testLock(toolkit, index);
+      testRWLock(toolkit, index);
     }
 
     private void testLockWithRejoin(TestHandlerMBean testHandlerMBean, ToolkitInternal toolkit, int index)
@@ -64,10 +68,9 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       ToolkitBarrier testBarrier = toolkit.getBarrier("testBarrier", CLIENT_COUNT);
 
       if (index == 0) {
+        lock.lock();
         try {
-          lock.lock();
           startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
-          // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
         } finally {
           try {
             lock.unlock();
@@ -75,13 +78,10 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
             // ignored
           }
         }
-
         testBarrier.await();
         doLockUnlock(lock);
       } else {
-        waitUntilPassiveStandBy(testHandlerMBean);
         waitUntilRejoinCompleted();
-
         testBarrier.await();
         doLockUnlock(lock);
       }
@@ -91,10 +91,9 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       for (int i = 0; i < LOCK_COUNT; i++) {
         ToolkitReadWriteLock rwLock = toolkit.getReadWriteLock("testRWLock" + i);
         if (index == 0) {
+          rwLock.writeLock().lock();
           try {
-            rwLock.writeLock().lock();
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
-            // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
           } finally {
             try {
               rwLock.writeLock().unlock();
@@ -102,13 +101,10 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
               // ignored
             }
           }
-
           testBarrier.await();
-          doLockUnlock(lock);
+          doLockUnlock(rwLock.writeLock());
         } else {
-          waitUntilPassiveStandBy(testHandlerMBean);
           waitUntilRejoinCompleted();
-
           testBarrier.await();
           doLockUnlock(rwLock.writeLock());
         }
@@ -119,10 +115,9 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       for (int i = 0; i < LOCK_COUNT; i++) {
         ToolkitReadWriteLock rwLock = toolkit.getReadWriteLock("testRWLock" + i);
         if (index == 0) {
+          rwLock.readLock().lock();
           try {
-            rwLock.readLock().lock();
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
-            // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
           } finally {
             try {
               rwLock.readLock().unlock();
@@ -130,13 +125,10 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
               // ignored
             }
           }
-
           testBarrier.await();
           doLockUnlock(rwLock.readLock());
         } else {
-          waitUntilPassiveStandBy(testHandlerMBean);
           waitUntilRejoinCompleted();
-
           testBarrier.await();
           doLockUnlock(rwLock.readLock());
         }
@@ -145,8 +137,9 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
     }
 
     private void doLockUnlock(ToolkitLock lock) {
+      lock.lock();
       try {
-        lock.lock();
+        // do nothing
       } finally {
         lock.unlock();
       }
@@ -155,7 +148,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
     private void testLock(Toolkit toolkit, int index) throws Throwable {
       ToolkitLock lock = toolkit.getLock("testLock");
       ToolkitBarrier testBarrier = toolkit.getBarrier("testBarrier", CLIENT_COUNT);
-      final ToolkitList list = toolkit.getList("samplelist", String.class);
+
 
       // testing newCondition();
       try {
@@ -171,38 +164,34 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       } catch (IllegalMonitorStateException expected) {
         // ignored
       }
+      testBarrier.await();
 
-      // testing getCondition()
       if (index == 0) {
         lockTimes(lock);
         try {
-          list.add("hello");
           lock.getCondition().await();
         } finally {
           unlockTimes(lock);
         }
       } else {
-        WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return list.size() > 0;
-          }
-        });
+        TimeUnit.SECONDS.sleep(10L);
         lockTimes(lock);
         try {
           lock.getCondition().signalAll();
         } finally {
           unlockTimes(lock);
         }
-        list.clear();
       }
+      testBarrier.await();
 
       // testing lock boundaries
+      final ToolkitList list = toolkit.getList("samplelist", String.class);
       if (index == 0) {
         lock.lock();
         try {
-          testBarrier.await();
           list.add("hello" + index);
+          ((ToolkitInternal) toolkit).waitUntilAllTransactionsComplete();
+          testBarrier.await();
         } finally {
           lock.unlock();
         }
