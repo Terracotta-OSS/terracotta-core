@@ -56,7 +56,7 @@ public class NonStopToolkit implements ToolkitInternal {
   private static final String                                                          DELIMITER                     = "|";
 
   private final FutureTask<ToolkitInternal>                                            toolkitDelegateFutureTask;
-  private final NonStopManager                                                         nonStopManager;
+  private final NonStopManagerImpl                                                     nonStopManager;
   private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolver                                         nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
@@ -262,6 +262,7 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public void shutdown() {
+    nonStopManager.shutdown();
     getInitializedToolkit().shutdown();
   }
 
