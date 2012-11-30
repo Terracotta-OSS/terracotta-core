@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.collections;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
@@ -12,7 +13,6 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 
 import java.io.Serializable;
@@ -60,7 +60,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     boolean isLiteral = LiteralValues.isLiteralInstance(o);
     if (isLiteral) { return (E) o; }
 
-    return ((SerializedClusterObject<E>) o).getValue(strategy, false);
+    return ((SerializedClusterObject<E>) o).getValue(strategy, false, false);
   }
 
   @Override

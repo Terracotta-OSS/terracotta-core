@@ -49,6 +49,7 @@ public class ManagedObjectPersistor  {
   }
 
   public void close() {
+    //
   }
 
   public Set loadRoots() {

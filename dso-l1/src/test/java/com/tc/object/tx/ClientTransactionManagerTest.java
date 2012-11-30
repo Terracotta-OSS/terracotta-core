@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.MockTCObject;
@@ -32,7 +33,8 @@ public class ClientTransactionManagerTest extends TestCase {
     objMgr = new TestClientObjectManager();
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     clientTxnFactory, new MockClientLockManager(), rmtTxnMgr,
-                                                    SampledCounter.NULL_SAMPLED_COUNTER, null);
+                                                    SampledCounter.NULL_SAMPLED_COUNTER, null,
+                                                    new NullAbortableOperationManager());
   }
 
   @Override
@@ -40,7 +42,7 @@ public class ClientTransactionManagerTest extends TestCase {
     if (error.get() != null) { throw new RuntimeException((Throwable) error.get()); }
   }
 
-  public void testCheckWriteAccess() {
+  public void testCheckWriteAccess() throws Exception {
     // Test that we get an exception when we have no TXN started
     try {
       clientTxnMgr.checkWriteAccess(new Object());
@@ -72,7 +74,7 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr.commit(new StringLockID("test"), LockLevel.CONCURRENT);
   }
 
-  public void testDoIllegalReadChange() {
+  public void testDoIllegalReadChange() throws Exception {
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.READ);
 
     try {

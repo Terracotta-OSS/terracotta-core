@@ -147,7 +147,7 @@ public class ConfigHelper {
       l2ConfigBuilders[serverIndex].setStatistics(getStatisticsDirectoryPath(groupIndex, serverIndex));
 
       // set test level things
-      L2Config l2Config = testConfig.getL2Config();
+      L2Config l2Config = testConfig.getL2Config(groupIndex, serverIndex);
       // set client reconnect window
       l2ConfigBuilders[serverIndex].setReconnectWindowForPrevConnectedClients(l2Config.getClientReconnectWindow());
 
@@ -204,8 +204,7 @@ public class ConfigHelper {
       }
 
       groupData[groupIndex] = new GroupsData(groupName, tsaPorts, jmxPorts, tsaGroupPorts, serverNames, proxyTsaPorts,
-                                             proxyTsaGroupPorts, dataDirectoryPath, logDirectoryPath,
-                                             backupDirectoryPath);
+                                             proxyTsaGroupPorts, dataDirectoryPath, logDirectoryPath, backupDirectoryPath, groupIndex);
     }
   }
 

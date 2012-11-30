@@ -6,6 +6,8 @@ package com.tctest.jdk15;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.MockStage;
@@ -86,7 +88,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(logger, new NullSessionManager(), rmtLockManager, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                  new NullAbortableOperationManager());
 
     AbstractEventHandler serverLockUnlockHandler = new RequestLockUnLockHandler();
 
@@ -154,7 +157,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
         System.err.println("Thread " + threadName + " request lock");
         lockRequestOrder.add(threadName);
         LockManagerSystemTest.this.threadManager.setThreadID(tid3);
-        LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.WRITE);
+        try {
+          LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.err.println("Thread " + threadName + " obtain lock");
         lockAwardOrder.add(threadName);
       }
@@ -169,7 +176,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
         // to make sure that lock request order is correct i.e. t2 request the lock after t1
         ThreadUtil.reallySleep(30000);
         LockManagerSystemTest.this.threadManager.setThreadID(tid2);
-        LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.READ);
+        try {
+          LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.READ);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.err.println("Thread " + threadName + " obtain lock");
         lockAwardOrder.add(threadName);
       }
@@ -218,6 +229,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
           throw new AssertionError("Should have thrown a TCLockUpgradeNotSupportedError.");
         } catch (TCLockUpgradeNotSupportedError e) {
           flag.set();
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
         }
       }
     };
@@ -238,7 +251,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Read requested !");
         LockManagerSystemTest.this.threadManager.setThreadID(tid2);
-        LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.READ);
+        try {
+          LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.READ);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got Read !");
       }
     };
@@ -251,7 +268,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Write requested !");
         LockManagerSystemTest.this.threadManager.setThreadID(tid3);
-        LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.WRITE);
+        try {
+          LockManagerSystemTest.this.clientLockManager.lock(l1, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got Write !");
       }
     };
@@ -301,7 +322,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Asked for second lock");
         threadManager.setThreadID(tid2);
-        clientLockManager.lock(l1, LockLevel.WRITE);
+        try {
+          clientLockManager.lock(l1, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got second lock");
         done[0] = true;
       }
@@ -329,7 +354,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Asking for write lock");
         threadManager.setThreadID(tid4);
-        clientLockManager.lock(l3, LockLevel.WRITE);
+        try {
+          clientLockManager.lock(l3, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got write lock");
         done[0] = true;
       }
@@ -359,7 +388,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Asking for read lock");
         threadManager.setThreadID(tid1);
-        clientLockManager.lock(l3, LockLevel.READ);
+        try {
+          clientLockManager.lock(l3, LockLevel.READ);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got read lock");
         done[0] = true;
       }
@@ -372,7 +405,11 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Asking for read lock");
         threadManager.setThreadID(tid2);
-        clientLockManager.lock(l3, LockLevel.READ);
+        try {
+          clientLockManager.lock(l3, LockLevel.READ);
+        } catch (AbortedOperationException e) {
+          logger.warn("Should never come here ", e);
+        }
         System.out.println("Got read lock");
         done[1] = true;
       }
@@ -421,6 +458,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
             }
           } catch (InterruptedException e) {
             System.out.println("XXX INTERRUPTED XXX");
+          } catch (AbortedOperationException e) {
+            logger.warn("Should never come here ", e);
           }
         }
       }
@@ -452,6 +491,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
             }
           } catch (InterruptedException e) {
             System.out.println("XXX INTERRUPTED XXX");
+          } catch (AbortedOperationException e) {
+            logger.warn("Should never come here ", e);
           }
         }
       }
@@ -486,84 +527,104 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   private static class MockL2LockStatsManager implements L2LockStatsManager {
 
+    @Override
     public void clearAllStatsFor(NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void enableStatsForNodeIfNeeded(NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public int getGatherInterval() {
       throw new ImplementMe();
     }
 
+    @Override
     public Collection<LockSpec> getLockSpecs() {
       throw new ImplementMe();
     }
 
+    @Override
     public long getNumberOfLockHopRequests(LockID lockID) {
       throw new ImplementMe();
     }
 
+    @Override
     public long getNumberOfLockReleased(LockID lockID) {
       throw new ImplementMe();
     }
 
+    @Override
     public long getNumberOfLockRequested(LockID lockID) {
       throw new ImplementMe();
     }
 
+    @Override
     public long getNumberOfPendingRequests(LockID lockID) {
       throw new ImplementMe();
     }
 
+    @Override
     public int getTraceDepth() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isLockStatisticsEnabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements) {
       throw new ImplementMe();
     }
 
+    @Override
     public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
                                   long lockAwardTimestamp) {
       //
     }
 
+    @Override
     public void recordLockHopRequested(LockID lockID) {
       //
     }
 
+    @Override
     public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
       //
     }
 
+    @Override
     public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int numberOfPendingRequests) {
       //
     }
 
+    @Override
     public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
       throw new ImplementMe();
     }
 
+    @Override
     public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats,
                       ObjectStatsManager objectManager) {
       throw new ImplementMe();
     }
 
+    @Override
     public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
       return null;
     }

@@ -4,11 +4,6 @@
  */
 package com.tc.l2.ha;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.CLUSTER_ID_KEY;
-import static com.tc.l2.ha.ClusterStateDBKeyNames.L2_STATE_KEY;
-
-import com.tc.exception.CleanDirtyDatabaseException;
-import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -18,10 +13,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
-import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.UUID;
@@ -32,6 +23,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static com.tc.l2.ha.ClusterStateDBKeyNames.CLUSTER_ID_KEY;
+import static com.tc.l2.ha.ClusterStateDBKeyNames.L2_STATE_KEY;
 
 public class ClusterState {
 
@@ -52,8 +46,6 @@ public class ClusterState {
   private long                                      nextAvailableDGCId     = -1;
   private State                                     currentState;
   private StripeID                                  stripeID;
-  private final TerracottaOperatorEventLogger       operatorEventLogger    = TerracottaOperatorEventLogging
-                                                                               .getEventLogger();
 
   private boolean                                   nextObjectIDChanged    = false;
   private boolean                                   nextGlobalTxnIDChanged = false;
@@ -72,35 +64,10 @@ public class ClusterState {
     this.dgcSequenceProvider = dgcSequenceProvider;
     String sid = persistentStateStore.get(CLUSTER_ID_KEY);
     this.stripeID = (sid != null) ? new StripeID(sid) : StripeID.NULL_ID;
-    validateStartupState(persistentStateStore.get(L2_STATE_KEY));
     this.nextAvailObjectID = this.oidSequence.currentObjectIDValue();
     this.nextAvailGlobalTxnID = this.gidSequenceProvider.currentGID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
     this.nextAvailableDGCId = this.dgcSequenceProvider.currentIDValue();
-  }
-
-  private void validateStartupState(String stateStr) {
-    if (stateStr != null) {
-      State stateB4Crash = new State(stateStr);
-      if (!StateManager.ACTIVE_COORDINATOR.equals(stateB4Crash)) {
-        /*
-         * The server is running in persistent mode and this instance of the server was not the ACTIVE server before the
-         * crash. Force user to clean up the DB so that this server can resync state from the ACTIVE.
-         */
-        String errorMessage = Banner
-            .makeBanner("This server is running with persistence turned on and was stopped in " + stateStr
-                        + " state. Only the " + StateManager.ACTIVE_COORDINATOR.getName() + " server is allowed "
-                        + " to be restarted without cleaning up the data directory with persistence turned on.\n\n"
-                        + "Please clean up the data directory and make sure that the "
-                        + StateManager.ACTIVE_COORDINATOR.getName()
-                        + " is up and running before starting this server. It is important that the "
-                        + StateManager.ACTIVE_COORDINATOR.getName()
-                        + " is up and running before starting this server else you might end up losing data", "ERROR");
-        logger.error(errorMessage, new Throwable());
-        operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDirtyDBEvent());
-        throw new CleanDirtyDatabaseException(errorMessage);
-      }
-    }
   }
 
   public void setNextAvailableObjectID(long nextAvailOID) {

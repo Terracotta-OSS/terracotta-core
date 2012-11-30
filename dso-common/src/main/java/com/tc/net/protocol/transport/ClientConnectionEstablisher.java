@@ -158,12 +158,17 @@ public class ClientConnectionEstablisher {
       }
 
       this.asyncReconnecting.set(true);
+      boolean reconnectionRejected = false;
       for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected; i++) {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
 
-          if (cmt.isRejoinExpected()) {
-            cmt.logger.warn("Skipping reconnect as it has been rejected. Expecting Rejoin.");
+          // if (cmt.isRejoinExpected()) {
+          // cmt.logger.warn("Skipping reconnect as it has been rejected. Expecting Rejoin.");
+          // return;
+          // }
+          if (reconnectionRejected) {
+            LOGGER.info("Reconnection rejected by L2, no more trying to reconnect - " + cmt);
             return;
           }
 
@@ -172,15 +177,19 @@ public class ClientConnectionEstablisher {
 
           // DEV-1945
           if (i == 0) {
-            String previousConnectHost = cmt.getRemoteAddress().getAddress().getHostAddress();
+            String previousConnectHost = "";
+            int previousConnectHostPort = -1;
+            if (cmt.getRemoteAddress() != null) {
+              previousConnectHost = cmt.getRemoteAddress().getAddress().getHostAddress();
+              previousConnectHostPort = cmt.getRemoteAddress().getPort();
+            }
             String connectingToHost = "";
             try {
               connectingToHost = InetAddress.getByName(connInfo.getHostname()).getHostAddress();
             } catch (UnknownHostException e) {
               // these errors are caught even before
+              throw new RuntimeException(e);
             }
-
-            int previousConnectHostPort = cmt.getRemoteAddress().getPort();
             int connectingToHostPort = connInfo.getPort();
 
             if ((addresses.hasNext()) && (previousConnectHost.equals(connectingToHost))
@@ -200,6 +209,7 @@ public class ClientConnectionEstablisher {
           } catch (MaxConnectionsExceededException e) {
             throw e;
           } catch (ReconnectionRejectedException e) {
+            reconnectionRejected = true;
             handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (TCTimeoutException e) {
             handleConnectException(e, false, connectionErrorLossyLogger, connection);
@@ -226,9 +236,15 @@ public class ClientConnectionEstablisher {
 
     this.asyncReconnecting.set(true);
     try {
+      boolean reconnectionRejected = false;
       while (!connected) {
-        if (cmt.isRejoinExpected()) {
-          cmt.logger.warn("Skipping restore as it has been rejected. Expecting Rejoin.");
+        // if (cmt.isRejoinExpected()) {
+        // cmt.logger.warn("Skipping restore as it has been rejected. Expecting Rejoin.");
+        // return;
+        // }
+
+        if (reconnectionRejected) {
+          LOGGER.info("Reconnection rejected by L2, no more trying to restore connection - " + cmt);
           return;
         }
 
@@ -244,6 +260,7 @@ public class ClientConnectionEstablisher {
         } catch (TCTimeoutException e) {
           handleConnectException(e, false, cmt.logger, connection);
         } catch (ReconnectionRejectedException e) {
+          reconnectionRejected = true;
           handleConnectException(e, false, cmt.logger, connection);
         } catch (IOException e) {
           handleConnectException(e, false, cmt.logger, connection);
@@ -363,6 +380,7 @@ public class ClientConnectionEstablisher {
       }
     }
 
+    @Override
     public void run() {
       while (!stopped) {
         ConnectionRequest request = waitUntilRequestAvailableOrStopped();

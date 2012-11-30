@@ -3,38 +3,46 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.net.GroupID;
+import com.tc.platform.PlatformService;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
+import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
-    implements AggregateToolkitTypeRoot<T, S> {
+    implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedClusteredObjectLookup<S> {
 
   private final ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots;
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
   private final WeakValueMap<T>                           localCache;
   private final PlatformService                           platformService;
+  private final String                                    rootName;
 
-  protected AggregateDistributedToolkitTypeRoot(ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
+  protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
                                                 PlatformService platformService) {
+    this.rootName = rootName;
     this.roots = roots;
     this.distributedTypeFactory = factory;
     this.localCache = weakValueMap;
     this.platformService = platformService;
+    this.platformService.addRejoinLifecycleListener(this);
   }
 
   @Override
@@ -62,14 +70,18 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
           stripeObjects = createStripeObjects(name, effectiveConfig);
         }
 
-        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, name, stripeObjects,
+        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, this, name, stripeObjects,
                                                                        effectiveConfig, platformService);
         localCache.put(name, distributedType);
         return distributedType;
       }
     } finally {
       unlock(type, name);
-      platformService.waitForAllCurrentTransactionsToComplete();
+      try {
+        platformService.waitForAllCurrentTransactionsToComplete();
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
     }
   }
 
@@ -90,7 +102,8 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     return stripeObjects;
   }
 
-  private ToolkitObjectStripe<S>[] lookupStripeObjects(String name) throws AssertionError {
+  @Override
+  public ToolkitObjectStripe<S>[] lookupStripeObjects(String name) {
     final ToolkitObjectStripe<S>[] stripeObjects = new ToolkitObjectStripe[roots.length];
     // already created.. make sure was created in all stripes
     for (int i = 0; i < roots.length; i++) {
@@ -146,4 +159,31 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     }
   }
 
+  @Override
+  public void onRejoinStart() {
+    for (String name : localCache.keySet()) {
+      T wrapper = localCache.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinStarted();
+      }
+    }
+  }
+
+  @Override
+  public void onRejoinComplete() {
+    lookupOrCreateRoots();
+    for (String name : localCache.keySet()) {
+      T wrapper = localCache.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinCompleted();
+      }
+    }
+  }
+
+  public void lookupOrCreateRoots() {
+    GroupID[] gids = platformService.getGroupIDs();
+    for (int i = 0; i < gids.length; i++) {
+      roots[i] = ToolkitTypeRootsStaticFactory.lookupOrCreateRootInGroup(platformService, gids[i], rootName);
+    }
+  }
 }

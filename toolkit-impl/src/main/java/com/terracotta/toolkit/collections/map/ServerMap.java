@@ -10,7 +10,9 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.SearchException;
+import org.terracotta.toolkit.search.attribute.NullAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
@@ -18,6 +20,8 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -34,6 +38,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.terracotta.toolkit.TerracottaProperties;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
@@ -191,11 +196,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void commitLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    platformService.commitLock(lockId, LockingUtils.translate(type));
+    try {
+      platformService.commitLock(lockId, LockingUtils.translate(type));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private void beginLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    platformService.beginLock(lockId, LockingUtils.translate(type));
+    try {
+      platformService.beginLock(lockId, LockingUtils.translate(type));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private V doGet(Object key, GetType getType, boolean quiet) {
@@ -266,9 +279,9 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private V getNonExpiredValue(Object key, SerializedMapValue serializedMapValue, GetType getType, boolean quiet) {
     if (serializedMapValue == null) { return null; }
 
-    if (getType == GetType.UNSAFE) {
+    if (isUnsafeGet(getType)) {
       // don't touch tc layer when doing unsafe reads
-      return deserialize(key, serializedMapValue);
+      return deserialize(key, serializedMapValue, true);
     }
     serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
     return deserialize(key, serializedMapValue);
@@ -277,7 +290,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public V checkAndGetNonExpiredValue(K key, Object value, GetType getType, boolean quiet) {
     SerializedMapValue serializedMapValue = asSerializedMapValue(value);
-    return deserialize(key, expireEntryIfNecessary(key, serializedMapValue, getType, quiet));
+    return deserialize(key, expireEntryIfNecessary(key, serializedMapValue, getType, quiet), isUnsafeGet(getType));
+  }
+
+  private boolean isUnsafeGet(GetType getType) {
+    return getType == GetType.UNSAFE;
   }
 
   private SerializedMapValue expireEntryIfNecessary(Object key, SerializedMapValue serializedMapValue, GetType getType,
@@ -310,15 +327,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private V deserialize(Object key, SerializedMapValue serializedMapValue) {
+    return deserialize(key, serializedMapValue, false);
+  }
+
+  private V deserialize(Object key, SerializedMapValue serializedMapValue, boolean local) {
     if (serializedMapValue == null) { return null; }
     try {
       V deserialized = null;
 
       if (copyOnReadEnabled) {
-        deserialized = (V) serializedMapValue.getDeserializedValueCopy(strategy, compressionEnabled);
+        deserialized = (V) serializedMapValue.getDeserializedValueCopy(strategy, compressionEnabled, local);
       } else {
         deserialized = (V) serializedMapValue.getDeserializedValue(strategy, compressionEnabled,
-                                                                   l1ServerMapLocalCacheStore, key);
+                                                                   l1ServerMapLocalCacheStore, key, local);
       }
       return deserialized;
     } catch (Exception e) {
@@ -354,8 +375,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void expire(Object key, SerializedMapValue serializedMapValue, GetType getType) {
     final boolean notify;
-
-    V deserializedValue = deserialize(key, serializedMapValue);
+    // perform local get for unsafe operations
+    V deserializedValue = deserialize(key, serializedMapValue, isUnsafeGet(getType));
     MetaData metaData = getEvictRemoveMetaData();
 
     if (getType == GetType.LOCKED) {
@@ -407,11 +428,23 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private Object doLogicalGetValueLocked(Object key, final Long lockID) {
-    return this.tcObjectServerMap.getValue(this, lockID, key);
+    try {
+      return this.tcObjectServerMap.getValue(this, lockID, key);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   private Object doLogicalGetValueUnlocked(Object key) {
-    return this.tcObjectServerMap.getValueUnlocked(this, key);
+    try {
+      return this.tcObjectServerMap.getValueUnlocked(this, key);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   private void doLogicalPutLocked(final Long lockID, K key, final V value, int createTimeInSecs,
@@ -510,6 +543,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
+  public void cleanLocalState() {
+    this.tcObjectServerMap.cleanLocalState();
+  }
+
+  @Override
   public void clearLocalCache() {
     if (isEventual()) {
       // DEV-5244: no need to broadcast 'clear local cache' when invalidateOnChange
@@ -520,7 +558,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         platformService.logicalInvoke(this, SerializationUtil.CLEAR_LOCAL_CACHE_SIGNATURE, NO_ARGS);
       } finally {
         commitLock(getInstanceDsoLockName(), this.lockType);
-        platformService.waitForAllCurrentTransactionsToComplete();
+        try {
+          platformService.waitForAllCurrentTransactionsToComplete();
+        } catch (AbortedOperationException e) {
+          throw new ToolkitAbortableOperationException(e);
+        }
         internalClearLocalCache();
       }
     }
@@ -566,12 +608,28 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<K> keySet() {
-    return new ServerMapKeySet<K, V>(this, tcObjectServerMap.keySet(this));
+    Set keySet = null;
+    try {
+      keySet = tcObjectServerMap.keySet(this);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+    return new ServerMapKeySet<K, V>(this, keySet);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return new ServerMapEntrySet<K, V>(this, tcObjectServerMap.keySet(this));
+    Set keySet = null;
+    try {
+      keySet = tcObjectServerMap.keySet(this);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+    return new ServerMapEntrySet<K, V>(this, keySet);
   }
 
   private void assertNotNull(final Object value) {
@@ -919,7 +977,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
       final V old = deserialize(key, oldSerializedMapValue);
-      
+
       MetaData metaData = createPutSearchMetaData(key, newValue);
       if (metaData != null) metaData.set(SearchMetaData.COMMAND, SearchCommand.REPLACE);
 
@@ -930,7 +988,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                                                                               timeSource.nowInSeconds(),
                                                                               ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
                                                                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
-          
+
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue);
           return true;
         } finally {
@@ -1004,7 +1062,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       unlockedClear();
     } finally {
       commitLock(getInstanceDsoLockName(), this.lockType);
-      platformService.waitForAllCurrentTransactionsToComplete();
+      try {
+        platformService.waitForAllCurrentTransactionsToComplete();
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
       internalClearLocalCache();
     }
   }
@@ -1046,7 +1108,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public int size() {
-    long sum = ((TCObjectServerMap) __tc_managed()).getAllSize(new TCServerMap[] { this });
+    long sum = 0;
+    try {
+      sum = ((TCObjectServerMap) __tc_managed()).getAllSize(new TCServerMap[] { this });
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
@@ -1273,7 +1342,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private boolean isSearchable() {
-    return attrExtractor != ToolkitAttributeExtractor.NULL_EXTRACTOR;
+    return attrExtractor != null && !(attrExtractor instanceof NullAttributeExtractor);
   }
 
   private String getAttrTypeMapLockName() {

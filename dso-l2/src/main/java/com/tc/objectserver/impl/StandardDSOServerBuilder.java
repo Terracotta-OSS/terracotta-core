@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
@@ -289,12 +291,13 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
                                              final DGCSequenceProvider dgcSequenceProvider,
-                                             final SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence) {
+                                             final SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence,
+                                             final MonitoredResource resource) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence);
+                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence, resource);
   }
 
   @Override

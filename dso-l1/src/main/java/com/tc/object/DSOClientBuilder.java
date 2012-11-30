@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -90,15 +91,18 @@ public interface DSOClientBuilder {
                                                                       final PreTransactionFlushCallback preTransactionFlushCallback);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                final int faultCount, final SessionManager sessionManager);
+                                                final int faultCount, final SessionManager sessionManager,
+                                                AbortableOperationManager abortableOperationManager);
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
-                                                      final L1ServerMapLocalCacheManager globalLocalCacheManager);
+                                                      final L1ServerMapLocalCacheManager globalLocalCacheManager,
+                                                      final AbortableOperationManager abortableOperationManager);
 
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
-                                                              final SessionManager sessionManager);
+                                                              final SessionManager sessionManager,
+                                                              final AbortableOperationManager abortableOperationManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,
@@ -115,14 +119,16 @@ public interface DSOClientBuilder {
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                               final Portability portability, final DSOClientMessageChannel dsoChannel,
                                               final ToggleableReferenceManager toggleRefMgr,
-                                              TCObjectSelfStore tcObjectSelfStore);
+                                              TCObjectSelfStore tcObjectSelfStore,
+                                              AbortableOperationManager abortableOperationManager);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
                                       final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
                                       final LockRequestMessageFactory lockRequestMessageFactory,
                                       final ThreadIDManager threadManager,
                                       final ClientGlobalTransactionManager clientGlobalTransactionManager,
-                                      final ClientLockManagerConfig clientLockManagerConfig);
+                                      final ClientLockManagerConfig clientLockManagerConfig,
+                                      final AbortableOperationManager abortableOperationManager);
 
   @Deprecated
   ClientLockStatManager createLockStatsManager();
@@ -136,7 +142,8 @@ public interface DSOClientBuilder {
                                                           final Counter outstandingBatchesCounter,
                                                           final Counter pendingBatchesSize,
                                                           SampledRateCounter transactionSizeCounter,
-                                                          SampledRateCounter transactionPerBatchCounter);
+                                                          SampledRateCounter transactionPerBatchCounter,
+                                                          AbortableOperationManager abortableOperationManager);
 
   ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence);
 
@@ -151,7 +158,8 @@ public interface DSOClientBuilder {
                                                       final SessionManager sessionManager,
                                                       final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                       final String clientVersion,
-                                                      final Collection<ClientHandshakeCallback> callbacks);
+                                                      final Collection<ClientHandshakeCallback> callbacks,
+                                                      Collection<ClearableCallback> clearCallbacks);
 
   L1Management createL1Management(TunnelingEventHandler teh, String rawConfigText,
                                   DistributedObjectClient distributedObjectClient);

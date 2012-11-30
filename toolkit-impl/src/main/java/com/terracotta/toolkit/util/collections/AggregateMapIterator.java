@@ -26,6 +26,7 @@ public abstract class AggregateMapIterator<T> implements Iterator<T> {
 
   public abstract Iterator<T> getClusterMapIterator(Map map);
 
+  @Override
   public boolean hasNext() {
 
     if (this.currentIterator == null) { return false; }
@@ -43,6 +44,7 @@ public abstract class AggregateMapIterator<T> implements Iterator<T> {
     return hasNext;
   }
 
+  @Override
   public T next() {
 
     if (this.currentIterator == null) { throw new NoSuchElementException(); }
@@ -61,6 +63,7 @@ public abstract class AggregateMapIterator<T> implements Iterator<T> {
     throw new NoSuchElementException();
   }
 
+  @Override
   public void remove() {
     this.currentIterator.remove();
   }

@@ -13,6 +13,7 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.ServerCrashMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.proxy.ProxyConnectManager;
@@ -160,7 +161,8 @@ public class GroupServerManager {
 
     for (int i = 0; i < groupData.getServerCount(); i++) {
       ArrayList<String> perServerJvmArgs = new ArrayList<String>();
-      perServerJvmArgs.addAll(testConfig.getL2Config().getExtraServerJvmArgs());
+      L2Config l2Config = testConfig.getL2Config(groupData.getGroupIndex(), i);
+      perServerJvmArgs.addAll(l2Config.getExtraServerJvmArgs());
       if (isProxyTsaGroupPort()) {
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
@@ -172,7 +174,7 @@ public class GroupServerManager {
         Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
       }
       serverControl[i] = getServerControl(groupData.getTsaPort(i), groupData.getJmxPort(i),
-                                          groupData.getServerNames()[i], perServerJvmArgs);
+                                          groupData.getServerNames()[i], perServerJvmArgs, l2Config);
       expectedServerRunning[i] = false;
     }
   }
@@ -181,16 +183,15 @@ public class GroupServerManager {
     return DEBUG_SERVER || Boolean.getBoolean(DEBUG_SERVER_PROPERTY + "." + debugPortOffset);
   }
 
-  private ServerControl getServerControl(final int tsaPort, final int jmxPort, final String serverName,
-                                         List<String> jvmArgs) {
+  private ServerControl getServerControl(final int tsaPort, final int jmxPort, final String serverName, List<String> jvmArgs, final L2Config l2config) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
     TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
-    TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap(),
-                                 testConfig.getL2Config().getDirectMemorySize());
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, l2config.getMinHeap(), l2config.getMaxHeap(),
+                                 l2config.getDirectMemorySize());
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
-    testConfig.getL2Config().getBytemanConfig().addTo(jvmArgs, tempDir);
+    l2config.getBytemanConfig().addTo(jvmArgs, tempDir);
     return new MonitoringServerControl(new ExtraProcessServerControl(HOST, tsaPort, jmxPort,
                                                                      tcConfigFile.getAbsolutePath(), true, serverName,
                                                                      jvmArgs, javaHome, true, workingDir),
@@ -817,6 +818,9 @@ public class GroupServerManager {
     for (ProxyConnectManager proxy : this.proxyL1Managers) {
       proxy.closeClientConnections();
     }
+  }
 
+  public int waitForServerExit(int serverIndex) throws Exception {
+    return serverControl[serverIndex].waitFor();
   }
 }

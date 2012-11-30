@@ -4,6 +4,8 @@
  */
 package com.tc.object.applicator;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
@@ -31,6 +33,7 @@ public class HashSetApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
       ClassNotFoundException {
     Set set = (Set) pojo;
@@ -49,11 +52,21 @@ public class HashSetApplicator extends BaseApplicator {
     switch (method) {
       case SerializationUtil.ADD:
         Object v = params[0];
-        Object value = v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v;
+        Object value;
+        try {
+          value = v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v;
+        } catch (AbortedOperationException e) {
+            throw new TCRuntimeException(e);
+        }
         set.add(value);
         break;
       case SerializationUtil.REMOVE:
-        Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
+        Object rkey;
+        try {
+          rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
+        } catch (AbortedOperationException e) {
+          throw new TCRuntimeException(e);
+        }
         set.remove(rkey);
         break;
       case SerializationUtil.REMOVE_ALL:
@@ -71,11 +84,16 @@ public class HashSetApplicator extends BaseApplicator {
     List retParams = new ArrayList(params.length);
 
     for (Object param : params) {
-      retParams.add(param instanceof ObjectID ? objectManager.lookupObject((ObjectID) param) : param);
+      try {
+        retParams.add(param instanceof ObjectID ? objectManager.lookupObject((ObjectID) param) : param);
+      } catch (AbortedOperationException e) {
+          throw new TCRuntimeException(e);
+      }
     }
     return retParams;
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     Set set = (Set) pojo;
     for (Iterator i = set.iterator(); i.hasNext();) {
@@ -94,6 +112,7 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     Set set = (Set) pojo;
     for (Iterator i = set.iterator(); i.hasNext();) {
@@ -105,6 +124,7 @@ public class HashSetApplicator extends BaseApplicator {
     return addTo;
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }

@@ -3,8 +3,8 @@
  */
 package com.terracotta.toolkit.express;
 
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.DSOContext;
+import com.tc.platform.StaticPlatformApi;
 
 import java.util.Set;
 
@@ -14,7 +14,8 @@ public class SpiInit implements DSOContextControl {
 
   public SpiInit(Object context) {
     this.dsoContext = (DSOContext) context;
-    ManagerUtil.enableSingleton(dsoContext.getManager());
+    StaticPlatformApi.enableSingleton(dsoContext.getManager());
+    // ManagerUtil.enableSingleton(dsoContext.getManager());
   }
 
   @Override
@@ -34,5 +35,10 @@ public class SpiInit implements DSOContextControl {
   @Override
   public void shutdown() {
     dsoContext.shutdown();
+  }
+
+  @Override
+  public boolean isOnline() {
+    return dsoContext.getManager().getDsoCluster().areOperationsEnabled();
   }
 }

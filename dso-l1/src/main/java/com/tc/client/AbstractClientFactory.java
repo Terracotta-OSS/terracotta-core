@@ -4,6 +4,7 @@
  */
 package com.tc.client;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
@@ -11,6 +12,7 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.util.factory.AbstractFactory;
 import com.tcclient.cluster.DsoClusterInternal;
 
@@ -28,7 +30,9 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        ClassProvider classProvider,
                                                        PreparedComponentsFromL2Connection connectionComponents,
                                                        Manager manager, DsoClusterInternal dsoCluster,
-                                                       ClientMode clientMode, TCSecurityManager securityManager);
+                                                       ClientMode clientMode, TCSecurityManager securityManager,
+                                                       AbortableOperationManager abortableOperationManager,
+                                                       RejoinManagerInternal rejoinManager);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

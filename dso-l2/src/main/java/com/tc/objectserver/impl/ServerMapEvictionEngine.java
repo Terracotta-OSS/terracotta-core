@@ -122,7 +122,7 @@ public class ServerMapEvictionEngine {
 
 //  /**
 //   * Collects random samples and initiates eviction
-//   * 
+//   *
 //   * @return true, if eviction is initiated, false otherwise
 //   */
 //  private ServerMapEvictionContext doEviction(final ObjectID oid, final EvictableMap ev,
@@ -205,7 +205,7 @@ public class ServerMapEvictionEngine {
         if ( candidates.isEmpty() ) {
           notifyEvictionCompletedFor(oid);
           return;
-        } 
+        }
 
         final NodeID localNodeID = this.groupManager.getLocalNodeID();
         final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();

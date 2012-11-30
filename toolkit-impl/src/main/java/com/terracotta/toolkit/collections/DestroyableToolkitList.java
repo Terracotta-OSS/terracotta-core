@@ -8,27 +8,51 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E> {
+public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E>,
+    RejoinAwareToolkitObject {
 
-  private volatile ToolkitList<E> list;
-  private final String            name;
+  private volatile ToolkitList<E>                              list;
+  private final String                                         name;
+  private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
 
-  public DestroyableToolkitList(ToolkitObjectFactory factory, ToolkitListImpl<E> list, String name) {
+  public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
+                                ToolkitListImpl<E> list, String name) {
     super(factory);
+    this.lookup = lookup;
     this.list = list;
     this.name = name;
     list.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
+  public void rejoinStarted() {
+    this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin != null) {
+      this.list = afterRejoin;
+    } else {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // apply destroy locally
+      applyDestroy();
+    }
+  }
+
+  @Override
   public void applyDestroy() {
-    this.list = DestroyedInstanceProxy.createNewInstance(ToolkitList.class, getName());
+    this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitList.class);
   }
 
   @Override
@@ -168,71 +192,85 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
       this.subList = subList;
     }
 
+    @Override
     public int size() {
       checkDestroyed();
       return subList.size();
     }
 
+    @Override
     public boolean isEmpty() {
       checkDestroyed();
       return subList.isEmpty();
     }
 
+    @Override
     public boolean contains(Object o) {
       checkDestroyed();
       return subList.contains(o);
     }
 
+    @Override
     public Iterator<E> iterator() {
       checkDestroyed();
       return new DestroyableIterator(subList.iterator(), DestroyableToolkitList.this);
     }
 
+    @Override
     public Object[] toArray() {
       checkDestroyed();
       return subList.toArray();
     }
 
+    @Override
     public <T> T[] toArray(T[] a) {
       checkDestroyed();
       return subList.toArray(a);
     }
 
+    @Override
     public boolean add(E e) {
       checkDestroyed();
       return subList.add(e);
     }
 
+    @Override
     public boolean remove(Object o) {
       checkDestroyed();
       return subList.remove(o);
     }
 
+    @Override
     public boolean containsAll(Collection<?> c) {
       checkDestroyed();
       return subList.containsAll(c);
     }
 
+    @Override
     public boolean addAll(Collection<? extends E> c) {
       checkDestroyed();
       return subList.addAll(c);
     }
 
+    @Override
     public boolean addAll(int index, Collection<? extends E> c) {
       checkDestroyed();
       return subList.addAll(index, c);
     }
 
+    @Override
     public boolean removeAll(Collection<?> c) {
       checkDestroyed();
       return subList.removeAll(c);
     }
 
+    @Override
     public boolean retainAll(Collection<?> c) {
       checkDestroyed();
       return subList.retainAll(c);
     }
 
+    @Override
     public void clear() {
       checkDestroyed();
       subList.clear();
@@ -250,46 +288,55 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
       return subList.hashCode();
     }
 
+    @Override
     public E get(int index) {
       checkDestroyed();
       return subList.get(index);
     }
 
+    @Override
     public E set(int index, E element) {
       checkDestroyed();
       return subList.set(index, element);
     }
 
+    @Override
     public void add(int index, E element) {
       checkDestroyed();
       subList.add(index, element);
     }
 
+    @Override
     public E remove(int index) {
       checkDestroyed();
       return subList.remove(index);
     }
 
+    @Override
     public int indexOf(Object o) {
       checkDestroyed();
       return subList.indexOf(o);
     }
 
+    @Override
     public int lastIndexOf(Object o) {
       checkDestroyed();
       return subList.lastIndexOf(o);
     }
 
+    @Override
     public ListIterator<E> listIterator() {
       checkDestroyed();
       return subList.listIterator();
     }
 
+    @Override
     public ListIterator<E> listIterator(int index) {
       checkDestroyed();
       return subList.listIterator(index);
     }
 
+    @Override
     public List<E> subList(int fromIndex, int toIndex) {
       checkDestroyed();
       return new SubListWrapper(subList.subList(fromIndex, toIndex));

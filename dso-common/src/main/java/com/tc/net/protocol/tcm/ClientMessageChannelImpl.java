@@ -86,6 +86,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  @Override
+  public void reopen() {
+    // todo: what about passwd?
+    this.sendLayer.reopen();
+  }
+
+  @Override
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
@@ -96,10 +103,12 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  @Override
   public int getConnectCount() {
     return this.connectCount;
   }
 
+  @Override
   public int getConnectAttemptCount() {
     return this.connectAttemptCount;
   }
@@ -119,6 +128,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(final MessageTransport transport) {
+    // TODO: review this.
+    long channelIdLong = transport.getConnectionId().getChannelID();
+    this.channelID = new ChannelID(channelIdLong);
+    this.cidProvider.setChannelID(this.channelID);
+    setLocalNodeID(new ClientID(channelIdLong));
     super.notifyTransportConnected(transport);
     this.connectCount++;
   }
@@ -142,6 +156,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     //
   }
 
+  @Override
   public ChannelIDProvider getChannelIDProvider() {
     return this.cidProvider;
   }
@@ -154,6 +169,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       this.channelID = channelID;
     }
 
+    @Override
     public synchronized ChannelID getChannelID() {
       return this.channelID;
     }

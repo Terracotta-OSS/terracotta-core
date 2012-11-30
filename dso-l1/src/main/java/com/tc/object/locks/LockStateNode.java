@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNode> {
 
   private static final ExecutorService UNPARK_HANDLER = Executors.newCachedThreadPool(new ThreadFactory() {
+                                                        @Override
                                                         public Thread newThread(Runnable r) {
                                                           Thread t = new Thread(r, "Unpark Handler Thread");
                                                           t.setDaemon(true);
@@ -28,12 +29,20 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
                                                       });
 
   private final ThreadID               owner;
-
+  private volatile boolean             rejoinInProgress = false;
   private LockStateNode                next;
 
   LockStateNode(ThreadID owner) {
     this.owner = owner;
     this.next = null;
+  }
+
+  void setrejoinInProgress(boolean inProgress) {
+    rejoinInProgress = inProgress;
+  }
+
+  boolean isRejoinInProgress() {
+    return rejoinInProgress;
   }
 
   /**
@@ -68,10 +77,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
   abstract ClientServerExchangeLockContext toContext(LockID lock, ClientID node);
 
+  @Override
   public LockStateNode getNext() {
     return next;
   }
 
+  @Override
   public LockStateNode setNext(LockStateNode newNext) {
     LockStateNode old = next;
     next = newNext;
@@ -96,6 +107,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
   static class LockHold extends LockStateNode {
     private final LockLevel level;
+    private boolean         flushInProgress = false;
 
     LockHold(ThreadID owner, LockLevel level) {
       super(owner);
@@ -106,9 +118,19 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return level;
     }
 
+    public void flushInProgress() {
+      flushInProgress = true;
+    }
+
+    public void flushCompleted() {
+      flushInProgress = false;
+    }
+
     @Override
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner())) {
+        if (flushInProgress) { return LockAcquireResult.WAIT_FOR_FLUSH; }
+
         if (this.getLockLevel().isWrite()) { return LockAcquireResult.SUCCESS; }
         if (newHold.getLockLevel().isRead()) { return LockAcquireResult.SHARED_SUCCESS; }
       } else {
@@ -390,6 +412,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     @Override
     void unpark() {
       Runnable unparker = new Runnable() {
+        @Override
         public void run() {
           synchronized (waitObject) {
             unparked = true;
@@ -484,6 +507,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     void unpark() {
       // this is a slight hack to avoiding blocking the stage thread
       Runnable unparker = new Runnable() {
+        @Override
         public void run() {
           synchronized (waitObject) {
             notified = true;

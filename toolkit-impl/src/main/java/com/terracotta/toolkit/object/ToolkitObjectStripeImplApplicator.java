@@ -6,6 +6,8 @@ package com.terracotta.toolkit.object;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.config.SupportedConfigurationType;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
@@ -77,7 +79,11 @@ public class ToolkitObjectStripeImplApplicator extends BaseApplicator {
             if (!(array[i] instanceof ObjectID)) { throw new AssertionError(
                                                                             "ClusteredObjectStripe should fault in only ObjectID's for components - "
                                                                                 + array[i]); }
-            components[i] = (TCToolkitObject) objectManager.lookupObject((ObjectID) array[i]);
+            try {
+              components[i] = (TCToolkitObject) objectManager.lookupObject((ObjectID) array[i]);
+            } catch (AbortedOperationException e) {
+              throw new TCRuntimeException(e);
+            }
           }
         } else {
           String key = pa.getFieldName();

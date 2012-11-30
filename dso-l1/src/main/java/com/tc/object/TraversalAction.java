@@ -3,11 +3,12 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 
 import java.util.List;
 
 public interface TraversalAction {
 
-  public void visit(List objects, GroupID gid);
+  public void visit(List objects, GroupID gid) throws AbortedOperationException;
 }

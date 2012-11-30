@@ -45,6 +45,7 @@ public class EmbeddedConfigClient extends ClientBase {
         .newTerracottaClientConfig();
     TerracottaInternalClient client1 = TerracottaInternalClientStaticFactory
         .getOrCreateTerracottaInternalClient(config);
+    client1.init();
 
     // no assertion here, client1 should start correctly without problem
 

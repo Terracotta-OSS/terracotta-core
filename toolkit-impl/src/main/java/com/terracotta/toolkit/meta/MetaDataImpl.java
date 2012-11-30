@@ -4,8 +4,8 @@
 package com.terracotta.toolkit.meta;
 
 
-import com.tc.object.bytecode.PlatformService;
 import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.platform.PlatformService;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchMetaData;
 

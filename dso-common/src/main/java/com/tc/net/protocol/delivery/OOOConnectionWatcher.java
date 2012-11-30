@@ -5,21 +5,24 @@ package com.tc.net.protocol.delivery;
 
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
-import com.tc.net.protocol.transport.ConnectionWatcher;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.RestoreConnectionCallback;
 import com.tc.util.DebugUtil;
 
-public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreConnectionCallback {
+public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageTransportListener {
 
   private static final boolean                      debug = false;
 
+  protected final ClientMessageTransport            cmt;
+  protected final ClientConnectionEstablisher       cce;
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
 
   public OOOConnectionWatcher(ClientMessageTransport cmt, ClientConnectionEstablisher cce,
                               OnceAndOnlyOnceProtocolNetworkLayer oooLayer, long timeoutMillis) {
-    super(cmt, oooLayer, cce);
+    this.cmt = cmt;
+    this.cce = cce;
     this.oooLayer = oooLayer;
     this.timeoutMillis = timeoutMillis;
   }
@@ -43,11 +46,31 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
     oooLayer.notifyTransportConnected(transport);
   }
 
+  @Override
   public void restoreConnectionFailed(MessageTransport transport) {
     log(transport, "Restore Connection Failed");
     oooLayer.connectionRestoreFailed();
-    // forcedDisconnect flag is not in above layer. So, defaultingh to false
-    super.notifyTransportDisconnected(transport, false);
+
+    // restore failed - try reconnect
+    cce.asyncReconnect(cmt);
+    // forcedDisconnect flag is not in above layer. So, defaulting to false
+    oooLayer.notifyTransportDisconnected(transport, false);
+  }
+
+  @Override
+  public void notifyTransportClosed(MessageTransport transport) {
+    cce.quitReconnectAttempts();
+    oooLayer.notifyTransportClosed(transport);
+  }
+
+  @Override
+  public void notifyTransportConnectAttempt(MessageTransport transport) {
+    oooLayer.notifyTransportConnectAttempt(transport);
+  }
+
+  @Override
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    oooLayer.notifyTransportReconnectionRejected(transport);
   }
 
   private static void log(MessageTransport transport, String msg) {

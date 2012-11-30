@@ -10,10 +10,9 @@ import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.PlatformService;
-import com.terracotta.toolkit.TerracottaToolkit;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,8 +28,7 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   private final PlatformService platformService;
 
   public SerializerMapImpl() {
-    platformService = ManagerUtil.lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
-                                                               PlatformService.class);
+    platformService = PlatformServiceProvider.getPlatformService();
   }
 
   @Override

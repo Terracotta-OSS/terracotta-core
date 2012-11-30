@@ -13,10 +13,10 @@ import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
-import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -25,10 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
-    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>,
-    ToolkitCacheInternal<K, V> {
+    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
 
-  private final AggregateServerMap<K, V>      aggregateServerMap;
+  private volatile AggregateServerMap<K, V>   aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
   private final String                        name;
 
@@ -37,13 +36,26 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     super(factory);
     this.name = name;
     this.aggregateServerMap = delegate;
-    activeDelegate = aggregateServerMap;
+    this.activeDelegate = aggregateServerMap;
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
+  public void rejoinStarted() {
+    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
+    aggregateServerMap.rejoinStarted();
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    aggregateServerMap.rejoinCompleted();
+    this.activeDelegate = aggregateServerMap;
+  }
+
+  @Override
   public void applyDestroy() {
-    this.activeDelegate = DestroyedInstanceProxy.createNewInstance(ToolkitCacheInternal.class, getName());
+    this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
+    this.aggregateServerMap = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), AggregateServerMap.class);
   }
 
   @Override
@@ -158,7 +170,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public V unsafeLocalGet(Object key) {
-    return activeDelegate.unsafeLocalGet(key);
+    return aggregateServerMap.unsafeLocalGet(key);
   }
 
   @Override
@@ -168,12 +180,12 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public int localSize() {
-    return activeDelegate.localSize();
+    return aggregateServerMap.localSize();
   }
 
   @Override
   public Set<K> localKeySet() {
-    return activeDelegate.localKeySet();
+    return aggregateServerMap.localKeySet();
   }
 
   @Override
@@ -193,7 +205,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public boolean containsLocalKey(Object key) {
-    return activeDelegate.containsLocalKey(key);
+    return aggregateServerMap.containsLocalKey(key);
   }
 
   @Override
@@ -208,6 +220,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void addListener(ToolkitCacheListener<K> listener) {
+    // TODO : handle rejoin ...
     activeDelegate.addListener(listener);
   }
 
@@ -243,37 +256,37 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public long localOnHeapSizeInBytes() {
-    return activeDelegate.localOnHeapSizeInBytes();
+    return aggregateServerMap.localOnHeapSizeInBytes();
   }
 
   @Override
   public long localOffHeapSizeInBytes() {
-    return activeDelegate.localOffHeapSizeInBytes();
+    return aggregateServerMap.localOffHeapSizeInBytes();
   }
 
   @Override
   public int localOnHeapSize() {
-    return activeDelegate.localOnHeapSize();
+    return aggregateServerMap.localOnHeapSize();
   }
 
   @Override
   public int localOffHeapSize() {
-    return activeDelegate.localOffHeapSize();
+    return aggregateServerMap.localOffHeapSize();
   }
 
   @Override
   public boolean containsKeyLocalOnHeap(Object key) {
-    return activeDelegate.containsKeyLocalOnHeap(key);
+    return aggregateServerMap.containsKeyLocalOnHeap(key);
   }
 
   @Override
   public boolean containsKeyLocalOffHeap(Object key) {
-    return activeDelegate.containsKeyLocalOffHeap(key);
+    return aggregateServerMap.containsKeyLocalOffHeap(key);
   }
 
   @Override
   public void disposeLocally() {
-    activeDelegate.disposeLocally();
+    aggregateServerMap.disposeLocally();
   }
 
   @Override
@@ -293,7 +306,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void clearLocalCache() {
-    activeDelegate.clearLocalCache();
+    aggregateServerMap.clearLocalCache();
   }
 
   @Override

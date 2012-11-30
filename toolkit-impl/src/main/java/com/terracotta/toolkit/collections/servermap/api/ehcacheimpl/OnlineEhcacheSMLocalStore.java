@@ -123,6 +123,12 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
   }
 
   @Override
+  public void cleanLocalState() {
+    // no need to notify listeners
+    localStoreCache.removeAll(true);
+  }
+
+  @Override
   public long getOnHeapSizeInBytes() {
     return localStoreCache.calculateInMemorySize();
   }

@@ -29,7 +29,7 @@ public interface TestHandlerMBean {
    * @param groupIndex the index of the mirror group in which the server is to be restarted
    * @throws Exception
    */
-  public void reastartLastCrashedServer(final int groupIndex) throws Exception;
+  public void restartLastCrashedServer(final int groupIndex) throws Exception;
 
   /**
    * Dumps the state for all servers and clients
@@ -145,4 +145,14 @@ public interface TestHandlerMBean {
    * @return true if the server is running.
    */
   public boolean isServerRunning(int groupIndex, int serverIndex);
+
+  /**
+   * Wait for a server to exit, returning the exit code.
+   *
+   * @param groupIndex  group for the server
+   * @param serverIndex server index
+   * @return exit code
+   */
+  public int waitForServerExit(int groupIndex, int serverIndex) throws Exception;
 }
+

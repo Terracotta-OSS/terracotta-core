@@ -30,7 +30,7 @@ public class CapacityEvictionTriggerTest extends AbstractEvictionTriggerTest {
         Mockito.when(getEvictableMap().getSize()).thenReturn(10000000);
         //  set max to 250k
         Mockito.when(getEvictableMap().getMaxTotalCount()).thenReturn(250000);
-        testCycle(250000);
+        checkCycle(250000);
         Mockito.verify(this.getClientSet()).addReferenceSetChangeListener(Mockito.<ClientObjectReferenceSetChangedListener>any());
     }
 

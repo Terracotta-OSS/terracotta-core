@@ -12,7 +12,7 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
-
+import com.tc.platform.rejoin.RejoinManager;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,10 +26,12 @@ public class ClientShutdownManager {
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
   private final DistributedObjectClient            client;
+  private final RejoinManager                      rejoinManager;
 
   public ClientShutdownManager(ClientObjectManager objectManager, DistributedObjectClient client,
-                               PreparedComponentsFromL2Connection connectionComponents) {
+                               PreparedComponentsFromL2Connection connectionComponents, RejoinManager rejoinManager) {
     this.client = client;
+    this.rejoinManager = rejoinManager;
     this.rtxManager = client.getRemoteTransactionManager();
     this.channel = client.getChannel();
     this.handshakeManager = client.getClientHandshakeManager();
@@ -53,6 +55,9 @@ public class ClientShutdownManager {
   }
 
   public void execute(boolean fromShutdownHook, boolean forceImmediate) {
+    // no more rejoins should happen after shutdown
+    rejoinManager.shutdown();
+
     executeBeforeShutdownHooks();
 
     closeLocalWork(forceImmediate);

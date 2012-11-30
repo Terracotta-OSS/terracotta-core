@@ -5,8 +5,9 @@ package com.terracotta.toolkit.object.serialization;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import com.tc.object.bytecode.PlatformServiceImpl;
+import com.tc.platform.PlatformService;
 
 import java.io.IOException;
 import java.io.ObjectStreamClass;
@@ -26,7 +27,7 @@ public class ObjectStreamClassMappingTest {
   @Before
   public void init() {
     localSerializerMap = new LocalSerializerMap();
-    serializer = new ObjectStreamClassMapping(new PlatformServiceImpl(), localSerializerMap);
+    serializer = new ObjectStreamClassMapping(Mockito.mock(PlatformService.class), localSerializerMap);
   }
 
   @Test

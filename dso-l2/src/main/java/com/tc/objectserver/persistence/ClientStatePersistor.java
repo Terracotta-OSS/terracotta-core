@@ -3,6 +3,7 @@ package com.tc.objectserver.persistence;
 import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.Transformer;
 import org.terracotta.corestorage.StorageManager;
 
 import com.tc.net.protocol.tcm.ChannelID;

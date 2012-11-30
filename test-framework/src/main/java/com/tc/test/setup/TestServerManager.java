@@ -233,4 +233,8 @@ public class TestServerManager {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
     this.groups[groupIndex].stopDsoProxy();
   }
+
+  public int waitForServerExit(int groupIndex, int serverIndex) throws Exception {
+    return groups[groupIndex].waitForServerExit(serverIndex);
+  }
 }

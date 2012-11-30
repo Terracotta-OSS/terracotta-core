@@ -10,6 +10,8 @@ public class MonitoringServerControl implements ServerControl {
   private final ServerControl serverControl;
   private final MonitoringServerControlExitCallback exitCallback;
 
+  private volatile int exitCode = -1;
+
   private Thread monitoringThread;
 
   public MonitoringServerControl(final ServerControl serverControl, final MonitoringServerControlExitCallback exitCallback) {
@@ -58,8 +60,11 @@ public class MonitoringServerControl implements ServerControl {
   }
 
   @Override
-  public int waitFor() throws Exception {
-    return serverControl.waitFor();
+  public synchronized int waitFor() throws Exception {
+    if (monitoringThread != null) {
+      monitoringThread.join();
+    }
+    return exitCode;
   }
 
   @Override
@@ -82,18 +87,17 @@ public class MonitoringServerControl implements ServerControl {
     return serverControl.getAdminPort();
   }
 
-  private void startMonitoring() {
+  private synchronized void startMonitoring() throws InterruptedException {
     if (monitoringThread != null) {
-      throw new AssertionError("Monitoring is already started.");
+      monitoringThread.join();
     }
     monitoringThread = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
-          while (exitCallback.onExit(serverControl.waitFor())) {
+          while (exitCallback.onExit(exitCode = serverControl.waitFor())) {
             serverControl.start();
           }
-          monitoringThread = null;
         } catch (InterruptedException e) {
           // Ignore interrupted exception, it comes on shutdown.
         } catch (Exception e) {
@@ -105,7 +109,7 @@ public class MonitoringServerControl implements ServerControl {
     monitoringThread.start();
   }
 
-  private void stopMonitoring() throws InterruptedException {
+  private synchronized void stopMonitoring() throws InterruptedException {
     if (monitoringThread == null) {
       throw new AssertionError("Monitoring was not started.");
     }

@@ -9,6 +9,9 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -16,21 +19,42 @@ import java.util.Map;
 import java.util.Set;
 
 public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObject<ToolkitMap> implements
-    ToolkitMap<K, V> {
+    ToolkitMap<K, V>, RejoinAwareToolkitMap<K, V> {
 
-  private final String              name;
-  private volatile ToolkitMap<K, V> map;
+  private final String                                        name;
+  private volatile ToolkitMap<K, V>                           map;
+  private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
 
-  public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory, ToolkitMapImpl<K, V> map, String name) {
+  public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
+                               IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
+                               String name) {
     super(factory);
+    this.lookup = lookup;
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
+  public void rejoinStarted() {
+    this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin != null) {
+      this.map = afterRejoin;
+    } else {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // so apply destroy locally
+      applyDestroy();
+    }
+  }
+
+  @Override
   public void applyDestroy() {
-    this.map = DestroyedInstanceProxy.createNewInstance(ToolkitMap.class, getName());
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitMap.class);
   }
 
   @Override

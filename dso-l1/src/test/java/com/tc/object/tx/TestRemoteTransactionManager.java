@@ -28,6 +28,12 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public TxnBatchID                   batchAcked;
   public ClientTransaction            transaction;
 
+  @Override
+  public void cleanup() {
+    // NOP
+  }
+
+  @Override
   public void commit(final ClientTransaction txn) {
     this.ids = txn.getAllLockIDs();
     this.changes = txn.getChangeBuffers();
@@ -36,63 +42,81 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.transaction = txn;
   }
 
+  public ClientTransaction getTransaction() {
+    return transaction;
+  }
+
+  @Override
   public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID ackTxID,
                                                    final NodeID nodeID) {
     this.acked = ackTxID;
     return null;
   }
 
+  @Override
   public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {
     this.batchAcked = batchID;
   }
 
+  @Override
   public void flush(final LockID lockID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void stop() {
     throw new ImplementMe();
 
   }
 
+  @Override
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
     throw new ImplementMe();
   }
 
+  @Override
   public void stopProcessing() {
     throw new ImplementMe();
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
   }
 
+  @Override
   public void pause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
 
+  @Override
   public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
 
+  @Override
   public void shutdown() {
     // NOP
   }
 
+  @Override
   public void waitForAllCurrentTransactionsToComplete() {
     //
   }
 
+  @Override
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
     throw new ImplementMe();
   }
 
+  @Override
   public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }

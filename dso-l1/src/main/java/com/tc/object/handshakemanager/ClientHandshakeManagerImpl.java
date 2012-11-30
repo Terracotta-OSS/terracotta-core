@@ -7,13 +7,11 @@ package com.tc.object.handshakemanager;
 import com.tc.async.api.Sink;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelEvent;
-import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.ChannelEventType;
+import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
-import com.tc.object.context.PauseContext;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -22,7 +20,6 @@ import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.tc.util.State;
 import com.tc.util.Util;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
@@ -31,17 +28,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ClientHandshakeManagerImpl implements ClientHandshakeManager, ChannelEventListener {
-  private static final State                        PAUSED               = new State("PAUSED");
-  private static final State                        STARTING             = new State("STARTING");
-  private static final State                        RUNNING              = new State("RUNNING");
+public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
+  private static enum State {
+    PAUSED, STARTING, RUNNING
+  }
+
   private static final TCLogger                     CONSOLE_LOGGER       = CustomerLogging.getConsoleLogger();
 
   private final Collection<ClientHandshakeCallback> callBacks;
   private final ClientIDProvider                    cidp;
   private final ClientHandshakeMessageFactory       chmf;
   private final TCLogger                            logger;
-  private final Sink                                pauseSink;
   private final SessionManager                      sessionManager;
   private final String                              clientVersion;
   private final Map                                 groupStates          = new HashMap();
@@ -51,24 +48,26 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private volatile boolean                          isShutdown           = false;
   private final AtomicBoolean                       transitionInProgress = new AtomicBoolean(false);
   private final DsoClusterInternalEventsGun         dsoClusterEventsGun;
+  private final Collection<ClearableCallback>       clearCallbacks;
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
                                     final SessionManager sessionManager,
                                     final DsoClusterInternalEventsGun dsoClusterEventsGun, final String clientVersion,
-                                    final Collection<ClientHandshakeCallback> callbacks) {
+                                    final Collection<ClientHandshakeCallback> callbacks,
+                                    final Collection<ClearableCallback> clearCallbacks) {
     this.logger = logger;
     this.cidp = channel.getClientIDProvider();
     this.chmf = chmf;
-    this.pauseSink = pauseSink;
     this.sessionManager = sessionManager;
     this.dsoClusterEventsGun = dsoClusterEventsGun;
     this.clientVersion = clientVersion;
     this.callBacks = callbacks;
     this.groupIDs = channel.getGroupIDs();
     this.disconnected = this.groupIDs.length;
-    initGroupStates(PAUSED);
+    initGroupStates(State.PAUSED);
     pauseCallbacks(GroupID.ALL_GROUPS, this.disconnected);
+    this.clearCallbacks = clearCallbacks;
   }
 
   private void waitForTransitionToComplete() {
@@ -129,24 +128,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     return false;
   }
 
-  @Override
-  public void notifyChannelEvent(final ChannelEvent event) {
-    if (GroupID.ALL_GROUPS.equals(event.getChannel().getRemoteNodeID())) { throw new AssertionError(
-                                                                                                    "Recd event for Group Channel : "
-                                                                                                        + event); }
-    if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-      this.pauseSink.add(new PauseContext(true, event.getChannel().getRemoteNodeID()));
-    } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
-      this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
-    } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
-      disconnected(event.getChannel().getRemoteNodeID());
-      // ReconnectionRejectedListenerImpl is anyway firing thisNodeLeft on Channel Close. Below one seems to be
-      // redundant.
-      // if (!isShutdown) {
-      // dsoClusterEventsGun.fireOperationsDisabled();
-      // }
-    }
-  }
+  // @Override
+  // public void notifyChannelEvent(final ChannelEvent event) {
+  // if (GroupID.ALL_GROUPS.equals(event.getChannel().getRemoteNodeID())) { throw new AssertionError(
+  // "Recd event for Group Channel : "
+  // + event); }
+  // if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
+  // this.pauseSink.add(new PauseContext(true, event.getChannel().getRemoteNodeID()));
+  // } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+  // this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
+  // } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
+  // disconnected(event.getChannel().getRemoteNodeID());
+  // }
+  // }
 
   private synchronized boolean isOnlyOneGroupDisconnected() {
     return 1 == this.disconnected;
@@ -156,9 +150,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   public void disconnected(final NodeID remoteNode) {
     if (checkShutdown()) return;
     State currentState = getState(remoteNode);
-    if (currentState == PAUSED) {
+    if (currentState == State.PAUSED) {
       this.logger.warn("Pause called while already PAUSED for " + remoteNode);
-    } else if (currentState == STARTING) {
+    } else if (currentState == State.STARTING) {
       // can happen when we get server disconnects before ack for client handshake
       this.logger.info("Disconnected: Ignoring disconnect event from  RemoteNode : " + remoteNode
                        + " as the current state is " + currentState + ". Disconnect count: " + getDisconnectedCount());
@@ -201,7 +195,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     this.logger.info("Connected: Unpausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                      + ". Disconnect count : " + getDisconnectedCount());
 
-    if (getState(remoteNode) != PAUSED) {
+    if (getState(remoteNode) != State.PAUSED) {
       this.logger.warn("Unpause called while not PAUSED for " + remoteNode);
       return;
     }
@@ -220,10 +214,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     return 0 == this.disconnected;
   }
 
-  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final NodeID thisNodeId,
-                                      final NodeID[] clusterMembers, final String serverVersion) {
+  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final ClientID thisNodeId,
+                                      final ClientID[] clusterMembers, final String serverVersion) {
     this.logger.info("Received Handshake ack for this node :" + remoteID);
-    if (getState(remoteID) != STARTING) {
+    if (getState(remoteID) != State.STARTING) {
       this.logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));
       return;
     }
@@ -264,6 +258,16 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private void shutdownCallbacks() {
     for (ClientHandshakeCallback c : this.callBacks) {
       c.shutdown();
+    }
+  }
+
+  @Override
+  public void reset() {
+    for (ClientHandshakeCallback c : callBacks) {
+      c.cleanup();
+    }
+    for (ClearableCallback clearable : clearCallbacks) {
+      clearable.cleanup();
     }
   }
 
@@ -308,11 +312,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   private synchronized void changeToPaused(final NodeID node) {
-    Object old = this.groupStates.put(node, PAUSED);
+    Object old = this.groupStates.put(node, State.PAUSED);
 
-    if (old == PAUSED) { throw new AssertionError("old value was already equal PAUSED"); }
+    if (old == State.PAUSED) { throw new AssertionError("old value was already equal PAUSED"); }
 
-    if (old == RUNNING) {
+    if (old == State.RUNNING) {
       this.disconnected++;
     }
 
@@ -325,13 +329,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   private synchronized void changeToStarting(final NodeID node) {
-    Object old = this.groupStates.put(node, STARTING);
-    Assert.assertEquals(old, PAUSED);
+    Object old = this.groupStates.put(node, State.STARTING);
+    Assert.assertEquals(old, State.PAUSED);
   }
 
   private synchronized void changeToRunning(final NodeID node) {
-    Object old = this.groupStates.put(node, RUNNING);
-    Assert.assertEquals(old, STARTING);
+    Object old = this.groupStates.put(node, State.RUNNING);
+    Assert.assertEquals(old, State.STARTING);
     this.disconnected--;
     if (this.disconnected < 0) { throw new AssertionError("disconnected count is less than zero, disconnected = "
                                                           + this.disconnected); }

@@ -4,6 +4,15 @@
  */
 package com.tc.objectserver.handler;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +31,8 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -46,15 +57,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ApplyTransactionChangeHandlerTest extends TestCase {
 
@@ -160,7 +162,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     @Override
     public void describeTo(final Description description) {
-
+      //
     }
   }
 

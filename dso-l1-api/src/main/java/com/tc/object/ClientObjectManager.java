@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
@@ -96,8 +97,9 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * like lookupObject. Non-existent objects are ignored by the server.
    * 
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
-  public void preFetchObject(ObjectID id);
+  public void preFetchObject(ObjectID id) throws AbortedOperationException;
 
   /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. This method will not log any exceptions
@@ -106,8 +108,9 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param id Identifier
    * @return Instance for the id
    * @throws ClassNotFoundException If class can't be found in this VM
+   * @throws AbortedOperationException
    */
-  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException;
+  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. The default fault-count will be used to
@@ -116,8 +119,9 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param id Identifier
    * @return Instance for the id
    * @throws ClassNotFoundException If class can't be found in this VM
+   * @throws AbortedOperationException
    */
-  public Object lookupObject(ObjectID id) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
@@ -127,9 +131,11 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException;
 
   /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. No fault-count depth will be used and all
@@ -138,8 +144,9 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param id Identifier
    * @return Instance for the id
    * @throws ClassNotFoundException If class can't be found in this VM
+   * @throws AbortedOperationException
    */
-  public Object lookupObjectNoDepth(ObjectID id) throws ClassNotFoundException;
+  public Object lookupObjectNoDepth(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Find the managed object for this instance or create a new one if it does not yet exist.
@@ -237,8 +244,9 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param id Identifier
    * @return Managed object
    * @throws ClassNotFoundException If a class needed to hydrate cannot be found
+   * @throws AbortedOperationException
    */
-  public TCObject lookup(ObjectID id) throws ClassNotFoundException;
+  public TCObject lookup(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Find managed object by instance, which may be null

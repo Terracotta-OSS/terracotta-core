@@ -70,6 +70,8 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    */
   public void clear();
 
+  public void cleanLocalState();
+
   /**
    * @return key set for this map
    */

@@ -27,10 +27,12 @@ public class TestMessageChannel implements MessageChannel {
   private NodeID                source                = ClientID.NULL_ID;
   private NodeID                destination           = ServerID.NULL_ID;
 
+  @Override
   public void addListener(ChannelEventListener listener) {
     return;
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     if (source == ClientID.NULL_ID) {
       source = new ClientID(getChannelID().toLong());
@@ -38,10 +40,12 @@ public class TestMessageChannel implements MessageChannel {
     return source;
   }
 
+  @Override
   public void setLocalNodeID(NodeID source) {
     this.source = source;
   }
 
+  @Override
   public NodeID getRemoteNodeID() {
     return destination;
   }
@@ -50,27 +54,33 @@ public class TestMessageChannel implements MessageChannel {
     this.destination = destination;
   }
 
+  @Override
   public boolean isConnected() {
     return false;
   }
 
+  @Override
   public boolean isOpen() {
     return false;
   }
 
+  @Override
   public boolean isClosed() {
     return false;
   }
 
+  @Override
   public TCMessage createMessage(TCMessageType type) {
     createMessageContexts.add(new CreateMessageContext(type, this.message));
     return this.message;
   }
 
+  @Override
   public void close() {
     return;
   }
 
+  @Override
   public ChannelID getChannelID() {
     return channelID;
   }
@@ -83,6 +93,7 @@ public class TestMessageChannel implements MessageChannel {
     return;
   }
 
+  @Override
   public void send(TCNetworkMessage msg) {
     sendQueue.put(msg);
   }
@@ -91,10 +102,12 @@ public class TestMessageChannel implements MessageChannel {
     return;
   }
 
+  @Override
   public NetworkStackID open() {
     return null;
   }
 
+  @Override
   public NetworkStackID open(char[] password) {
     return null;
   }
@@ -115,14 +128,17 @@ public class TestMessageChannel implements MessageChannel {
     return;
   }
 
+  @Override
   public Object getAttachment(String key) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addAttachment(String key, Object value, boolean replace) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object removeAttachment(String key) {
     throw new ImplementMe();
   }
@@ -131,11 +147,18 @@ public class TestMessageChannel implements MessageChannel {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void reopen() {
     throw new ImplementMe();
   }
 

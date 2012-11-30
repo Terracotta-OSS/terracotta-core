@@ -22,14 +22,15 @@ import java.util.Set;
 
 public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
-  private static final char         COMMA                       = ',';
-  private static final String       TOOLKIT_IMPL_CLASS_NAME     = "com.terracotta.toolkit.TerracottaToolkit";
-  private static final String       TOOLKIT_IMPL_EE_CLASS_NAME  = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
-  private final static String       TERRACOTTA_TOOLKIT_TYPE     = "terracotta";
-  private static final String       TUNNELLED_MBEAN_DOMAINS_KEY = "tunnelledMBeanDomains";
-  private static final String       TC_CONFIG_SNIPPET_KEY       = "tcConfigSnippet";
-  private static final String       REJOIN_KEY                  = "rejoin";
-  private static final Properties   EMPTY_PROPERTIES            = new Properties();
+  private static final char         COMMA                            = ',';
+  private static final String       TOOLKIT_IMPL_CLASS_NAME          = "com.terracotta.toolkit.TerracottaToolkit";
+  private static final String       TOOLKIT_IMPL_EE_CLASS_NAME       = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
+  private final static String       TERRACOTTA_TOOLKIT_TYPE          = "terracotta";
+  private final static String       NON_STOP_TERRACOTTA_TOOLKIT_TYPE = "nonstop-terracotta";
+  private static final String       TUNNELLED_MBEAN_DOMAINS_KEY      = "tunnelledMBeanDomains";
+  private static final String       TC_CONFIG_SNIPPET_KEY            = "tcConfigSnippet";
+  private static final String       REJOIN_KEY                       = "rejoin";
+  private static final Properties   EMPTY_PROPERTIES                 = new Properties();
   private static final List<String> WRONG_JARS_CLASSES;
   static {
     List<String> tmp = new ArrayList<String>();
@@ -40,7 +41,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
   @Override
   public boolean canHandleToolkitType(String type, String subName) {
-    return TERRACOTTA_TOOLKIT_TYPE.equals(type);
+    return TERRACOTTA_TOOLKIT_TYPE.equals(type) || NON_STOP_TERRACOTTA_TOOLKIT_TYPE.equals(type);
   }
 
   @Override
@@ -97,8 +98,14 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
       isUrl = false;
     }
     Set<String> tunnelledMBeanDomains = getTunnelledMBeanDomains(properties);
+
     return new TerracottaClientConfigParams().tcConfigSnippetOrUrl(terracottaUrlOrConfig).isUrl(isUrl)
-        .tunnelledMBeanDomains(tunnelledMBeanDomains).rejoin(isRejoinEnabled(properties)).newTerracottaClientConfig();
+        .tunnelledMBeanDomains(tunnelledMBeanDomains).rejoin(isRejoinEnabled(properties))
+        .nonStopEnabled(isNonStopEnabled(type)).newTerracottaClientConfig();
+  }
+
+  private boolean isNonStopEnabled(String type) {
+    return type.equals(NON_STOP_TERRACOTTA_TOOLKIT_TYPE);
   }
 
   private boolean isRejoinEnabled(Properties properties) {

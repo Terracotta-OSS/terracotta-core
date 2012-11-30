@@ -4,6 +4,8 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -19,6 +21,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.terracottatech.search.NVPair;
@@ -36,9 +39,9 @@ import javax.management.MBeanServer;
 public interface Manager extends TerracottaLocking {
 
   /** This class's class path: com/tc/object/bytecode/Manager */
-  public static final String CLASS                       = "com/tc/object/bytecode/Manager";
+  public static final String CLASS = "com/tc/object/bytecode/Manager";
   /** Bytecode type definition for this class */
-  public static final String TYPE                        = "L" + CLASS + ";";
+  public static final String TYPE  = "L" + CLASS + ";";
 
   /**
    * Determine whether this class is physically instrumented
@@ -64,6 +67,7 @@ public interface Manager extends TerracottaLocking {
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupOrCreateRoot(String name, Object object);
 
@@ -74,6 +78,7 @@ public interface Manager extends TerracottaLocking {
    * @param object Root object to use if none exists yet
    * @param gid group id
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupOrCreateRoot(final String name, final Object object, GroupID gid);
 
@@ -83,6 +88,7 @@ public interface Manager extends TerracottaLocking {
    * @param name Root name
    * @param gid group id
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupRoot(final String name, GroupID gid);
 
@@ -92,8 +98,9 @@ public interface Manager extends TerracottaLocking {
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
-  public Object lookupOrCreateRootNoDepth(String name, Object obj);
+  public Object lookupOrCreateRootNoDepth(String name, Object obj) throws AbortedOperationException;
 
   /**
    * Create or replace root, typically used for replaceable roots.
@@ -101,24 +108,27 @@ public interface Manager extends TerracottaLocking {
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
+   * @throws AbortedOperationException
    */
-  public Object createOrReplaceRoot(String rootName, Object object);
+  public Object createOrReplaceRoot(String rootName, Object object) throws AbortedOperationException;
 
   /**
    * Look up object by ID, faulting into the JVM if necessary
    * 
    * @param id Object identifier
    * @return The actual object
+   * @throws AbortedOperationException
    */
-  public Object lookupObject(ObjectID id) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
    * 
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
-  public void preFetchObject(ObjectID id);
+  public void preFetchObject(ObjectID id) throws AbortedOperationException;
 
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
@@ -127,9 +137,11 @@ public interface Manager extends TerracottaLocking {
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException;
 
   /**
    * Find managed object, which may be null
@@ -165,8 +177,10 @@ public interface Manager extends TerracottaLocking {
    * @param lockObject The lock object
    * @param methodName The method to call
    * @param params The parameters to the method
+   * @throws AbortedOperationException
    */
-  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params);
+  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params)
+      throws AbortedOperationException;
 
   /**
    * Perform distributed method call
@@ -188,8 +202,9 @@ public interface Manager extends TerracottaLocking {
    * 
    * @param name Name of root
    * @return Root object
+   * @throws AbortedOperationException
    */
-  public Object lookupRoot(String name);
+  public Object lookupRoot(String name) throws AbortedOperationException;
 
   /**
    * Check whether current context has write access
@@ -231,8 +246,9 @@ public interface Manager extends TerracottaLocking {
    * Check whether dso MonitorExist is required
    * 
    * @return True if required
+   * @throws AbortedOperationException
    */
-  public boolean isDsoMonitorEntered(Object obj);
+  public boolean isDsoMonitorEntered(Object obj) throws AbortedOperationException;
 
   /**
    * Retrieve the customer change applicator that was registered for a particular class.
@@ -321,8 +337,10 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorenter</code>.
+   * 
+   * @throws AbortedOperationException
    */
-  public void monitorEnter(LockID lock, LockLevel level);
+  public void monitorEnter(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorexit</code>.
@@ -340,8 +358,10 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Used by BulkLoad to wait for all current transactions completed
+   * 
+   * @throws AbortedOperationException
    */
-  public void waitForAllCurrentTransactionsToComplete();
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
   /**
    * Registers a hook that will be called before shutting down this client
@@ -352,11 +372,13 @@ public interface Manager extends TerracottaLocking {
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException;
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException;
 
   public NVPair createNVPair(String name, Object value);
 
@@ -370,11 +392,11 @@ public interface Manager extends TerracottaLocking {
 
   public GroupID[] getGroupIDs();
 
-  void lockIDWait(final LockID lock, final long timeout) throws InterruptedException;
+  void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException;
 
-  void lockIDNotifyAll(final LockID lock);
+  void lockIDNotifyAll(final LockID lock) throws AbortedOperationException;
 
-  void lockIDNotify(final LockID lock);
+  void lockIDNotify(final LockID lock) throws AbortedOperationException;
 
   /**
    * Register an object with given name if null is mapped currently to the name. Otherwise returns old mapped object.
@@ -395,6 +417,10 @@ public interface Manager extends TerracottaLocking {
   <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType);
 
   void addTransactionCompleteListener(TransactionCompleteListener listener);
+
+  AbortableOperationManager getAbortableOperationManager();
+
+  PlatformService getPlatformService();
 
   void throttlePutIfNecessary(ObjectID object);
 }

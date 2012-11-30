@@ -45,14 +45,17 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     this.initConnect = false;
   }
 
+  @Override
   public ChannelIDProvider getChannelIDProvider() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getConnectAttemptCount() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getConnectCount() {
     throw new ImplementMe();
   }
@@ -62,73 +65,90 @@ public class TestClientMessageChannel implements ClientMessageChannel {
 
   }
 
+  @Override
   public void addAttachment(final String key, final Object value, final boolean replace) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void addListener(final ChannelEventListener listener) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void close() {
     throw new ImplementMe();
 
   }
 
+  @Override
   public TCMessage createMessage(final TCMessageType type) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object getAttachment(final String key) {
     throw new ImplementMe();
   }
 
+  @Override
   public ChannelID getChannelID() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getRemoteNodeID() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isClosed() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isConnected() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isOpen() {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkStackID open() {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkStackID open(char[] password) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object removeAttachment(final String key) {
     throw new ImplementMe();
   }
 
+  @Override
   public void send(final TCNetworkMessage message) {
     throw new ImplementMe();
 
@@ -138,11 +158,17 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     throw new ImplementMe();
   }
 
+  @Override
   public void setLocalNodeID(final NodeID source) {
     throw new ImplementMe();
   }
 
   public void reloadConfiguration(ConnectionAddressProvider... cap) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void reopen() {
     throw new ImplementMe();
   }
 }

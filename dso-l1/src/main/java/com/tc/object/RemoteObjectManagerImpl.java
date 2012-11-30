@@ -4,6 +4,9 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
@@ -67,7 +70,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
                                                                              .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
 
   private static enum State {
-    PAUSED, RUNNING, STARTING, STOPPED
+    PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
   }
 
   private static enum RemovedObjectsSendState {
@@ -93,27 +96,57 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private State                                    state                    = State.RUNNING;
   private ObjectIDSet                              removeObjects            = new ObjectIDSet();
-
   private boolean                                  pendingSendTaskScheduled = false;
   private RemovedObjectsSendState                  removeTaskScheduled      = RemovedObjectsSendState.NOT_SCHEDULED;
   private long                                     objectRequestIDCounter   = 0;
   private long                                     hit                      = 0;
   private long                                     miss                     = 0;
+  private final AbortableOperationManager          abortableOperationManager;
 
   public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger,
                                  final RequestRootMessageFactory rrmFactory,
                                  final RequestManagedObjectMessageFactory rmomFactory, final int defaultDepth,
-                                 final SessionManager sessionManager) {
+                                 final SessionManager sessionManager,
+                                 AbortableOperationManager abortableOperationManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.rrmFactory = rrmFactory;
     this.rmomFactory = rmomFactory;
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
+    this.abortableOperationManager = abortableOperationManager;
     this.objectRequestTimer.schedule(new CleanupUnusedDNATimerTask(), CLEANUP_UNUSED_DNA_TIMER,
                                      CLEANUP_UNUSED_DNA_TIMER);
   }
 
+  @Override
+  public synchronized void cleanup() {
+    checkAndSetstate();
+    rootRequests.clear();
+    dnaCache.clear();
+    objectLookupStates.clear();
+    lru.clear();
+    removeObjects = new ObjectIDSet();
+    pendingSendTaskScheduled = false;
+    removeTaskScheduled = RemovedObjectsSendState.NOT_SCHEDULED;
+  }
+
+  private void checkAndSetstate() {
+    throwExceptionIfNecessary(false);
+    state = State.REJOIN_IN_PROGRESS;
+    notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + State.PAUSED + " but found " + state;
+    if (throwExp) {
+      if (state != State.PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      logger.info(message);
+    }
+  }
+
+  @Override
   public synchronized void shutdown() {
     this.state = State.STOPPED;
     this.objectRequestTimer.cancel();
@@ -124,6 +157,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return this.state == State.STOPPED;
   }
 
+  private boolean isRejoinInProgress() {
+    return this.state == State.REJOIN_IN_PROGRESS;
+  }
+
+  @Override
   public synchronized void pause(final NodeID remote, final int disconnected) {
     if (isStopped()) { return; }
     assertNotPaused("Attempt to pause while PAUSED");
@@ -135,13 +173,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isStopped()) { return; }
-    assertPaused("Attempt to init handshake while not PAUSED");
+    assertPausedOrRejoinInProgress("Attempt to init handshake while ");
     this.state = State.STARTING;
   }
 
+  @Override
   public synchronized void unpause(final NodeID remote, final int disconnected) {
     if (isStopped()) { return; }
     assertNotRunning("Attempt to unpause while not PAUSED");
@@ -150,10 +190,29 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void clear(GroupID gid) {
     this.lru.clear();
     this.dnaCache.clear();
     this.removeObjects.clear();
+  }
+
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.state != State.RUNNING) {
+        if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          handleInterruptedException();
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
   }
 
   private void waitUntilRunning() {
@@ -161,6 +220,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     try {
       while (this.state != State.RUNNING) {
         if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -172,8 +232,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
-  private void assertPaused(final String message) {
-    if (this.state != State.PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == State.PAUSED || current == State.REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": "
+                                                                                                      + current); }
   }
 
   private void assertNotPaused(final String message) {
@@ -199,27 +261,33 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
-  public synchronized void preFetchObject(final ObjectID id) {
-    waitUntilRunning();
+  @Override
+  public synchronized void preFetchObject(final ObjectID id) throws AbortedOperationException {
+    waitUntilRunningAbortable();
     if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
     final ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth, ObjectID.NULL_ID);
     ols.makePrefetchRequest();
     sendRequest(ols);
   }
 
-  public DNA retrieve(final ObjectID id) {
+  @Override
+  public DNA retrieve(final ObjectID id) throws AbortedOperationException {
     return basicRetrieve(id, this.defaultDepth, ObjectID.NULL_ID);
   }
 
-  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
+  @Override
+  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext)
+      throws AbortedOperationException {
     return basicRetrieve(id, this.defaultDepth, parentContext);
   }
 
-  public DNA retrieve(final ObjectID id, final int depth) {
+  @Override
+  public DNA retrieve(final ObjectID id, final int depth) throws AbortedOperationException {
     return basicRetrieve(id, depth, ObjectID.NULL_ID);
   }
 
-  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext) {
+  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext)
+      throws AbortedOperationException {
     boolean isInterrupted = false;
     if (id.getGroupID() != this.groupID.toInt()) { throw new AssertionError("Looking up in the wrong Remote Manager : "
                                                                             + this.groupID + " id : " + id
@@ -232,7 +300,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     DNA dna;
     try {
       while ((dna = this.dnaCache.remove(id)) == null) {
-        waitUntilRunning();
+        waitUntilRunningAbortable();
         ObjectLookupState ols = this.objectLookupStates.get(id);
         if (ols == null) {
           ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
@@ -256,12 +324,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         try {
           wait(RETRIEVE_WAIT_INTERVAL);
         } catch (final InterruptedException e) {
+          handleInterruptedException();
           isInterrupted = true;
         }
       }
+    } finally {
       this.objectLookupStates.remove(id);
       this.lru.remove(id);
-    } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
     }
     increamentStatsAndLogIfNecessary(inMemory);
@@ -376,6 +445,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return rmom;
   }
 
+  @Override
   public synchronized ObjectID retrieveRootID(final String name, GroupID gid) {
 
     waitUntilRunning();
@@ -410,6 +480,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return rrm;
   }
 
+  @Override
   public synchronized void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     waitUntilRunning();
     if (id.isNull()) {
@@ -420,6 +491,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas,
                                          final NodeID nodeID) {
     waitUntilRunning();
@@ -442,6 +514,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingOIDs,
                                               final NodeID nodeID) {
     waitUntilRunning();
@@ -499,6 +572,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
    * cause deadlocks on restarts. Since you are not allowed to wait here (waitUntilRunning) don't send any messages to
    * the server from this method too as it can end-up in the server even before the connection is fully handshaked.
    */
+  @Override
   public synchronized void removed(final ObjectID id) {
 
     if (isStopped()) { return; }
@@ -526,6 +600,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
+  @Override
   public synchronized boolean isInDNACache(final ObjectID id) {
     return this.dnaCache.get(id) != null;
   }
@@ -543,6 +618,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
   }
@@ -552,6 +629,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         sendRemovedObjects();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
@@ -564,6 +643,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         clearAllUnrequestedDNABatches();
+      } catch (PlatformRejoinException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
@@ -727,6 +808,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.duplicateAndIndent().indent().print(getClass().getSimpleName()).flush();
     out.duplicateAndIndent().indent().print(this.groupID).flush();
@@ -734,5 +816,17 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     // printing this.objectLookupStates.toString() as PrettyPrinter prints the size of the map otherwise
     out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates.toString()).flush();
     return out;
+  }
+
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 }

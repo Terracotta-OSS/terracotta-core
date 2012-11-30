@@ -26,7 +26,8 @@ public interface SerializationStrategy {
    * @throws IOException if deserialization fails
    * @throws ClassNotFoundException if a required class is not found
    */
-  public Object deserialize(byte[] fromBytes, boolean compress) throws IOException, ClassNotFoundException;
+  public Object deserialize(byte[] fromBytes, boolean compress, boolean local) throws IOException,
+      ClassNotFoundException;
 
   /**
    * Convert the given key into a portable {@code String} form.

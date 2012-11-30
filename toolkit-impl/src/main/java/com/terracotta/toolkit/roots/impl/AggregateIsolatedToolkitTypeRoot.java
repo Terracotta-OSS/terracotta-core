@@ -3,37 +3,45 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.object.ToolkitObject;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.net.GroupID;
+import com.tc.platform.PlatformService;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
-public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends TCToolkitObject> implements
-    AggregateToolkitTypeRoot<T, S> {
+public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject, S extends TCToolkitObject> implements
+    AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, IsolatedClusteredObjectLookup<S> {
 
   private final ToolkitTypeRoot<S>[]             roots;
   private final IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory;
   private final WeakValueMap<T>                  isolatedTypes;
   private final PlatformService                  platformService;
+  private final String                           rootName;
 
-  protected AggregateIsolatedToolkitTypeRoot(ToolkitTypeRoot<S>[] roots,
+  protected AggregateIsolatedToolkitTypeRoot(String rootName, ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
                                              WeakValueMap weakValueMap, PlatformService platformService) {
+    this.rootName = rootName;
     this.roots = roots;
     this.isolatedTypeFactory = isolatedTypeFactory;
     this.isolatedTypes = weakValueMap;
     this.platformService = platformService;
+    platformService.addRejoinLifecycleListener(this);
   }
 
   @Override
@@ -53,14 +61,19 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
           clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
           getToolkitTypeRoot(name).addClusteredObject(name, clusteredObject);
         }
-        isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, name, configuration, clusteredObject);
+        isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, this, name, configuration,
+                                                                     clusteredObject);
         isolatedTypes.put(name, isolatedType);
         return isolatedType;
       }
 
     } finally {
       unlock(type, name);
-      platformService.waitForAllCurrentTransactionsToComplete();
+      try {
+        platformService.waitForAllCurrentTransactionsToComplete();
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
     }
   }
 
@@ -104,4 +117,38 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
       unlock(type, obj.getName());
     }
   }
+
+  @Override
+  public void onRejoinStart() {
+    for (String name : isolatedTypes.keySet()) {
+      T wrapper = isolatedTypes.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinStarted();
+      }
+    }
+  }
+
+  @Override
+  public void onRejoinComplete() {
+    lookupOrCreateRoots();
+    for (String name : isolatedTypes.keySet()) {
+      T wrapper = isolatedTypes.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinCompleted();
+      }
+    }
+  }
+
+  @Override
+  public S lookupClusteredObject(String name) {
+    return getToolkitTypeRoot(name).getClusteredObject(name);
+  }
+
+  public void lookupOrCreateRoots() {
+    GroupID[] gids = platformService.getGroupIDs();
+    for (int i = 0; i < gids.length; i++) {
+      roots[i] = ToolkitTypeRootsStaticFactory.lookupOrCreateRootInGroup(platformService, gids[i], rootName);
+    }
+  }
+
 }

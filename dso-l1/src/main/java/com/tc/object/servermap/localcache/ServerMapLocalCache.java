@@ -107,6 +107,8 @@ public interface ServerMapLocalCache {
 
   void clearInline();
 
+  void cleanLocalState();
+
   /**
    * unpin all pinned keys
    */

@@ -5,8 +5,10 @@ package com.terracotta.toolkit.util.collections;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class WeakValueMap<V> {
   private final ReferenceQueue                     referenceQueue = new ReferenceQueue();
@@ -14,6 +16,10 @@ public class WeakValueMap<V> {
 
   WeakValueMap() {
     // make constructor package protected
+  }
+
+  public synchronized Set<String> keySet() {
+    return Collections.unmodifiableSet(internalMap.keySet());
   }
 
   public synchronized V get(String name) {

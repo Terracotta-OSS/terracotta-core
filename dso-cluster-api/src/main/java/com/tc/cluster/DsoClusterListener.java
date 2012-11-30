@@ -4,6 +4,7 @@
  */
 package com.tc.cluster;
 
+
 /**
  * A listener interface that can be implemented to be notified about DSO cluster events.
  * <p>
@@ -82,4 +83,6 @@ public interface DsoClusterListener {
    * @see DsoCluster#areOperationsEnabled()
    */
   public void operationsDisabled(DsoClusterEvent event);
+
+  void nodeRejoined(DsoClusterEvent event);
 }

@@ -11,15 +11,16 @@ import java.util.Map;
  */
 public class TestConfig {
 
-  private int                       numOfGroups      = 1;
-  private final String              configName;
-  private final L2Config            l2Config         = new L2Config();
-  private final CrashConfig         crashConfig      = new CrashConfig();
-  private final GroupConfig         groupConfig      = new GroupConfig();
-  private final ClientConfig        clientConfig     = new ClientConfig();
-  private final Map<String, String> tcPropertiesMap;
-  private boolean                   isStandAloneTest = false;
-  private Boolean                   restartZappedL2;
+  private int                                        numOfGroups             = 1;
+  private final String                               configName;
+  private final L2Config                             l2Config                = new L2Config();
+  private final Map<Integer, Map<Integer, L2Config>> serverSpecificL2Configs = new HashMap<Integer, Map<Integer, L2Config>>();
+  private final CrashConfig                          crashConfig             = new CrashConfig();
+  private final GroupConfig                          groupConfig             = new GroupConfig();
+  private final ClientConfig                         clientConfig            = new ClientConfig();
+  private final Map<String, String>                  tcPropertiesMap;
+  private boolean                                    isStandAloneTest        = false;
+  private Boolean                                    restartZappedL2;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -34,6 +35,46 @@ public class TestConfig {
    */
   public L2Config getL2Config() {
     return l2Config;
+  }
+
+  /**
+   * Get the L2Config for a specific L2. If no specific config exists, just return the default one.
+   *
+   * @param groupIndex group of the L2
+   * @param serverIndex index in the group for the L2
+   * @return the L2's config
+   */
+  public L2Config getL2Config(int groupIndex, int serverIndex) {
+    Map<Integer, L2Config> groupConfigs = serverSpecificL2Configs.get(groupIndex);
+    if (groupConfigs == null) {
+      return getL2Config();
+    }
+    L2Config serverConfig = groupConfigs.get(serverIndex);
+    if (serverConfig == null) {
+      return getL2Config();
+    }
+    return serverConfig;
+  }
+
+  /**
+   * Get the L2Config for a specific L2, creating a config if no specific config exists.
+   *
+   * @param groupIndex group of the L2
+   * @param serverIndex index in the group of the L2
+   * @return L2's config
+   */
+  public L2Config getOrCreateSpecificL2Config(int groupIndex, int serverIndex) {
+    Map<Integer, L2Config> groupConfigs = serverSpecificL2Configs.get(groupIndex);
+    if (groupConfigs == null) {
+      groupConfigs = new HashMap<Integer, L2Config>();
+      serverSpecificL2Configs.put(groupIndex, groupConfigs);
+    }
+    L2Config serverConfig = groupConfigs.get(serverIndex);
+    if (serverConfig == null) {
+      serverConfig = new L2Config();
+      groupConfigs.put(serverIndex, serverConfig);
+    }
+    return serverConfig;
   }
 
   /**

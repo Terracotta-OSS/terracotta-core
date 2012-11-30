@@ -3,7 +3,9 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
@@ -21,7 +23,7 @@ import java.util.Map;
 /**
  * ThreadLocal based transaction manager interface. Changes go through here to the transaction for the current thread.
  */
-public interface ClientTransactionManager {
+public interface ClientTransactionManager extends ClearableCallback {
 
   /**
    * Begin a thread local transaction
@@ -37,8 +39,9 @@ public interface ClientTransactionManager {
    * 
    * @param lockName Lock name
    * @throws UnlockedSharedObjectException If a shared object is being accessed from outside a shared transaction
+   * @throws AbortedOperationException
    */
-  public void commit(LockID lock, LockLevel lockLevel) throws UnlockedSharedObjectException;
+  public void commit(LockID lock, LockLevel lockLevel) throws UnlockedSharedObjectException, AbortedOperationException;
 
   /**
    * When transactions come in from the L2 we use this method to apply them. We will have to get a bit fancier because
@@ -205,7 +208,9 @@ public interface ClientTransactionManager {
 
   /**
    * Used by BulkLoad to wait for all current transactions completed
+   * 
+   * @throws AbortedOperationException
    */
-  public void waitForAllCurrentTransactionsToComplete();
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
 }

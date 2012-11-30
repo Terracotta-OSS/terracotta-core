@@ -26,6 +26,7 @@ public class SerializedMapValueApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
+  @Override
   public void dehydrate(final ClientObjectManager objectManager, final TCObject tco, final DNAWriter writer,
                         final Object pojo) {
 
@@ -35,14 +36,17 @@ public class SerializedMapValueApplicator extends BaseApplicator {
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD_NAME, se.internalGetLastAccessedTime());
   }
 
+  @Override
   public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     return addTo;
   }
 
+  @Override
   public void hydrate(final ClientObjectManager objectManager, final TCObject tco, final DNA dna, final Object pojo)
       throws IOException, ClassNotFoundException {
     SerializedMapValue<Serializable> se = (SerializedMapValue<Serializable>) pojo;

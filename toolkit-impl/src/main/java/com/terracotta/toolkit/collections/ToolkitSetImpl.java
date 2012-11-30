@@ -9,18 +9,31 @@ import org.terracotta.toolkit.object.Destroyable;
 import org.terracotta.toolkit.object.ToolkitLockedObject;
 import org.terracotta.toolkit.object.ToolkitObject;
 
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public class ToolkitSetImpl<E> implements ToolkitSet<E> {
-  static final Integer          DUMMY_VALUE = 0;
-  private final Map<E, Integer> toolkitMap;
+public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObject {
+  static final Integer                     DUMMY_VALUE = 0;
+  private final RejoinAwareToolkitMap<E, Integer> toolkitMap;
 
-  public ToolkitSetImpl(Map<E, Integer> toolkitMap) {
+  public ToolkitSetImpl(RejoinAwareToolkitMap<E, Integer> toolkitMap) {
     this.toolkitMap = toolkitMap;
+  }
+
+  @Override
+  public void rejoinStarted() {
+    toolkitMap.rejoinStarted();
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    toolkitMap.rejoinCompleted();
   }
 
   @Override

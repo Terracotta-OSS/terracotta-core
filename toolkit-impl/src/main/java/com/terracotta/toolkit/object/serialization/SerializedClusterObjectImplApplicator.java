@@ -22,6 +22,7 @@ public class SerializedClusterObjectImplApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
+  @Override
   public void dehydrate(final ClientObjectManager objectManager, final TCObject tco, final DNAWriter writer,
                         final Object pojo) {
     writer.addEntireArray(asSerializedClusterObject(pojo).getBytes());
@@ -32,14 +33,17 @@ public class SerializedClusterObjectImplApplicator extends BaseApplicator {
     return serializedClusterObject;
   }
 
+  @Override
   public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     return addTo;
   }
 
+  @Override
   public void hydrate(final ClientObjectManager objectManager, final TCObject tco, final DNA dna, final Object pojo)
       throws IOException, ClassNotFoundException {
     synchronized (pojo) {

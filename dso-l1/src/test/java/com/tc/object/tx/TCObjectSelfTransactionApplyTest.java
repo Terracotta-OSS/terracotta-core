@@ -5,6 +5,7 @@ package com.tc.object.tx;
 
 import org.mockito.Mockito;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
 import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
@@ -60,7 +61,8 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
                                                                                        Mockito
                                                                                            .mock(RemoteTransactionManager.class),
                                                                                        SampledCounter.NULL_SAMPLED_COUNTER,
-                                                                                       store);
+                                                                                       store,
+                                                                                       new NullAbortableOperationManager());
     Collection changes = Collections.singletonList(new MyDna(oid, 200));
     Assert.assertEquals(100, serializedEntry.getLastAccessedTime());
     transactionManager.apply(TxnType.NORMAL, null, changes, Collections.EMPTY_MAP);
@@ -152,6 +154,11 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
 
   private class MyTCObjectSelfStore implements TCObjectSelfStore {
     private final HashMap<ObjectID, byte[]> oidtoSerialized = new HashMap<ObjectID, byte[]>();
+
+    @Override
+    public void cleanup() {
+      throw new ImplementMe();
+    }
 
     @Override
     public void addAllObjectIDs(Set oids) {

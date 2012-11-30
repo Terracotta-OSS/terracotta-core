@@ -4,6 +4,9 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortableOperationManagerImpl;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.client.AbstractClientFactory;
 import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
@@ -53,6 +56,10 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
+import com.tc.platform.PlatformService;
+import com.tc.platform.PlatformServiceImpl;
+import com.tc.platform.rejoin.RejoinManagerImpl;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -79,31 +86,34 @@ import java.util.concurrent.CountDownLatch;
 import javax.management.MBeanServer;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger              = TCLogging.getLogger(Manager.class);
-  private final SetOnceFlag                        clientStarted       = new SetOnceFlag();
-  private final SetOnceFlag                        clientStopped       = new SetOnceFlag();
-  private final DSOClientConfigHelper              config;
-  private final ClassProvider                      classProvider;
-  private final boolean                            startClient;
-  private final PreparedComponentsFromL2Connection connectionComponents;
-  private final Thread                             shutdownAction;
-  private final Portability                        portability;
-  private final DsoClusterInternal                 dsoCluster;
-  private final LockIdFactory                      lockIdFactory;
-  private final ClientMode                         clientMode;
-  private final TCSecurityManager                  securityManager;
+  private static final TCLogger                       logger                    = TCLogging.getLogger(Manager.class);
+  private final SetOnceFlag                           clientStarted             = new SetOnceFlag();
+  private final SetOnceFlag                           clientStopped             = new SetOnceFlag();
+  private final ClassProvider                         classProvider;
+  private final boolean                               startClient;
+  private final Thread                                shutdownAction;
+  private final DsoClusterInternal                    dsoCluster;
+  private final LockIdFactory                         lockIdFactory;
+  private final ClientMode                            clientMode;
+  private final TCSecurityManager                     securityManager;
+  private ClientObjectManager                         objectManager;
+  private ClientShutdownManager                       shutdownManager;
+  private ClientTransactionManager                    txManager;
+  private ClientLockManager                           lockManager;
+  private RemoteSearchRequestManager                  searchRequestManager;
+  private DistributedObjectClient                     dso;
+  private DmiManager                                  methodCallManager;
 
-  private ClientObjectManager                      objectManager;
-  private ClientShutdownManager                    shutdownManager;
-  private ClientTransactionManager                 txManager;
-  private ClientLockManager                        lockManager;
-  private RemoteSearchRequestManager               searchRequestManager;
-  private DistributedObjectClient                  dso;
-  private DmiManager                               methodCallManager;
+  private volatile Portability                        portability;
+  private volatile DSOClientConfigHelper              config;
+  private volatile PreparedComponentsFromL2Connection connectionComponents;
 
-  private final SerializationUtil                  serializer          = new SerializationUtil();
+  private final SerializationUtil                     serializer                = new SerializationUtil();
 
-  private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
+  private final ConcurrentHashMap<String, Object>     registeredObjects         = new ConcurrentHashMap<String, Object>();
+  private final AbortableOperationManager             abortableOperationManager = new AbortableOperationManagerImpl();
+  private final PlatformServiceImpl                   platformService;
+  private final RejoinManagerInternal                 rejoinManager;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -127,16 +137,17 @@ public class ManagerImpl implements Manager {
                      final boolean isExpressRejoinMode, final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
-    this.portability = config.getPortability();
+    this.portability = config == null ? null : config.getPortability();
     this.txManager = txManager;
     this.lockManager = lockManager;
     this.searchRequestManager = searchRequestManager;
     this.config = config;
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
-    this.dsoCluster = new DsoClusterImpl();
+    this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
+    this.dsoCluster = new DsoClusterImpl(rejoinManager);
     if (shutdownActionRequired) {
-      this.shutdownAction = new Thread(new ShutdownAction());
+      this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
       // Register a shutdown hook for the DSO client
       Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     } else {
@@ -146,6 +157,13 @@ public class ManagerImpl implements Manager {
 
     this.lockIdFactory = new LockIdFactory(this);
     this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
+    this.platformService = new PlatformServiceImpl(this, isExpressRejoinMode);
+  }
+
+  public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
+    this.portability = config.getPortability();
+    this.config = config;
+    this.connectionComponents = connectionComponents;
   }
 
   @Override
@@ -164,6 +182,7 @@ public class ManagerImpl implements Manager {
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
         startClient(forTests, testStartLatch);
+        this.platformService.init(rejoinManager, this.dso.getClientHandshakeManager());
       }
     }
   }
@@ -228,8 +247,11 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.dso = clientFactory.createClient(ManagerImpl.this.config, group,
                                                           ManagerImpl.this.classProvider,
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
-                                                          ManagerImpl.this.dsoCluster, ManagerImpl.this.clientMode,
-                                                          ManagerImpl.this.securityManager);
+                                                          ManagerImpl.this.dsoCluster,
+                                                          ManagerImpl.this.clientMode,
+                                                          ManagerImpl.this.securityManager,
+                                                          ManagerImpl.this.abortableOperationManager,
+                                                          ManagerImpl.this.rejoinManager);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
@@ -243,7 +265,8 @@ public class ManagerImpl implements Manager {
 
         ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
                                                                      ManagerImpl.this.dso,
-                                                                     ManagerImpl.this.connectionComponents);
+                                                                     ManagerImpl.this.connectionComponents,
+                                                                     rejoinManager);
 
         ManagerImpl.this.dsoCluster.init(ManagerImpl.this.dso.getClusterMetaDataManager(),
                                          ManagerImpl.this.objectManager, ManagerImpl.this.dso.getClusterEventsStage());
@@ -328,7 +351,7 @@ public class ManagerImpl implements Manager {
 
   @Override
   public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
-                                           final Object[] params) {
+                                           final Object[] params) throws AbortedOperationException {
     final LockID lock = generateLockIdentifier(lockObject);
     lock(lock, LockLevel.WRITE);
     try {
@@ -413,7 +436,6 @@ public class ManagerImpl implements Manager {
       return this.objectManager.lookupOrCreateRoot(rootName, object, true);
     } catch (final Throwable t) {
       Util.printLogAndRethrowError(t, logger);
-
       // shouldn't get here
       throw new AssertionError();
     }
@@ -426,7 +448,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean isDsoMonitorEntered(final Object o) {
+  public boolean isDsoMonitorEntered(final Object o) throws AbortedOperationException {
     if (this.objectManager.isCreationInProgress()) { return false; }
 
     final LockID lock = generateLockIdentifier(o);
@@ -483,17 +505,18 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return this.objectManager.lookupObject(id);
   }
 
   @Override
-  public void preFetchObject(final ObjectID id) {
+  public void preFetchObject(final ObjectID id) throws AbortedOperationException {
     this.objectManager.preFetchObject(id);
   }
 
   @Override
-  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException {
     return this.objectManager.lookupObject(id, parentContext);
   }
 
@@ -595,7 +618,7 @@ public class ManagerImpl implements Manager {
     public void run() {
       // XXX: we should just call stop(), but for the 1.5 (chex) release, I'm reverting the behavior
       // stop();
-
+      logger.info("Running L1 VM shutdown hook");
       shutdown(true, false);
     }
   }
@@ -673,37 +696,37 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public int globalHoldCount(final LockID lock, final LockLevel level) {
+  public int globalHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.globalHoldCount(lock, level);
   }
 
   @Override
-  public int globalPendingCount(final LockID lock) {
+  public int globalPendingCount(final LockID lock) throws AbortedOperationException {
     return this.lockManager.globalPendingCount(lock);
   }
 
   @Override
-  public int globalWaitingCount(final LockID lock) {
+  public int globalWaitingCount(final LockID lock) throws AbortedOperationException {
     return this.lockManager.globalWaitingCount(lock);
   }
 
   @Override
-  public boolean isLocked(final LockID lock, final LockLevel level) {
+  public boolean isLocked(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.isLocked(lock, level);
   }
 
   @Override
-  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) {
+  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.isLockedByCurrentThread(lock, level);
   }
 
   @Override
-  public int localHoldCount(final LockID lock, final LockLevel level) {
+  public int localHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.localHoldCount(lock, level);
   }
 
   @Override
-  public void lock(final LockID lock, final LockLevel level) {
+  public void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lock(lock, level);
       this.txManager.begin(lock, level);
@@ -711,7 +734,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException {
+  public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lockInterruptibly(lock, level);
       this.txManager.begin(lock, level);
@@ -719,7 +743,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Notify notify(final LockID lock, final Object waitObject) {
+  public Notify notify(final LockID lock, final Object waitObject) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notify(lock, waitObject));
     } else {
@@ -729,7 +753,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Notify notifyAll(final LockID lock, final Object waitObject) {
+  public Notify notifyAll(final LockID lock, final Object waitObject) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notifyAll(lock, waitObject));
     } else {
@@ -739,7 +763,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level) {
+  public boolean tryLock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
         this.txManager.begin(lock, level);
@@ -753,7 +777,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException {
+  public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeout)) {
         this.txManager.begin(lock, level);
@@ -767,7 +792,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void unlock(final LockID lock, final LockLevel level) {
+  public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       try {
         this.txManager.commit(lock, level);
@@ -778,7 +803,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject) throws InterruptedException {
+  public void wait(final LockID lock, final Object waitObject) throws InterruptedException, AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         this.txManager.commit(lock, LockLevel.WRITE);
@@ -797,7 +822,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException {
+  public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         this.txManager.commit(lock, LockLevel.WRITE);
@@ -836,7 +862,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void monitorEnter(final LockID lock, final LockLevel level) {
+  public void monitorEnter(final LockID lock, final LockLevel level) throws AbortedOperationException {
     lock(lock, level);
   }
 
@@ -885,7 +911,7 @@ public class ManagerImpl implements Manager {
                                                              + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 
   @Override
-  public void waitForAllCurrentTransactionsToComplete() {
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     this.txManager.waitForAllCurrentTransactionsToComplete();
   }
 
@@ -897,7 +923,8 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
@@ -908,7 +935,8 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
@@ -947,7 +975,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException {
+  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException {
     try {
       this.txManager.commit(lock, LockLevel.WRITE);
     } catch (final UnlockedSharedObjectException e) {
@@ -962,12 +990,12 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockIDNotifyAll(final LockID lock) {
+  public void lockIDNotifyAll(final LockID lock) throws AbortedOperationException {
     this.txManager.notify(this.lockManager.notifyAll(lock, null));
   }
 
   @Override
-  public void lockIDNotify(final LockID lock) {
+  public void lockIDNotify(final LockID lock) throws AbortedOperationException {
     this.txManager.notify(this.lockManager.notify(lock, null));
   }
 
@@ -989,6 +1017,16 @@ public class ManagerImpl implements Manager {
   @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     txManager.getCurrentTransaction().addTransactionCompleteListener(listener);
+  }
+
+  @Override
+  public AbortableOperationManager getAbortableOperationManager() {
+    return abortableOperationManager;
+  }
+
+  @Override
+  public PlatformService getPlatformService() {
+    return platformService;
   }
 
   @Override

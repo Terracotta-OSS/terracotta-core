@@ -11,6 +11,8 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
@@ -75,7 +77,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new TransactionIDGenerator(), new NullSessionManager(),
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
-                                                    this.transactionsPerBatchCounter, 0);
+                                                    this.transactionsPerBatchCounter, 0,
+                                                    new NullAbortableOperationManager());
     this.batchAccounting = this.manager.getBatchAccounting();
     this.number = new SynchronizedInt(0);
     this.error = new SynchronizedRef(null);
@@ -104,7 +107,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new TransactionIDGenerator(), new NullSessionManager(),
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
-                                                    this.transactionsPerBatchCounter, ackOnExitTimeout * 1000);
+                                                    this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
+                                                    new NullAbortableOperationManager());
     this.batchAccounting = this.manager.getBatchAccounting();
 
     final LockID lockID1 = new StringLockID("lock1");
@@ -140,7 +144,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new TransactionIDGenerator(), new NullSessionManager(),
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
-                                                    this.transactionsPerBatchCounter, ackOnExitTimeout * 1000);
+                                                    this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
+                                                    new NullAbortableOperationManager());
     this.batchAccounting = this.manager.getBatchAccounting();
 
     final LockID lockID1 = new StringLockID("lock1");
@@ -181,7 +186,12 @@ public class RemoteTransactionManagerTest extends TestCase {
     Runnable flusher = new Runnable() {
       @Override
       public void run() {
-        RemoteTransactionManagerTest.this.manager.flush(lockID1);
+        try {
+          RemoteTransactionManagerTest.this.manager.flush(lockID1);
+        } catch (AbortedOperationException e) {
+          e.printStackTrace();
+          // should never come here
+        }
         flushCalls.put(lockID1);
       }
     };

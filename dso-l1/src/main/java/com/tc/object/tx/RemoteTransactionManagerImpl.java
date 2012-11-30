@@ -4,6 +4,9 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -26,7 +29,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
-import com.tc.util.TCAssertionError;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -48,43 +50,45 @@ import java.util.TimerTask;
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager, PrettyPrintable {
 
-  private static final long                       FLUSH_WAIT_INTERVAL         = 15 * 1000;
+  private static final long                              FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
-  private static final int                        MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
-  private static final long                       COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+  private static final int                               MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
+                                                                                         .getProperties()
+                                                                                         .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
+  private static final long                              COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
+                                                                                         .getProperties()
+                                                                                         .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
-  private static final State                      RUNNING                     = new State("RUNNING");
-  private static final State                      PAUSED                      = new State("PAUSED");
-  private static final State                      STARTING                    = new State("STARTING");
-  private static final State                      STOP_INITIATED              = new State("STOP-INITIATED");
-  private static final State                      STOPPED                     = new State("STOPPED");
+  private static final State                             RUNNING                     = new State("RUNNING");
+  private static final State                             PAUSED                      = new State("PAUSED");
+  private static final State                             STARTING                    = new State("STARTING");
+  private static final State                             REJOIN_IN_PROGRESS          = new State("REJOIN_IN_PROGRESS");
+  private static final State                             STOP_INITIATED              = new State("STOP-INITIATED");
+  private static final State                             STOPPED                     = new State("STOPPED");
 
-  private final Object                            lock                        = new Object();
-  private final Map                               incompleteBatches           = new HashMap();
-  private final HashMap                           lockFlushCallbacks          = new HashMap();
+  private final Object                                   lock                        = new Object();
+  private final Map                                      incompleteBatches           = new HashMap();
+  private final HashMap<LockID, List<LockFlushCallback>> lockFlushCallbacks          = new HashMap<LockID, List<LockFlushCallback>>();
 
-  private final Counter                           outstandingBatchesCounter;
-  private final TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
-  private final LockAccounting                    lockAccounting              = new LockAccounting();
-  private final TCLogger                          logger;
-  private final long                              ackOnExitTimeout;
+  private final Counter                                  outstandingBatchesCounter;
+  private TransactionBatchAccounting                     batchAccounting             = new TransactionBatchAccounting();
+  private final LockAccounting                           lockAccounting;
+  private final TCLogger                                 logger;
+  private final long                                     ackOnExitTimeout;
 
-  private int                                     outStandingBatches          = 0;
-  private State                                   status;
-  private final SessionManager                    sessionManager;
-  private final TransactionSequencer              sequencer;
-  private final DSOClientMessageChannel           channel;
-  private final Timer                             timer                       = new Timer(
-                                                                                          "RemoteTransactionManager Flusher",
-                                                                                          true);
-  private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
+  private int                                            outStandingBatches          = 0;
+  private State                                          status;
+  private final SessionManager                           sessionManager;
+  private final TransactionSequencer                     sequencer;
+  private final DSOClientMessageChannel                  channel;
+  private final Timer                                    timer                       = new Timer(
+                                                                                                 "RemoteTransactionManager Flusher",
+                                                                                                 true);
+  private final RemoteTransactionManagerTimerTask        remoteTxManagerTimerTask;
 
-  private final GroupID                           groupID;
-  private volatile boolean                        isShutdown                  = false;
+  private final GroupID                                  groupID;
+  private volatile boolean                               isShutdown                  = false;
+  private final AbortableOperationManager                abortableOperationManager;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -93,20 +97,53 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
                                       final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
                                       final SampledRateCounter transactionSizeCounter,
                                       final SampledRateCounter transactionsPerBatchCounter,
-                                      final long ackOnExitTimeoutMs) {
+                                      final long ackOnExitTimeoutMs, AbortableOperationManager abortableOperationManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
     this.channel = channel;
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
+    this.lockAccounting = new LockAccounting(abortableOperationManager);
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
-                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
+                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
+                                              abortableOperationManager);
     this.remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
     this.timer.schedule(this.remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
+    this.abortableOperationManager = abortableOperationManager;
   }
 
+  @Override
+  public void cleanup() {
+    synchronized (this.lock) {
+      checkAndSetstate();
+      incompleteBatches.clear();
+      lockFlushCallbacks.clear();
+      outStandingBatches = 0;
+      outstandingBatchesCounter.setValue(0);
+      batchAccounting = new TransactionBatchAccounting();
+      lockAccounting.cleanup();
+      sequencer.cleanup();
+    }
+  }
+
+  private void checkAndSetstate() {
+    throwExceptionIfNecessary(false);
+    status = REJOIN_IN_PROGRESS;
+    this.lock.notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + status;
+    if (throwExp) {
+      if (status != PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      logger.info(message);
+    }
+  }
+
+  @Override
   public void shutdown() {
     this.lockAccounting.shutdown();
     this.isShutdown = true;
@@ -116,6 +153,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void pause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
@@ -126,6 +164,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void unpause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
@@ -137,13 +176,20 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
-      if (this.status != PAUSED) { throw new AssertionError("At " + this.status + " from " + remoteNode + " to "
-                                                            + thisNode + " . "
-                                                            + "Attempting to handshake while not in paused state."); }
+      State current = this.status;
+      if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(
+                                                                                            "At from "
+                                                                                                + remoteNode
+                                                                                                + " to "
+                                                                                                + thisNode
+                                                                                                + " . "
+                                                                                                + "Attempting to handshake while "
+                                                                                                + current); }
       this.status = STARTING;
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
       handshakeMessage.addResentTransactionIDs(getResentTransactionIDs());
@@ -167,11 +213,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     return MAX_OUTSTANDING_BATCHES;
   }
 
+  @Override
   public void stopProcessing() {
     this.sequencer.shutdown();
     this.channel.close();
   }
 
+  @Override
   public void stop() {
     final long start = System.currentTimeMillis();
     this.logger.debug("stop() is called on " + System.identityHashCode(this));
@@ -208,7 +256,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.logger.info("stop(): took " + (System.currentTimeMillis() - start) + " millis to complete");
   }
 
-  public void flush(final LockID lockID) {
+  @Override
+  public void flush(final LockID lockID) throws AbortedOperationException {
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
@@ -226,6 +275,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
+            handleInterruptedException();
             isInterrupted = true;
           }
         }
@@ -235,7 +285,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lockId) {
+  @Override
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lockId) throws AbortedOperationException {
     // wait for transactions to get acked here from the server
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
@@ -252,6 +303,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
+            handleInterruptedException();
             isInterrupted = true;
           }
         }
@@ -265,6 +317,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
    * This method will be called when the server receives a batch. This should ideally be called only when a batch
    * contains a sync write transaction.
    */
+  @Override
   public void batchReceived(final TxnBatchID batchId, final Set<TransactionID> syncTxnSet, final NodeID nid) {
     // This batch id was received by the server
     // so notify the locks waiting for this transaction
@@ -276,6 +329,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   /* This does not block unlike flush() */
+  @Override
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
     synchronized (this.lock) {
 
@@ -285,20 +339,29 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       } else {
         // register for call back
         if (callback != null) {
-          final Object prev = this.lockFlushCallbacks.put(lockID, callback);
-          if (prev != null) {
-            // Will this scenario come up in server restart scenario ? It should as we check for greediness in the Lock
-            // Manager before making this call
-            throw new TCAssertionError("There is already a registered call back on Lock Flush for this lock ID - "
-                                       + lockID);
+          List<LockFlushCallback> lockFlushCallbacksList = this.lockFlushCallbacks.get(lockID);
+          if (lockFlushCallbacksList == null) {
+            lockFlushCallbacksList = new ArrayList<LockFlushCallback>();
+            this.lockFlushCallbacks.put(lockID, lockFlushCallbacksList);
           }
+          lockFlushCallbacksList.add(callback);
         }
         return false;
       }
     }
   }
 
-  public void commit(final ClientTransaction txn) {
+  @Override
+  public void commit(final ClientTransaction txn) throws AbortedOperationException {
+    throttleIfNecessary();
+    commitWithoutThrottling(txn);
+  }
+
+  void throttleIfNecessary() throws AbortedOperationException {
+    this.sequencer.throttleIfNecesary();
+  }
+
+  void commitWithoutThrottling(final ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies() && txn.getDmiDescriptors().isEmpty() && txn.getNewRoots().isEmpty()) {
       //
       throw new AssertionError("Attempt to commit an empty transaction.");
@@ -319,7 +382,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         // Send now if stop is requested
         sendBatches(true, "commit() : Stop initiated.");
       } else {
-        waitUntilRunning();
+        try {
+          waitUntilRunningAbortable();
+        } catch (AbortedOperationException e) {
+          logger
+              .debug("Ignoring Aborted Operation Exception since the transaction is already written to the sequencer.");
+          return;
+        }
         sendBatches(false);
       }
     }
@@ -420,6 +489,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   // XXX:: Currently server always sends NULL BatchID
+  @Override
   public void receivedBatchAcknowledgement(final TxnBatchID txnBatchID, final NodeID remoteNode) {
     synchronized (this.lock) {
       if (isStoppingOrStopped()) {
@@ -436,6 +506,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID txID,
                                                    final NodeID remoteNode) {
     TransactionBuffer tb = null;
@@ -482,7 +553,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
-  public void waitForAllCurrentTransactionsToComplete() {
+  @Override
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     this.lockAccounting.waitAllCurrentTxnCompleted();
   }
 
@@ -496,38 +568,65 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   /*
    * Never fire callbacks while holding lock
    */
-  private void fireLockFlushCallbacks(final Map callbacks) {
+  private void fireLockFlushCallbacks(final Map<LockID, List<LockFlushCallback>> callbacks) {
     if (callbacks.isEmpty()) { return; }
-    for (final Iterator i = callbacks.entrySet().iterator(); i.hasNext();) {
-      final Entry e = (Entry) i.next();
-      final LockID lid = (LockID) e.getKey();
-      final LockFlushCallback callback = (LockFlushCallback) e.getValue();
-      callback.transactionsForLockFlushed(lid);
+    for (Entry<LockID, List<LockFlushCallback>> element : callbacks.entrySet()) {
+      final LockID lid = element.getKey();
+      final List<LockFlushCallback> callbacksList = element.getValue();
+      for (LockFlushCallback callback : callbacksList) {
+        callback.transactionsForLockFlushed(lid);
+      }
     }
   }
 
-  private Map getLockFlushCallbacks(final Set completedLocks) {
-    Map callbacks = Collections.EMPTY_MAP;
+  private Map<LockID, List<LockFlushCallback>> getLockFlushCallbacks(final Set completedLocks) {
+    Map<LockID, List<LockFlushCallback>> callbacks = Collections.EMPTY_MAP;
     if (!completedLocks.isEmpty() && !this.lockFlushCallbacks.isEmpty()) {
-      for (final Iterator i = completedLocks.iterator(); i.hasNext();) {
-        final Object lid = i.next();
-        final Object callback = this.lockFlushCallbacks.remove(lid);
-        if (callback != null) {
+      for (final Iterator<LockID> i = completedLocks.iterator(); i.hasNext();) {
+        final LockID lid = i.next();
+        final List<LockFlushCallback> lockFlushCallbacksList = this.lockFlushCallbacks.remove(lid);
+        if (lockFlushCallbacksList != null) {
           if (callbacks == Collections.EMPTY_MAP) {
             callbacks = new HashMap();
           }
-          callbacks.put(lid, callback);
+          callbacks.put(lid, lockFlushCallbacksList);
         }
       }
     }
     return callbacks;
   }
 
+  /**
+   * waits until the Transaction manager is in running state.
+   */
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
       while (this.status != RUNNING) {
         if (isShutdown) { throw new TCNotRunningException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
+        try {
+          this.lock.wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
+  /**
+   * waits until the Transaction manager is in running state.
+   * 
+   * @throws AbortedOperationException If the Operation is aborted.
+   */
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.status != RUNNING) {
+        if (isShutdown) { throw new TCNotRunningException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
@@ -552,6 +651,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
     @Override
     public void run() {
+      synchronized (RemoteTransactionManagerImpl.this.lock) {
+        if (status != RUNNING) {
+          RemoteTransactionManagerImpl.this.logger.info("Ignoring RemoteTransactionManagerTimerTask because status "
+                                                        + status);
+          return;
+        }
+      }
       try {
         final TransactionID lwm = getCompletedTransactionIDLowWaterMark();
         if (lwm.isNull()) { return; }
@@ -568,6 +674,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       } catch (final TCNotRunningException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
         this.cancel();
+      } catch (final PlatformRejoinException e) {
+        RemoteTransactionManagerImpl.this.logger.info("Ignoring " + e.getClass().getSimpleName()
+                                                      + " while sending Low water mark : ");
       } catch (final Exception e) {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);
@@ -579,6 +688,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     synchronized (this.lock) {
       out.indent().print("incompleteBatches count: ").print(Integer.valueOf(this.incompleteBatches.size())).flush();
@@ -592,5 +702,17 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   // for testing
   public boolean isShutdown() {
     return this.isShutdown;
+  }
+
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 }

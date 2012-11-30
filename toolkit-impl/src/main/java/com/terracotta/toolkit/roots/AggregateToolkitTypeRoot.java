@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.roots;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.object.ToolkitObject;
@@ -10,7 +11,6 @@ import org.terracotta.toolkit.object.ToolkitObject;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 
 /**
  * An aggregate toolkit root which is itself not clustered, but creates and stores the toolkit type in a clustered
@@ -36,4 +36,5 @@ public interface AggregateToolkitTypeRoot<T extends ToolkitObject, S extends TCT
 
   void destroy(AbstractDestroyableToolkitObject obj, ToolkitObjectType type);
 
+  void lookupOrCreateRoots();
 }

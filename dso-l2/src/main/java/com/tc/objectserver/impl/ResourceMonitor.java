@@ -22,16 +22,18 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   private final List            listeners     = new CopyOnWriteArrayList();
 
   private final long            sleepInterval;
+  private final int             critical;
 
   private MemoryMonitor             monitor;
   private final MonitoredResource   resource;
 
   private final ThreadGroup   threadGroup;
 
-  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, ThreadGroup threadGroup) {
+  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, int critical , ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
+    this.critical = critical;
   }
 
 
@@ -67,7 +69,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
-      this.monitor = new MemoryMonitor(this.sleepInterval);
+      this.monitor = new MemoryMonitor(this.sleepInterval,critical);
       Thread t = new Thread(this.threadGroup, this.monitor);
       t.setDaemon(true);
       t.setName("Resource Monitor");
@@ -86,9 +88,11 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
     private volatile boolean       run = true;
     private long                   sleepTime;
+    private final int                    critical;
 
-    public MemoryMonitor(long sleepInterval) {
+    public MemoryMonitor(long sleepInterval,int critical) {
       this.sleepTime = sleepInterval;
+      this.critical = critical;
     }
 
     public void stop() {
@@ -137,6 +141,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
                 @Override
                 public long getUsedMemory() {
+            /* above the critical threshold, return the more accurate value */
                     return checkUsed();
                 }
 

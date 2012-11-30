@@ -128,6 +128,11 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   }
 
   @Override
+  public void cleanLocalState() {
+    backingCache.clear();
+  }
+
+  @Override
   public synchronized List getKeys() {
     return new ArrayList(backingCache.keySet());
   }

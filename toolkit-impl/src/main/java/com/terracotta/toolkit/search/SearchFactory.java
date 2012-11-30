@@ -6,7 +6,7 @@ package com.terracotta.toolkit.search;
 
 import org.terracotta.toolkit.search.QueryBuilder;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 
 public interface SearchFactory {

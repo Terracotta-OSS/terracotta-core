@@ -10,6 +10,7 @@ public class TerracottaClientConfigParams {
   private boolean     isUrl;
   private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
+  private boolean     nonStop;
 
   public String getTcConfigSnippetOrUrl() {
     return tcConfigSnippetOrUrl;
@@ -61,6 +62,15 @@ public class TerracottaClientConfigParams {
   public TerracottaClientConfigParams rejoin(boolean rejoinParam) {
     this.rejoin = rejoinParam;
     return this;
+  }
+
+  public TerracottaClientConfigParams nonStopEnabled(boolean nonStopParam) {
+    this.nonStop = nonStopParam;
+    return this;
+  }
+
+  public boolean isNonStop() {
+    return nonStop;
   }
 
   public TerracottaClientConfig newTerracottaClientConfig() {

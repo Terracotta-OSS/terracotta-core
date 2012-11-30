@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.locks.LockFlushCallback;
@@ -23,11 +24,11 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
   /**
    * Blocks until all of the transactions within the given lock has been fully ACKed.
    */
-  public void flush(LockID lockID);
+  public void flush(LockID lockID) throws AbortedOperationException;
 
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
 
-  public void commit(ClientTransaction transaction);
+  public void commit(ClientTransaction transaction) throws AbortedOperationException;
 
   public TransactionBuffer receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID nodeID);
 
@@ -35,9 +36,10 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
 
   public void stopProcessing();
 
-  public void waitForAllCurrentTransactionsToComplete();
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock);
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) throws AbortedOperationException;
 
   public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid);
+  
 }

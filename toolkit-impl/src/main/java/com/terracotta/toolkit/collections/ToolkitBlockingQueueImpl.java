@@ -4,12 +4,12 @@
 package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObject<ToolkitBlockingQueue> implements
-    ToolkitBlockingQueue<E> {
+    ToolkitBlockingQueue<E>, RejoinAwareToolkitObject {
   private final int                  capacity;
-  private final ToolkitList<E>       backingList;
+  private final DestroyableToolkitList<E> backingList;
   private final ToolkitReadWriteLock lock;
   private final Condition            condition;
 
@@ -30,6 +30,16 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
     this.capacity = capacity;
     this.lock = backingList.getReadWriteLock();
     this.condition = lock.writeLock().getCondition();
+  }
+
+  @Override
+  public void rejoinStarted() {
+    this.backingList.rejoinStarted();
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    this.backingList.rejoinCompleted();
   }
 
   @Override

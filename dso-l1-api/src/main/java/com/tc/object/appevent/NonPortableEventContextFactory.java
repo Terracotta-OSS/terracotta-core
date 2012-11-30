@@ -17,7 +17,7 @@ public class NonPortableEventContextFactory {
   /**
    * Construct the factory with the provider of a ChannelID
    * 
-   * @param provider2 The provider
+   * @param provider The provider
    */
   public NonPortableEventContextFactory(ClientIDProvider provider) {
     this.provider = provider;

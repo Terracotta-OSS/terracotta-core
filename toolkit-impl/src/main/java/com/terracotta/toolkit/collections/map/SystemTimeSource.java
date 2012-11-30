@@ -8,6 +8,7 @@ package com.terracotta.toolkit.collections.map;
  */
 public class SystemTimeSource implements TimeSource {
 
+  @Override
   public int nowInSeconds() {
     return (int) (System.currentTimeMillis() / 1000);
   }

@@ -11,4 +11,6 @@ public interface DSOContextControl {
 
   void shutdown();
 
+  boolean isOnline();
+
 }

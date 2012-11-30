@@ -46,6 +46,11 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
+  public void reopen() {
+    throw new UnsupportedOperationException("Server transport doesn't support reopen()");
+  }
+
+  @Override
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
     boolean notifyTransportConnected = false;
     boolean recycleAndReturn = false;
@@ -109,6 +114,7 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private final class RestartConnectionAttacher implements ConnectionAttacher {
 
+    @Override
     public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
       Assert.assertNull(oldConnection);
       wireNewConnection(newConnection);

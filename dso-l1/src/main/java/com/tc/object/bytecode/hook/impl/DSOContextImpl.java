@@ -27,6 +27,7 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
 
 import java.io.OutputStream;
@@ -34,27 +35,31 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
+  private static final TCLogger          logger = TCLogging.getLogger(DSOContextImpl.class);
 
-  private static final TCLogger       logger = TCLogging.getLogger(DSOContextImpl.class);
+  private final ManagerImpl              manager;
+  private final boolean                  expressRejoinClient;
+  private final String                   configSpec;
+  private final TCSecurityManager        securityManager;
+  private final SecurityInfo             securityInfo;
 
-  private final DSOClientConfigHelper configHelper;
-  private final Manager               manager;
-
-  private final boolean               expressRejoinClient;
-
-  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient)
-      throws ConfigurationSetupException {
-    return createStandaloneContext(configSpec, loader, expressRejoinClient, null, new SecurityInfo());
-  }
+  private volatile DSOClientConfigHelper configHelper;
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient,
-                                                   TCSecurityManager securityManager, SecurityInfo securityInfo)
-      throws ConfigurationSetupException {
+                                                   TCSecurityManager securityManager, SecurityInfo securityInfo) {
+    ManagerImpl manager = new ManagerImpl(true, null, null, null, null, null, null, true, loader,
+                                          expressRejoinClient, securityManager);
+    DSOContextImpl context = createContext(manager, expressRejoinClient, configSpec, securityManager, securityInfo);
+    return context;
+  }
+
+  public void init() throws ConfigurationSetupException {
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     (String[]) null,
                                                                                                     StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
                                                                                                     new FatalIllegalConfigurationChangeHandler(),
-                                                                                                    configSpec, securityManager);
+                                                                                                    configSpec,
+                                                                                                    securityManager);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
     config.setupLogging();
@@ -65,28 +70,26 @@ public class DSOContextImpl implements DSOContext {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
 
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
+    DSOClientConfigHelper configHelperLocal = new StandardDSOClientConfigHelperImpl(config);
 
-    Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, loader,
-                                      expressRejoinClient, securityManager);
-
-    DSOContextImpl context = createContext(configHelper, manager, expressRejoinClient);
+    this.configHelper = configHelperLocal;
+    manager.set(configHelper, l2Connection);
 
     try {
-      context.startToolkitConfigurator();
+      startToolkitConfigurator();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
-
     manager.init();
+  }
 
-    return context;
+  public PlatformService getPlatformService() {
+    return manager.getPlatformService();
   }
 
   public static TCSecurityManager createSecurityManager(Map<String, Object> env) {
     return AbstractClientFactory.getFactory().createClientSecurityManager(env);
   }
-
 
   private void startToolkitConfigurator() throws Exception {
     Class toolkitConfiguratorClass = null;
@@ -101,20 +104,21 @@ public class DSOContextImpl implements DSOContext {
     start.invoke(toolkitConfigurator, configHelper);
   }
 
-  private static DSOContextImpl createContext(DSOClientConfigHelper configHelper, Manager manager,
-                                              boolean expressRejoinClient) {
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, expressRejoinClient);
+  private static DSOContextImpl createContext(ManagerImpl manager, boolean expressRejoinClient, String configSpec,
+                                              TCSecurityManager securityManager, SecurityInfo securityInfo) {
+    return new DSOContextImpl(manager.getClassProvider(), manager, expressRejoinClient, configSpec, securityManager,
+                              securityInfo);
   }
 
-  private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
-                         boolean expressRejoinClient) {
-    Assert.assertNotNull(configHelper);
-
+  private DSOContextImpl(ClassProvider classProvider, ManagerImpl manager, boolean expressRejoinClient,
+                         String configSpec, TCSecurityManager securityManager, SecurityInfo securityInfo) {
     resolveClasses();
 
     this.expressRejoinClient = expressRejoinClient;
-    this.configHelper = configHelper;
     this.manager = manager;
+    this.configSpec = configSpec;
+    this.securityManager = securityManager;
+    this.securityInfo = securityInfo;
     logger.info("DSOContext created with expressRejoinClient=" + expressRejoinClient);
   }
 
