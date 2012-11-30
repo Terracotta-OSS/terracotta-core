@@ -10,6 +10,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.SearchException;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
@@ -17,8 +18,9 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
-import com.tc.abortable.AbortedOperationException;
 import com.google.common.base.Preconditions;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -429,6 +431,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       return this.tcObjectServerMap.getValue(this, lockID, key);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
   }
 
@@ -437,6 +441,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       return this.tcObjectServerMap.getValueUnlocked(this, key);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
   }
 
@@ -535,6 +541,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return ToolkitLockingApi.createUnnamedReadWriteLock(lockId, platformService);
   }
 
+  @Override
   public void cleanLocalState() {
     this.tcObjectServerMap.cleanLocalState();
   }
@@ -605,6 +612,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       keySet = tcObjectServerMap.keySet(this);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
     return new ServerMapKeySet<K, V>(this, keySet);
   }
@@ -616,6 +625,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       keySet = tcObjectServerMap.keySet(this);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
     return new ServerMapEntrySet<K, V>(this, keySet);
   }
@@ -1101,6 +1112,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       sum = ((TCObjectServerMap) __tc_managed()).getAllSize(new TCServerMap[] { this });
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {

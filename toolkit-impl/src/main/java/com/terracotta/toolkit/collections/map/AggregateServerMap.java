@@ -17,6 +17,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchQueryResultSet;
 import org.terracotta.toolkit.search.ToolkitSearchQuery;
@@ -24,8 +25,9 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
-import com.tc.abortable.AbortedOperationException;
 import com.google.common.base.Preconditions;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -56,8 +58,8 @@ import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.object.DestroyApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.search.SearchFactory;
-import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.search.SearchableEntity;
+import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
@@ -247,6 +249,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {
@@ -607,6 +611,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       rv = tcObjectServerMap.getAllValuesUnlocked(mapIdToKeysMap);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
     }
 
     for (Entry<K, V> entry : rv.entrySet()) {
