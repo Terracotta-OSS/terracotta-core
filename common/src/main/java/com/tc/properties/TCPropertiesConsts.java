@@ -40,6 +40,10 @@ public interface TCPropertiesConsts {
    * criticalObjectThreshold : Number of objects that the cache can hold after which the eviction
    *                           may start, its highly recommended to not to set it as the size
    *                           of the objects is not generally known
+   * resourcePoolInterval    : poll time on resource monitoring in msec
+   * haltThreshold           : the threshold where l2 singles l1 to halt additive operations
+   * criticalUpperbound      : the upperbound bytes available above the threshold levels
+   * criticalLowerbound      : the lowerbound bytes available above the threshold levels
    * </code>
    ********************************************************************************************************************/
   public static final String L2_CACHEMANAGER_ENABLED                                        = "l2.cachemanager.enabled";
@@ -56,6 +60,9 @@ public interface TCPropertiesConsts {
 
   public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
+  public static final String L2_EVICTION_HALTTHRESHOLD                                  = "l2.eviction.haltThreshold";
+  public static final String L2_EVICTION_CRITICALUPPERBOUND                                  = "l2.eviction.criticalUpperbound";
+  public static final String L2_EVICTION_CRITICALLOWERBOUND                                  = "l2.eviction.criticalLowerbound";
 
   /*********************************************************************************************************************
    * <code>
