@@ -34,11 +34,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class ClusteredStateLoader extends SecureClassLoader {
   private static final boolean      USE_APP_JTA_CLASSES;
-  private static final String       PRIVATE_CLASS_SUFFIX     = ".class_terracotta";
-  private static final boolean      DEV_MODE                 = Boolean.getBoolean("com.tc.test.toolkit.devmode");
+  private static final String       PRIVATE_CLASS_SUFFIX = ".class_terracotta";
+  private static final boolean      DEV_MODE             = Boolean.getBoolean("com.tc.test.toolkit.devmode");
 
   private final ClassLoader         appLoader;
-  private final Map<String, byte[]> extraClasses             = new ConcurrentHashMap<String, byte[]>();
+  private final Map<String, byte[]> extraClasses         = new ConcurrentHashMap<String, byte[]>();
   private final List<String>        embeddedResourcePrefixes;
   private final ClassLoader         devModeUrlClassLoader;
 
@@ -48,13 +48,13 @@ class ClusteredStateLoader extends SecureClassLoader {
     USE_APP_JTA_CLASSES = Boolean.valueOf(prop);
   }
 
-  ClusteredStateLoader(List<String> prefixes, AppClassLoader appLoader) {
+  ClusteredStateLoader(List<String> prefixes, AppClassLoader appLoader, boolean useEmbeddedEhcache) {
     super(null);
     this.appLoader = appLoader;
     this.embeddedResourcePrefixes = prefixes;
     if (DEV_MODE) {
-      System.out.println("XXX TOOLKIT DEVMODE CLASS LOADING IS APPLIED.");
-      devModeUrlClassLoader = URLClassLoader.newInstance(generateDevModeUrls(), null);
+      System.out.println("XXX TOOLKIT DEVMODE CLASS LOADING IS APPLIED");
+      devModeUrlClassLoader = URLClassLoader.newInstance(generateDevModeUrls(useEmbeddedEhcache), null);
     } else {
       devModeUrlClassLoader = null;
     }
@@ -184,7 +184,7 @@ class ClusteredStateLoader extends SecureClassLoader {
     return defineClass(name, bytes, 0, bytes.length);
   }
 
-  private static URL[] generateDevModeUrls() {
+  private static URL[] generateDevModeUrls(boolean useEmbeddedEhcache) {
     List<URL> urlList = new ArrayList<URL>();
     BufferedReader reader = null;
     try {
@@ -199,7 +199,10 @@ class ClusteredStateLoader extends SecureClassLoader {
           String path = part.trim();
           if (path.length() == 0) continue;
           File file = new File(path);
-          urlList.add(file.toURI().toURL());
+          URL url = file.toURI().toURL();
+          if (useEmbeddedEhcache || !url.toString().contains("ehcache/")) {
+            urlList.add(url);
+          }
         }
       }
       System.out.println("XXX devmode classpath: " + urlList);

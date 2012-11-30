@@ -481,8 +481,14 @@
         <surefire.jvm.mode>-server</surefire.jvm.mode>
       </properties>
     </profile>
+    
     <profile>
       <id>devmode</id>
+      <activation>
+        <file>
+          <exists>${user.home}/.devmode</exists>
+        </file>
+      </activation>      
       <properties>
         <devmode>true</devmode>
       </properties>
