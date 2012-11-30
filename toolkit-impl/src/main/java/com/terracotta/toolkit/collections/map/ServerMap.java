@@ -1274,7 +1274,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private boolean isSearchable() {
-    return !(attrExtractor instanceof NullAttributeExtractor);
+    return attrExtractor != null && !(attrExtractor instanceof NullAttributeExtractor);
   }
 
   private String getAttrTypeMapLockName() {
