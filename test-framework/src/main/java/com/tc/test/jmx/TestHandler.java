@@ -124,4 +124,9 @@ public class TestHandler implements TestHandlerMBean {
   public boolean isServerRunning(int groupIndex, int serverIndex) {
     return testServerManager.isServerRunning(groupIndex, serverIndex);
   }
+
+  @Override
+  public int waitForServerExit(final int groupIndex, final int serverIndex) throws Exception {
+    return testServerManager.waitForServerExit(groupIndex, serverIndex);
+  }
 }

@@ -4,6 +4,8 @@
  */
 package com.tc.l2.msg;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.net.groups.GroupMessage;
 import com.tc.util.State;
 
@@ -16,9 +18,10 @@ public class ObjectListSyncMessageFactory {
   }
 
   public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
-                                                                 State currentState, Set knownIDs, boolean isCleanDB) {
+                                                                 State currentState, Set knownIDs, boolean isCleanDB,
+                                                                 final MonitoredResource resource) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
-                                     knownIDs, isCleanDB);
+                                     knownIDs, isCleanDB, resource.getType().name(), resource.getTotal());
   }
 
   public static GroupMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {

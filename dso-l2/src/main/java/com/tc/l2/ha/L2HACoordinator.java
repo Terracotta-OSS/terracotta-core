@@ -4,6 +4,8 @@
  */
 package com.tc.l2.ha;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
@@ -117,7 +119,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final L2ConfigurationSetupManager configurationSetupManager, final MessageRecycler recycler,
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
-                         DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence) {
+                         DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
+                         final ObjectIDSequence objectIDSequence, final MonitoredResource resource) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -129,7 +132,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
-         serverTransactionFactory, dgcSequenceProvider, objectIDSequence);
+         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, resource);
   }
 
   private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
@@ -138,7 +141,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
-                    final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider, final ObjectIDSequence objectIDSequence) {
+                    final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
+                    final ObjectIDSequence objectIDSequence, final MonitoredResource resource) {
 
     isCleanDB = isCleanDB(persistentStateStore);
 
@@ -220,7 +224,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                           this.rTxnManager, objectManager, transactionManager,
                                                           objectsSyncRequestSink, indexSyncRequestSink,
                                                           this.sequenceGenerator, this.indexSequenceGenerator,
-                                                          isCleanDB);
+                                                          isCleanDB, resource);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);

@@ -19,10 +19,11 @@ public class GroupsData implements Serializable {
   private final String[] dataDirectoryPath;
   private final String[] logDirectoryPath;
   private final String[] backupDirectoryPath;
+  private final int      groupIndex;
 
   public GroupsData(String groupName, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames,
                     int[] proxyDsoPorts, int[] proxyL2GroupPorts, String[] dataDirectoryPath, String[] logDirectoryPath,
-                    String[] backupDirectoryPath) {
+                    String[] backupDirectoryPath, final int groupIndex) {
     this.groupName = groupName;
     this.serverNames = serverNames;
     this.dsoPorts = dsoPorts;
@@ -33,6 +34,7 @@ public class GroupsData implements Serializable {
     this.dataDirectoryPath = dataDirectoryPath;
     this.logDirectoryPath = logDirectoryPath;
     this.backupDirectoryPath = backupDirectoryPath;
+    this.groupIndex = groupIndex;
   }
 
   public void setDsoPorts(int[] dsoPorts) {
@@ -99,6 +101,10 @@ public class GroupsData implements Serializable {
 
   public int getServerCount() {
     return dsoPorts.length;
+  }
+
+  public int getGroupIndex() {
+    return groupIndex;
   }
 
   @Override
