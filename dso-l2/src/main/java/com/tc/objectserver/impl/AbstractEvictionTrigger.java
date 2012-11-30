@@ -53,7 +53,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public boolean startEviction(EvictableMap map) {
         started = true;
         name = map.getCacheName();
-        pinned = map.getMaxTotalCount() == 0;
+        pinned = (map.getMaxTotalCount() == 0);
         if ( !pinned && !map.isEvicting() && map.getSize() > 0 ) {
             startTime = System.currentTimeMillis();
             return map.startEviction();
