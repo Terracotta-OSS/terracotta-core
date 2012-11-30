@@ -30,8 +30,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     NonStopConfiguration nonStopConfiguration = nonStopDelegateProvider.getNonStopConfiguration(method.getName());
 
-    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args,
-                                                                 nonStopDelegateProvider.getTimeoutBehavior()); }
+    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args, nonStopDelegateProvider.getDelegate()); }
 
     if (nonStopConfiguration.isImmediateTimeoutEnabled() && !clusterListener.areOperationsEnabled()) { return invokeMethod(method,
                                                                                                                            args,
