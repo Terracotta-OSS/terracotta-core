@@ -63,6 +63,7 @@
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${linked-child-process.version}/linked-child-process-${linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
+    <devmode>false</devmode>
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
@@ -80,6 +81,7 @@
       -Dcom.tc.properties=${tc.system.tests.properties}
       -Dtc.install-root.ignore-checks=true
       -Dcom.sun.management.jmxremote 
+      -Dcom.tc.test.toolkit.devmode=${devmode}
       ${surefire.additional-jvm-args}</surefire.argLine>   
   </properties>
 
@@ -746,6 +748,9 @@
           <exists>${user.home}/.devmode</exists>
         </file>
       </activation>
+      <properties>
+        <devmode>true</devmode>
+      </properties>      
       <build>
         <plugins>
           <plugin>
