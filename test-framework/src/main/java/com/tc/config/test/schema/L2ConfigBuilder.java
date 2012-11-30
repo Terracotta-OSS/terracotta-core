@@ -48,10 +48,6 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("data", data);
   }
 
-  public void setStatistics(String statistics) {
-    setProperty("statistics", statistics);
-  }
-
   public void setServerDbBackup(String serverDbBackup) {
     setProperty("data-backup", serverDbBackup);
   }
@@ -183,7 +179,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     security_authImpl = authImpl;
   }
 
-  private static final String[] L2                   = new String[] { "data", "logs", "data-backup", "statistics" };
+  private static final String[] L2                          = new String[] { "data", "logs", "data-backup" };
 
   private static final String[] DSO_PERSISTENCE_RESTARTABLE = new String[] { "restartable" };
   private static final String[] DSO_PERSISTENCE      = concat(new Object[] { DSO_PERSISTENCE_RESTARTABLE });
@@ -203,10 +199,10 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += indent() + "<server host=" + (this.host != null ? "\"" + this.host + "\"" : "\"%i\"")
            + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
-    out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
+    out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION)
            + elements(DSO_RECONNECTWINDOW) + openElement("persistence", DSO_PERSISTENCE)
            + getRestartable() + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
-           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO) + getSecurityConfig();
+           + elementGroup("garbage-collection", DSO_GC) + getSecurityConfig();
 
     out += closeElement("server");
 

@@ -409,31 +409,31 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
   private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/persistence/offheap/enabled"))
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "persistence/offheap/enabled"))
         .getBooleanValue();
   }
 
   private static int getDefaultReconnectWindow(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso/client-reconnect-window"))
+    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "client-reconnect-window"))
         .getBigIntegerValue().intValue();
   }
 
   private static boolean getDefaultGarbageCollectionEnabled(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/enabled"))
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/enabled"))
         .getBooleanValue();
   }
 
   private static boolean getDefaultGarbageCollectionVerbose(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/verbose"))
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/verbose"))
         .getBooleanValue();
   }
 
   private static int getDefaultGarbageCollectionInterval(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/interval"))
+    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/interval"))
         .getBigIntegerValue().intValue();
   }
 

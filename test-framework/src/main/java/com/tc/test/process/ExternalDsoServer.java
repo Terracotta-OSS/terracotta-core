@@ -172,7 +172,6 @@ public class ExternalDsoServer {
     l2.setJMXPort(jmxPort);
     l2.setData(workingDir + File.separator + "data");
     l2.setLogs(workingDir + File.separator + "logs");
-    l2.setStatistics(workingDir + File.separator + "stats");
     if (persistentMode) {
       l2.setRestartable(true);
     }

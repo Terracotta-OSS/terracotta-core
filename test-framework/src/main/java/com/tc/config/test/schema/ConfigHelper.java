@@ -144,7 +144,6 @@ public class ConfigHelper {
       l2ConfigBuilders[serverIndex].setLogs(getLogDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setData(getDataDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setServerDbBackup(getBackupDirectoryPath(groupIndex, serverIndex));
-      l2ConfigBuilders[serverIndex].setStatistics(getStatisticsDirectoryPath(groupIndex, serverIndex));
 
       // set test level things
       L2Config l2Config = testConfig.getL2Config(groupIndex, serverIndex);
@@ -271,9 +270,4 @@ public class ConfigHelper {
   protected String getBackupDirectoryPath(final int groupIndex, final int serverIndex) {
     return groupData[groupIndex].getBackupDirectoryPath(serverIndex);
   }
-
-  private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {
-    return new File(tempDir, getServerName(groupIndex, serverIndex) + File.separator + "statistics").getAbsolutePath();
-  }
-
 }
