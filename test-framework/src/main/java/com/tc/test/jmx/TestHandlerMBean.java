@@ -145,4 +145,13 @@ public interface TestHandlerMBean {
    * @return true if the server is running.
    */
   public boolean isServerRunning(int groupIndex, int serverIndex);
+
+  /**
+   * Wait for a server to exit, returning the exit code.
+   *
+   * @param groupIndex  group for the server
+   * @param serverIndex server index
+   * @return exit code
+   */
+  public int waitForServerExit(int groupIndex, int serverIndex) throws Exception;
 }
