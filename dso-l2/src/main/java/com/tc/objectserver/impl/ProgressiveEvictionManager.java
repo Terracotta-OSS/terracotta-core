@@ -264,9 +264,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             } 
         } finally {
             evictor.markEvictionDone(oid);
-//            if (evictor.isLogging()) {
-//                log("Evictor results " + trigger);
-//            }
+            if (evictor.isLogging()) {
+                log("Evictor results " + trigger);
+            }
         }
 
         return true;
@@ -438,7 +438,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             long max = usage.getMaxMemory();
             long aveGrow = (reserve-size) / ( System.currentTimeMillis() - epoc );
             long gap = ( System.currentTimeMillis() - last ) * aveGrow * 2;
-            if ( gap < 0 ) {
+/**
+ * if size is zero, our initial grow reading is very suspect, particularly for 
+ * heap implementations.
+ */
+            if ( size == 0 || gap < 0 ) {
                 gap = 0;
             }
             long threshold = level - gap;
@@ -457,7 +461,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     * growth in the future
     */        
         private void resetEpocIfNeeded(long currentTime, long currentSize, long maxSize) {
-            if ( currentSize < size - ( maxSize *.10 ) || epoc + (5 * 60 * 1000) < currentTime) {
+            if ( size == 0 || currentSize < size - ( maxSize *.10 ) || epoc + (5 * 60 * 1000) < currentTime) {
                 resetEpoc(currentTime,currentSize);
             }
         }
