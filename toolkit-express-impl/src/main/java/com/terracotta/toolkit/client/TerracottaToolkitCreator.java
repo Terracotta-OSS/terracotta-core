@@ -125,7 +125,7 @@ public class TerracottaToolkitCreator {
     try {
       return internalClient.instantiate(TOOLKIT_DEFAULT_CM_PROVIDER, null, null);
     } catch (Exception e) {
-      throw new RuntimeException();
+      throw new RuntimeException(e);
     }
   }
 
