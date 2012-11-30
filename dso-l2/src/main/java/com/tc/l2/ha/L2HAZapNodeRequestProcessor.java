@@ -29,6 +29,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public static final int              NODE_JOINED_WITH_DIRTY_DB       = 0x03;
   public static final int              COMMUNICATION_TO_ACTIVE_ERROR   = 0x04;
   public static final int              PARTIALLY_SYNCED_PASSIVE_JOINED = 0x05;
+  public static final int              INSUFFICIENT_RESOURCES          = 0x06;
   public static final int              SPLIT_BRAIN                     = 0xff;
 
   private final TCLogger                      consoleLogger;
@@ -87,6 +88,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         return "Newly joined node in uninitialized state is already partially synced - this is not supported.";
       case SPLIT_BRAIN:
         return "Two or more Active servers detected in the cluster";
+      case INSUFFICIENT_RESOURCES:
+        return "L2 has insufficient resources to join the cluster. Check offheap settings and try again.";
       default:
         throw new AssertionError("Unknown type : " + type);
     }
@@ -100,6 +103,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case NODE_JOINED_WITH_DIRTY_DB:
       case PARTIALLY_SYNCED_PASSIVE_JOINED:
       case SPLIT_BRAIN:
+      case INSUFFICIENT_RESOURCES:
         break;
       default:
         throw new AssertionError("Unknown type : " + type + " reason : " + reason);
@@ -120,6 +124,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         logger.error(message);
         if (zapNodeType == NODE_JOINED_WITH_DIRTY_DB) {
           throw new ZapDirtyDbServerNodeException(message);
+        } else if (zapNodeType == INSUFFICIENT_RESOURCES) {
+          throw new RuntimeException(message);
         } else {
           throw new ZapServerNodeException(message);
         }

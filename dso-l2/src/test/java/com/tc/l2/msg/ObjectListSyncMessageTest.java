@@ -4,6 +4,8 @@
  */
 package com.tc.l2.msg;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.state.StateManager;
@@ -14,6 +16,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ObjectListSyncMessageTest extends TestCase {
   private ObjectListSyncMessage objectListSyncMessage;
@@ -69,8 +74,11 @@ public class ObjectListSyncMessageTest extends TestCase {
     ObjectListSyncMessage olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
 
+    MonitoredResource resource = mock(MonitoredResource.class);
+    when(resource.getType()).thenReturn(MonitoredResource.Type.OFFHEAP);
+    when(resource.getTotal()).thenReturn(1L);
     olsm = (ObjectListSyncMessage) ObjectListSyncMessageFactory
-        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, oids, true);
+        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, oids, true, resource);
     olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
   }

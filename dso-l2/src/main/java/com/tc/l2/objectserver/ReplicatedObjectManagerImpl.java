@@ -4,6 +4,8 @@
  */
 package com.tc.l2.objectserver;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.async.api.Sink;
 import com.tc.l2.context.SyncIndexesRequest;
 import com.tc.l2.context.SyncObjectsRequest;
@@ -68,6 +70,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final boolean                      isCleanDB;
   private final L2PassiveSyncStateManager    passiveSyncStateManager;
   private final L2ObjectStateManager         l2ObjectStateManager;
+  private final MonitoredResource            resource;
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
                                      final L2PassiveSyncStateManager l2PassiveSyncStateManager,
@@ -76,7 +79,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
                                      final SequenceGenerator sequenceGenerator,
-                                     final SequenceGenerator indexSequenceGenerator, final boolean isCleanDB) {
+                                     final SequenceGenerator indexSequenceGenerator, final boolean isCleanDB,
+                                     final MonitoredResource resource) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.rTxnManager = txnManager;
@@ -86,6 +90,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.indexSyncRequestSink = indexSyncRequestSink;
     this.sequenceGenerator = sequenceGenerator;
     this.indexSequenceGenerator = indexSequenceGenerator;
+    this.resource = resource;
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(this.gcMonitor);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
@@ -116,7 +121,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
             this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
                                       "Passive : " + msg.messageFrom() + " joined in partially synced state. "
                                           + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-          } else nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
+          } else if (checkForSufficientResources(msg)) {
+            nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
+          }
 
         } else {
           logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
@@ -218,6 +225,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   private void handleObjectListResponse(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
     Assert.assertTrue(this.stateManager.isActiveCoordinator());
+    checkForSufficientResources(clusterMsg);
     final Set oids = clusterMsg.getObjectIDs();
     if (!oids.isEmpty() || !clusterMsg.isCleanDB()) {
       final StringBuilder error = new StringBuilder();
@@ -356,7 +364,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + this.isCleanDB + " currentState " + clusterMsg.getCurrentState());
       this.groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
           .createObjectListSyncResponseMessage(clusterMsg, this.stateManager.getCurrentState(), knownIDs,
-                                               this.isCleanDB));
+                                               this.isCleanDB, resource));
     } else {
       logger.error("Recd. ObjectListRequest when in ACTIVE state from " + nodeID + ". Zapping node ...");
       this.groupManager.sendTo(nodeID,
@@ -365,6 +373,22 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN,
                                 "Recd ObjectListRequest from : " + nodeID + " while in ACTIVE-COORDINATOR state"
                                     + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+    }
+  }
+
+  private boolean checkForSufficientResources(ObjectListSyncMessage response) {
+    if (response.getType() != ObjectListSyncMessage.RESPONSE) {
+      throw new AssertionError();
+    }
+
+    // We don't want to allow a passive with less than the active's resources to join the cluster. That could lead
+    // to the passive crashing randomly at some point in the future, or maybe even during passive sync.
+    if (!response.getResourceType().equals(resource.getType().name()) || response.getResourceSize() < resource.getTotal()) {
+      groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
+          "Node " + response.messageFrom() + " does not have enough resource to join the cluster.");
+      return false;
+    } else {
+      return true;
     }
   }
 

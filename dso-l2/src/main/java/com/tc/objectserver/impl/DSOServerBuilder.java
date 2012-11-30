@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
@@ -157,7 +159,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence);
+                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
+                                      ObjectIDSequence objectIDSequence, final MonitoredResource resource);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   L2ConfigurationSetupManager configSetupManager,

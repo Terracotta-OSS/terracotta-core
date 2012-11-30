@@ -24,6 +24,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
   private ObjectIDSet     oids;
   private State           currentState;
   private boolean         isCleanDB;
+  private String          resourceType;
+  private long            resourceSize;
 
   // To make serialization happy
   public ObjectListSyncMessage() {
@@ -34,11 +36,13 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, Set oids, boolean isCleanDB) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, Set oids, boolean isCleanDB, final String resourceType, final long resourceSize) {
     super(type, messageID);
     this.currentState = currentState;
     this.oids = (ObjectIDSet) oids;
     this.isCleanDB = isCleanDB;
+    this.resourceType = resourceType;
+    this.resourceSize = resourceSize;
   }
 
   public ObjectListSyncMessage(MessageID messageID, int type) {
@@ -57,6 +61,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         currentState = new State(in.readString());
         oids = new ObjectIDSet();
         oids.deserializeFrom(in);
+        resourceType = in.readString();
+        resourceSize = in.readLong();
         break;
       default:
         throw new AssertionError("Unknown Message Type : " + getType());
@@ -75,6 +81,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         out.writeString(this.currentState.getName());
         Assert.assertNotNull(oids);
         oids.serializeTo(out);
+        out.writeString(resourceType);
+        out.writeLong(resourceSize);
         break;
       default:
         throw new AssertionError("Unknown Message Type : " + getType());
@@ -92,6 +100,14 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
 
   public State getCurrentState() {
     return this.currentState;
+  }
+
+  public long getResourceSize() {
+    return resourceSize;
+  }
+
+  public String getResourceType() {
+    return resourceType;
   }
 
   @Override
