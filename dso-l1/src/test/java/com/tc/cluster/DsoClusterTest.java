@@ -4,6 +4,7 @@
  */
 package com.tc.cluster;
 
+import org.junit.Ignore;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
+@Ignore
 public class DsoClusterTest extends TestCase {
 
   private DsoClusterImpl cluster;
