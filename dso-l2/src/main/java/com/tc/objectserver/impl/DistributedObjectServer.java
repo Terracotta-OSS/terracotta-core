@@ -524,14 +524,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath(), l2State);
     persistor.start();
 
-    if (restartable) {
-      Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1, maxStageSize).getSink();
-      backupManager = new BackupManagerImpl(persistor, configSetupManager.commonl2Config()
-          .serverDbBackupPath(), backupSink);
-    } else {
-      backupManager = NullBackupManager.INSTANCE;
-    }
-
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
     this.serverBuilder
@@ -1050,6 +1042,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
+    if (restartable) {
+      Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1, maxStageSize).getSink();
+      backupManager = new BackupManagerImpl(persistor, indexHACoordinator, configSetupManager.commonl2Config()
+          .serverDbBackupPath(), backupSink);
+    } else {
+      backupManager = NullBackupManager.INSTANCE;
+    }
 
     final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
         globalObjectFaultCounter,

@@ -5,12 +5,14 @@ package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.IndexException;
 import com.terracottatech.search.IndexFile;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchResult;
 import com.terracottatech.search.SyncSnapshot;
 import com.terracottatech.search.ValueID;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +68,11 @@ public class NullIndexManager implements IndexManager {
         return Collections.EMPTY_MAP;
       }
     };
+  }
+
+  @Override
+  public void backup(final File dest) throws IndexException {
+    //
   }
 
   @Override

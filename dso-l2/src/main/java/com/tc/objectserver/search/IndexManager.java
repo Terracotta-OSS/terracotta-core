@@ -11,6 +11,7 @@ import com.terracottatech.search.SearchResult;
 import com.terracottatech.search.SyncSnapshot;
 import com.terracottatech.search.ValueID;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -41,6 +42,8 @@ public interface IndexManager {
                                   List<NVPair> aggregators, int maxResults) throws IndexException;
 
   public SyncSnapshot snapshot(String id) throws IndexException;
+
+  void backup(File destDir) throws IndexException;
 
   void shutdown();
 
