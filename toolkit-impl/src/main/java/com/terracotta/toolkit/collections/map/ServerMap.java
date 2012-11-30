@@ -11,6 +11,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.search.SearchException;
+import org.terracotta.toolkit.search.attribute.NullAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
@@ -1273,7 +1274,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private boolean isSearchable() {
-    return attrExtractor != ToolkitAttributeExtractor.NULL_EXTRACTOR;
+    return !(attrExtractor instanceof NullAttributeExtractor);
   }
 
   private String getAttrTypeMapLockName() {
