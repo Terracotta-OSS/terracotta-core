@@ -465,6 +465,15 @@ public class RejoinAwarePlatformService implements PlatformService, RejoinLifecy
   }
 
   @Override
+  public void throttlePutIfNecessary(final ObjectID object) {
+    try {
+      delegate.throttlePutIfNecessary(object);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+  }
+
+  @Override
   public void addRejoinLifecycleListener(RejoinLifecycleListener listener) {
     try {
       delegate.addRejoinLifecycleListener(listener);

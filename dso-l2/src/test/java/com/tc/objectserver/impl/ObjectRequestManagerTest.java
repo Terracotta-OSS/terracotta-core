@@ -1016,12 +1016,8 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-<<<<<<< .working
     @Override
-    public ManagedObject getObjectByIDOrNull(final ObjectID id) {
-=======
     public ManagedObject getObjectByIDReadOnly(final ObjectID id) {
->>>>>>> .merge-right.r21555
       throw new NotImplementedException(TestObjectManager.class);
     }
 

@@ -12,6 +12,7 @@ import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
@@ -241,5 +242,10 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public AbortableOperationManager getAbortableOperationManager() {
     return manager.getAbortableOperationManager();
+  }
+
+  @Override
+  public void throttlePutIfNecessary(final ObjectID object) {
+    ManagerUtil.throttlePutIfNecessary(object);
   }
 }

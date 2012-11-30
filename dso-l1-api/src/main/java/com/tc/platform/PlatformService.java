@@ -103,4 +103,6 @@ public interface PlatformService {
 
   boolean isRejoinEnabled();
 
+  void throttlePutIfNecessary(ObjectID object);
+
 }
