@@ -221,7 +221,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
    * Waits in quantums of {@link #RESULT_WAIT_MAXTIME_MILLIS} until results corresponding to contextsToWaitFor are
    * available from the server.
    */
-  protected void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor, Map<Object, Object> rv)
+  protected synchronized void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor,
+                                             Map<Object, Object> rv)
       throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
