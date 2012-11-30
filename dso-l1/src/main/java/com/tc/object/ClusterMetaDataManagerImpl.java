@@ -106,10 +106,18 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   private void checkAndSetstate() {
-    if (state != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
-                                                           + state); }
+    throwExceptionIfNecessary(false);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + state;
+    if (throwExp) {
+      if (state != PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      LOGGER.info(message);
+    }
   }
 
   @Override

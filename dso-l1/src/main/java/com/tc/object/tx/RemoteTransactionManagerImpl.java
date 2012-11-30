@@ -129,10 +129,18 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   private void checkAndSetstate() {
-    if (status != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
-                                                            + status); }
+    throwExceptionIfNecessary(false);
     status = REJOIN_IN_PROGRESS;
     this.lock.notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + status;
+    if (throwExp) {
+      if (status != PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      logger.info(message);
+    }
   }
 
   @Override

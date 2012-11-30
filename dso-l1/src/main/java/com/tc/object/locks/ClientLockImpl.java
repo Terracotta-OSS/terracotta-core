@@ -60,19 +60,18 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     notifyAll();
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
       LockStateNode lockState = it.next();
-      unparkIfNecessary(lockState, it);
+      removeAndUnpark(lockState, it);
     }
     greediness = ClientGreediness.FREE;
   }
 
-  private void unparkIfNecessary(LockStateNode lockState, Iterator<LockStateNode> it) {
+  private void removeAndUnpark(LockStateNode lockState, Iterator<LockStateNode> it) {
     try {
       lockState.setrejoinInProgress(true);
+      it.remove();
       lockState.unpark();
-      it.remove(); // if unpark() fails (like LockHold), we do not remove item because unlock() / release() of this item
-                   // will remove it
     } catch (AssertionError e) {
-      // some impl of LockStateNode (like LockHold) throws AssertionError
+      // some impl of LockStateNode (like LockHold) throws AssertionError on unpark()
     }
   }
 
@@ -775,10 +774,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           final LockHold hold = (LockHold) s;
           if (hold.getOwner().equals(thread) && hold.getLockLevel().equals(level)) {
             unlock = hold;
-            if (unlock.isRejoinInProgress()) {
-              it.remove();
-              throw new PlatformRejoinException();
-            }
             break;
           }
         }

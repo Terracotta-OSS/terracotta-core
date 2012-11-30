@@ -101,11 +101,18 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void checkAndSetstate() {
-    if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
-                                                                 + " but found "
-                                                           + state); }
+    throwExceptionIfNecessary(false);
     state = State.REJOIN_IN_PROGRESS;
     notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + State.PAUSED + " but found " + state;
+    if(throwExp) {
+      if (state != State.PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      logger.info(message);
+    }
   }
 
   /**

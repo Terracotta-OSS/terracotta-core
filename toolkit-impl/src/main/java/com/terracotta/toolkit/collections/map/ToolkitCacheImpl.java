@@ -36,7 +36,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     super(factory);
     this.name = name;
     this.aggregateServerMap = delegate;
-    activeDelegate = aggregateServerMap;
+    this.activeDelegate = aggregateServerMap;
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
   }
 

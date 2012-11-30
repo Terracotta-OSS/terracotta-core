@@ -14,7 +14,6 @@ import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockLevel;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
@@ -23,10 +22,8 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.ConcurrentHashMap;
-import com.tc.util.runtime.ThreadIDManager;
-import com.tc.util.runtime.ThreadIDManagerImpl;
-import com.tc.util.runtime.ThreadIDMapImpl;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
@@ -35,115 +32,48 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RejoinAwarePlatformService implements PlatformService, RejoinLifecycleListener {
+public class RejoinAwarePlatformService implements PlatformService {
   // private static final TCLogger LOGGER = TCLogging
   // .getLogger(RejoinAwarePlatformService.class);
   private final PlatformService delegate;
-  private final ThreadIDManager threadIDManager = new ThreadIDManagerImpl(new ThreadIDMapImpl());
-  private final ConcurrentHashMap<ThreadLockContext, AtomicInteger> current         = new ConcurrentHashMap<ThreadLockContext, AtomicInteger>();
-  private final ConcurrentHashMap<ThreadLockContext, AtomicInteger> old             = new ConcurrentHashMap<ThreadLockContext, AtomicInteger>();
-
-  private static class ThreadLockContext {
-    private final Object   lockId;
-    private final ThreadID threadId;
-
-    @Override
-    public String toString() {
-      return "lockId=" + lockId + ", threadId=" + threadId;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((lockId == null) ? 0 : lockId.hashCode());
-      result = prime * result + ((threadId == null) ? 0 : threadId.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) return true;
-      if (obj == null) return false;
-      if (!(obj instanceof ThreadLockContext)) return false;
-      ThreadLockContext other = (ThreadLockContext) obj;
-      if (lockId == null) {
-        if (other.lockId != null) return false;
-      } else if (!lockId.equals(other.lockId)) return false;
-      if (threadId == null) {
-        if (other.threadId != null) return false;
-      } else if (!threadId.equals(other.threadId)) return false;
-      return true;
-    }
-
-    public ThreadLockContext(Object lockId, ThreadID threadId) {
-      this.lockId = lockId;
-      this.threadId = threadId;
-    }
-  }
-
-  // private String getCallTrace() {
-  // Throwable t = new Throwable();
-  // StringWriter sw = new StringWriter();
-  // PrintWriter pw = new PrintWriter(sw);
-  // t.printStackTrace(pw);
-  // return sw.toString();
-  // }
+  private static final ThreadLocal<ConcurrentHashMap<Object, AtomicInteger>> lockIdToCount = new VicariousThreadLocal<ConcurrentHashMap<Object, AtomicInteger>>() {
+                                                                                             @Override
+                                                                                             protected ConcurrentHashMap<Object, AtomicInteger> initialValue() {
+                                                                                               return new ConcurrentHashMap<Object, AtomicInteger>();
+                                                                                             }
+                                                                                           };
 
   private void addContext(Object lockId) {
-    ThreadLockContext context = createContext(lockId);
-    AtomicInteger count = current.putIfAbsent(context, new AtomicInteger(1));
+    ConcurrentHashMap<Object, AtomicInteger> localMap = lockIdToCount.get();
+    AtomicInteger count = localMap.putIfAbsent(lockId, new AtomicInteger(1));
     if (count != null) {
       count.incrementAndGet();
-    } else {
-      old.remove(context);
     }
   }
 
   private void removeContext(Object lockId) {
-    ThreadLockContext context = createContext(lockId);
-    AtomicInteger count = current.get(context);
-    if (count != null && count.decrementAndGet() < 0) { throw new IllegalStateException("current removed more times "
-                                                                                        + context); }
-  }
-
-  private ThreadLockContext createContext(Object lockId) {
-    ThreadID thredId = threadIDManager.getThreadID();
-    ThreadLockContext context = new ThreadLockContext(lockId, thredId);
-    return context;
+    ConcurrentHashMap<Object, AtomicInteger> localMap = lockIdToCount.get();
+    AtomicInteger count = localMap.get(lockId);
+    if (count.decrementAndGet() < 0) { throw new IllegalStateException("removeContext removed more times " + lockId); }
+    if (count.get() == 0) {
+      localMap.remove(lockId);
+    }
   }
 
   private boolean isLockedBeforeRejoin(Object lockId) {
-    ThreadLockContext context = createContext(lockId);
-    AtomicInteger count = old.get(context);
+    ConcurrentHashMap<Object, AtomicInteger> localMap = lockIdToCount.get();
+    AtomicInteger count = localMap.get(lockId);
     if (count != null) {
-      int value = count.decrementAndGet();
-      if (value >= 0) {
-        if (value == 0) {
-          old.remove(context);
-        }
-        return true;
-      } else {
-        throw new IllegalStateException("old removed more times " + context);
-      }
+      int current = count.decrementAndGet();
+      if (current < 0) { throw new IllegalStateException("isLockedBeforeRejoin removed more times " + lockId); }
+      return current >= 0;
     }
     return false;
   }
 
-  @Override
-  public void onRejoinStart() {
-    old.putAll(current);
-    current.clear();
-  }
-
-  @Override
-  public void onRejoinComplete() {
-    //
-  }
 
   public RejoinAwarePlatformService(PlatformService delegate) {
     this.delegate = delegate;
-    addRejoinLifecycleListener(this);
   }
 
   @Override
