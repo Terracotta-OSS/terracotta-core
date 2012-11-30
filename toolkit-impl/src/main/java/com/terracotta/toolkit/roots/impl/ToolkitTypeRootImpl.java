@@ -3,16 +3,17 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.NotClearable;
-import com.tc.object.bytecode.PlatformService;
-import com.terracotta.toolkit.TerracottaToolkit;
+import com.tc.platform.PlatformService;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.TCToolkitObject;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
 import java.util.HashMap;
@@ -27,8 +28,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   private final PlatformService                 platformService;
 
   public ToolkitTypeRootImpl() {
-    platformService = ManagerUtil.lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
-                                                               PlatformService.class);
+    platformService = PlatformServiceProvider.getPlatformService();
   }
 
   @Override
@@ -67,7 +67,11 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   }
 
   private T faultValue(ObjectID value) {
-    return (T) platformService.lookupObject(value);
+    try {
+      return (T) platformService.lookupObject(value);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override

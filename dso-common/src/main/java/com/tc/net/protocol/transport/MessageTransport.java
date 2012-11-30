@@ -21,7 +21,7 @@ public interface MessageTransport extends NetworkLayer {
 
   public void addTransportListener(MessageTransportListener listener);
 
-  public void addTransportListeners(List transportListeners);
+  public void addTransportListeners(List<MessageTransportListener> transportListeners);
 
   public void removeTransportListeners();
 

@@ -22,10 +22,12 @@ public class TerracottaNode implements ClusterNode {
     this.hostname = node.getHostname();
   }
 
+  @Override
   public String getId() {
     return id;
   }
 
+  @Override
   public InetAddress getAddress() {
     try {
       return InetAddress.getByAddress(hostname, InetAddress.getByName(ip).getAddress());

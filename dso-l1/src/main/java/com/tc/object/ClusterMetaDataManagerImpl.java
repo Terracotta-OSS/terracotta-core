@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -51,6 +52,8 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
                                                                                                                  "PAUSED");
   private static final State                                RUNNING                                  = new State(
                                                                                                                  "RUNNING");
+  private static final State                          REJOIN_IN_PROGRESS                       = new State(
+                                                                                                           "REJOIN_IN_PROGRESS");
   private static final State                                STARTING                                 = new State(
                                                                                                                  "STARTING");
 
@@ -88,10 +91,41 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     this.nwkmFactory = nwkmFactory;
   }
 
+  @Override
+  public void cleanup() {
+    // TODO: notify threads waiting for responses
+    synchronized (this) {
+      checkAndSetstate();
+      outstandingNodesWithObjectsRequests.clear();
+      outstandingKeysForOrphanedValuesRequests.clear();
+      outstandingNodeMetaDataRequests.clear();
+      outstandingNodesWithKeysRequests.clear();
+      waitObjects.clear();
+      responses.clear();
+    }
+  }
+
+  private void checkAndSetstate() {
+    throwExceptionIfNecessary(false);
+    state = REJOIN_IN_PROGRESS;
+    notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + state;
+    if (throwExp) {
+      if (state != PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      LOGGER.info(message);
+    }
+  }
+
+  @Override
   public DNAEncoding getEncoding() {
     return encoding;
   }
 
+  @Override
   public Set<NodeID> getNodesWithObject(final ObjectID objectID) {
     waitUntilRunning();
 
@@ -110,6 +144,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response.get(objectID);
   }
 
+  @Override
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(final Collection<ObjectID> objectIDs) {
     waitUntilRunning();
 
@@ -129,6 +164,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public Set<?> getKeysForOrphanedValues(final TCMap tcMap) {
     waitUntilRunning();
 
@@ -149,6 +185,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     waitUntilRunning();
 
@@ -239,6 +276,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public void setResponse(final ThreadID threadID, final Object response) {
     final WaitForResponse waitObject;
     synchronized (waitObjects) {
@@ -258,6 +296,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
     waitUntilRunning();
 
@@ -279,6 +318,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return result;
   }
 
+  @Override
   public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCServerMap tcMap, final Collection<? extends K> keys) {
     waitUntilRunning();
 
@@ -313,6 +353,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void shutdown() {
     isShutdown = true;
     synchronized (this) {
@@ -320,6 +361,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void pause(final NodeID remote, final int disconnected) {
     if (isShutdown) return;
     synchronized (this) {
@@ -329,15 +371,17 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown) return;
     synchronized (this) {
-      assertPaused("Attempt to initializeHandshake while not PAUSED");
+      assertPausedOrRejoinInProgress("Attempt to initializeHandshake while ");
       this.state = STARTING;
     }
   }
 
+  @Override
   public void unpause(final NodeID remote, final int disconnected) {
     if (isShutdown) return;
     synchronized (this) {
@@ -354,6 +398,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       synchronized (this) {
         while (this.state != RUNNING) {
           if (isShutdown) { throw new TCNotRunningException(); }
+          if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
           try {
             this.wait();
           } catch (InterruptedException e) {
@@ -366,8 +411,9 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
-  private void assertPaused(final Object message) {
-    if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": " + current); }
   }
 
   private void assertNotPaused(final Object message) {

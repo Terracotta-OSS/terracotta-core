@@ -33,9 +33,9 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     return logger;
   }
 
-  public final void addTransportListeners(List toAdd) {
-    for (Iterator i = toAdd.iterator(); i.hasNext();) {
-      MessageTransportListener l = (MessageTransportListener) i.next();
+  @Override
+  public final void addTransportListeners(List<MessageTransportListener> toAdd) {
+    for (MessageTransportListener l : toAdd) {
       addTransportListener(l);
     }
   }
@@ -47,12 +47,14 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     return Collections.unmodifiableList(listeners);
   }
 
+  @Override
   public void addTransportListener(MessageTransportListener listener) {
     if (!listeners.addIfAbsent(listener)) { throw new AssertionError(
                                                                      "Attempt to add the same listener more than once: "
                                                                          + listener); }
   }
 
+  @Override
   public final void removeTransportListeners() {
     this.listeners.clear();
   }
@@ -116,6 +118,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
   }
 
+  @Override
   public short getCommunicationStackFlags(NetworkLayer parentLayer) {
     short stackLayerFlags = 0;
     while (parentLayer != null) {
@@ -125,6 +128,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     return stackLayerFlags;
   }
 
+  @Override
   public String getCommunicationStackNames(NetworkLayer parentLayer) {
     StringBuilder currentLayer = new StringBuilder();
     while (parentLayer != null) {
@@ -134,6 +138,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     return currentLayer.toString();
   }
 
+  @Override
   public void initConnectionID(ConnectionID cid) {
     throw new UnsupportedOperationException();
   }

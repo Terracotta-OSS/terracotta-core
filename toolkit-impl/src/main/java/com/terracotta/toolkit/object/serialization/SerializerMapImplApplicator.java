@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
@@ -47,7 +49,11 @@ public class SerializerMapImplApplicator extends BaseApplicator {
         Object k = params[0];
         Object v = params[1];
         if (v instanceof ObjectID) {
-          v = objectManager.lookup((ObjectID) v).getPeerObject();
+          try {
+            v = objectManager.lookup((ObjectID) v).getPeerObject();
+          } catch (AbortedOperationException e) {
+            throw new TCRuntimeException(e);
+          }
         }
         m.internalput(k, v);
         break;

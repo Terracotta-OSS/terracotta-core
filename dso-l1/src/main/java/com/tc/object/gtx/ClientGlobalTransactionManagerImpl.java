@@ -4,6 +4,7 @@
  */
 package com.tc.object.gtx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -21,14 +22,15 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransactionManager {
+public class ClientGlobalTransactionManagerImpl implements
+    ClientGlobalTransactionManager {
 
   private static final TCLogger             logger               = TCLogging
                                                                      .getLogger(ClientGlobalTransactionManagerImpl.class);
 
   private static final int                  ALLOWED_LWM_DELTA    = 100;
-  private final Set                         applied              = new HashSet();
-  private final SortedMap                   globalTransactionIDs = new TreeMap();
+  private final Set                               applied              = new HashSet();
+  private final SortedMap                         globalTransactionIDs = new TreeMap();
 
   private GlobalTransactionID               lowWatermark         = GlobalTransactionID.NULL_ID;
   private final RemoteTransactionManager    remoteTransactionManager;
@@ -41,7 +43,17 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     this.preTransactionFlushCallback = preTransactionFlushCallback;
   }
 
+  @Override
+  public synchronized void cleanup() {
+    // remoteTxnManager will be cleanup from clientHandshakeCallbacks
+    applied.clear();
+    globalTransactionIDs.clear();
+    lowWatermark = GlobalTransactionID.NULL_ID; // need to do this, discuss
+    ignoredCount = 0;
+  }
+
   // For testing
+  @Override
   public synchronized int size() {
     return this.applied.size();
   }
@@ -51,6 +63,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return ALLOWED_LWM_DELTA;
   }
 
+  @Override
   public synchronized boolean startApply(final NodeID committerID, final TransactionID transactionID,
                                          final GlobalTransactionID gtxID, final NodeID remoteGroupID) {
     if (gtxID.lessThan(getLowGlobalTransactionIDWatermark())) {
@@ -63,10 +76,12 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return this.applied.add(serverTransactionID);
   }
 
+  @Override
   public synchronized GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     return this.lowWatermark;
   }
 
+  @Override
   public synchronized void setLowWatermark(final GlobalTransactionID lowWatermark, final NodeID nodeID) {
     if (this.lowWatermark.toLong() > lowWatermark.toLong()) {
       // XXX::This case is possible when the server crashes, Eventually the server will catch up
@@ -94,17 +109,20 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     }
   }
 
-  public void flush(final LockID lockID, boolean noLocksLeftOnClient) {
+  @Override
+  public void flush(final LockID lockID, boolean noLocksLeftOnClient) throws AbortedOperationException {
     if (noLocksLeftOnClient) {
       preTransactionFlushCallback.preTransactionFlush(lockID);
     }
     this.remoteTransactionManager.flush(lockID);
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {
+  @Override
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) throws AbortedOperationException {
     this.remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
 
+  @Override
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback, boolean noLocksLeftOnClient) {
     if (noLocksLeftOnClient) {
       preTransactionFlushCallback.preTransactionFlush(lockID);

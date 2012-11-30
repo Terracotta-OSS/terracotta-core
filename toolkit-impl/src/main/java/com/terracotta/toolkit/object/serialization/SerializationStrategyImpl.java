@@ -5,7 +5,7 @@ package com.terracotta.toolkit.object.serialization;
 
 import org.terracotta.toolkit.object.serialization.NotSerializableRuntimeException;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,12 +38,12 @@ public class SerializationStrategyImpl implements SerializationStrategy {
   }
 
   @Override
-  public Object deserialize(final byte[] data, boolean compression) throws IOException, ClassNotFoundException {
+  public Object deserialize(final byte[] data, boolean compression, boolean local) throws IOException, ClassNotFoundException {
     InputStream in = new ByteArrayInputStream(data);
     if (compression) {
       in = new GZIPInputStream(in);
     }
-    SerializerObjectInputStream sois = new SerializerObjectInputStream(in, serializer, tccl);
+    SerializerObjectInputStream sois = new SerializerObjectInputStream(in, serializer, tccl, local);
     try {
       return sois.readObject();
     } finally {
@@ -107,7 +107,7 @@ public class SerializationStrategyImpl implements SerializationStrategy {
   public Object deserializeFromString(final String key) throws IOException, ClassNotFoundException {
     if (key.length() >= 1 && key.charAt(0) == MARKER) {
       StringSerializedObjectInputStream ssois = new StringSerializedObjectInputStream(key);
-      SerializerObjectInputStream sois = new SerializerObjectInputStream(ssois, serializer, tccl);
+      SerializerObjectInputStream sois = new SerializerObjectInputStream(ssois, serializer, tccl, false);
       return sois.readObject();
     }
     return key;
@@ -195,18 +195,24 @@ public class SerializationStrategyImpl implements SerializationStrategy {
 
     private final ObjectStreamClassMapping oscSerializer;
     private final ClassLoader              loader;
+    private final boolean                  local;
 
-    public SerializerObjectInputStream(InputStream in, ObjectStreamClassMapping oscSerializer, ClassLoader loader)
-        throws IOException {
+    public SerializerObjectInputStream(InputStream in, ObjectStreamClassMapping oscSerializer, ClassLoader loader,
+                                       boolean local) throws IOException {
       super(in);
       this.oscSerializer = oscSerializer;
       this.loader = loader;
+      this.local = local;
     }
 
     @Override
     protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
       int code = decodeInt(this);
-      return oscSerializer.getObjectStreamClassFor(code);
+      if (local) {
+        return oscSerializer.localGetObjectStreamClassFor(code);
+      } else {
+        return oscSerializer.getObjectStreamClassFor(code);
+      }
     }
 
     @Override

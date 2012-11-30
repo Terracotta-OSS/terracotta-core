@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -115,12 +116,12 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                            final HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class> messageTypeClassMapping,
                                                            Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                                           ReconnectionRejectedHandler reconnectionRejectediHandler,
+                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
                                                            TCSecurityManager securityManager) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter,
                                          stackHarnessFactory, null, connectionPolicy, 0, aConfig,
                                          new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         messageTypeFactoryMapping, reconnectionRejectediHandler, securityManager);
+                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager);
   }
 
   @Override
@@ -143,12 +144,14 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   @Override
   public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger,
                                                            final DSOClientMessageChannel dsoChannel,
-                                                           final int faultCount, final SessionManager sessionManager) {
+                                                           final int faultCount, final SessionManager sessionManager,
+                                                           AbortableOperationManager abortableOperationManager) {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
     return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getRequestRootMessageFactory(),
-                                       dsoChannel.getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
+                                       dsoChannel.getRequestManagedObjectMessageFactory(), faultCount, sessionManager,
+                                       abortableOperationManager);
   }
 
   @Override
@@ -178,10 +181,11 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                      final Portability portability,
                                                      final DSOClientMessageChannel dsoChannel,
                                                      final ToggleableReferenceManager toggleRefMgr,
-                                                     TCObjectSelfStore tcObjectSelfStore) {
+                                                     TCObjectSelfStore tcObjectSelfStore,
+                                                     AbortableOperationManager abortableOperationManager) {
     return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, rtLogger, clientIDProvider,
                                        classProviderLocal, classFactory, objectFactory, portability, dsoChannel,
-                                       toggleRefMgr, tcObjectSelfStore);
+                                       toggleRefMgr, tcObjectSelfStore, abortableOperationManager);
   }
 
   @Override
@@ -191,15 +195,16 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                              final LockRequestMessageFactory lockRequestMessageFactory,
                                              final ThreadIDManager threadManager,
                                              final ClientGlobalTransactionManager gtxManager,
-                                             final ClientLockManagerConfig config) {
+                                             final ClientLockManagerConfig config,
+                                             final AbortableOperationManager abortableOperationManager) {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    final RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
+    final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
                                                                       defaultGroups[0], lockRequestMessageFactory,
                                                                       gtxManager, lockStatManager);
-    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config,
-                                     lockStatManager);
+    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteLockManager, threadManager, config,
+                                     lockStatManager, abortableOperationManager);
   }
 
   @Override
@@ -218,7 +223,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                  final Counter outstandingBatchesCounter,
                                                                  final Counter pendingBatchesSize,
                                                                  final SampledRateCounter transactionSizeCounter,
-                                                                 final SampledRateCounter transactionsPerBatchCounter) {
+                                                                 final SampledRateCounter transactionsPerBatchCounter,
+                                                                 AbortableOperationManager abortableOperationManager) {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
@@ -239,7 +245,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                             transactionSizeCounter,
                                             transactionsPerBatchCounter,
                                             TCPropertiesImpl.getProperties()
-                                                .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
+                                                .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000,
+                                            abortableOperationManager);
   }
 
   @Override
@@ -273,9 +280,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final Sink pauseSink, final SessionManager sessionManager,
                                                              final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                              final String clientVersion,
-                                                             final Collection<ClientHandshakeCallback> callbacks) {
+                                                             final Collection<ClientHandshakeCallback> callbacks,
+                                                             final Collection<ClearableCallback> clearCallbacks) {
     return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, dsoClusterEventsGun,
-                                          clientVersion, callbacks);
+                                          clientVersion, callbacks, clearCallbacks);
   }
 
   @Override
@@ -303,18 +311,20 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                              final DSOClientMessageChannel dsoChannel,
                                                              final SessionManager sessionManager,
-                                                             final L1ServerMapLocalCacheManager globalLocalCacheManager) {
+                                                             final L1ServerMapLocalCacheManager globalLocalCacheManager,
+                                                             final AbortableOperationManager abortableOperationManager) {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
     return new RemoteServerMapManagerImpl(defaultGroups[0], logger, dsoChannel.getServerMapMessageFactory(),
-                                          sessionManager, globalLocalCacheManager);
+                                          sessionManager, globalLocalCacheManager, abortableOperationManager);
   }
 
   @Override
   public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                                      final DSOClientMessageChannel dsoChannel,
-                                                                     final SessionManager sessionManager) {
+                                                                     final SessionManager sessionManager,
+                                                                     final AbortableOperationManager abortableOperationManager) {
     return new NullRemoteSearchRequestManager();
   }
 

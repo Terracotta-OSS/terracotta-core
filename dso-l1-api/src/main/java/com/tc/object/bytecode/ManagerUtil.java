@@ -6,6 +6,8 @@ package com.tc.object.bytecode;
 
 // import com.partitions.TCNoPartitionError;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -165,8 +167,10 @@ public class ManagerUtil {
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
-  protected static Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
+  protected static Object lookupOrCreateRootNoDepth(final String name, final Object obj)
+      throws AbortedOperationException {
     return getManager().lookupOrCreateRootNoDepth(name, obj);
   }
 
@@ -176,8 +180,10 @@ public class ManagerUtil {
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
+   * @throws AbortedOperationException
    */
-  protected static Object createOrReplaceRoot(final String rootName, final Object object) {
+  protected static Object createOrReplaceRoot(final String rootName, final Object object)
+      throws AbortedOperationException {
     return getManager().createOrReplaceRoot(rootName, object);
   }
 
@@ -187,8 +193,10 @@ public class ManagerUtil {
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    * @param level Lock level
+   * @throws AbortedOperationException
    */
-  protected static void beginVolatile(final Object pojo, final long fieldOffset, final LockLevel level) {
+  protected static void beginVolatile(final Object pojo, final long fieldOffset, final LockLevel level)
+      throws AbortedOperationException {
     TCObject TCObject = lookupExistingOrNull(pojo);
     beginVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), level);
   }
@@ -198,8 +206,10 @@ public class ManagerUtil {
    *
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
+   * @throws AbortedOperationException
    */
-  protected static void commitVolatile(final Object pojo, final long fieldOffset, final LockLevel level) {
+  protected static void commitVolatile(final Object pojo, final long fieldOffset, final LockLevel level)
+      throws AbortedOperationException {
     TCObject TCObject = lookupExistingOrNull(pojo);
     commitVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), level);
   }
@@ -210,8 +220,10 @@ public class ManagerUtil {
    * @param TCObject TCObject to lock
    * @param fieldName Field name holding volatile object
    * @param level Lock type
+   * @throws AbortedOperationException
    */
-  protected static void beginVolatile(final TCObject TCObject, final String fieldName, final LockLevel level) {
+  protected static void beginVolatile(final TCObject TCObject, final String fieldName, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(TCObject, fieldName);
     mgr.lock(lock, level);
@@ -222,9 +234,10 @@ public class ManagerUtil {
    *
    * @param lockID Lock identifier
    * @param level Lock type
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void beginLock0(final String lockID, final LockLevel level) {
+  protected static void beginLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
     beginLock(lockID, level);
   }
 
@@ -254,20 +267,21 @@ public class ManagerUtil {
    * @param lockID Lock identifier
    * @param level Lock type
    * @return True if lock was successful
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static boolean tryBeginLock0(final String lockID, final LockLevel level) {
+  protected static boolean tryBeginLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
     return tryBeginLock(lockID, level);
   }
 
-  protected static boolean tryBeginLock(final Object obj, final LockLevel level) {
+  protected static boolean tryBeginLock(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.tryLock(lock, level);
   }
 
   protected static boolean tryBeginLock(final Object obj, final LockLevel level, final long time, final TimeUnit unit)
-      throws InterruptedException {
+      throws InterruptedException, AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.tryLock(lock, level, unit.toMillis(time));
@@ -280,10 +294,11 @@ public class ManagerUtil {
    * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
+   * @throws AbortedOperationException
    */
   @Deprecated
   protected static boolean tryBeginLock0(final String lockID, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException {
+      throws InterruptedException, AbortedOperationException {
     return tryBeginLock(lockID, level, timeoutInNanos, TimeUnit.NANOSECONDS);
   }
 
@@ -292,8 +307,10 @@ public class ManagerUtil {
    *
    * @param TCObject Volatile object TCObject
    * @param fieldName Field holding the volatile object
+   * @throws AbortedOperationException
    */
-  protected static void commitVolatile(final TCObject TCObject, final String fieldName, final LockLevel level) {
+  protected static void commitVolatile(final TCObject TCObject, final String fieldName, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(TCObject, fieldName);
     mgr.unlock(lock, level);
@@ -303,9 +320,10 @@ public class ManagerUtil {
    * Commit lock
    *
    * @param lockID Lock name
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void commitLock0(final String lockID, final LockLevel level) {
+  protected static void commitLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
     commitLock(lockID, level);
   }
 
@@ -349,9 +367,11 @@ public class ManagerUtil {
    * @param lockObject The lock object
    * @param methodName The method to call
    * @param params The parameters to the method
+   * @throws AbortedOperationException
    */
   protected static void logicalInvokeWithTransaction(final Object object, final Object lockObject,
-                                                     final String methodName, final Object[] params) {
+                                                     final String methodName, final Object[] params)
+      throws AbortedOperationException {
     getManager().logicalInvokeWithTransaction(object, lockObject, methodName, params);
   }
 
@@ -389,8 +409,9 @@ public class ManagerUtil {
    *
    * @param name Name of root
    * @return Root object
+   * @throws AbortedOperationException
    */
-  protected static Object lookupRoot(final String name) {
+  protected static Object lookupRoot(final String name) throws AbortedOperationException {
     return getManager().lookupRoot(name);
   }
 
@@ -399,9 +420,10 @@ public class ManagerUtil {
    *
    * @param id Object identifier
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  protected static Object lookupObject(final ObjectID id) {
+  protected static Object lookupObject(final ObjectID id) throws AbortedOperationException {
     try {
       return getManager().lookupObject(id);
     } catch (ClassNotFoundException e) {
@@ -414,8 +436,9 @@ public class ManagerUtil {
    * like lookupObject. Non-existent objects are ignored by the server.
    *
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
-  protected static void preFetchObject(final ObjectID id) {
+  protected static void preFetchObject(final ObjectID id) throws AbortedOperationException {
     getManager().preFetchObject(id);
   }
 
@@ -426,9 +449,11 @@ public class ManagerUtil {
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  protected static Object lookupObjectWithParentContext(final ObjectID id, final ObjectID parentContext) {
+  protected static Object lookupObjectWithParentContext(final ObjectID id, final ObjectID parentContext)
+      throws AbortedOperationException {
     try {
       return getManager().lookupObject(id, parentContext);
     } catch (ClassNotFoundException e) {
@@ -490,8 +515,9 @@ public class ManagerUtil {
    * Check whether dso MonitorExist is required
    *
    * @return True if required
+   * @throws AbortedOperationException
    */
-  protected static boolean isDsoMonitorEntered(final Object obj) {
+  protected static boolean isDsoMonitorEntered(final Object obj) throws AbortedOperationException {
     return getManager().isDsoMonitorEntered(obj);
   }
 
@@ -519,8 +545,9 @@ public class ManagerUtil {
    * Perform notify on obj
    *
    * @param obj Instance
+   * @throws AbortedOperationException
    */
-  protected static void objectNotify(final Object obj) {
+  protected static void objectNotify(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.notify(lock, obj);
@@ -530,8 +557,9 @@ public class ManagerUtil {
    * Perform notifyAll on obj
    *
    * @param obj Instance
+   * @throws AbortedOperationException
    */
-  protected static void objectNotifyAll(final Object obj) {
+  protected static void objectNotifyAll(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.notifyAll(lock, obj);
@@ -541,8 +569,9 @@ public class ManagerUtil {
    * Perform untimed wait on obj
    *
    * @param obj Instance
+   * @throws AbortedOperationException
    */
-  protected static void objectWait(final Object obj) throws InterruptedException {
+  protected static void objectWait(final Object obj) throws InterruptedException, AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.wait(lock, obj);
@@ -553,8 +582,10 @@ public class ManagerUtil {
    *
    * @param obj Instance
    * @param millis Wait time
+   * @throws AbortedOperationException
    */
-  protected static void objectWait(final Object obj, final long millis) throws InterruptedException {
+  protected static void objectWait(final Object obj, final long millis) throws InterruptedException,
+      AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.wait(lock, obj, millis);
@@ -566,8 +597,10 @@ public class ManagerUtil {
    * @param obj Instance
    * @param millis Wait time
    * @param nanos More wait time
+   * @throws AbortedOperationException
    */
-  protected static void objectWait(final Object obj, long millis, final int nanos) throws InterruptedException {
+  protected static void objectWait(final Object obj, long millis, final int nanos) throws InterruptedException,
+      AbortedOperationException {
     if (nanos >= 500000 || (nanos != 0 && millis == 0)) {
       millis++;
     }
@@ -580,9 +613,10 @@ public class ManagerUtil {
    *
    * @param obj Object
    * @param level Lock type
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void monitorEnter0(final Object obj, final LockLevel level) {
+  protected static void monitorEnter0(final Object obj, final LockLevel level) throws AbortedOperationException {
     beginLock(obj, level);
   }
 
@@ -602,14 +636,16 @@ public class ManagerUtil {
    * Exit synchronized monitor
    *
    * @param obj Object
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void monitorExit0(final Object obj, final LockLevel level) {
+  protected static void monitorExit0(final Object obj, final LockLevel level) throws AbortedOperationException {
     commitLock(obj, level);
   }
 
   @Deprecated
-  protected static void instrumentationMonitorEnter(final Object obj, final LockLevel level) {
+  protected static void instrumentationMonitorEnter(final Object obj, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.monitorEnter(lock, level);
@@ -636,16 +672,17 @@ public class ManagerUtil {
    * @param obj Lock
    * @param level Lock level
    * @return True if locked at this level
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static boolean isLocked(final Object obj, final LockLevel level) {
+  protected static boolean isLocked(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.isLocked(lock, level);
   }
 
   @Deprecated
-  protected static boolean tryMonitorEnter0(final Object obj, final LockLevel level) {
+  protected static boolean tryMonitorEnter0(final Object obj, final LockLevel level) throws AbortedOperationException {
     return tryBeginLock(obj, level);
   }
 
@@ -656,11 +693,12 @@ public class ManagerUtil {
    * @param timeoutInNanos Timeout in nanoseconds
    * @param level The lock level
    * @return True if entered
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
   @Deprecated
   protected static boolean tryMonitorEnter0(final Object obj, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException {
+      throws InterruptedException, AbortedOperationException {
     return tryBeginLock(obj, level, timeoutInNanos, TimeUnit.NANOSECONDS);
   }
 
@@ -671,9 +709,11 @@ public class ManagerUtil {
    * @param level The lock level
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void monitorEnterInterruptibly0(final Object obj, final LockLevel level) throws InterruptedException {
+  protected static void monitorEnterInterruptibly0(final Object obj, final LockLevel level)
+      throws InterruptedException, AbortedOperationException {
     beginLockInterruptibly(obj, level);
   }
 
@@ -684,8 +724,10 @@ public class ManagerUtil {
    * @param level The lock level
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
+   * @throws AbortedOperationException
    */
-  protected static void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException {
+  protected static void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException,
+      AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.lockInterruptibly(lock, level);
@@ -697,9 +739,10 @@ public class ManagerUtil {
    * @param obj The lock object
    * @param level The lock level
    * @return Lock count
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int localHeldCount(final Object obj, final LockLevel level) {
+  protected static int localHeldCount(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.localHoldCount(lock, level);
@@ -711,9 +754,11 @@ public class ManagerUtil {
    * @param obj The lock
    * @param level The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static boolean isHeldByCurrentThread(final Object obj, final LockLevel level) {
+  protected static boolean isHeldByCurrentThread(final Object obj, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -725,8 +770,10 @@ public class ManagerUtil {
    * @param lockId The lock ID
    * @param level The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    */
-  protected static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level) {
+  protected static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -737,9 +784,10 @@ public class ManagerUtil {
    *
    * @param obj The object
    * @return Number of waiters
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int queueLength(final Object obj) {
+  protected static int queueLength(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.globalPendingCount(lock);
@@ -750,9 +798,10 @@ public class ManagerUtil {
    *
    * @param obj The object
    * @return Number of waiters
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int waitLength(final Object obj) {
+  protected static int waitLength(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.globalWaitingCount(lock);
@@ -763,41 +812,10 @@ public class ManagerUtil {
   }
 
   /**
-   * @return TCProperties
-   */
-  protected static TCProperties getTCProperties() {
-    return getManager().getTCProperties();
-  }
-
-  /**
-   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   *
-   * @param pojo Object
-   * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise
-   */
-  protected static boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
-    return getManager().isFieldPortableByOffset(pojo, fieldOffset);
-  }
-
-  //
-  // protected static void registerMBean(Object bean, ObjectName name) throws InstanceAlreadyExistsException,
-  // MBeanRegistrationException, NotCompliantMBeanException {
-  // getManager().registerMBean(bean, name);
-  // }
-
-  protected static void waitForAllCurrentTransactionsToComplete() {
-    getManager().waitForAllCurrentTransactionsToComplete();
-  }
-
-  protected static MetaDataDescriptor createMetaDataDescriptor(String category) {
-    return getManager().createMetaDataDescriptor(category);
-  }
-
-  protected static SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                                    boolean includeValues, Set<String> attributeSet,
                                                    List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                                   int maxResults, int batchSize, boolean waitForTxn) {
+                                                   int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     return getManager().executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
                                      aggregators, maxResults, batchSize, waitForTxn);
   }
@@ -805,7 +823,7 @@ public class ManagerUtil {
   protected static SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                                    Set<String> groupByAttributes, List<NVPair> sortAttributes,
                                                    List<NVPair> aggregators, int maxResults, int batchSize,
-                                                   boolean waitForTxn) {
+                                                   boolean waitForTxn) throws AbortedOperationException {
     return getManager().executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
                                      aggregators, maxResults, batchSize, waitForTxn);
   }
@@ -819,8 +837,9 @@ public class ManagerUtil {
    *
    * @param lockID Lock identifier
    * @param level Lock type
+   * @throws AbortedOperationException
    */
-  protected static void beginLock(final Object lockID, final LockLevel level) {
+  protected static void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lock(lock, level);
@@ -830,8 +849,9 @@ public class ManagerUtil {
    * Commit lock
    *
    * @param lockID Lock name
+   * @throws AbortedOperationException
    */
-  protected static void commitLock(final Object lockID, final LockLevel level) {
+  protected static void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.unlock(lock, level);
@@ -842,9 +862,10 @@ public class ManagerUtil {
    *
    * @param lockID Lock identifier
    * @param level Lock type
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void beginLock0(final long lockID, final LockLevel level) {
+  protected static void beginLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
     beginLock(lockID, level);
   }
 
@@ -854,9 +875,10 @@ public class ManagerUtil {
    * @param lockID Lock identifier
    * @param level Lock type
    * @return True if lock was successful
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static boolean tryBeginLock0(final long lockID, final LockLevel level) {
+  protected static boolean tryBeginLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
     return tryBeginLock(lockID, level);
   }
 
@@ -867,10 +889,11 @@ public class ManagerUtil {
    * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
+   * @throws AbortedOperationException
    */
   @Deprecated
   protected static boolean tryBeginLock0(final long lockID, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException {
+      throws InterruptedException, AbortedOperationException {
     return tryBeginLock(lockID, level, timeoutInNanos, TimeUnit.NANOSECONDS);
   }
 
@@ -878,9 +901,10 @@ public class ManagerUtil {
    * Commit lock
    *
    * @param lockID Lock name
+   * @throws AbortedOperationException
    */
   @Deprecated
-  protected static void commitLock0(final long lockID, final LockLevel level) {
+  protected static void commitLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
     commitLock(lockID, level);
   }
 
@@ -902,8 +926,10 @@ public class ManagerUtil {
    * @param lockId The lock ID
    * @param level The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    */
-  protected static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level) {
+  protected static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -922,19 +948,20 @@ public class ManagerUtil {
     return getManager().getGroupIDs();
   }
 
-  protected static void lockIDWait(final Object lockID, long time, TimeUnit unit) throws InterruptedException {
+  protected static void lockIDWait(final Object lockID, long time, TimeUnit unit) throws InterruptedException,
+      AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lockIDWait(lock, unit.toMillis(time));
   }
 
-  protected static void lockIDNotifyAll(final Object lockID) {
+  protected static void lockIDNotifyAll(final Object lockID) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lockIDNotifyAll(lock);
   }
 
-  protected static void lockIDNotify(final Object lockID) {
+  protected static void lockIDNotify(final Object lockID) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lockIDNotify(lock);
@@ -958,6 +985,11 @@ public class ManagerUtil {
   protected static void addTransactionCompleteListener(TransactionCompleteListener listener) {
     Manager mgr = getManager();
     mgr.addTransactionCompleteListener(listener);
+  }
+
+  protected static AbortableOperationManager getAbortableOperationManager() {
+    Manager mgr = getManager();
+    return mgr.getAbortableOperationManager();
   }
 
   public static void throttlePutIfNecessary(ObjectID object) {

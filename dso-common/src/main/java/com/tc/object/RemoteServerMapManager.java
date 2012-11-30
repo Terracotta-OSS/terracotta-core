@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.invalidation.InvalidationsProcessor;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -18,11 +19,14 @@ import java.util.Set;
 public interface RemoteServerMapManager extends ClientHandshakeCallback, PreTransactionFlushCallback,
     InvalidationsProcessor, PrettyPrintable {
 
-  public Object getMappingForKey(ObjectID mapID, Object portableKey);
+  public Object getMappingForKey(ObjectID mapID, Object portableKey) throws AbortedOperationException;
 
-  public Set getAllKeys(ObjectID mapID);
+  public Set getAllKeys(ObjectID mapID) throws AbortedOperationException;
 
-  public long getAllSize(ObjectID[] mapIDs);
+  public long getAllSize(ObjectID[] mapIDs) throws AbortedOperationException;
+
+  public void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, final Map<Object, Object> rv)
+      throws AbortedOperationException;
 
   public void addResponseForKeyValueMapping(SessionID localSessionID, ObjectID mapID,
                                             Collection<ServerMapGetValueResponse> responses, NodeID nodeID);
@@ -34,6 +38,4 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback, PreTran
                                        Long size, NodeID sourceNodeID);
 
   public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID);
-
-  public void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, final Map<Object, Object> rv);
 }

@@ -8,19 +8,13 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
-import com.tc.net.CommStackMismatchException;
-import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
-import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +48,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     this.localNodeID = ClientID.NULL_ID;
   }
 
+  @Override
   public void addAttachment(String key, Object value, boolean replace) {
     synchronized (attachmentLock) {
       boolean exists = attachments.containsKey(key);
@@ -63,52 +58,55 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
   }
 
+  @Override
   public Object removeAttachment(String key) {
     return this.attachments.remove(key);
   }
 
+  @Override
   public Object getAttachment(String key) {
     return this.attachments.get(key);
   }
 
+  @Override
   public boolean isOpen() {
     return this.status.isOpen();
   }
 
+  @Override
   public boolean isClosed() {
     return this.status.isClosed();
   }
 
+  @Override
   public void addListener(ChannelEventListener listener) {
     if (listener == null) { return; }
 
     listeners.add(listener);
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     return localNodeID;
   }
 
+  @Override
   public void setLocalNodeID(NodeID localNodeID) {
     this.localNodeID = localNodeID;
   }
 
+  @Override
   public NodeID getRemoteNodeID() {
     return remoteNodeID;
   }
 
+  @Override
   public TCMessage createMessage(TCMessageType type) {
     TCMessage rv = this.msgFactory.createMessage(this, type);
     // TODO: set default channel specific information in the TC message header
 
     return rv;
   }
-
-  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException,
-      UnknownHostException, IOException, CommStackMismatchException;
-
-  public abstract NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException,
-      UnknownHostException, IOException, CommStackMismatchException;
 
   private void fireChannelOpenedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
@@ -131,6 +129,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     fireChannelOpenedEvent();
   }
 
+  @Override
   public void close() {
     if (!status.getAndSetIsClosed()) {
       Assert.assertNotNull(this.sendLayer);
@@ -139,26 +138,32 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
   }
 
+  @Override
   public boolean isConnected() {
     return this.sendLayer != null && this.sendLayer.isConnected();
   }
 
+  @Override
   public final void setSendLayer(NetworkLayer layer) {
     this.sendLayer = layer;
   }
 
+  @Override
   public final void setReceiveLayer(NetworkLayer layer) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public NetworkLayer getReceiveLayer() {
     // this is the topmost layer, it has no parent
     return null;
   }
 
+  @Override
   public void send(final TCNetworkMessage message) {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
+        @Override
         public void run() {
           logger.debug("Message Sent: " + message.toString());
         }
@@ -169,6 +174,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
       if (existingCallback != null) {
         newCallback = new Runnable() {
+          @Override
           public void run() {
             try {
               existingCallback.run();
@@ -189,6 +195,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     this.sendLayer.send(message);
   }
 
+  @Override
   public final void receive(TCByteBuffer[] msgData) {
     this.router.putMessage(parser.parseMessage(this, msgData));
   }
@@ -197,6 +204,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return status;
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     fireTransportDisconnectedEvent();
   }
@@ -205,23 +213,28 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_DISCONNECTED_EVENT, AbstractMessageChannel.this));
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CONNECTED_EVENT, AbstractMessageChannel.this));
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     return;
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     // yeah, we know. We closed it.
     return;
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT, AbstractMessageChannel.this));
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {
@@ -231,6 +244,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {
@@ -249,6 +263,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   /**
    * this function gets the stack Lyaer Flag added to build the communctaion stack information
    */
+  @Override
   public short getStackLayerFlag() {
     // this is the channel layer
     return TYPE_CHANNEL_LAYER;
@@ -257,6 +272,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   /**
    * this function gets the stack Layer Name added to build the communctaion stack information
    */
+  @Override
   public String getStackLayerName() {
     // this is the channel layer
     return NAME_CHANNEL_LAYER;

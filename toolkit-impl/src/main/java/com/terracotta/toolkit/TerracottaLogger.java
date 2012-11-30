@@ -6,7 +6,7 @@ package com.terracotta.toolkit;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 
 import com.tc.logging.TCLogger;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 
 public class TerracottaLogger implements ToolkitLogger {
   private final static String TOOLKIT_LOGGER_NAMESPACE = "org.terracotta.toolkit";

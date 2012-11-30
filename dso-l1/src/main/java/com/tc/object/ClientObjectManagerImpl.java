@@ -5,6 +5,9 @@
 package com.tc.object;
 
 import com.google.common.collect.MapMaker;
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCNotRunningException;
@@ -79,17 +82,19 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
-    Evictable, PrettyPrintable {
+public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback,
+    PortableObjectProvider, Evictable, PrettyPrintable {
 
-  private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
+  private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
   private static final int                      REFERENCE_MAP_SEGS           = 32;
   private static final State                    PAUSED                       = new State("PAUSED");
   private static final State                    RUNNING                      = new State("RUNNING");
   private static final State                    STARTING                     = new State("STARTING");
   private static final State                    SHUTDOWN                     = new State("SHUTDOWN");
+  private static final State                    REJOIN_IN_PROGRESS           = new State("REJOIN_IN_PROGRESS");
 
   private static final TCLogger                 staticLogger                 = TCLogging
                                                                                  .getLogger(ClientObjectManager.class);
@@ -102,21 +107,21 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private static final int                      COMMIT_SIZE                  = 100;
 
   private State                                 state                        = RUNNING;
-  private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
+  private final ConcurrentMap<Object, TCObject>       pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
 
   private final ClassProvider                   classProvider;
   private final RemoteObjectManager             remoteObjectManager;
-  private final Traverser                       traverser;
-  private final TraverseTest                    traverseTest;
+  private final Traverser                             traverser;
+  private final TraverseTest                          traverseTest;
   private final DSOClientConfigHelper           clientConfiguration;
   private final TCClassFactory                  clazzFactory;
   private final ObjectIDProvider                idProvider;
   private final TCObjectFactory                 factory;
-  private final ObjectStore                     objectStore;
+  private final ObjectStore                           objectStore;
 
-  private ClientTransactionManager              txManager;
+  private ClientTransactionManager              clientTxManager;
 
   private StoppableThread                       reaper                       = null;
   private final TCLogger                        logger;
@@ -126,11 +131,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Portability                     portability;
   private final DSOClientMessageChannel         channel;
   private final ToggleableReferenceManager      referenceManager;
-  private final ReferenceQueue                  referenceQueue               = new ReferenceQueue();
+  private final ReferenceQueue                        referenceQueue               = new ReferenceQueue();
 
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-  private final Map<ObjectID, ObjectLatchState> objectLatchStateMap          = new HashMap();
+  private final Map<ObjectID, ObjectLatchState>       objectLatchStateMap          = new HashMap();
   private final ThreadLocal<LocalLookupContext> localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
@@ -141,6 +146,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                              };
   private final Semaphore                       creationSemaphore            = new Semaphore(1, true);
   private final RootsHolder                     rootsHolder;
+  private final AbortableOperationManager       abortableOperationManager;
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
@@ -148,10 +154,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                  final ClassProvider classProvider, final TCClassFactory classFactory,
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
-                                 final ToggleableReferenceManager referenceManager, TCObjectSelfStore tcObjectSelfStore) {
+                                 final ToggleableReferenceManager referenceManager,
+                                 TCObjectSelfStore tcObjectSelfStore,
+                                 AbortableOperationManager abortableOperationManager) {
     this(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
          objectFactory, portability, channel, referenceManager, tcObjectSelfStore,
-         new RootsHolder(new GroupID[] { new GroupID(0) }));
+         new RootsHolder(new GroupID[] { new GroupID(0) }), abortableOperationManager);
   }
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
@@ -161,7 +169,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager,
-                                 TCObjectSelfStore tcObjectSelfStore, RootsHolder holder) {
+                                 TCObjectSelfStore tcObjectSelfStore, RootsHolder holder,
+                                 AbortableOperationManager abortableOperationManager) {
     this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
     this.clientConfiguration = clientConfiguration;
@@ -179,9 +188,42 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.factory.setObjectManager(this);
     this.appEventContextFactory = new NonPortableEventContextFactory(provider);
     this.rootsHolder = holder;
-
+    this.abortableOperationManager = abortableOperationManager;
     startReaper();
     ensureKeyClassesLoaded();
+  }
+
+  @Override
+  public synchronized void cleanup() {
+    checkAndSetstate();
+    // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from RemoteServerMapManagerImpl
+    // remoteObjectManager will be cleanup from clientHandshakeCallbacks
+
+    pojoToManaged.clear();
+    objectStore.cleanup();
+    clientTxManager.cleanup();
+    while (referenceQueue.poll() != null) {
+      // cleanup the referenceQueue
+    }
+    for (ObjectLatchState latchState : objectLatchStateMap.values()) {
+      latchState.getLatch().release();
+    }
+    objectLatchStateMap.clear();
+  }
+
+  private void checkAndSetstate() {
+    throwExceptionIfNecessary(false);
+    state = REJOIN_IN_PROGRESS;
+    notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + state;
+    if (throwExp) {
+      if (state != PAUSED) { throw new IllegalStateException(message); }
+    } else {
+      logger.info(message);
+    }
   }
 
   private void ensureKeyClassesLoaded() {
@@ -226,7 +268,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown()) return;
-    assertPaused("Attempt to initiateHandshake while not PAUSED. " + thisNode + " <--> " + remoteNode);
+    assertPausedOrRejoinInProgress("Attempt to initiateHandshake " + thisNode + " <--> " + remoteNode);
     changeStateToStarting();
     addAllObjectIDs(handshakeMessage.getObjectIDs(), remoteNode);
 
@@ -241,11 +283,30 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.state = STARTING;
   }
 
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.state != RUNNING) {
+        if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          handleInterruptedException();
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -257,8 +318,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void assertPaused(final Object message) {
-    if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": " + current); }
   }
 
   private void assertNotPaused(final Object message) {
@@ -267,7 +329,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void assertNotRunning(final Object message) {
     if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
-
   }
 
   protected synchronized boolean isPaused() {
@@ -286,12 +347,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   @Override
   public void setTransactionManager(final ClientTransactionManager txManager) {
-    this.txManager = txManager;
+    this.clientTxManager = txManager;
   }
 
   @Override
   public ClientTransactionManager getTransactionManager() {
-    return this.txManager;
+    return this.clientTxManager;
   }
 
   private LocalLookupContext getLocalLookupContext() {
@@ -447,9 +508,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    * like lookupObject. Non-existent objects are ignored by the server.
    *
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
   @Override
-  public void preFetchObject(final ObjectID id) {
+  public void preFetchObject(final ObjectID id) throws AbortedOperationException {
     if (id.isNull()) return;
 
     synchronized (this) {
@@ -458,35 +520,39 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // while we are calling prefetch
       markLookupInProgress(id);
     }
-    this.remoteObjectManager.preFetchObject(id);
-    synchronized (this) {
-      lookupDone(id, false);
-      notifyAll();
+    try {
+      this.remoteObjectManager.preFetchObject(id);
+    } finally {
+      synchronized (this) {
+        lookupDone(id, false);
+        notifyAll();
+      }
     }
   }
 
   @Override
-  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException {
+  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return lookupObject(id, null, false, true);
   }
 
   @Override
-  public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException {
+  public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return lookupObject(id, null, true, false);
   }
 
   @Override
-  public Object lookupObject(final ObjectID objectID) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID objectID) throws ClassNotFoundException, AbortedOperationException {
     return lookupObject(objectID, null, false, false);
   }
 
   @Override
-  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException {
     return lookupObject(id, parentContext, false, false);
   }
 
   private Object lookupObject(final ObjectID objectID, final ObjectID parentContext, final boolean noDepth,
-                              final boolean quiet) throws ClassNotFoundException {
+                              final boolean quiet) throws ClassNotFoundException, AbortedOperationException {
     if (objectID.isNull()) { return null; }
     Object o = null;
     while (o == null) {
@@ -534,12 +600,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   // Done
 
   @Override
-  public TCObject lookup(final ObjectID id) throws ClassNotFoundException {
+  public TCObject lookup(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return lookup(id, null, false, false);
   }
 
   private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
-      throws ClassNotFoundException {
+      throws AbortedOperationException, ClassNotFoundException {
     TCObject obj = null;
     boolean retrieveNeeded = false;
     boolean isInterrupted = false;
@@ -548,7 +614,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     if (lookupContext.getCallStackCount().increment() == 1) {
       // first time
-      this.txManager.disableTransactionLogging();
+      this.clientTxManager.disableTransactionLogging();
       lookupContext.getLatch().reset();
     }
 
@@ -572,6 +638,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
               try {
                 wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
               } catch (final InterruptedException ie) {
+                handleInterruptedException();
                 isInterrupted = true;
               }
             } else {
@@ -590,6 +657,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // a pre-init TCObject, then hydrating the object
       if (retrieveNeeded) {
         boolean createInProgressSet = false;
+        boolean exception = false;
         try {
           final DNA dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
               : (parentContext == null ? this.remoteObjectManager.retrieve(id) : this.remoteObjectManager
@@ -613,16 +681,27 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           if (this.runtimeLogger.getFaultDebug()) {
             this.runtimeLogger.updateFaultStats(dna.getTypeName());
           }
+        } catch (AbortedOperationException t) {
+          exception = true;
+          if (!quiet) {
+            logger.warn("Exception retrieving object " + id, t);
+          }
+          throw t;
         } catch (final Throwable t) {
+          exception = true;
           if (!quiet) {
             logger.warn("Exception retrieving object " + id, t);
           }
           // remove the object creating in progress from the list.
-          lookupDone(id, createInProgressSet);
-          this.remoteObjectManager.removed(id);
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
+        } finally {
+          if (exception) {
+            // remove the object creating in progress from the list.
+            lookupDone(id, createInProgressSet);
+            this.remoteObjectManager.removed(id);
+          }
         }
         basicAddLocal(obj, true);
       }
@@ -633,7 +712,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         final Set waitSet = lookupContext.getObjectLatchWaitSet();
         waitAndClearLatchSet(waitSet);
         // enabled transaction logging
-        this.txManager.enableTransactionLogging();
+        this.clientTxManager.enableTransactionLogging();
       }
     }
     return obj;
@@ -658,7 +737,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void waitAndClearLatchSet(final Set waitSet) {
     boolean isInterrupted = false;
-    // now wait till all the other objects you are waiting for releases there latch.
+    // now wait till all the other objects you are waiting for releases there latch. This is waiting for creation of
+    // objects locally by other threads.
     for (final Iterator iter = waitSet.iterator(); iter.hasNext();) {
       final ObjectLatchState ols = (ObjectLatchState) iter.next();
       while (true) {
@@ -712,6 +792,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   /**
    * Check to see if the root is already in existence on the server. If it is then get it if not then create it.
+   * 
+   * @throws AbortedOperationException
    */
   @Override
   public Object lookupOrCreateRoot(final String rootName, final Object root, final GroupID gid) {
@@ -725,6 +807,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   /**
    * This method must be called within a DSO synchronized context. Currently, this is called in a setter method of a
    * replaceable root.
+   * 
+   * @throws AbortedOperationException
    */
   @Override
   public Object createOrReplaceRoot(final String rootName, final Object root) {
@@ -979,25 +1063,23 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 
     isNew = retrieveNeeded || (rootID.isNull() && create);
-
-    if (retrieveNeeded) {
-      rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
-    }
-
-    if (rootID.isNull() && create) {
-      Assert.assertNotNull(rootPojo);
-      // TODO:: Optimize this, do lazy instantiation
-      TCObject root = null;
-      if (isLiteralPojo(rootPojo)) {
-        root = basicCreate(rootPojo, gid);
-      } else {
-        root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
-                              gid);
+      if (retrieveNeeded) {
+        rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
       }
-      rootID = root.getObjectID();
-      this.txManager.createRoot(rootName, rootID);
-    }
 
+      if (rootID.isNull() && create) {
+        Assert.assertNotNull(rootPojo);
+        // TODO:: Optimize this, do lazy instantiation
+        TCObject root = null;
+        if (isLiteralPojo(rootPojo)) {
+          root = basicCreate(rootPojo, gid);
+        } else {
+          root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
+                                gid);
+        }
+        rootID = root.getObjectID();
+        this.clientTxManager.createRoot(rootName, rootID);
+    }
     synchronized (this) {
       if (isNew && !rootID.isNull()) {
         this.rootsHolder.addRoot(rootName, rootID);
@@ -1005,10 +1087,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (lookupInProgress) {
         markRootLookupNotInProgress(rootName, gid);
         notifyAll();
+        }
       }
-    }
 
-    return lookupObject(rootID, null, noDepth, false);
+    try {
+      return lookupObject(rootID, null, noDepth, false);
+    } catch (AbortedOperationException e) {
+      throw new TCRuntimeException(e);
+    }
   }
 
   private TCObject basicCreate(final Object rootPojo, GroupID gid) {
@@ -1155,7 +1241,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
     @Override
-    public final void visit(final List objects, final GroupID gid) {
+    public final void visit(final List objects, final GroupID gid) throws AbortedOperationException {
       for (final Object pojo : objects) {
         final List<Method> postCreateMethods = ClientObjectManagerImpl.this.clazzFactory
             .getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this).getPostCreateMethods();
@@ -1167,7 +1253,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
       final List tcObjects = basicCreateIfNecessary(objects, gid);
       for (final Iterator i = tcObjects.iterator(); i.hasNext();) {
-        ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
+        ClientObjectManagerImpl.this.clientTxManager.createObject((TCObject) i.next());
       }
     }
 
@@ -1202,9 +1288,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
+      obj = this.factory.getNewInstance(nextObjectID(this.clientTxManager.getCurrentTransaction(), pojo, gid), pojo,
                                         pojo.getClass(), true);
-      this.txManager.createObject(obj);
+      this.clientTxManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
         this.runtimeLogger.newManagedObject(obj);
@@ -1213,13 +1299,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return obj;
   }
 
-  private List basicCreateIfNecessary(final List pojos, final GroupID gid) {
+  private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
     canCreate();
     try {
       reserveObjectIds(pojos.size(), gid);
 
       synchronized (this) {
-        waitUntilRunning();
+        waitUntilRunningAbortable();
         final List tcObjects = new ArrayList(pojos.size());
         for (final Iterator i = pojos.iterator(); i.hasNext();) {
           tcObjects.add(basicCreateIfNecessary(i.next(), gid));
@@ -1367,12 +1453,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           if (pr != null) {
             // We don't want to take dso locks while clearing since it will happen inside the scope of the resolve lock
             // (see CDV-596)
-            this.txManager.disableTransactionLogging();
+            this.clientTxManager.disableTransactionLogging();
             final int cleared;
             try {
               cleared = removed.clearReferences(toClear);
             } finally {
-              this.txManager.enableTransactionLogging();
+              this.clientTxManager.enableTransactionLogging();
             }
 
             totalReferencesCleared += cleared;
@@ -1424,6 +1510,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
       this.tcObjectSelfStore = tcObjectSelfStore;
       this.cache = new ConcurrentClockEvictionPolicy(this.cacheManaged);
+    }
+
+    public void cleanup() {
+      cacheManaged.clear();
+      cacheUnmanaged.clear();
     }
 
     public void shutdown() {
@@ -1569,6 +1660,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
+  }
+
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 
 }

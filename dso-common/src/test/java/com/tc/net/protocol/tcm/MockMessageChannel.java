@@ -62,22 +62,27 @@ public class MockMessageChannel implements MessageChannelInternal {
     return numSends;
   }
 
+  @Override
   public void addListener(ChannelEventListener listener) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isConnected() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isOpen() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isClosed() {
     throw new ImplementMe();
   }
 
+  @Override
   public void close() {
     this.lastClosedCallTimestamp = System.currentTimeMillis();
     try {
@@ -91,31 +96,38 @@ public class MockMessageChannel implements MessageChannelInternal {
     return closedCalls.poll(timeout) != null;
   }
 
+  @Override
   public ChannelID getChannelID() {
     return channelId;
   }
 
+  @Override
   public void setSendLayer(NetworkLayer layer) {
     this.sendLayer = layer;
   }
 
+  @Override
   public void setReceiveLayer(NetworkLayer layer) {
     throw new ImplementMe();
   }
 
+  @Override
   public void send(TCNetworkMessage message) {
     ++this.numSends;
     this.lastSentMessage = message;
   }
 
+  @Override
   public void receive(TCByteBuffer[] msgData) {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkStackID open() {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkStackID open(char[] password) {
     throw new ImplementMe();
   }
@@ -124,6 +136,7 @@ public class MockMessageChannel implements MessageChannelInternal {
     return (Class) this.knownMessageTypes.get(type);
   }
 
+  @Override
   public TCMessage createMessage(TCMessageType type) {
     Class theClass = (Class) this.knownMessageTypes.get(type);
 
@@ -139,25 +152,30 @@ public class MockMessageChannel implements MessageChannelInternal {
     }
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     throw new ImplementMe();
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     throw new ImplementMe();
   }
@@ -170,52 +188,68 @@ public class MockMessageChannel implements MessageChannelInternal {
     return sendLayer;
   }
 
+  @Override
   public Object getAttachment(String key) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addAttachment(String key, Object value, boolean replace) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object removeAttachment(String key) {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     throw new ImplementMe();
   }
 
+  @Override
   public short getStackLayerFlag() {
     throw new ImplementMe();
   }
 
+  @Override
   public String getStackLayerName() {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkLayer getReceiveLayer() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     return source;
   }
 
+  @Override
   public void setLocalNodeID(NodeID source) {
     this.source = source;
   }
 
+  @Override
   public NodeID getRemoteNodeID() {
     return destination;
   }
 
   public void setRemoteNodeID(NodeID destination) {
     this.destination = destination;
+  }
+
+  @Override
+  public void reopen() {
+    throw new ImplementMe();
   }
 
 }

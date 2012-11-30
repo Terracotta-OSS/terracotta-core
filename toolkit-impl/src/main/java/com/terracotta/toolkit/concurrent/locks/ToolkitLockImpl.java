@@ -3,19 +3,19 @@
  */
 package com.terracotta.toolkit.concurrent.locks;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.PlatformService;
-import com.terracotta.toolkit.object.ToolkitObjectType;
+import com.tc.platform.PlatformService;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class ToolkitLockImpl implements ToolkitLock {
-  private final String             lockName;
-  private final UnnamedToolkitLock delegate;
+  private final String      lockName;
+  private final ToolkitLock delegate;
 
   public ToolkitLockImpl(PlatformService platformService, String name, ToolkitLockTypeInternal lockType) {
     this.lockName = name;

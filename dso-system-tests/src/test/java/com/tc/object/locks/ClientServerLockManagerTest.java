@@ -6,6 +6,8 @@ package com.tc.object.locks;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.logging.NullTCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.object.locks.ServerLockContext.Type;
@@ -44,13 +46,14 @@ public class ClientServerLockManagerTest extends TestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                  new NullAbortableOperationManager());
 
     serverLockManager = new LockManagerImpl(sink, new NullChannelManager(), new NonGreedyLockPolicyFactory());
     glue.set(clientLockManager, serverLockManager);
   }
 
-  public void testRWServer() {
+  public void testRWServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final LockID lockID2 = new StringLockID("2");
     final ThreadID tx1 = new ThreadID(1);
@@ -70,7 +73,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWRServer() {
+  public void testWRServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final LockID lockID2 = new StringLockID("2");
     final ThreadID tx1 = new ThreadID(1);
@@ -106,6 +109,7 @@ public class ClientServerLockManagerTest extends TestCase {
         try {
           threadManager.setThreadID(tx1);
           clientLockManager.wait(lockID1, new WaitListener() {
+            @Override
             public void handleWaitEvent() {
               try {
                 barrier.barrier();
@@ -117,6 +121,8 @@ public class ClientServerLockManagerTest extends TestCase {
           }, null);
         } catch (InterruptedException ie) {
           handleExceptionForTest(ie);
+        } catch (Exception e) {
+          handleExceptionForTest(e);
         }
       }
     };
@@ -128,7 +134,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWaitWRServer() {
+  public void testWaitWRServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
 
@@ -144,6 +150,8 @@ public class ClientServerLockManagerTest extends TestCase {
           clientLockManager.wait(lockID1, null);
         } catch (InterruptedException ie) {
           handleExceptionForTest(ie);
+        } catch (AbortedOperationException e) {
+          handleExceptionForTest(e);
         }
       }
     };
@@ -155,7 +163,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWaitNotifyRWServer() {
+  public void testWaitNotifyRWServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
@@ -171,6 +179,8 @@ public class ClientServerLockManagerTest extends TestCase {
           threadManager.setThreadID(tx1);
           clientLockManager.wait(lockID1, null);
         } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        } catch (AbortedOperationException ie) {
           handleExceptionForTest(ie);
         }
       }
@@ -193,7 +203,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWaitNotifyRWClientServer() {
+  public void testWaitNotifyRWClientServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
@@ -211,6 +221,8 @@ public class ClientServerLockManagerTest extends TestCase {
           threadManager.setThreadID(tx1);
           clientLockManager.wait(lockID1, null);
         } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        } catch (AbortedOperationException ie) {
           handleExceptionForTest(ie);
         }
       }
@@ -267,6 +279,8 @@ public class ClientServerLockManagerTest extends TestCase {
           System.out.println("1st thread Wait over for lock id = " + lockID1 + " thread = " + tx1);
         } catch (InterruptedException ie) {
           handleExceptionForTest(ie);
+        } catch (AbortedOperationException ie) {
+          handleExceptionForTest(ie);
         }
       }
     };
@@ -322,7 +336,7 @@ public class ClientServerLockManagerTest extends TestCase {
     System.out.println(ThreadDumpUtil.getThreadDump());
   }
 
-  public void testPendingWaitNotifiedRWClientServer() {
+  public void testPendingWaitNotifiedRWClientServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
@@ -338,6 +352,8 @@ public class ClientServerLockManagerTest extends TestCase {
           threadManager.setThreadID(tx1);
           clientLockManager.wait(lockID1, null);
         } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        } catch (AbortedOperationException ie) {
           handleExceptionForTest(ie);
         }
       }
@@ -375,7 +391,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testPendingWaitNotifiedWRClientServer() {
+  public void testPendingWaitNotifiedWRClientServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
@@ -392,6 +408,8 @@ public class ClientServerLockManagerTest extends TestCase {
           threadManager.setThreadID(tx1);
           clientLockManager.wait(lockID1, null);
         } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        } catch (AbortedOperationException ie) {
           handleExceptionForTest(ie);
         }
       }
@@ -427,7 +445,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testPendingRequestClientServer() {
+  public void testPendingRequestClientServer() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
 
@@ -440,7 +458,11 @@ public class ClientServerLockManagerTest extends TestCase {
       @Override
       public void run() {
         threadManager.setThreadID(tx1);
-        clientLockManager.lock(lockID1, LockLevel.WRITE);
+        try {
+          clientLockManager.lock(lockID1, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          handleExceptionForTest(e);
+        }
       }
     };
     pendingLockRequestThread.start();
@@ -451,7 +473,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
   }
 
-  public void testWRClient() {
+  public void testWRClient() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
 
@@ -473,7 +495,7 @@ public class ClientServerLockManagerTest extends TestCase {
     if (!found) { throw new AssertionError("Didn't find the lock I am looking for"); }
   }
 
-  public void testConcurrentLocksServerRestart() {
+  public void testConcurrentLocksServerRestart() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);

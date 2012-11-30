@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
@@ -21,6 +22,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
@@ -460,6 +462,16 @@ public class NullManager implements Manager {
   @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     //
+  }
+
+  @Override
+  public AbortableOperationManager getAbortableOperationManager() {
+    return null;
+  }
+
+  @Override
+  public PlatformService getPlatformService() {
+    return null;
   }
 
   @Override

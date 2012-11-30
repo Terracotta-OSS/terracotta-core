@@ -28,107 +28,44 @@ public class ClusterNodeStatus {
   }
 
   public static enum ClusterNodeStateType {
-    UNKNOWN("unknown") {
+    // unknown
+    UNKNOWN("unknown", false, false, false),
+    // joined
+    NODE_JOINED("node-joined", true, false, false),
+    // ops enabled
+    OPERATIONS_ENABLED("operations-enabled", true, true, false),
+    // ops disabled
+    OPERATIONS_DISABLED("operations-disabled", true, false, false),
+    // node left
+    NODE_LEFT("node-left", true, false, true);
 
-      @Override
-      public boolean isNodeJoined() {
-        return false;
-      }
-
-      @Override
-      public boolean areOperationsEnabled() {
-        return false;
-      }
-
-      @Override
-      public boolean isNodeLeft() {
-        return false;
-      }
-    },
-    NODE_JOINED("node-joined") {
-
-      @Override
-      public boolean isNodeJoined() {
-        return true;
-      }
-
-      @Override
-      public boolean areOperationsEnabled() {
-        return false;
-      }
-
-      @Override
-      public boolean isNodeLeft() {
-        return false;
-      }
-    },
-    OPERATIONS_ENABLED("operations-enabled") {
-
-      @Override
-      public boolean isNodeJoined() {
-        return true;
-      }
-
-      @Override
-      public boolean areOperationsEnabled() {
-        return true;
-      }
-
-      @Override
-      public boolean isNodeLeft() {
-        return false;
-      }
-    },
-    OPERATIONS_DISABLED("operations-disabled") {
-
-      @Override
-      public boolean isNodeJoined() {
-        return true;
-      }
-
-      @Override
-      public boolean areOperationsEnabled() {
-        return false;
-      }
-
-      @Override
-      public boolean isNodeLeft() {
-        return false;
-      }
-    },
-    NODE_LEFT("node-left") {
-
-      @Override
-      public boolean isNodeJoined() {
-        return true;
-      }
-
-      @Override
-      public boolean areOperationsEnabled() {
-        return false;
-      }
-
-      @Override
-      public boolean isNodeLeft() {
-        return true;
-      }
-    };
-
-    private final String name;
-
-    ClusterNodeStateType(String name) {
-      this.name = name;
-    }
+    private final String  name;
+    private final boolean nodeJoined;
+    private final boolean opsEnabled;
+    private final boolean nodeLeft;
 
     @Override
     public String toString() {
       return "ClusterNodeState[name=" + name + "]";
     }
 
-    public abstract boolean isNodeJoined();
+    private ClusterNodeStateType(String name, boolean nodeJoined, boolean opsEnabled, boolean nodeLeft) {
+      this.name = name;
+      this.nodeJoined = nodeJoined;
+      this.opsEnabled = opsEnabled;
+      this.nodeLeft = nodeLeft;
+    }
 
-    public abstract boolean areOperationsEnabled();
+    public boolean isNodeJoined() {
+      return nodeJoined;
+    }
 
-    public abstract boolean isNodeLeft();
+    public boolean areOperationsEnabled() {
+      return opsEnabled;
+    }
+
+    public boolean isNodeLeft() {
+      return nodeLeft;
+    }
   }
 }

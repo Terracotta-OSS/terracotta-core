@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortedOperationException;
 
 public interface ClientLockManagerTestMethods {
   /**
@@ -12,6 +13,9 @@ public interface ClientLockManagerTestMethods {
    */
   public int runLockGc();
 
-  public void wait(LockID lock, WaitListener listener, Object waitObject) throws InterruptedException;
-  public void wait(LockID lock, WaitListener listener, Object waitObject, long timeout) throws InterruptedException;
+  public void wait(LockID lock, WaitListener listener, Object waitObject) throws InterruptedException,
+      AbortedOperationException;
+
+  public void wait(LockID lock, WaitListener listener, Object waitObject, long timeout) throws InterruptedException,
+      AbortedOperationException;
 }

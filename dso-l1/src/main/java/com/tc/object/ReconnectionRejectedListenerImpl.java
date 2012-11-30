@@ -14,6 +14,10 @@ import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.List;
 
+/**
+ * <p/>
+ * TODO: REMOVE THIS CLASS
+ */
 public class ReconnectionRejectedListenerImpl implements ReconnectionRejectedListener {
   private static final TCLogger                    DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger                    CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
@@ -30,6 +34,7 @@ public class ReconnectionRejectedListenerImpl implements ReconnectionRejectedLis
     this.reconnectionRejectedCallbacks = reconnectionRejectedCallbacks;
   }
 
+  @Override
   public void notifyChannelEvent(ChannelEvent event) {
     if ((event.getType() == ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT)
         || (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT)) {
@@ -55,6 +60,7 @@ public class ReconnectionRejectedListenerImpl implements ReconnectionRejectedLis
     DSO_LOGGER.info("Shutting down clientHandshakeManager...");
   }
 
+  @Override
   public void shutDown() {
     this.shutDown = true;
   }

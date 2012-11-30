@@ -4,6 +4,8 @@
  */
 package com.tc.object.applicator;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -29,6 +31,7 @@ public class ListApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     for (Iterator i = ((List) pojo).iterator(); i.hasNext();) {
       Object o = i.next();
@@ -39,6 +42,7 @@ public class ListApplicator extends BaseApplicator {
     return addTo;
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     List list = (List) po;
@@ -52,7 +56,11 @@ public class ListApplicator extends BaseApplicator {
       for (int i = 0, n = params.length; i < n; i++) {
         Object param = params[i];
         if (param instanceof ObjectID) {
-          params[i] = objectManager.lookupObject((ObjectID) param);
+          try {
+            params[i] = objectManager.lookupObject((ObjectID) param);
+          } catch (AbortedOperationException e) {
+             throw new TCRuntimeException(e);
+          }
         }
       }
 
@@ -154,6 +162,7 @@ public class ListApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     List list = (List) pojo;
 
@@ -171,6 +180,7 @@ public class ListApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }

@@ -69,6 +69,8 @@ public interface NetworkLayer {
   public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
       IOException, CommStackMismatchException;
 
+  void reopen();
+
   public void close();
 
   public TCSocketAddress getRemoteAddress();

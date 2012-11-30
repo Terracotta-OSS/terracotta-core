@@ -33,6 +33,7 @@ public class URLConfigClient extends ClientBase {
         .newTerracottaClientConfig();
     TerracottaInternalClient client1 = TerracottaInternalClientStaticFactory
         .getOrCreateTerracottaInternalClient(config);
+    client1.init();
 
     // clusteringToolkit client is shared with client1
     Assert.assertFalse(client1.isDedicatedClient());
@@ -40,6 +41,7 @@ public class URLConfigClient extends ClientBase {
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
     TerracottaInternalClient client2 = TerracottaInternalClientStaticFactory
         .getOrCreateTerracottaInternalClient(config);
+    client2.init();
 
     Assert.assertFalse(client2.isDedicatedClient());
 
@@ -50,6 +52,7 @@ public class URLConfigClient extends ClientBase {
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
     TerracottaInternalClient client3 = TerracottaInternalClientStaticFactory
         .getOrCreateTerracottaInternalClient(config);
+    client3.init();
 
     Assert.assertFalse(client2.isDedicatedClient());
 

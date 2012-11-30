@@ -3,20 +3,20 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.events.DestroyableToolkitNotifier;
 import com.terracotta.toolkit.events.ToolkitNotifierImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.object.ToolkitObjectType;
-import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 import java.util.concurrent.ExecutorService;
@@ -30,21 +30,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * An implementation of {@link ClusteredListFactory}
  */
 public class ToolkitNotifierFactoryImpl extends
-    AbstractPrimaryToolkitObjectFactory<ToolkitNotifier, ToolkitNotifierImpl> {
+    AbstractPrimaryToolkitObjectFactory<DestroyableToolkitNotifier, ToolkitNotifierImpl> {
   private static final TCLogger                    LOGGER                            = TCLogging
                                                                                          .getLogger(ToolkitNotifierFactoryImpl.class);
   public static final String                       TOOLKIT_NOTIFIER_EXECUTOR_SERVICE = "toolkitNotifierExecutorService";
 
   private static final NotifierIsolatedTypeFactory FACTORY                           = new NotifierIsolatedTypeFactory();
 
-  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
-                                    PlatformService platformService) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME,
-                                                                FACTORY, platformService));
+  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
+    super(toolkit, context.getToolkitTypeRootsFactory()
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME, FACTORY,
+                                         context.getPlatformService()));
 
-    final ExecutorService notifierService = createExecutorService(platformService);
-    ExecutorService service = platformService.registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
-                                                                           notifierService);
+    final ExecutorService notifierService = createExecutorService(context.getPlatformService());
+    ExecutorService service = context.getPlatformService()
+        .registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE, notifierService);
     if (service == notifierService) {
       registerForShutdown(notifierService);
     }
@@ -88,12 +88,14 @@ public class ToolkitNotifierFactoryImpl extends
   }
 
   private static class NotifierIsolatedTypeFactory implements
-      IsolatedToolkitTypeFactory<ToolkitNotifier, ToolkitNotifierImpl> {
+      IsolatedToolkitTypeFactory<DestroyableToolkitNotifier, ToolkitNotifierImpl> {
 
     @Override
-    public ToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory factory, String name, Configuration config,
-                                                     ToolkitNotifierImpl tcClusteredObject) {
-      return new DestroyableToolkitNotifier(factory, tcClusteredObject, name);
+    public DestroyableToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitNotifier> factory,
+                                                                IsolatedClusteredObjectLookup<ToolkitNotifierImpl> lookup,
+                                                                String name, Configuration config,
+                                                                ToolkitNotifierImpl tcClusteredObject) {
+      return new DestroyableToolkitNotifier(factory, lookup, tcClusteredObject, name);
     }
 
     @Override

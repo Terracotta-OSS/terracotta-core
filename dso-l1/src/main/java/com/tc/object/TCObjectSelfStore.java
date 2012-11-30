@@ -9,7 +9,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 
 import java.util.Set;
 
-public interface TCObjectSelfStore {
+public interface TCObjectSelfStore extends ClearableCallback {
   void initializeTCObjectSelfStore(TCObjectSelfCallback callback);
 
   Object getById(ObjectID oid);

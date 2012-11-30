@@ -4,6 +4,8 @@
  */
 package com.tc.object.event;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -15,6 +17,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.util.Assert;
 import com.tc.util.VicariousThreadLocal;
 import com.tcclient.object.DistributedMethodCall;
@@ -72,7 +75,13 @@ public class DmiManagerImpl implements DmiManager {
       objMgr.getTransactionManager().addDmiDescriptor(dd);
       return true;
     } finally {
-      objMgr.getTransactionManager().commit(lock, LockLevel.CONCURRENT);
+      try {
+        objMgr.getTransactionManager().commit(lock, LockLevel.CONCURRENT);
+      } catch (UnlockedSharedObjectException e) {
+        throw new TCRuntimeException(e);
+      } catch (AbortedOperationException e) {
+        throw new TCRuntimeException(e);
+      }
     }
   }
 

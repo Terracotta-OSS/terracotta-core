@@ -4,15 +4,17 @@
  */
 package com.tc.object.gtx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
 
-public interface ClientGlobalTransactionManager extends GlobalTransactionManager {
+public interface ClientGlobalTransactionManager extends GlobalTransactionManager, ClearableCallback {
   public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID);
 
-  public void flush(LockID lockID, boolean noLocksLeftOnClient);
+  public void flush(LockID lockID, boolean noLocksLeftOnClient) throws AbortedOperationException;
 
   public boolean startApply(NodeID clientID, TransactionID transactionID, GlobalTransactionID globalTransactionID,
                             NodeID remoteGroupID);
@@ -24,5 +26,5 @@ public interface ClientGlobalTransactionManager extends GlobalTransactionManager
 
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient);
 
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock);
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) throws AbortedOperationException;
 }

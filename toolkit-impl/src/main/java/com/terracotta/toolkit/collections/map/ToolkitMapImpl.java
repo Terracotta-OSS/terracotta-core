@@ -3,9 +3,11 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
+import com.tc.abortable.AbortedOperationException;
 import com.google.common.base.Preconditions;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
@@ -13,9 +15,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 
 import java.util.ArrayList;
@@ -68,7 +70,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     boolean isLiteral = LiteralValues.isLiteralInstance(o);
     if (isLiteral) { return (K) o; }
 
-    return ((SerializedClusterObject<K>) o).getValue(strategy, false);
+    return ((SerializedClusterObject<K>) o).getValue(strategy, false, false);
   }
 
   @Override
@@ -95,7 +97,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     if (oidKey == null) {
       return createTCCompatibleObject(key);
     } else {
-      return platformService.lookupObject(oidKey);
+      try {
+        return platformService.lookupObject(oidKey);
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
     }
   }
 

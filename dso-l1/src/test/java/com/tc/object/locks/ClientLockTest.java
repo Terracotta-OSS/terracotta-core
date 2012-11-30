@@ -3,6 +3,8 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
 import com.tc.util.Assert;
@@ -19,10 +21,11 @@ import junit.framework.TestCase;
 
 public class ClientLockTest extends TestCase {
 
-  private static final LockID                LOCK_ID            = new StringLockID("testlock");
+  private static final LockID                    LOCK_ID                     = new StringLockID("testlock");
+  private static final AbortableOperationManager ABORTABLE_OPERATION_MANAGER = new NullAbortableOperationManager();
 
-  private static final Collection<LockLevel> WRITE_LEVELS;
-  private static final Collection<LockLevel> READ_LEVELS;
+  private static final Collection<LockLevel>     WRITE_LEVELS;
+  private static final Collection<LockLevel>     READ_LEVELS;
   static {
     Collection<LockLevel> write = new HashSet<LockLevel>();
     Collection<LockLevel> read = new HashSet<LockLevel>();
@@ -39,23 +42,25 @@ public class ClientLockTest extends TestCase {
     READ_LEVELS = read;
   }
 
-  private static final WaitListener          NULL_WAIT_LISTENER = new WaitListener() {
-                                                                  public void handleWaitEvent() {
-                                                                    //
-                                                                  }
-                                                                };
+  private static final WaitListener              NULL_WAIT_LISTENER          = new WaitListener() {
+                                                                               @Override
+                                                                               public void handleWaitEvent() {
+                                                                                 //
+                                                                               }
+                                                                             };
 
   private ClientLock getFreshClientLock() {
     return new ClientLockImpl(LOCK_ID);
   }
 
-  public void testBasicLockFunctionality() {
+  public void testBasicLockFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
                     new ThreadID(1), level);
@@ -66,13 +71,14 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicTryLockFunctionality() {
+  public void testBasicTryLockFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
+        Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER,
+                                       new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
                                        level));
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
@@ -84,13 +90,14 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicTryLockWithTimeoutFunctionality() {
+  public void testBasicTryLockWithTimeoutFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
+        Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER,
+                                       new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
                                        level, 0));
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
@@ -104,13 +111,14 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicLockInterruptiblyFunctionality() {
+  public void testBasicLockInterruptiblyFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lockInterruptibly(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lockInterruptibly(ABORTABLE_OPERATION_MANAGER,
+                               new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
                     new ThreadID(1), level);
@@ -123,22 +131,25 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockExclusionProperties() {
+  public void testLockExclusionProperties() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : WRITE_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         for (LockLevel nested : LockLevel.values()) {
           switch (nested) {
             case CONCURRENT:
-              Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested));
+              Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                             new ThreadID(2), nested));
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
-              Assert.assertFalse(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested));
+              Assert.assertFalse(lock.tryLock(ABORTABLE_OPERATION_MANAGER,
+                                              new AssertingRemoteLockManager(lock), new ThreadID(2), nested));
               break;
           }
         }
@@ -150,13 +161,16 @@ public class ClientLockTest extends TestCase {
 
       for (LockLevel level : READ_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         for (LockLevel nested : LockLevel.values()) {
           if (nested.isWrite()) {
-            Assert.assertFalse(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested));
+            Assert.assertFalse(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                            new ThreadID(2), nested));
           } else {
-            Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK),
+            Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER,
+                                           new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK),
                                            new ThreadID(2), nested));
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level), hold(new ThreadID(2), nested));
             lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
@@ -173,16 +187,18 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockNestingProperties() {
+  public void testLockNestingProperties() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : WRITE_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         for (LockLevel nested : LockLevel.values()) {
-          Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(1), nested));
+          Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                         new ThreadID(1), nested));
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level), hold(new ThreadID(1), nested));
           lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH), new ThreadID(1), nested);
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
@@ -194,18 +210,21 @@ public class ClientLockTest extends TestCase {
 
       for (LockLevel level : READ_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         for (LockLevel nested : LockLevel.values()) {
           if (nested.isWrite()) {
             try {
-              lock.lock(new AssertingRemoteLockManager(lock), new ThreadID(1), nested);
+              lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock), new ThreadID(1),
+                        nested);
               Assert.fail("Expected TCLockUpgradeNotSupportedError");
             } catch (TCLockUpgradeNotSupportedError e) {
               // expected
             }
           } else {
-            Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(1), nested));
+            Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                           new ThreadID(1), nested));
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level), hold(new ThreadID(1), nested));
             lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(1), nested);
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
@@ -220,23 +239,26 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testTimeoutOfTryLock() {
+  public void testTimeoutOfTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       for (LockLevel nested : LockLevel.values()) {
         try {
           switch (nested) {
             case CONCURRENT:
-              Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 1000));
+              Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                             new ThreadID(2), nested, 1000));
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
               long start = System.currentTimeMillis();
-              Assert.assertFalse(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 1000));
+              Assert.assertFalse(lock.tryLock(ABORTABLE_OPERATION_MANAGER,
+                                              new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 1000));
               long duration = System.currentTimeMillis() - start;
               Assert.assertTrue(duration > 500);
               Assert.assertTrue(duration < 2000);
@@ -255,24 +277,27 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testPreInterruptingTimedTryLock() {
+  public void testPreInterruptingTimedTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       for (LockLevel nested : LockLevel.values()) {
         try {
           switch (nested) {
             case CONCURRENT:
-              Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 1000));
+              Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                             new ThreadID(2), nested, 1000));
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
               Thread.currentThread().interrupt();
               try {
-                lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 1000);
+                lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                             new ThreadID(2), nested, 1000);
                 Assert.fail("Expected InterruptedException");
               } catch (InterruptedException e) {
                 // expected
@@ -291,18 +316,20 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testInterruptingTimedTryLock() {
+  public void testInterruptingTimedTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       for (LockLevel nested : LockLevel.values()) {
         try {
           switch (nested) {
             case CONCURRENT:
-              Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 10000));
+              Assert.assertTrue(lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                             new ThreadID(2), nested, 10000));
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
@@ -320,7 +347,8 @@ public class ClientLockTest extends TestCase {
                     }
                   }
                 }.start();
-                lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested, 10000);
+                lock.tryLock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                             new ThreadID(2), nested, 10000);
                 Assert.fail("Expected InterruptedException");
               } catch (InterruptedException e) {
                 // expected
@@ -339,24 +367,27 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testPreInterruptingInterruptibleLock() {
+  public void testPreInterruptingInterruptibleLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       for (LockLevel nested : LockLevel.values()) {
         try {
           switch (nested) {
             case CONCURRENT:
-              lock.lockInterruptibly(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
+              lock.lockInterruptibly(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                     new ThreadID(2), nested);
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
               Thread.currentThread().interrupt();
               try {
-                lock.lockInterruptibly(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
+                lock.lockInterruptibly(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                       new ThreadID(2), nested);
                 lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
                 Assert.fail("Expected InterruptedException");
               } catch (InterruptedException e) {
@@ -376,18 +407,20 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testInterruptingInterruptibleLock() {
+  public void testInterruptingInterruptibleLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       for (LockLevel nested : LockLevel.values()) {
         try {
           switch (nested) {
             case CONCURRENT:
-              lock.lockInterruptibly(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
+              lock.lockInterruptibly(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                     new ThreadID(2), nested);
               lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
               break;
             default:
@@ -405,7 +438,8 @@ public class ClientLockTest extends TestCase {
                     }
                   }
                 }.start();
-                lock.lockInterruptibly(new AssertingRemoteLockManager(lock), new ThreadID(2), nested);
+                lock.lockInterruptibly(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock),
+                                       new ThreadID(2), nested);
                 Assert.fail("Expected InterruptedException");
               } catch (InterruptedException e) {
                 // expected
@@ -424,7 +458,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testIllegalLockUnlockSequences() {
+  public void testIllegalLockUnlockSequences() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -433,7 +467,8 @@ public class ClientLockTest extends TestCase {
           if (lockLevel == unlockLevel) continue;
 
           checkLockQueryMethods(lock, 0, 0);
-          lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), lockLevel);
+          lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                    new ThreadID(1), lockLevel);
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), lockLevel));
           try {
             switch (unlockLevel) {
@@ -461,21 +496,24 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyReadFunctionality() {
+  public void testGreedyReadFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ));
-      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(2),
+                LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ), hold(new ThreadID(2), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(3), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(3),
+                LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(3), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(3), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
@@ -483,12 +521,14 @@ public class ClientLockTest extends TestCase {
       lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.WRITE, 0, false);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.RECALL_COMMIT),
+      lock.lock(ABORTABLE_OPERATION_MANAGER,
+                new AssertingGreedyRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.RECALL_COMMIT),
                 new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
@@ -498,21 +538,24 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyWriteFunctionality() {
+  public void testGreedyWriteFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(1),
+                LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(2),
+                LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -520,7 +563,8 @@ public class ClientLockTest extends TestCase {
       lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.WRITE, 0, false);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -529,15 +573,17 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyTimesOut() {
+  public void testWaitNotifyTimesOut() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
-                new ThreadID(1), null, 500);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.WAIT,
+                                                                                    RemoteOperation.FLUSH),
+                NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
                   LockLevel.WRITE);
@@ -549,14 +595,16 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyWhenGreedyTimesOut() {
+  public void testWaitNotifyWhenGreedyTimesOut() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.wait(new AssertingGreedyRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), NULL_WAIT_LISTENER,
+                new ThreadID(1), null, 500);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -567,12 +615,13 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyIsNotifiable() {
+  public void testWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       new Thread() {
         @Override
@@ -592,8 +641,9 @@ public class ClientLockTest extends TestCase {
         }
       }.start();
 
-      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
-                new ThreadID(1), null);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.WAIT,
+                                                                                    RemoteOperation.FLUSH),
+                NULL_WAIT_LISTENER, new ThreadID(1), null);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
                   LockLevel.WRITE);
@@ -605,13 +655,15 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNestedWaitNotifyIsNotifiable() {
+  public void testNestedWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.WRITE));
       new Thread() {
         @Override
@@ -636,8 +688,9 @@ public class ClientLockTest extends TestCase {
         }
       }.start();
 
-      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
-                new ThreadID(1), null);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.WAIT,
+                                                                                    RemoteOperation.FLUSH),
+                NULL_WAIT_LISTENER, new ThreadID(1), null);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
                   LockLevel.WRITE);
@@ -651,12 +704,13 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyWaitNotifyIsNotifiable() {
+  public void testGreedyWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       final Thread t = Thread.currentThread();
       new Thread() {
@@ -669,7 +723,8 @@ public class ClientLockTest extends TestCase {
           }
 
           try {
-            lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
+            lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(2),
+                      LockLevel.WRITE);
             checkLockQueryMethods(lock, 0, 1, hold(new ThreadID(2), LockLevel.WRITE));
             lock.notify(new AssertingRemoteLockManager(lock), new ThreadID(2), null);
             checkLockQueryMethods(lock, 1, 0, hold(new ThreadID(2), LockLevel.WRITE));
@@ -682,7 +737,8 @@ public class ClientLockTest extends TestCase {
       }.start();
 
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER,
+                new ThreadID(1), null);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -693,11 +749,12 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitIllegalMonitorState() {
+  public void testWaitIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
-      lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
+      lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER,
+                new ThreadID(1), null, 500);
       Assert.fail("Expected IllegalMonitorStateException");
     } catch (IllegalMonitorStateException e) {
       // expected
@@ -710,10 +767,12 @@ public class ClientLockTest extends TestCase {
 
       try {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         try {
-          lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
+          lock.wait(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER,
+                    new ThreadID(1), null, 500);
         } finally {
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
           lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
@@ -731,7 +790,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNotifyIllegalMonitorState() {
+  public void testNotifyIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -746,7 +805,8 @@ public class ClientLockTest extends TestCase {
 
       try {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         try {
           lock.notify(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
@@ -765,7 +825,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNotifyAllIllegalMonitorState() {
+  public void testNotifyAllIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -780,7 +840,8 @@ public class ClientLockTest extends TestCase {
 
       try {
         checkLockQueryMethods(lock, 0, 0);
-        lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                  new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         try {
           lock.notifyAll(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
@@ -799,12 +860,13 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockGarbageCollection() {
+  public void testLockGarbageCollection() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
 
       for (int i = 0; i < 100; i++) {
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
@@ -819,7 +881,8 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
 
       try {
-        lock.lock(new AssertingRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
+        lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingRemoteLockManager(lock), new ThreadID(1),
+                  LockLevel.WRITE);
         Assert.fail("Expected GarbageLockException");
       } catch (GarbageLockException e) {
         // expected
@@ -845,12 +908,13 @@ public class ClientLockTest extends TestCase {
     Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
   }
 
-  public void testGreedyWriteOnReadRecall() {
+  public void testGreedyWriteOnReadRecall() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
 
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
@@ -859,7 +923,8 @@ public class ClientLockTest extends TestCase {
       lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.READ, 0, false);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock), new ThreadID(2),
+                LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.READ));
 
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
@@ -869,12 +934,13 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBatchedRecalls() {
+  public void testBatchedRecalls() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(ABORTABLE_OPERATION_MANAGER, new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
 
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
@@ -939,6 +1005,7 @@ public class ClientLockTest extends TestCase {
     @Override
     protected void awardLock(final ThreadID thread, final ServerLockLevel level) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingGreedyRemoteLockManager.this, ThreadID.VM_ID, level);
@@ -961,32 +1028,54 @@ public class ClientLockTest extends TestCase {
       this.legal = Arrays.asList(legal);
     }
 
+    @Override
+    public boolean isRejoinInProgress() {
+      return false;
+    }
+
+    @Override
+    public void setRejoinInProgress(boolean isProgress) {
+      //
+    }
+
+    @Override
+    public void cleanup() {
+      //
+    }
+
+    @Override
     public void flush(LockID lock, boolean noLocksLeftOnClient) {
       Assert.assertTrue(legal.contains(RemoteOperation.FLUSH));
     }
 
+    @Override
     public ClientID getClientID() {
       return ClientID.NULL_ID;
     }
 
+    @Override
     public void interrupt(LockID lock, ThreadID thread) {
       Assert.assertTrue(legal.contains(RemoteOperation.INTERRUPT));
     }
 
+    @Override
     public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient) {
-      Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
+      Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED) || legal.contains(RemoteOperation.FLUSH));
       return true;
     }
 
+    @Override
     public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.LOCK));
       awardLock(thread, level);
     }
 
+    @Override
     public void query(LockID lock, ThreadID thread) {
       Assert.assertTrue(legal.contains(RemoteOperation.QUERY));
     }
 
+    @Override
     public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
       Assert.assertTrue(legal.contains(RemoteOperation.RECALL_COMMIT));
       for (ClientServerExchangeLockContext c : lockState) {
@@ -1000,9 +1089,11 @@ public class ClientLockTest extends TestCase {
       }
     }
 
+    @Override
     public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
       Assert.assertTrue(legal.contains(RemoteOperation.TRY_LOCK));
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingRemoteLockManager.this, thread, level);
@@ -1013,10 +1104,12 @@ public class ClientLockTest extends TestCase {
       });
     }
 
+    @Override
     public void unlock(LockID lock, ThreadID thread, ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.UNLOCK));
     }
 
+    @Override
     public void wait(LockID lock, ThreadID thread, long waitTime) {
       Assert.assertTrue(legal.contains(RemoteOperation.WAIT));
 
@@ -1034,6 +1127,7 @@ public class ClientLockTest extends TestCase {
 
     protected void awardLock(final ThreadID thread, final ServerLockLevel level) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingRemoteLockManager.this, thread, level);
@@ -1046,20 +1140,24 @@ public class ClientLockTest extends TestCase {
 
     protected void notifyLock(final ThreadID thread) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           target.notified(thread);
         }
       });
     }
 
+    @Override
     public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
       //
     }
 
+    @Override
     public void shutdown() {
       //
     }
 
+    @Override
     public boolean isShutdown() {
       return false;
     }

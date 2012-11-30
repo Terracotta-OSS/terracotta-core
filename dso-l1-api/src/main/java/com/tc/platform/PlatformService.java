@@ -1,8 +1,10 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object.bytecode;
+package com.tc.platform;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -13,6 +15,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
@@ -30,26 +33,27 @@ public interface PlatformService {
 
   void logicalInvoke(final Object object, final String methodName, final Object[] params);
 
-  void waitForAllCurrentTransactionsToComplete();
+  void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
-  boolean isHeldByCurrentThread(Object lockID, LockLevel level);
+  boolean isHeldByCurrentThread(Object lockID, LockLevel level) throws AbortedOperationException;
 
-  void beginLock(final Object lockID, final LockLevel level);
+  void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException;
 
-  void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException;
+  void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException, AbortedOperationException;
 
-  void commitLock(final Object lockID, final LockLevel level);
+  void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException;
 
-  boolean tryBeginLock(Object lockID, LockLevel level);
+  boolean tryBeginLock(Object lockID, LockLevel level) throws AbortedOperationException;
 
   public boolean tryBeginLock(final Object lockID, final LockLevel level, final long timeout, TimeUnit timeUnit)
-      throws InterruptedException;
+      throws InterruptedException, AbortedOperationException;
 
-  void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException;
+  void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException,
+      AbortedOperationException;
 
-  void lockIDNotify(Object lockID);
+  void lockIDNotify(Object lockID) throws AbortedOperationException;
 
-  void lockIDNotifyAll(Object lockID);
+  void lockIDNotifyAll(Object lockID) throws AbortedOperationException;
 
   TCProperties getTCProperties();
 
@@ -59,7 +63,7 @@ public interface PlatformService {
 
   TCObject lookupOrCreate(final Object obj, GroupID gid);
 
-  Object lookupObject(final ObjectID id);
+  Object lookupObject(final ObjectID id) throws AbortedOperationException;
 
   GroupID[] getGroupIDs();
 
@@ -81,15 +85,24 @@ public interface PlatformService {
 
   SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn);
+                                  int maxResults, int batchSize, boolean waitForTxn) throws AbortedOperationException;
 
   SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn);
+                                  int maxResults, int batchSize, boolean waitForTxn) throws AbortedOperationException;
 
-  void preFetchObject(final ObjectID id);
+  void preFetchObject(final ObjectID id) throws AbortedOperationException;
 
   void verifyCapability(String capability);
 
+  AbortableOperationManager getAbortableOperationManager();
+
+  void addRejoinLifecycleListener(RejoinLifecycleListener listener);
+
+  void removeRejoinLifecycleListener(RejoinLifecycleListener listener);
+
+  boolean isRejoinEnabled();
+
   void throttlePutIfNecessary(ObjectID object);
+
 }

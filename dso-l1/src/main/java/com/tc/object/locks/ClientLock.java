@@ -3,13 +3,16 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 
 import java.util.Collection;
 
-public interface ClientLock {
+public interface ClientLock extends ClearableCallback {
   /**
    * Blocking acquire
    * 
@@ -19,13 +22,15 @@ public interface ClientLock {
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
    */
-  public void lock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException;
+  public void lock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   ThreadID thread, LockLevel level) throws GarbageLockException,
+      AbortedOperationException;
 
   /**
    * Try to acquire
    * <p>
-   * Non-blocking try acquires will wait for a definitive server response - in
-   * this sense they are not truly non-blocking...
+   * Non-blocking try acquires will wait for a definitive server response - in this sense they are not truly
+   * non-blocking...
    * 
    * @param remote remote lock manager for delegation
    * @param thread id of the locking (current) thread
@@ -33,8 +38,11 @@ public interface ClientLock {
    * @return <code>true</code> if locked
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
+   * @throws AbortedOperationException
    */
-  public boolean tryLock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException;
+  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                         ThreadID thread, LockLevel level) throws GarbageLockException,
+      AbortedOperationException;
   
   /**
    * Timed acquire
@@ -46,8 +54,11 @@ public interface ClientLock {
    * @return <code>true</code> if locked
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
+   * @throws AbortedOperationException
    */
-  public boolean tryLock(RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout) throws InterruptedException, GarbageLockException;
+  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                         ThreadID thread, LockLevel level, long timeout)
+      throws InterruptedException, GarbageLockException, AbortedOperationException;
   
   /**
    * Interruptible acquire
@@ -57,8 +68,11 @@ public interface ClientLock {
    * @param level level at which to lock
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
+   * @throws AbortedOperationException
    */
-  public void lockInterruptibly(RemoteLockManager remote, ThreadID thread, LockLevel level) throws InterruptedException, GarbageLockException;
+  public void lockInterruptibly(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                                ThreadID thread, LockLevel level)
+      throws InterruptedException, GarbageLockException, AbortedOperationException;
 
   /**
    * Blocking unlock
@@ -66,9 +80,10 @@ public interface ClientLock {
    * @param remote remote lock manager for delegation
    * @param thread id of the unlocking (current) thread
    * @param level at which to unlock
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if there is no matching lock hold
    */
-  public void unlock(RemoteLockManager remote, ThreadID thread, LockLevel level);
+  public void unlock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws AbortedOperationException;
 
   /**
    * Notify a single thread waiting on the lock.
@@ -89,7 +104,7 @@ public interface ClientLock {
    * @param waitObject TODO
    * @return <code>true</code> is remote threads may need notifying
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
-   */  
+   */
   public boolean notifyAll(RemoteLockManager remote, ThreadID thread, Object waitObject);
   
   /**
@@ -99,9 +114,13 @@ public interface ClientLock {
    * @param listener listener to fire just prior to moving to a local JVM Object.wait();
    * @param thread id of the locking (current) thread
    * @param waitObject TODO
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(RemoteLockManager remote, WaitListener listener, ThreadID thread, Object waitObject) throws InterruptedException;
+  public void wait(final AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject)
+      throws InterruptedException, AbortedOperationException;
+  
   /**
    * Move the current thread to wait with timeout.
    * 
@@ -110,15 +129,18 @@ public interface ClientLock {
    * @param thread id of the locking (current) thread
    * @param waitObject TODO
    * @param timeout maximum time to remain waiting
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
-   */  
-  public void wait(RemoteLockManager remote, WaitListener listener, ThreadID thread, Object waitObject, long timeout) throws InterruptedException;
+   */
+  public void wait(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject, long timeout)
+      throws InterruptedException, AbortedOperationException;
 
   /**
    * Return true if the given lock is held locally by any thread at the given lock level.
    * <p>
    * It is also important to note that the current locking implementation <em>does not</em>
-   * track concurrent lock holds. 
+   * track concurrent lock holds.
    * 
    * @param level level to query
    */
@@ -128,7 +150,7 @@ public interface ClientLock {
    * Return true if the given lock is held locally by the given thread at the given lock level.
    * <p>
    * It is also important to note that the current locking implementation <em>does not</em>
-   * track concurrent lock holds. 
+   * track concurrent lock holds.
    * 
    * @param thread thread id to query
    * @param level level to query
@@ -190,10 +212,10 @@ public interface ClientLock {
   public Collection<ClientServerExchangeLockContext> getStateSnapshot(ClientID client);
   
   /**
-   * Add the necessary current lock state information to the handshake message. 
+   * Add the necessary current lock state information to the handshake message.
    * 
    * @param handshake message to add state to
-   */  
+   */
   public void initializeHandshake(ClientID client, ClientHandshakeMessage handshake);
 
   /**

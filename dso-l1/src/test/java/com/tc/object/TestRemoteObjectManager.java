@@ -37,6 +37,16 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public static final DNA         THROW_NOT_FOUND       = new ThrowNotFound();
   public final ObjectIDSet        removedObjects        = new ObjectIDSet();
 
+  @Override
+  public void cleanup() {
+    retrieveCalls.clear();
+    retrieveResults.clear();
+    retrieveRootIDCalls.clear();
+    retrieveRootIDResults.clear();
+    removedObjects.clear();
+  }
+
+  @Override
   public DNA retrieve(final ObjectID id) {
     this.retrieveCalls.add(id);
     DNA dna;
@@ -49,10 +59,12 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     return dna;
   }
 
+  @Override
   public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
     return retrieve(id);
   }
 
+  @Override
   public ObjectID retrieveRootID(final String name, GroupID gid) {
     this.retrieveRootIDCalls.add(name);
     try {
@@ -62,22 +74,27 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     }
   }
 
+  @Override
   public void removed(final ObjectID id) {
     removedObjects.add(id);
   }
 
+  @Override
   public DNA retrieve(final ObjectID id, final int depth) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas, final NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingObjectIDs,
                                  final NodeID nodeID) {
     throw new ImplementMe();
@@ -89,67 +106,82 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
       //
     }
 
+    @Override
     public int getArraySize() {
       throw new ImplementMe();
     }
 
+    @Override
     public DNACursor getCursor() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       throw new ImplementMe();
     }
 
+    @Override
     public String getTypeName() {
       throw new ImplementMe();
     }
 
+    @Override
     public long getVersion() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean hasLength() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isDelta() {
       throw new ImplementMe();
     }
   }
 
+  @Override
   public void clear(GroupID gid) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isInDNACache(final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void pause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void shutdown() {
     // NOP
   }
 
+  @Override
   public void preFetchObject(final ObjectID id) {
     throw new ImplementMe();
   }
@@ -163,6 +195,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }

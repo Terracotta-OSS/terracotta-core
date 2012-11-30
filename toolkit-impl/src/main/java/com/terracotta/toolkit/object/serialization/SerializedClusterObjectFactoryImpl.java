@@ -6,7 +6,7 @@ package com.terracotta.toolkit.object.serialization;
 import org.terracotta.toolkit.object.serialization.NotSerializableRuntimeException;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 
 import java.io.Serializable;
 

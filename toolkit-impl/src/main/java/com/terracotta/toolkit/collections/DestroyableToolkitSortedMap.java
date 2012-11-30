@@ -9,6 +9,9 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,23 +21,42 @@ import java.util.Set;
 import java.util.SortedMap;
 
 public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> extends
-    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements
-    ToolkitSortedMap<K, V> {
+    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements ToolkitSortedMap<K, V>, RejoinAwareToolkitMap<K, V> {
 
-  private final String                    name;
-  private volatile ToolkitSortedMap<K, V> map;
+  private final String                                              name;
+  private volatile ToolkitSortedMap<K, V>                           map;
+  private final IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup;
 
-  public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory, ToolkitSortedMapImpl<K, V> map,
-                                     String name) {
+  public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory,
+                                     IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
+                                     ToolkitSortedMapImpl<K, V> map, String name) {
     super(factory);
+    this.lookup = lookup;
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
+  public void rejoinStarted() {
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin != null) {
+      this.map = afterRejoin;
+    } else {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // apply destory locally
+      applyDestroy();
+    }
+  }
+
+  @Override
   public void applyDestroy() {
-    this.map = DestroyedInstanceProxy.createNewInstance(ToolkitSortedMap.class, getName());
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
   }
 
   @Override

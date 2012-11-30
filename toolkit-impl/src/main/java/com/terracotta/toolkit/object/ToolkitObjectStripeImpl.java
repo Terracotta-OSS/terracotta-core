@@ -57,6 +57,7 @@ public class ToolkitObjectStripeImpl<C extends TCToolkitObject> implements Toolk
     return components;
   }
 
+  @Override
   public void setConfigField(String key, Serializable value) {
     synchronized (tcObject.getResolveLock()) {
       InternalCacheConfigurationType type = InternalCacheConfigurationType.getTypeFromConfigString(key);
@@ -110,6 +111,7 @@ public class ToolkitObjectStripeImpl<C extends TCToolkitObject> implements Toolk
     // TODO: fix this
   }
 
+  @Override
   public void applyDestroy() {
     // TODO: fix this
   }

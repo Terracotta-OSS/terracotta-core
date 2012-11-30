@@ -6,8 +6,6 @@ package com.tc.net.protocol.transport;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.TCLogger;
-import com.tc.net.CommStackMismatchException;
-import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
@@ -15,13 +13,10 @@ import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
-import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,6 +52,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.status = new MessageTransportStatus(initialState, logger);
   }
 
+  @Override
   public void setAllowConnectionReplace(boolean allow) {
     this.allowConnectionReplace = allow;
   }
@@ -69,22 +65,27 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     return healthCheckerContext;
   }
 
+  @Override
   public final ConnectionID getConnectionId() {
     return this.connectionId;
   }
 
+  @Override
   public final void setReceiveLayer(NetworkLayer layer) {
     this.receiveLayer = layer;
   }
 
+  @Override
   public final NetworkLayer getReceiveLayer() {
     return receiveLayer;
   }
 
+  @Override
   public final void setSendLayer(NetworkLayer layer) {
     throw new UnsupportedOperationException("Transport layer has no send layer.");
   }
 
+  @Override
   public final void receiveTransportMessage(WireProtocolMessage message) {
     synchronized (attachingNewConnection) {
       if (message.getSource() == this.connection) {
@@ -94,9 +95,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       }
     }
   }
-
-  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, IOException,
-      CommStackMismatchException;
 
   protected abstract void receiveTransportMessageImpl(WireProtocolMessage message);
 
@@ -117,6 +115,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     message.getWireProtocolHeader().recycle();
   }
 
+  @Override
   public final void receive(TCByteBuffer[] msgData) {
     throw new UnsupportedOperationException();
   }
@@ -124,6 +123,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   /**
    * Moves the MessageTransport state to closed and closes the underlying connection, if any.
    */
+  @Override
   public void close() {
     terminate(false);
   }
@@ -161,6 +161,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
+  @Override
   public final void send(TCNetworkMessage message) {
     // synchronized (isOpen) {
     // Assert.eval("Can't send on an unopen transport [" +
@@ -178,6 +179,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   // Do not override this method. Not a final method, as a test class is deriving it
+  @Override
   public void sendToConnection(TCNetworkMessage message) {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
     connection.putMessage(message);
@@ -186,12 +188,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   /**
    * Returns true if the underlying connection is open.
    */
+  @Override
   public final boolean isConnected() {
     synchronized (status) {
       return ((getConnection() != null) && getConnection().isConnected() && this.status.isEstablished());
     }
   }
 
+  @Override
   public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
     synchronized (attachingNewConnection) {
       if ((this.connection != null) && !allowConnectionReplace) { throw new IllegalReconnectException(); }
@@ -219,6 +223,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       this.logger = logger;
     }
 
+    @Override
     public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
       Assert.assertNotNull(oldConnection);
       if (closeEvent == null || closeEvent.getSource() != oldConnection) {
@@ -246,10 +251,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
    * TCConnection listener interface
    */
 
+  @Override
   public void connectEvent(TCConnectionEvent event) {
     return;
   }
 
+  @Override
   public void closeEvent(TCConnectionEvent event) {
     boolean isSameConnection = false;
 
@@ -282,10 +289,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
+  @Override
   public void errorEvent(TCConnectionErrorEvent errorEvent) {
     return;
   }
 
+  @Override
   public void endOfFileEvent(TCConnectionEvent event) {
     return;
   }
@@ -298,10 +307,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     return connection;
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     return (connection != null ? this.connection.getRemoteAddress() : null);
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     return (connection != null ? this.connection.getLocalAddress() : null);
   }
@@ -344,6 +355,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   /**
    * this function gets the stackLayerFlag added to build the communication stack information
    */
+  @Override
   public short getStackLayerFlag() {
     // this is the transport layer
     return TYPE_TRANSPORT_LAYER;
@@ -352,15 +364,18 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   /**
    * This function gets the stack layer name of the present layer added to build the communication stack information
    */
+  @Override
   public String getStackLayerName() {
     // this is the transport layer
     return NAME_TRANSPORT_LAYER;
   }
 
+  @Override
   public synchronized int getRemoteCallbackPort() {
     return this.remoteCallbackPort;
   }
 
+  @Override
   public synchronized void setRemoteCallbackPort(int remoteCallbackPort) {
     this.remoteCallbackPort = remoteCallbackPort;
   }

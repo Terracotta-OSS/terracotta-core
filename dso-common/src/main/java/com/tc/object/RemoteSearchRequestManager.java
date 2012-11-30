@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -23,11 +24,12 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
-                                  int maxResults, int batchSize);
+                                  int maxResults, int batchSize) throws AbortedOperationException;
 
   public SearchQueryResults query(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributeMap,
-                                  List<NVPair> aggregators, int maxResults, int batchSize);
+                                  List<NVPair> aggregators, int maxResults, int batchSize)
+      throws AbortedOperationException;
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
                                   final List<IndexQueryResult> queryResults, final List<Aggregator> aggregators,

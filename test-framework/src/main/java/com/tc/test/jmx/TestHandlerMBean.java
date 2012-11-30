@@ -29,7 +29,7 @@ public interface TestHandlerMBean {
    * @param groupIndex the index of the mirror group in which the server is to be restarted
    * @throws Exception
    */
-  public void reastartLastCrashedServer(final int groupIndex) throws Exception;
+  public void restartLastCrashedServer(final int groupIndex) throws Exception;
 
   /**
    * Dumps the state for all servers and clients

@@ -5,9 +5,9 @@ package com.terracotta.toolkit.events;
 
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 
-import com.tc.object.bytecode.PlatformService;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.PlatformService;
 
 public class OperatorEventUtil {
 

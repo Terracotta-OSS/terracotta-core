@@ -35,7 +35,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
 
   private final Object               jmxReadyLock;
 
-  private final SetOnceFlag          localJmxServerReady;
+  private SetOnceFlag                localJmxServerReady;
 
   private boolean                    transportConnected;
 
@@ -51,6 +51,17 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     localJmxServerReady = new SetOnceFlag();
     transportConnected = false;
     sentReadyMessage = false;
+  }
+
+  @Override
+  public void cleanup() {
+    synchronized (this) {
+      notifyAll();
+      acceptOk = false;
+      localJmxServerReady = new SetOnceFlag();
+      transportConnected = false;
+      sentReadyMessage = false;
+    }
   }
 
   public MessageChannel getMessageChannel() {
@@ -168,10 +179,12 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
 
   }
 
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     // Ignore
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(channel.getRemoteNodeID())) {
       reset();
@@ -181,6 +194,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     }
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(channel.getRemoteNodeID())) {
       synchronized (jmxReadyLock) {
@@ -192,6 +206,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     }
   }
 
+  @Override
   public void shutdown() {
     // Ignore
   }

@@ -81,6 +81,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.sessionId = UUID.getUUID();
   }
 
+  @Override
   public void setSendLayer(NetworkLayer layer) {
     if (!(layer instanceof MessageTransport)) { throw new IllegalArgumentException(
                                                                                    "Error: send layer must be MessageTransport!"); }
@@ -91,6 +92,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.sendLayer = transport;
   }
 
+  @Override
   public void setReceiveLayer(NetworkLayer layer) {
     if (!(layer instanceof MessageChannelInternal)) { throw new IllegalArgumentException(
                                                                                          "Error: receive layer must be MessageChannelInternal, was "
@@ -99,14 +101,17 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.receiveLayer = (MessageChannelInternal) layer;
   }
 
+  @Override
   public NetworkLayer getReceiveLayer() {
     return this.receiveLayer;
   }
 
+  @Override
   public void send(TCNetworkMessage message) {
     delivery.send(message);
   }
 
+  @Override
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
     if (debug) {
@@ -265,16 +270,25 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
   }
 
+  @Override
   public boolean isConnected() {
     return (channelConnected.get() && !delivery.isPaused());
   }
 
+  @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     Assert.assertNotNull(sendLayer);
     return sendLayer.open();
   }
 
+  @Override
+  public void reopen() {
+    Assert.assertNotNull(sendLayer);
+    sendLayer.reopen();
+  }
+
+  @Override
   public void close() {
     Assert.assertNotNull(sendLayer);
     if (isClient) {
@@ -295,6 +309,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    * Transport listener interface...
    */
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     handshakeMode.set(true);
     if (isClient) {
@@ -310,6 +325,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     reconnectMode.set(false);
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     final boolean restoreConnectionMode = reconnectMode.get();
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
@@ -320,12 +336,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     if (!reconnectMode.get()) {
       receiveLayer.notifyTransportConnectAttempt(this);
     }
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     // XXX: do we do anything here? We've probably done everything we need to do when close() was called.
     debugLog("Transport Closed - notifying higher layer");
@@ -333,6 +351,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     channelConnected.set(false);
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     receiveLayer.notifyTransportReconnectionRejected(this);
   }
@@ -341,16 +360,19 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    * Protocol Message Delivery interface
    */
 
+  @Override
   public OOOProtocolMessage createHandshakeMessage(long ack) {
     OOOProtocolMessage rv = this.messageFactory.createNewHandshakeMessage(getSessionId(), ack);
     return rv;
   }
 
+  @Override
   public OOOProtocolMessage createHandshakeReplyOkMessage(long ack) {
     OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyOkMessage(getSessionId(), ack);
     return rv;
   }
 
+  @Override
   public OOOProtocolMessage createHandshakeReplyFailMessage(long ack) {
     OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyFailMessage(getSessionId(), ack);
     return rv;
@@ -360,10 +382,12 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     return sessionId;
   }
 
+  @Override
   public OOOProtocolMessage createAckMessage(long ack) {
     return (this.messageFactory.createNewAckMessage(getSessionId(), ack));
   }
 
+  @Override
   public boolean sendMessage(OOOProtocolMessage msg) {
     // this method doesn't do anything at the moment, but it is a good spot to plug in things you might want to do
     // every message flowing down from the layer (like logging for example)
@@ -375,6 +399,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
   }
 
+  @Override
   public void receiveMessage(OOOProtocolMessage msg) {
     Assert.assertNotNull("Receive layer is null.", this.receiveLayer);
     Assert.assertNotNull("Attempt to null msg", msg);
@@ -383,12 +408,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.receiveLayer.receive(msg.getPayload());
   }
 
+  @Override
   public OOOProtocolMessage createProtocolMessage(long sequence, final TCNetworkMessage msg) {
     OOOProtocolMessage rv = messageFactory.createNewSendMessage(getSessionId(), sequence, delivery.getReceiver()
         .ackSequence(), msg);
     final Runnable callback = msg.getSentCallback();
     if (callback != null) {
       rv.setSentCallback(new Runnable() {
+        @Override
         public void run() {
           callback.run();
         }
@@ -407,44 +434,54 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
   }
 
+  @Override
   public void attachNewConnection(TCConnection connection) {
     throw new AssertionError("Must not call!");
   }
 
+  @Override
   public void setAllowConnectionReplace(boolean allow) {
     throw new AssertionError("Must not call!");
   }
 
+  @Override
   public ConnectionID getConnectionId() {
     return sendLayer != null ? sendLayer.getConnectionId() : null;
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     return sendLayer.getLocalAddress();
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     return sendLayer.getRemoteAddress();
   }
 
+  @Override
   public void receiveTransportMessage(WireProtocolMessage message) {
     throw new AssertionError("Must not call!");
   }
 
+  @Override
   public void sendToConnection(TCNetworkMessage message) {
     throw new AssertionError("Must not call!");
   }
 
+  @Override
   public void startRestoringConnection() {
     debugLog("Switched to restoreConnection mode");
     reconnectMode.set(true);
   }
 
+  @Override
   public Timer getRestoreConnectTimer() {
     Assert.assertNotNull(this.restoreConnectTimer);
     return this.restoreConnectTimer;
   }
 
+  @Override
   public void connectionRestoreFailed() {
     debugLog("RestoreConnectionFailed - resetting stack");
     if (channelConnected.get()) {
@@ -465,6 +502,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     delivery.reset();
   }
 
+  @Override
   public boolean isClosed() {
     return isClosed;
   }
@@ -472,6 +510,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   /**
    * this function gets the stackLayerFlag, added to build the communication stack information
    */
+  @Override
   public short getStackLayerFlag() {
     // this is the OOO layer
     return TYPE_OOO_LAYER;
@@ -480,15 +519,18 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   /**
    * This function gets the stack layer name of the present layer, added to build the communication stack information
    */
+  @Override
   public String getStackLayerName() {
     // this is the OOO layer
     return NAME_OOO_LAYER;
   }
 
+  @Override
   public void setRemoteCallbackPort(int callbackPort) {
     throw new AssertionError();
   }
 
+  @Override
   public int getRemoteCallbackPort() {
     throw new AssertionError();
   }

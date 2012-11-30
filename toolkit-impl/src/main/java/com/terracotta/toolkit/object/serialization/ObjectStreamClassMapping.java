@@ -7,7 +7,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.tc.util.runtime.Vm;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
 

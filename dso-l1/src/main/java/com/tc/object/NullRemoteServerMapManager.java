@@ -17,6 +17,11 @@ import java.util.Set;
 
 public final class NullRemoteServerMapManager implements RemoteServerMapManager {
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   public void initialize(ClientObjectManager clientObjectManager) {
     //
   }

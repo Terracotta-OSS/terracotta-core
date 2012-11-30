@@ -4,6 +4,9 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.mockito.Mockito;
+
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -26,6 +29,8 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.platform.rejoin.RejoinManager;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -133,7 +138,8 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
     ThreadUtil.reallySleep(5000);
 
-    new ClientShutdownManager(client.getObjectManager(), client, preparedComponentsFromL2Connection)
+    new ClientShutdownManager(client.getObjectManager(), client, preparedComponentsFromL2Connection,
+                              Mockito.mock(RejoinManager.class))
         .execute(shutDownHook, false);
 
     System.out.println("XXX waiting for client close event");
@@ -183,13 +189,17 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                   PreparedComponentsFromL2Connection preparedComponentsFromL2Connection2)
       throws ConfigurationSetupException {
 
+    RejoinManagerInternal mock = Mockito.mock(RejoinManagerInternal.class);
     DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  preparedComponentsFromL2Connection,
                                                                  NullManager.getInstance(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 new DsoClusterImpl(mock),
+                                                                 new NullRuntimeLogger(),
+                                                                 new NullAbortableOperationManager(),
+ mock);
     client.start();
     return client;
   }

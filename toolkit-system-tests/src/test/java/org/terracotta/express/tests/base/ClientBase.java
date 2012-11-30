@@ -25,7 +25,7 @@ public abstract class ClientBase extends AbstractClientBase {
   }
 
   @Override
-  protected final void doTest() throws Throwable {
+  protected void doTest() throws Throwable {
     test(getClusteringToolkit());
   }
 
@@ -36,12 +36,16 @@ public abstract class ClientBase extends AbstractClientBase {
     return clusteringToolkit;
   }
 
-  private Toolkit createToolkit() {
+  protected Toolkit createToolkit() {
     try {
-      return ToolkitFactory.createToolkit("toolkit:terracotta://" + getTerracottaUrl());
+      return ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
     } catch (ToolkitInstantiationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String getTerracottaTypeSubType() {
+    return "toolkit:terracotta://";
   }
 
   protected abstract void test(Toolkit toolkit) throws Throwable;

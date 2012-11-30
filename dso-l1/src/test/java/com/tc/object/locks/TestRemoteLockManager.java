@@ -26,6 +26,7 @@ import java.util.Map;
 public class TestRemoteLockManager implements RemoteLockManager {
   public final LockResponder          LOOPBACK_LOCK_RESPONDER = new LoopbackLockResponder();
   public final LockResponder          NULL_LOCK_RESPONDER     = new LockResponder() {
+                                                                @Override
                                                                 public void respondToLockRequest(LockID lock,
                                                                                                  ThreadID thread,
                                                                                                  ServerLockLevel level) {
@@ -46,6 +47,21 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   public TestRemoteLockManager(SessionProvider sessionProvider) {
     this.sessionProvider = sessionProvider;
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    return false;
+  }
+
+  @Override
+  public void setRejoinInProgress(boolean isProgress) {
+    //
+  }
+
+  @Override
+  public void cleanup() {
+    //
   }
 
   public void setClientLockManager(ClientLockManager lockManager) {
@@ -70,6 +86,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   // by other transactions are not taken into consideration
   // *************************
 
+  @Override
   public synchronized void lock(LockID lockID, ThreadID threadID, ServerLockLevel level) {
     lockRequests++;
     lockRequestCalls.put(new Object[] { lockID, threadID, level });
@@ -106,6 +123,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     isGreedy = false;
   }
 
+  @Override
   public synchronized void unlock(LockID lockID, ThreadID threadID, ServerLockLevel level) {
     unlockRequests++;
 
@@ -132,14 +150,17 @@ public class TestRemoteLockManager implements RemoteLockManager {
     lockResponder.respondToLockRequest(lockID, lock.threadID, lock.level);
   }
 
+  @Override
   public void wait(LockID lockID, ThreadID threadID, long timeout) {
     return;
   }
 
+  @Override
   public void recallCommit(LockID lockID, Collection contexts, boolean batch) {
     return;
   }
 
+  @Override
   public synchronized void flush(LockID lockID, boolean noLocksLeftOnClient) {
     flushCount++;
   }
@@ -152,6 +173,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return flushCount;
   }
 
+  @Override
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
     return true;
   }
@@ -168,6 +190,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   private class LoopbackLockResponder implements LockResponder {
+    @Override
     public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
       new Thread() {
         @Override
@@ -197,17 +220,21 @@ public class TestRemoteLockManager implements RemoteLockManager {
     }
   }
 
+  @Override
   public void query(LockID lockID, ThreadID threadID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void interrupt(LockID lockID, ThreadID threadID) {
     //
   }
 
+  @Override
   public void tryLock(final LockID lockID, final ThreadID threadID, final ServerLockLevel level, final long timeout) {
     Assert.assertEquals(0, timeout);
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         System.err.println("Sleeping in try lock for 30 seconds -- ");
         ThreadUtil.reallySleep(30000);
@@ -218,18 +245,22 @@ public class TestRemoteLockManager implements RemoteLockManager {
     t.start();
   }
 
+  @Override
   public ClientID getClientID() {
     return ClientID.NULL_ID;
   }
 
+  @Override
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
     flush(lock, true);
   }
 
+  @Override
   public void shutdown() {
     //
   }
 
+  @Override
   public boolean isShutdown() {
     return false;
   }

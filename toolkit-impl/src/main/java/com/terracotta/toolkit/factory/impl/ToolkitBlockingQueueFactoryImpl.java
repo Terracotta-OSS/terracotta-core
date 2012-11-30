@@ -3,20 +3,20 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitListImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
-import com.terracotta.toolkit.object.ToolkitObjectType;
-import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 public class ToolkitBlockingQueueFactoryImpl extends
@@ -25,10 +25,10 @@ public class ToolkitBlockingQueueFactoryImpl extends
   public static final String              CAPACITY_FIELD_NAME = "capacity";
   private static final CBQIsolatedFactory FACTORY             = new CBQIsolatedFactory();
 
-  public ToolkitBlockingQueueFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
-                                         PlatformService platformService) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_BLOCKING_QUEUE_ROOT_NAME,
-                                                                FACTORY, platformService));
+  public ToolkitBlockingQueueFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
+    super(toolkit, context.getToolkitTypeRootsFactory()
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_BLOCKING_QUEUE_ROOT_NAME, FACTORY,
+                                         context.getPlatformService()));
   }
 
   @Override
@@ -41,11 +41,23 @@ public class ToolkitBlockingQueueFactoryImpl extends
 
     @Override
     public ToolkitBlockingQueueImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitBlockingQueueImpl> factory,
+                                                              final IsolatedClusteredObjectLookup<ToolkitObjectStripe<ToolkitListImpl>> lookup,
                                                               String name, Configuration config,
                                                               ToolkitObjectStripe<ToolkitListImpl> tcClusteredObject) {
       int actualCapacity = assertConfig(name, config, tcClusteredObject);
-      DestroyableToolkitList listWrapper = new DestroyableToolkitList(factory, tcClusteredObject.iterator().next(),
-                                                                      name);
+      DestroyableToolkitList listWrapper = new DestroyableToolkitList(
+                                                                      factory,
+                                                                      new IsolatedClusteredObjectLookup<ToolkitListImpl>() {
+
+                                                                        @Override
+                                                                        public ToolkitListImpl lookupClusteredObject(String blockingQName) {
+                                                                          ToolkitObjectStripe<ToolkitListImpl> toolkitObjectStripe = lookup
+                                                                              .lookupClusteredObject(blockingQName);
+                                                                          // todo: toolkitObjectStripe may be null
+                                                                          return toolkitObjectStripe.iterator().next();
+                                                                        }
+
+                                                                      }, tcClusteredObject.iterator().next(), name);
 
       return new ToolkitBlockingQueueImpl(factory, listWrapper, actualCapacity);
     }

@@ -4,6 +4,8 @@
  */
 package com.tc.object.applicator;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
@@ -32,6 +34,7 @@ public class HashMapApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
+  @Override
   public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     final Map m = (Map) pojo;
     filterPortableObjects(m.keySet(), addTo);
@@ -48,6 +51,7 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public void hydrate(final ClientObjectManager objectManager, final TCObject tco, final DNA dna, final Object po)
       throws IOException, ClassNotFoundException {
     final DNACursor cursor = dna.getCursor();
@@ -79,8 +83,12 @@ public class HashMapApplicator extends BaseApplicator {
 
         break;
       case SerializationUtil.REMOVE:
-        final Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0])
-            : params[0];
+        Object rkey;
+        try {
+          rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
+        } catch (AbortedOperationException e) {
+            throw new TCRuntimeException(e);
+        }
         if (m instanceof TCMap) {
           ((TCMap) m).__tc_applicator_remove(rkey);
         } else {
@@ -103,13 +111,21 @@ public class HashMapApplicator extends BaseApplicator {
   // This can be overridden by subclass if you want different behavior.
   protected Object getObjectForValue(final ClientObjectManager objectManager, final Object v)
       throws ClassNotFoundException {
-    return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
+    try {
+      return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
+    } catch (AbortedOperationException e) {
+     throw new TCRuntimeException(e);
+    }
   }
 
   // This can be overridden by subclass if you want different behavior.
   protected Object getObjectForKey(final ClientObjectManager objectManager, final Object k)
       throws ClassNotFoundException {
-    return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
+    try {
+      return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
+    } catch (AbortedOperationException e) {
+       throw new TCRuntimeException(e);
+    }
   }
 
   private Object getValue(final Object[] params) {
@@ -121,6 +137,7 @@ public class HashMapApplicator extends BaseApplicator {
     return params.length == 3 ? params[1] : params[0];
   }
 
+  @Override
   public void dehydrate(final ClientObjectManager objectManager, final TCObject tco, final DNAWriter writer,
                         final Object pojo) {
 
@@ -148,6 +165,7 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public Object getNewInstance(final ClientObjectManager objectManager, final DNA dna) throws IOException,
       ClassNotFoundException {
     if (false) { throw new IOException(); } // silence compiler warning

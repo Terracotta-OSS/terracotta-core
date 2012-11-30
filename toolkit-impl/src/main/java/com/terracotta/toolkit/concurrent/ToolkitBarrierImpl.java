@@ -160,7 +160,6 @@ public class ToolkitBarrierImpl implements ToolkitBarrier {
     } finally {
       lock.unlock();
     }
-
   }
 
   @Override

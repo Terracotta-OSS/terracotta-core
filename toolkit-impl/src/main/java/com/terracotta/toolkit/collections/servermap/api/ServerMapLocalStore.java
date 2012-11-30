@@ -17,6 +17,8 @@ public interface ServerMapLocalStore<K, V> {
 
   public void clear();
 
+  public void cleanLocalState();
+
   public void unpinAll();
 
   public boolean isPinned(K key);

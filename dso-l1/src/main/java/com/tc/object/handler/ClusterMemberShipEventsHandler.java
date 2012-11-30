@@ -6,6 +6,7 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.net.ClientID;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
@@ -28,9 +29,9 @@ public class ClusterMemberShipEventsHandler extends AbstractEventHandler {
 
   private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
     if (cmm.isNodeConnectedEvent()) {
-      dsoClusterEventsGun.fireNodeJoined(cmm.getNodeId());
+      dsoClusterEventsGun.fireNodeJoined((ClientID) cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
-      dsoClusterEventsGun.fireNodeLeft(cmm.getNodeId());
+      dsoClusterEventsGun.fireNodeLeft((ClientID) cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);
     }

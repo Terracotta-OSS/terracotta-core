@@ -4,7 +4,9 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.field.TCField;
 import com.tc.util.Assert;
@@ -94,6 +96,8 @@ public class TCObjectPhysical extends TCObjectImpl {
         o = getObjectManager().lookupObject(id);
       } catch (ClassNotFoundException e) {
         throw new TCClassNotFoundException(e);
+      } catch (AbortedOperationException e) {
+        throw new TCRuntimeException(e);
       }
       po[index] = o;
     }
@@ -147,6 +151,8 @@ public class TCObjectPhysical extends TCObjectImpl {
           setObject = getObjectManager().lookupObject(id);
         } catch (ClassNotFoundException e) {
           throw new TCClassNotFoundException(e);
+        } catch (AbortedOperationException e) {
+          throw new TCRuntimeException(e);
         }
       }
       removeReference(fieldName);

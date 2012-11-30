@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -122,10 +123,12 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
-  public Object getValueUnlocked(final TCServerMap map, final Object key);
+  public Object getValueUnlocked(final TCServerMap map, final Object key) throws AbortedOperationException;
 
-  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap);
+  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+      throws AbortedOperationException;
 
   /**
    * Returns a snapshot of keys for the giver TCServerMap
@@ -133,7 +136,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map TCServerMap
    * @return set Set return snapshot of keys
    */
-  public Set keySet(final TCServerMap map);
+  public Set keySet(final TCServerMap map) throws AbortedOperationException;
 
   /**
    * Returns the value for a particular Key in a ServerTCMap.
@@ -143,8 +146,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
-  public Object getValue(final TCServerMap map, final L lockID, final Object key);
+  public Object getValue(final TCServerMap map, final L lockID, final Object key) throws AbortedOperationException;
 
   /**
    * Returns total size of an array of ServerTCMap.
@@ -156,7 +160,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param maps ServerTCMap[]
    * @return long for size of map.
    */
-  public long getAllSize(final TCServerMap[] maps);
+  public long getAllSize(final TCServerMap[] maps) throws AbortedOperationException;
 
   /**
    * Returns the size of the local cache
@@ -191,6 +195,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    */
   public void clearLocalCache(final TCServerMap map);
+
+  public void cleanLocalState();
 
   public void clearAllLocalCacheInline(final TCServerMap map);
 

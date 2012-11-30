@@ -3,17 +3,15 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.exception.ImplementMe;
+import org.mockito.Mockito;
+
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
-import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerLongGCTest;
@@ -43,7 +41,8 @@ public class ChannelManagerTest extends TestCase {
   final TCMessageRouter             msgRouter      = new TCMessageRouterImpl();
 
   final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
-                                                     public MessageChannelInternal createNewChannel(ChannelID id) {
+                                                     @Override
+                                                    public MessageChannelInternal createNewChannel(ChannelID id) {
                                                        return new ServerMessageChannelImpl(id, msgRouter, msgFactory,
                                                                                            new ServerID("test:9520",
                                                                                                         new byte[] { 1,
@@ -63,7 +62,7 @@ public class ChannelManagerTest extends TestCase {
     assertEquals(0, events.channels.size());
     MessageChannelInternal c1 = channelManager.createNewChannel(new ChannelID(2));
     channelManager.notifyChannelEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CONNECTED_EVENT, c1));
-    c1.setSendLayer(new NullNetworkLayer());
+    c1.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(1, events.channels.size());
     assertTrue(events.channels.contains(c1));
     c1.close();
@@ -84,17 +83,17 @@ public class ChannelManagerTest extends TestCase {
     long sequence = 1;
 
     MessageChannelInternal channel1 = channelManager.createNewChannel(new ChannelID(sequence++));
-    channel1.setSendLayer(new NullNetworkLayer());
+    channel1.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel1.isOpen());
 
     MessageChannelInternal channel2 = channelManager.createNewChannel(new ChannelID(sequence++));
-    channel2.setSendLayer(new NullNetworkLayer());
+    channel2.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel2.isOpen());
 
     MessageChannelInternal channel3 = channelManager.createNewChannel(new ChannelID(sequence++));
-    channel3.setSendLayer(new NullNetworkLayer());
+    channel3.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel3.isOpen());
 
@@ -418,64 +417,14 @@ public class ChannelManagerTest extends TestCase {
   static class Events implements ChannelManagerEventListener {
     Set channels = new HashSet();
 
+    @Override
     public void channelCreated(MessageChannel channel) {
       channels.add(channel);
     }
 
+    @Override
     public void channelRemoved(MessageChannel channel) {
       channels.remove(channel);
-    }
-  }
-
-  static class NullNetworkLayer implements NetworkLayer {
-    public void setSendLayer(NetworkLayer layer) {
-      return;
-    }
-
-    public void setReceiveLayer(NetworkLayer layer) {
-      return;
-    }
-
-    public void send(TCNetworkMessage message) {
-      return;
-    }
-
-    public void receive(TCByteBuffer[] msgData) {
-      return;
-    }
-
-    public boolean isConnected() {
-      return false;
-    }
-
-    public NetworkStackID open() {
-      return null;
-    }
-
-    public void close() {
-      return;
-    }
-
-    public short getStackLayerFlag() {
-      // its a test
-      // do nothing
-      throw new ImplementMe();
-    }
-
-    public String getStackLayerName() {
-      throw new ImplementMe();
-    }
-
-    public NetworkLayer getReceiveLayer() {
-      throw new ImplementMe();
-    }
-
-    public TCSocketAddress getLocalAddress() {
-      throw new ImplementMe();
-    }
-
-    public TCSocketAddress getRemoteAddress() {
-      throw new ImplementMe();
     }
   }
 

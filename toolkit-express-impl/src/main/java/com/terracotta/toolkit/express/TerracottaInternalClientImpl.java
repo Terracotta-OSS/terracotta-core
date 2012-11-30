@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private static final String TOOLKIT_CONTENT_RESOURCE                                         = "/toolkit-content.txt";
   private static final String SPI_INIT                                                         = "com.terracotta.toolkit.express.SpiInit";
   public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";
+  public static final String  DSO_CONTEXT_IMPL                                                 = "com.tc.object.bytecode.hook.impl.DSOContextImpl";
 
   private static final String EE_SECRET_DELEGATE                                               = "com.terracotta.toolkit.DelegatingSecretProvider";
   private static final String SECRET_PROVIDER_CLASS                                            = "org.terracotta.toolkit.SecretProvider";
@@ -37,13 +39,16 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   private final ClusteredStateLoader            clusteredStateLoader;
   private final AppClassLoader                  appClassLoader;
-  private final DSOContextControl               contextControl;
-  private final AtomicInteger                   refCount = new AtomicInteger(0);
+  private volatile DSOContextControl            contextControl;
+  private final AtomicInteger                   refCount      = new AtomicInteger(0);
   private final TerracottaInternalClientFactory parent;
   private final String                          tcConfig;
   private final boolean                         isUrlConfig;
   private final boolean                         rejoinEnabled;
-  private boolean                               shutdown = false;
+  private boolean                               shutdown      = false;
+  private volatile Object                       dsoContext;
+  private final Set<String>                     tunneledMBeanDomains;
+  private volatile boolean                      isInitialized = false;
 
   TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader,
                                TerracottaInternalClientFactory parent, boolean rejoinEnabled,
@@ -52,6 +57,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     this.tcConfig = tcConfig;
     this.isUrlConfig = isUrlConfig;
     this.parent = parent;
+    this.tunneledMBeanDomains = tunneledMBeanDomains;
 
     try {
       this.appClassLoader = new AppClassLoader(appLoader);
@@ -72,11 +78,37 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
                                                                   rejoinEnabled, env);
 
       Object context = boot.call();
+      this.dsoContext = context;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void init() {
+    if (isInitialized) { return; }
+
+    try {
+      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
+      Method method = dsoContextClass.getMethod("init");
+      method.invoke(dsoContext);
 
       Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
-      contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(context);
+      contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
       join(tunneledMBeanDomains);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
+    isInitialized = true;
+  }
+
+  @Override
+  public Object getPlatformService() {
+    try {
+      Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
+      Method method = dsoContextClass.getMethod("getPlatformService");
+      return method.invoke(dsoContext);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -99,6 +131,11 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     Class clazz = clusteredStateLoader.loadClass(className);
     Constructor cstr = clazz.getConstructor(cstrArgTypes);
     return (T) cstr.newInstance(cstrArgs);
+  }
+
+  @Override
+  public Class loadClass(String className) throws ClassNotFoundException {
+    return clusteredStateLoader.loadClass(className);
   }
 
   @Override
@@ -226,5 +263,10 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       throw new RuntimeException("Couldn't wrap the custom impl. " + backEnd.getClass().getName()
                                  + " in an instance of " + EE_SECRET_DELEGATE, e);
     }
+  }
+
+  @Override
+  public boolean isOnline() {
+    return contextControl.isOnline();
   }
 }

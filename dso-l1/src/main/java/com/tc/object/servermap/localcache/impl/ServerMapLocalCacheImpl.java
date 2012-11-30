@@ -274,6 +274,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
+  @Override
+  public void cleanLocalState() {
+    this.pendingTransactionEntries.clear();
+    this.localStore.cleanLocalState();
+  }
+
   /**
    * unpin all pinned keys
    */

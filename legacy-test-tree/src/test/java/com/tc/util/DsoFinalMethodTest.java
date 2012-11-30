@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.net.GroupID;
@@ -103,7 +104,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                        final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                        final TCObjectSelfStore tcObjectSelfStore) {
       super(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
-            objectFactory, new TestPortability(), null, null, tcObjectSelfStore);
+            objectFactory, new TestPortability(), null, null, tcObjectSelfStore, new NullAbortableOperationManager());
     }
 
     @Override

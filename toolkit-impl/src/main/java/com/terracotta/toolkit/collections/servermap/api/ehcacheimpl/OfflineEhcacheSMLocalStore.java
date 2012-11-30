@@ -98,6 +98,11 @@ public class OfflineEhcacheSMLocalStore implements ServerMapLocalStore<Object, O
   }
 
   @Override
+  public void cleanLocalState() {
+    LOGGER.info("Ignoring cleanLocalState as inner cache is not alive.");
+  }
+
+  @Override
   public long getOnHeapSizeInBytes() {
     LOGGER.info("Ignoring getOnHeapSizeInBytes as inner cache is not alive.");
     return 0;

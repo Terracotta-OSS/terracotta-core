@@ -50,7 +50,7 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
-  public void reastartLastCrashedServer(final int groupIndex) throws Exception {
+  public void restartLastCrashedServer(final int groupIndex) throws Exception {
     testServerManager.restartLastCrashedServer(groupIndex);
   }
 

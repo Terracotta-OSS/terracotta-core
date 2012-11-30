@@ -13,8 +13,7 @@ import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
 import com.tcclient.cluster.DsoNode;
@@ -34,10 +33,6 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   public TerracottaClusterInfo(PlatformService platformService) {
     this.dsoCluster = platformService.getDsoCluster();
-  }
-
-  public TerracottaClusterInfo() {
-    this.dsoCluster = ManagerUtil.getManager().getDsoCluster();
   }
 
   @Override
@@ -96,17 +91,7 @@ public class TerracottaClusterInfo implements ClusterInfo {
   }
 
   private ClusterEvent translateEvent(final DsoClusterEvent event, final Type type) {
-    return new ClusterEvent() {
-      @Override
-      public ClusterNode getNode() {
-        return new TerracottaNode(event.getNode());
-      }
-
-      @Override
-      public Type getType() {
-        return type;
-      }
-    };
+    return new ClusterEventImpl(event.getNode(), type);
   }
 
   private class ClusterListenerWrapper implements OutOfBandDsoClusterListener {
@@ -138,6 +123,11 @@ public class TerracottaClusterInfo implements ClusterInfo {
     }
 
     @Override
+    public void nodeRejoined(DsoClusterEvent event) {
+      listener.onClusterEvent(translateEvent(event, Type.NODE_REJOINED));
+    }
+
+    @Override
     public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
       if (listener instanceof OutOfBandClusterListener) {
         return ((OutOfBandClusterListener) listener)
@@ -157,6 +147,8 @@ public class TerracottaClusterInfo implements ClusterInfo {
           return Type.OPERATIONS_ENABLED;
         case OPERATIONS_DISABLED:
           return Type.OPERATIONS_DISABLED;
+        case NODE_REJOINED:
+          return Type.NODE_REJOINED;
         default:
           throw new AssertionError("Unknown type: " + type);
       }
@@ -175,6 +167,33 @@ public class TerracottaClusterInfo implements ClusterInfo {
         return false;
       }
     }
+  }
+
+  private static class ClusterEventImpl implements ClusterEvent {
+
+    private final TerracottaNode clusterNode;
+    private final Type           type;
+
+    public ClusterEventImpl(DsoNode node, Type type) {
+      clusterNode = new TerracottaNode(node);
+      this.type = type;
+    }
+
+    @Override
+    public ClusterNode getNode() {
+      return clusterNode;
+    }
+
+    @Override
+    public Type getType() {
+      return type;
+    }
+
+    @Override
+    public String toString() {
+      return "ClusterEvent [type=" + type + ", clusterNode=" + clusterNode + "]";
+    }
+
   }
 
 }
