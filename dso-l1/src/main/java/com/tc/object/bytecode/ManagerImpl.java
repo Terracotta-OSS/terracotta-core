@@ -1049,4 +1049,9 @@ public class ManagerImpl implements Manager {
   public PlatformService getPlatformService() {
     return platformService;
   }
+
+  @Override
+  public void throttlePutIfNecessary(final ObjectID object) {
+    dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
+  }
 }

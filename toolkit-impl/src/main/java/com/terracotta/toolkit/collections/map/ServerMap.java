@@ -18,6 +18,7 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.abortable.AbortedOperationException;
+import com.google.common.base.Preconditions;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -620,7 +621,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void assertNotNull(final Object value) {
-    if (null == value) { throw new NullPointerException(); }
+    Preconditions.checkNotNull(value);
   }
 
   private void assertNull(final Object value) {
@@ -645,8 +646,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-
     assertNotNull(value);
+    throttleIfNecessary();
 
     if (isEventual()) {
       if (isExplicitlyLocked()) {
@@ -690,6 +691,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+    throttleIfNecessary();
     MetaData md = createPutSearchMetaData(key, value);
     if (md != null) {
       md.set(SearchMetaData.COMMAND, SearchCommand.PUT);
@@ -701,6 +703,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void putNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     assertNotNull(value);
+    throttleIfNecessary();
 
     if (isEventual()) {
       if (isExplicitlyLocked()) {
@@ -737,6 +740,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public V putIfAbsent(final K key, final V value) {
     assertNotNull(value);
+    throttleIfNecessary();
     return internalPutIfAbsent(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
                                ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
   }
@@ -744,6 +748,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public V putIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     assertNotNull(value);
+    throttleIfNecessary();
     return internalPutIfAbsent(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
@@ -909,6 +914,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public V replace(final K key, final V value) {
     assertNotNull(value);
 
+    throttleIfNecessary();
     if (isEventual()) {
       final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
       if (old != null) {
@@ -954,6 +960,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public boolean replace(final K key, final V oldValue, final V newValue) {
     assertNotNull(oldValue);
     assertNotNull(newValue);
+    throttleIfNecessary();
 
     if (isEventual()) {
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
@@ -1407,6 +1414,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     meta.add(SearchMetaData.CACHENAME, name);
     meta.add(SearchMetaData.COMMAND, SearchCommand.NOT_SET);
     return meta;
+  }
+
+  private void throttleIfNecessary() {
+    platformService.throttlePutIfNecessary(tcObjectServerMap.getObjectID());
   }
 
   @Override

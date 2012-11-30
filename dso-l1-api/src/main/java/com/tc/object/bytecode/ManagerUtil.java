@@ -192,7 +192,7 @@ public class ManagerUtil {
    *
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
-   * @param type Lock level
+   * @param level Lock level
    * @throws AbortedOperationException
    */
   protected static void beginVolatile(final Object pojo, final long fieldOffset, final LockLevel level)
@@ -219,7 +219,7 @@ public class ManagerUtil {
    *
    * @param TCObject TCObject to lock
    * @param fieldName Field name holding volatile object
-   * @param type Lock type
+   * @param level Lock type
    * @throws AbortedOperationException
    */
   protected static void beginVolatile(final TCObject TCObject, final String fieldName, final LockLevel level)
@@ -233,7 +233,7 @@ public class ManagerUtil {
    * Begin lock
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @throws AbortedOperationException
    */
   @Deprecated
@@ -265,7 +265,7 @@ public class ManagerUtil {
    * Try to begin lock
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @return True if lock was successful
    * @throws AbortedOperationException
    */
@@ -291,7 +291,7 @@ public class ManagerUtil {
    * Try to begin lock within a specific timespan
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    * @throws AbortedOperationException
@@ -612,7 +612,7 @@ public class ManagerUtil {
    * Enter synchronized monitor
    *
    * @param obj Object
-   * @param type Lock type
+   * @param level Lock type
    * @throws AbortedOperationException
    */
   @Deprecated
@@ -670,7 +670,7 @@ public class ManagerUtil {
    * Check whether an object is locked at this lockLevel
    *
    * @param obj Lock
-   * @param lockLevel Lock level
+   * @param level Lock level
    * @return True if locked at this level
    * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
@@ -691,7 +691,7 @@ public class ManagerUtil {
    *
    * @param obj The object monitor
    * @param timeoutInNanos Timeout in nanoseconds
-   * @param type The lock level
+   * @param level The lock level
    * @return True if entered
    * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
@@ -706,7 +706,7 @@ public class ManagerUtil {
    * Enter synchronized monitor (interruptibly).
    *
    * @param obj The object monitor
-   * @param type The lock level
+   * @param level The lock level
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
    * @throws AbortedOperationException
@@ -737,7 +737,7 @@ public class ManagerUtil {
    * Get number of locks held locally on this object
    *
    * @param obj The lock object
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return Lock count
    * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
@@ -752,7 +752,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param obj The lock
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
@@ -768,7 +768,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param lockId The lock ID
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    * @throws AbortedOperationException
    */
@@ -835,8 +835,8 @@ public class ManagerUtil {
   /**
    * Begin lock
    *
-   * @param Object lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    * @throws AbortedOperationException
    */
   protected static void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
@@ -860,8 +860,8 @@ public class ManagerUtil {
   /**
    * Begin lock
    *
-   * @param long lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    * @throws AbortedOperationException
    */
   @Deprecated
@@ -872,8 +872,8 @@ public class ManagerUtil {
   /**
    * Try to begin lock
    *
-   * @param long lockID Lock identifier
-   * @param type Lock type
+   * @param lockID Lock identifier
+   * @param level Lock type
    * @return True if lock was successful
    * @throws AbortedOperationException
    */
@@ -886,7 +886,7 @@ public class ManagerUtil {
    * Try to begin lock within a specific timespan
    *
    * @param lockID Lock identifier
-   * @param type Lock type
+   * @param level Lock type
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    * @throws AbortedOperationException
@@ -900,7 +900,7 @@ public class ManagerUtil {
   /**
    * Commit lock
    *
-   * @param long lockID Lock name
+   * @param lockID Lock name
    * @throws AbortedOperationException
    */
   @Deprecated
@@ -924,7 +924,7 @@ public class ManagerUtil {
    * Check whether this lock is held by the current thread
    *
    * @param lockId The lock ID
-   * @param lockLevel The lock level
+   * @param level The lock level
    * @return True if held by current thread
    * @throws AbortedOperationException
    */
@@ -990,5 +990,9 @@ public class ManagerUtil {
   protected static AbortableOperationManager getAbortableOperationManager() {
     Manager mgr = getManager();
     return mgr.getAbortableOperationManager();
+  }
+
+  public static void throttlePutIfNecessary(ObjectID object) {
+    getManager().throttlePutIfNecessary(object);
   }
 }

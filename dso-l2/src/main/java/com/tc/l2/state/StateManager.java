@@ -17,13 +17,14 @@ import java.util.List;
 public interface StateManager {
 
   public static final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
+  public static final State       RECOVERING           = new State("RECOVERING");
   public static final State       PASSIVE_UNINITIALIZED = new State("PASSIVE-UNINITIALIZED");
   public static final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public static final State       START_STATE          = new State("START-STATE");
   public static final State       STOP_STATE           = new State("STOP-STATE");
   public static final List<State> validStates          = Collections.unmodifiableList(Arrays
                                                            .asList(START_STATE, PASSIVE_UNINITIALIZED, PASSIVE_STANDBY,
-                                                                   ACTIVE_COORDINATOR, STOP_STATE));
+                                                                   ACTIVE_COORDINATOR, STOP_STATE, RECOVERING));
 
   public void startElection();
 

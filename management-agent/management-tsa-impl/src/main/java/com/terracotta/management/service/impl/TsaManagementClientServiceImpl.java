@@ -57,13 +57,14 @@ import javax.management.remote.JMXConnector;
 /**
  * @author Ludovic Orban
  */
-public class ClearTextTsaManagementClientServiceImpl implements TsaManagementClientService {
+public class TsaManagementClientServiceImpl implements TsaManagementClientService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ClearTextTsaManagementClientServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TsaManagementClientServiceImpl.class);
 
   private static final int ZIP_BUFFER_SIZE = 2048;
-  private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] {
-      "Version", "BuildID", "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State"};
+  private static final String[]  SERVER_ENTITY_ATTRIBUTE_NAMES      = new String[] { "Version", "BuildID",
+      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State",
+      "StartTime", "ActivateTime", "Restartable", "RestrictedMode" };
 
   private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
       "ObjectFlushRate", "TransactionRate"                         };
@@ -73,9 +74,11 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
 
   private final JmxConnectorPool jmxConnectorPool;
+  private final boolean secure;
 
-  public ClearTextTsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool) {
+  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure) {
     this.jmxConnectorPool = jmxConnectorPool;
+    this.secure = secure;
   }
 
   @Override
@@ -119,14 +122,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
-          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
-          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntity.setDump("Unavailable");
           threadDumpEntities.add(threadDumpEntity);
         }
@@ -167,7 +168,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
           JMXConnector jmxConnector = null;
           try {
-            jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
             MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
@@ -212,7 +213,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       serverEntity.getAttributes().put("JmxPort", l2Info.jmxPort());
       serverEntity.getAttributes().put("HostAddress", l2Info.safeGetHostAddress());
 
-      jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + l2Info.host() + ":" + l2Info.jmxPort());
+      jmxConnector = jmxConnectorPool.getConnector(l2Info.host(), l2Info.jmxPort());
       MBeanServerConnection mBeanServer = jmxConnector.getMBeanServerConnection();
 
 
@@ -420,7 +421,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
         throw new ServiceExecutionException("server with name " + serverName + " not found");
       }
 
-      jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + targetServer.host() + ":" + targetServer.jmxPort());
+      jmxConnector = jmxConnectorPool.getConnector(targetServer.host(), targetServer.jmxPort());
       MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"),
@@ -597,7 +598,11 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       for (L2Info l2Info : l2Infos) {
         try {
           ServerEntity serverEntity = buildServerEntity(l2Info);
-          urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
+          String prefix = "http://";
+          if (secure) {
+            prefix = "https://";
+          }
+          urls.add(prefix + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
         } catch (ServiceExecutionException see) {
           urls.add("?");
         }
@@ -730,7 +735,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
           JMXConnector jmxConnector = null;
           try {
-            jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
             MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
@@ -845,7 +850,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       String jmxHost = l2Info.host();
       int jmxPort = l2Info.jmxPort();
 
-      JMXConnector jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+      JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
 
       MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       if (serverIsActive(mBeanServerConnection)) {
@@ -894,7 +899,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       int jmxPort = l2Info.jmxPort();
 
       try {
-        JMXConnector jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+        JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
 
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         if (serverContainsEhcacheMBeans(mBeanServerConnection)) {
@@ -927,7 +932,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       int jmxPort = l2Info.jmxPort();
 
       try {
-        JMXConnector jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+        JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
 
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         if (serverContainsL1MBeans(mBeanServerConnection)) {

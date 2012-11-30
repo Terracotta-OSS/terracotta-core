@@ -333,4 +333,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new LongGCLogger(gcTimeOut);
   }
 
+  @Override
+  public RemoteResourceManager createRemoteResourceManager(final DSOClientMessageChannel dsoChannel) {
+    return new RemoteResourceManagerImpl();
+  }
 }

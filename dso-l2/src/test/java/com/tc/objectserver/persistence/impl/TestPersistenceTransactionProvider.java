@@ -23,4 +23,10 @@ public final class TestPersistenceTransactionProvider implements TransactionProv
       throw new TCRuntimeException(e);
     }
   }
+
+    public Transaction currentTransaction() {
+        return newTransaction();
+    }
+  
+  
 }

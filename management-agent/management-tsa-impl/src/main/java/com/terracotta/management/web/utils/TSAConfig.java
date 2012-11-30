@@ -1,13 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.terracotta.management.web.config;
+package com.terracotta.management.web.utils;
 
 import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.security.SSLContextFactory;
-import com.terracotta.management.security.impl.DfltSSLContextFactory;
-import com.terracotta.management.security.impl.ObfuscatedSecretFileStoreKeyChainAccessor;
 
 import java.lang.management.ManagementFactory;
 
@@ -19,7 +17,6 @@ import javax.management.ObjectName;
  */
 public class TSAConfig {
 
-  private static final String DEFAULT_IA_URL = "https://localhost:9443/tmc/api/assertIdentity";
   private static final int DEFAULT_TIMEOUT = 10000;
 
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
@@ -41,7 +38,7 @@ public class TSAConfig {
     if (KEY_CHAIN_ACCESSOR == null) {
       synchronized (KEY_CHAIN_ACCESSOR_LOCK) {
         if (KEY_CHAIN_ACCESSOR == null) {
-          KEY_CHAIN_ACCESSOR = new ObfuscatedSecretFileStoreKeyChainAccessor();
+          KEY_CHAIN_ACCESSOR = new L2KeyChainAccessor();
         }
       }
     }
@@ -52,7 +49,7 @@ public class TSAConfig {
     if (SSL_CONTEXT_FACTORY == null) {
       synchronized (SSL_CONTEXT_FACTORY_LOCK) {
         if (SSL_CONTEXT_FACTORY == null) {
-          SSL_CONTEXT_FACTORY = new DfltSSLContextFactory(getKeyChain(), null, null, false);
+          SSL_CONTEXT_FACTORY = new TSASslContextFactory();
         }
       }
     }
@@ -65,10 +62,12 @@ public class TSAConfig {
       Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceLocation");
 
       if (response == null) {
-        return DEFAULT_IA_URL;
+        throw new RuntimeException("Missing configuration entry for security service location");
       }
 
       return (String)response;
+    } catch (RuntimeException re) {
+      throw re;
     } catch (Exception e) {
       throw new RuntimeException("Error getting SecurityServiceLocation", e);
     }

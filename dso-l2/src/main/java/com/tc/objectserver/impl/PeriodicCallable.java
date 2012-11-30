@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.util.ObjectIDSet;
 import java.util.concurrent.Callable;
 
@@ -13,7 +16,7 @@ import java.util.concurrent.Callable;
  *
  * @author mscott
  */
-public class PeriodicCallable implements Callable<Void>, CanCancel {
+public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel {
     
     private final ObjectIDSet workingSet;
     private final ServerMapEvictionManager evictor;
@@ -40,14 +43,16 @@ public class PeriodicCallable implements Callable<Void>, CanCancel {
     }
 
     @Override
-    public Void call() throws Exception {
+    public SampledRateCounter call() throws Exception {
+        SampledRateCounter counter = new AggregateSampleRateCounter();
         for (final ObjectID mapID : workingSet) {
             if ( stopped ) {
                 return null;
             }
             current = new PeriodicEvictionTrigger(objectManager, mapID,elementBasedTTIorTTL);
             evictor.doEvictionOn(current);
+            counter.increment(current.getCount(),current.getRuntimeInMillis());
         }
-        return null;
+        return counter;
     }    
 }

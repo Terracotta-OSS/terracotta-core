@@ -24,6 +24,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   boolean isPassiveStandby();
 
+  boolean isRecovering();
+
   long getStartTime();
 
   long getActivateTime();
@@ -133,4 +135,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getBackupStatus(String name) throws IOException;
 
   void backup(String name) throws IOException;
+
+  boolean isRestrictedMode();
 }

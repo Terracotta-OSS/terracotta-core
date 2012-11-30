@@ -25,6 +25,7 @@ import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2Management;
+import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
@@ -334,7 +335,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException {
+  public Persistor createPersistor(final boolean persistent, final File l2DataPath, final L2State l2State) throws IOException {
     if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
     return new Persistor(HeapStorageManagerFactory.INSTANCE);
   }

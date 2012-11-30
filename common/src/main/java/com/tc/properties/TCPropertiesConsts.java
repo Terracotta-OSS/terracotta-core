@@ -40,6 +40,10 @@ public interface TCPropertiesConsts {
    * criticalObjectThreshold : Number of objects that the cache can hold after which the eviction
    *                           may start, its highly recommended to not to set it as the size
    *                           of the objects is not generally known
+   * resourcePoolInterval    : poll time on resource monitoring in msec
+   * haltThreshold           : the threshold where l2 singles l1 to halt additive operations
+   * criticalUpperbound      : the upperbound bytes available above the threshold levels
+   * criticalLowerbound      : the lowerbound bytes available above the threshold levels
    * </code>
    ********************************************************************************************************************/
   public static final String L2_CACHEMANAGER_ENABLED                                        = "l2.cachemanager.enabled";
@@ -56,6 +60,9 @@ public interface TCPropertiesConsts {
 
   public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
+  public static final String L2_EVICTION_HALTTHRESHOLD                                  = "l2.eviction.haltThreshold";
+  public static final String L2_EVICTION_CRITICALUPPERBOUND                                  = "l2.eviction.criticalUpperbound";
+  public static final String L2_EVICTION_CRITICALLOWERBOUND                                  = "l2.eviction.criticalLowerbound";
 
   /*********************************************************************************************************************
    * <code>
@@ -513,6 +520,8 @@ public interface TCPropertiesConsts {
    *                           new objects
    * flush.logging.enabled   : Enable/disable object's flush logging
    * fault.logging.enabled   : Enable/disable object's fault logging
+   * removed.objects.send.timer : Max interval in milliseconds before sending a batch of removed object ids
+   * removed.objects.threshold : Max number of removed objects before immediately sending a batch of removed ids.
    * </code>
    ********************************************************************************************************************/
   public static final String L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                        = "l1.objectmanager.remote.maxDNALRUSize";
@@ -522,6 +531,8 @@ public interface TCPropertiesConsts {
   public static final String L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                         = "l1.objectmanager.objectid.request.size";
   public static final String L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                         = "l1.objectmanager.flush.logging.enabled";
   public static final String L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                         = "l1.objectmanager.fault.logging.enabled";
+  public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER                    = "l1.objectmanager.removed.objects.send.timer";
+  public static final String L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD                     = "l1.objectmanager.removed.objects.threshold";
 
   /*********************************************************************************************************************
    * <code>

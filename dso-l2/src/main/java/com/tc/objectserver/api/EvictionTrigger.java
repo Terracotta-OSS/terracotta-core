@@ -47,6 +47,9 @@ public interface EvictionTrigger {
     
     long getRuntimeInSeconds();
     
+    long getRuntimeInMillis();
+    
     int getCount();
 
+    String getName();
 }

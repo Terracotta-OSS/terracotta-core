@@ -642,7 +642,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
           public boolean accept(File dir, String name) {
-            return name.endsWith(".war");
+            return name.startsWith("management-tsa-war") && name.endsWith(".war");
           }
         });
 
@@ -807,6 +807,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public void backup(final String name) throws IOException {
     dsoServer.getBackupManager().backup(name);
+  }
+
+  @Override
+  public boolean isRestrictedMode() {
+    return dsoServer.getResourceManager().isThrowException();
   }
 
   @Override

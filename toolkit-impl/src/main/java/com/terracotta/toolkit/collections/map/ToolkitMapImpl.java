@@ -8,6 +8,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.tc.abortable.AbortedOperationException;
+import com.google.common.base.Preconditions;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
@@ -199,7 +200,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   private V unlockedPut(K key, V value) {
     applyPendingChanges();
-    if (value == null) { throw new NullPointerException(); }
+    Preconditions.checkNotNull(value);
 
     V rv = keyValueHolder.get(key);
 

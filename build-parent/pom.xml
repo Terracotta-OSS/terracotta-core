@@ -31,7 +31,7 @@
     <jetty.version>8.1.7.v20120910</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.6.6</slf4j.version>
-    <offheap-store.version>1.0.10-SNAPSHOT</offheap-store.version>
+    <offheap-store.version>1.1.0-SNAPSHOT</offheap-store.version>
     <search.version>1.1.1-SNAPSHOT</search.version>
     <security-core-version>1.1.0-SNAPSHOT</security-core-version>
     <security-keychain-version>1.1.0-SNAPSHOT</security-keychain-version>
@@ -203,22 +203,6 @@
         </exclusions>        
       </dependency>
       <dependency>
-        <groupId>jfree</groupId>
-        <artifactId>jfreechart</artifactId>
-        <version>1.0.13</version>
-        <exclusions>
-          <exclusion>
-            <groupId>gnujaxp</groupId>
-            <artifactId>gnujaxp</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>       
-      <dependency>
-        <groupId>treemap</groupId>
-        <artifactId>treemap</artifactId>
-        <version>2.5.1</version>
-      </dependency>
-      <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>1.0.67</version>
@@ -278,11 +262,6 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>jfree</groupId>
-        <artifactId>jcommon</artifactId>
-        <version>1.0.16</version>
       </dependency>
       <dependency>
         <groupId>commons-codec</groupId>

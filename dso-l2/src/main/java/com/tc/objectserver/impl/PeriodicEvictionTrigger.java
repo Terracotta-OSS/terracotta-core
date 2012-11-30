@@ -11,6 +11,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.util.ObjectIDSet;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -175,7 +176,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
       return Integer.MIN_VALUE;
     }
     final ObjectID oid = (ObjectID) value;
-    final ManagedObject mo = this.mgr.getObjectByIDOrNull(oid);
+    final ManagedObject mo = this.mgr.getObjectByIDReadOnly(oid);
     if (mo == null) { return 0; }
     try {
       final EvictableEntry ev = getEvictableEntryFrom(mo);
@@ -220,6 +221,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
   }
+  
+  
+    @Override
+    public String getName() {
+        return "Periodic";
+    }
 
     @Override
     public String toString() {

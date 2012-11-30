@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
@@ -71,9 +72,36 @@ public class UpdateCheckRequestTest extends TCTestCase {
   }
 
   private URL getURL() throws MalformedURLException {
-    URL url = AdminClientPanel.constructCheckURL(ProductInfo.getInstance(), 0);
+    URL url = constructCheckURL(ProductInfo.getInstance(), 0);
     return new URL("http://localhost:" + fPort + "/test?" + url.getQuery());
   }
+
+  public static URL constructCheckURL(ProductInfo productInfo, int id) throws MalformedURLException {
+    String defaultPropsUrl = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
+    String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
+    StringBuffer sb = new StringBuffer(propsUrl);
+
+    sb.append(defaultPropsUrl.equals(propsUrl) ? '&' : '?');
+
+    sb.append("id=");
+    sb.append(URLEncoder.encode(Integer.toString(id)));
+    sb.append("&os-name=");
+    sb.append(URLEncoder.encode(System.getProperty("os.name")));
+    sb.append("&jvm-name=");
+    sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
+    sb.append("&jvm-version=");
+    sb.append(URLEncoder.encode(System.getProperty("java.version")));
+    sb.append("&platform=");
+    sb.append(URLEncoder.encode(System.getProperty("os.arch")));
+    sb.append("&tc-version=");
+    sb.append(URLEncoder.encode(productInfo.version()));
+    sb.append("&tc-product=");
+    sb.append(productInfo.license().equals(ProductInfo.DEFAULT_LICENSE) ? "oss" : "ee");
+    sb.append("&source=console");
+
+    return new URL(sb.toString());
+  }
+
 }
 
 class TestServlet extends HttpServlet {

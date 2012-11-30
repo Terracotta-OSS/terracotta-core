@@ -86,7 +86,6 @@ public interface Manager extends TerracottaLocking {
    * Look up a new root object in the particular group
    * 
    * @param name Root name
-   * @param object Root object to use if none exists yet
    * @param gid group id
    * @return The root object actually used, may or may not == object
    * @throws AbortedOperationException
@@ -422,4 +421,6 @@ public interface Manager extends TerracottaLocking {
   AbortableOperationManager getAbortableOperationManager();
 
   PlatformService getPlatformService();
+
+  void throttlePutIfNecessary(ObjectID object);
 }

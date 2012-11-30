@@ -7,7 +7,7 @@ package com.terracotta.management.web.shiro;
 
 import org.apache.shiro.web.servlet.ShiroFilter;
 
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
 
 /**
  * @author brandony

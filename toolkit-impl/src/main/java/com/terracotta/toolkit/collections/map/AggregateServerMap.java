@@ -25,6 +25,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.abortable.AbortedOperationException;
+import com.google.common.base.Preconditions;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -139,11 +140,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         .createConcurrentTransactionLock("bulkops-static-eventual-concurrent-lock", platformService);
 
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;
-    if (!isValidType(type)) {
-      //
-      throw new IllegalArgumentException("Type has to be one of " + VALID_TYPES + " - " + type);
+    Preconditions.checkArgument(isValidType(type), "Type has to be one of %s but was %s", VALID_TYPES, type);
 
-    }
     this.name = name;
     this.attrSchema = attributeTypes;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
@@ -217,7 +215,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   protected InternalToolkitMap<K, V> getServerMapForKey(Object key) {
-    if (key == null) { throw new NullPointerException("Key cannot be null"); }
+    Preconditions.checkNotNull(key, "Key cannot be null");
     return serverMaps[Math.abs(key.hashCode() % serverMaps.length)];
   }
 
@@ -431,9 +429,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V putIfAbsent(K key, V value) {
-    return getServerMapForKey(key).putIfAbsent(key, value, timeSource.nowInSeconds(),
-                                               ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    return getServerMapForKey(key).putIfAbsent(key, value);
   }
 
   @Override
@@ -597,7 +593,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         }
         return rv;
       case EVENTUAL:
-        return unlockedGetAll((Collection<K>) keys, quiet);
+        return unlockedGetAll((Collection<K>)keys, quiet);
     }
     throw new UnsupportedOperationException("Unknown consistency - " + consistency);
   }
@@ -673,9 +669,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
     try {
       InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
-      if (!configType.isDynamicChangeAllowed()) { throw new IllegalArgumentException(
-                                                                                     "Dynamic change not allowed for field: "
-                                                                                         + fieldChanged); }
+      Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s", fieldChanged);
 
       config.setObject(fieldChanged, changedValue);
 

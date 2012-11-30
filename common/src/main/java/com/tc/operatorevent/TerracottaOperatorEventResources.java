@@ -129,4 +129,17 @@ class TerracottaOperatorEventResources {
   static String getActiveStartedWithOldDBMessage() {
     return instance.resources.getString("db.state");
   }
+  
+  /**
+   * resource management
+   */
+  static String getNearResourceCapacityLimit() {
+    return instance.resources.getString("resource.nearcapacity");
+  }
+  static String getFullResourceCapacityLimit() {
+    return instance.resources.getString("resource.fullcapacity");
+  }
+    static String getRestoredNormalResourceCapacity() {
+    return instance.resources.getString("resource.capacityrestored");
+  }
 }

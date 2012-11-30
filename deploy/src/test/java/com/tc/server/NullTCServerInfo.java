@@ -127,6 +127,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public boolean isRecovering() {
+    return false;
+  }
+
+  @Override
   public void startBeanShell(int port) {
     //
   }
@@ -318,5 +323,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   @Override
   public String getBackupStatus(final String name) throws IOException {
     return BackupManager.BackupStatus.UNKNOWN.toString();
+  }
+
+  @Override
+  public boolean isRestrictedMode() {
+    return false;
   }
 }

@@ -13,6 +13,7 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.terracotta.management.keychain.URIKeyName;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.IdentityAssertionServiceClient;
@@ -35,15 +36,21 @@ import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
-import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.ConfigurationServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
+import com.terracotta.management.service.impl.TsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
-import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.web.utils.TSAConfig;
+import com.terracotta.management.web.utils.TSASslSocketFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 /**
@@ -51,25 +58,48 @@ import javax.servlet.ServletContextEvent;
  */
 public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
+  private static final String TSA_JMX_CLIENT_NAME = System.getProperty("com.terracotta.management.debug.jmxClientName", "terracotta");
+
   private volatile JmxConnectorPool jmxConnectorPool;
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     try {
+      boolean sslEnabled = TSAConfig.isSslEnabled();
       ServiceLocator serviceLocator = new ServiceLocator();
 
       // The following services are for monitoring the TSA itself
       serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
-      jmxConnectorPool = new JmxConnectorPool();
-      TsaManagementClientService tsaManagementClientService = new ClearTextTsaManagementClientServiceImpl(jmxConnectorPool);
+
+      TsaManagementClientService tsaManagementClientService;
+      if (sslEnabled) {
+        final TSASslSocketFactory socketFactory = new TSASslSocketFactory();
+        jmxConnectorPool = new JmxConnectorPool("service:jmx:rmi://{0}:{1}/jndi/rmi://{0}:{1}/jmxrmi") {
+          @Override
+          protected Map<String, Object> createJmxConnectorEnv(String host, int port) {
+            try {
+              Map<String, Object> env = new HashMap<String, Object>();
+              env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
+              env.put("com.sun.jndi.rmi.factory.socket", socketFactory);
+              byte[] secret = TSAConfig.getKeyChain()
+                  .retrieveSecret(new URIKeyName("jmx://" + TSA_JMX_CLIENT_NAME + "@" + host + ":" + port));
+              env.put("jmx.remote.credentials", new Object[] { TSA_JMX_CLIENT_NAME, new String(secret).toCharArray()});
+              return env;
+            } catch (Exception e) {
+              throw new RuntimeException("Error retrieving secret for JMX host [" + host + ":" + port + "]", e);
+            }
+          }
+        };
+      } else {
+        jmxConnectorPool = new JmxConnectorPool("service:jmx:jmxmp://{0}:{1}");
+      }
+      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled);
+
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(ConfigurationService.class, new ConfigurationServiceImpl(tsaManagementClientService));
-
-      // The following services are for forwarding REST calls to L1s, using security or not
-      boolean sslEnabled = TSAConfig.isSslEnabled();
 
       JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
       AgentService l1Agent;
@@ -121,12 +151,17 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, l1Agent));
 
       ServiceLocator.load(serviceLocator);
+
+      super.contextInitialized(sce);
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("Error initializing TSAEnvironmentLoaderListener", e);
     }
+  }
 
-    super.contextInitialized(sce);
+  @Override
+  protected Class<?> determineWebEnvironmentClass(ServletContext servletContext) {
+    return TSAIniWebEnvironment.class;
   }
 
   @Override

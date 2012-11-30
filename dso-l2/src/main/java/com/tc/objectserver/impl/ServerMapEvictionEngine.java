@@ -179,7 +179,7 @@ public class ServerMapEvictionEngine {
   }
 
   private void notifyEvictionCompletedFor(ObjectID oid) {
-    final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+    final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
     if (mo == null) { return; }
     final ManagedObjectState state = mo.getManagedObjectState();
     try {

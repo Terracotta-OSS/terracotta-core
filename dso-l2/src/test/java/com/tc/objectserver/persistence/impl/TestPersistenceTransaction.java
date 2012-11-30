@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionListener;
 
 public final class TestPersistenceTransaction implements Transaction {
 
@@ -31,4 +32,11 @@ public final class TestPersistenceTransaction implements Transaction {
   public Object getTransaction() {
     return null;
   }
+
+    @Override
+    public void addTransactionListener(TransactionListener l) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+  
+  
 }
