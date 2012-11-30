@@ -728,7 +728,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread, final LockLevel level) {
+  private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread,
+                                                       final LockLevel level) {
     if (remote.isRejoinInProgress()) { throw new PlatformRejoinException(); }
     // What can we glean from local lock state
     final LockHold newHold = new LockHold(thread, level);
@@ -797,56 +798,26 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
     }
 
-    final boolean noLocksHeld;
-    final ServerLockLevel flushLevel;
-
     synchronized (this) {
-      unlock.flushInProgress();
-      noLocksHeld = noLocksHeld(unlock, null);
-      flushLevel = greediness.getFlushLevel();
+      final boolean noLocksHeld = noLocksHeld(unlock, null);
+      final ServerLockLevel flushLevel = greediness.getFlushLevel();
+
+      if (flushOnUnlock(unlock)) {
+        // TODO: to be done in a flush thread and not on txn complete thread
+        unlock.flushInProgress();
+        UnlockCallback flushCallback = new UnlockCallback(remote, flushLevel, unlock);
+        if (remote.asyncFlush(lock, flushCallback, noLocksHeld)) {
+          flushCallback.transactionsForLockFlushed(lock);
+        }
+      } else {
+        boolean rv = release(remote, unlock);
+        if (aborted) { throw new AbortedOperationException(); }
+        return rv;
+      }
     }
-
-    // TODO: to be done in a flush thread and not on txn complete thread
-    LockFlushCallback flushCallback = getUnlockFlushCallback(remote, flushLevel, unlock);
-
-    if (remote.asyncFlush(lock, flushCallback, noLocksHeld)) {
-      flushCallback.transactionsForLockFlushed(lock);
-    }
-
     if (aborted) { throw new AbortedOperationException(); }
 
     return true;
-  }
-
-  private LockFlushCallback getUnlockFlushCallback(final RemoteLockManager remote, final ServerLockLevel flushLevel,
-                                                   final LockHold unlockParam) {
-    LockFlushCallback flushCallback = new LockFlushCallback() {
-      @Override
-      public void transactionsForLockFlushed(LockID id) {
-        ServerLockLevel flushLevelParam = flushLevel;
-        while (true) {
-          synchronized (ClientLockImpl.this) {
-            if (flushLevelParam.equals(greediness.getFlushLevel())) {
-              unlockParam.flushCompleted();
-              remove(unlockParam);
-              ClientLockImpl.this.notifyAll();
-
-              if (greediness.isFree()) {
-                remoteUnlock(remote, unlockParam);
-              } else if (greediness.isRecalled() && canRecallNow()) {
-                greediness = recallCommit(remote, false);
-              }
-              return;
-            } else {
-              flushLevelParam = greediness.getFlushLevel();
-              LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + flushLevelParam + " to "
-                          + greediness.getFlushLevel() + " during flush operation");
-            }
-          }
-        }
-      }
-    };
-    return flushCallback;
   }
 
   private boolean noLocksHeld(LockHold unlockHold, ThreadID thread) {
@@ -975,9 +946,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           interrupted = true;
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
-        if (node.isRejoinInProgress()) {
-          throw new PlatformRejoinException();
-        }
+        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
       abortAndRemove(remote, node);
@@ -1215,6 +1184,39 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
     } else {
       return this.greediness;
+    }
+  }
+
+  private class UnlockCallback implements LockFlushCallback {
+    private final RemoteLockManager remote;
+    private final ServerLockLevel   expectedFlushLevel;
+    private final LockHold          unlock;
+
+    public UnlockCallback(RemoteLockManager remote, ServerLockLevel flushLevel, final LockHold unlock) {
+      this.remote = remote;
+      this.expectedFlushLevel = flushLevel;
+      this.unlock = unlock;
+    }
+
+    @Override
+    public void transactionsForLockFlushed(LockID id) {
+      synchronized (ClientLockImpl.this) {
+        if (expectedFlushLevel.equals(greediness.getFlushLevel())) {
+          releaseOnFlush();
+        } else {
+          UnlockCallback callback = new UnlockCallback(remote, greediness.getFlushLevel(), unlock);
+          boolean noLocksHeld = noLocksHeld(null, null);
+          if (remote.asyncFlush(id, callback, noLocksHeld)) {
+            releaseOnFlush();
+          }
+        }
+      }
+    }
+
+    private void releaseOnFlush() {
+      unlock.flushCompleted();
+      ClientLockImpl.this.notifyAll();
+      release(remote, unlock);
     }
   }
 

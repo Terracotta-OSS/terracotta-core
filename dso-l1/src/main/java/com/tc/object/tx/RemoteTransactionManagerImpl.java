@@ -29,7 +29,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
-import com.tc.util.TCAssertionError;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -51,45 +50,45 @@ import java.util.TimerTask;
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager, PrettyPrintable {
 
-  private static final long                       FLUSH_WAIT_INTERVAL         = 15 * 1000;
+  private static final long                              FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
-  private static final int                        MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
-  private static final long                       COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+  private static final int                               MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
+                                                                                         .getProperties()
+                                                                                         .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
+  private static final long                              COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
+                                                                                         .getProperties()
+                                                                                         .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
-  private static final State                      RUNNING                     = new State("RUNNING");
-  private static final State                      PAUSED                      = new State("PAUSED");
-  private static final State                      STARTING                    = new State("STARTING");
-  private static final State                REJOIN_IN_PROGRESS          = new State("REJOIN_IN_PROGRESS");
-  private static final State                      STOP_INITIATED              = new State("STOP-INITIATED");
-  private static final State                      STOPPED                     = new State("STOPPED");
+  private static final State                             RUNNING                     = new State("RUNNING");
+  private static final State                             PAUSED                      = new State("PAUSED");
+  private static final State                             STARTING                    = new State("STARTING");
+  private static final State                             REJOIN_IN_PROGRESS          = new State("REJOIN_IN_PROGRESS");
+  private static final State                             STOP_INITIATED              = new State("STOP-INITIATED");
+  private static final State                             STOPPED                     = new State("STOPPED");
 
-  private final Object                            lock                        = new Object();
-  private final Map                               incompleteBatches           = new HashMap();
-  private final HashMap                           lockFlushCallbacks          = new HashMap();
+  private final Object                                   lock                        = new Object();
+  private final Map                                      incompleteBatches           = new HashMap();
+  private final HashMap<LockID, List<LockFlushCallback>> lockFlushCallbacks          = new HashMap<LockID, List<LockFlushCallback>>();
 
-  private final Counter                           outstandingBatchesCounter;
-  private TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
-  private final LockAccounting                    lockAccounting;
-  private final TCLogger                          logger;
-  private final long                              ackOnExitTimeout;
+  private final Counter                                  outstandingBatchesCounter;
+  private TransactionBatchAccounting                     batchAccounting             = new TransactionBatchAccounting();
+  private final LockAccounting                           lockAccounting;
+  private final TCLogger                                 logger;
+  private final long                                     ackOnExitTimeout;
 
-  private int                                     outStandingBatches          = 0;
-  private State                                   status;
-  private final SessionManager                    sessionManager;
-  private final TransactionSequencer              sequencer;
-  private final DSOClientMessageChannel           channel;
-  private final Timer                             timer                       = new Timer(
-                                                                                          "RemoteTransactionManager Flusher",
-                                                                                          true);
-  private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
+  private int                                            outStandingBatches          = 0;
+  private State                                          status;
+  private final SessionManager                           sessionManager;
+  private final TransactionSequencer                     sequencer;
+  private final DSOClientMessageChannel                  channel;
+  private final Timer                                    timer                       = new Timer(
+                                                                                                 "RemoteTransactionManager Flusher",
+                                                                                                 true);
+  private final RemoteTransactionManagerTimerTask        remoteTxManagerTimerTask;
 
-  private final GroupID                           groupID;
-  private volatile boolean                        isShutdown                  = false;
-  private final AbortableOperationManager         abortableOperationManager;
+  private final GroupID                                  groupID;
+  private volatile boolean                               isShutdown                  = false;
+  private final AbortableOperationManager                abortableOperationManager;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -332,13 +331,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       } else {
         // register for call back
         if (callback != null) {
-          final Object prev = this.lockFlushCallbacks.put(lockID, callback);
-          if (prev != null) {
-            // Will this scenario come up in server restart scenario ? It should as we check for greediness in the Lock
-            // Manager before making this call
-            throw new TCAssertionError("There is already a registered call back on Lock Flush for this lock ID - "
-                                       + lockID);
+          List<LockFlushCallback> lockFlushCallbacksList = this.lockFlushCallbacks.get(lockID);
+          if (lockFlushCallbacksList == null) {
+            lockFlushCallbacksList = new ArrayList<LockFlushCallback>();
+            this.lockFlushCallbacks.put(lockID, lockFlushCallbacksList);
           }
+          lockFlushCallbacksList.add(callback);
         }
         return false;
       }
@@ -562,27 +560,28 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   /*
    * Never fire callbacks while holding lock
    */
-  private void fireLockFlushCallbacks(final Map callbacks) {
+  private void fireLockFlushCallbacks(final Map<LockID, List<LockFlushCallback>> callbacks) {
     if (callbacks.isEmpty()) { return; }
-    for (final Iterator i = callbacks.entrySet().iterator(); i.hasNext();) {
-      final Entry e = (Entry) i.next();
-      final LockID lid = (LockID) e.getKey();
-      final LockFlushCallback callback = (LockFlushCallback) e.getValue();
-      callback.transactionsForLockFlushed(lid);
+    for (Entry<LockID, List<LockFlushCallback>> element : callbacks.entrySet()) {
+      final LockID lid = element.getKey();
+      final List<LockFlushCallback> callbacksList = element.getValue();
+      for (LockFlushCallback callback : callbacksList) {
+        callback.transactionsForLockFlushed(lid);
+      }
     }
   }
 
-  private Map getLockFlushCallbacks(final Set completedLocks) {
-    Map callbacks = Collections.EMPTY_MAP;
+  private Map<LockID, List<LockFlushCallback>> getLockFlushCallbacks(final Set completedLocks) {
+    Map<LockID, List<LockFlushCallback>> callbacks = Collections.EMPTY_MAP;
     if (!completedLocks.isEmpty() && !this.lockFlushCallbacks.isEmpty()) {
-      for (final Iterator i = completedLocks.iterator(); i.hasNext();) {
-        final Object lid = i.next();
-        final Object callback = this.lockFlushCallbacks.remove(lid);
-        if (callback != null) {
+      for (final Iterator<LockID> i = completedLocks.iterator(); i.hasNext();) {
+        final LockID lid = i.next();
+        final List<LockFlushCallback> lockFlushCallbacksList = this.lockFlushCallbacks.remove(lid);
+        if (lockFlushCallbacksList != null) {
           if (callbacks == Collections.EMPTY_MAP) {
             callbacks = new HashMap();
           }
-          callbacks.put(lid, callback);
+          callbacks.put(lid, lockFlushCallbacksList);
         }
       }
     }
