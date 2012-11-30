@@ -264,8 +264,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             } 
         } finally {
             evictor.markEvictionDone(oid);
-            if (evictor.isLogging()) {
-                log("Evictor results " + trigger);
+            if (evictor.isLogging() && logger.isDebugEnabled()) {
+                logger.debug(trigger);
             }
         }
 
