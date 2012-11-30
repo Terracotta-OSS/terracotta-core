@@ -19,29 +19,6 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     >
 
-  <!-- The 'system' section contains configuration data that affects the
-     entire Terracotta system as a whole; things like whether to activate
-     DSO services go here. -->
-
-  <system>
-    <!-- The configuration model: 'development' or 'production'.
-
-       In 'development' mode, each client can have its own configuration,
-       independent of the server or any other client. This mode can result in
-       shared data being corrupted or lost if, for instance, two different
-       clients specify roots of different types.
-
-       In 'production' mode, it is enforced that each client has obtained its
-       configuration from its server. When a client first connects to a server
-       it determines the servers configuration model and, if production, ensures
-       that its configuration source was that server. A client can specify that its
-       configuration come from server by setting the 'tc.config' system propery as
-       -Dtc.config=serverHost:tsaPort.
-
-       Default: 'development'. -->
-    <configuration-model>development</configuration-model>
-  </system>
-
   <!--
     This section defines the servers present in your Terracotta system. You can
     omit this section entirely, in which case it behaves as if there's a
@@ -135,7 +112,7 @@
 
          Default: 9530
       -->
-      <l2-group-port>9530</l2-group-port>
+      <tsa-group-port>9530</tsa-group-port>
 
       <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
            connected clients to reconnect?  After this period, clients will

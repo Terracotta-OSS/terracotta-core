@@ -29,12 +29,9 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server1-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server1-stats</statistics>"
-                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <tsa-port>9510</tsa-port>"
                       + "\n       <jmx-port>9520</jmx-port>"
-                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n       <tsa-group-port>9530</tsa-group-port>"
                       + "\n      </server>"
                       + "\n      <server name=\"server2\">"
                       + "\n       <data>"
@@ -43,10 +40,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>8510</dso-port>"
+                      + "\n       <tsa-port>8510</tsa-port>"
                       + "\n</server>"
                       + "\n      <server name=\"server3\">"
                       + "\n       <data>"
@@ -55,14 +49,11 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>7510</dso-port>"
-                      + "\n       <l2-group-port>7555</l2-group-port>"
+                      + "\n       <tsa-port>7510</tsa-port>"
+                      + "\n       <tsa-group-port>7555</tsa-group-port>"
                       + "\n</server>"
                       + "\n      <server name=\"server5\">"
-                      + "\n       <dso-port>65534</dso-port>"
+                      + "\n       <tsa-port>65534</tsa-port>"
                       + "\n</server>"
 
                       + "\n      <server name=\"server4\">"
@@ -79,7 +70,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
-      // case 2: just dso-port specified in the config; other port numbers are calculated
+      // case 2: just tsa-port specified in the config; other port numbers are calculated
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
       Assert.assertEquals(8510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(8510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT, configSetupMgr.commonl2Config()
@@ -87,7 +78,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
       Assert.assertEquals(8510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT, configSetupMgr.dsoL2Config()
           .tsaGroupPort().getIntValue());
 
-      // case 3: dso-port and group-port specified; jmx-port calculated
+      // case 3: tsa-port and group-port specified; jmx-port calculated
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server3");
       Assert.assertEquals(7510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(7520, configSetupMgr.commonl2Config().jmxPort().getIntValue());

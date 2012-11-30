@@ -11,7 +11,7 @@ class PortConfigBuilder extends BaseConfigBuilder {
   private static final String   BIND           = "bind";
   private static final String   TSA_PORT       = "tsa-port";
   private static final String   JMX_PORT       = "jmx-port";
-  private static final String   GROUP_PORT     = "l2-group-port";
+  private static final String   GROUP_PORT     = "tsa-group-port";
   private static final String[] ALL_PROPERTIES = concat(new Object[] { BIND, TSA_PORT, JMX_PORT, GROUP_PORT });
 
   private String                bindAddress;

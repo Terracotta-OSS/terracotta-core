@@ -162,7 +162,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeJmxPort(server, defaultValueProvider);
       initializeTsaGroupPort(server, defaultValueProvider);
       // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
-      // and name is supposed to default to 'host:dso-port'
+      // and name is supposed to default to 'host:tsa-port'
       initializeNameAndHost(server, defaultValueProvider);
       initializeDataDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);

@@ -21,26 +21,26 @@ public class PortBindAddressTest extends TCTestCase {
     try {
       tcConfig = getTempFile("tc-config-testHaMode1.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">"
                       + "\n<servers>"
-                      + "\n      <server name=\"server1\">" 
-                      + "\n      <dso-port bind=\"127.8.9.0\">6510</dso-port>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n      <tsa-port bind=\"127.8.9.0\">6510</tsa-port>"
                       + "\n      <jmx-port bind=\"127.8.9.1\">6520</jmx-port>"
-                      + "\n      <l2-group-port bind=\"127.8.9.2\">6530</l2-group-port>"  
+                      + "\n      <tsa-group-port bind=\"127.8.9.2\">6530</tsa-group-port>"
                       + "\n      </server>"
                       + "\n      <server name=\"server2\">"
-                      + "\n      <dso-port>8510</dso-port>"
+                      + "\n      <tsa-port>8510</tsa-port>"
                       + "\n      <jmx-port>8520</jmx-port>"
-                      + "\n      <l2-group-port>8530</l2-group-port>"
+                      + "\n      <tsa-group-port>8530</tsa-group-port>"
                       + "\n      </server>"
-                      + "\n      <server name=\"server3\" bind=\"1.2.3.4\">" 
-                      + "\n      <dso-port bind=\"127.8.9.0\">7510</dso-port>"
+                      + "\n      <server name=\"server3\" bind=\"1.2.3.4\">"
+                      + "\n      <tsa-port bind=\"127.8.9.0\">7510</tsa-port>"
                       + "\n      <jmx-port bind=\"127.8.9.1\">7520</jmx-port>"
-                      + "\n      <l2-group-port bind=\"127.8.9.2\">7530</l2-group-port>"  
+                      + "\n      <tsa-group-port bind=\"127.8.9.2\">7530</tsa-group-port>"
                       + "\n      </server>"
-                      + "\n      <server name=\"server4\" bind=\"1.2.3.4\">" 
+                      + "\n      <server name=\"server4\" bind=\"1.2.3.4\">"
                       + "\n      </server>"
-                      + "\n</servers>" 
+                      + "\n</servers>"
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
       TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
@@ -54,7 +54,7 @@ public class PortBindAddressTest extends TCTestCase {
       Assert.assertEquals(6510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(6530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
       Assert.assertEquals(6520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      
+
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
       Assert.assertEquals("0.0.0.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("0.0.0.0", configSetupMgr.commonl2Config().jmxPort().getBind());
@@ -62,7 +62,7 @@ public class PortBindAddressTest extends TCTestCase {
       Assert.assertEquals(8510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(8530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
       Assert.assertEquals(8520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-     
+
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server3");
       Assert.assertEquals("127.8.9.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("127.8.9.1", configSetupMgr.commonl2Config().jmxPort().getBind());
@@ -70,7 +70,7 @@ public class PortBindAddressTest extends TCTestCase {
       Assert.assertEquals(7510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(7530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
       Assert.assertEquals(7520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      
+
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server4");
       Assert.assertEquals("1.2.3.4", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("1.2.3.4", configSetupMgr.commonl2Config().jmxPort().getBind());

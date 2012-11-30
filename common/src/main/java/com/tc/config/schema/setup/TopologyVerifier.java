@@ -211,9 +211,9 @@ public class TopologyVerifier {
         || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
         || !validatePorts(oldServer.getTsaGroupPort(), newServer.getTsaGroupPort())) {
       logger.warn("Server port configuration was changed for server " + oldServer.getName()
-                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
+                  + ". [tsa-port, tsa-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
                   + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
-                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
+                  + ". [tsa-port, tsa-group-port, jmx-port] [ {" + oldServer.getTsaPort() + "}, {"
                   + oldServer.getTsaGroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {"
                   + newServer.getTsaPort() + "}, {" + newServer.getTsaGroupPort() + "}, {" + newServer.getJmxPort()
                   + "}]");

@@ -239,8 +239,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                          "The server "
                                                                                              + hostport
                                                                                              + " is specified more than once in tc-config."
-                                                                                             + "\nPlease provide different server name or port numbers(dso-port, jmx-port, "
-                                                                                             + "\nl2-group-port) in tc-config."); }
+                                                                                             + "\nPlease provide different server name or port numbers(tsa-port, jmx-port, "
+                                                                                             + "\ntsa-group-port) in tc-config."); }
   }
 
   private void verifyL2Identifier(final Server[] servers, final String l2Identifier) throws ConfigurationSetupException {

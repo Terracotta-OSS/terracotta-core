@@ -28,12 +28,9 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server1-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server1-stats</statistics>"
-                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <tsa-port>9510</tsa-port>"
                       + "\n       <jmx-port>9520</jmx-port>"
-                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n       <tsa-group-port>9530</tsa-group-port>"
                       + "\n      </server>"
                       + "\n      <server name=\"server2\" host=\"11.0.1.2\">"
                       + "\n       <data>"
@@ -42,10 +39,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>8510</dso-port>"
+                      + "\n       <tsa-port>8510</tsa-port>"
                       + "\n</server>"
                       + "\n      <server name=\"server3\" host=\"11.0.1.3\">"
                       + "\n       <data>"
@@ -54,11 +48,8 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>7510</dso-port>"
-                      + "\n       <l2-group-port>7555</l2-group-port>"
+                      + "\n       <tsa-port>7510</tsa-port>"
+                      + "\n       <tsa-group-port>7555</tsa-group-port>"
                       + "\n</server>"
                       + "\n</servers>"
                       + "\n</tc:tc-config>";
