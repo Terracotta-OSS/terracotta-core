@@ -528,6 +528,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1, maxStageSize).getSink();
       backupManager = new BackupManagerImpl(persistor, configSetupManager.commonl2Config()
           .serverDbBackupPath(), backupSink);
+    } else {
+      backupManager = NullBackupManager.INSTANCE;
     }
 
     // register the terracotta operator event logger
