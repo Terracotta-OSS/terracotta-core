@@ -73,7 +73,7 @@ public class NonStopToolkit implements ToolkitInternal {
       toolkitObjects.put(objectType, new ConcurrentHashMap<String, ToolkitObject>());
     }
 
-    this.nonStopClusterListener = new NonStopClusterListener(toolkitDelegateFutureTask);
+    this.nonStopClusterListener = new NonStopClusterListener(toolkitDelegateFutureTask, abortableOperationManager);
   }
 
   private ToolkitInternal getInitializedToolkit() {

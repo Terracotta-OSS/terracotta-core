@@ -8,14 +8,20 @@ import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NonStopClusterListener implements ClusterListener {
-  private final AtomicBoolean operationsEnabled = new AtomicBoolean(true);
+  private final AtomicBoolean             operationsEnabled = new AtomicBoolean(true);
+  private final AbortableOperationManager abortableOperationManager;
 
-  public NonStopClusterListener(FutureTask<ToolkitInternal> toolkitDelegateFutureTask) {
+  public NonStopClusterListener(FutureTask<ToolkitInternal> toolkitDelegateFutureTask,
+                                AbortableOperationManager abortableOperationManager) {
     registerToToolkit(toolkitDelegateFutureTask);
+    this.abortableOperationManager = abortableOperationManager;
   }
 
   private void registerToToolkit(final FutureTask<ToolkitInternal> toolkitDelegateFutureTask) {
@@ -46,8 +52,11 @@ public class NonStopClusterListener implements ClusterListener {
         operationsEnabled.set(false);
         break;
       case OPERATIONS_ENABLED:
-        operationsEnabled.set(true);
-        break;
+        synchronized (this) {
+          operationsEnabled.set(true);
+          this.notifyAll();
+          break;
+        }
       default:
         // no op
         break;
@@ -56,5 +65,25 @@ public class NonStopClusterListener implements ClusterListener {
 
   public boolean areOperationsEnabled() {
     return operationsEnabled.get();
+  }
+
+  public void waitUntilOperationsEnabled() {
+    if (!operationsEnabled.get()) {
+      synchronized (this) {
+        boolean interrupted = false;
+        while (!operationsEnabled.get()) {
+          try {
+            this.wait();
+          } catch (InterruptedException e) {
+            if (abortableOperationManager.isAborted()) { throw new ToolkitAbortableOperationException(); }
+            interrupted = true;
+          }
+        }
+
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
   }
 }

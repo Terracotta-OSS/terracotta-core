@@ -38,6 +38,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
                                                                                                                                .getTimeoutBehavior()); }
     boolean started = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
     try {
+      clusterListener.waitUntilOperationsEnabled();
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
