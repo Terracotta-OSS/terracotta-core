@@ -22,7 +22,7 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
   }
 
   public static class ToolkitSetRejoinTestClient extends AbstractToolkitRejoinTestClient {
-    private static final int              No_OF_PUTS                = 100;
+    private static final int              NUM_ELEMENTS                = 100;
     private final static int              START_INDEX_BEFORE_REJOIN = 0;
     private final static int              START_INDEX_AFTER_REJOIN  = 100;
 
@@ -61,7 +61,7 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
       toolkitSet = toolkit.getSet("freshSet", String.class);
       clientIndex = barrier.await();
       if (clientIndex == 0) {
-        doSomePuts(toolkitSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+        doSomePuts(toolkitSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       }
       barrier.await();
 
@@ -72,10 +72,10 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
         throws InterruptedException, BrokenBarrierException, Exception {
       clientIndex = barrier.await();
       if (clientIndex == 0) {
-        doSomePuts(toolkitSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+        doSomePuts(toolkitSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       }
       barrier.await();
-      assertAllKeyValuePairsExist(toolkitSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
       barrier.await();
       doDebug("Starting rejoin...");
 
@@ -86,12 +86,12 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
       }
       doDebug("Came back to app code after rejoin completed");
       barrier.await();
-      assertAllKeyValuePairsExist(toolkitSet, No_OF_PUTS, START_INDEX_BEFORE_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSet, NUM_ELEMENTS, START_INDEX_BEFORE_REJOIN);
 
       if (clientIndex == 1) {
-        doSomePuts(toolkitSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+        doSomePuts(toolkitSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
       }
-      assertAllKeyValuePairsExist(toolkitSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
       barrier.await();
 
       doDebug("clearing Set..");
@@ -103,37 +103,37 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
       toolkitSet = toolkit.getSet("FreshSet", String.class);
       if (clientIndex == 0) {
         doDebug("Client 0 is adding values to fresh Set");
-        doSomePuts(toolkitSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+        doSomePuts(toolkitSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
       } else {
         doDebug("Client 0 is adding values to fresh Set, i'm suppossed to wait..");
       }
       barrier.await();
       doDebug("Asserting that all values put by client 0 are present");
-      assertAllKeyValuePairsExist(toolkitSet, No_OF_PUTS, START_INDEX_AFTER_REJOIN);
+      assertAllKeyValuePairsExist(toolkitSet, NUM_ELEMENTS, START_INDEX_AFTER_REJOIN);
 
     }
 
     private void testForSingleNode(ToolkitSet toolkitSet, TestHandlerMBean testHandlerMBean, ToolkitInternal toolkit)
         throws Exception {
 
-      for (int i = 0; i < No_OF_PUTS; i++) {
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
         toolkitSet.add(getValue(i));
       }
 
       doDebug("Asserting values before rejoin");
-      for (int i = 0; i < No_OF_PUTS; i++) {
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
 
       startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
 
       doDebug("Asserting old values after rejoin");
-      for (int i = 0; i < No_OF_PUTS; i++) {
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
 
       doDebug("Adding new values after rejoin");
-      for (int i = No_OF_PUTS; i < 2 * No_OF_PUTS; i++) {
+      for (int i = NUM_ELEMENTS; i < 2 * NUM_ELEMENTS; i++) {
         toolkitSet.add(getValue(i));
       }
 
@@ -143,8 +143,8 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
       }
 
       doDebug("Asserting new values inserted after rejoin");
-      Assert.assertEquals(2 * No_OF_PUTS, toolkitSet.size());
-      for (int i = 0; i < 2 * No_OF_PUTS; i++) {
+      Assert.assertEquals(2 * NUM_ELEMENTS, toolkitSet.size());
+      for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitSet.contains(getValue(i)));
       }
       doDebug("Asserted new values");
