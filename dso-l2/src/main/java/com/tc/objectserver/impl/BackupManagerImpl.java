@@ -4,9 +4,9 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.api.BackupManager;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.search.IndexManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,14 +20,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BackupManagerImpl implements BackupManager {
   private static final TCLogger logger = TCLogging.getLogger(BackupManager.class);
   private static final String STATUS_FILE_NAME = "status";
+  private static final String INDEX_FOLDER_NAME = "index";
+  private static final String DATA_FOLDER_NAME = "data";
 
   private final AtomicReference<String> backupInProgress = new AtomicReference<String>();
   private final Persistor persistor;
+  private final IndexManager indexManager;
   private final File backupPath;
   private final Sink backupSink;
 
-  public BackupManagerImpl(final Persistor persistor, final File backupPath, final Sink backupSink) {
+  public BackupManagerImpl(final Persistor persistor, final IndexManager indexManager, final File backupPath, final Sink backupSink) {
     this.persistor = persistor;
+    this.indexManager = indexManager;
     this.backupPath = backupPath;
     this.backupSink = backupSink;
   }
@@ -100,7 +104,10 @@ public class BackupManagerImpl implements BackupManager {
       RandomAccessFile raf = new RandomAccessFile(statusFile, "rwd");
       try {
         BackupStatus.RUNNING.putStatus(raf);
-        persistor.backup(new File(backupDir, L2DSOConfig.OBJECTDB_DIRNAME));
+        persistor.backup(new File(backupDir, DATA_FOLDER_NAME));
+        if (indexManager != null) {
+          indexManager.backup(new File(backupDir, INDEX_FOLDER_NAME));
+        }
         BackupStatus.COMPLETE.putStatus(raf);
       } catch (Exception e) {
         BackupStatus.FAILED.putStatus(raf);

@@ -234,7 +234,8 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     List<String> prefixes = loadPrefixes();
 
     // we don't need to use embedded ehcache classes if it's already on classpath
-    if (!isEmbeddedEhcacheRequired()) {
+    boolean useEmbeddedEhcache = isEmbeddedEhcacheRequired();
+    if (!useEmbeddedEhcache) {
       for (Iterator<String> it = prefixes.iterator(); it.hasNext();) {
         String prefix = it.next();
         if (prefix.contains("ehcache/")) {
@@ -243,7 +244,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       }
     }
 
-    ClusteredStateLoader loader = new ClusteredStateLoader(prefixes, appClassLoader);
+    ClusteredStateLoader loader = new ClusteredStateLoader(prefixes, appClassLoader, useEmbeddedEhcache);
 
     loader.addExtraClass(SpiInit.class.getName(), getClassBytes(SpiInit.class));
     loader.addExtraClass(StandaloneL1Boot.class.getName(), getClassBytes(StandaloneL1Boot.class));
