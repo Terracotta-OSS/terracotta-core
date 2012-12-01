@@ -25,7 +25,6 @@ import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
-import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -355,13 +354,12 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
     Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
 
-    Assert.assertFalse(server.getPersistence().getRestartable().getEnabled());
-    Assert.assertEquals(120, server.getClientReconnectWindow());
-    Assert.assertEquals(true, server.getGarbageCollection().getEnabled());
-    Assert.assertEquals(false, server.getGarbageCollection().getVerbose());
-    Assert.assertEquals(3600, server.getGarbageCollection().getInterval());
+    Assert.assertFalse(servers.getRestartable().getEnabled());
+    Assert.assertEquals(120, servers.getClientReconnectWindow());
+    Assert.assertEquals(true, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(false, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(3600, servers.getGarbageCollection().getInterval());
   }
 
   public void testDefaultPersistence() throws IOException, ConfigurationSetupException {
@@ -376,10 +374,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
-    Assert.assertTrue(server.isSetPersistence());
-    Persistence persistence = server.getPersistence();
-    Assert.assertFalse(persistence.isSetOffheap());
-    Assert.assertFalse(persistence.getRestartable().getEnabled());
+    Assert.assertFalse(server.isSetOffheap());
+    Assert.assertFalse(servers.getRestartable().getEnabled());
   }
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
@@ -398,11 +394,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getClientReconnectWindow());
-    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
-    Assert.assertFalse(server.getPersistence().isSetOffheap());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
+    Assert.assertFalse(server.isSetOffheap());
   }
 
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
@@ -423,14 +419,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getClientReconnectWindow());
-    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
 
-    Assert.assertTrue(server.getPersistence().isSetOffheap());
-    Assert.assertEquals(true, server.getPersistence().getOffheap().getEnabled());
-    Assert.assertEquals("5628m", server.getPersistence().getOffheap().getMaxDataSize());
+    Assert.assertTrue(server.isSetOffheap());
+    Assert.assertEquals(true, server.getOffheap().getEnabled());
+    Assert.assertEquals("5628m", server.getOffheap().getMaxDataSize());
   }
 
   public void testOffHeap2() throws IOException {
@@ -468,13 +464,12 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
     Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(9876, server.getClientReconnectWindow());
-    Assert.assertEquals(false, server.getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getGarbageCollection().getInterval());
-    Assert.assertTrue(server.getPersistence().getRestartable().getEnabled());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
+    Assert.assertTrue(servers.getRestartable().getEnabled());
   }
 
   public void testMirrorGroupDefaults() throws IOException, ConfigurationSetupException {

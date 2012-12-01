@@ -7,7 +7,7 @@ import com.tc.config.schema.Config;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Offheap;
-import com.terracottatech.config.Persistence;
+import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 
 /**
@@ -18,8 +18,6 @@ public interface L2DSOConfig extends Config {
   public static final String OBJECTDB_DIRNAME                      = "objectdb";
   public static final String DIRTY_OBJECTDB_BACKUP_DIRNAME         = "dirty-objectdb-backup";
   public static final String DIRTY_OBJECTDB_BACKUP_PREFIX          = "dirty-objectdb-";
-
-  Persistence getPersistence();
 
   GarbageCollection garbageCollection();
 
@@ -39,4 +37,7 @@ public interface L2DSOConfig extends Config {
 
   Security securityConfig();
 
+  Offheap getOffheap();
+
+  Restartable getRestartable();
 }

@@ -21,7 +21,7 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitBlockingQueueRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitBlockingQueueRejoinTestClient.class, ToolkitBlockingQueueRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitBlockingQueueRejoinTestClient extends AbstractToolkitRejoinTestClient {

@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -292,9 +295,6 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -472,7 +472,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     final TCProperties objManagerProperties = this.l2Properties.getPropertiesFor("objectmanager");
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
-    final boolean restartable = l2DSOConfig.getPersistence().getRestartable().getEnabled();
+    final boolean restartable = l2DSOConfig.getRestartable().getEnabled();
 
     final Offheap offHeapConfig = l2DSOConfig.offHeapConfig();
     // start the JMX server
@@ -812,7 +812,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // Lookup stage should never be blocked trying to add to apply stage
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor.getPersistenceTransactionProvider()), 1, -1);
-    
+
     // Server initiated request processing stages should not be bounded
     stageManager.createStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE, new RecallObjectsHandler(), 1, -1);
 

@@ -53,8 +53,6 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
 
   public void testSchemaViolation() throws Exception {
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
-    builder.getSystem().setLicenseType("funkiness"); // invalid enumeration value
-    builder.getSystem().setLicenseLocation("foo");
     byte[] xml = builder.toString().getBytes("UTF-8");
     ByteArrayInputStream stream = new ByteArrayInputStream(xml);
 

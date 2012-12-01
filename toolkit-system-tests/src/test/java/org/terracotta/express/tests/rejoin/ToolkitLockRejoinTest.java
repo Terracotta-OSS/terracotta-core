@@ -25,7 +25,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitLockRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitLockRejoinTestClient.class, ToolkitLockRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitLockRejoinTestClient extends AbstractToolkitRejoinTestClient {
@@ -51,7 +51,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       testRWLock(toolkit, index);
       doDebug("client " + index + " is going to do rejoin");
       lockBarrier.await();
-      
+
       // test during rejoin
       testLockWithRejoin(testHandlerMBean, toolkit, index);
 

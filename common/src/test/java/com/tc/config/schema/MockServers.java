@@ -17,8 +17,11 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
+import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroups;
+import com.terracottatech.config.NonNegativeInt;
+import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.UpdateCheck;
@@ -28,7 +31,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.List;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -42,409 +44,474 @@ public class MockServers implements Servers {
     super();
   }
 
+  @Override
   public Server[] getServerArray() {
     throw new ImplementMe();
   }
 
+  @Override
   public Server getServerArray(int arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public int sizeOfServerArray() {
     return 1;
   }
 
+  @Override
   public void setServerArray(Server[] arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setServerArray(int arg0, Server arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public Server insertNewServer(int arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Server addNewServer() {
     throw new ImplementMe();
   }
 
+  @Override
   public void removeServer(int arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean getSecure() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlBoolean xgetSecure() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSetSecure() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setSecure(boolean secure) {
     throw new ImplementMe();
   }
 
+  @Override
   public void xsetSecure(XmlBoolean secure) {
     throw new ImplementMe();
   }
 
+  @Override
   public void unsetSecure() {
     throw new ImplementMe();
   }
 
+  @Override
   public SchemaType schemaType() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean validate() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean validate(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectPath(String arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectPath(String arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] execQuery(String arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] execQuery(String arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject changeType(SchemaType arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject substitute(QName arg0, SchemaType arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isNil() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setNil() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isImmutable() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject set(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject copy() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean valueEquals(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public int valueHashCode() {
     throw new ImplementMe();
   }
 
+  @Override
   public int compareTo(Object arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public int compareValue(XmlObject arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(QName arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(String arg0, String arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectChildren(QNameSet arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject selectAttribute(QName arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject selectAttribute(String arg0, String arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlObject[] selectAttributes(QNameSet arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object monitor() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlDocumentProperties documentProperties() {
     throw new ImplementMe();
   }
 
+  @Override
   public XmlCursor newCursor() {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLInputStream newXMLInputStream() {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLStreamReader newXMLStreamReader() {
     throw new ImplementMe();
   }
 
+  @Override
   public String xmlText() {
     throw new ImplementMe();
   }
 
+  @Override
   public InputStream newInputStream() {
     throw new ImplementMe();
   }
 
+  @Override
   public Reader newReader() {
     throw new ImplementMe();
   }
 
+  @Override
   public Node newDomNode() {
     throw new ImplementMe();
   }
 
+  @Override
   public Node getDomNode() {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(ContentHandler arg0, LexicalHandler arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(File arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(OutputStream arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(Writer arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLInputStream newXMLInputStream(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public XMLStreamReader newXMLStreamReader(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public String xmlText(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public InputStream newInputStream(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Reader newReader(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public Node newDomNode(XmlOptions arg0) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(ContentHandler arg0, LexicalHandler arg1, XmlOptions arg2) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(File arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(OutputStream arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void save(Writer arg0, XmlOptions arg1) {
     throw new ImplementMe();
   }
 
+  @Override
   public void dump() {
     throw new ImplementMe();
   }
 
+  @Override
   public Ha addNewHa() {
     throw new ImplementMe();
   }
 
+  @Override
   public MirrorGroups addNewMirrorGroups() {
     throw new ImplementMe();
   }
 
-  public MirrorGroups[] getMirrorGroupsArray() {
-    throw new ImplementMe();
-  }
-
-  public MirrorGroups getMirrorGroupsArray(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public Ha[] getHaArray() {
-    throw new ImplementMe();
-  }
-
-  public Ha getHaArray(int arg0) {
-    throw new ImplementMe();
-  }
-
+  @Override
   public UpdateCheck addNewUpdateCheck() {
     throw new ImplementMe();
   }
 
-  public MirrorGroups insertNewMirrorGroups(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public Ha insertNewHa(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public void removeActiveServerGroups(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public void removeHa(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public void setMirrorGroupsArray(MirrorGroups[] arg0) {
-    throw new ImplementMe();
-  }
-
-  public void setActiveServerGroupsArray(int arg0, MirrorGroups arg1) {
-    throw new ImplementMe();
-  }
-
-  public void setHaArray(Ha[] arg0) {
-    throw new ImplementMe();
-  }
-
-  public void setHaArray(int arg0, Ha arg1) {
-    throw new ImplementMe();
-  }
-
-  public int sizeOfActiveServerGroupsArray() {
-    throw new ImplementMe();
-  }
-
-  public int sizeOfHaArray() {
-    throw new ImplementMe();
-  }
-
-  public UpdateCheck[] getUpdateCheckArray() {
-    throw new ImplementMe();
-  }
-
-  public UpdateCheck getUpdateCheckArray(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public UpdateCheck insertNewUpdateCheck(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public void removeUpdateCheck(int arg0) {
-    throw new ImplementMe();
-  }
-
-  public void setUpdateCheckArray(UpdateCheck[] arg0) {
-    throw new ImplementMe();
-  }
-
-  public void setUpdateCheckArray(int arg0, UpdateCheck arg1) {
-    throw new ImplementMe();
-  }
-
-  public int sizeOfUpdateCheckArray() {
-    throw new ImplementMe();
-  }
-
+  @Override
   public MirrorGroups getMirrorGroups() {
     throw new ImplementMe();
   }
 
+  @Override
   public Ha getHa() {
     throw new ImplementMe();
   }
 
+  @Override
   public UpdateCheck getUpdateCheck() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSetMirrorGroups() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSetHa() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSetUpdateCheck() {
     throw new ImplementMe();
   }
 
-  public void setMirrorGroups(MirrorGroups arg0) {
-    throw new ImplementMe();
-
-  }
-
+  @Override
   public void setHa(Ha arg0) {
     throw new ImplementMe();
-
   }
 
+  @Override
   public void setUpdateCheck(UpdateCheck arg0) {
     throw new ImplementMe();
-
   }
 
+  @Override
   public void unsetMirrorGroups() {
     throw new ImplementMe();
-
   }
 
+  @Override
   public void unsetHa() {
     throw new ImplementMe();
-
   }
 
+  @Override
   public void unsetUpdateCheck() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setMirrorGroups(MirrorGroups mirrorGroups) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int getClientReconnectWindow() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public NonNegativeInt xgetClientReconnectWindow() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isSetClientReconnectWindow() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setClientReconnectWindow(int clientReconnectWindow) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void xsetClientReconnectWindow(NonNegativeInt clientReconnectWindow) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void unsetClientReconnectWindow() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Restartable getRestartable() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isSetRestartable() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setRestartable(Restartable restartable) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Restartable addNewRestartable() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void unsetRestartable() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public GarbageCollection getGarbageCollection() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isSetGarbageCollection() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setGarbageCollection(GarbageCollection garbageCollection) {
     throw new ImplementMe();
 
   }
 
-  public List<Server> getServerList() {
+  @Override
+  public GarbageCollection addNewGarbageCollection() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void unsetGarbageCollection() {
     throw new ImplementMe();
   }
 }

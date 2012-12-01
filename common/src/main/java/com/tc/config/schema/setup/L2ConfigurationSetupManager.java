@@ -33,8 +33,6 @@ public interface L2ConfigurationSetupManager {
 
   ActiveServerGroupConfig getActiveServerGroupForThisL2();
 
-  String[] applicationNames();
-
   String describeSources();
 
   InputStream rawConfigFile();

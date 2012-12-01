@@ -59,10 +59,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     List jvmArgs = new ArrayList();
     int proxyPort = portChooser.chooseRandomPort();
 
-    RestartTestHelper helper = new RestartTestHelper(isCrashy,
-                                                     new RestartTestEnvironment(this.getTempDirectory(), portChooser,
-                                                                                RestartTestEnvironment.DEV_MODE),
-                                                     jvmArgs);
+    RestartTestHelper helper = new RestartTestHelper(isCrashy, new RestartTestEnvironment(this.getTempDirectory(),
+                                                                                          portChooser), jvmArgs);
     int tsaPort = helper.getServerPort();
     int jmxPort = helper.getAdminPort();
     ServerControl server = helper.getServerControl();
@@ -88,10 +86,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components,
-                                                                 NullManager.getInstance(),
-                                                                 new DsoClusterImpl(mock),
-                                                                 new NullAbortableOperationManager(),
-                                                                 mock);
+                                                                 NullManager.getInstance(), new DsoClusterImpl(mock),
+                                                                 new NullAbortableOperationManager(), mock);
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 

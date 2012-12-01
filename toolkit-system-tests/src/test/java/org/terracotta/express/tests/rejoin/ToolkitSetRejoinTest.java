@@ -18,7 +18,7 @@ import junit.framework.Assert;
 public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
   public ToolkitSetRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitSetRejoinTestClient.class, ToolkitSetRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitSetRejoinTestClient extends AbstractToolkitRejoinTestClient {

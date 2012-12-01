@@ -378,7 +378,7 @@ public class GroupServerManager {
   }
 
   private void cleanupServerDB(int index) throws Exception {
-    if (testConfig.getL2Config().getRestartable()) {
+    if (testConfig.getRestartable()) {
       if (renameDataDir) {
         System.out.println("Moving data directory for server=[" + serverControl[index].getTsaPort() + "]");
         renameDir(groupData.getDataDirectoryPath(index));

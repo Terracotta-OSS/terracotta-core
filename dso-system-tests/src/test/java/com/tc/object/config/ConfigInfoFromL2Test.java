@@ -236,11 +236,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     }
 
     @Override
-    public String[] applicationNames() {
-      return this.l2Config.applicationNames();
-    }
-
-    @Override
     public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
       return this.l2Config.commonL2ConfigFor(name);
     }

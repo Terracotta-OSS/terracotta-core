@@ -118,10 +118,23 @@ public class ConfigHelper {
     l2sConfig.setL2s(l2s);
     l2sConfig.setGroups(groups);
 
+    // set client reconnect window
+    l2sConfig.setReconnectWindowForPrevConnectedClients(testConfig.getClientReconnectWindow());
+
+    // set persistence
+    l2sConfig.setRestartable(testConfig.getRestartable());
+
+    // set DGC props
+    GarbageCollectionConfigBuilder gc = new GarbageCollectionConfigBuilder();
+    gc.setGCEnabled(testConfig.isDgcEnabled());
+    gc.setGCInterval(testConfig.getDgcIntervalInSec());
+    gc.setGCVerbose(testConfig.getDgcVerbose());
+    l2sConfig.setGarbageCollection(gc);
+
     HaConfigBuilder ha = new HaConfigBuilder(3);
-    GroupConfig gc = testConfig.getGroupConfig();
+    GroupConfig groupConfig = testConfig.getGroupConfig();
     ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
-    ha.setElectionTime(String.valueOf(gc.getElectionTime()));
+    ha.setElectionTime(String.valueOf(groupConfig.getElectionTime()));
     l2sConfig.setHa(ha);
 
     return l2sConfig;
@@ -129,6 +142,7 @@ public class ConfigHelper {
 
   private L2ConfigBuilder[] getServersForGroup(int groupIndex) {
     L2ConfigBuilder[] l2ConfigBuilders = new L2ConfigBuilder[this.numOfServersPerGroup];
+
     for (int serverIndex = 0; serverIndex < l2ConfigBuilders.length; serverIndex++) {
       l2ConfigBuilders[serverIndex] = new L2ConfigBuilder();
       // set host and name
@@ -147,15 +161,6 @@ public class ConfigHelper {
 
       // set test level things
       L2Config l2Config = testConfig.getL2Config(groupIndex, serverIndex);
-      // set client reconnect window
-      l2ConfigBuilders[serverIndex].setReconnectWindowForPrevConnectedClients(l2Config.getClientReconnectWindow());
-
-      // set persistence
-      l2ConfigBuilders[serverIndex].setRestartable(l2Config.getRestartable());
-
-      // set DGC props
-      l2ConfigBuilders[serverIndex].setGCEnabled(l2Config.isDgcEnabled());
-      l2ConfigBuilders[serverIndex].setGCInterval(l2Config.getDgcIntervalInSec());
 
       // set offheap props
       l2ConfigBuilders[serverIndex].setOffHeapEnabled(l2Config.isOffHeapEnabled());

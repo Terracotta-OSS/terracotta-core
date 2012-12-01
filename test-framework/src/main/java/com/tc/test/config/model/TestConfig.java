@@ -21,6 +21,11 @@ public class TestConfig {
   private final Map<String, String>                  tcPropertiesMap;
   private boolean                                    isStandAloneTest        = false;
   private Boolean                                    restartZappedL2;
+  private boolean                                    dgcEnabled              = false;
+  private int                                        dgcIntervalInSec        = 3600;
+  private boolean                                    dgcVerbose              = false;
+  private boolean                                    restartable             = false;
+  private int                                        clientReconnectWindow   = 15;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -152,6 +157,7 @@ public class TestConfig {
     if (restartZappedL2 == null) { return groupConfig.getMemberCount() > 2; }
     return restartZappedL2;
   }
+
   /**
    * enables or disable the test in standAlone mode. Note that if this is set the servers will not start and so the user
    * has to make sure that there are no errors like crashing the servers, or using clustered barrier etc.
@@ -165,6 +171,7 @@ public class TestConfig {
   public void setRestartZappedL2(boolean restart) {
     restartZappedL2 = restart;
   }
+
   /**
    * creates a default test configuration object for the test
    * 
@@ -215,4 +222,57 @@ public class TestConfig {
     return createTestConfig("TwoActiveTwoPassive", 2, 2);
   }
 
+  /**
+   * Persistence mode for the L2
+   */
+  public boolean getRestartable() {
+    return restartable;
+  }
+
+  /**
+   * Sets whether the L2 should be restartable
+   * 
+   * @param restartable true to enable restartable
+   */
+  public void setRestartable(boolean restartable) {
+    this.restartable = restartable;
+  }
+
+  /**
+   * client reconnect window in secs
+   */
+  public int getClientReconnectWindow() {
+    return clientReconnectWindow;
+  }
+
+  /**
+   * sets client reconnect window in seconds
+   */
+  public void setClientReconnectWindow(int clientReconnectWindow) {
+    this.clientReconnectWindow = clientReconnectWindow;
+  }
+
+  public void setDgcEnabled(boolean b) {
+    this.dgcEnabled = b;
+  }
+
+  public boolean isDgcEnabled() {
+    return this.dgcEnabled;
+  }
+
+  public void setDgcIntervalInSec(int i) {
+    this.dgcIntervalInSec = i;
+  }
+
+  public int getDgcIntervalInSec() {
+    return this.dgcIntervalInSec;
+  }
+
+  public boolean getDgcVerbose() {
+    return this.dgcVerbose;
+  }
+
+  public void setDgcVerbose(boolean dgcVerbose) {
+    this.dgcVerbose = dgcVerbose;
+  }
 }

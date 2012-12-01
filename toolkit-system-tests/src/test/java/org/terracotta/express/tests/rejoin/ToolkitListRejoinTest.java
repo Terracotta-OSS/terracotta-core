@@ -18,7 +18,7 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitListRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitListRejoinTestClient.class, ToolkitListRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitListRejoinTestClient extends AbstractToolkitRejoinTestClient {

@@ -10,13 +10,16 @@ package com.tc.config.test.schema;
  */
 public class L2SConfigBuilder extends BaseConfigBuilder {
 
-  private L2ConfigBuilder[]        l2s;
-  private HaConfigBuilder          ha;
-  private GroupsConfigBuilder      groups;
-  private UpdateCheckConfigBuilder updateCheck;
+  private L2ConfigBuilder[]              l2s;
+  private HaConfigBuilder                ha;
+  private GroupsConfigBuilder            groups;
+  private UpdateCheckConfigBuilder       updateCheck;
+  private GarbageCollectionConfigBuilder gc;
+  private boolean                        restartable = false;
 
   public L2SConfigBuilder() {
-    super(1, new String[] { "l2s", "ha", "groups", "update-check" });
+    super(1, new String[] { "l2s", "ha", "groups", "update-check", "garbage-collection", "client-reconnect-window",
+        "restartable" });
   }
 
   public void setL2s(L2ConfigBuilder[] l2s) {
@@ -39,6 +42,20 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     setProperty("update-check", updateCheck);
   }
 
+  public void setGarbageCollection(GarbageCollectionConfigBuilder gc) {
+    this.gc = gc;
+    setProperty("garbage-collection", gc);
+  }
+
+  public void setRestartable(boolean data) {
+    setProperty("restartable", data);
+    restartable = data;
+  }
+
+  public void setReconnectWindowForPrevConnectedClients(int secs) {
+    setProperty("client-reconnect-window", secs);
+  }
+
   public L2ConfigBuilder[] getL2s() {
     return l2s;
   }
@@ -55,6 +72,7 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     return updateCheck;
   }
 
+  @Override
   public String toString() {
     String out = "";
     if (isSet("l2s")) {
@@ -69,13 +87,29 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     if (isSet("update-check")) {
       out += updateCheck.toString();
     }
+
+    if (isSet("garbage-collection")) {
+      out += gc.toString();
+    }
+
+    out += getRestartable();
+
+    if (isSet("client-reconnect-window")) {
+      out += element("client-reconnect-window");
+    }
+
     return out;
+  }
+
+  private String getRestartable() {
+    if (!restartable) return "\n";
+    return "\n<restartable enabled=\"" + restartable + "\"/>\n";
   }
 
   private String l2sToString() {
     String val = "";
-    for (int i = 0; i < l2s.length; i++) {
-      val += l2s[i].toString();
+    for (L2ConfigBuilder l2 : l2s) {
+      val += l2.toString();
     }
     return val;
   }

@@ -172,6 +172,8 @@ public class TopologyVerifier {
       oldServersInfo.put(server.getName(), server);
     }
 
+    if (!checkGarbageCollection()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
+
     Server[] newServerArray = newServersBean.getServerArray();
     boolean isTopologyChanged = !(newServerArray.length == oldServerArray.length);
     for (Server newServer : newServerArray) {
@@ -186,6 +188,20 @@ public class TopologyVerifier {
     if (!isTopologyChanged) { return TopologyReloadStatus.TOPOLOGY_UNCHANGED; }
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
+  }
+
+  private boolean checkGarbageCollection() {
+    if (oldServersBean.isSetGarbageCollection()) {
+      if (!newServersBean.isSetGarbageCollection()) { return false; }
+
+      if ((oldServersBean.getGarbageCollection().getEnabled() != newServersBean.getGarbageCollection().getEnabled())
+          || oldServersBean.getGarbageCollection().getInterval() != newServersBean.getGarbageCollection().getInterval()) {
+        logger.warn("Server Garbage Collection Info changed");
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private Set<String> getRemovedMembers() {
@@ -218,17 +234,6 @@ public class TopologyVerifier {
                   + newServer.getTsaPort() + "}, {" + newServer.getTsaGroupPort() + "}, {" + newServer.getJmxPort()
                   + "}]");
       return false;
-    }
-
-    if (oldServer.isSetGarbageCollection()) {
-      if (!newServer.isSetGarbageCollection()) { return false; }
-
-      if ((oldServer.getGarbageCollection().getEnabled() != newServer.getGarbageCollection().getEnabled())
-          || oldServer.getGarbageCollection().getInterval() != newServer.getGarbageCollection()
-              .getInterval()) {
-        logger.warn("Server Garbage Collection Info changed for server " + oldServer.getName());
-        return false;
-      }
     }
 
     return true;

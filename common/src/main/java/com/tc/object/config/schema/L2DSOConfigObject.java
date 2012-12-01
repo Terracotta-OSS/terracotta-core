@@ -25,7 +25,6 @@ import com.terracottatech.config.BindPort;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Keychain;
 import com.terracottatech.config.Offheap;
-import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
@@ -47,7 +46,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   public static final int         MIN_PORTNUMBER                        = 0x0FFF;
   public static final int         MAX_PORTNUMBER                        = 0xFFFF;
 
-  private final Persistence       persistence;
   private final Offheap           offHeapConfig;
   private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
@@ -57,15 +55,17 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final String            serverName;
   private final String            bind;
   private final int               clientReconnectWindow;
+  private final Restartable       restartable;
 
-  public L2DSOConfigObject(ConfigContext context) {
+  public L2DSOConfigObject(ConfigContext context, GarbageCollection gc, int clientReconnectWindow,
+                           Restartable restartable) {
     super(context);
 
     this.context.ensureRepositoryProvides(Server.class);
     Server server = (Server) this.context.bean();
-    this.persistence = server.getPersistence();
-    this.garbageCollection = server.getGarbageCollection();
-    this.clientReconnectWindow = server.getClientReconnectWindow();
+    this.garbageCollection = gc;
+    this.clientReconnectWindow = clientReconnectWindow;
+    this.restartable = restartable;
 
     this.bind = server.getBind();
     this.host = server.getHost();
@@ -77,8 +77,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
-    if (server.getPersistence().isSetOffheap()) {
-      this.offHeapConfig = server.getPersistence().getOffheap();
+    if (server.isSetOffheap()) {
+      this.offHeapConfig = server.getOffheap();
     } else {
       this.offHeapConfig = Offheap.Factory.newInstance();
     }
@@ -103,6 +103,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   @Override
+  public Offheap getOffheap() {
+    return this.offHeapConfig;
+  }
+
+  @Override
   public BindPort tsaPort() {
     return this.tsaPort;
   }
@@ -113,6 +118,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   @Override
+  public Restartable getRestartable() {
+    return this.restartable;
+  }
+
+  @Override
   public String host() {
     return host;
   }
@@ -120,11 +130,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   @Override
   public String serverName() {
     return this.serverName;
-  }
-
-  @Override
-  public Persistence getPersistence() {
-    return this.persistence;
   }
 
   @Override
@@ -155,6 +160,10 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       servers.setSecure(false);
     }
 
+    initializeClientReconnectWindow(servers, defaultValueProvider);
+    initializeRestartable(servers, defaultValueProvider);
+    initializeGarbageCollection(servers, defaultValueProvider);
+
     for (int i = 0; i < servers.sizeOfServerArray(); i++) {
       Server server = servers.getServerArray(i);
       initializeServerBind(server, defaultValueProvider);
@@ -168,10 +177,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeClientReconnectWindow(server, defaultValueProvider);
-      initializePersisitence(server, defaultValueProvider);
-      initializeGarbageCollection(server, defaultValueProvider);
       initializeSecurity(server, defaultValueProvider);
+      initializeOffHeap(server, defaultValueProvider);
     }
 
     HaConfigObject.initializeHa(servers, defaultValueProvider);
@@ -304,11 +311,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     return out.getAbsolutePath();
   }
 
-  private static void initializeClientReconnectWindow(Server server, DefaultValueProvider defaultValueProvider)
+  private static void initializeClientReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)
       throws XmlException {
 
-    if (!server.isSetClientReconnectWindow()) {
-      server.setClientReconnectWindow(getDefaultReconnectWindow(server, defaultValueProvider));
+    if (!servers.isSetClientReconnectWindow()) {
+      servers.setClientReconnectWindow(getDefaultReconnectWindow(servers, defaultValueProvider));
     }
   }
 
@@ -350,35 +357,19 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     security.getAuth().setUrl(ParameterSubstituter.substitute(security.getAuth().getUrl()));
   }
 
-  private static void initializePersisitence(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    initializeRestartable(server, defaultValueProvider);
-    initializeOffHeap(server, defaultValueProvider);
-  }
-
-  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider) {
-    if (!server.isSetPersistence()) {
-      server.addNewPersistence();
+  private static void initializeRestartable(Servers servers, DefaultValueProvider defaultValueProvider) {
+    if (!servers.isSetRestartable()) {
+      servers.addNewRestartable();
     }
 
-    Persistence persistence = server.getPersistence();
-    Assert.assertNotNull(persistence);
-
-    if (!persistence.isSetRestartable()) {
-      persistence.addNewRestartable();
-    }
-
-    Restartable restartable = persistence.getRestartable();
+    Restartable restartable = servers.getRestartable();
     Assert.assertNotNull(restartable);
   }
 
   private static void initializeOffHeap(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
-    Persistence persistence = server.getPersistence();
-    Assert.assertNotNull(persistence);
+    if (!server.isSetOffheap()) return;
 
-    if (!persistence.isSetOffheap()) return;
-
-    Offheap offHeap = persistence.getOffheap();
+    Offheap offHeap = server.getOffheap();
     Assert.assertNotNull(offHeap);
 
     if (!offHeap.isSetEnabled()) {
@@ -386,55 +377,56 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
   }
 
-  private static void initializeGarbageCollection(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    if (!server.isSetGarbageCollection()) {
-      server.addNewGarbageCollection();
-    }
 
-    GarbageCollection gc = server.getGarbageCollection();
-    Assert.assertNotNull(gc);
-    if (!gc.isSetEnabled()) {
-      gc.setEnabled(getDefaultGarbageCollectionEnabled(server, defaultValueProvider));
-    }
-
-    if (!gc.isSetVerbose()) {
-      gc.setVerbose(getDefaultGarbageCollectionVerbose(server, defaultValueProvider));
-    }
-
-    if (!gc.isSetInterval()) {
-      gc.setInterval(getDefaultGarbageCollectionInterval(server, defaultValueProvider));
-    }
-  }
 
   private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "persistence/offheap/enabled"))
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "offheap/enabled"))
         .getBooleanValue();
   }
 
-  private static int getDefaultReconnectWindow(Server server, DefaultValueProvider defaultValueProvider)
+  private static int getDefaultReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "client-reconnect-window"))
+    return ((XmlInteger) defaultValueProvider.defaultFor(servers.schemaType(), "client-reconnect-window"))
         .getBigIntegerValue().intValue();
   }
 
-  private static boolean getDefaultGarbageCollectionEnabled(Server server, DefaultValueProvider defaultValueProvider)
+  private static void initializeGarbageCollection(Servers servers, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/enabled"))
+    if (!servers.isSetGarbageCollection()) {
+      servers.addNewGarbageCollection();
+    }
+
+    GarbageCollection gc = servers.getGarbageCollection();
+    Assert.assertNotNull(gc);
+    if (!gc.isSetEnabled()) {
+      gc.setEnabled(getDefaultGarbageCollectionEnabled(servers, defaultValueProvider));
+    }
+
+    if (!gc.isSetVerbose()) {
+      gc.setVerbose(getDefaultGarbageCollectionVerbose(servers, defaultValueProvider));
+    }
+
+    if (!gc.isSetInterval()) {
+      gc.setInterval(getDefaultGarbageCollectionInterval(servers, defaultValueProvider));
+    }
+  }
+
+  private static boolean getDefaultGarbageCollectionEnabled(Servers servers, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlBoolean) defaultValueProvider.defaultFor(servers.schemaType(), "garbage-collection/enabled"))
         .getBooleanValue();
   }
 
-  private static boolean getDefaultGarbageCollectionVerbose(Server server, DefaultValueProvider defaultValueProvider)
+  private static boolean getDefaultGarbageCollectionVerbose(Servers servers, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/verbose"))
+    return ((XmlBoolean) defaultValueProvider.defaultFor(servers.schemaType(), "garbage-collection/verbose"))
         .getBooleanValue();
   }
 
-  private static int getDefaultGarbageCollectionInterval(Server server, DefaultValueProvider defaultValueProvider)
+  private static int getDefaultGarbageCollectionInterval(Servers servers, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "garbage-collection/interval"))
+    return ((XmlInteger) defaultValueProvider.defaultFor(servers.schemaType(), "garbage-collection/interval"))
         .getBigIntegerValue().intValue();
   }
-
 }

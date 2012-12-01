@@ -15,7 +15,7 @@ public class ToolkitSortedSetMultipleNodeRejoinTest extends AbstractToolkitRejoi
   public ToolkitSortedSetMultipleNodeRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitSortedSetMultipleNodeRejoinTestClient.class,
           ToolkitSortedSetMultipleNodeRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitSortedSetMultipleNodeRejoinTestClient extends AbstractToolkitRejoinTestClient {

@@ -145,7 +145,7 @@ public class TestBaseUtil {
     testConfig.getL2Config().setOffHeapEnabled(true);
     testConfig.getL2Config().setDirectMemorySize(maxDirectMemory);
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
-    testConfig.getL2Config().setRestartable(true);
+    testConfig.setRestartable(true);
 
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE, "1m");

@@ -172,7 +172,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private boolean                               offHeapEnabled          = false;
   private boolean                               securityEnabled         = false;
   private String                                maxOffHeapDataSize      = "-1m";
-  private boolean                               restartable             = false;
+  private final boolean                         restartable             = false;
   private final L1ConfigurationSetupManagerImpl sampleL1Manager;
   private final L2ConfigurationSetupManagerImpl sampleL2Manager;
 
@@ -563,14 +563,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   public void setGCIntervalInSec(int val) {
     gcIntervalInSec = val;
     l2DSOConfig().garbageCollection().setInterval(val);
-  }
-
-  public void setRestartable(boolean val) {
-    restartable = val;
-    if (!l2DSOConfig().getPersistence().isSetRestartable()) {
-      l2DSOConfig().getPersistence().addNewRestartable();
-    }
-    l2DSOConfig().getPersistence().getRestartable().setEnabled(val);
   }
 
   public boolean isOffHeapEnabled() {

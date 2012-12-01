@@ -14,7 +14,7 @@ import com.tc.test.jmx.TestHandlerMBean;
 public class ToolkitListMultipleNodeRejoinTest extends AbstractToolkitRejoinTest {
   public ToolkitListMultipleNodeRejoinTest(TestConfig testConfig) {
     super(testConfig, ToolkitListMultipleNodeRejoinTestClient.class, ToolkitListMultipleNodeRejoinTestClient.class);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
   }
 
   public static class ToolkitListMultipleNodeRejoinTestClient extends AbstractToolkitRejoinTestClient {

@@ -14,19 +14,6 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     super(0, ALL_PROPERTIES);
   }
 
-  public void setSystem(String value) {
-    setProperty("system", value);
-  }
-
-  public void setSystem(SystemConfigBuilder value) {
-    setProperty("system", value);
-  }
-
-  public SystemConfigBuilder getSystem() {
-    if (!isSet("system")) setSystem(SystemConfigBuilder.newMinimalInstance());
-    return (SystemConfigBuilder) getRawProperty("system");
-  }
-
   public void setClient(String value) {
     setProperty("clients", value);
   }
@@ -68,10 +55,8 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
   }
 
   public static TerracottaConfigBuilder newMinimalInstance() {
-    SystemConfigBuilder system = SystemConfigBuilder.newMinimalInstance();
     L2SConfigBuilder l2s = L2SConfigBuilder.newMinimalInstance();
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
-    out.setSystem(system);
     out.setServers(l2s);
     return out;
   }

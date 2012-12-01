@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.Loader;
 import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.util.PortChooser;
@@ -165,16 +166,15 @@ public class ExternalDsoServer {
     File theConfigFile = new File(workingDir, SERVER_CONFIG_FILENAME);
 
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
-    builder.getSystem().setConfigurationModel("development");
 
-    L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
+    L2SConfigBuilder servers = builder.getServers();
+    servers.setRestartable(persistentMode);
+
+    L2ConfigBuilder l2 = servers.getL2s()[0];
     l2.setTSAPort(tsaPort);
     l2.setJMXPort(jmxPort);
     l2.setData(workingDir + File.separator + "data");
     l2.setLogs(workingDir + File.separator + "logs");
-    if (persistentMode) {
-      l2.setRestartable(true);
-    }
 
     String configAsString = builder.toString();
 

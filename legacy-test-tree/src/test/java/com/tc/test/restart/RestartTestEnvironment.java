@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
+import com.tc.config.test.schema.GarbageCollectionConfigBuilder;
 import com.tc.config.test.schema.L2ConfigBuilder;
 import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
@@ -32,9 +33,6 @@ import java.util.List;
 
 public class RestartTestEnvironment {
 
-  public static final OperatingMode                  DEV_MODE          = new OperatingMode();
-  public static final OperatingMode                  PROD_MODE         = new OperatingMode();
-
   private static TCLogger                            logger            = TCLogging
                                                                            .getTestingLogger(RestartTestEnvironment.class);
   private final PortChooser                          portChooser;
@@ -54,18 +52,16 @@ public class RestartTestEnvironment {
   private int                                        serverPort;
   private int                                        adminPort;
   private int                                        groupPort;
-  private final OperatingMode                        operatingMode;
   private final TestConfigurationSetupManagerFactory configFactory;
 
-  public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode) {
-    this(tempDirectory, portChooser, operatingMode, null);
+  public RestartTestEnvironment(File tempDirectory, PortChooser portChooser) {
+    this(tempDirectory, portChooser, null);
   }
 
-  public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode,
+  public RestartTestEnvironment(File tempDirectory, PortChooser portChooser,
                                 TestConfigurationSetupManagerFactory configFactory) {
     this.tempDirectory = tempDirectory;
     this.portChooser = portChooser;
-    this.operatingMode = operatingMode;
     this.configFactory = configFactory;
     if (!tempDirectory.isDirectory()) {
       //
@@ -123,16 +119,6 @@ public class RestartTestEnvironment {
 
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
 
-    String configurationModel;
-    if (operatingMode == DEV_MODE) {
-      configurationModel = "development";
-    } else if (operatingMode == PROD_MODE) {
-      configurationModel = "production";
-    } else {
-      throw new AssertionError("Unknown operating mode.");
-    }
-    builder.getSystem().setConfigurationModel(configurationModel);
-
     boolean restartable = false;
 
     if (isPersistent && isParanoid) {
@@ -157,19 +143,28 @@ public class RestartTestEnvironment {
     l2.setJMXPort(adminPort);
     l2.setTSAGroupPort(groupPort);
     l2.setData(tempDirectory.getAbsolutePath());
-    l2.setRestartable(restartable);
+
     if (configFactory != null) {
-      l2.setGCEnabled(configFactory.getGCEnabled());
-      l2.setGCVerbose(configFactory.getGCVerbose());
-      l2.setGCInterval(configFactory.getGCIntervalInSec());
       if (configFactory.isOffHeapEnabled()) {
         l2.setOffHeapEnabled(configFactory.isOffHeapEnabled());
         l2.setOffHeapMaxDataSize(configFactory.getOffHeapMaxDataSize());
       }
-      l2.setReconnectWindowForPrevConnectedClients(configFactory.l2DSOConfig().clientReconnectWindow());
     }
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[] { l2 };
     L2SConfigBuilder servers = new L2SConfigBuilder();
+
+    GarbageCollectionConfigBuilder gc = new GarbageCollectionConfigBuilder();
+    gc.setGCEnabled(configFactory.getGCEnabled());
+    gc.setGCVerbose(configFactory.getGCVerbose());
+    gc.setGCInterval(configFactory.getGCIntervalInSec());
+    servers.setGarbageCollection(gc);
+
+    servers.setRestartable(restartable);
+
+    if (configFactory != null) {
+      servers.setReconnectWindowForPrevConnectedClients(configFactory.l2DSOConfig().clientReconnectWindow());
+    }
+
     servers.setL2s(l2s);
     builder.setServers(servers);
 
@@ -317,12 +312,6 @@ public class RestartTestEnvironment {
 
   public int getGroupPort() {
     return this.groupPort;
-  }
-
-  public static final class OperatingMode {
-    private OperatingMode() {
-      //
-    }
   }
 
   private final class ServerWrapper implements ServerControl {

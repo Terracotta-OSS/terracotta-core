@@ -41,7 +41,6 @@ import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.MirrorGroups;
-import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -86,6 +85,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
   private volatile SecurityConfig           securityConfig;
   private volatile boolean                  secure;
+
+  private final Servers serversBean;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -136,7 +137,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
 
-    Servers serversBean = (Servers) serversBeanRepository().bean();
+    serversBean = (Servers) serversBeanRepository().bean();
     this.secure = serversBean != null && serversBean.getSecure();
     Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
     Server server = null;
@@ -386,14 +387,15 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     private final CommonL2Config      commonL2Config;
     private final L2DSOConfig         dsoL2Config;
 
-    public L2ConfigData(String name) throws ConfigurationSetupException {
+    public L2ConfigData(String name, Servers serversBean) throws ConfigurationSetupException {
       this.name = name;
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
       this.commonL2Config = new CommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()), secure);
       this.dsoL2Config = new L2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
-          .directoryConfigurationLoadedFrom()));
+          .directoryConfigurationLoadedFrom()), serversBean.getGarbageCollection(),
+                                               serversBean.getClientReconnectWindow(), serversBean.getRestartable());
     }
 
     public CommonL2Config commonL2Config() {
@@ -511,7 +513,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     L2ConfigData out = this.l2ConfigData.get(name);
 
     if (out == null) {
-      out = new L2ConfigData(name);
+      out = new L2ConfigData(name, serversBean);
 
       if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
         Servers servers = (Servers) this.serversBeanRepository().bean();
@@ -553,7 +555,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return out;
   }
 
-  private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
+  private L2ConfigData setupConfigDataForL2(final String l2Identifier)
+      throws ConfigurationSetupException {
     L2ConfigData serverConfigData = configDataFor(l2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
@@ -561,7 +564,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
-    validatePersistenceModeInGroups();
     List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
 
     Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
@@ -586,7 +588,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
           Assert.assertNotNull(data);
           boolean isNwAP = serversToMode.get(name);
-          if (!isNwAP && (!isRestartable(data.dsoL2Config().getPersistence()))) {
+          if (!isNwAP && (!serversBean.getRestartable().getEnabled())) {
             badServers.add(name);
           }
         }
@@ -607,35 +609,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                   + "See the Terracotta documentation for more details.");
       }
     }
-  }
-
-  private void validatePersistenceModeInGroups() throws ConfigurationSetupException {
-    List<ActiveServerGroupConfig> groupArray = this.activeServerGroupsConfig.getActiveServerGroups();
-
-    for (ActiveServerGroupConfig group : groupArray) {
-      String[] members = group.getMembers().getMemberArray();
-      if (members.length > 1) {
-        boolean isRestartable = isRestartable(configDataFor(members[0]).dsoL2Config().getPersistence());
-        for (int i = 1; i < members.length; i++) {
-          L2ConfigData memberData = configDataFor(members[i]);
-          if (isRestartable(memberData.dsoL2Config.getPersistence()) != isRestartable) {
-            StringBuilder msg = new StringBuilder();
-            msg.append("The persistence mode of the servers in the group ").append(group.getGroupName())
-                .append(" with servers {");
-            for (String member : members) {
-              msg.append(member).append(" ");
-            }
-            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
-            throw new ConfigurationSetupException(msg.toString());
-          }
-        }
-      }
-    }
-
-  }
-
-  private static boolean isRestartable(Persistence persistence) {
-    return persistence.getRestartable().getEnabled();
   }
 
   public void validateHaConfiguration() throws ConfigurationSetupException {
@@ -701,7 +674,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   @Override
   public String[] allCurrentlyKnownServers() {
-    Servers serversBean = (Servers) serversBeanRepository().bean();
     Server[] l2s = serversBean == null ? null : serversBean.getServerArray();
     if (l2s == null || l2s.length == 0) return new String[] { null };
     else {

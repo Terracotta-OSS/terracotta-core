@@ -99,7 +99,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
       }
     } else {
-      if (testConfig.getL2Config().getRestartable()) {
+      if (testConfig.getRestartable()) {
         System.out.println("============== Disabling opensource restartable tests ===============");
         disableTest();
       }

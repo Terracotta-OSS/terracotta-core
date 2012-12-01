@@ -16,7 +16,7 @@ public class RestartTestEnvironmentTest extends TCTestCase {
 
   public void testChoosePort() throws Exception {
     PortChooser portChooser = new PortChooser();
-    RestartTestEnvironment env = new RestartTestEnvironment(getTempDirectory(), portChooser, RestartTestEnvironment.PROD_MODE);
+    RestartTestEnvironment env = new RestartTestEnvironment(getTempDirectory(), portChooser);
     int port = env.chooseAdminPort();
     NoExceptionLinkedQueue control = new NoExceptionLinkedQueue();
     System.err.println("I chose port " + port);
@@ -30,7 +30,7 @@ public class RestartTestEnvironmentTest extends TCTestCase {
   }
 
   private static final class Listener extends Thread {
-    private int                          port;
+    private final int                          port;
     private final NoExceptionLinkedQueue control;
 
     public Listener(int port, NoExceptionLinkedQueue control) {
@@ -38,6 +38,7 @@ public class RestartTestEnvironmentTest extends TCTestCase {
       this.control = control;
     }
 
+    @Override
     public void run() {
       try {
         ServerSocket s = new ServerSocket(port);

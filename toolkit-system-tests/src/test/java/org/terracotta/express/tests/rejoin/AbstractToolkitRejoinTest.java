@@ -40,11 +40,11 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     testConfig.getGroupConfig().setMemberCount(2);
     testConfig.getGroupConfig().setElectionTime(this.electionTimeSec);
     if (isPermanentStore) {
-      testConfig.getL2Config().setRestartable(true);
+      testConfig.setRestartable(true);
     } else {
-      testConfig.getL2Config().setRestartable(false);
+      testConfig.setRestartable(false);
     }
-    testConfig.getL2Config().setClientReconnectWindow(this.clientReconnectWindowSecs);
+    testConfig.setClientReconnectWindow(this.clientReconnectWindowSecs);
 
     testConfig.addTcProperty("l2.l1reconnect.enabled", "true");
     testConfig.addTcProperty("l2.l1reconnect.timeout.millis", Long.toString(this.oooTimeoutMillis));
