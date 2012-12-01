@@ -135,11 +135,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   private void throwExceptionIfNecessary(boolean throwExp) {
-    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + status;
-    if (throwExp) {
-      if (status != PAUSED) { throw new IllegalStateException(message); }
-    } else {
-      logger.info(message);
+    if (status != PAUSED) {
+      String message = "cleanup unexpected state: expected " + PAUSED + " but found " + status;
+      if (throwExp) {
+        throw new IllegalStateException(message);
+      } else {
+        logger.warn(message);
+      }
     }
   }
 

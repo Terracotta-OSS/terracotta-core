@@ -107,11 +107,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void throwExceptionIfNecessary(boolean throwExp) {
-    String message = "cleanup unexpected state: expexted " + State.PAUSED + " but found " + state;
-    if(throwExp) {
-      if (state != State.PAUSED) { throw new IllegalStateException(message); }
-    } else {
-      logger.info(message);
+    if (state != State.PAUSED) {
+      String message = "cleanup unexpected state: expected " + State.PAUSED + " but found " + state;
+      if (throwExp) {
+        throw new IllegalStateException(message);
+      } else {
+        logger.warn(message);
+      }
     }
   }
 
