@@ -4,7 +4,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
@@ -12,6 +11,7 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
@@ -22,14 +22,14 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   private final List            listeners     = new CopyOnWriteArrayList();
 
   private final long            sleepInterval;
-  private final int             critical;
+  private final long             critical;
 
   private MemoryMonitor             monitor;
   private final MonitoredResource   resource;
 
   private final ThreadGroup   threadGroup;
 
-  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, int critical , ThreadGroup threadGroup) {
+  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, long critical , ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
@@ -69,7 +69,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
-      this.monitor = new MemoryMonitor(this.sleepInterval,critical);
+      this.monitor = new MemoryMonitor(this.sleepInterval);
       Thread t = new Thread(this.threadGroup, this.monitor);
       t.setDaemon(true);
       t.setName("Resource Monitor");
@@ -88,11 +88,9 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
     private volatile boolean       run = true;
     private long                   sleepTime;
-    private final int                    critical;
 
-    public MemoryMonitor(long sleepInterval,int critical) {
+    public MemoryMonitor(long sleepInterval) {
       this.sleepTime = sleepInterval;
-      this.critical = critical;
     }
 
     public void stop() {
@@ -178,8 +176,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
 
     private void adjust(MemoryUsage mu) {
-      int remove = Math.round(sleepInterval * (mu.getUsedMemory()*1f / mu.getMaxMemory()));
-      sleepTime = sleepInterval - remove;
+      int remove = Math.round(sleepInterval * (float)Math.sin(mu.getUsedMemory()*1d / mu.getMaxMemory()));
+      sleepTime = sleepInterval - (remove);
     }
   }
 
