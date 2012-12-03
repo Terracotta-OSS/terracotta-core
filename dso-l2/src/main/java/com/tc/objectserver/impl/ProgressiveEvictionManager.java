@@ -284,14 +284,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 }
                 this.evictorSink.add(context);
             }
-        } catch ( Throwable t ) {
-            t.printStackTrace();
         } finally {
             evictor.markEvictionDone(oid);
             if (evictor.isLogging() && logger.isDebugEnabled()) {
                 logger.debug(triggerParam);
             }
-            log(triggerParam.toString());
         }
 
         return true;
@@ -395,7 +392,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         private long last = System.currentTimeMillis();
         private long epoc = System.currentTimeMillis();
-        private long maxRate = 0;
         private long size = 0;
         private boolean isEmergency = false;
         private boolean isThrottling = false;
@@ -411,11 +407,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 long reserve = usage.getUsedMemory();
                 long threshold = calculateThreshold(usage,(max * L2_EVICTION_CRITICALTHRESHOLD / 100));
                 if ( evictor.isLogging() ) {
-                    log("Percent usage:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + (threshold*100/max) + " max rate:" + maxRate);
+                    log("Percent usage:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + (threshold*100/max));
                 }
 //  since removal is so imporant for all eviction operations.  Update this number on every round.
                 clientObjectReferenceSet.refreshClientObjectReferencesNow();
-                if (reserve > threshold ) {  
+                if (reserve >= threshold ) {  
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + (reserve * 100 / max));
                         currentRun.cancel(false);
@@ -431,12 +427,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         isEmergency = true;
                     }
   //  if we are about to OOME, stop the world
-                    if ( reserve > calculateThreshold(usage,threshold + ((max - threshold)/2)) ) {
+                    if ( reserve >= calculateThreshold(usage,(max * L2_EVICTION_HALTTHRESHOLD / 100)) ) {
                         if ( !isThrottling ) {
                             throttle(usage);
   //  double check one more time, weighting will make the throttling threshold lower than the stopping but make sure
   //  we really need to stop
-                        } else if ( !isStopped && reserve > calculateThreshold(usage,threshold + ((max - threshold)*3/4)) ) {
+                        } else if ( !isStopped ) {
                             stop(usage);
                         }
                     }
@@ -455,8 +451,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         currentRun = scheduleEvictionRun();
                     }
                 }
-                resetEpocIfNeeded(current,reserve,max);
                 last = current;
+                resetEpocIfNeeded(current,reserve,max);
             } catch (UnsupportedOperationException us) {
                 if ( currentRun.isDone() ) {
                     currentRun = scheduleEvictionRun();
@@ -501,10 +497,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     * growth in the future
     */
         private void resetEpocIfNeeded(long currentTime, long currentSize, long maxSize) {
-            long rate = (currentSize - size)/(currentTime-last);
-            if ( rate > maxRate ) {
-                maxRate = rate;
-            }
             if ( size == 0 || currentSize < size - ( maxSize *.10 ) || epoc + (5 * 60 * 1000) < currentTime) {
                 resetEpoc(currentTime,currentSize);
             }
