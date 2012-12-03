@@ -112,6 +112,13 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
       objectReferencesRefreshInProgress.set(false);
     }
   }
+  
+  public void refreshClientObjectReferencesNow() {
+      if ( objectReferencesRefreshInProgress.compareAndSet(false, true) ) {
+          this.reinitObjectReferenceSnapshot();
+          objectReferencesRefreshInProgress.set(false);
+      }
+  } 
 
   @Override
   public void objectReferenceAdded(ObjectID objectID) {

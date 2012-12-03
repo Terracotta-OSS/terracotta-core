@@ -111,6 +111,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         return "AbstractEvictionTrigger{"
                 + "name=" + name + " - " + getId() + (( pinned ) ? " - PINNED" : "")
                 + ", started=" + started
+                + ", startTime=" + startTime
                 + ", processed=" + processed
                 + ", evicting=" + evicting + '}';
     }

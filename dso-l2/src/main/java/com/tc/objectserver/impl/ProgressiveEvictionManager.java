@@ -156,7 +156,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     //  100MB a second
             sleeptime = (monitored.getTotal() * 1000) / (100 * 1024 * 1024);
         }
-        this.trigger = new ResourceMonitor(monitored, sleeptime, L2_EVICTION_CRITICALTHRESHOLD, evictionGrp);
+        this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);      
         this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
             @Override
@@ -198,6 +198,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private Future<SampledRateCounter> scheduleEvictionRun() {
         try{
             resetStatistics();
+            clientObjectReferenceSet.refreshClientObjectReferencesNow();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
             return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
         } catch ( ShutdownError err ) {
@@ -308,6 +309,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         Random r = new Random();
         List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
         resetStatistics();
+        clientObjectReferenceSet.refreshClientObjectReferencesNow();
         final AggregateSampleRateCounter rate = new AggregateSampleRateCounter();
         while ( !list.isEmpty() ) {
             final ObjectID mapID = list.remove(r.nextInt(list.size()));
@@ -397,7 +399,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 if ( evictor.isLogging() ) {
                     log("Percent usage:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + (threshold*100/max));
                 }
-                if (reserve >= threshold ) {
+//  since removal is so imporant for all eviction operations.  Update this number on every round.
+                clientObjectReferenceSet.refreshClientObjectReferencesNow();
+                if (reserve >= threshold ) {  
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + (reserve * 100 / max));
                         currentRun.cancel(false);
@@ -426,7 +430,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     if ( isStopped || isThrottling ) {
                         clear(usage);
                     }
-                    clientObjectReferenceSet.size();
                     if ( isEmergency ) {
                         isEmergency = false;
                         currentRun.cancel(false);
