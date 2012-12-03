@@ -288,8 +288,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
                     + "<data>abc/xyz/123</data>" + "<logs>xyz/abc/451</logs>"
-                    + "<data-backup>/qrt/opt/pqr</data-backup>"
-                    + "<index>/rta/try/456</index>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<data-backup>/qrt/opt/pqr</data-backup>" + "<index>/rta/try/456</index>" + "</server>"
+                    + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -323,8 +323,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testServerSubsitutedDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>"
-                    + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>" + "</server>"
+                    + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -380,10 +380,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</server>" + "</servers>" + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server/>"
+                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -404,11 +404,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
-                    + "<maxDataSize>5628m</maxDataSize>" + "</offheap>" + "</persistence>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<offheap>" + "<enabled>true</enabled>" + "<maxDataSize>5628m</maxDataSize>" + "</offheap>"
+                    + "</server>" + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -432,11 +431,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testOffHeap2() throws IOException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
-                    + "</offheap>" + "</persistence>" + "<client-reconnect-window>9876</client-reconnect-window>"
-                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
-                    + "<interval>1234</interval>" + "</garbage-collection>" + "</server>" + "</servers>"
-                    + "</tc:tc-config>";
+                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>" + "</offheap>" + "</persistence>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
+                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
+                    + "</garbage-collection>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -451,11 +449,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<persistence>" + "<restartable enabled=\"true\"/>" + "</persistence>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</server>" + "</servers>" + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server/>"
+                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>" + "<restartable enabled=\"true\"/>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
