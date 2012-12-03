@@ -27,7 +27,7 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
                                                                                                         .toNanos(TCPropertiesImpl
                                                                                                             .getProperties()
                                                                                                             .getLong(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL,
-                                                                                                                     2500));
+                                                                                                                     60000));
   public static final long                                                    MONITOR_INTERVAL_NANO = REFRESH_INTERVAL_NANO * 5;
 
   private final ClientStateManager                                            clientStateManager;
