@@ -69,11 +69,11 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       debug("Creating rejoin toolkit");
       Properties properties = new Properties();
       properties.put("rejoin", "true");
-      ToolkitInternal tk = (ToolkitInternal) ToolkitFactory.createToolkit("toolkit:terracotta://" + getTerracottaUrl(),
-                                                                          properties);
-      logger = tk.getLogger("com.tc.AppLogger");
-      statefulListener = new TKStatefulClusterListener(tk);
-      return tk;
+      clusteringToolkit = (ToolkitInternal) ToolkitFactory
+          .createToolkit("toolkit:terracotta://" + getTerracottaUrl(), properties);
+      logger = clusteringToolkit.getLogger("com.tc.AppLogger");
+      statefulListener = new TKStatefulClusterListener(clusteringToolkit);
+      return clusteringToolkit;
     }
 
     protected void startRejoinAndWaitUntilPassiveStandBy(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
@@ -122,7 +122,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     }
 
     @Override
-    protected void test(Toolkit toolkit) throws Throwable {
+    protected void test(Toolkit myToolkit) throws Throwable {
       throw new RuntimeException("This method should not be used for rejoin tests");
     }
 
