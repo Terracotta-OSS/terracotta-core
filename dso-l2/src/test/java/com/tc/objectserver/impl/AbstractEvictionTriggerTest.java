@@ -121,7 +121,7 @@ public class AbstractEvictionTriggerTest {
           description.appendText("< " + maxLocal);
         }
 
-      }), Mockito.eq(cs));
+      }), Matchers.eq(cs));
       Mockito.verify(map).evictionCompleted();
     }
   }

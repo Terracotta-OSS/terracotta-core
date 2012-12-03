@@ -3,14 +3,14 @@
  */
 package com.terracotta.toolkit.rejoin;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.platform.PlatformService;
-import com.tc.platform.StaticPlatformApi;
 
 public class PlatformServiceProvider {
   private static final PlatformService platformService = createRejoinAwareIfNecessary();
 
   private static PlatformService createRejoinAwareIfNecessary() {
-    PlatformService service = StaticPlatformApi.getPlatformService();
+    PlatformService service = ManagerUtil.getManager().getPlatformService();
     if (service.isRejoinEnabled()) { return new RejoinAwarePlatformService(service); }
     return service;
   }
