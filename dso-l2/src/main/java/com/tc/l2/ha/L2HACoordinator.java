@@ -72,6 +72,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.State;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
@@ -106,6 +107,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
   private final L2ObjectStateManager                      l2ObjectStateManager;
   private boolean                                         isCleanDB;
+  private final PersistentMapStore                        persistentStateStore;
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                          final StageManager stageManager, final GroupManager groupCommsManager,
@@ -129,6 +131,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.l2ObjectStateManager = l2ObjectStateManager;
+    this.persistentStateStore = persistentStateStore;
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
@@ -164,7 +167,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
                                                                                      this.stateManager,
                                                                                      this.groupManager,
-                                                                                     weightGeneratorFactory);
+                                                                                     weightGeneratorFactory,
+                                                                                     persistentStateStore);
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
@@ -219,6 +223,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.rTxnManager = new ReplicatedTransactionManagerImpl(this.groupManager, orderedObjectsSyncSink,
                                                             transactionManager, gtxm, recycler, objectSyncAckManager);
 
+
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
                                                           this.l2PassiveSyncStateManager, this.l2ObjectStateManager,
                                                           this.rTxnManager, objectManager, transactionManager,
@@ -271,7 +276,30 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
   @Override
   public void start() {
-    this.stateManager.startElection();
+    if (wasShutdownInPassiveStateInPreviousLife()) {
+      while (true) {
+        try {
+          logger.warn("Detected that this server was shutdown and restarted in a PASSIVE STANDBY mode." +
+                      " Sleeping until ACTIVE server zaps it.");
+          Thread.sleep(60 * 1000);
+        } catch (InterruptedException e) {
+          // ignore
+        }
+      }
+    } else {
+      this.stateManager.startElection();
+    }
+  }
+
+  private boolean wasShutdownInPassiveStateInPreviousLife() {
+    String stateStr = persistentStateStore.get(ClusterStateDBKeyNames.L2_STATE_KEY);
+    if (stateStr != null) {
+      State stateB4Crash = new State(stateStr);
+      return !StateManager.PASSIVE_STANDBY.equals(stateB4Crash);
+    } else {
+      // case when Server is started for the first time
+      return false;
+    }
   }
 
   @Override

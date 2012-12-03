@@ -121,10 +121,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
             this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
                                       "Passive : " + msg.messageFrom() + " joined in partially synced state. "
                                           + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+          } else if (StateManager.PASSIVE_STANDBY.equals(curState) && !msg.isCleanDB()) {
+            logger.error("Syncing to passives which were restarted before active is not supported. msg : " + msg);
+            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+                "Passive : " + msg.messageFrom() + " was restarted before active." +
+                L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
           } else if (checkForSufficientResources(msg)) {
             nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
           }
-
         } else {
           logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
                        + " : msg : " + msg);
@@ -225,7 +229,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   private void handleObjectListResponse(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
     Assert.assertTrue(this.stateManager.isActiveCoordinator());
-    checkForSufficientResources(clusterMsg);
+
+
     final Set oids = clusterMsg.getObjectIDs();
     if (!oids.isEmpty() || !clusterMsg.isCleanDB()) {
       final StringBuilder error = new StringBuilder();
@@ -239,9 +244,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
                                 error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
-      // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the resent
+      // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the re-sent
       // transactions. If we do that there is a race where passive can apply already applied transactions twice.
       // XXX:: 3 passives - partial sync.
+      if (!checkForSufficientResources(clusterMsg)) {
+        return;   // Only check for sufficient resources on the new passive if it was shut down after the active and is not a candidate for zapping due to dirty db.
+      }
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
             @Override
