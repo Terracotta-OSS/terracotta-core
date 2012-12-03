@@ -380,7 +380,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server/>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
                     + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
                     + "<interval>1234</interval>" + "</garbage-collection>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
@@ -449,7 +449,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server/>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
                     + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
                     + "<interval>1234</interval>" + "</garbage-collection>" + "<restartable enabled=\"true\"/>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
