@@ -108,20 +108,20 @@ public class AbstractEvictionTriggerTest {
     }
     if (found != null) {
       Mockito.verify(map).getRandomSamples(Matchers.intThat(new BaseMatcher<Integer>() {
-        int max = et.boundsCheckSampleSize(Integer.MAX_VALUE);
+        int maxLocal = et.boundsCheckSampleSize(Integer.MAX_VALUE);
 
         @Override
         public boolean matches(Object item) {
-          if (item instanceof Integer && ((Integer) item) <= max && ((Integer) item) >= 0) { return true; }
+          if (item instanceof Integer && ((Integer) item) <= maxLocal && ((Integer) item) >= 0) { return true; }
           return false;
         }
 
         @Override
         public void describeTo(Description description) {
-          description.appendText("< " + max);
+          description.appendText("< " + maxLocal);
         }
 
-      }), Mockito.eq(cs));
+      }), Matchers.eq(cs));
       Mockito.verify(map).evictionCompleted();
     }
   }

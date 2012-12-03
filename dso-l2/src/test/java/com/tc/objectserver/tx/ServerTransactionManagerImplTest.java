@@ -36,14 +36,12 @@ import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
-import com.tc.util.sequence.SimpleSequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +63,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private TestClientStateManager             clientStateManager;
   private TestLockManager                    lockManager;
   private TestObjectManager                  objectManager;
-  private TestTransactionStore               transactionStore;
   private Counter                            transactionRateCounter;
   private TestChannelStats                   channelStats;
   private TestGlobalTransactionManager       gtxm;
@@ -79,7 +76,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.clientStateManager = new TestClientStateManager();
     this.lockManager = new TestLockManager();
     this.objectManager = new TestObjectManager();
-    this.transactionStore = new TestTransactionStore(new SimpleSequence());
     this.transactionRateCounter = new CounterImpl();
     this.channelStats = new TestChannelStats();
     this.gtxm = new TestGlobalTransactionManager();
@@ -144,6 +140,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     // add a listener that throws an exception
     this.transactionManager.addRootListener(new ServerTransactionManagerEventListener() {
+      @Override
       public void rootCreated(String name, ObjectID id) {
         throw new RuntimeException("This exception is supposed to be here");
       }
@@ -593,10 +590,12 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     public LinkedQueue notifyTransactionContexts = new LinkedQueue();
 
+    @Override
     public Counter getCounter(MessageChannel channel, String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyTransaction(NodeID nodeID, int numTxns) {
       try {
         this.notifyTransactionContexts.put(nodeID);
@@ -605,22 +604,27 @@ public class ServerTransactionManagerImplTest extends TestCase {
       }
     }
 
+    @Override
     public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyTransactionAckedFrom(NodeID nodeID) {
       // NOP
     }
 
+    @Override
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
       // NOP
     }
 
+    @Override
     public void notifyServerMapRequest(ServerMapRequestType type, MessageChannel channel, int numRequests) {
       // NOP
     }
@@ -640,6 +644,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private static class Listener implements ServerTransactionManagerEventListener {
     final List rootsCreated = new ArrayList();
 
+    @Override
     public void rootCreated(String name, ObjectID id) {
       this.rootsCreated.add(new Root(name, id));
     }
@@ -671,6 +676,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     public NodeID        clientID;
     public TransactionID txID;
 
+    @Override
     public void acknowledgeTransaction(ServerTransactionID stxID) {
       this.txID = stxID.getClientTransactionID();
       this.clientID = stxID.getSourceID();

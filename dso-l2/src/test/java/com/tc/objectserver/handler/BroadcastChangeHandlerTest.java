@@ -837,10 +837,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
 
     }
-
-    public void callbackOnLowWaterMarkInSystemCompletion(Runnable r) {
-      //
-    }
   }
 
   private static class TestServerTransactionManager implements ServerTransactionManager {

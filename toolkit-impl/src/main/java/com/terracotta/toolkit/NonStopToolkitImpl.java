@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit;
 
+import org.terracotta.toolkit.NonStopToolkit;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -23,7 +24,6 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
@@ -52,7 +52,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-public class NonStopToolkit implements ToolkitInternal {
+public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   private static final String                                                          DELIMITER                     = "|";
 
   private final FutureTask<ToolkitInternal>                                            toolkitDelegateFutureTask;
@@ -64,7 +64,7 @@ public class NonStopToolkit implements ToolkitInternal {
   private final AbortableOperationManager                                              abortableOperationManager;
   private final NonStopClusterListener                                                 nonStopClusterListener;
 
-  public NonStopToolkit(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
+  public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
     this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
     abortableOperationManager = platformService.getAbortableOperationManager();
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
@@ -184,9 +184,8 @@ public class NonStopToolkit implements ToolkitInternal {
                                                                                                                             name);
     lock = (ToolkitReadWriteLock) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitReadWriteLock.class },
-                          new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager,
-                                                                                       nonStopDelegateProvider,
-                                                                                       nonStopClusterListener));
+                          new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager, nonStopDelegateProvider,
+                                                                             nonStopClusterListener));
     ToolkitReadWriteLock oldLock = (ToolkitReadWriteLock) toolkitObjects.get(ToolkitObjectType.READ_WRITE_LOCK)
         .putIfAbsent(name, lock);
     return oldLock == null ? lock : oldLock;
@@ -267,8 +266,31 @@ public class NonStopToolkit implements ToolkitInternal {
   }
 
   @Override
+  public NonStopToolkit asNonStopToolkit() {
+    return this;
+  }
+
+  @Override
   public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
     return nonStopConfigManager;
+  }
+
+  @Override
+  public void begin(NonStopConfiguration configuration) {
+    nonStopConfigManager.registerForThread(configuration);
+
+    if (configuration.isEnabled()) {
+      nonStopManager.begin(configuration.getTimeoutMillis());
+    }
+  }
+
+  @Override
+  public void finish() {
+    NonStopConfiguration configuration = nonStopConfigManager.deregisterForThread();
+
+    if (configuration.isEnabled()) {
+      nonStopManager.finish();
+    }
   }
 
   @Override
@@ -319,10 +341,5 @@ public class NonStopToolkit implements ToolkitInternal {
   @Override
   public ToolkitProperties getProperties() {
     return getInitializedToolkit().getProperties();
-  }
-
-  @Override
-  public NonStopManager getNonStopManager() {
-    return nonStopManager;
   }
 }

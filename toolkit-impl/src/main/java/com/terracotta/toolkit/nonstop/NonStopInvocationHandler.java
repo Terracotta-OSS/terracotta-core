@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
-import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.rejoin.RejoinException;
 

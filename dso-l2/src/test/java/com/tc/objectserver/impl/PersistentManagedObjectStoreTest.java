@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.DGCResultContext;
@@ -12,24 +15,18 @@ import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 public class PersistentManagedObjectStoreTest extends TestCase {
 
-  private Map                          map;
   private Sink                         gcSink;
   private ManagedObjectPersistor persistor;
   private PersistentManagedObjectStore objectStore;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
-    map = new HashMap();
     gcSink = mock(Sink.class);
     persistor = mock(ManagedObjectPersistor.class);
     objectStore = new PersistentManagedObjectStore(persistor, gcSink);

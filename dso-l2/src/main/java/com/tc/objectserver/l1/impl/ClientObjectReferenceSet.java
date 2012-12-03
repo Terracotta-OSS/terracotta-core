@@ -17,8 +17,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -29,7 +27,7 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
                                                                                                         .toNanos(TCPropertiesImpl
                                                                                                             .getProperties()
                                                                                                             .getLong(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL,
-                                                                                                                     60000));
+                                                                                                                     2500));
   public static final long                                                    MONITOR_INTERVAL_NANO = REFRESH_INTERVAL_NANO * 5;
 
   private final ClientStateManager                                            clientStateManager;

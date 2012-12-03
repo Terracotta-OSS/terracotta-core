@@ -58,11 +58,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     }
             
     @Override
-    public Map collectEvictonCandidates(final int max, final EvictableMap map, final ClientObjectReferenceSet clients) {
+    public Map collectEvictonCandidates(final int maxParam, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
-        final int sample = boundsCheckSampleSize(size - max);
+        final int sample = boundsCheckSampleSize(size - maxParam);
 
-        if ( max == 0 ) {
+        if ( maxParam == 0 ) {
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
         if ( sample <= 0 ) {
@@ -71,7 +71,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         Map samples = map.getRandomSamples(sample, clients);
         count = samples.size();
  // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
-        if ( count < size - max ) {
+        if ( count < size - maxParam ) {
             clients.addReferenceSetChangeListener(this);
             clientSetCount = clients.size();
             clientSet = clients;
@@ -84,16 +84,16 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     public void notifyReferenceSetChanged() {
        mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
             private int sampleCount = 0;
-            private int size = 0;
-            private int max = 0;
+            private int sizeInternal = 0;
+            private int maxInternal = 0;
             private boolean wasOver = true;
-            private int clientSetCount = 0;
+            private int clientSetCountInternal = 0;
 
             @Override
             public boolean startEviction(EvictableMap map) {
-                size = map.getSize();
-                max = map.getMaxTotalCount();
-                if ( size <= max ) {
+                sizeInternal = map.getSize();
+                maxInternal = map.getMaxTotalCount();
+                if ( sizeInternal <= maxInternal ) {
                     wasOver = false;
                     clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                     return false;
@@ -103,17 +103,17 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             }
             
             @Override
-            public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
-                final int grab = boundsCheckSampleSize(size - max);
+            public Map collectEvictonCandidates(int maxParam, EvictableMap map, ClientObjectReferenceSet clients) {
+                final int grab = boundsCheckSampleSize(sizeInternal - maxParam);
                 Map sample;
                 if ( grab > 0 ) {
                     sample = map.getRandomSamples(grab, clients);
-                    clientSetCount = clients.size();
+                    clientSetCountInternal = clients.size();
                 } else {
                     sample = Collections.emptyMap();
                 }
                 sampleCount = sample.size();
-                if ( sampleCount >= size - max ) {
+                if ( sampleCount >= sizeInternal - maxParam ) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
                 return processSample(sample);
@@ -128,9 +128,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
                         + ", count=" + sampleCount
-                        + ", size=" + size 
-                        + ", max=" + max 
-                        + ", clientset=" + clientSetCount
+                        + ", size=" + sizeInternal 
+                        + ", max=" + maxInternal 
+                        + ", clientset=" + clientSetCountInternal
                         + ", parent=" + super.toString() 
                         + "}";
             }

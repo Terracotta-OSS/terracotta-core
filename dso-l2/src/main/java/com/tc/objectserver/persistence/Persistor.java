@@ -32,12 +32,13 @@ public class Persistor {
   private MutableSequence gidSequence;
   private ClientStatePersistor clientStatePersistor;
   private SequenceManager sequenceManager;
-  private ObjectIDSetMaintainer objectIDSetMaintainer;
+  private final ObjectIDSetMaintainer objectIDSetMaintainer;
 
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
     try {
-      storageManager = storageManagerFactory.createStorageManager(getDataStorageConfigs(objectIDSetMaintainer, storageManagerFactory),
+      storageManager = storageManagerFactory
+          .createStorageManager(getDataStorageConfigs(storageManagerFactory),
           new SingletonTransformerLookup(Object.class, LiteralSerializer.INSTANCE));
     } catch (IOException e) {
       throw new AssertionError(e);
@@ -52,7 +53,7 @@ public class Persistor {
     return storageManager;
   }
 
-  private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs(ObjectIDSetMaintainer objectIDSetMaintainer, StorageManagerFactory storageManagerFactory) {
+  private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs(StorageManagerFactory storageManagerFactory) {
     Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
     TransactionPersistor.addConfigsTo(configs);
     ClientStatePersistor.addConfigsTo(configs);
@@ -139,6 +140,8 @@ public class Persistor {
   }
 
   public void backup(File path) throws IOException {
+    // make warning go away
+    if (false) { throw new IOException(); }
     throw new UnsupportedOperationException("Can not backup a non-persistent L2.");
   }
 }

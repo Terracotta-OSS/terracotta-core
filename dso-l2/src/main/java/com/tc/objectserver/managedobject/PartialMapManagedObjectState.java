@@ -42,6 +42,8 @@ public class PartialMapManagedObjectState extends MapManagedObjectState {
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+    // make warning go away
+    if (false) { throw new ClassNotFoundException(); }
     return new PartialMapManagedObjectState(in, factory);
   }
 }

@@ -98,18 +98,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
     state.rejoin_in_progress();
     runningCondition.signalAll();
-  }
-
-  private void throwExceptionIfNecessary(boolean throwExp) {
-    String message = "cleanup unexpected state: expexted " + State.PAUSED + " but found " + state;
-    if (throwExp) {
-      if (state != State.PAUSED) { throw new IllegalStateException(message); }
-    } else {
-      logger.info(message);
-    }
   }
 
   private ClientLock getOrCreateClientLockState(final LockID lock) {
@@ -788,7 +778,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
+        // throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
+        return REJOIN_IN_PROGRESS;
       }
 
       @Override

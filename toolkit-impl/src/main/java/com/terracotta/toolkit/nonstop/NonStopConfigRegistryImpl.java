@@ -102,7 +102,6 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
   }
 
-  @Override
   public void registerForThread(NonStopConfiguration config) {
     verify(config);
 
@@ -172,7 +171,6 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     return nonStopConfig;
   }
 
-  @Override
   public NonStopConfiguration getConfigForThread() {
     return threadLocalConfiguration.get();
   }
@@ -202,7 +200,6 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     return allConfigs.remove(nonStopConfigKey);
   }
 
-  @Override
   public NonStopConfiguration deregisterForThread() {
     NonStopConfiguration old = threadLocalConfiguration.get();
     threadLocalConfiguration.remove();

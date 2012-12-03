@@ -67,9 +67,9 @@ public class ResourceManagerThrottleMessage extends DSOMessageBase {
     }
   }
 
-  public void initialize(GroupID groupId, boolean exception, float throttle) {
-    this.exception = exception;
-    this.throttle = throttle;
+  public void initialize(GroupID groupId, boolean exceptionParam, float throttleParam) {
+    this.exception = exceptionParam;
+    this.throttle = throttleParam;
     this.groupID = groupId;
   }
 }

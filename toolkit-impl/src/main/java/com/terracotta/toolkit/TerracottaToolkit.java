@@ -5,6 +5,7 @@ package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
 
+import org.terracotta.toolkit.NonStopToolkit;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -25,9 +26,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
@@ -320,16 +319,11 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   @Override
-  public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
-    throw new UnsupportedOperationException();
+  public NonStopToolkit asNonStopToolkit() {
+    throw new UnsupportedOperationException("Please create non stop toolkit");
   }
 
   AbortableOperationManager getAbortableOperationManager() {
     return platformService.getAbortableOperationManager();
-  }
-
-  @Override
-  public NonStopManager getNonStopManager() {
-    throw new UnsupportedOperationException("Please initialize the toolkit as non stop");
   }
 }

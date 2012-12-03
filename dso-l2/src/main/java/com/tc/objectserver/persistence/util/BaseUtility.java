@@ -4,12 +4,7 @@
  */
 package com.tc.objectserver.persistence.util;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
 
@@ -20,8 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class BaseUtility {
-
-  private static final TCLogger logger = TCLogging.getLogger(BaseUtility.class);
 
   protected final Writer        writer;
   protected final Map           dbPersistorsMap;
@@ -44,7 +37,6 @@ public abstract class BaseUtility {
   }
 
   private Persistor createPersistor(int id) throws Exception {
-    final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
     Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
     
     return persistor;
@@ -65,14 +57,6 @@ public abstract class BaseUtility {
       writer.flush();
     } catch (IOException e) {
       e.printStackTrace();
-    }
-  }
-
-  private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
-
-    public ManagedObjectChangeListener getListener() {
-      return new NullManagedObjectChangeListener();
-
     }
   }
 

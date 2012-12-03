@@ -16,26 +16,25 @@ public class NullTransactionProvider implements TransactionProvider {
     return null;
   }
 
+  @Override
   public Transaction newTransaction() {
     return NULL_TRANSACTION;
   }
 
   private final static class NullPersistenceTransaction implements Transaction {
+    @Override
     public void commit() {
       return;
     }
 
+    @Override
     public void abort() {
       //
     }
 
-        @Override
-        public void addTransactionListener(TransactionListener l) {
-
-        }
-
-    public Object getTransaction() {
-      return null;
+    @Override
+    public void addTransactionListener(TransactionListener l) {
+      //
     }
 
   }

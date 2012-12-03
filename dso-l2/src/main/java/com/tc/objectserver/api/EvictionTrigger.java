@@ -4,12 +4,12 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+
 import java.util.Map;
 
 /**
- * EvictionTriggers signal that an eviction operation needs to occur on a given 
+ * EvictionTriggers signal that an eviction operation needs to occur on a given
  * map.
  * 
  * @author mscott
@@ -32,7 +32,7 @@ public interface EvictionTrigger {
     /**
      * return state on the map to non-evicting and perform any cleanup at the end of eviction
      * 
-     * @param map 
+     * @param map
      */
     void      completeEviction(EvictableMap map);
     /**

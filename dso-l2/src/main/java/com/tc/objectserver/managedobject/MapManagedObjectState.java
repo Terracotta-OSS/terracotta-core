@@ -196,7 +196,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 //  }
 
   // CollectionsPersistor will save retrieve data in references map.
-  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException,
+      ClassNotFoundException {
+    // make warning go away
+    if (false) { throw new ClassNotFoundException(); }
     return new MapManagedObjectState(in, factory);
   }
 

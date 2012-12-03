@@ -14,7 +14,7 @@ import java.util.concurrent.BrokenBarrierException;
 
 public abstract class ClientBase extends AbstractClientBase {
   private ToolkitBarrier      barrier;
-  private Toolkit             clusteringToolkit;
+  protected ToolkitInternal clusteringToolkit;
 
   public ClientBase(String args[]) {
     super(args);
@@ -36,9 +36,9 @@ public abstract class ClientBase extends AbstractClientBase {
     return clusteringToolkit;
   }
 
-  protected Toolkit createToolkit() {
+  protected ToolkitInternal createToolkit() {
     try {
-      return ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
+      return (ToolkitInternal) ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
     } catch (ToolkitInstantiationException e) {
       throw new RuntimeException(e);
     }

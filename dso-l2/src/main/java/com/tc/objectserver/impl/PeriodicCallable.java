@@ -7,9 +7,8 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.util.ObjectIDSet;
+
 import java.util.concurrent.Callable;
 
 /**
@@ -54,5 +53,5 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
             counter.increment(current.getCount(),current.getRuntimeInMillis());
         }
         return counter;
-    }    
+    }
 }

@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.nonstop;
 
-import org.terracotta.toolkit.internal.nonstop.NonStopManager;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;

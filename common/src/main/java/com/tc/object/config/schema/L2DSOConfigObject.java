@@ -331,26 +331,28 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     security.getSsl().setCertificate(ParameterSubstituter.substitute(security.getSsl().getCertificate()));
   }
 
-  private static void initializeKeyChain(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
-    final String defaultKeyChainImpl =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "keychain/class")).getStringValue();
+  private static void initializeKeyChain(final Security security, final DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    final String defaultKeyChainImpl = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(),
+                                                                                    "keychain/class")).getStringValue();
 
-    if(!security.getKeychain().isSetClass1()) {
+    if (!security.getKeychain().isSetClass1()) {
       security.getKeychain().setClass1(defaultKeyChainImpl);
     }
     security.getKeychain().setUrl(ParameterSubstituter.substitute(security.getKeychain().getUrl()));
   }
 
-  private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
-    final String defaultRealm =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/realm")).getStringValue();
-    final String defaultUser =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/user")).getStringValue();
+  private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    final String defaultRealm = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(), "auth/realm"))
+        .getStringValue();
+    final String defaultUser = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(), "auth/user"))
+        .getStringValue();
 
-    if(!security.getAuth().isSetRealm()) {
+    if (!security.getAuth().isSetRealm()) {
       security.getAuth().setRealm(defaultRealm);
     }
-    if(!security.getAuth().isSetUser()) {
+    if (!security.getAuth().isSetUser()) {
       security.getAuth().setUser(defaultUser);
     }
 
@@ -376,8 +378,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       offHeap.setEnabled(getDefaultOffHeapEnabled(server, defaultValueProvider));
     }
   }
-
-
 
   private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {

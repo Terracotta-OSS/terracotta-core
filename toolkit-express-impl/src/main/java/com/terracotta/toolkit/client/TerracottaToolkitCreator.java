@@ -17,7 +17,7 @@ public class TerracottaToolkitCreator {
   private static final String            TOOLKIT_IMPL_CLASSNAME            = "com.terracotta.toolkit.TerracottaToolkit";
   private static final String            ENTERPRISE_TOOLKIT_IMPL_CLASSNAME = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
 
-  private static final String            NON_STOP_TOOLKIT_IMPL_CLASSNAME   = "com.terracotta.toolkit.NonStopToolkit";
+  private static final String            NON_STOP_TOOLKIT_IMPL_CLASSNAME   = "com.terracotta.toolkit.NonStopToolkitImpl";
 
   private static final String            TOOLKIT_DEFAULT_CM_PROVIDER       = "com.terracotta.toolkit.ToolkitCacheManagerProvider";
 
@@ -96,10 +96,8 @@ public class TerracottaToolkitCreator {
 
   private ToolkitInternal instantiateNonStopToolkit(FutureTask<ToolkitInternal> futureTask) throws Exception {
     return internalClient.instantiate(NON_STOP_TOOLKIT_IMPL_CLASSNAME,
-                                      new Class[] { FutureTask.class,
- internalClient.loadClass(PLATFORM_SERVICE) },
-                                      new Object[] {
-                                          futureTask, internalClient.getPlatformService() });
+                                      new Class[] { FutureTask.class, internalClient.loadClass(PLATFORM_SERVICE) },
+                                      new Object[] { futureTask, internalClient.getPlatformService() });
   }
 
   private TerracottaL1Instance getTerracottaL1Instance() {

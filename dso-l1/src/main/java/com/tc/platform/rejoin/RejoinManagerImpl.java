@@ -9,7 +9,6 @@ import com.tc.net.ClientID;
 import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +80,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   @Override
-  public void thisNodeJoinedCallback(DsoClusterInternalEventsGun dsoEventsGun, ClientID newNodeId) {
+  public boolean thisNodeJoined(ClientID newNodeId) {
     logger.info("This node joined the cluster - rejoinEnabled: " + rejoinEnabled + ", rejoin in progress:"
                 + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
     if (rejoinEnabled) {
@@ -89,10 +88,10 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
       if (rejoinInProgress.compareAndSet(true, false)) {
         // take care of any cleanup/reinitialization
         notifyRejoinComplete();
-        // fire rejoin event
-        dsoEventsGun.fireNodeRejoined(newNodeId);
+        return true;
       }
     }
+    return false;
   }
 
   // only called by rejoin worker

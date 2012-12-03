@@ -12,16 +12,16 @@ import com.tcclient.cluster.DsoNodeInternal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterTopologyImpl implements DsoClusterTopology {
-  private final Map<NodeID, DsoNodeInternal>     nodes          = new HashMap<NodeID, DsoNodeInternal>();
+  private final ConcurrentMap<NodeID, DsoNodeInternal> nodes          = new ConcurrentHashMap<NodeID, DsoNodeInternal>();
 
-  private final ReentrantReadWriteLock           nodesLock      = new ReentrantReadWriteLock();
-  private final ReentrantReadWriteLock.ReadLock  nodesReadLock  = nodesLock.readLock();
-  private final ReentrantReadWriteLock.WriteLock nodesWriteLock = nodesLock.writeLock();
+  private final ReentrantReadWriteLock                 nodesLock      = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock.ReadLock        nodesReadLock  = nodesLock.readLock();
+  private final ReentrantReadWriteLock.WriteLock       nodesWriteLock = nodesLock.writeLock();
 
   Collection<DsoNodeInternal> getInternalNodes() {
     nodesReadLock.lock();
@@ -93,7 +93,6 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   DsoNodeInternal updateOnRejoin(final ClientID thisNodeId, final NodeID[] clusterMembers) {
     nodesWriteLock.lock();
     try {
-      nodes.clear();
       for (NodeID otherNode : clusterMembers) {
         if (!thisNodeId.equals(otherNode)) {
           registerDsoNodeBase((ClientID) otherNode, false);
@@ -110,8 +109,21 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
 
     nodesWriteLock.lock();
     try {
-      nodes.put(clientId, node);
-      return node;
+      DsoNodeInternal old = nodes.putIfAbsent(clientId, node);
+      if (old != null) {
+        return old;
+      } else {
+        return node;
+      }
+    } finally {
+      nodesWriteLock.unlock();
+    }
+  }
+
+  void cleanup() {
+    nodesWriteLock.lock();
+    try {
+      nodes.clear();
     } finally {
       nodesWriteLock.unlock();
     }

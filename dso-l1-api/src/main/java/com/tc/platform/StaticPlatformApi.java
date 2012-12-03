@@ -12,9 +12,4 @@ public final class StaticPlatformApi {
     // todo: remove mgrUtil
     ManagerUtil.enableSingleton(manager);
   }
-
-  public static PlatformService getPlatformService() {
-    return ManagerUtil.getManager().getPlatformService();
-  }
-
 }

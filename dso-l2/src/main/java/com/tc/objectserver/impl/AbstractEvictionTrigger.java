@@ -6,7 +6,7 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.EvictionTrigger;
-import java.util.Collections;
+
 import java.util.Map;
 
 /**
@@ -37,7 +37,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     @Override
     public String getName() {
         return getClass().getName();
-    }   
+    }
     
     public int boundsCheckSampleSize(int sampled) {
         if ( sampled < 0 ) {
@@ -75,7 +75,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
             map.evictionCompleted();
         }
         
-    }    
+    }
     
     protected Map<Object, ObjectID> processSample(Map<Object, ObjectID> sample) {
         evicting = !sample.isEmpty();
@@ -108,7 +108,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
 
     @Override
     public String toString() {
-        return "AbstractEvictionTrigger{" 
+        return "AbstractEvictionTrigger{"
                 + "name=" + name + " - " + getId() + (( pinned ) ? " - PINNED" : "")
                 + ", started=" + started
                 + ", processed=" + processed

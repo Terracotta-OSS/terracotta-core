@@ -79,8 +79,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final TCLogger                                 logger          = TCLogging
                                                                                     .getLogger(ObjectManager.class);
 
-
-  private final PersistentManagedObjectStore                              objectStore;
+  private final PersistentManagedObjectStore                    objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
   private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
   private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
@@ -103,7 +102,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final NoReferencesIDStore                             noReferencesIDStore;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
-                           final PersistentManagedObjectStore objectStore, final TransactionProvider persistenceTransactionProvider) {
+                           final PersistentManagedObjectStore objectStore,
+                           final TransactionProvider persistenceTransactionProvider) {
     Assert.assertNotNull(objectStore);
     this.config = config;
     this.stateManager = stateManager;
@@ -117,10 +117,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.txnObjectMgr = txnObjectManager;
   }
 
+  @Override
   public void setStatsListener(final ObjectManagerStatsListener statsListener) {
     this.stats = statsListener;
   }
 
+  @Override
   public void start() {
     this.collector.start();
   }
@@ -128,6 +130,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   /**
    * Stops the ObjectManager - After this call, none of the objects are allowed to be checked out.
    */
+  @Override
   public void stop() {
     if (!this.inShutdown.compareAndSet(false, true)) { return; }
 
@@ -151,6 +154,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print("collector: ").visit(this.collector).flush();
@@ -179,11 +183,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return out;
   }
 
+  @Override
   public ObjectID lookupRootID(final String name) {
     assertNotInShutdown();
     return this.objectStore.getRootID(name);
   }
 
+  @Override
   public boolean lookupObjectsAndSubObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext,
                                                final int maxReachableObjects) {
     return basicLookupObjectsFor(nodeID,
@@ -191,16 +197,19 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                  maxReachableObjects);
   }
 
+  @Override
   public boolean lookupObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext) {
     return basicLookupObjectsFor(nodeID,
                                  new ObjectManagerLookupContext(responseContext, false, AccessLevel.READ_WRITE), -1);
   }
 
+  @Override
   public Iterator getRoots() {
     assertNotInShutdown();
     return this.objectStore.getRoots().iterator();
   }
 
+  @Override
   public Iterator getRootNames() {
     assertNotInShutdown();
     return this.objectStore.getRootNames().iterator();
@@ -209,13 +218,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   /**
    * For management use only (see interface documentation)
    */
+  @Override
   public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
     assertNotInShutdown();
 
     if (!containsObject(id)) { throw new NoSuchObjectException(id); }
 
-    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP,
-        AccessLevel.READ);
+    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, AccessLevel.READ);
     if (object == null) { throw new NoSuchObjectException(id); }
 
     try {
@@ -241,6 +250,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return mo;
   }
 
+  @Override
   public ManagedObject getObjectByID(final ObjectID id) {
     return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
   }
@@ -248,16 +258,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   /**
    * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.
    */
+  @Override
   public ManagedObject getQuietObjectByID(ObjectID id) {
     return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
   }
 
+  @Override
   public ManagedObject getObjectByIDReadOnly(final ObjectID id) {
     return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, AccessLevel.READ);
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {
-      final boolean marked = reference.markReference();
+    final boolean marked = reference.markReference();
     if (marked) {
       if (reference != this.references.get(reference.getObjectID())) {
         // This reference was removed by someone else and then unmarked before this thread got a chance to call
@@ -306,6 +318,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return rv;
   }
 
+  @Override
   public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
     createNewObjects(newOids);
   }
@@ -371,27 +384,27 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (reference == null || !available) {
         continue;
       }
-      
+
       final boolean isNew = isANewObjectIn(reference, newObjectIDs);
       boolean isMarked = false;
-      
-      if ( isNew ) {
-          isMarked = markReferenced(reference);
+
+      if (isNew) {
+        isMarked = markReferenced(reference);
       }
-      
-      if ( isNew && isMarked ) {
+
+      if (isNew && isMarked) {
         objects.put(id, reference.getObject());
       } else {
-        available = false;      
-        if ( isMarked ) {
-            unmarkReferenced(reference);
+        available = false;
+        if (isMarked) {
+          unmarkReferenced(reference);
         }
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         blockedObjectID = id;
       }
     }
-    
+
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
@@ -405,7 +418,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be
       // processed after this request is (unblocked) and processed
       LookupState state = addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
-        return state;
+      return state;
     }
   }
 
@@ -442,9 +455,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean isANewObjectIn(final ManagedObjectReference reference, final Set<ObjectID> newObjectIDs) {
     // If reference isNew() and not in newObjects, someone (L1) is trying to do a lookup before the object is fully
     // created, make it pending.
-    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { 
-        return false; 
-    }
+    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { return false; }
     return true;
   }
 
@@ -474,6 +485,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return LookupState.NOT_AVAILABLE;
   }
 
+  @Override
   public void createNewObjects(final Set<ObjectID> newObjectIDs) {
     for (final ObjectID oid : newObjectIDs) {
       final ManagedObject mo = objectStore.createObject(oid);
@@ -481,6 +493,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
+  @Override
   public void releaseReadOnly(final ManagedObject object) {
     if (this.config.paranoid() && !object.isNew() && object.isDirty()) { throw new AssertionError(
                                                                                                   "Object is dirty after a read-only checkout "
@@ -489,12 +502,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
+  @Override
   public void release(final ManagedObject object) {
     basicRelease(object);
     postRelease();
 
   }
 
+  @Override
   public void releaseAllReadOnly(final Collection<ManagedObject> objects) {
     for (final ManagedObject mo : objects) {
       if (this.config.paranoid() && !mo.isNew() && mo.isDirty()) {
@@ -515,8 +530,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * may be re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before
    * releasing the objects.
    */
+  @Override
   public void releaseAll(final Collection<ManagedObject> managedObjects) {
-//    flushAllAndCommit(persistenceTransaction, managedObjects);
+    // flushAllAndCommit(persistenceTransaction, managedObjects);
     for (final ManagedObject managedObject : managedObjects) {
       basicRelease(managedObject);
     }
@@ -573,18 +589,22 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   }
 
+  @Override
   public int getCheckedOutCount() {
     return this.checkedOutCount.get();
   }
 
+  @Override
   public Set getRootIDs() {
     return this.objectStore.getRoots();
   }
 
+  @Override
   public Map getRootNamesToIDsMap() {
     return this.objectStore.getRootNamesToIDsMap();
   }
 
+  @Override
   public ObjectIDSet getAllObjectIDs() {
     return this.objectStore.getAllObjectIDs();
   }
@@ -593,16 +613,19 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.objectStore.containsObject(id);
   }
 
+  @Override
   public ObjectIDSet getObjectIDsInCache() {
     final ObjectIDSet ids = new ObjectIDSet();
     ids.addAll(this.references.keySet()); // CDM doesn't throw ConcurrentModificationException
     return ids;
   }
 
+  @Override
   public int getLiveObjectCount() {
     return this.objectStore.getObjectCount();
   }
 
+  @Override
   public Set<ObjectID> getObjectReferencesFrom(final ObjectID id, final boolean cacheOnly) {
     if (this.noReferencesIDStore.hasNoReferences(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     final ManagedObjectReference mor = getReference(id);
@@ -666,12 +689,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObjectReference removeReferenceAndDestroyIfNecessary(ObjectID oid) {
-//    logger.info("XXX removing reference " + oid);
+    // logger.info("XXX removing reference " + oid);
     final ManagedObjectReference removed = this.references.remove(oid);
     if (removed != null && removed.getObject() != null) {
       ManagedObjectState removedManagedObjectState = removed.getObject().getManagedObjectState();
       if (removedManagedObjectState instanceof Destroyable) {
-        ((Destroyable)removedManagedObjectState).destroy();
+        ((Destroyable) removedManagedObjectState).destroy();
       }
     }
     return removed;
@@ -693,6 +716,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
+  @Override
   public void waitUntilReadyToGC() {
     this.lock.writeLock().lock();
     try {
@@ -720,6 +744,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
+  @Override
   public void notifyGCComplete(final DGCResultContext gcResult) {
     this.lock.writeLock().lock();
     try {
@@ -730,6 +755,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     deleteObjects(gcResult);
   }
 
+  @Override
   public void deleteObjects(final DGCResultContext gcResult) {
     Assert.assertTrue(this.collector.isDelete());
     final Set<ObjectID> toDelete = gcResult.getGarbageIDs();
@@ -775,6 +801,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.stateManager;
   }
 
+  @Override
   public void createRoot(final String rootName, final ObjectID id) {
     assertNotInShutdown();
     this.objectStore.addNewRoot(null, rootName, id);
@@ -787,10 +814,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.persistenceTransactionProvider.newTransaction();
   }
 
+  @Override
   public GarbageCollector getGarbageCollector() {
     return this.collector;
   }
 
+  @Override
   public void setGarbageCollector(final GarbageCollector newCollector) {
     assertNotInShutdown();
     if (this.collector != null) {
@@ -802,11 +831,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void processPendingLookups() {
     if (this.pending.size() == 0) { return; }
     final List<Pending> pendingLookups = this.pending.drain();
-    
-      for (final Pending p : pendingLookups) {
-          basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
-      }
+
+    for (final Pending p : pendingLookups) {
+      basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
     }
+  }
 
   private void makeUnBlocked(final ObjectID id) {
     this.pending.makeUnBlocked(id);
@@ -823,7 +852,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectManagerResultsContext responseContext;
-    private final boolean                     removeOnRelease;
     private final ObjectIDSet                 missing        = new ObjectIDSet();
     private final AccessLevel                 accessLevel;
     private int                               processedCount = 0;
@@ -831,7 +859,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     public ObjectManagerLookupContext(final ObjectManagerResultsContext responseContext, final boolean removeOnRelease,
                                       AccessLevel accessLevel) {
       this.responseContext = responseContext;
-      this.removeOnRelease = removeOnRelease;
       this.accessLevel = accessLevel;
     }
 
@@ -847,22 +874,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       return this.processedCount;
     }
 
-    public boolean isNewRequest() {
-      return this.processedCount == 0;
-    }
-
-    public boolean removeOnRelease() {
-      return this.removeOnRelease;
-    }
-
+    @Override
     public ObjectIDSet getLookupIDs() {
       return this.responseContext.getLookupIDs();
     }
 
+    @Override
     public ObjectIDSet getNewObjectIDs() {
       return this.responseContext.getNewObjectIDs();
     }
 
+    @Override
     public void setResults(final ObjectManagerLookupResults results) {
       this.responseContext.setResults(results);
     }
@@ -908,16 +930,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         try {
           wait();
         } catch (final InterruptedException e) {
-            throw new AssertionError(e);
+          throw new AssertionError(e);
         }
       }
       return this.result;
     }
 
+    @Override
     public ObjectIDSet getLookupIDs() {
       return this.lookupIDs;
     }
 
+    @Override
     public ObjectIDSet getNewObjectIDs() {
       if (this.newObjects == NewObjects.LOOKUP) {
         return this.lookupIDs;
@@ -926,10 +950,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
     }
 
+    @Override
     public synchronized void setResults(final ObjectManagerLookupResults results) {
-        if ( this.resultSet ) {
-            throw new AssertionError("results already set");
-        }
+      if (this.resultSet) { throw new AssertionError("results already set"); }
       this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
       final Map objects = results.getObjects();
@@ -940,7 +963,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       notifyAll();
     }
-    
+
     private void assertMissingObjects(final ObjectIDSet missing) {
       if (this.missingObjects == MissingObjects.NOT_OK && !missing.isEmpty()) { throw new AssertionError(
                                                                                                          "Lookup of non-existing objects : "
@@ -1020,7 +1043,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     public void makeUnBlocked(final ObjectID id) {
       final Set<Pending> blockedRequests = this.blocked.removeAll(id);
       if (blockedRequests.isEmpty()) { return; }
-      
+
       for (final Pending pendingRequests : blockedRequests) {
         this.pending.add(pendingRequests);
       }
@@ -1035,6 +1058,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       return this.pending.size();
     }
 
+    @Override
     public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       out.print(this.getClass().getName()).flush();
       out.indent().print("pending lookups : ").visit(this.pending.size()).flush();
@@ -1049,6 +1073,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   /*********************************************************************************************************************
    * ManagedObjectChangeListener interface
    */
+  @Override
   public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
     this.collector.changed(changedObject, oldReference, newReference);
   }

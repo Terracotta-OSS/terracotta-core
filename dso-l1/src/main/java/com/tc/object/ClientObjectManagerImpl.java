@@ -214,11 +214,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void throwExceptionIfNecessary(boolean throwExp) {
-    String message = "cleanup unexpected state: expexted " + PAUSED + " but found " + state;
-    if (throwExp) {
-      if (state != PAUSED) { throw new IllegalStateException(message); }
-    } else {
-      logger.info(message);
+    if (state != PAUSED) {
+      String message = "cleanup unexpected state: expected " + PAUSED + " but found " + state;
+      if (throwExp) {
+        throw new IllegalStateException(message);
+      } else {
+        logger.warn(message);
+      }
     }
   }
 

@@ -729,6 +729,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final ProductInfo pInfo = ProductInfo.getInstance();
     final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
     clearCallbacks.add(stageManager);
+    clearCallbacks.add(dsoCluster);
     this.clientHandshakeManager = this.dsoClientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel, this.channel

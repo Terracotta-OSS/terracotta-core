@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.api;
 
+import static org.mockito.Mockito.mock;
+
 import org.mockito.Mockito;
 
 import com.tc.async.api.Sink;
@@ -95,8 +97,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * @author steve
@@ -1044,11 +1044,12 @@ public class ObjectManagerTest extends TCTestCase {
     List<Callable<Void>> runnables = new ArrayList<Callable<Void>>(5);
     for (int i = 0; i < 5; i++) {
       runnables.add(new Callable<Void>() {
+        @Override
         public Void call() {
-          for (int i = 0; i < 1000; i++) {
-            ManagedObject mo = objectManager.getObjectByID(oid);
-            Assert.assertNotNull(mo);
-            objectManager.releaseReadOnly(mo);
+          for (int j = 0; j < 1000; j++) {
+            ManagedObject moInternal = objectManager.getObjectByID(oid);
+            Assert.assertNotNull(moInternal);
+            objectManager.releaseReadOnly(moInternal);
           }
           return null;
         }
@@ -1433,12 +1434,10 @@ public class ObjectManagerTest extends TCTestCase {
     boolean                             complete = false;
     private final ObjectIDSet           ids;
     private final ObjectIDSet           newIDS;
-    private final boolean               updateStats;
 
     public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS, final boolean updateStats) {
       this.ids = ids;
       this.newIDS = newIDS;
-      this.updateStats = updateStats;
     }
 
     public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS) {
@@ -1588,14 +1587,17 @@ public class ObjectManagerTest extends TCTestCase {
       this.oidHolder = oidHolder;
     }
 
+    @Override
     public LogicalAction getLogicalAction() {
       return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHolder.get() });
     }
 
+    @Override
     public PhysicalAction getPhysicalAction() {
       return null;
     }
 
+    @Override
     public boolean next() {
       if (hasNext) {
         hasNext = false;
@@ -1604,18 +1606,22 @@ public class ObjectManagerTest extends TCTestCase {
       return false;
     }
 
+    @Override
     public boolean next(final DNAEncoding encoding) {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getAction() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getActionCount() {
       return 1;
     }
 
+    @Override
     public void reset() throws UnsupportedOperationException {
       hasNext = true;
     }

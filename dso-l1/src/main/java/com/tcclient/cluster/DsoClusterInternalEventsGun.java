@@ -19,6 +19,4 @@ public interface DsoClusterInternalEventsGun {
 
   void fireOperationsDisabled();
 
-  void fireNodeRejoined(ClientID newNodeId);
-
 }

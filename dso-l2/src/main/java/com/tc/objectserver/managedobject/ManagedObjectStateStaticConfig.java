@@ -125,7 +125,8 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory) throws IOException, ClassNotFoundException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory)
+          throws IOException, ClassNotFoundException {
         return MapManagedObjectState.readFrom(objectInput, objectFactory);
       }
 
