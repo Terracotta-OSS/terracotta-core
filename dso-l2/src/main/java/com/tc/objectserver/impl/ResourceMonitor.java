@@ -111,6 +111,10 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
               private long checkUsed() {
                   if ( cacheUsed < 0 ) {
                       cacheUsed = resource.getReserved();
+                      long check = resource.getUsed();
+                      if ( check > cacheUsed * 1.25 || check < cacheUsed * .75 ) {
+                          logger.info("MEMCHECK used:" + check + "!=" + cacheUsed + ":reserve");
+                      }
                   }
                   return cacheUsed;
               }
