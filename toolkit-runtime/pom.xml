@@ -327,7 +327,7 @@
                     println "================== devmode ===================="
                     def packagingDir = new File(project.build.directory, project.properties['packagingTarget'])
                     def toolkitDevmodeClasspath = new File(project.build.outputDirectory, 'devmode-embedded-classpath.txt')
-                    toolkitDevmodeClasspath.withWriter{ out ->
+                    toolkitDevmodeClasspath.withWriter{ out -&gt;
                       packagingDir.eachFileRecurse  {
                         if (it.name.endsWith('.jar')) {
                           def jarFile = new java.util.zip.ZipFile(it)
@@ -341,7 +341,7 @@
                       }
                     }
                     // create empty toolkit content file 
-                    new File(project.build.outputDirectory, project.properties['toolkitContentFilename']).withWriter { out ->
+                    new File(project.build.outputDirectory, project.properties['toolkitContentFilename']).withWriter { out -&gt;
                       out.println("")
                     }
                   </source>

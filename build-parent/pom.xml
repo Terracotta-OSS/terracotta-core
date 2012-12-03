@@ -770,7 +770,7 @@
                     def classesDir = new File(project.build.outputDirectory)
                     classesDir.mkdirs()
                     def targetFile = new File(classesDir, "devmode-classdir.txt")
-                    targetFile.withWriter { out ->
+                    targetFile.withWriter { out -&gt;
                       out.println classesDir
                     }
                   </source>
