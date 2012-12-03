@@ -184,9 +184,8 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
                                                                                                                             name);
     lock = (ToolkitReadWriteLock) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitReadWriteLock.class },
-                          new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager,
-                                                                                       nonStopDelegateProvider,
-                                                                                       nonStopClusterListener));
+                          new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager, nonStopDelegateProvider,
+                                                                             nonStopClusterListener));
     ToolkitReadWriteLock oldLock = (ToolkitReadWriteLock) toolkitObjects.get(ToolkitObjectType.READ_WRITE_LOCK)
         .putIfAbsent(name, lock);
     return oldLock == null ? lock : oldLock;
@@ -270,7 +269,7 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   public NonStopToolkit asNonStopToolkit() {
     return this;
   }
-  
+
   @Override
   public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
     return nonStopConfigManager;
@@ -279,13 +278,19 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   @Override
   public void begin(NonStopConfiguration configuration) {
     nonStopConfigManager.registerForThread(configuration);
-    nonStopManager.begin(configuration.getTimeoutMillis());
+
+    if (configuration.isEnabled()) {
+      nonStopManager.begin(configuration.getTimeoutMillis());
+    }
   }
 
   @Override
   public void finish() {
-    nonStopConfigManager.deregisterForThread();
-    nonStopManager.finish();
+    NonStopConfiguration configuration = nonStopConfigManager.deregisterForThread();
+
+    if (configuration.isEnabled()) {
+      nonStopManager.finish();
+    }
   }
 
   @Override
