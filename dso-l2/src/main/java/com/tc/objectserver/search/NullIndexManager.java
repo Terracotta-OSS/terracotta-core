@@ -5,7 +5,6 @@ package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
-import com.terracottatech.search.IndexException;
 import com.terracottatech.search.IndexFile;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchResult;
@@ -71,7 +70,7 @@ public class NullIndexManager implements IndexManager {
   }
 
   @Override
-  public void backup(final File dest) throws IndexException {
+  public void backup(final File dest) {
     //
   }
 

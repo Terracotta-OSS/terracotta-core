@@ -5,7 +5,7 @@ import org.terracotta.corestorage.StorageManager;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
-import com.tc.objectserver.tx.TransactionalStageCoordinator;
+
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -20,6 +20,7 @@ public class PersistenceTransactionProvider implements TransactionProvider {
         this.manager = manager;
     }
 
+    @Override
     public Transaction newTransaction() {
         return new StorageTransaction();
     }
@@ -35,6 +36,7 @@ public class PersistenceTransactionProvider implements TransactionProvider {
             manager.begin();
         }
 
+        @Override
         public void commit() {
             if ( !valid ) {
                 return;
@@ -47,16 +49,17 @@ public class PersistenceTransactionProvider implements TransactionProvider {
             valid = false;
         }
 
+        @Override
         public void abort() {
             throw new UnsupportedOperationException();
         }
         
         private void fireFinalizer(boolean committed) {
-            for ( TransactionListener t : finalizer ) {
+            for ( TransactionListener tLocal : finalizer ) {
                 if ( committed ) {
-                    t.committed(this);
+                    tLocal.committed(this);
                 } else {
-                    t.aborted(this);
+                    tLocal.aborted(this);
                 }
             }
         }

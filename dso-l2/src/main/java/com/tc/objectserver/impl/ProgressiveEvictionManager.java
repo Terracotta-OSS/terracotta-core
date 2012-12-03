@@ -49,7 +49,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -73,7 +72,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD, 98);
      private static final long L2_EVICTION_CRITICALUPPERBOUND = TCPropertiesImpl
             .getProperties()
-            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALUPPERBOUND, 10l * 1024 * 1024 * 1024);    
+            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALUPPERBOUND, 10l * 1024 * 1024 * 1024);
      private static final long L2_EVICTION_CRITICALLOWERBOUND = TCPropertiesImpl
             .getProperties()
             .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND, 16l * 1024 * 1024);    /*  3 max offheap pages  */
@@ -92,7 +91,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     private final static Future<SampledRateCounter> completedFuture = new Future<SampledRateCounter>() {
 
-        private final SampledRateCounter zeroStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false)); 
+        private final SampledRateCounter zeroStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
         
         @Override
             public boolean cancel(boolean bln) {
@@ -110,21 +109,24 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
             @Override
-            public SampledRateCounter get() throws InterruptedException, ExecutionException {
+                                                                                        public SampledRateCounter get() {
                 return zeroStats;
             }
 
             @Override
-            public SampledRateCounter get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
+                                                                                        public SampledRateCounter get(long l,
+                                                                                                                      TimeUnit tu) {
                 return zeroStats;
             }
             
     };
             
-     public SampledRateCounter getExpirationStatistics() {
+     @Override
+    public SampledRateCounter getExpirationStatistics() {
         return expirationStats;
     }
      
+    @Override
     public SampledRateCounter getEvictionStatistics() {
         return evictionStats;
     }
@@ -154,7 +156,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     //  100MB a second
             sleeptime = (monitored.getTotal() * 1000) / (100 * 1024 * 1024);
         }
-        this.trigger = new ResourceMonitor(monitored, sleeptime, L2_EVICTION_CRITICALTHRESHOLD, evictionGrp);      
+        this.trigger = new ResourceMonitor(monitored, sleeptime, L2_EVICTION_CRITICALTHRESHOLD, evictionGrp);
         this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
             @Override
@@ -206,29 +208,29 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         return completedFuture;
     }
     
-    public void scheduleEvictionTrigger(final EvictionTrigger trigger) {    
+    public void scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
         final SampledRateCounter count = new AggregateSampleRateCounter();
         final Future<SampledRateCounter> run = agent.submit(new Runnable() {
             @Override
             public void run()  {
-                doEvictionOn(trigger);
-                count.increment(trigger.getCount(), trigger.getRuntimeInMillis());
+                doEvictionOn(triggerParam);
+                count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
             }
-        },count);        
-        print(trigger.getName(), run);
+        },count);
+        print(triggerParam.getName(), run);
     }
     /*
      * return of false means the map is gone
      */
 
     @Override
-    public boolean doEvictionOn(final EvictionTrigger trigger) {        
+    public boolean doEvictionOn(final EvictionTrigger triggerParam) {
         if ( Thread.currentThread().getThreadGroup() != this.evictionGrp ) {
-            scheduleEvictionTrigger(trigger);
+            scheduleEvictionTrigger(triggerParam);
             return true;
         }
         
-        ObjectID oid = trigger.getId();
+        ObjectID oid = triggerParam.getId();
 
         if (!evictor.markEvictionInProgress(oid)) {
             return true;
@@ -248,40 +250,40 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
             EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
     // if size is zero or cache is pinned or already evicting, exit false
-            if ( !trigger.startEviction(ev) ) {
+            if ( !triggerParam.startEviction(ev) ) {
                 this.objectManager.releaseReadOnly(mo);
                 return true;
             }
-            ServerMapEvictionContext context = doEviction(trigger, ev, className, ev.getCacheName());
+            ServerMapEvictionContext context = doEviction(triggerParam, ev, className, ev.getCacheName());
 
             // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
             // to the sink because the sink reached max capacity and blocking
             // with a checked-out object will result in a deadlock. @see DEV-5207
-            trigger.completeEviction(ev);
+            triggerParam.completeEviction(ev);
             if ( context == null && ev.isEvicting() ) {
-                throw new AssertionError(trigger.toString());
+                throw new AssertionError(triggerParam.toString());
             }
             this.objectManager.releaseReadOnly(mo);
             
             if (context != null) {
-                if ( trigger instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)trigger).isExpirationOnly() ) {
-                    expirationStats.increment(trigger.getCount(),trigger.getRuntimeInMillis());
+                if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
+                    expirationStats.increment(triggerParam.getCount(),triggerParam.getRuntimeInMillis());
                 } else {
-                    evictionStats.increment(trigger.getCount(),trigger.getRuntimeInMillis());
+                    evictionStats.increment(triggerParam.getCount(),triggerParam.getRuntimeInMillis());
                 }
                 this.evictorSink.add(context);
-            } 
+            }
         } finally {
             evictor.markEvictionDone(oid);
             if (evictor.isLogging() && logger.isDebugEnabled()) {
-                logger.debug(trigger);
+                logger.debug(triggerParam);
             }
         }
 
         return true;
     }
 
-    private ServerMapEvictionContext doEviction(final EvictionTrigger trigger, final EvictableMap ev,
+    private ServerMapEvictionContext doEviction(final EvictionTrigger triggerParam, final EvictableMap ev,
             final String className,
             final String cacheName) {
         int max = ev.getMaxTotalCount();
@@ -291,12 +293,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             max = Integer.MAX_VALUE;
         }
 
-        Map samples = trigger.collectEvictonCandidates(max, ev, clientObjectReferenceSet);
+        Map samples = triggerParam.collectEvictonCandidates(max, ev, clientObjectReferenceSet);
 
         if (samples.isEmpty()) {
             return null;
         } else {
-            return new ServerMapEvictionContext(trigger, samples, className, cacheName);
+            return new ServerMapEvictionContext(triggerParam, samples, className, cacheName);
         }
     }
 
@@ -312,9 +314,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             push.add(agent.submit(new Callable<SampledRateCounter>() {
                 @Override
                 public SampledRateCounter call() throws Exception {
-                    EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
-                    doEvictionOn(trigger);
-                    rate.increment(trigger.getCount(), trigger.getRuntimeInMillis());
+                    EmergencyEvictionTrigger triggerLocal = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
+                    doEvictionOn(triggerLocal);
+                    rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
                     return rate;
                 }
             }
@@ -353,6 +355,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         
     private void print(final String name, final Future<SampledRateCounter> counter) {
         agent.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     SampledRateCounter rate = counter.get();
@@ -371,7 +374,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 }
             }
         });
-    }    
+    }
 
     class Responder implements MemoryEventsListener {
 
@@ -394,7 +397,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 if ( evictor.isLogging() ) {
                     log("Percent usage:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + (threshold*100/max));
                 }
-                if (reserve >= threshold ) {  
+                if (reserve >= threshold ) {
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + (reserve * 100 / max));
                         currentRun.cancel(false);
@@ -413,12 +416,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     if ( reserve >= calculateThreshold(usage,(max * L2_EVICTION_HALTTHRESHOLD / 100)) ) {
                         if ( !isThrottling ) {
                             throttle(usage);
-  //  double check one more time, weighting will make the throttling threshold lower than the stopping but make sure 
+  //  double check one more time, weighting will make the throttling threshold lower than the stopping but make sure
   //  we really need to stop
                         } else if ( !isStopped ) {
                             stop(usage);
-                        } 
-                    } 
+                        }
+                    }
                 } else {
                     if ( isStopped || isThrottling ) {
                         clear(usage);
@@ -433,7 +436,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                             print("Periodic", currentRun);
                         }
                         currentRun = scheduleEvictionRun();
-                    } 
+                    }
                 }
                 last = current;
                 resetEpocIfNeeded(current,reserve,max);
@@ -442,7 +445,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
-            } 
+            }
         }
         
         private long calculateThreshold(MemoryUsage usage, long level) {
@@ -460,7 +463,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             long gap = ( System.currentTimeMillis() - last ) * aveGrow * weight;
 /**
- * if size is zero, our initial grow reading is very suspect, particularly for 
+ * if size is zero, our initial grow reading is very suspect, particularly for
  * heap implementations.
  */
             if ( size == 0 || gap < 0 || gap > level / 2) {
@@ -476,10 +479,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
             return threshold;
         }
-    /* 
-    * if resource usage is going down or 5 min have passed, reset the epoc and base size to try and detect rapid 
+    /*
+    * if resource usage is going down or 5 min have passed, reset the epoc and base size to try and detect rapid
     * growth in the future
-    */        
+    */
         private void resetEpocIfNeeded(long currentTime, long currentSize, long maxSize) {
             if ( size == 0 || currentSize < size - ( maxSize *.10 ) || epoc + (5 * 60 * 1000) < currentTime) {
                 resetEpoc(currentTime,currentSize);

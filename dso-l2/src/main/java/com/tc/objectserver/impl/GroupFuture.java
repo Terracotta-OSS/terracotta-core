@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -64,7 +63,7 @@ public class GroupFuture<T> implements Future<T> {
     }
 
     @Override
-    public T get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
+  public T get(long l, TimeUnit tu) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

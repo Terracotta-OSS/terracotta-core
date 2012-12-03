@@ -4,9 +4,9 @@
  */
 package com.tc.objectserver.managedobject;
 
+import static org.mockito.Mockito.mock;
+
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -26,11 +26,8 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadDumpUtil;
 
-import static org.mockito.Mockito.mock;
-
 
 public abstract class ManagedObjectStateSerializationTestBase extends TCTestCase {
-  private final TCLogger                 logger   = TCLogging.getTestingLogger(getClass());
   private ObjectID                       objectID = new ObjectID(2000);
 
   private ManagedObjectPersistor managedObjectPersistor;

@@ -3,17 +3,18 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
+
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 public class ResourceMonitor implements ReconnectionRejectedCallback {
 
@@ -22,7 +23,6 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   private final List            listeners     = new CopyOnWriteArrayList();
 
   private final long            sleepInterval;
-  private final long             critical;
 
   private MemoryMonitor             monitor;
   private final MonitoredResource   resource;
@@ -33,7 +33,6 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
-    this.critical = critical;
   }
 
 
@@ -97,6 +96,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       run = false;
     }
 
+    @Override
     public void run() {
       logger.debug("Starting Memory Monitor - sleep interval - " + sleepTime);
       long counter = 0;
@@ -120,7 +120,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
                       cacheMax = resource.getTotal();
                   }
                   return cacheMax;
-              }              
+              }
               
                 @Override
                 public long getFreeMemory() {
@@ -181,6 +181,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
   }
 
+  @Override
   public synchronized void shutdown() {
     stopMonitorThread();
   }

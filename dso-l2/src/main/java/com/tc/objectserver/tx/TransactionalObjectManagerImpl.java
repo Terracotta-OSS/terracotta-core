@@ -75,6 +75,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // ProcessTransactionHandler Method
+  @Override
   public void addTransactions(Collection<ServerTransaction> txns) {
     try {
       Collection<TransactionLookupContext> txnLookupContexts = createAndPreFetchObjectsFor(txns);
@@ -113,8 +114,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       boolean initiateApply = this.gtxm.initiateApply(txn.getServerTransactionID());
       if (initiateApply) {
         newOids.addAll(txn.getNewObjectIDs());
-        for (Iterator j = txn.getObjectIDs().iterator(); j.hasNext();) {
-          ObjectID oid = (ObjectID) j.next();
+        for (Object element : txn.getObjectIDs()) {
+          ObjectID oid = (ObjectID) element;
           if (!newOids.contains(oid)) {
             oids.add(oid);
           }
@@ -127,6 +128,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // LookupHandler Method
+  @Override
   public void lookupObjectsForTransactions() {
     processPendingIfNecessary();
     while (true) {
@@ -310,6 +312,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // ApplyTransaction stage method
+  @Override
   public synchronized boolean applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
     TxnObjectGrouping grouping = this.applyPendingTxns.remove(applyInfo.getServerTransactionID());
     Assert.assertNotNull(grouping);
@@ -330,21 +333,25 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // Apply Complete stage method
+  @Override
   public void processApplyComplete() {
     throw new AssertionError();
   }
 
   // Commit Transaction stage method
+  @Override
   public synchronized void commitTransactionsComplete(CommitTransactionContext ctc) {
     throw new AssertionError();
   }
 
   // recall from ObjectManager on DGC start
+  @Override
   public void recallAllCheckedoutObject() {
     this.txnStageCoordinator.initiateRecallAll();
   }
 
   // Recall Stage method
+  @Override
   public synchronized void recallCheckedoutObject(RecallObjectsContext roc) {
     processPendingIfNecessary();
     if (roc.recallAll()) {
@@ -368,6 +375,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print(shortDescription()).flush();
@@ -394,6 +402,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
 
+    @Override
     public synchronized void setResults(ObjectManagerLookupResults results) {
       this.lookedUpObjects = results.getObjects();
       assertNoMissingObjects(results.getMissingObjectIDs());
@@ -415,10 +424,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
              + (this.lookedUpObjects == null ? "0" : Integer.toString(this.lookedUpObjects.size())) + "}";
     }
 
+    @Override
     public ObjectIDSet getLookupIDs() {
       return this.oids;
     }
 
+    @Override
     public ObjectIDSet getNewObjectIDs() {
       return this.txn.getNewObjectIDs();
     }
@@ -426,11 +437,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     private void assertNoMissingObjects(ObjectIDSet missing) {
       if (!missing.isEmpty()) { throw new AssertionError("Lookup for non-exisistent Objects : " + missing
                                                          + " lookup context is : " + this); }
-    }
-
-    public boolean updateStats() {
-      // These lookups are already preFetched. So don't update stats.
-      return false;
     }
 
   }
@@ -466,6 +472,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return this.pending.size();
     }
 
+    @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       out.print(getClass().getName()).print(" : ").print(this.pending.size());
       return out;

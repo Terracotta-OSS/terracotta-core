@@ -6,7 +6,6 @@ import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.TransformerLookup;
 import org.terracotta.corestorage.heap.HeapStorageManager;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -21,7 +20,8 @@ public class HeapStorageManagerFactory implements StorageManagerFactory {
   }
 
   @Override
-  public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap, final TransformerLookup transformerLookup) throws IOException {
+  public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap,
+                                             final TransformerLookup transformerLookup) {
     return new HeapStorageManager(configMap);
   }
 

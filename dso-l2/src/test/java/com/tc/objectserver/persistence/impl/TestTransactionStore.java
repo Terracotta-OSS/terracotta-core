@@ -18,7 +18,6 @@ import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,6 +51,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID stxid) {
     GlobalTransactionDescriptor rv = volatileMap.get(stxid);
     if (rv == null) {
@@ -67,6 +67,7 @@ public class TestTransactionStore implements TransactionStore {
     map.put(txID.getServerTransactionID(), txID);
   }
 
+  @Override
   public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID) {
     GlobalTransactionDescriptor txID = getTransactionDescriptor(stxID);
     if (txID.isCommitted()) { throw new TransactionCommittedError("Already committed : " + txID); }
@@ -80,6 +81,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID stxid) {
     try {
       loadContextQueue.put(stxid);
@@ -89,6 +91,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public GlobalTransactionID getLeastGlobalTransactionID() {
     leastContextQueue.put(new Object());
     if (ids.isEmpty()) {
@@ -98,6 +101,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, ServerTransactionID lowWaterMark) {
     for (final Entry<ServerTransactionID, GlobalTransactionDescriptor> e : volatileMap
         .entrySet()) {
@@ -112,19 +116,23 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public void shutdownNode(Transaction transaction, NodeID nid) {
     throw new ImplementMe();
   }
 
+  @Override
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicPut(volatileMap, rv);
   }
 
+  @Override
   public void shutdownAllClientsExcept(Transaction tx, Set cids) {
     throw new ImplementMe();
   }
 
+  @Override
   public void commitAllTransactionDescriptor(Transaction persistenceTransaction, Collection stxIDs) {
     for (final Object stxID : stxIDs) {
       ServerTransactionID sid = (ServerTransactionID)stxID;
@@ -132,6 +140,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, GlobalTransactionID lowWaterMark) {
     throw new ImplementMe();
   }

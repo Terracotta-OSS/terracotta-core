@@ -10,7 +10,6 @@ import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.api.BackupManager;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.management.NotCompliantMBeanException;
@@ -312,7 +311,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public void backup(final String name) throws IOException {
+  public void backup(final String name) {
+    //
   }
 
   @Override
@@ -321,7 +321,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public String getBackupStatus(final String name) throws IOException {
+  public String getBackupStatus(final String name) {
     return BackupManager.BackupStatus.UNKNOWN.toString();
   }
 

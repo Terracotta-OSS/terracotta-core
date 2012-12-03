@@ -94,46 +94,57 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
   }
 
+  @Override
   public Offheap offHeapConfig() {
     return this.offHeapConfig;
   }
 
+  @Override
   public Security securityConfig() {
     return this.securityConfig;
   }
 
+  @Override
   public BindPort dsoPort() {
     return this.dsoPort;
   }
 
+  @Override
   public BindPort l2GroupPort() {
     return this.l2GroupPort;
   }
 
+  @Override
   public String host() {
     return host;
   }
 
+  @Override
   public String serverName() {
     return this.serverName;
   }
 
+  @Override
   public Persistence getPersistence() {
     return this.persistence;
   }
 
+  @Override
   public GarbageCollection garbageCollection() {
     return this.garbageCollection;
   }
 
+  @Override
   public DsoServerData getDso() {
     return this.dso;
   }
 
+  @Override
   public int clientReconnectWindow() {
     return this.dso.getClientReconnectWindow();
   }
 
+  @Override
   public String bind() {
     return this.bind;
   }
@@ -343,26 +354,28 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     security.getSsl().setCertificate(ParameterSubstituter.substitute(security.getSsl().getCertificate()));
   }
 
-  private static void initializeKeyChain(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
-    final String defaultKeyChainImpl =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "keychain/class")).getStringValue();
+  private static void initializeKeyChain(final Security security, final DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    final String defaultKeyChainImpl = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(),
+                                                                                    "keychain/class")).getStringValue();
 
-    if(!security.getKeychain().isSetClass1()) {
+    if (!security.getKeychain().isSetClass1()) {
       security.getKeychain().setClass1(defaultKeyChainImpl);
     }
     security.getKeychain().setUrl(ParameterSubstituter.substitute(security.getKeychain().getUrl()));
   }
 
-  private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
-    final String defaultRealm =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/realm")).getStringValue();
-    final String defaultUser =
-        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/user")).getStringValue();
+  private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    final String defaultRealm = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(), "auth/realm"))
+        .getStringValue();
+    final String defaultUser = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(), "auth/user"))
+        .getStringValue();
 
-    if(!security.getAuth().isSetRealm()) {
+    if (!security.getAuth().isSetRealm()) {
       security.getAuth().setRealm(defaultRealm);
     }
-    if(!security.getAuth().isSetUser()) {
+    if (!security.getAuth().isSetUser()) {
       security.getAuth().setUser(defaultUser);
     }
 
@@ -378,8 +391,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     initializeOffHeap(server, defaultValueProvider);
   }
 
-  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
+  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider) {
     DsoServerData dso = server.getDso();
     Assert.assertNotNull(dso);
 

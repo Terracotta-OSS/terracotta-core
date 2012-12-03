@@ -22,16 +22,16 @@ public class AggregateSampleRateCounter extends SampledCounterImpl implements Sa
     }
 
     @Override
-    public synchronized void increment(long numerator, long denominator) {
-        this.numerator += numerator;
-        this.denominator += denominator;
+    public synchronized void increment(long numeratorParam, long denominatorParam) {
+        this.numerator += numeratorParam;
+        this.denominator += denominatorParam;
         super.increment();
     }
 
     @Override
-    public synchronized void decrement(long numerator, long denominator) {
-        this.numerator -= numerator;
-        this.denominator -= denominator;
+    public synchronized void decrement(long numeratorParam, long denominatorParam) {
+        this.numerator -= numeratorParam;
+        this.denominator -= denominatorParam;
         super.decrement();
     }
 

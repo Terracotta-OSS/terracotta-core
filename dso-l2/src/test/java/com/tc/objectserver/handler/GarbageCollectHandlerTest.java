@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.handler;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 import org.junit.Assert;
 import org.mockito.Mockito;
 
@@ -50,8 +52,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class GarbageCollectHandlerTest extends TCTestCase {
   {
@@ -281,133 +281,160 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
   private class TestObjectManager implements ObjectManager {
 
+    @Override
     public ManagedObject getObjectByID(ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public Iterator getRootNames() {
       throw new ImplementMe();
     }
 
+    @Override
     public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
       throw new ImplementMe();
     }
 
-    public int getCachedObjectCount() {
-      throw new ImplementMe();
-    }
-
+    @Override
     public void stop() {
       throw new ImplementMe();
     }
 
+    @Override
     public void release(ManagedObject object) {
       throw new ImplementMe();
     }
 
+    @Override
     public void releaseAllReadOnly(Collection<ManagedObject> objects) {
       throw new ImplementMe();
     }
 
+    @Override
     public void releaseReadOnly(ManagedObject object) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void releaseAll(Collection<ManagedObject> collection) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext,
                                                  int maxCount) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
       throw new ImplementMe();
     }
 
+    @Override
     public Iterator getRoots() {
       throw new ImplementMe();
     }
 
+    @Override
     public Map getRootNamesToIDsMap() {
       throw new ImplementMe();
     }
 
+    @Override
     public void createRoot(String name, ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public void createNewObjects(Set<ObjectID> ids) {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectID lookupRootID(String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public GarbageCollector getGarbageCollector() {
       return gc;
     }
 
+    @Override
     public void setGarbageCollector(GarbageCollector gc) {
       throw new ImplementMe();
     }
 
+    @Override
     public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
       throw new ImplementMe();
     }
 
+    @Override
     public void waitUntilReadyToGC() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getLiveObjectCount() {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyGCComplete(DGCResultContext dgcResultContext) {
       deletedObjects.addAll(dgcResultContext.getGarbageIDs());
       inlineGCCount.incrementAndGet();
     }
 
+    @Override
     public void setStatsListener(ObjectManagerStatsListener listener) {
       throw new ImplementMe();
     }
 
+    @Override
     public void start() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getCheckedOutCount() {
       throw new ImplementMe();
     }
 
+    @Override
     public Set getRootIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getAllObjectIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getObjectIDsInCache() {
       throw new ImplementMe();
     }
 
+    @Override
     public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids) {
       throw new ImplementMe();
     }
 
+    @Override
     public ManagedObject getObjectByIDReadOnly(ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public ManagedObject getQuietObjectByID(ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public void deleteObjects(DGCResultContext dgcResultContext) {
       deletedObjects.addAll(dgcResultContext.getGarbageIDs());
       inlineGCCount.incrementAndGet();
@@ -415,46 +442,57 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   }
 
   private class TestGarbageCollector extends AbstractGarbageCollector {
+    @Override
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       throw new ImplementMe();
     }
 
+    @Override
     public void doGC(GCType type) {
       periodicDGCCount.incrementAndGet();
     }
 
+    @Override
     public void start() {
       // no-op
     }
 
+    @Override
     public void stop() {
       // no-op
     }
 
+    @Override
     public boolean isStarted() {
       return false;
     }
 
+    @Override
     public void setState(LifeCycleState st) {
       // no-op
     }
 
+    @Override
     public void addListener(GarbageCollectorEventListener listener) {
       // no-op
     }
 
+    @Override
     public void deleteGarbage(DGCResultContext resultContext) {
       // no-op
     }
 
+    @Override
     public void notifyObjectCreated(ObjectID id) {
       // no-op
     }
 
+    @Override
     public void notifyNewObjectInitalized(ObjectID id) {
       // no-op
     }
 
+    @Override
     public void notifyObjectsEvicted(Collection evicted) {
       // no-op
     }

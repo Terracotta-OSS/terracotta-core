@@ -3,10 +3,10 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.object.ObjectID;
-import com.tc.objectserver.api.EvictionTrigger;
-import com.tc.objectserver.api.ObjectManager;
 import org.mockito.Mockito;
+
+import com.tc.object.ObjectID;
+import com.tc.objectserver.api.ObjectManager;
 
 /**
  *
