@@ -165,15 +165,25 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 return t;
             }
         });
-        
-        monitored.addReservedThreshold(MonitoredResource.Direction.RISING, L2_EVICTION_HALTTHRESHOLD*monitored.getTotal()/100, new Runnable() {
+        try {
+            Runnable rb = new Runnable() {
 
-            @Override
-            public void run() {
-                resourceManager.setThrowException();
+                @Override
+                public void run() {
+                    resourceManager.setThrowException();
+                }
+
+            };
+            if ( monitored.getType() == MonitoredResource.Type.HEAP ) {
+                monitored.addUsedThreshold(MonitoredResource.Direction.RISING, L2_EVICTION_HALTTHRESHOLD*monitored.getTotal()/100, rb);
             }
-            
-        });
+            if ( monitored.getType() == MonitoredResource.Type.OFFHEAP ) {
+                monitored.addReservedThreshold(MonitoredResource.Direction.RISING, L2_EVICTION_HALTTHRESHOLD*monitored.getTotal()/100, rb);
+            }
+        } catch ( UnsupportedOperationException uns ) {
+            logger.info("threshold monitor not registered", uns);
+        }
+        
         log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
     }
 
