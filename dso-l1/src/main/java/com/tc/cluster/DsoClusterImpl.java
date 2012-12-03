@@ -27,7 +27,6 @@ import com.tcclient.cluster.ClusterNodeStatus;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 import com.tcclient.cluster.DsoNode;
-import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
@@ -210,41 +209,61 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   @Override
   public void fireThisNodeJoined(final ClientID nodeId, final ClientID[] clusterMembers) {
     stateWriteLock.lock();
+    boolean rejoinHappened = false;
+    boolean fireThisNodeJoined = false;
+    DsoNodeInternal oldNode = currentNode;
     try {
       ClientID newNodeId = nodeId;
+      rejoinHappened = rejoinManager.thisNodeJoined(newNodeId);
 
-      rejoinManager.thisNodeJoinedCallback(this, newNodeId);
-
-      if (currentNode != null) {
+      if (rejoinHappened) {
         // node rejoined, update current node
         currentClientID = newNodeId;
         currentNode = topology.updateOnRejoin(currentClientID, clusterMembers);
-        return;
       } else {
+        if (currentNode == null) {
+          // not a reconnect, joining first time
+          fireThisNodeJoined = true;
+        }
         currentClientID = newNodeId;
         currentNode = topology.registerThisDsoNode(nodeId);
-        nodeStatus.nodeJoined();
-        nodeStatus.operationsEnabled();
-
         for (ClientID otherNodeId : clusterMembers) {
           if (!currentClientID.equals(otherNodeId)) {
             topology.registerDsoNode(otherNodeId);
           }
         }
+        nodeStatus.nodeJoined();
+        nodeStatus.operationsEnabled();
       }
-
     } finally {
       stateWriteLock.unlock();
 
       if (currentNode != null) {
         notifyWaiters();
-      } else {
-        fireNodeJoined(nodeId);
       }
 
-      fireOperationsEnabled();
+      final DsoClusterEventImpl currentThisNodeEvent = new DsoClusterEventImpl(currentNode);
+      if (rejoinHappened) {
+        // with rejoin, sequence of events:
+        // - old node leaves
+        // - new node joins
+        // - new node ops enabled
+        // - new node rejoin event
+        DsoClusterEvent thisOldNodeLeftEvent = new DsoClusterEventImpl(oldNode);
+        fireEventToAllListeners(DsoClusterEventType.NODE_LEFT, thisOldNodeLeftEvent);
+        fireEventToAllListeners(DsoClusterEventType.NODE_JOIN, currentThisNodeEvent);
+        fireEventToAllListeners(DsoClusterEventType.OPERATIONS_ENABLED, currentThisNodeEvent);
+        fireEventToAllListeners(DsoClusterEventType.NODE_REJOINED, currentThisNodeEvent);
+      } else {
+        // without rejoin, sequence of events:
+        // - if node is joining first time, fire node joined of current node
+        // - fire ops enabled of current node
+        if (fireThisNodeJoined) {
+          fireEventToAllListeners(DsoClusterEventType.NODE_JOIN, currentThisNodeEvent);
+        }
+        fireEventToAllListeners(DsoClusterEventType.OPERATIONS_ENABLED, currentThisNodeEvent);
+      }
     }
-
   }
 
   @Override
@@ -290,16 +309,9 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     fireEvent(DsoClusterEventType.NODE_JOIN, event, listener);
   }
 
-  @Override
-  public void fireNodeRejoined(ClientID newNodeId) {
-
-    fireRejoinEvent(new DsoNodeImpl(newNodeId.toString(), newNodeId.toLong(), false));
-  }
-
-  private void fireRejoinEvent(DsoNodeImpl newNode) {
-    final DsoClusterEvent event = new DsoClusterEventImpl(newNode);
+  private void fireEventToAllListeners(final DsoClusterEventType eventType, final DsoClusterEvent event) {
     for (DsoClusterListener l : listeners) {
-      fireEvent(DsoClusterEventType.NODE_REJOINED, event, l);
+      fireEvent(eventType, event, l);
     }
   }
 
