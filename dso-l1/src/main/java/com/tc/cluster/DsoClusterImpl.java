@@ -267,6 +267,13 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
+  public void cleanup() {
+    // cleanup on rejoin start
+    // remove all cluster members
+    topology.cleanup();
+  }
+
+  @Override
   public void fireThisNodeLeft() {
     boolean fireOperationsDisabled = false;
     stateWriteLock.lock();

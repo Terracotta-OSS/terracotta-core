@@ -7,6 +7,7 @@ package com.tcclient.cluster;
 import com.tc.async.api.Stage;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
+import com.tc.object.ClearableCallback;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 
@@ -14,7 +15,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEventsGun, DsoClusterEventsNotifier {
+public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEventsGun, DsoClusterEventsNotifier,
+    ClearableCallback {
 
   public static enum DsoClusterEventType {
     NODE_JOIN("Node Joined"), NODE_LEFT("Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED(

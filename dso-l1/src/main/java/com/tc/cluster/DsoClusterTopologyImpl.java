@@ -93,7 +93,6 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   DsoNodeInternal updateOnRejoin(final ClientID thisNodeId, final NodeID[] clusterMembers) {
     nodesWriteLock.lock();
     try {
-      nodes.clear();
       for (NodeID otherNode : clusterMembers) {
         if (!thisNodeId.equals(otherNode)) {
           registerDsoNodeBase((ClientID) otherNode, false);
@@ -116,6 +115,15 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
       } else {
         return node;
       }
+    } finally {
+      nodesWriteLock.unlock();
+    }
+  }
+
+  void cleanup() {
+    nodesWriteLock.lock();
+    try {
+      nodes.clear();
     } finally {
       nodesWriteLock.unlock();
     }
