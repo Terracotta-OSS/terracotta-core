@@ -35,7 +35,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
 
   private final Object               jmxReadyLock;
 
-  private SetOnceFlag                localJmxServerReady;
+  private final SetOnceFlag                localJmxServerReady;
 
   private boolean                    transportConnected;
 
@@ -58,9 +58,10 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     synchronized (this) {
       notifyAll();
       acceptOk = false;
-      localJmxServerReady = new SetOnceFlag();
-      transportConnected = false;
-      sentReadyMessage = false;
+      synchronized (jmxReadyLock) {
+        sentReadyMessage = false;
+        transportConnected = false;
+      }
     }
   }
 
