@@ -12,7 +12,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.net.GroupID;
 import com.tc.util.Assert;
-import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
@@ -26,23 +25,24 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
   // int defaultId = ((XmlInteger)
   // defaultValueProvider.defaultFor(serversBeanRepository.rootBeanSchemaType(),
   // "active-server-groups/active-server-group[@id]")).getBigIntegerValue().intValue();
-  public static final int     defaultGroupId = 0;
+  public static final int     defaultGroupId         = 0;
+
+  private static final int    DEFAULT_ELECETION_TIME = 5;
 
   private GroupID             groupId;
   private String              grpName;
-  private final HaConfigSchema   haConfig;
   private final MembersConfig membersConfig;
+  private final MirrorGroup   group;
 
   public ActiveServerGroupConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager) {
     super(context);
     context.ensureRepositoryProvides(MirrorGroup.class);
-    MirrorGroup group = (MirrorGroup) context.bean();
+    group = (MirrorGroup) context.bean();
 
     String groupName = group.getGroupName();
     this.grpName = groupName;
 
-    membersConfig = new MembersConfigObject(createContext(setupManager, true, group));
-    haConfig = new HaConfigObject(createContext(setupManager, false, group));
+    membersConfig = new MembersConfigObject(createContext(setupManager));
   }
 
   public void setGroupId(GroupID groupId) {
@@ -50,8 +50,9 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
   }
 
   @Override
-  public HaConfigSchema getHaHolder() {
-    return this.haConfig;
+  public int getElectionTimeInSecs() {
+    if (group.isSetElectionTime()) { return group.getElectionTime(); }
+    return DEFAULT_ELECETION_TIME;
   }
 
   public void setGroupName(String groupName) {
@@ -73,27 +74,15 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     return this.groupId;
   }
 
-  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager, boolean isMembers,
-                                            final MirrorGroup group) {
-    if (isMembers) {
-      ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,
-                                                                   new ChildBeanFetcher() {
-                                                                     @Override
-                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                       return group.getMembers();
-                                                                     }
-                                                                   });
-      return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
-    } else {
-      ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Ha.class,
-                                                                   new ChildBeanFetcher() {
-                                                                     @Override
-                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                       return group.getHa();
-                                                                     }
-                                                                   });
-      return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
-    }
+  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager) {
+    ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,
+                                                                 new ChildBeanFetcher() {
+                                                                   @Override
+                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                     return group.getMembers();
+                                                                   }
+                                                                 });
+    return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
   }
 
   @Override
@@ -105,12 +94,11 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     return false;
   }
 
-  public static void createDefaultMirrorGroup(Servers servers, Ha ha) throws ConfigurationSetupException {
+  public static void createDefaultMirrorGroup(Servers servers) throws ConfigurationSetupException {
     Assert.assertTrue(servers.isSetMirrorGroups());
     Assert.assertEquals(0, servers.getMirrorGroups().getMirrorGroupArray().length);
 
     MirrorGroup mirrorGroup = servers.getMirrorGroups().addNewMirrorGroup();
-    mirrorGroup.setHa(ha);
     Members members = mirrorGroup.addNewMembers();
 
     Server[] serverArray = servers.getServerArray();

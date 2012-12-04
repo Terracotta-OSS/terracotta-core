@@ -23,7 +23,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.terracottatech.config.HaMode;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,7 +31,7 @@ import java.net.UnknownHostException;
 
 /**
  * Test for DEV-1060
- * 
+ *
  * @author Manoj
  */
 public class DSOServerBindAddressTest extends BaseDSOTestCase {
@@ -167,7 +166,6 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     manager.commonl2Config().jmxPort().setIntValue(jmxPort);
     manager.commonl2Config().jmxPort().setBind(bindAddress);
 
-    manager.haConfig().getHa().setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);
     return manager;
   }
 }

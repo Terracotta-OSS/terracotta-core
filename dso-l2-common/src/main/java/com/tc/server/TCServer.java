@@ -40,8 +40,6 @@ public interface TCServer {
 
   boolean getRestartable();
 
-  String getFailoverMode();
-
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();

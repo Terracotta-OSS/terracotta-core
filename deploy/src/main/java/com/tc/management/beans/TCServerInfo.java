@@ -369,11 +369,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public String getFailoverMode() {
-    return server.getFailoverMode();
-  }
-
-  @Override
   public String getConfig() {
     return server.getConfig();
   }

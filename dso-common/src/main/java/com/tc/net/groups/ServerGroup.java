@@ -6,7 +6,6 @@ package com.tc.net.groups;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
@@ -22,15 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerGroup {
 
-  private final GroupID        groupId;
-  private String[]             members;
-  private final HaConfigSchema haMode;
-  private final Map            nodes;
+  private final GroupID     groupId;
+  private volatile String[] members;
+  private final Map         nodes;
 
   public ServerGroup(final ActiveServerGroupConfig group) {
     this.groupId = group.getGroupId();
     this.members = group.getMembers().getMemberArray();
-    this.haMode = group.getHaHolder();
     this.nodes = new ConcurrentHashMap();
   }
 
@@ -121,10 +118,6 @@ public class ServerGroup {
 
   public Node getNode(String serverName) {
     return (Node) this.nodes.get(serverName);
-  }
-
-  public boolean isNetworkedActivePassive() {
-    return this.haMode.isNetworkedActivePassive();
   }
 
   @Override

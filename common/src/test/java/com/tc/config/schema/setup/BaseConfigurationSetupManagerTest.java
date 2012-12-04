@@ -21,8 +21,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.Ha;
-import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
@@ -489,12 +487,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
     Assert.assertEquals(1, mirrorGroup.getMembers().sizeOfMemberArray());
     Assert.assertEquals(1, mirrorGroup.getMembers().getMemberArray().length);
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
     Assert.assertEquals(server.getName(), mirrorGroup.getMembers().getMemberArray(0));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
   }
 
   public void testMirrorGroupWithDefaultHa() throws IOException, ConfigurationSetupException {
@@ -529,11 +523,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals("server1", mirrorGroup.getMembers().getMemberArray(0));
     Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
     Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
 
     mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
     Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
@@ -542,11 +532,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
     Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
     Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
   }
 
   public void testMirrorGroupWithGivenHa() throws IOException, ConfigurationSetupException {
@@ -558,11 +544,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
                     + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
                     + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
                     + "<member>server2</member>" + "</members>" + "</mirror-group>"
-                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
-                    + "<member>server4</member>" + "</members>" + "<ha>" + "<mode>networked-active-passive</mode>"
-                    + "<networked-active-passive>" + "<election-time>15</election-time>"
-                    + "</networked-active-passive>" + "</ha>" + "</mirror-group>" + "</mirror-groups>" + "<ha>"
-                    + "<mode>disk-based-active-passive</mode>" + "</ha>" + "</servers>" + "</tc:tc-config>";
+                    + "<mirror-group group-name=\"group2\" election-time=\"15\">" + "<members>"
+                    + "<member>server3</member>" + "<member>server4</member>" + "</members>" + "</mirror-group>"
+                    + "</mirror-groups>" + "</servers>"
+                    + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -584,10 +569,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
     Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
 
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha ha = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.DISK_BASED_ACTIVE_PASSIVE, ha.getMode());
-
     mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
     Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
     Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
@@ -595,11 +576,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
     Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
     Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    ha = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, ha.getMode());
-    Assert.assertEquals(15, ha.getNetworkedActivePassive().getElectionTime());
+    Assert.assertEquals(15, mirrorGroup.getElectionTime());
   }
 
   public void testUpdateCheckDefault() throws IOException, ConfigurationSetupException {

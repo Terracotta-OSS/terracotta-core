@@ -59,8 +59,7 @@ public class HASettingsChecker {
                                                                     l2l2PingInterval, l2l2PingProbes,
                                                                     l2l2SocketConnectTimeout);
     this.clientReconnectWindow = config.dsoL2Config().clientReconnectWindow();
-    this.electionTime = config.getActiveServerGroupForThisL2().getHaHolder().getHa().getNetworkedActivePassive()
-        .getElectionTime();
+    this.electionTime = config.getActiveServerGroupForThisL2().getElectionTimeInSecs();
     this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);
   }
 

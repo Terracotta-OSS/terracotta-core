@@ -68,8 +68,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   boolean getRestartable();
 
-  String getFailoverMode();
-
   boolean isGarbageCollectionEnabled();
 
   int getGarbageCollectionInterval();

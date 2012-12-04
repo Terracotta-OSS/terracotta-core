@@ -9,7 +9,6 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -20,7 +19,6 @@ import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.config.test.schema.GroupConfigBuilder;
 import com.tc.config.test.schema.GroupsConfigBuilder;
-import com.tc.config.test.schema.HaConfigBuilder;
 import com.tc.config.test.schema.L2ConfigBuilder;
 import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.MembersConfigBuilder;
@@ -147,9 +145,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     }
 
     l2sBuilder.setL2s(l2Builders);
-    HaConfigBuilder haConfigBuilder = new HaConfigBuilder();
-    haConfigBuilder.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
-    l2sBuilder.setHa(haConfigBuilder);
     l2sBuilder.setGroups(groupsBuilder);
     out.setServers(l2sBuilder);
 
@@ -278,11 +273,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     @Override
     public SecurityConfig getSecurity() {
       return this.l2Config.getSecurity();
-    }
-
-    @Override
-    public HaConfigSchema haConfig() {
-      return this.l2Config.haConfig();
     }
 
     @Override

@@ -29,17 +29,11 @@ reserved.
     </server>
     
     <mirror-groups>
-      <mirror-group>
+      <mirror-group election-time="5">
 	<members>
 	  <member>server-1</member>
 	  <member>server-2</member>
 	</members>
-	<ha>
-	  <mode>networked-active-passive</mode>
-	  <networked-active-passive>
-	    <election-time>5</election-time>
-	  </networked-active-passive>
-	</ha>
       </mirror-group>
     </mirror-groups>
 

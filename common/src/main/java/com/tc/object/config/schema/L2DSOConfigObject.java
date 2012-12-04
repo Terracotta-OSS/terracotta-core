@@ -11,7 +11,6 @@ import org.apache.xmlbeans.XmlString;
 
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.BaseConfigObject;
-import com.tc.config.schema.HaConfigObject;
 import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -181,7 +180,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeOffHeap(server, defaultValueProvider);
     }
 
-    HaConfigObject.initializeHa(servers, defaultValueProvider);
     ActiveServerGroupsConfigObject.initializeMirrorGroups(servers, defaultValueProvider);
     UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
   }

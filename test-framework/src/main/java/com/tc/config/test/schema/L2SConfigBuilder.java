@@ -11,7 +11,6 @@ package com.tc.config.test.schema;
 public class L2SConfigBuilder extends BaseConfigBuilder {
 
   private L2ConfigBuilder[]              l2s;
-  private HaConfigBuilder                ha;
   private GroupsConfigBuilder            groups;
   private UpdateCheckConfigBuilder       updateCheck;
   private GarbageCollectionConfigBuilder gc;
@@ -25,11 +24,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
   public void setL2s(L2ConfigBuilder[] l2s) {
     this.l2s = l2s;
     setProperty("l2s", l2s);
-  }
-
-  public void setHa(HaConfigBuilder ha) {
-    this.ha = ha;
-    setProperty("ha", ha);
   }
 
   public void setGroups(GroupsConfigBuilder groups) {
@@ -60,10 +54,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     return l2s;
   }
 
-  public HaConfigBuilder getHa() {
-    return ha;
-  }
-
   public GroupsConfigBuilder getGroups() {
     return groups;
   }
@@ -80,9 +70,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     }
     if (isSet("groups")) {
       out += groups.toString();
-    }
-    if (isSet("ha")) {
-      out += ha.toString();
     }
     if (isSet("update-check")) {
       out += updateCheck.toString();

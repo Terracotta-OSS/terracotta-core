@@ -18,7 +18,6 @@ import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.GarbageCollection;
-import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.NonNegativeInt;
 import com.terracottatech.config.Restartable;
@@ -360,11 +359,6 @@ public class MockServers implements Servers {
   }
 
   @Override
-  public Ha addNewHa() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public MirrorGroups addNewMirrorGroups() {
     throw new ImplementMe();
   }
@@ -380,11 +374,6 @@ public class MockServers implements Servers {
   }
 
   @Override
-  public Ha getHa() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public UpdateCheck getUpdateCheck() {
     throw new ImplementMe();
   }
@@ -395,17 +384,7 @@ public class MockServers implements Servers {
   }
 
   @Override
-  public boolean isSetHa() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public boolean isSetUpdateCheck() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void setHa(Ha arg0) {
     throw new ImplementMe();
   }
 
@@ -416,11 +395,6 @@ public class MockServers implements Servers {
 
   @Override
   public void unsetMirrorGroups() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void unsetHa() {
     throw new ImplementMe();
   }
 

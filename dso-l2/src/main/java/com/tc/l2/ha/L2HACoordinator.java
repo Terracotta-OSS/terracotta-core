@@ -4,6 +4,8 @@
  */
 package com.tc.l2.ha;
 
+import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
+
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.Sink;
@@ -84,8 +86,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
-
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener, PrettyPrintable {
 
   private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
@@ -122,7 +122,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
                          DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
-                         final ObjectIDSequence objectIDSequence, final MonitoredResource resource) {
+                         final ObjectIDSequence objectIDSequence, final MonitoredResource resource,
+                         int electionTimInSecs) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -133,19 +134,19 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.l2ObjectStateManager = l2ObjectStateManager;
     this.persistentStateStore = persistentStateStore;
 
-    init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
+    init(stageManager, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
-         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, resource);
+         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, resource, electionTimInSecs);
   }
 
-  private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
+  private void init(final StageManager stageManager,
                     L2ObjectStateManager objectStateManager, L2IndexStateManager l2IndexStateManager,
                     final ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
-                    final ObjectIDSequence objectIDSequence, final MonitoredResource resource) {
+                    final ObjectIDSequence objectIDSequence, final MonitoredResource resource, int electionTimeInSecs) {
 
     isCleanDB = isCleanDB(persistentStateStore);
 
@@ -160,7 +161,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     new L2StateChangeHandler(), 1, MAX_STAGE_SIZE).getSink();
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
-                                             new StateManagerConfigImpl(this.configSetupManager.haConfig()),
+                                             new StateManagerConfigImpl(electionTimeInSecs),
                                              createWeightGeneratorFactoryForStateManager(gtxm));
     this.sequenceGenerator = new SequenceGenerator(this);
 

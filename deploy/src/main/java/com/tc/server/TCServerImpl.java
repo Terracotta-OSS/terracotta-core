@@ -31,7 +31,6 @@ import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.ServerGroupInfo;
@@ -336,12 +335,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public boolean getRestartable() {
     return configurationSetupManager.dsoL2Config().getRestartable().getEnabled();
-  }
-
-  @Override
-  public String getFailoverMode() {
-    HaConfigSchema haConfig = this.configurationSetupManager.haConfig();
-    return haConfig.getHa().getMode().toString();
   }
 
   @Override

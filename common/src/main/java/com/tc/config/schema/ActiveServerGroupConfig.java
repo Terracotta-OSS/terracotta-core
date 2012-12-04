@@ -10,9 +10,10 @@ public interface ActiveServerGroupConfig extends Config {
 
   boolean isMember(String l2Name);
 
-  HaConfigSchema getHaHolder();
-
   GroupID getGroupId();
-  
+
   String getGroupName();
+
+  int getElectionTimeInSecs();
+
 }

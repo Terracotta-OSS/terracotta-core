@@ -12,8 +12,6 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.util.ActiveCoordinatorHelper;
-import com.tc.util.Assert;
-import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Servers;
@@ -49,14 +47,17 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
     this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
   }
 
+  @Override
   public int getActiveServerGroupCount() {
     return this.groupConfigs.size();
   }
 
+  @Override
   public List<ActiveServerGroupConfig> getActiveServerGroups() {
     return groupConfigs;
   }
 
+  @Override
   public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
     for (ActiveServerGroupConfig activeServerGroupConfig : groupConfigs) {
       if(activeServerGroupConfig.isMember(name)) {
@@ -69,7 +70,8 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
   private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager, final MirrorGroup group) {
     ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
                                                                  MirrorGroup.class, new ChildBeanFetcher() {
-                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                   @Override
+                                                                  public XmlObject getChild(XmlObject parent) {
                                                                      return group;
                                                                    }
                                                                  });
@@ -78,29 +80,19 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
 
   public static void createDefaultServerMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
       throws ConfigurationSetupException {
-    Ha ha = servers.getHa();
-    Assert.assertNotNull(ha);
     servers.addNewMirrorGroups();
-    ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers, ha);
+    ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
   }
 
   public static void initializeMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
       throws ConfigurationSetupException {
-    Assert.assertTrue(servers.isSetHa());
+
     if (!servers.isSetMirrorGroups()) {
       createDefaultServerMirrorGroups(servers, defaultValueProvider);
     } else {
       MirrorGroup[] mirrorGroups = servers.getMirrorGroups().getMirrorGroupArray();
       if (mirrorGroups.length == 0) {
-        ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers, servers.getHa());
-      }
-
-      for (MirrorGroup mirrorGroup : mirrorGroups) {
-        if (!mirrorGroup.isSetHa()) {
-          mirrorGroup.setHa(servers.getHa());
-        } else {
-          HaConfigObject.checkAndInitializeHa(mirrorGroup.getHa(), servers.getHa());
-        }
+        ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
       }
     }
   }

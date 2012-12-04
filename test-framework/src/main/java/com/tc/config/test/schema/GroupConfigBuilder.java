@@ -11,7 +11,7 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
 
   private final String         groupName;
   private MembersConfigBuilder members;
-  private HaConfigBuilder      ha;
+  private Integer              electionTime = null;
 
   public GroupConfigBuilder(String groupName) {
     super(5, new String[0]);
@@ -22,8 +22,9 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
     this.members = members;
   }
 
-  public void setHa(HaConfigBuilder ha) {
-    this.ha = ha;
+  public void setElectionTime(int value) {
+    setProperty("election-time", value);
+    this.electionTime = value;
   }
 
   @Override
@@ -32,14 +33,13 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
 
     Map attr = new HashMap();
     if (groupName != null) attr.put("group-name", groupName);
+    if (electionTime != null) {
+      attr.put("election-time", electionTime.toString());
+    }
 
     out += openElement("mirror-group", attr);
 
     out += this.members.toString();
-
-    if (ha != null) {
-      out += this.ha.toString();
-    }
 
     out += closeElement("mirror-group");
 

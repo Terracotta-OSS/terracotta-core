@@ -156,11 +156,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public String getFailoverMode() {
-    return null;
-  }
-
-  @Override
   public boolean getRestartable() {
     return false;
   }

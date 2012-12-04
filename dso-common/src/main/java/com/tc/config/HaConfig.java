@@ -14,18 +14,8 @@ public interface HaConfig {
    */
   boolean isActiveActive();
 
-  /**
-   * Returns true if not active-active and ha mode is set to networked-active-passive
-   */
-  boolean isNetworkedActivePassive();
-
-  /**
-   * Returns true if not active-active and not networked-active-passive
-   */
-  boolean isDiskedBasedActivePassive();
-
   GroupID getActiveCoordinatorGroupID();
-  
+
   GroupID[] getGroupIDs();
 
   Node getThisNode();

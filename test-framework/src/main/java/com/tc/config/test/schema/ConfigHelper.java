@@ -2,7 +2,6 @@ package com.tc.config.test.schema;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.test.config.model.GroupConfig;
 import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
@@ -130,12 +129,6 @@ public class ConfigHelper {
     gc.setGCInterval(testConfig.getDgcIntervalInSec());
     gc.setGCVerbose(testConfig.getDgcVerbose());
     l2sConfig.setGarbageCollection(gc);
-
-    HaConfigBuilder ha = new HaConfigBuilder(3);
-    GroupConfig groupConfig = testConfig.getGroupConfig();
-    ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
-    ha.setElectionTime(String.valueOf(groupConfig.getElectionTime()));
-    l2sConfig.setHa(ha);
 
     return l2sConfig;
   }

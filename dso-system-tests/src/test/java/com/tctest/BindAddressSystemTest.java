@@ -55,12 +55,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</tsa-port>"
                     + "\n      </server>"
-                    + "\n      <ha>"
-                    + "\n        <mode>networked-active-passive</mode>"
-                    + "\n        <networked-active-passive>"
-                    + "\n           <election-time>5</election-time>"
-                    + "\n         </networked-active-passive>"
-                    + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
+                    + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();
@@ -106,11 +101,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</tsa-group-port>"
                     + "\n      </server>"
-                    + "\n      <ha>"
-                    + "\n        <mode>networked-active-passive</mode>"
-                    + "\n        <networked-active-passive>"
-                    + "\n           <election-time>5</election-time>"
-                    + "\n         </networked-active-passive>" + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
+                    + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();

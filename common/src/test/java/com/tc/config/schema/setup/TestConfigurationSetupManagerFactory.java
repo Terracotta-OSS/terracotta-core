@@ -12,7 +12,6 @@ import org.apache.xmlbeans.impl.common.XPath;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
@@ -158,7 +157,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private final CommonL2Config                  sampleL2Common;
   private final L2DSOConfig                     sampleL2DSO;
   private final ActiveServerGroupsConfig        sampleActiveServerGroups;
-  private final HaConfigSchema                  sampleHa;
 
   private final String                          defaultL2Identifier;
 
@@ -204,7 +202,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     this.sampleL2Common = sampleL2Manager.commonl2Config();
     this.sampleL2DSO = sampleL2Manager.dsoL2Config();
     this.sampleActiveServerGroups = sampleL2Manager.activeServerGroupsConfig();
-    this.sampleHa = sampleL2Manager.haConfig();
 
     sampleL1Manager = this.createL1TVSConfigurationSetupManager(this.configurationCreator);// new
     try {
@@ -627,10 +624,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   public ActiveServerGroupsConfig activeServerGroupsConfig() {
     return this.sampleActiveServerGroups;
-  }
-
-  public HaConfigSchema haConfig() {
-    return this.sampleHa;
   }
 
   public TestConfigurationSetupManagerFactory(String l2Identifier,

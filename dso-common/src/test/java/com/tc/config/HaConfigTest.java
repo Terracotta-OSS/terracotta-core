@@ -8,12 +8,9 @@ import org.apache.commons.io.IOUtils;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.config.HaMode;
 
 import java.io.File;
 import java.io.FileOutputStream;

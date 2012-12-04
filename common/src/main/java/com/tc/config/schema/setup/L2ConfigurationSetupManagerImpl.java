@@ -17,7 +17,6 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SecurityConfigObject;
@@ -75,7 +74,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map<String, L2ConfigData>   l2ConfigData;
-  private final HaConfigSchema              haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
   private final L2ConfigData                myConfigData;
@@ -175,12 +173,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     verifyL2Identifier(servers, this.thisL2Identifier);
     this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
 
-    this.haConfig = getHaConfig();
-
     // do this after servers and groups have been processed
     validateGroups();
-    validateDSOClusterPersistenceMode();
-    validateHaConfiguration();
     validateSecurityConfiguration();
   }
 
@@ -323,18 +317,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
         groupNames.add(grpName);
       }
     }
-  }
-
-  // make sure there is at most one of these
-  private HaConfigSchema getHaConfig() {
-    HaConfigSchema newHaConfig = null;
-    if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
-      ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
-      if (groupConfig != null) {
-        newHaConfig = groupConfig.getHaHolder();
-      }
-    }
-    return newHaConfig;
   }
 
   private UpdateCheckConfig getUpdateCheckConfig() throws XmlException {
@@ -563,73 +545,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return serverConfigData;
   }
 
-  private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
-    List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
-
-    Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
-    for (ActiveServerGroupConfig element : groups) {
-      boolean isNwAP = element.getHaHolder().isNetworkedActivePassive();
-      String[] members = element.getMembers().getMemberArray();
-      for (String member : members) {
-        serversToMode.put(member, isNwAP);
-      }
-    }
-
-    if (super.serversBeanRepository().bean() != null) {
-      Server[] servers = ((Servers) super.serversBeanRepository().bean()).getServerArray();
-      Set<String> badServers = new HashSet<String>();
-
-      if (servers != null && servers.length > 1) {
-        // We have clustered DSO; they must all be in permanent-store
-        // mode
-        for (Server server : servers) {
-          String name = server.getName();
-          L2ConfigData data = configDataFor(name);
-
-          Assert.assertNotNull(data);
-          boolean isNwAP = serversToMode.get(name);
-          if (!isNwAP && (!serversBean.getRestartable().getEnabled())) {
-            badServers.add(name);
-          }
-        }
-      }
-
-      if (badServers.size() > 0) {
-        // formatting
-        throw new ConfigurationSetupException(
-                                              "At least one server defined in the Terracotta configuration file is\n"
-                                                  + "not restartable. (Servers in this mode:\n"
-                                                  + badServers
-                                                  + ".) \n\n"
-                                                  + "If even one server is not restartable"
-                                                  + ", \nthen High Availability mode must be set to 'networked-active-passive'"
-                                                  + "\n\nFor servers in a mirror group, High Availability mode can be set per"
-                                                  + "\nmirror group. A mirror-group High Availability setting overrides the main"
-                                                  + "\nHigh Availability for that mirror group.\n\n"
-                                                  + "See the Terracotta documentation for more details.");
-      }
-    }
-  }
-
-  public void validateHaConfiguration() throws ConfigurationSetupException {
-    int networkedHa = 0;
-    int diskbasedHa = 0;
-    List<ActiveServerGroupConfig> asgcArray = activeServerGroupsConfig.getActiveServerGroups();
-    for (ActiveServerGroupConfig asgc : asgcArray) {
-      if (asgc.getHaHolder().isNetworkedActivePassive()) {
-        ++networkedHa;
-      } else {
-        ++diskbasedHa;
-      }
-    }
-    if (networkedHa > 0 && diskbasedHa > 0) { throw new ConfigurationSetupException(
-                                                                                    "All mirror-groups must be set to the same High Availability mode. Your tc-config.xml has "
-                                                                                        + networkedHa
-                                                                                        + " group(s) set to networked HA and "
-                                                                                        + diskbasedHa
-                                                                                        + " group(s) set to disk-based HA."); }
-  }
-
   private void validateSecurityConfiguration() throws ConfigurationSetupException {
     Servers servers = (Servers)serversBeanRepository().bean();
     if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) {
@@ -655,11 +570,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   @Override
   public L2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
-  }
-
-  @Override
-  public HaConfigSchema haConfig() {
-    return haConfig;
   }
 
   @Override
