@@ -59,21 +59,21 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
 
   @Override
   public NonStopConfiguration getNonStopConfiguration(String methodName) {
-    return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getTolkitObjectType());
+    return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getToolkitObjectType());
   }
 
   @Override
   public T getTimeoutBehavior() {
-    NonStopConfiguration config = nonStopConfigRegistry.getConfigForInstance(toolkitObjectName, getTolkitObjectType());
+    NonStopConfiguration config = nonStopConfigRegistry.getConfigForInstance(toolkitObjectName, getToolkitObjectType());
     final NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableBehavior = config
-        .getImmutableOpNonStopTimeoutBehavior();
+        .getReadOpNonStopTimeoutBehavior();
     final NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior = config
-        .getMutableOpNonStopTimeoutBehavior();
+        .getWriteOpNonStopTimeoutBehavior();
     Wrapper wrapper = new Wrapper(immutableBehavior, mutableBehavior);
 
     T t = behaviors.get(wrapper);
     if (t == null) {
-      t = behaviorResolver.create(getTolkitObjectType(), immutableBehavior, mutableBehavior, delegate);
+      t = behaviorResolver.create(getToolkitObjectType(), immutableBehavior, mutableBehavior, delegate);
       T old = behaviors.putIfAbsent(wrapper, t);
       t = old == null ? t : old;
     }
@@ -90,7 +90,7 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
 
   public abstract T getToolkitObject();
 
-  public abstract ToolkitObjectType getTolkitObjectType();
+  public abstract ToolkitObjectType getToolkitObjectType();
 
   private static class Wrapper {
     private final NonStopConfigurationFields.NonStopReadTimeoutBehavior  immutableBehavior;

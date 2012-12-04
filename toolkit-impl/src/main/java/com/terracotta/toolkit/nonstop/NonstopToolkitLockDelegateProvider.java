@@ -33,7 +33,7 @@ public class NonstopToolkitLockDelegateProvider extends AbstractNonStopDelegateP
   }
 
   @Override
-  public ToolkitObjectType getTolkitObjectType() {
+  public ToolkitObjectType getToolkitObjectType() {
     return ToolkitObjectType.READ_WRITE_LOCK;
   }
 

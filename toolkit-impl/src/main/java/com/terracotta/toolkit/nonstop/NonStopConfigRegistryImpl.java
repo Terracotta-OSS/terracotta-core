@@ -18,13 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
-  private static final EnumSet<ToolkitObjectType>                     SUPPORTED_TOOLKIT_TYPES  = EnumSet.of(STORE,
+  public static final EnumSet<ToolkitObjectType>                      SUPPORTED_TOOLKIT_TYPES  = EnumSet.of(STORE,
                                                                                                             CACHE,
                                                                                                             LIST, LOCK);
 
-  private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs               = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
-
-  private final NonStopConfiguration                                  DEFAULT_CONFIG           = new NonStopConfiguration() {
+  public static final NonStopConfiguration                            DEFAULT_CONFIG           = new NonStopConfiguration() {
 
                                                                                                  @Override
                                                                                                  public long getTimeoutMillis() {
@@ -42,17 +40,18 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                  }
 
                                                                                                  @Override
-                                                                                                 public NonStopConfigurationFields.NonStopReadTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
+                                                                                                 public NonStopConfigurationFields.NonStopReadTimeoutBehavior getReadOpNonStopTimeoutBehavior() {
                                                                                                    return NonStopConfigurationFields.DEFAULT_NON_STOP_READ_TIMEOUT_BEHAVIOR;
                                                                                                  }
 
                                                                                                  @Override
-                                                                                                 public NonStopConfigurationFields.NonStopWriteTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
+                                                                                                 public NonStopConfigurationFields.NonStopWriteTimeoutBehavior getWriteOpNonStopTimeoutBehavior() {
                                                                                                    return NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR;
                                                                                                  }
                                                                                                };
 
   private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
+  private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs               = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
 
   private void verify(NonStopConfiguration nonStopConfiguration, ToolkitObjectType... types) {
     if (types != null) {
@@ -61,7 +60,23 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                                   nonStopToolkitTypeParam
                                                                                                                       .name()
                                                                                                                       + " is not yet supported as a non stop data structure"); }
+        if (nonStopToolkitTypeParam != CACHE && nonStopToolkitTypeParam != STORE) {
+          if (nonStopConfiguration.getWriteOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopWriteTimeoutBehavior.EXCEPTION_ON_TIMEOUT) { throw new UnsupportedOperationException(
+                                                                                                                                                                                                "behavior "
+                                                                                                                                                                                                    + nonStopConfiguration
+                                                                                                                                                                                                        .getWriteOpNonStopTimeoutBehavior()
+                                                                                                                                                                                                    + " not supported for "
+                                                                                                                                                                                                    + nonStopToolkitTypeParam); }
+
+          if (nonStopConfiguration.getReadOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopReadTimeoutBehavior.EXCEPTION_ON_TIMEOUT) { throw new UnsupportedOperationException(
+                                                                                                                                                                                              "behavior "
+                                                                                                                                                                                                  + nonStopConfiguration
+                                                                                                                                                                                                      .getReadOpNonStopTimeoutBehavior()
+                                                                                                                                                                                                  + " not supported for "
+                                                                                                                                                                                                  + nonStopToolkitTypeParam); }
+        }
       }
+
     }
   }
 
