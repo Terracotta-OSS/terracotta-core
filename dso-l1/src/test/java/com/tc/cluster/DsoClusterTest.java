@@ -4,7 +4,6 @@
  */
 package com.tc.cluster;
 
-import org.junit.Ignore;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -44,7 +43,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
-@Ignore
 public class DsoClusterTest extends TestCase {
 
   private DsoClusterImpl cluster;
@@ -176,17 +174,18 @@ public class DsoClusterTest extends TestCase {
     assertEquals(thisNodeId.toString(), nodesIt.next().getId());
     assertFalse(nodesIt.hasNext());
 
-    // should not fire multiple thisNodeConnected events in a row...
+    // would fire multiple thisNodeConnected events in a row...
     listener.reset();
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
-    assertTrue(listener.getOccurredEvents().isEmpty());
+    assertFalse(listener.getOccurredEvents().isEmpty());
+    assertEquals(1, listener.getOccurredEvents().size());
 
     // but it should not be fired after thisNodeLeft
     cluster.fireThisNodeLeft();
     listener.reset();
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
     assertTrue(listener.getOccurredEvents().size() == 1);
-    assertTrue(cluster.getClusterTopology().getNodes().isEmpty());
+    assertEquals(1, cluster.getClusterTopology().getNodes().size());
 
     // no callback if listener is added again
     listener.reset();
@@ -210,9 +209,9 @@ public class DsoClusterTest extends TestCase {
     final ClientID[] otherNodeIds = new ClientID[] { otherNodeId };
     cluster.fireThisNodeJoined(otherNodeId, otherNodeIds);
     assertTrue(listener.getOccurredEvents().size() == 1);
-    assertTrue(cluster.getClusterTopology().getNodes().isEmpty());
+    assertEquals(1, cluster.getClusterTopology().getNodes().size());
 
-    assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
+    assertEquals(otherNodeId.toString(), cluster.getCurrentNode().getId());
   }
 
   public void testThisNodeLeft() {
