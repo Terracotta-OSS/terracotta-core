@@ -873,8 +873,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(resourceManager);
 
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
-                                                           objectStore, clientObjectReferenceSet,
-                                                           serverTransactionFactory, threadGroup, resourceManager);
+            objectStore, clientObjectReferenceSet, serverTransactionFactory, threadGroup, resourceManager, sampledCounterManager);
 
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));

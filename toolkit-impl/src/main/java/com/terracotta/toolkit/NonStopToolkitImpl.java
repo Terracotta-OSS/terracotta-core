@@ -74,6 +74,9 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
     }
 
     this.nonStopClusterListener = new NonStopClusterListener(toolkitDelegateFutureTask, abortableOperationManager);
+    this.nonStopConfigManager.registerForType(NonStopConfigRegistryImpl.DEFAULT_CONFIG,
+                                              NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
+                                                  .toArray(new ToolkitObjectType[0]));
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -266,17 +269,12 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   }
 
   @Override
-  public NonStopToolkit asNonStopToolkit() {
-    return this;
-  }
-
-  @Override
-  public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
+  public NonStopConfigurationRegistry getNonStopConfigurationToolkitRegistry() {
     return nonStopConfigManager;
   }
 
   @Override
-  public void begin(NonStopConfiguration configuration) {
+  public void start(NonStopConfiguration configuration) {
     nonStopConfigManager.registerForThread(configuration);
 
     if (configuration.isEnabled()) {
@@ -285,7 +283,7 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   }
 
   @Override
-  public void finish() {
+  public void stop() {
     NonStopConfiguration configuration = nonStopConfigManager.deregisterForThread();
 
     if (configuration.isEnabled()) {

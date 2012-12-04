@@ -5,7 +5,6 @@ package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
 
-import org.terracotta.toolkit.NonStopToolkit;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -316,11 +315,6 @@ public class TerracottaToolkit implements ToolkitInternal {
       toolkitProperties = new TerracottaProperties(platformService);
     }
     return toolkitProperties;
-  }
-
-  @Override
-  public NonStopToolkit asNonStopToolkit() {
-    throw new UnsupportedOperationException("Please create non stop toolkit");
   }
 
   AbortableOperationManager getAbortableOperationManager() {

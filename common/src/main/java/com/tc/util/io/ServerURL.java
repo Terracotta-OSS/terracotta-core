@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HostnameVerifier;
@@ -60,7 +61,7 @@ public class ServerURL {
     if (securityInfo.isSecure()) {
       HttpsURLConnection sslUrlConnection = (HttpsURLConnection) theURL.openConnection();
       if (securityInfo.getUsername() != null) {
-        uri = "tc://" + securityInfo.getUsername() + "@" + theURL.getHost() + ":" + theURL.getPort();
+        uri = "tc://" + URLEncoder.encode(securityInfo.getUsername(), "UTF-8") + "@" + theURL.getHost() + ":" + theURL.getPort();
         final char[] passwordTo;
         try {
           final URI theURI = new URI(uri);

@@ -59,21 +59,21 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
 
   @Override
   public NonStopConfiguration getNonStopConfiguration(String methodName) {
-    return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getTolkitObjectType());
+    return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getToolkitObjectType());
   }
 
   @Override
   public T getTimeoutBehavior() {
-    NonStopConfiguration config = nonStopConfigRegistry.getConfigForInstance(toolkitObjectName, getTolkitObjectType());
-    final NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior = config
-        .getImmutableOpNonStopTimeoutBehavior();
-    final NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior = config
-        .getMutableOpNonStopTimeoutBehavior();
+    NonStopConfiguration config = nonStopConfigRegistry.getConfigForInstance(toolkitObjectName, getToolkitObjectType());
+    final NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableBehavior = config
+        .getReadOpNonStopTimeoutBehavior();
+    final NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior = config
+        .getWriteOpNonStopTimeoutBehavior();
     Wrapper wrapper = new Wrapper(immutableBehavior, mutableBehavior);
 
     T t = behaviors.get(wrapper);
     if (t == null) {
-      t = behaviorResolver.create(getTolkitObjectType(), immutableBehavior, mutableBehavior, delegate);
+      t = behaviorResolver.create(getToolkitObjectType(), immutableBehavior, mutableBehavior, delegate);
       T old = behaviors.putIfAbsent(wrapper, t);
       t = old == null ? t : old;
     }
@@ -90,14 +90,14 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
 
   public abstract T getToolkitObject();
 
-  public abstract ToolkitObjectType getTolkitObjectType();
+  public abstract ToolkitObjectType getToolkitObjectType();
 
   private static class Wrapper {
-    private final NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior;
-    private final NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior;
+    private final NonStopConfigurationFields.NonStopReadTimeoutBehavior  immutableBehavior;
+    private final NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior;
 
-    public Wrapper(NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior,
-                   NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior) {
+    public Wrapper(NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableBehavior,
+                   NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior) {
       this.immutableBehavior = immutableBehavior;
       this.mutableBehavior = mutableBehavior;
     }

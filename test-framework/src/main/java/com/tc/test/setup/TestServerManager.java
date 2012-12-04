@@ -231,7 +231,7 @@ public class TestServerManager {
    */
   public void closeClientConnections(int groupIndex) {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
-    this.groups[groupIndex].stopDsoProxy();
+    this.groups[groupIndex].stopTsaProxy();
   }
 
   public int waitForServerExit(int groupIndex, int serverIndex) throws Exception {

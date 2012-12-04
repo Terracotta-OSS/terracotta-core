@@ -280,7 +280,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     if (wasShutdownInPassiveStateInPreviousLife()) {
       while (true) {
         try {
-          logger.warn("Detected that this server was shutdown and restarted in a PASSIVE STANDBY mode." +
+          logger.warn("Detected that this server was shutdown and restarted in a state state other than ACTIVE-COORDINATOR." +
                       " Sleeping until ACTIVE server zaps it.");
           Thread.sleep(60 * 1000);
         } catch (InterruptedException e) {
@@ -296,7 +296,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     String stateStr = persistentStateStore.get(ClusterStateDBKeyNames.L2_STATE_KEY);
     if (stateStr != null) {
       State stateB4Crash = new State(stateStr);
-      return !StateManager.PASSIVE_STANDBY.equals(stateB4Crash);
+      return !StateManager.ACTIVE_COORDINATOR.equals(stateB4Crash);
     } else {
       // case when Server is started for the first time
       return false;

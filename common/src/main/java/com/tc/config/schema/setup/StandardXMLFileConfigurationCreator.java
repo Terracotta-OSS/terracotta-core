@@ -38,6 +38,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -197,6 +199,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       int userSeparatorIndex = host.indexOf('@');
       if (userSeparatorIndex > -1) {
         username = host.substring(0, userSeparatorIndex);
+        try {
+          username = URLDecoder.decode(username, "UTF-8");
+        } catch (UnsupportedEncodingException uee) {
+          // cannot happen
+        }
         secure = true;
         host = host.substring(userSeparatorIndex + 1);
       }

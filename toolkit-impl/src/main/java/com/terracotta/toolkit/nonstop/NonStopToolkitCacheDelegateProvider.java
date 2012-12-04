@@ -35,7 +35,7 @@ public class NonStopToolkitCacheDelegateProvider<V> extends AbstractNonStopDeleg
   }
 
   @Override
-  public ToolkitObjectType getTolkitObjectType() {
+  public ToolkitObjectType getToolkitObjectType() {
     return ToolkitObjectType.CACHE;
   }
 

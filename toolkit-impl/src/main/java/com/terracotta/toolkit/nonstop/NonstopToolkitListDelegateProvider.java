@@ -32,7 +32,7 @@ public class NonstopToolkitListDelegateProvider<E> extends AbstractNonStopDelega
   }
 
   @Override
-  public ToolkitObjectType getTolkitObjectType() {
+  public ToolkitObjectType getToolkitObjectType() {
     return ToolkitObjectType.LIST;
   }
 

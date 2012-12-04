@@ -29,7 +29,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private final ThreadGroup   threadGroup;
 
-  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, long critical , ThreadGroup threadGroup) {
+  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
