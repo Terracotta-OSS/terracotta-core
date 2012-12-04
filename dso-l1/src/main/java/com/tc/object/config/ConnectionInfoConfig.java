@@ -13,6 +13,9 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.util.stringification.OurStringBuilder;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 /**
  * Returns a {@link ConnectionInfo} array from the L2 data.
  */
@@ -59,6 +62,11 @@ public class ConnectionInfoConfig {
         if (userSeparatorIndex > -1) {
           secure = true;
           urlUsername = host.substring(0, userSeparatorIndex);
+          try {
+            urlUsername = URLDecoder.decode(urlUsername, "UTF-8");
+          } catch (UnsupportedEncodingException uee) {
+            // cannot happen
+          }
           host = host.substring(userSeparatorIndex + 1);
         }
 

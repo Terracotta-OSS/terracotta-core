@@ -5,6 +5,8 @@ package com.terracotta.toolkit.express;
 
 import com.tc.util.Assert;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -75,6 +77,11 @@ public class URLConfigUtil {
           Assert.assertEquals(username, s.substring(0, index).trim());
         }
         username = s.substring(0, index).trim();
+        try {
+          username = URLDecoder.decode(username, "UTF-8");
+        } catch (UnsupportedEncodingException uee) {
+          // cannot happen
+        }
       }
     }
     return username;
