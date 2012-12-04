@@ -7,7 +7,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 
 public class ConnectionID {
 
-  private static final char        DOT_PLACEHOLDER = ' ';
+  private static final char        DOT_PLACEHOLDER = '+';
   private static final char        DOT             = '.';
 
   private final long               channelID;
