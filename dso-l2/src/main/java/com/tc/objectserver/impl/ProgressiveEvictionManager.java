@@ -131,11 +131,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         return evictionStats;
     }
     
-    private void resetStatistics() {
-        evictionStats.setValue(0,0);
-        expirationStats.setValue(0,0);
-    }
-    
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp, final ResourceManager resourceManager) {
         this.objectManager = mgr;
         this.store = store;
@@ -207,7 +202,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     private Future<SampledRateCounter> scheduleEvictionRun() {
         try{
-            resetStatistics();
             clientObjectReferenceSet.refreshClientObjectReferencesNow();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
             return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
@@ -318,7 +312,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         List<Future<SampledRateCounter>> push = new ArrayList<Future<SampledRateCounter>>(evictableObjects.size());
         Random r = new Random();
         List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
-        resetStatistics();
+
         clientObjectReferenceSet.refreshClientObjectReferencesNow();
         final AggregateSampleRateCounter rate = new AggregateSampleRateCounter();
         while ( !list.isEmpty() ) {
