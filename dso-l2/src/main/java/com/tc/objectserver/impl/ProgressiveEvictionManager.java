@@ -31,6 +31,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
+import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
@@ -85,8 +86,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
     private final Responder responder =        new Responder();
-    private final SampledRateCounter expirationStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
-    private final SampledRateCounter evictionStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
+    private final SampledRateCounter expirationStats;
+    private final SampledRateCounter evictionStats;
   private final ResourceManager resourceManager;
     
     private final static Future<SampledRateCounter> completedFuture = new Future<SampledRateCounter>() {
@@ -131,7 +132,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         return evictionStats;
     }
     
-    public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp, final ResourceManager resourceManager) {
+    public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp, final ResourceManager resourceManager, final CounterManager counterManager) {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
@@ -180,6 +181,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
         log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
+      this.evictionStats = (SampledRateCounter)counterManager.createCounter(new SampledRateCounterConfig(5, 100, true));
+      this.expirationStats = (SampledRateCounter)counterManager.createCounter(new SampledRateCounterConfig(5, 100, true));
     }
 
     @Override
