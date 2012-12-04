@@ -11,7 +11,6 @@ import static org.terracotta.toolkit.ToolkitObjectType.STORE;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
-import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
 import java.util.EnumSet;
@@ -43,12 +42,12 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                  }
 
                                                                                                  @Override
-                                                                                                 public NonStopTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
+                                                                                                 public NonStopConfigurationFields.NonStopReadTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
                                                                                                    return NonStopConfigurationFields.DEFAULT_NON_STOP_READ_TIMEOUT_BEHAVIOR;
                                                                                                  }
 
                                                                                                  @Override
-                                                                                                 public NonStopTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
+                                                                                                 public NonStopConfigurationFields.NonStopWriteTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
                                                                                                    return NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR;
                                                                                                  }
                                                                                                };
@@ -56,11 +55,6 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
 
   private void verify(NonStopConfiguration nonStopConfiguration, ToolkitObjectType... types) {
-    NonStopConfigurationFields.NonStopTimeoutBehavior mutableOpBehavior = nonStopConfiguration
-        .getMutableOpNonStopTimeoutBehavior();
-    if (mutableOpBehavior == NonStopTimeoutBehavior.LOCAL_READS) { throw new IllegalArgumentException(
-                                                                                                      "LOCAL_READS is not supported for mutable operations"); }
-
     if (types != null) {
       for (ToolkitObjectType nonStopToolkitTypeParam : types) {
         if (!SUPPORTED_TOOLKIT_TYPES.contains(nonStopToolkitTypeParam)) { throw new UnsupportedOperationException(

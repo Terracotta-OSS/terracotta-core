@@ -65,9 +65,9 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
   @Override
   public T getTimeoutBehavior() {
     NonStopConfiguration config = nonStopConfigRegistry.getConfigForInstance(toolkitObjectName, getTolkitObjectType());
-    final NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior = config
+    final NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableBehavior = config
         .getImmutableOpNonStopTimeoutBehavior();
-    final NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior = config
+    final NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior = config
         .getMutableOpNonStopTimeoutBehavior();
     Wrapper wrapper = new Wrapper(immutableBehavior, mutableBehavior);
 
@@ -93,11 +93,11 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
   public abstract ToolkitObjectType getTolkitObjectType();
 
   private static class Wrapper {
-    private final NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior;
-    private final NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior;
+    private final NonStopConfigurationFields.NonStopReadTimeoutBehavior  immutableBehavior;
+    private final NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior;
 
-    public Wrapper(NonStopConfigurationFields.NonStopTimeoutBehavior immutableBehavior,
-                   NonStopConfigurationFields.NonStopTimeoutBehavior mutableBehavior) {
+    public Wrapper(NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableBehavior,
+                   NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableBehavior) {
       this.immutableBehavior = immutableBehavior;
       this.mutableBehavior = mutableBehavior;
     }
