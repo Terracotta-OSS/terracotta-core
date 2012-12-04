@@ -114,8 +114,8 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-tsa-impl</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
+      <artifactId>management-tsa-war</artifactId>
+      <version>${project.version}</version>
       <type>war</type>
     </dependency>
   </dependencies>
