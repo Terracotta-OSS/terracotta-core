@@ -61,14 +61,14 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                                       .name()
                                                                                                                       + " is not yet supported as a non stop data structure"); }
         if (nonStopToolkitTypeParam != CACHE && nonStopToolkitTypeParam != STORE) {
-          if (nonStopConfiguration.getWriteOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopWriteTimeoutBehavior.EXCEPTION_ON_TIMEOUT) { throw new UnsupportedOperationException(
+          if (nonStopConfiguration.getWriteOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopWriteTimeoutBehavior.EXCEPTION) { throw new UnsupportedOperationException(
                                                                                                                                                                                                 "behavior "
                                                                                                                                                                                                     + nonStopConfiguration
                                                                                                                                                                                                         .getWriteOpNonStopTimeoutBehavior()
                                                                                                                                                                                                     + " not supported for "
                                                                                                                                                                                                     + nonStopToolkitTypeParam); }
 
-          if (nonStopConfiguration.getReadOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopReadTimeoutBehavior.EXCEPTION_ON_TIMEOUT) { throw new UnsupportedOperationException(
+          if (nonStopConfiguration.getReadOpNonStopTimeoutBehavior() != NonStopConfigurationFields.NonStopReadTimeoutBehavior.EXCEPTION) { throw new UnsupportedOperationException(
                                                                                                                                                                                               "behavior "
                                                                                                                                                                                                   + nonStopConfiguration
                                                                                                                                                                                                       .getReadOpNonStopTimeoutBehavior()

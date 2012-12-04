@@ -89,7 +89,7 @@ public class NonstopTimeoutBehaviorResolver {
                                         NonStopConfigurationFields.NonStopWriteTimeoutBehavior nonStopBehavior,
                                         AtomicReference<E> e) {
     switch (nonStopBehavior) {
-      case EXCEPTION_ON_TIMEOUT:
+      case EXCEPTION:
         return createExceptionOnTimeOutBehaviour(objectType, e.get());
       case NO_OP:
         return createNoOpBehaviour(objectType, e.get());
@@ -101,7 +101,7 @@ public class NonstopTimeoutBehaviorResolver {
                                           NonStopConfigurationFields.NonStopReadTimeoutBehavior nonStopBehavior,
                                           AtomicReference<E> e) {
     switch (nonStopBehavior) {
-      case EXCEPTION_ON_TIMEOUT:
+      case EXCEPTION:
         return createExceptionOnTimeOutBehaviour(objectType, e.get());
       case NO_OP:
         return createNoOpBehaviour(objectType, e.get());
