@@ -119,12 +119,14 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
           byte[] bytes = l1InfoMBean.takeCompressedThreadDump(10000L);
           ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
+          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
+          threadDumpEntity.setNodeType(NodeType.CLIENT);
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
