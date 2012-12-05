@@ -99,6 +99,7 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     Assert.assertEquals(0, servers.getMirrorGroups().getMirrorGroupArray().length);
 
     MirrorGroup mirrorGroup = servers.getMirrorGroups().addNewMirrorGroup();
+    mirrorGroup.setElectionTime(DEFAULT_ELECETION_TIME);
     Members members = mirrorGroup.addNewMembers();
 
     Server[] serverArray = servers.getServerArray();
