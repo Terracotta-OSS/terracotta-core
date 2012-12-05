@@ -21,7 +21,9 @@ import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.RequestIdentityAsserter;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SSLContextFactory;
+import com.terracotta.management.security.SecurityServiceDirectory;
 import com.terracotta.management.security.UserService;
+import com.terracotta.management.security.impl.ConstantSecurityServiceDirectory;
 import com.terracotta.management.security.impl.DfltContextService;
 import com.terracotta.management.security.impl.DfltRequestTicketMonitor;
 import com.terracotta.management.security.impl.DfltUserService;
@@ -46,6 +48,7 @@ import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.utils.TSAConfig;
 import com.terracotta.management.web.utils.TSASslSocketFactory;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -112,7 +115,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
         ContextService contextService = new DfltContextService();
         UserService userService = new DfltUserService();
-        IdentityAssertionServiceClient identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceLocation, securityTimeout, contextService);
+        SecurityServiceDirectory securityServiceDirectory = new ConstantSecurityServiceDirectory(new URI(securityServiceLocation), securityTimeout);
+        IdentityAssertionServiceClient identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceDirectory, contextService);
         RequestTicketMonitor requestTicketMonitor = new DfltRequestTicketMonitor();
         TSAIdentityAsserter identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
 
