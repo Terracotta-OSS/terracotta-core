@@ -165,7 +165,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
-           final RuntimeLogger runtimeLogger) {
+                  final RuntimeLogger runtimeLogger) {
     this.portability = config.getPortability();
     this.config = config;
     this.connectionComponents = connectionComponents;
@@ -311,7 +311,9 @@ public class ManagerImpl implements Manager {
 
   private void shutdownClient(boolean fromShutdownHook, boolean forceImmediate) {
     Assert.eval(clientStopped.isSet());
-    this.runtimeLogger.shutdown();
+    if (runtimeLogger != null) {
+      this.runtimeLogger.shutdown();
+    }
     if (this.shutdownManager != null) {
       try {
         // XXX: This "fromShutdownHook" flag should be removed. It's only here temporarily to make shutdown behave
