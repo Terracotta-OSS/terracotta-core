@@ -8,6 +8,7 @@ import com.terracotta.management.security.IACredentials;
 import com.terracotta.management.security.InvalidIAInteractionException;
 import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.SSLContextFactory;
+import com.terracotta.management.security.SecurityServiceDirectory;
 import com.terracotta.management.user.UserInfo;
 
 import java.net.MalformedURLException;
@@ -20,9 +21,9 @@ public class RelayingJerseyIdentityAssertionServiceClient extends JerseyIdentity
   private final ContextService contextService;
 
   public RelayingJerseyIdentityAssertionServiceClient(KeyChainAccessor keyChainAccessor, SSLContextFactory sslCtxtFactory,
-                                                      String securitySvcLocation, Integer secuirtySvcTimeout,
+                                                      SecurityServiceDirectory securityServiceDirectory,
                                                       ContextService contextService) throws URISyntaxException, MalformedURLException {
-    super(keyChainAccessor, sslCtxtFactory, securitySvcLocation, secuirtySvcTimeout);
+    super(keyChainAccessor, sslCtxtFactory, securityServiceDirectory);
     this.contextService = contextService;
   }
 

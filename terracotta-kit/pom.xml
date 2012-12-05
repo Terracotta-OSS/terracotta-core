@@ -290,7 +290,7 @@
                     <!-- REST agent -->
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/management</targetPath>
+                      <targetPath>${rootDir}/lib</targetPath>
                       <dependency>
                         <groupId>org.terracotta</groupId>
                         <artifactId>management-tsa-war</artifactId>

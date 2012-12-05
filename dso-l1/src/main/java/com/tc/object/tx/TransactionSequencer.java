@@ -15,6 +15,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
@@ -189,7 +190,7 @@ public class TransactionSequencer implements ClearableCallback {
           try {
             wait(sleepTime);
           } catch (InterruptedException e) {
-            handleInterruptedException();
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
             isInterrupted = true;
           }
         }
@@ -287,19 +288,6 @@ public class TransactionSequencer implements ClearableCallback {
       SequenceID currentSequenceID = new SequenceID(this.sequence.getCurrentSequence());
       return currentSequenceID.next();
     }
-  }
-
-  private void handleInterruptedException()
-      throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
   }
 
 }

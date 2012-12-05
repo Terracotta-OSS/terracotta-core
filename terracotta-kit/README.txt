@@ -25,3 +25,7 @@ Commands to build Terracotta kits:
 
 - "no-extra": skip packaging of ehcache, quartz, sessions, toolkit-runtime
 - "tarball":  create a tar ball package
+- "bigmemory-max"; self explainatory, but you might want to build with -Ddist to
+   ensure the distributions are created from your bits, otherwise they come from
+   the cloud.
+

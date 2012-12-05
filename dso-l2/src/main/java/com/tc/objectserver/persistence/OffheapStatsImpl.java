@@ -10,17 +10,31 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Conversion;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
   public static final long                        serialVersionUID = 1L;
+  private static final long REFRESH_INTERVAL = 10000;
 
-  private transient final MonitoredResource monitoredResource;
+  private final MonitoredResource monitoredResource;
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final AtomicBoolean refreshing = new AtomicBoolean();
+
+  private long lastRefreshTime = System.nanoTime();
+
+  private volatile long usedSize = 0;
+
 
   public OffheapStatsImpl(final MonitoredResource monitoredResource) {
     this.monitoredResource = monitoredResource;
   }
 
   public long getOffheapMaxSize() {
-    if (monitoredResource.getType() == MonitoredResource.Type.OFFHEAP) {
+    if (isOffheapResource()) {
       return monitoredResource.getTotal();
     } else {
       return 0L;
@@ -28,7 +42,7 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
   }
 
   public long getOffheapReservedSize() {
-    if (monitoredResource.getType() == MonitoredResource.Type.OFFHEAP) {
+    if (isOffheapResource()) {
       return monitoredResource.getReserved();
     } else {
       return 0L;
@@ -36,11 +50,34 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
   }
 
   public long getOffheapUsedSize() {
-    if (monitoredResource.getType() == MonitoredResource.Type.OFFHEAP) {
-      return monitoredResource.getUsed();
+    if (isOffheapResource()) {
+      refreshUsedSizeIfNecessary();
+      return usedSize;
     } else {
       return 0L;
     }
+  }
+
+  private void refreshUsedSizeIfNecessary() {
+    if (!refreshing.get() && NANOSECONDS.toMillis(System.nanoTime() - lastRefreshTime) > REFRESH_INTERVAL) {
+      if (refreshing.compareAndSet(false, true)) {
+        executorService.submit(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              usedSize = monitoredResource.getUsed();
+              lastRefreshTime = System.nanoTime();
+            } finally {
+              refreshing.set(false);
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private boolean isOffheapResource() {
+    return monitoredResource.getType() == MonitoredResource.Type.OFFHEAP;
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

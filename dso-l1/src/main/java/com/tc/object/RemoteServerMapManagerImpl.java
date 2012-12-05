@@ -26,6 +26,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.Util;
@@ -159,7 +160,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     return contextsToWaitFor;
   }
 
-
   @Override
   public synchronized Set getAllKeys(ObjectID mapID) throws AbortedOperationException {
     assertSameGroupID(mapID);
@@ -231,8 +231,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
    * available from the server.
    */
   protected synchronized void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor,
-                                             Map<Object, Object> rv)
-      throws AbortedOperationException {
+                                             Map<Object, Object> rv) throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
       while (true) {
@@ -462,7 +461,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
           if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           wait();
         } catch (final InterruptedException e) {
-          handleInterruptedException();
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           isInterrupted = true;
         }
       }
@@ -492,24 +491,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   /**
-   * Checks whether the interrupt was due to aborting the operation.
-   * 
-   * @throws AbortedOperationException if the interrupt was due to aborting the operation.
-   */
-  private void handleInterruptedException() throws AbortedOperationException {
-    if (isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
-  }
-
-
-  /**
    * Checks whether the interrupt was due to aborting the operation. Also removes the context from
    * {@link #outstandingRequests}
    * 
@@ -519,7 +500,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       throws AbortedOperationException {
     if (isAborted()) {
       removeRequestContext(context);
-      handleInterruptedException();
+      AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
     }
   }
 
@@ -529,12 +510,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
    * 
    * @throws AbortedOperationException if the interrupt was due to aborting the operation.
    */
-  private void checkIfAbortedAndRemoveContexts(Set<AbstractServerMapRequestContext> contextsToWaitFor) throws AbortedOperationException {
+  private void checkIfAbortedAndRemoveContexts(Set<AbstractServerMapRequestContext> contextsToWaitFor)
+      throws AbortedOperationException {
     if (isAborted()) {
       for (AbstractServerMapRequestContext context : contextsToWaitFor) {
         removeRequestContext(context);
       }
-      handleInterruptedException();
+      AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
     }
   }
 
