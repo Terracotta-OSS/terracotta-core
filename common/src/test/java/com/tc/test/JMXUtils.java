@@ -39,6 +39,11 @@ public class JMXUtils {
     }
   }
 
+  /**
+   * You should call {@link javax.net.ssl.SSLContext#setDefault} with a context that supports the
+   * {@code tc.ssl.trustAllCerts} system property before calling this method if you're planning
+   * on bypassing SSL certificate trust check.
+   */
   public static JMXConnector getSecuredJmxConnector(String username, char[] password, String host, int port) {
     SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
     SslRMIServerSocketFactory ssf = new SslRMIServerSocketFactory();
