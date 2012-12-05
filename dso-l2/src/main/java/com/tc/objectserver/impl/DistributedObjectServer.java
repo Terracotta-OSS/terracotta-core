@@ -1122,8 +1122,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private boolean isNetworkHA() {
-    return configSetupManager.activeServerGroupsConfig().getActiveServerGroups().size() > 1
-           || configSetupManager.getActiveServerGroupForThisL2().getMembers().getMemberArray().length > 1;
+    return true;
   }
 
   protected StateSyncManager createStateSyncManager(IndexHACoordinator coordinator) {
