@@ -26,6 +26,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
@@ -277,7 +278,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
-            handleInterruptedException();
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
             isInterrupted = true;
           }
         }
@@ -305,7 +306,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
-            handleInterruptedException();
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
             isInterrupted = true;
           }
         }
@@ -704,17 +705,5 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   // for testing
   public boolean isShutdown() {
     return this.isShutdown;
-  }
-
-  private void handleInterruptedException() throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
   }
 }

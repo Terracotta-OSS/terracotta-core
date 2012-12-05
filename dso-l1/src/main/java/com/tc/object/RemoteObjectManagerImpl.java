@@ -24,6 +24,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -52,10 +53,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private static final int     REMOVE_OBJECTS_THRESHOLD                  = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD, 10000);
+                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD,
+                                                                                     10000);
   private static final long    REMOVED_OBJECTS_SEND_TIMER                = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getLong(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER, 5000);
+                                                                             .getLong(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER,
+                                                                                      5000);
   private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
@@ -208,7 +211,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         try {
           wait();
         } catch (final InterruptedException e) {
-          handleInterruptedException();
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           isInterrupted = true;
         }
       }
@@ -326,7 +329,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         try {
           wait(RETRIEVE_WAIT_INTERVAL);
         } catch (final InterruptedException e) {
-          handleInterruptedException();
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           isInterrupted = true;
         }
       }
@@ -820,15 +823,4 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return out;
   }
 
-  private void handleInterruptedException() throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
-  }
 }

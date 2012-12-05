@@ -52,6 +52,7 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.text.StringFormatter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.NonPortableReason;
@@ -294,7 +295,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         try {
           wait();
         } catch (final InterruptedException e) {
-          handleInterruptedException();
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           isInterrupted = true;
         }
       }
@@ -640,7 +641,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
               try {
                 wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
               } catch (final InterruptedException ie) {
-                handleInterruptedException();
+                AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
                 isInterrupted = true;
               }
             } else {
@@ -1662,18 +1663,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
-  }
-
-  private void handleInterruptedException() throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
   }
 
 }

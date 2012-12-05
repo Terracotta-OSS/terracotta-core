@@ -16,6 +16,7 @@ import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SynchronizedSinglyLinkedList;
 import com.tc.util.Util;
@@ -676,19 +677,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private void handleInterruptedException(AbortableOperationManager abortableOperationManager)
-      throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
-  }
-
   /*
    * Attempt to acquire the lock at the given level locally
    */
@@ -706,7 +694,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         try {
           ClientLockImpl.this.wait();
         } catch (InterruptedException e) {
-          handleInterruptedException(abortableOperationManager);
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           interrupted = true;
         }
         result = tryAcquireUsingThreadState(remote, thread, level);
@@ -931,14 +919,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         node.park();
         if (Thread.interrupted()) {
           try {
-            handleInterruptedException(abortableOperationManager);
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
             abortAndRemove(remote, node);
             unparkFirstQueuedAcquire();
             throw e;
           }
-
           interrupted = true;
+
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
@@ -994,7 +982,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
         if (Thread.interrupted()) {
           try {
-            handleInterruptedException(abortableOperationManager);
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
             abortAndRemove(remote, node);
             unparkFirstQueuedAcquire();
@@ -1056,7 +1044,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         if (!node.canDelegate()) {
           node.park();
           try {
-            handleInterruptedException(abortableOperationManager);
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
             abortAndRemove(remote, node);
             unparkFirstQueuedAcquire();
@@ -1065,7 +1053,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         } else {
           node.park(timeout);
           try {
-            handleInterruptedException(abortableOperationManager);
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
             abortAndRemove(remote, node);
             unparkFirstQueuedAcquire();

@@ -17,6 +17,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.operatorevent.LockEventListener;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.runtime.ThreadIDManager;
@@ -708,7 +709,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
-          handleInterruptedException();
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           interrupted = true;
         }
       }
@@ -717,19 +718,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       Util.selfInterruptIfNeeded(interrupted);
     }
 
-  }
-
-  private void handleInterruptedException()
-      throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    //
   }
 
   /**

@@ -41,6 +41,7 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.StringUtil;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
@@ -326,7 +327,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       throws AbortedOperationException {
     try {
       // Check here that If operation was already aborted.
-      if (abortableOperationManager.isAborted()) { throw new AbortedOperationException(); }
+      AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
       return commitInternal(lockID, currentTransaction, isWaitContext);
     } catch (AbortedOperationException t) {
       throw t;

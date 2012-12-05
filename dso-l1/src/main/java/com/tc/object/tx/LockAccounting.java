@@ -12,6 +12,7 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockID;
+import com.tc.util.AbortedOperationUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -168,7 +169,7 @@ public class LockAccounting implements ClearableCallback {
         if (shutdown) { throw new TCNotRunningException(); }
       } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
     } catch (InterruptedException e) {
-      handleInterruptedException();
+      AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
       throw new TCRuntimeException(e);
     } finally {
       listeners.remove(listener);
@@ -274,19 +275,6 @@ public class LockAccounting implements ClearableCallback {
   // for testing purpose only
   int sizeOfIDWrapMap() {
     return tid2wrap.size();
-  }
-
-  private void handleInterruptedException()
-      throws AbortedOperationException {
-    if (abortableOperationManager.isAborted()) {
-      throw new AbortedOperationException();
-    } else {
-      checkIfShutDownOnInterruptedException();
-    }
-  }
-
-  private void checkIfShutDownOnInterruptedException() {
-    // TODO: to be handled during rejoin
   }
 
 }
