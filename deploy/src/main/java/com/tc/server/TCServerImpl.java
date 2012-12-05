@@ -637,7 +637,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       // register REST webapp
       String warFile = System.getProperty("com.tc.management.war");
       if (warFile == null) {
-        File managementDir = new File(tcInstallDir, "management");
+        File managementDir = new File(tcInstallDir, "lib");
 
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
