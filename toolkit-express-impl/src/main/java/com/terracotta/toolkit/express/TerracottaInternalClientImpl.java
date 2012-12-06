@@ -261,8 +261,13 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       Class tkClass = loader.loadClass(EE_SECRET_DELEGATE);
       return tkClass.getConstructor(customClass).newInstance(backEnd);
     } catch (Exception e) {
-      throw new RuntimeException("Couldn't wrap the custom impl. " + backEnd.getClass().getName()
-                                 + " in an instance of " + EE_SECRET_DELEGATE, e);
+      String message;
+      if (backEnd != null) {
+        message = "Couldn't wrap the custom impl. " + backEnd.getClass().getName() + " in an instance of " + EE_SECRET_DELEGATE;
+      } else {
+        message = "Couldn't fetch keystore password from the console";
+      }
+      throw new RuntimeException(message, e);
     }
   }
 
