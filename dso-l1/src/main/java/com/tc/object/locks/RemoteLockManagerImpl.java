@@ -37,7 +37,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
   private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
   private boolean                              shutdown                    = false;
-  private boolean                              rejoinInProgress            = false;
 
   @Deprecated
   private final ClientLockStatManager          statManager;
@@ -51,19 +50,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     this.group = group;
     this.clientIdProvider = clientIdProvider;
     this.statManager = statManager;
-  }
-
-  @Override
-  public void setRejoinInProgress(boolean inProgress) {
-    synchronized (queue) {
-      rejoinInProgress = inProgress;
-    }
-  }
-  @Override
-  public boolean isRejoinInProgress() {
-    synchronized (queue) {
-      return rejoinInProgress;
-    }
   }
 
   @Override
@@ -254,10 +240,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
         if (shutdown) {
           logger.info("Ignoring Batched Recall Requests Timer task as timer is already shut down.");
           this.cancel();
-          return;
-        }
-        if (rejoinInProgress) {
-          logger.info("Ignoring Batched Recall Requests Timer task as rejoin-in-progress.");
           return;
         }
         sendBatchedRequestsImmediately();

@@ -717,7 +717,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread,
                                                        final LockLevel level) {
-    if (remote.isRejoinInProgress()) { throw new PlatformRejoinException(); }
     // What can we glean from local lock state
     final LockHold newHold = new LockHold(thread, level);
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {

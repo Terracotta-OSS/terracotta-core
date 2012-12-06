@@ -84,14 +84,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.stateGuard.writeLock().lock();
     try {
       checkAndSetstate();
-      remoteLockManager.setRejoinInProgress(true);
       for (ClientLock clientLock : locks.values()) {
         clientLock.cleanup();
       }
       locks.clear();
       remoteLockManager.cleanup();
       inFlightLockQueries.clear();
-      remoteLockManager.setRejoinInProgress(false);
     } finally {
       this.stateGuard.writeLock().unlock();
     }
