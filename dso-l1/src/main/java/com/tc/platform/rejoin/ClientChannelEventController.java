@@ -13,10 +13,9 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.context.PauseContext;
+import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
-import com.tc.runtime.TCMemoryManager;
-import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,22 +25,14 @@ public class ClientChannelEventController {
   private static final TCLogger             DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger             CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
-  private final RejoinManagerInternal       rejoinManager;
   private final ClientHandshakeManager      clientHandshakeManager;
-  private final TCMemoryManager             tcMemManager;
   private final Sink                        pauseSink;
-  private final DsoClusterInternalEventsGun dsoClusterEventsGun;
   private final AtomicBoolean               shutdown       = new AtomicBoolean(false);
 
   public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
-                                      RejoinManagerInternal rejoinManager,
-                                      ClientHandshakeManager clientHandshakeManager,
-                                      DsoClusterInternalEventsGun dsoClusterEventsGun, TCMemoryManager tcMemManager) {
+                                      ClientHandshakeManager clientHandshakeManager) {
     this.pauseSink = pauseSink;
-    this.rejoinManager = rejoinManager;
     this.clientHandshakeManager = clientHandshakeManager;
-    this.dsoClusterEventsGun = dsoClusterEventsGun;
-    this.tcMemManager = tcMemManager;
     channel.addListener(new ChannelEventListenerImpl(this));
   }
 
@@ -72,33 +63,16 @@ public class ClientChannelEventController {
   private void channelClosed(ChannelEvent event) {
     clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
     // MNK-2410: initiate rejoin on transport close too
-    initiateRejoin(event);
+    requestRejoin(event);
   }
 
   private void channelReconnectionRejected(ChannelEvent event) {
-    initiateRejoin(event);
+    requestRejoin(event);
   }
 
-  private void initiateRejoin(ChannelEvent event) {
-    if (rejoinManager.isRejoinEnabled()) {
-      if (false) {
-        // TODO: remove me
-        oldRejoinBehavior(event);
-        return;
-      }
-      rejoinManager.initiateRejoin(event.getChannel());
-    }
-  }
-
-  private void oldRejoinBehavior(ChannelEvent event) {
+  private void requestRejoin(ChannelEvent event) {
     logRejoinStatusMessages(event);
-    // MNK-2771: stop memory monitor before firing node left
-    tcMemManager.shutdown();
-    clientHandshakeManager.shutdown();
-
-    if (!this.shutdown.get()) {
-      this.dsoClusterEventsGun.fireThisNodeLeft();
-    }
+    pauseSink.add(new RejoinContext(event.getChannel()));
   }
 
   private static void logRejoinStatusMessages(final ChannelEvent event) {

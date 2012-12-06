@@ -11,14 +11,17 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
+import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private static final TCLogger  consoleLogger = CustomerLogging.getConsoleLogger();
   private ClientHandshakeManager handshakeManager;
+  private RejoinManagerInternal  rejoinManager;
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -30,6 +33,8 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
     } else if (context instanceof PauseContext) {
       handlePauseContext((PauseContext) context);
+    } else if (context instanceof RejoinContext) {
+      handleRejoinContext((RejoinContext) context);
     } else {
       throw new AssertionError("unknown event type: " + context.getClass().getName());
     }
@@ -42,6 +47,10 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
       handshakeManager.connected(ctxt.getRemoteNode());
     }
   }
+  
+  private void handleRejoinContext(final RejoinContext context) {
+    rejoinManager.initiateRejoin(context.getMessageChannel());
+  }
 
   private void handleClientHandshakeAckMessage(final ClientHandshakeAckMessage handshakeAck) {
     handshakeManager.acknowledgeHandshake(handshakeAck);
@@ -50,7 +59,9 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
   @Override
   public synchronized void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    this.handshakeManager = ((ClientConfigurationContext) context).getClientHandshakeManager();
+    ClientConfigurationContext ccContext = (ClientConfigurationContext) context;
+    this.handshakeManager = ccContext.getClientHandshakeManager();
+    this.rejoinManager = ccContext.getRejoinManager();
   }
 
 }

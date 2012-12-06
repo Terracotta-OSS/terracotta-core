@@ -743,28 +743,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                       dsoCluster, pInfo.version(), Collections
                                           .unmodifiableCollection(clientHandshakeCallbacks), Collections
                                           .unmodifiableCollection(clearCallbacks));
-    // this.channel.addListener(this.clientHandshakeManager);
-
-    // final List<ReconnectionRejectedCallback> reconnectionRejectedCallbacks = new
-    // ArrayList<ReconnectionRejectedCallback>();
-    // reconnectionRejectedCallbacks.add(tcMemManager);
-    //
-    // if (clientMode.isExpressRejoinClient()) {
-    // reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(dsoCluster, clientHandshakeManager,
-    // reconnectionRejectedCallbacks);
-    // this.channel.addListener(reconnectionRejectedListener);
-    // }
 
     this.clientChannelEventController = new ClientChannelEventController(channel, pauseStage.getSink(),
-                                                                                         rejoinManager,
-                                                                                         clientHandshakeManager,
-                                                                                         dsoCluster,
-                                                                                      tcMemManager);
+                                                                         clientHandshakeManager);
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, this.lockManager,
                                                                          remoteObjectManager, this.clientTxnManager,
                                                                          this.clientHandshakeManager,
-                                                                         this.clusterMetaDataManager);
+                                                                         this.clusterMetaDataManager,
+                                                                         this.rejoinManager);
     stageManager.startAll(cc, Collections.EMPTY_LIST);
 
     initChannelMessageRouter(messageRouter, hydrateStage, lockResponse, lockStatisticsEnableDisableStage,
