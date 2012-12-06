@@ -45,6 +45,11 @@ set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
 
+set LICENSE_KEY=%TC_INSTALL_DIR%\..\terracotta-license.key
+if exist %LICENSE_KEY% (
+  set OPTS=%OPTS% -Dcom.tc.productkey.path=%LICENSE_KEY%
+)
+
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 :START_TCSERVER
 %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
