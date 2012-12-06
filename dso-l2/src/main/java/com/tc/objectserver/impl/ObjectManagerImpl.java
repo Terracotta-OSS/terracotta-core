@@ -21,6 +21,7 @@ import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.NullGarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -759,6 +760,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public void deleteObjects(final DGCResultContext gcResult) {
     Assert.assertTrue(this.collector.isDelete());
     final Set<ObjectID> toDelete = gcResult.getGarbageIDs();
+    final GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
+
+    //.fireGCDeleteEvent(gcInfo);
+    gcInfo.setActualGarbageCount(toDelete.size());
+    final long start = System.currentTimeMillis();
+
     Transaction t = persistenceTransactionProvider.newTransaction();
     removeAllObjectsByID(toDelete);
     this.objectStore.removeAllObjectsByID(gcResult);

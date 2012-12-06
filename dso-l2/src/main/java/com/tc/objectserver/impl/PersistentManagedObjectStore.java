@@ -84,10 +84,7 @@ public class PersistentManagedObjectStore {
    */
   public void removeAllObjectsByID(final DGCResultContext dgcResultContext) {
     assertNotInShutdown();
-    // NOTE:: Calling removeAllObjectIDs to remove the object IDs in-line so that the next DGC cycle doesn't pick up
-    // the same GCed object IDs again if the delete stage is falling behind.
     this.objectPersistor.deleteAllObjects(dgcResultContext.getGarbageIDs());
-    this.gcDisposerSink.add(dgcResultContext);
   }
 
   public ObjectIDSet getAllObjectIDs() {

@@ -74,8 +74,11 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   }
 
   public void deleteGarbage(final DGCResultContext dgcResultContext) {
+
     this.youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
     this.objectManager.notifyGCComplete(dgcResultContext);
+
+
     notifyGCComplete();
   }
 
