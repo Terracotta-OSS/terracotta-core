@@ -3,7 +3,7 @@
  */
 package com.terracotta.toolkit;
 
-import org.terracotta.toolkit.NonStopToolkit;
+import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -25,6 +25,7 @@ import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
+import org.terracotta.toolkit.nonstop.NonStop;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -49,7 +50,7 @@ import java.lang.reflect.Proxy;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
+public class NonStopToolkitImpl implements ToolkitInternal {
   private final FutureTask<ToolkitInternal>    toolkitDelegateFutureTask;
   private final NonStopManagerImpl             nonStopManager;
   private final NonStopConfigRegistryImpl      nonStopConfigManager          = new NonStopConfigRegistryImpl();
@@ -57,6 +58,7 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
 
   private final AbortableOperationManager      abortableOperationManager;
   private final NonStopClusterListener         nonStopClusterListener;
+  private final NonStop                        nonStopFeature;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
     this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
@@ -66,6 +68,7 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
     this.nonStopConfigManager.registerForType(NonStopConfigRegistryImpl.DEFAULT_CONFIG,
                                               NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
                                                   .toArray(new ToolkitObjectType[0]));
+    this.nonStopFeature = new NonStopImpl(this);
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -249,12 +252,10 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
     getInitializedToolkit().shutdown();
   }
 
-  @Override
   public NonStopConfigurationRegistry getNonStopConfigurationToolkitRegistry() {
     return nonStopConfigManager;
   }
 
-  @Override
   public void start(NonStopConfiguration configuration) {
     nonStopConfigManager.registerForThread(configuration);
 
@@ -263,7 +264,6 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
     }
   }
 
-  @Override
   public void stop() {
     NonStopConfiguration configuration = nonStopConfigManager.deregisterForThread();
 
@@ -314,5 +314,12 @@ public class NonStopToolkitImpl implements ToolkitInternal, NonStopToolkit {
   @Override
   public ToolkitProperties getProperties() {
     return getInitializedToolkit().getProperties();
+  }
+
+  @Override
+  public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
+    if (clazz.isInstance(nonStopFeature)) { return (T) nonStopFeature; }
+    throw new UnsupportedOperationException("Class " + clazz
+                                            + " doesn't have a feature asscociated with the current Toolkit");
   }
 }
