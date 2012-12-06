@@ -306,7 +306,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         if (samples.isEmpty()) {
             return null;
         } else {
-          logger.info("Evicting elements " + samples);
             return new ServerMapEvictionContext(triggerParam, samples, className, cacheName);
         }
     }
