@@ -27,7 +27,6 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     String war = guessWarLocation();
     testConfig.getL2Config().addExtraServerJvmArg("-Dcom.tc.management.war=" + war);
-    testConfig.getL2Config().addExtraServerJvmArg("-Dcom.tc.management.bindMBeansToPlatformMBeanServer=" + true);
   }
 
   private String guessWarLocation() {
