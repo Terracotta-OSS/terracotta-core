@@ -29,6 +29,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCTimerService;
 import com.tc.util.Util;
 
 import java.util.Collection;
@@ -61,9 +62,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final TCLogger                                                 logger;
   private final SessionManager                                           sessionManager;
   private final Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
-  private final Timer                                                    requestTimer                              = new Timer(
-                                                                                                                               "RemoteServerMapManager Request Scheduler",
-                                                                                                                               true);
+  private final Timer                                                    requestTimer                              = TCTimerService
+                                                                                                                       .getInstance()
+                                                                                                                       .getTimer("RemoteServerMapManager Request Scheduler");
   private final AbortableOperationManager                                abortableOperationManager;
 
   private volatile State                                                 state                                     = State.RUNNING;

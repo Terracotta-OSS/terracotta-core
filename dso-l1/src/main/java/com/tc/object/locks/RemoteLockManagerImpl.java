@@ -13,6 +13,7 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.util.TCTimerService;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,7 +36,8 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
 
   private final Queue<RecallBatchContext>            queue                       = new LinkedList<RecallBatchContext>();
   private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
-  private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
+  private final Timer                          timer                       = TCTimerService.getInstance()
+                                                                               .getTimer("Batch Recall Timer");
   private boolean                              shutdown                    = false;
 
   @Deprecated

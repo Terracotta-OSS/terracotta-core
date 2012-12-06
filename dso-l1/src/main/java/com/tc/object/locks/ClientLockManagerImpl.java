@@ -19,6 +19,7 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.FindbugsSuppressWarnings;
+import com.tc.util.TCTimerService;
 import com.tc.util.Util;
 import com.tc.util.runtime.ThreadIDManager;
 
@@ -43,9 +44,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
                                                                         }
                                                                       };
 
-  private final Timer                             gcTimer             = new Timer("ClientLockManager LockGC", true);
-  private final Timer                             lockLeaseTimer      = new Timer("ClientLockManager Lock Lease Timer",
-                                                                                  true);
+  private final Timer                             gcTimer             = TCTimerService.getInstance()
+                                                                          .getTimer("ClientLockManager LockGC");
+  private final Timer                             lockLeaseTimer      = TCTimerService
+                                                                          .getInstance()
+                                                                          .getTimer("ClientLockManager Lock Lease Timer");
   private final ConcurrentMap<LockID, ClientLock>     locks;
   private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
   private final Condition                         runningCondition    = this.stateGuard.writeLock().newCondition();

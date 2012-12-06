@@ -1194,9 +1194,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       }
     }
 
-    // if (this.reconnectionRejectedListener != null) {
-    // this.reconnectionRejectedListener.shutDown();
-    // }
     clientChannelEventController.shutdown();
 
     if (this.channel != null) {

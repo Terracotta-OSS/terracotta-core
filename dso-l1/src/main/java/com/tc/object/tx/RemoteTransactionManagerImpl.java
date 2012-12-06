@@ -30,6 +30,7 @@ import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
+import com.tc.util.TCTimerService;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -82,9 +83,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   private final SessionManager                           sessionManager;
   private final TransactionSequencer                     sequencer;
   private final DSOClientMessageChannel                  channel;
-  private final Timer                                    timer                       = new Timer(
-                                                                                                 "RemoteTransactionManager Flusher",
-                                                                                                 true);
+  private final Timer                                    timer                       = TCTimerService
+                                                                                         .getInstance()
+                                                                                         .getTimer("RemoteTransactionManager Flusher");
   private final RemoteTransactionManagerTimerTask        remoteTxManagerTimerTask;
 
   private final GroupID                                  groupID;

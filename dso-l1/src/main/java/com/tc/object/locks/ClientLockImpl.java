@@ -990,6 +990,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
           break;
         }
+        if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
       abortAndRemove(remote, node);
