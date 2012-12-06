@@ -1,0 +1,1 @@
+Please refer to http://www.terracotta.org/kit/reflector?kitID=default&pageID=BigMemoryMaxReleaseNotes for changes and release notes.
