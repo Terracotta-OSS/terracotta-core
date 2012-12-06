@@ -40,7 +40,7 @@ rem users may change it accordingly
 
 :found_command
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
-set OPTS=%SERVER_OPT% -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
+set OPTS=%SERVER_OPT% -Xms1g -Xmx1g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
