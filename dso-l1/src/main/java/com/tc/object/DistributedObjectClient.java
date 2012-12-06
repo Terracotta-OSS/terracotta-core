@@ -745,7 +745,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                           .unmodifiableCollection(clearCallbacks));
 
     this.clientChannelEventController = new ClientChannelEventController(channel, pauseStage.getSink(),
-                                                                         clientHandshakeManager);
+                                                                         clientHandshakeManager, this.rejoinManager);
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, this.lockManager,
                                                                          remoteObjectManager, this.clientTxnManager,

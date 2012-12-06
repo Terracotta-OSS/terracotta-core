@@ -28,11 +28,13 @@ public class ClientChannelEventController {
   private final ClientHandshakeManager      clientHandshakeManager;
   private final Sink                        pauseSink;
   private final AtomicBoolean               shutdown       = new AtomicBoolean(false);
+  private final RejoinManager          rejoinManager;
 
   public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
-                                      ClientHandshakeManager clientHandshakeManager) {
+                                      ClientHandshakeManager clientHandshakeManager, RejoinManager rejoinManager) {
     this.pauseSink = pauseSink;
     this.clientHandshakeManager = clientHandshakeManager;
+    this.rejoinManager = rejoinManager;
     channel.addListener(new ChannelEventListenerImpl(this));
   }
 
@@ -71,8 +73,12 @@ public class ClientChannelEventController {
   }
 
   private void requestRejoin(ChannelEvent event) {
-    logRejoinStatusMessages(event);
-    pauseSink.add(new RejoinContext(event.getChannel()));
+    if (rejoinManager.isRejoinEnabled()) {
+      logRejoinStatusMessages(event);
+      pauseSink.add(new RejoinContext(event.getChannel()));
+    } else {
+      DSO_LOGGER.info("Rejoin request ignored as rejoin is NOT enabled");
+    }
   }
 
   private static void logRejoinStatusMessages(final ChannelEvent event) {
@@ -81,7 +87,6 @@ public class ClientChannelEventController {
         : "Reconnection rejected event fired, caused by " + channelID;
     CONSOLE_LOGGER.info(msg);
     DSO_LOGGER.info(msg);
-    DSO_LOGGER.info("Shutting down clientHandshakeManager...");
   }
 
   private static class ChannelEventListenerImpl implements ChannelEventListener {
