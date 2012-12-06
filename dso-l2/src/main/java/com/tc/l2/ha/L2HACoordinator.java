@@ -138,7 +138,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
          serverTransactionFactory, dgcSequenceProvider, objectIDSequence, resource);
   }
 
-  private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
+  private void init(final StageManager stageManager, final PersistentMapStore perstStateStore,
                     L2ObjectStateManager objectStateManager, L2IndexStateManager l2IndexStateManager,
                     final ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
@@ -147,11 +147,11 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
                     final ObjectIDSequence objectIDSequence, final MonitoredResource resource) {
 
-    isCleanDB = isCleanDB(persistentStateStore);
+    isCleanDB = isCleanDB(perstStateStore);
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(persistentStateStore, objectIDSequence,
+    final ClusterState clusterState = new ClusterState(perstStateStore, objectIDSequence,
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);
@@ -168,7 +168,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     persistentStateStore);
+                                                                                     perstStateStore);
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
