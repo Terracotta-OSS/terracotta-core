@@ -18,6 +18,7 @@ import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
+import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.ServerEntity;
@@ -32,9 +33,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -840,6 +843,114 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           LOG.warn("error closing JMX connection", ioe);
         }
       }
+    }
+  }
+
+  @Override
+  public Collection<BackupEntity> getBackupStatus() throws ServiceExecutionException {
+    Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+            BackupEntity backupEntity = new BackupEntity();
+            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            backupEntity.setSourceId(member.name());
+
+            String runningBackup = tcServerInfoMBean.getRunningBackup();
+            backupEntity.setName(runningBackup);
+
+            if (runningBackup != null) {
+              String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
+              backupEntity.setStatus(backupStatus);
+            }
+
+            backupEntities.add(backupEntity);
+          } catch (Exception e) {
+            BackupEntity backupEntity = new BackupEntity();
+            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            backupEntity.setSourceId(member.name());
+            backupEntity.setError(e.getMessage());
+            backupEntities.add(backupEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return backupEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting servers config", e);
+    }
+  }
+
+  @Override
+  public Collection<BackupEntity> backup() throws ServiceExecutionException {
+    Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
+
+    try {
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+      final String backupName = "backup." + sdf.format(new Date());
+
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+            tcServerInfoMBean.backup(backupName);
+
+            BackupEntity backupEntity = new BackupEntity();
+            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            backupEntity.setSourceId(member.name());
+            backupEntities.add(backupEntity);
+          } catch (Exception e) {
+            BackupEntity backupEntity = new BackupEntity();
+            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            backupEntity.setSourceId(member.name());
+            backupEntity.setError(e.getMessage());
+            backupEntities.add(backupEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return backupEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting servers config", e);
     }
   }
 
