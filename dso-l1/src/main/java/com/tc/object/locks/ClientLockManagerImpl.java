@@ -99,7 +99,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   private void checkAndSetstate() {
-    // state = state.rejoin_in_progress();
+    state = state.rejoin_in_progress();
     runningCondition.signalAll();
   }
 
@@ -866,12 +866,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State unpause() {
-        return RUNNING;
+        throw new AssertionError("unpause is an invalid state transition for " + this);
       }
 
       @Override
       State initialize() {
-        return RUNNING;
+        return STARTING;
       }
 
       @Override
