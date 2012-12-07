@@ -49,6 +49,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
       if (sublist != null) {
         sublist.rejoinStarted();
       }
+      allSubLists.remove(sublistWeakRef);
     }
   }
 
