@@ -9,9 +9,12 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +26,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitList<E>                              list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
+  private final List<WeakReference<SubListWrapper>>            allSubLists = new ArrayList<WeakReference<SubListWrapper>>();
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
@@ -36,6 +40,16 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void rejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
+    notifyAllSubListsOfRejoin();
+  }
+
+  private void notifyAllSubListsOfRejoin() {
+    for (WeakReference<SubListWrapper> sublistWeakRef : allSubLists) {
+      SubListWrapper sublist = sublistWeakRef.get();
+      if (sublist != null) {
+        sublist.rejoinStarted();
+      }
+    }
   }
 
   @Override
@@ -172,7 +186,9 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public List<E> subList(int fromIndex, int toIndex) {
-    return new SubListWrapper(list.subList(fromIndex, toIndex));
+    SubListWrapper subList = new SubListWrapper(list.subList(fromIndex, toIndex));
+    allSubLists.add(new WeakReference<SubListWrapper>(subList));
+    return subList;
   }
 
   @Override
@@ -185,8 +201,8 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     return list.getReadWriteLock();
   }
 
-  private class SubListWrapper implements List<E> {
-    private final List<E> subList;
+  private class SubListWrapper implements List<E>, RejoinCallback {
+    private List<E> subList;
 
     public SubListWrapper(List<E> subList) {
       this.subList = subList;
@@ -339,11 +355,24 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     @Override
     public List<E> subList(int fromIndex, int toIndex) {
       checkDestroyed();
-      return new SubListWrapper(subList.subList(fromIndex, toIndex));
+      SubListWrapper tempSubList = new SubListWrapper(subList.subList(fromIndex, toIndex));
+      allSubLists.add(new WeakReference<SubListWrapper>(tempSubList));
+      return tempSubList;
+
     }
 
     private void checkDestroyed() {
       if (isDestroyed()) { throw new IllegalStateException("The List backing this subList is already destroyed."); }
+    }
+
+    @Override
+    public void rejoinStarted() {
+      this.subList = ToolkitInstanceProxy.newSubTypeNotUsableAfterRejoinProxy(name, List.class);
+    }
+
+    @Override
+    public void rejoinCompleted() {
+      // noop
     }
 
   }
