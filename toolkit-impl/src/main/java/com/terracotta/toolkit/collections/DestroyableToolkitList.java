@@ -26,7 +26,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitList<E>                              list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
-  private final List<WeakReference<SubListWrapper>>            allSubLists = new ArrayList<WeakReference<SubListWrapper>>();
+  private final List<WeakReference<SubListWrapper>>            colSubList = new ArrayList<WeakReference<SubListWrapper>>();
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
@@ -40,16 +40,14 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void rejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
-    notifyAllSubListsOfRejoin();
-  }
-
-  private void notifyAllSubListsOfRejoin() {
-    for (WeakReference<SubListWrapper> sublistWeakRef : allSubLists) {
-      SubListWrapper sublist = sublistWeakRef.get();
-      if (sublist != null) {
-        sublist.rejoinStarted();
+    synchronized (colSubList) {
+      for (WeakReference<SubListWrapper> weakSublist : colSubList) {
+        SubListWrapper sublist = weakSublist.get();
+        if (sublist != null) {
+          sublist.rejoinStarted();
+        }
+        colSubList.remove(weakSublist);
       }
-      allSubLists.remove(sublistWeakRef);
     }
   }
 
@@ -188,7 +186,9 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public List<E> subList(int fromIndex, int toIndex) {
     SubListWrapper subList = new SubListWrapper(list.subList(fromIndex, toIndex));
-    allSubLists.add(new WeakReference<SubListWrapper>(subList));
+    synchronized (colSubList) {
+      colSubList.add(new WeakReference<SubListWrapper>(subList));
+    }
     return subList;
   }
 
@@ -357,7 +357,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     public List<E> subList(int fromIndex, int toIndex) {
       checkDestroyed();
       SubListWrapper tempSubList = new SubListWrapper(subList.subList(fromIndex, toIndex));
-      allSubLists.add(new WeakReference<SubListWrapper>(tempSubList));
+      colSubList.add(new WeakReference<SubListWrapper>(tempSubList));
       return tempSubList;
 
     }
@@ -368,12 +368,12 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
     @Override
     public void rejoinStarted() {
-      this.subList = ToolkitInstanceProxy.newSubTypeNotUsableAfterRejoinProxy(name, List.class);
+      this.subList = ToolkitInstanceProxy.newRejoinInProgressProxy(name, List.class);
     }
 
     @Override
     public void rejoinCompleted() {
-      // noop
+      // no-op
     }
 
   }

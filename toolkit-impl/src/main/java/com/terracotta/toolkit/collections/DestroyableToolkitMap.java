@@ -28,7 +28,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
-  private final List<WeakReference<DestroyableSet>>           allKeySets = new ArrayList<WeakReference<DestroyableSet>>();
+  private final List<WeakReference<DestroyableSet>>           colKeySet = new ArrayList<WeakReference<DestroyableSet>>();
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -43,7 +43,15 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
-    notifyAllKeySetsOfRejoin();
+    synchronized (colKeySet) {
+      for (WeakReference<DestroyableSet> keySetWeakRef : colKeySet) {
+        DestroyableSet keySet = keySetWeakRef.get();
+        if (keySet != null) {
+          keySet.rejoinStarted();
+        }
+        colKeySet.remove(keySetWeakRef);
+      }
+    }
   }
 
   @Override
@@ -55,16 +63,6 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
       // didn't find backing clustered object after rejoin - must have been destroyed
       // so apply destroy locally
       applyDestroy();
-    }
-  }
-
-  private void notifyAllKeySetsOfRejoin() {
-    for (WeakReference<DestroyableSet> keySetWeakRef : allKeySets) {
-      DestroyableSet keySet = keySetWeakRef.get();
-      if (keySet != null) {
-        keySet.rejoinStarted();
-      }
-      allKeySets.remove(keySetWeakRef);
     }
   }
 
@@ -136,7 +134,9 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public Set<K> keySet() {
     DestroyableSet destroyableSet = new DestroyableSet(map.keySet());
-    allKeySets.add(new WeakReference<DestroyableSet>(destroyableSet));
+    synchronized (colKeySet) {
+      colKeySet.add(new WeakReference<DestroyableSet>(destroyableSet));
+    }
     return destroyableSet;
   }
 
@@ -247,12 +247,12 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
     @Override
     public void rejoinStarted() {
-      this.collection = ToolkitInstanceProxy.newSubTypeNotUsableAfterRejoinProxy(name, Set.class);
+      this.collection = ToolkitInstanceProxy.newRejoinInProgressProxy(name, Set.class);
     }
 
     @Override
     public void rejoinCompleted() {
-      // noop
+      // no-op
     }
   }
 

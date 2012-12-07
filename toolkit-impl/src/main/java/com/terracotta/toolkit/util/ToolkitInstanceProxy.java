@@ -37,19 +37,4 @@ public abstract class ToolkitInstanceProxy {
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
   }
-
-  public static <T> T newSubTypeNotUsableAfterRejoinProxy(final String name, final Class<T> clazz) {
-    InvocationHandler handler = new InvocationHandler() {
-      @Override
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // TODO: throw explicit public exception type
-        throw new RejoinException("The toolkit subType instance with name '" + name + "' (instance of "
-                                  + clazz.getName() + ") is not usable after rejoin");
-      }
-    };
-
-    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
-    return proxy;
-  }
-
 }
