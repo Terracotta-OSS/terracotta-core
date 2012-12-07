@@ -99,7 +99,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   private void checkAndSetstate() {
-    state.rejoin_in_progress();
+    state = state.rejoin_in_progress();
     runningCondition.signalAll();
   }
 
