@@ -3,7 +3,6 @@
  */
 package com.tc.object;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -298,7 +297,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private void updateLocalCacheIfNecessary(final Object key, final Object value) {
     // Null values (i.e. cache misses) & literal values are not cached locally
     if (value != null && !LiteralValues.isLiteralInstance(value)) {
-      if (invalidateOnChange) {
+      if (isEventual) {
         //
         addEventualValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
