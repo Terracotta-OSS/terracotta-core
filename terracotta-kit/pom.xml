@@ -407,9 +407,6 @@
                       <dependenciesAtM2>true</dependenciesAtM2>
                       <process>Util.processTerracottaJar(project, files.first(), "lib")
                                Util.setPermission(project)
-                               if (project.properties['gt.kit'] == "true") {
-                                 Util.processEnterpriseGtKit(project)
-                               }
                       </process>
                     </resource>                    
                   </resources>
