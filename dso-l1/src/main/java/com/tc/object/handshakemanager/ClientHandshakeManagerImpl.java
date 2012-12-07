@@ -116,7 +116,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     changeToStarting(remoteNode);
 
     ClientHandshakeMessage handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode, this.clientVersion,
-                                                                                  enterpriseClient());
+                                                                                  isEnterpriseClient());
     notifyCallbackOnHandshake(remoteNode, handshakeMessage);
     notifyTransitionComplete();
 
@@ -124,7 +124,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     handshakeMessage.send();
   }
 
-  protected boolean enterpriseClient() {
+  protected boolean isEnterpriseClient() {
     return false;
   }
 
