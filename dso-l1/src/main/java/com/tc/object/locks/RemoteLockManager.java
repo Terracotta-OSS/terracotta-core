@@ -36,8 +36,4 @@ public interface RemoteLockManager extends ClearableCallback {
 
   public boolean isShutdown();
 
-  public boolean isRejoinInProgress();
-
-  public void setRejoinInProgress(boolean isProgress);
-
 }

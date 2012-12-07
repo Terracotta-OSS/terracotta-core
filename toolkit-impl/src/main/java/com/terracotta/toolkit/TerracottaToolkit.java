@@ -5,6 +5,7 @@ package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
 
+import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -319,5 +320,10 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   AbortableOperationManager getAbortableOperationManager() {
     return platformService.getAbortableOperationManager();
+  }
+
+  @Override
+  public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
+    throw new UnsupportedOperationException();
   }
 }

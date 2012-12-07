@@ -130,7 +130,6 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner())) {
         if (flushInProgress) { return LockAcquireResult.WAIT_FOR_FLUSH; }
-
         if (this.getLockLevel().isWrite()) { return LockAcquireResult.SUCCESS; }
         if (newHold.getLockLevel().isRead()) { return LockAcquireResult.SHARED_SUCCESS; }
       } else {

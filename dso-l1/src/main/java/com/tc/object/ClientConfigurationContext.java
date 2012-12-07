@@ -9,6 +9,7 @@ import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
 
@@ -48,18 +49,25 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   private final ClientTransactionManager txManager;
   private final ClientHandshakeManager   clientHandshakeManager;
   private final ClusterMetaDataManager   clusterMetaDataManager;
+  private final RejoinManagerInternal    rejoinManager;
 
   public ClientConfigurationContext(final StageManager stageManager, final ClientLockManager lockManager,
                                     final RemoteObjectManager remoteObjectManager,
                                     final ClientTransactionManager txManager,
                                     final ClientHandshakeManager clientHandshakeManager,
-                                    final ClusterMetaDataManager clusterMetaDataManager) {
+                                    final ClusterMetaDataManager clusterMetaDataManager,
+                                    final RejoinManagerInternal rejoinManager) {
     super(stageManager);
     this.lockManager = lockManager;
     this.remoteObjectManager = remoteObjectManager;
     this.txManager = txManager;
     this.clientHandshakeManager = clientHandshakeManager;
     this.clusterMetaDataManager = clusterMetaDataManager;
+    this.rejoinManager = rejoinManager;
+  }
+
+  public RejoinManagerInternal getRejoinManager() {
+    return rejoinManager;
   }
 
   public ClientLockManager getLockManager() {

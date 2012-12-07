@@ -42,6 +42,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   // Every 100 transactions, it updates the LWM
   private static final int               LOW_WATER_MARK_UPDATE_FREQUENCY = 100;
+  private static final int               TXN_LIMIT_COUNT = 500;
 
   private ServerTransactionManager       transactionManager;
   private LockManager                    lockManager;
@@ -55,7 +56,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private int                            count                           = 0;
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
   private final TransactionProvider persistenceTransactionProvider;
-  private Transaction               currentTransaction;                      
+  private Transaction               currentTransaction;      
+  private int                       txnCount = 1;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
                                        TransactionProvider persistenceTransactionProvider) {
@@ -71,6 +73,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     
     if ( txn == null ) {
         currentTransaction.commit();
+        currentTransaction = null;
         return;
     }
       
@@ -79,11 +82,17 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       
     if (atc.needsApply()) {
     
-       if ( currentTransaction == null ) {
+       if ( currentTransaction == null || txnCount++ % TXN_LIMIT_COUNT == 0) {
+            txnCount = 1;
+            if ( currentTransaction == null ) {
+                recycleCommitSink.add(new ApplyTransactionContext(null));
+            } else {
+                currentTransaction.commit();
+            }
             currentTransaction = persistenceTransactionProvider.newTransaction();
-            recycleCommitSink.add(new ApplyTransactionContext(null));
        }
        Transaction tx = currentTransaction;
+       txnCount += 1;
        this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
        tx.addTransactionListener(new TransactionListener() {
 
@@ -92,7 +101,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
                 txnObjectMgr.applyTransactionComplete(applyInfo);
                 transactionManager.commit(null, applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(stxnID), applyInfo.getObjectIDsToDelete());
                 finishHandleEvent(atc, applyInfo, txn);
-                currentTransaction = null;
             }
 
             @Override

@@ -144,11 +144,11 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     }
   }
 
-  private void markDBDirty(PersistentMapStore persistentMapStore) {
+  private void markDBDirty(PersistentMapStore persMapStore) {
     final Calendar cal = Calendar.getInstance();
     final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-    persistentMapStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
-    persistentMapStore.put(ClusterStateDBKeyNames.L2_STATE_KEY, StateManager.PASSIVE_STANDBY
+    persMapStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
+    persMapStore.put(ClusterStateDBKeyNames.L2_STATE_KEY, StateManager.PASSIVE_STANDBY
         .getName());
   }
 

@@ -26,10 +26,17 @@ if test \! -d "${JAVA_HOME}"; then
 fi
 
 TC_INSTALL_DIR=`dirname "$0"`/..
+license_key="$TC_INSTALL_DIR/../terracotta-license.key"
 
 # For Cygwin, convert paths to Windows before invoking java
 if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
+  [ -f "$license_key" ] && license_key=`cygpath -d "$license_key"`
+fi
+
+license_opts=
+if [ -f "${license_key}" ]; then
+  license_opts="-Dcom.tc.productkey.path=$license_key"
 fi
 
 for JAVA_COMMAND in \
@@ -48,10 +55,11 @@ done
 start=true
 while "$start"
 do
-${JAVA_COMMAND} -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
+${JAVA_COMMAND} -Xms1g -Xmx1g -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
+   $license_opts \
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
    com.tc.server.TCServerMain "$@"

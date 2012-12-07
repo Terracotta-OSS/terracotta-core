@@ -7,6 +7,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 
 import java.util.Collection;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -21,17 +22,17 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface DiagnosticsResourceService {
 
-  @POST
+  @GET
   @Path("/threadDump")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<ThreadDumpEntity> clusterThreadDump(@Context UriInfo info);
 
-  @POST
+  @GET
   @Path("/threadDump/servers")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<ThreadDumpEntity> serversThreadDump(@Context UriInfo info);
 
-  @POST
+  @GET
   @Path("/threadDump/clients")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<ThreadDumpEntity> clientsThreadDump(@Context UriInfo info);

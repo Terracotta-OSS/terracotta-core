@@ -19,7 +19,7 @@ import javax.management.remote.JMXConnector;
 public abstract class AbstractClientBase implements Runnable {
 
   public final int                      HEAVY_CLIENT_TEST_TIME = 5 * 60 * 1000;
-  private static final SimpleDateFormat DATE_FORMATTER         = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
+  private static final SimpleDateFormat DATE_FORMATTER         = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private final TestHandlerMBean        testControlMBean;
 

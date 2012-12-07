@@ -6,6 +6,7 @@ package com.terracotta.management.service;
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.terracotta.management.ServiceExecutionException;
 
+import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
@@ -54,5 +55,9 @@ public interface TsaManagementClientService {
   Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
 
   Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException;
+
+  Collection<BackupEntity> getBackupStatus() throws ServiceExecutionException;
+
+  Collection<BackupEntity> backup() throws ServiceExecutionException;
 
 }

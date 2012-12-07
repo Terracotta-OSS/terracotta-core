@@ -28,6 +28,7 @@ import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
+import com.tc.util.TCTimerService;
 import com.tc.util.Util;
 
 import java.util.Collection;
@@ -85,9 +86,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private final Map<ObjectID, DNA>                 dnaCache                 = new HashMap<ObjectID, DNA>();
   private final Map<ObjectID, ObjectLookupState>   objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
 
-  private final Timer                              objectRequestTimer       = new Timer(
-                                                                                        "RemoteObjectManager Request Scheduler",
-                                                                                        true);
+  private final Timer                              objectRequestTimer       = TCTimerService
+                                                                                .getInstance()
+                                                                                .getTimer("RemoteObjectManager Request Scheduler");
 
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
