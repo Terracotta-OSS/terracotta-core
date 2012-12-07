@@ -624,19 +624,16 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void addManagementWebApp() throws Exception {
-    File tcInstallDir;
-    try {
-      tcInstallDir = Directories.getInstallationRoot();
-    } catch (FileNotFoundException e) {
-      // if an error occurs during the retrieval of the installation root, just set it to null
-      // so that the fallback mechanism can be used
-      tcInstallDir = null;
+    if (!TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
+      logger.info("RestManagement is disabled.");
+      return;
     }
-
-    if (tcInstallDir != null && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
-      // register REST webapp
-      String warFile = System.getProperty("com.tc.management.war");
-      if (warFile == null) {
+    // register REST webapp
+    String warFile = System.getProperty("com.tc.management.war");
+    if (warFile == null) {
+      File tcInstallDir;
+      try {
+        tcInstallDir = Directories.getInstallationRoot();
         File managementDir = new File(tcInstallDir, "lib");
 
         String[] files = managementDir.list(new FilenameFilter() {
@@ -649,24 +646,27 @@ public class TCServerImpl extends SEDA implements TCServer {
         if (files != null && files.length > 0) {
           warFile = managementDir.getPath() + File.separator + files[0];
         }
+      } catch (FileNotFoundException e) {
+        // there is no more hope of deploying the web app
+        logger.info("impossible to deploy the webapp due to invalid installation dir location");
       }
+    }
 
-      if (warFile != null) {
-        logger.info("deploying management REST services from archive " + warFile);
-        WebAppContext restContext = new WebAppContext();
+    if (warFile != null) {
+      logger.info("deploying management REST services from archive " + warFile);
+      WebAppContext restContext = new WebAppContext();
 
-        // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
-        List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
-        systemClasses.add("org.slf4j.");
-        restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
+      // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
+      List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
+      systemClasses.add("org.slf4j.");
+      restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
 
-        restContext.setContextPath("/tc-management-api");
-        restContext.setWar(warFile);
-        contextHandlerCollection.addHandler(restContext);
+      restContext.setContextPath("/tc-management-api");
+      restContext.setWar(warFile);
+      contextHandlerCollection.addHandler(restContext);
 
-        if (contextHandlerCollection.isStarted()) {
-          restContext.start();
-        }
+      if (contextHandlerCollection.isStarted()) {
+        restContext.start();
       }
     }
   }
