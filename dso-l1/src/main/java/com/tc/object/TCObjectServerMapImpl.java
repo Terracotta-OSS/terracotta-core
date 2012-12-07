@@ -296,14 +296,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   private void updateLocalCacheIfNecessary(final Object key, final Object value) {
-    if (isEventual) {
-      // Null values (i.e. cache misses) & literal values are not cached locally
-      if (value != null && !LiteralValues.isLiteralInstance(value)) {
+    // Null values (i.e. cache misses) & literal values are not cached locally
+    if (value != null && !LiteralValues.isLiteralInstance(value)) {
+      if (invalidateOnChange) {
         //
         addEventualValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
-    } else {
-      addIncoherentValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
+      else {
+        addIncoherentValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
+      }
     }
   }
 
