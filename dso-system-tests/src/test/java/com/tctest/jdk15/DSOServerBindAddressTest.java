@@ -4,6 +4,8 @@
  */
 package com.tctest.jdk15;
 
+import org.terracotta.test.util.WaitUtil;
+
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
@@ -28,6 +30,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.Callable;
 
 /**
  * Test for DEV-1060
@@ -83,7 +86,23 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       int tsaPort = pc.chooseRandomPort();
       int jmxPort = pc.chooseRandomPort();
 
+
       new StartupHelper(group, new StartAction(bind, tsaPort, jmxPort)).startUp();
+
+      final DistributedObjectServer dsoServer = server;
+      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          try {
+            dsoServer.getListenAddr();
+            return true;
+          } catch (IllegalStateException ise) {
+            //
+          }
+          return false;
+        }
+      });
+
       if (i == 0) {
         Assert.eval(server.getListenAddr().isAnyLocalAddress());
       } else {
