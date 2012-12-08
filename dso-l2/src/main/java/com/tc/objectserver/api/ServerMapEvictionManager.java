@@ -5,7 +5,7 @@ package com.tc.objectserver.api;
 
 import com.tc.async.api.PostInit;
 import com.tc.object.ObjectID;
-import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Map;
@@ -20,8 +20,8 @@ public interface ServerMapEvictionManager extends PostInit, PrettyPrintable {
 
   public void evict(ObjectID oid, Map samples, String className, String cacheName);
   
-  public SampledRateCounter getExpirationStatistics();
+  public SampledCounter getExpirationStatistics();
   
-  public SampledRateCounter getEvictionStatistics();
+  public SampledCounter getEvictionStatistics();
 
 }

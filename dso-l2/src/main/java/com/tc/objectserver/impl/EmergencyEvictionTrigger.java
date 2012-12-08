@@ -23,11 +23,11 @@ import java.util.Map;
  */
 public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     
-    private final boolean blowout;
+    private final int blowout;
     private int sampleCount;
     private int sizeCount;
 
-    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean blowout) {
+    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
         super(oid);
         this.blowout = blowout;
     }
@@ -40,7 +40,11 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
-        int get = boundsCheckSampleSize(( blowout ) ? sizeCount : sizeCount / 2);
+        int get = boundsCheckSampleSize(( blowout > 1 ) ? sizeCount : sizeCount * blowout / 10);
+//        int get = boundsCheckSampleSize(sizeCount);
+        if ( get < 2 ) {
+            get = 2;
+        }
         Map sampled = map.getRandomSamples(get,clients);
 //        Map sampled = map.getRandomSamples(sizeCount/5,new ClientObjectReferenceSet(new ClientStateManager() {
 //
