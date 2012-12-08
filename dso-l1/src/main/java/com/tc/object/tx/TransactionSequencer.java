@@ -257,9 +257,7 @@ public class TransactionSequencer implements ClearableCallback {
       // Check again to avoid sending the txn in the wrong order
       batch = get();
       reconcilePendingSize();
-      if ( this.pendingBatches.isEmpty() ) {
-          notifyAll();
-      }
+      notifyAll();
       if (batch != null) { return batch; }
       if (!this.currentBatch.isEmpty()) {
         batch = this.currentBatch;

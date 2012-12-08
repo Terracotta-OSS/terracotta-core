@@ -146,7 +146,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                                }
 
                                                                              };
-  private final Semaphore                       creationSemaphore            = new Semaphore(1, false);
+  private final Semaphore                       creationSemaphore            = new Semaphore(1, true);
   private final RootsHolder                     rootsHolder;
   private final AbortableOperationManager       abortableOperationManager;
 
@@ -1322,11 +1322,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void allowCreation() {
- //   this.creationSemaphore.release();
+    this.creationSemaphore.release();
   }
 
   private void canCreate() {
-//    this.creationSemaphore.acquireUninterruptibly();
+    this.creationSemaphore.acquireUninterruptibly();
   }
 
   private void reserveObjectIds(final int size, final GroupID gid) {
