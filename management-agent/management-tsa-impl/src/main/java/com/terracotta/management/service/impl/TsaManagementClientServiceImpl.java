@@ -8,14 +8,12 @@ import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.AgentEntity;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
-import com.tc.net.ClientID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.BackupEntity;
@@ -39,7 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 
@@ -104,33 +101,27 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
-          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
       for (ObjectName clientObjectName : clientObjectNames) {
-        ObjectName dsoClientObjectName = it.next();
-
-        String clientId = "" + ((ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).toLong();
+        String clientId = "" + ((Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).longValue();
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
 
         try {
-          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, dsoClientObjectName, L1InfoMBean.class);
+          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
+          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
 
           byte[] bytes = l1InfoMBean.takeCompressedThreadDump(10000L);
           ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
           threadDumpEntity.setNodeType(NodeType.CLIENT);
-          threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
           threadDumpEntity.setNodeType(NodeType.CLIENT);
-          threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           threadDumpEntity.setSourceId(clientId);
           threadDumpEntity.setDump("Unavailable");
@@ -182,13 +173,11 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             threadDumpEntity.setSourceId(member.name());
             threadDumpEntity.setNodeType(NodeType.SERVER);
-            threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
             threadDumpEntities.add(threadDumpEntity);
           } catch (Exception e) {
             ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
-            threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             threadDumpEntity.setSourceId(member.name());
             threadDumpEntity.setNodeType(NodeType.SERVER);
@@ -263,26 +252,26 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       Collection<ClientEntity> clientEntities = new HashSet<ClientEntity>();
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
-          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
       for (ObjectName clientObjectName : clientObjectNames) {
-        ObjectName dsoClientObjectName = it.next();
-
         ClientEntity clientEntity = new ClientEntity();
-        clientEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
         clientEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
-        clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
-        ClientID clientId = (ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
-        clientEntity.getAttributes().put("ClientID", "" + clientId.toLong());
+        try {
+          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
 
-        clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(dsoClientObjectName, "Version"));
-        clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(dsoClientObjectName, "BuildID"));
-
-        clientEntities.add(clientEntity);
+          clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
+          Long clientId = (Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+          clientEntity.getAttributes().put("ClientID", "" + clientId.longValue());
+  
+          clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(l1InfoObjectName, "Version"));
+          clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(l1InfoObjectName, "BuildID"));
+  
+          clientEntities.add(clientEntity);
+        } catch (Exception e) {
+          /* client must have disconnected */
+        }
       }
 
       return clientEntities;
@@ -310,7 +299,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         ServerGroupEntity serverGroupEntity = new ServerGroupEntity();
 
-        serverGroupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
         serverGroupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
         serverGroupEntity.setName(serverGroupInfo.name());
         serverGroupEntity.setId(serverGroupInfo.id());
@@ -320,7 +308,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         for (L2Info member : members) {
           try {
             ServerEntity serverEntity = buildServerEntity(member);
-            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             serverGroupEntity.getServers().add(serverEntity);
           } catch (ServiceExecutionException see) {
@@ -330,7 +317,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             serverEntity.getAttributes().put("Host", member.host());
             serverEntity.getAttributes().put("JmxPort", member.jmxPort());
             serverEntity.getAttributes().put("HostAddress", member.safeGetHostAddress());
-            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             serverGroupEntity.getServers().add(serverEntity);
           }
@@ -370,7 +356,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       StatisticsEntity statisticsEntity = new StatisticsEntity();
       statisticsEntity.setSourceId(clientId);
-      statisticsEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
       statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
       AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId),
@@ -408,7 +393,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     try {
       StatisticsEntity statisticsEntity = new StatisticsEntity();
       statisticsEntity.setSourceId(serverName);
-      statisticsEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
       statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
       L2Info targetServer = null;
@@ -478,8 +462,8 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
       for (ObjectName clientObjectName : clientObjectNames) {
-        ClientID clientID = (ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
-        clientNames.add("" + clientID.toLong());
+        Long clientID = (Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        clientNames.add("" + clientID.longValue());
       }
 
       return clientNames;
@@ -562,7 +546,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       for (GCStats gcStat : attributes) {
         StatisticsEntity statisticsEntity = new StatisticsEntity();
         statisticsEntity.setSourceId("DGC");
-        statisticsEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
         statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
         statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
@@ -747,7 +730,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
 
             ConfigEntity configEntity = new ConfigEntity();
-            configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             configEntity.setSourceId(member.name());
 
@@ -759,7 +741,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             configEntities.add(configEntity);
           } catch (Exception e) {
             ConfigEntity configEntity = new ConfigEntity();
-            configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             configEntity.setSourceId(member.name());
             configEntities.add(configEntity);
           } finally {
@@ -796,24 +777,19 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
-          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
       for (ObjectName clientObjectName : clientObjectNames) {
-        ObjectName dsoClientObjectName = it.next();
-
-        String clientId = "" + ((ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).toLong();
+        String clientId = "" + ((Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).longValue();
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
 
         try {
-          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, dsoClientObjectName, L1InfoMBean.class);
+          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
+          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
 
           ConfigEntity configEntity = new ConfigEntity();
-          configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           configEntity.setSourceId(clientId);
 
@@ -825,7 +801,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           configEntities.add(configEntity);
         } catch (Exception e) {
           ConfigEntity configEntity = new ConfigEntity();
-          configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           configEntity.setSourceId(clientId);
           configEntities.add(configEntity);
@@ -870,7 +845,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
 
             BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             backupEntity.setSourceId(member.name());
 
             String runningBackup = tcServerInfoMBean.getRunningBackup();
@@ -884,7 +858,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             backupEntities.add(backupEntity);
           } catch (Exception e) {
             BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             backupEntity.setSourceId(member.name());
             backupEntity.setError(e.getMessage());
             backupEntities.add(backupEntity);
@@ -931,12 +904,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             tcServerInfoMBean.backup(backupName);
 
             BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             backupEntity.setSourceId(member.name());
             backupEntities.add(backupEntity);
           } catch (Exception e) {
             BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             backupEntity.setSourceId(member.name());
             backupEntity.setError(e.getMessage());
             backupEntities.add(backupEntity);

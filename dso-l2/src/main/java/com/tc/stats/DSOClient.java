@@ -224,8 +224,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   @Override
-  public ClientID getClientID() {
-    return clientID;
+  public long getClientID() {
+    return clientID.toLong();
   }
 
   /**
