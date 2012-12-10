@@ -10,3 +10,6 @@ svn co https://svn.terracotta.org/repo/forge/projects/management-core/trunk mana
 svn co https://svn.terracotta.org/repo/quartz/trunk quartz
 svn co https://svn.terracotta.org/repo/forge/enterprise/quartz-ee/trunk quartz-ee
 svn co https://svn.terracotta.org/repo/forge/projects/terracotta-toolkit-api/trunk terracotta-toolkit-api
+svn co https://svn.terracotta.org/repo/forge/projects/core-storage-api/trunk core-storage-api
+svn co https://svn.terracotta.org/repo/internal/bigmemory-core-storage/trunk bigmemory-core-storage
+svn co https://svn.terracotta.org/repo/forge/projects/heap-core-storage/trunk heap-core-storage
