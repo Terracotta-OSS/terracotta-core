@@ -11,7 +11,6 @@ import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
-import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
@@ -26,7 +25,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
-  private int                                                 rejoinCount;
+  private volatile int                                        rejoinCount;
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -142,9 +141,9 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     }
   }
 
-  private class DestroyableCollection implements Collection, RejoinCallback {
-    private Collection collection;
-    private final int  rejoinCount;
+  private class DestroyableCollection implements Collection {
+    private final Collection collection;
+    private final int        rejoinCount;
 
     public DestroyableCollection(Collection collection) {
       this.collection = collection;
@@ -227,16 +226,6 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     public void clear() {
       exceptionIfDestroyedOrRejoined();
       collection.clear();
-    }
-
-    @Override
-    public void rejoinStarted() {
-      this.collection = ToolkitInstanceProxy.newRejoinInProgressProxy(name, Set.class);
-    }
-
-    @Override
-    public void rejoinCompleted() {
-      // no-op
     }
 
     private void exceptionIfDestroyedOrRejoined() {

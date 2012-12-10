@@ -24,7 +24,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitList<E>                              list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
-  private int                                                  rejoinCount;
+  private volatile int                                         rejoinCount;
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
