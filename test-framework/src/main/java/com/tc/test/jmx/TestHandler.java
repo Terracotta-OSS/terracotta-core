@@ -6,11 +6,14 @@ import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestServerManager;
 
+import java.io.Serializable;
+import java.util.Arrays;
+
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 public class TestHandler implements TestHandlerMBean {
-  public static final ObjectName  TEST_SERVER_CONTROL_MBEAN;
+  public static final ObjectName         TEST_SERVER_CONTROL_MBEAN;
 
   static {
     try {
@@ -22,8 +25,9 @@ public class TestHandler implements TestHandlerMBean {
     }
   }
 
-  private final TestServerManager testServerManager;
-  private final TestConfig        testConfig;
+  private final TestServerManager        testServerManager;
+  private final TestConfig               testConfig;
+  private volatile CustomCommandExecutor executor;
 
   public TestHandler(TestServerManager manager, TestConfig testConfig) {
     this.testServerManager = manager;
@@ -129,4 +133,15 @@ public class TestHandler implements TestHandlerMBean {
   public int waitForServerExit(final int groupIndex, final int serverIndex) throws Exception {
     return testServerManager.waitForServerExit(groupIndex, serverIndex);
   }
+
+  @Override
+  public Serializable executeCustomCommand(String cmd, Serializable[] params) {
+    if (executor != null) { return executor.execute(cmd, params); }
+    return "No Command executor registered. Failed to execute: " + cmd + ", params: " + Arrays.asList(params);
+  }
+
+  public void setCustomCommandExecutor(CustomCommandExecutor executor) {
+    this.executor = executor;
+  }
+
 }

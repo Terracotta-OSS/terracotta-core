@@ -62,7 +62,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private final boolean        useIdentifier;
   private String               stopperOutput;
 
-  public  Collection<String>  additionalArgs = new ArrayList<String>();
+  public Collection<String>    additionalArgs     = new ArrayList<String>();
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput) {
@@ -315,10 +315,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
     final List<String> args = new ArrayList<String>();
     if (serverName != null && !serverName.equals("")) {
       args.addAll(Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-          StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, "-force"));
+                                StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName,
+                                "-force"));
     } else {
       args.addAll(Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-                           "-force"));
+                                "-force"));
     }
     args.addAll(additionalArgs);
     return args;
@@ -390,10 +391,26 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   @Override
   public void attemptForceShutdown() throws Exception {
-    System.out.println("Force Shutting down server " + this.name + "...");
+    attemptForceShutdownInternal(false, null, null);
+  }
+
+  public void attemptForceShutdownSecured(String username, String passwd) throws Exception {
+    attemptForceShutdownInternal(true, username, passwd);
+  }
+
+  private void attemptForceShutdownInternal(boolean secured, String username, String passwd) throws Exception {
+    System.out.println("Force Shutting down server (secured=" + secured
+                       + (secured ? ", username: " + username + ", passwd: " + passwd : ")"));
     List<String> mainClassArguments = new ArrayList<String>();
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
+    if (secured) {
+      mainClassArguments.add("-s");
+      mainClassArguments.add("-u");
+      mainClassArguments.add(username);
+      mainClassArguments.add("-w");
+      mainClassArguments.add(passwd);
+    }
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, jvmArgs);
     stopper.start();
 
@@ -428,6 +445,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
       attemptForceShutdown();
     } catch (Exception e) {
       System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
+    }
+    waitUntilShutdown();
+    System.out.println(this.name + " stopped.");
+  }
+
+  public void shutdownSecured(String username, String passwd) throws Exception {
+    try {
+      attemptForceShutdownSecured(username, passwd);
+    } catch (Exception e) {
+      System.err.println("Attempt to shutdown server (securely) but it might have already crashed: " + e.getMessage());
     }
     waitUntilShutdown();
     System.out.println(this.name + " stopped.");
