@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -14,13 +15,10 @@ import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
-import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObject<ToolkitMap> implements
     ToolkitMap<K, V>, RejoinAwareToolkitMap<K, V> {
@@ -28,8 +26,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
-  private final List<WeakReference<DestroyableCollection>>    colKeySet   = new CopyOnWriteArrayList<WeakReference<DestroyableCollection>>();
-  private final List<WeakReference<DestroyableCollection>>    colEntrySet = new CopyOnWriteArrayList<WeakReference<DestroyableCollection>>();
+  private int                                                 rejoinCount;
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -44,19 +41,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
-    markRejoin(colKeySet);
-    markRejoin(colEntrySet);
-
-  }
-
-  private void markRejoin(List<WeakReference<DestroyableCollection>> listOfWeakReferences) {
-    for (WeakReference<DestroyableCollection> entrySetWeakRef : listOfWeakReferences) {
-      DestroyableCollection entrySet = entrySetWeakRef.get();
-      if (entrySet != null) {
-        entrySet.rejoinStarted();
-      }
-      listOfWeakReferences.remove(entrySetWeakRef);
-    }
+    rejoinCount++;
   }
 
   @Override
@@ -138,9 +123,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public Set<K> keySet() {
-    DestroyableSet destroyableSet = new DestroyableSet(map.keySet());
-    colKeySet.add(new WeakReference<DestroyableCollection>(destroyableSet));
-    return destroyableSet;
+    return new DestroyableSet(map.keySet());
   }
 
   @Override
@@ -150,13 +133,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    DestroyableSet destroyableSet = new DestroyableSet(map.entrySet());
-    colEntrySet.add(new WeakReference<DestroyableCollection>(destroyableSet));
-    return destroyableSet;
-  }
-
-  private void exceptionIfDestroyed() {
-    if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
+    return new DestroyableSet(map.entrySet());
   }
 
   private class DestroyableSet extends DestroyableCollection implements Set {
@@ -167,86 +144,88 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   private class DestroyableCollection implements Collection, RejoinCallback {
     private Collection collection;
+    private final int  rejoinCount;
 
     public DestroyableCollection(Collection collection) {
       this.collection = collection;
+      this.rejoinCount = DestroyableToolkitMap.this.rejoinCount;
     }
 
     @Override
     public int size() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.size();
     }
 
     @Override
     public boolean isEmpty() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.contains(o);
     }
 
     @Override
     public Iterator iterator() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return new DestroyableIterator(collection.iterator(), DestroyableToolkitMap.this);
     }
 
     @Override
     public Object[] toArray() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.toArray();
     }
 
     @Override
     public Object[] toArray(Object[] a) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.toArray(a);
     }
 
     @Override
     public boolean add(Object e) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.add(e);
     }
 
     @Override
     public boolean remove(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.addAll(c);
     }
 
     @Override
     public boolean removeAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.retainAll(c);
     }
 
     @Override
     public void clear() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       collection.clear();
     }
 
@@ -259,6 +238,13 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     public void rejoinCompleted() {
       // no-op
     }
+
+    private void exceptionIfDestroyedOrRejoined() {
+      if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
+      if (this.rejoinCount != DestroyableToolkitMap.this.rejoinCount) { throw new RejoinException(
+                                                                                                  "This subType is not usable anymore afer rejoin!"); }
+    }
+
   }
 
   @Override
