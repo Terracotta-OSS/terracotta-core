@@ -104,7 +104,6 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
 
   @Override
   public void reopen() {
-    clearConnection();
     // do a reconnect
     this.connectionEstablisher.asyncReconnect(this);
   }
@@ -342,6 +341,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     HandshakeResult result = handShake();
     handleHandshakeError(result);
     sendAck();
+    connectionId.authenticated();
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {
