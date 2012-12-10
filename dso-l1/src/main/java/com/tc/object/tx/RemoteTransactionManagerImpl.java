@@ -131,7 +131,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
+    throwExceptionIfNecessary(true);
     status = REJOIN_IN_PROGRESS;
     this.lock.notifyAll();
   }

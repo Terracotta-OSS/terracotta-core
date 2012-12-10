@@ -103,7 +103,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
+    throwExceptionIfNecessary(true);
     state = State.REJOIN_IN_PROGRESS;
     notifyAll();
   }

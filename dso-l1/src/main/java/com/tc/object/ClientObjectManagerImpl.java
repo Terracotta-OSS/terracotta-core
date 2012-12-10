@@ -214,7 +214,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
+    throwExceptionIfNecessary(true);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
   }
