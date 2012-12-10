@@ -63,4 +63,9 @@ public interface TerracottaInternalClient {
    * Returns whether this client is online or not
    */
   boolean isOnline();
+
+  /**
+   * Returns whether this client is initialized or not
+   */
+  boolean isInitialized();
 }
