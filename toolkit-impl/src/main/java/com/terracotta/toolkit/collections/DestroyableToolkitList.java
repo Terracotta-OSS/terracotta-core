@@ -190,11 +190,11 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   private class SubListWrapper implements List<E> {
     private final List<E> subList;
-    private final int     rejoinCount;
+    private final int     currentRejoinCount;
 
     public SubListWrapper(List<E> subList) {
       this.subList = subList;
-      this.rejoinCount = DestroyableToolkitList.this.rejoinCount;
+      this.currentRejoinCount = DestroyableToolkitList.this.rejoinCount;
     }
 
     @Override
@@ -349,7 +349,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
     private void checkDestroyedOrRejoined() {
       if (isDestroyed()) { throw new IllegalStateException("The List backing this subList is already destroyed."); }
-      if (this.rejoinCount != DestroyableToolkitList.this.rejoinCount) { throw new RejoinException(
+      if (this.currentRejoinCount != DestroyableToolkitList.this.rejoinCount) { throw new RejoinException(
                                                                                                    "Rejoin has Occured, This sublist is not usable after rejoin anymore"); }
     }
 
