@@ -3,8 +3,6 @@
  */
 package com.terracotta.management.resource.services;
 
-import org.terracotta.management.resource.VersionedEntity;
-
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.TopologyEntity;
 
