@@ -25,7 +25,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
-  private volatile int                                        rejoinCount;
+  private volatile int                                        currentRejoinCount;
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -40,7 +40,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
-    rejoinCount++;
+    currentRejoinCount++;
   }
 
   @Override
@@ -147,7 +147,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
     public DestroyableCollection(Collection collection) {
       this.collection = collection;
-      this.rejoinCount = DestroyableToolkitMap.this.rejoinCount;
+      this.rejoinCount = DestroyableToolkitMap.this.currentRejoinCount;
     }
 
     @Override
@@ -230,7 +230,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
     private void exceptionIfDestroyedOrRejoined() {
       if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
-      if (this.rejoinCount != DestroyableToolkitMap.this.rejoinCount) { throw new RejoinException(
+      if (this.rejoinCount != DestroyableToolkitMap.this.currentRejoinCount) { throw new RejoinException(
                                                                                                   "This subType is not usable anymore afer rejoin!"); }
     }
 
