@@ -942,6 +942,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
           int jmxPort = member.jmxPort();
           String jmxHost = member.host();
 
