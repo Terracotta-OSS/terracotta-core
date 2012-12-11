@@ -189,6 +189,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
+  public List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp) {
+    return this.operatorEventHistoryProvider.getOperatorEvents(sinceTimestamp);
+  }
+
+  @Override
   public ObjectName[] getRoots() {
     synchronized (rootObjectNames) {
       return (ObjectName[]) rootObjectNames.toArray(new ObjectName[rootObjectNames.size()]);

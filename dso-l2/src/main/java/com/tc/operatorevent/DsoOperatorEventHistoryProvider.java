@@ -7,8 +7,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.CircularLossyQueue;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventHistoryProvider {
   private final CircularLossyQueue<TerracottaOperatorEvent> operatorEventHistory = new CircularLossyQueue<TerracottaOperatorEvent>(
@@ -26,6 +25,19 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
     TerracottaOperatorEvent[] operatorEvents = new TerracottaOperatorEventImpl[this.operatorEventHistory.depth()];
     this.operatorEventHistory.toArray(operatorEvents);
     return Arrays.asList(operatorEvents);
+  }
+
+  public List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp) {
+    Date dateSince = new Date(sinceTimestamp);
+    List<TerracottaOperatorEvent> eventList = new ArrayList<TerracottaOperatorEvent>();
+    TerracottaOperatorEvent[] operatorEvents = new TerracottaOperatorEventImpl[this.operatorEventHistory.depth()];
+    this.operatorEventHistory.toArray(operatorEvents);
+    for(TerracottaOperatorEvent e : operatorEvents ) {
+      if((e != null) && e.getEventTime().after(dateSince)) {
+        eventList.add(e);
+      }
+    }
+    return eventList;
   }
 
 }

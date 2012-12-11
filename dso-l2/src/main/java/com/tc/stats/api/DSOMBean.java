@@ -60,6 +60,13 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
 
   List<TerracottaOperatorEvent> getOperatorEvents();
 
+  /**
+   * This method returns operator events which have occurred between a particular time and the current time.
+   * @param sinceTimestamp the time since which the operator events need to be fetched
+   * @return list of TerracottaOperatorEvents between the date represented by "sinceTimestamp" and now.
+   */
+  List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
+
   int getLiveObjectCount();
 
   boolean isResident(NodeID node, ObjectID oid);
