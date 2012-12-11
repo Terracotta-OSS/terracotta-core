@@ -96,13 +96,12 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
       Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
       contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
+      isInitialized = true;
       join(tunneledMBeanDomains);
-      contextControl.activateTunnelledMBeanDomains(tunneledMBeanDomains);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
-    isInitialized = true;
   }
 
   @Override
@@ -125,11 +124,10 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public synchronized void join(Set<String> tunnelledMBeanDomains) throws ClientShutdownException {
     if (shutdown) throw new ClientShutdownException();
     refCount.incrementAndGet();
-    if (this.tunneledMBeanDomains != tunnelledMBeanDomains) {
-      this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
-    }
     if (isInitialized) {
       contextControl.activateTunnelledMBeanDomains(this.tunneledMBeanDomains);
+    } else {
+      this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
     }
   }
 
