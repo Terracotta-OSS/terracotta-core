@@ -4,7 +4,6 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -13,12 +12,14 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
+import com.terracotta.management.resource.LogEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
@@ -37,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 
@@ -50,6 +52,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
@@ -871,7 +874,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       return backupEntities;
     } catch (Exception e) {
-      throw new ServiceExecutionException("error getting servers config", e);
+      throw new ServiceExecutionException("error getting servers backup status", e);
     }
   }
 
@@ -905,10 +908,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             BackupEntity backupEntity = new BackupEntity();
             backupEntity.setSourceId(member.name());
+            backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             backupEntities.add(backupEntity);
           } catch (Exception e) {
             BackupEntity backupEntity = new BackupEntity();
             backupEntity.setSourceId(member.name());
+            backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             backupEntity.setError(e.getMessage());
             backupEntities.add(backupEntity);
           } finally {
@@ -921,7 +926,67 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       return backupEntities;
     } catch (Exception e) {
-      throw new ServiceExecutionException("error getting servers config", e);
+      throw new ServiceExecutionException("error performing servers backup", e);
+    }
+  }
+
+  @Override
+  public Collection<LogEntity> getLogs(Set<String> serverNames, Long sinceWhen) throws ServiceExecutionException {
+    Collection<LogEntity> logEntities = new ArrayList<LogEntity>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            TCLoggingBroadcasterMBean tcLoggingBroadcaster = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Logger"), TCLoggingBroadcasterMBean.class);
+
+            List<Notification> logNotifications;
+            if (sinceWhen == null) {
+              logNotifications = tcLoggingBroadcaster.getLogNotifications();
+            } else {
+              logNotifications = tcLoggingBroadcaster.getLogNotificationsSince(sinceWhen);
+            }
+
+            for (Notification logNotification : logNotifications) {
+              LogEntity logEntity = new LogEntity();
+              logEntity.setSourceId(member.name());
+              logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+              logEntity.setMessage(logNotification.getMessage());
+              logEntity.setTimestamp(logNotification.getTimeStamp());
+
+              logEntities.add(logEntity);
+            }
+          } catch (Exception e) {
+            LogEntity logEntity = new LogEntity();
+            logEntity.setSourceId(member.name());
+            logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            logEntity.setMessage(e.getMessage());
+
+            logEntities.add(logEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return logEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting servers logs", e);
     }
   }
 
