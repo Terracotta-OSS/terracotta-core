@@ -61,6 +61,7 @@ import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.ResetableLatch;
 import com.tc.util.concurrent.StoppableThread;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.ReferenceQueue;
@@ -209,7 +210,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
+    throwExceptionIfNecessary(true);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
   }
@@ -1309,7 +1310,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (clazz.isUseNonDefaultConstructor()) {
       try {
         return this.factory.getNewPeerObject(clazz, dna);
-      } catch (final Exception e) {
+      } catch (final IOException e) {
+        throw new TCRuntimeException(e);
+      } catch (final ClassNotFoundException e) {
         throw new TCRuntimeException(e);
       }
     } else {

@@ -24,6 +24,10 @@ import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject, S extends TCToolkitObject> implements
     AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, IsolatedClusteredObjectLookup<S> {
 
@@ -32,6 +36,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   private final WeakValueMap<T>                  isolatedTypes;
   private final PlatformService                  platformService;
   private final String                           rootName;
+  private Set<String>                            currentKeys = Collections.EMPTY_SET;
 
   protected AggregateIsolatedToolkitTypeRoot(String rootName, ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
@@ -120,7 +125,8 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
 
   @Override
   public void onRejoinStart() {
-    for (String name : isolatedTypes.keySet()) {
+    currentKeys = new HashSet<String>(isolatedTypes.keySet());
+    for (String name : currentKeys) {
       T wrapper = isolatedTypes.get(name);
       if (wrapper != null) {
         wrapper.rejoinStarted();
@@ -131,12 +137,13 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   @Override
   public void onRejoinComplete() {
     lookupOrCreateRoots();
-    for (String name : isolatedTypes.keySet()) {
+    for (String name : currentKeys) {
       T wrapper = isolatedTypes.get(name);
       if (wrapper != null) {
         wrapper.rejoinCompleted();
       }
     }
+    currentKeys = Collections.EMPTY_SET;
   }
 
   @Override
@@ -144,6 +151,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
     return getToolkitTypeRoot(name).getClusteredObject(name);
   }
 
+  @Override
   public void lookupOrCreateRoots() {
     GroupID[] gids = platformService.getGroupIDs();
     for (int i = 0; i < gids.length; i++) {

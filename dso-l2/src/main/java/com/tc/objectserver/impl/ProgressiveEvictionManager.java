@@ -29,9 +29,10 @@ import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
@@ -67,16 +68,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
     private static final int L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl
             .getProperties()
-            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, 90);
+            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, 80);
     private static final int L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl
             .getProperties()
-            .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD, 98);
+            .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD, 90);
      private static final long L2_EVICTION_CRITICALUPPERBOUND = TCPropertiesImpl
             .getProperties()
             .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALUPPERBOUND, 10l * 1024 * 1024 * 1024);
      private static final long L2_EVICTION_CRITICALLOWERBOUND = TCPropertiesImpl
             .getProperties()
-            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND, 16l * 1024 * 1024);    /*  3 max offheap pages  */
+            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND, 64l * 1024 * 1024);    /*  4 max offheap pages  */
     private final ServerMapEvictionEngine evictor;
     private final ResourceMonitor trigger;
     private final PersistentManagedObjectStore store;
@@ -86,9 +87,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
     private final Responder responder =        new Responder();
-    private final SampledRateCounter expirationStats;
-    private final SampledRateCounter evictionStats;
+    private final SampledCounter expirationStats;
+    private final SampledCounter evictionStats;
   private final ResourceManager resourceManager;
+      private final EvictionThreshold threshold;
+
     
     private final static Future<SampledRateCounter> completedFuture = new Future<SampledRateCounter>() {
 
@@ -123,12 +126,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     };
             
      @Override
-    public SampledRateCounter getExpirationStatistics() {
+    public SampledCounter getExpirationStatistics() {
         return expirationStats;
     }
      
     @Override
-    public SampledRateCounter getEvictionStatistics() {
+    public SampledCounter getEvictionStatistics() {
         return evictionStats;
     }
     
@@ -151,7 +154,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         if ( sleeptime < 0 ) {
     //  100MB a second
             sleeptime = (monitored.getTotal() * 1000) / (100 * 1024 * 1024);
+            if ( sleeptime > 120 * 1000 ) {
+      // max out at 2 min.
+                sleeptime = 120 * 1000;
+            }
         }
+        this.threshold = EvictionThreshold.configure(monitored);
+        log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
+        
         this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);      
         this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
@@ -166,23 +176,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
                 @Override
                 public void run() {
+                    log("Threshold crossed");
                     resourceManager.setThrowException();
                 }
 
             };
-            if ( monitored.getType() == MonitoredResource.Type.HEAP ) {
-                monitored.addUsedThreshold(MonitoredResource.Direction.RISING, L2_EVICTION_HALTTHRESHOLD*monitored.getTotal()/100, rb);
-            }
             if ( monitored.getType() == MonitoredResource.Type.OFFHEAP ) {
-                monitored.addReservedThreshold(MonitoredResource.Direction.RISING, L2_EVICTION_HALTTHRESHOLD*monitored.getTotal()/100, rb);
+                monitored.addReservedThreshold(MonitoredResource.Direction.RISING, monitored.getTotal() - 32l * 1024 * 1024, rb);
             }
         } catch ( UnsupportedOperationException uns ) {
             logger.info("threshold monitor not registered", uns);
         }
         
         log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
-      this.evictionStats = (SampledRateCounter)counterManager.createCounter(new SampledRateCounterConfig(5, 100, true));
-      this.expirationStats = (SampledRateCounter)counterManager.createCounter(new SampledRateCounterConfig(5, 100, true));
+      this.evictionStats = (SampledCounter)counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
+      this.expirationStats = (SampledCounter)counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
     }
 
     @Override
@@ -195,7 +203,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     @Override
     public void startEvictor() {
         evictor.startEvictor();
-        trigger.registerForMemoryEvents(responder);
+        trigger.registerForResourceEvents(responder);
+
     }
 
     @Override
@@ -205,12 +214,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     private Future<SampledRateCounter> scheduleEvictionRun() {
         try{
-            clientObjectReferenceSet.refreshClientObjectReferencesNow();
+            clientObjectReferenceSet.size();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
             return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
         } catch ( ShutdownError err ) {
             //  is probably in shutdown, unregister
-            trigger.unregisterForMemoryEvents(responder);
+            trigger.unregisterForResourceEvents(responder);
         }
         agent.shutdown();
         return completedFuture;
@@ -275,9 +284,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             
             if (context != null) {
                 if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
-                    expirationStats.increment(triggerParam.getCount(),triggerParam.getRuntimeInMillis());
+                    PeriodicEvictionTrigger periodic = (PeriodicEvictionTrigger)triggerParam;
+                    expirationStats.increment(triggerParam.getCount());
+//                    if (periodic.filterRatio() > .5f ) {
+//                        scheduleEvictionTrigger(periodic.duplicate());
+//                    }
                 } else {
-                    evictionStats.increment(triggerParam.getCount(),triggerParam.getRuntimeInMillis());
+                    evictionStats.increment(triggerParam.getCount());
                 }
                 this.evictorSink.add(context);
             }
@@ -310,7 +323,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
     }
 
-    Future<SampledRateCounter> emergencyEviction(final boolean blowout) {
+    Future<SampledRateCounter> emergencyEviction(final int blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
         List<Future<SampledRateCounter>> push = new ArrayList<Future<SampledRateCounter>>(evictableObjects.size());
         Random r = new Random();
@@ -385,7 +398,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         });
     }
 
-    class Responder implements MemoryEventsListener {
+    class Responder implements ResourceEventListener {
 
         private long last = System.currentTimeMillis();
         private long epoc = System.currentTimeMillis();
@@ -393,55 +406,37 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private boolean isEmergency = false;
         private boolean isThrottling = false;
         private boolean isStopped = false;
+        private int turnCount = 1;
 
         Future<SampledRateCounter> currentRun = completedFuture;
 
         @Override
-        public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
+        public void resourcesUsed(DetailedMemoryUsage usage) {
             try {
                 long current = System.currentTimeMillis();
                 long max = usage.getMaxMemory();
-                long reserve = usage.getUsedMemory();
-                long threshold = calculateThreshold(usage,(max * L2_EVICTION_CRITICALTHRESHOLD / 100));
+                long reserve = usage.getReservedMemory();
+                
                 if ( evictor.isLogging() ) {
-                    log("Percent usage:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + (threshold*100/max));
+                    if ( max != 0 ) {
+                        log("Percent usage:" + (usage.getUsedMemory()*100/max) + " reserved:" + (reserve*100/max) + " time:" + (current - last) + " msec. threshold:" + threshold);
+                    }
                 }
-//  since removal is so imporant for all eviction operations.  Update this number on every round.
-                clientObjectReferenceSet.refreshClientObjectReferencesNow();
-                if (reserve >= threshold ) {  
+                                
+               throttleIfNeeded(threshold, usage);
+
+               if (threshold.isAboveThreshold(usage)) {  
                     if ( !isEmergency || currentRun.isDone() ) {
-                        log("Emergency Triggered - " + (reserve * 100 / max));
-                        currentRun.cancel(false);
-                        if (currentRun != completedFuture) {
-                            print("Emergency", currentRun);
-                        }
-                        
-                        if ( isEmergency && !isThrottling && !isStopped ) {
-                            throttle(usage);
-                        }
-                        
-                        currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
-                        isEmergency = true;
+                        triggerEmergency(usage);
                     }
-  //  if we are about to OOME, stop the world
-                    if ( reserve >= calculateThreshold(usage,(max * L2_EVICTION_HALTTHRESHOLD / 100)) ) {
-                        if ( !isThrottling ) {
-                            throttle(usage);
-  //  double check one more time, weighting will make the throttling threshold lower than the stopping but make sure
-  //  we really need to stop
-                        } else if ( !isStopped ) {
-                            stop(usage);
-                        }
-                    }
-                } else {
-                    if ( isStopped || isThrottling ) {
-                        clear(usage);
-                    }
+               } else {
                     if ( isEmergency ) {
-                        isEmergency = false;
-                        currentRun.cancel(false);
-                    }
-                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
+                        if ( !threshold.isAboveThreshold(usage) ) {
+                            stopEmergency(usage);
+                        } else if ( currentRun.isDone() ) {
+                            triggerEmergency(usage);
+                        }
+                    } else if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
                         if (currentRun != completedFuture) {
                             print("Periodic", currentRun);
                         }
@@ -458,36 +453,46 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
         }
         
-        private long calculateThreshold(MemoryUsage usage, long level) {
-/*  gap is to handle rapidly growing resource usage.  We take the average growth
- * and based on that, if we are going to go over on the next poll, go ahead and fire now to get a head start.
- * should consider a moving time window.
- * 
- */
-            long max = usage.getMaxMemory();
-            long reserve = usage.getUsedMemory();
-            long aveGrow = (reserve-size) / ( System.currentTimeMillis() - epoc );
-            int weight = (isEmergency) ? 1 : 2;
-            if ( isThrottling ) {
-                weight = 0;
-            }
-            long gap = ( System.currentTimeMillis() - last ) * aveGrow * weight;
-/**
- * if size is zero, our initial grow reading is very suspect, particularly for
- * heap implementations.
- */
-            if ( size == 0 || gap < 0 || gap > level / 2) {
-                gap = 0;
-            }
-            long threshold = level - gap;
-   //  bounds checks
-            if ( threshold < max - L2_EVICTION_CRITICALUPPERBOUND ) {
-                threshold = max - L2_EVICTION_CRITICALUPPERBOUND;
-            } else if ( threshold > max - L2_EVICTION_CRITICALLOWERBOUND ) {
-                threshold = max - L2_EVICTION_CRITICALLOWERBOUND;
+        private void throttleIfNeeded(EvictionThreshold threshold, DetailedMemoryUsage usage) {
+ //  if we are this low, stop no matter what
+            if ( usage.getReservedMemory() >= usage.getMaxMemory() - (32l * 1024 * 1024) ) {  
+                stop(usage);
+            } else if ( usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024) ) {  
+                throttle(usage);
             }
 
-            return threshold;
+            if ( isThrottling ) {
+                if ( threshold.shouldNormalize(usage) ) {
+                    clear(usage);
+                }
+            } else if ( isEmergency ) {
+                if ( threshold.shouldThrottle(usage) ) {
+                    throttle(usage);
+                }
+            } 
+        }
+        
+        private void stopEmergency(DetailedMemoryUsage usage) {
+            isEmergency = false;
+            currentRun.cancel(false);
+            if ( isStopped || isThrottling ) {
+               clear(usage);
+            }
+        }
+        
+        private void triggerEmergency(DetailedMemoryUsage usage) {
+            log("Emergency Triggered - " + usage.getUsedPercentage());
+            currentRun.cancel(false);
+            if (currentRun != completedFuture) {
+                print("Emergency", currentRun);
+            }
+
+            if ( isEmergency && !isThrottling && !isStopped ) {
+                throttle(usage);
+            }
+
+            currentRun = emergencyEviction(turnCount++);// if already in emergency situation, really try hard to remove items.
+            isEmergency = true;
         }
     /*
     * if resource usage is going down or 5 min have passed, reset the epoc and base size to try and detect rapid
@@ -507,7 +512,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private void throttle(MemoryUsage reserved) {
             isThrottling = true;
             resourceManager.setThrottle(1);
-            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNearResourceCapacityEvent("pool",reserved.getUsedMemory()*100/reserved.getMaxMemory());
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNearResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
             resetEpoc(System.currentTimeMillis(),reserved.getUsedMemory());
         }
@@ -518,7 +523,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             isStopped = true;
             resourceManager.setThrowException();
-            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool",reserved.getUsedMemory()*100/reserved.getMaxMemory());
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
         }
         
@@ -528,8 +533,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             isStopped = false;
             isThrottling = false;
+            turnCount = 1;
             resourceManager.clear();
-            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",reserved.getUsedMemory()*100/reserved.getMaxMemory());
+            TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
             resetEpoc(System.currentTimeMillis(),reserved.getUsedMemory());
         }

@@ -106,7 +106,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(false);
+    throwExceptionIfNecessary(true);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
   }

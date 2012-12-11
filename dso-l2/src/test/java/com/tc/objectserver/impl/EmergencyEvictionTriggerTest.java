@@ -3,8 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
-import org.mockito.Mockito;
-
+import static org.mockito.Mockito.mock;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 
@@ -19,7 +18,7 @@ public class EmergencyEvictionTriggerTest extends AbstractEvictionTriggerTest {
 
     @Override
     public AbstractEvictionTrigger getTrigger() {
-        return new EmergencyEvictionTrigger(Mockito.mock(ObjectManager.class), ObjectID.NULL_ID, false);
+        return new EmergencyEvictionTrigger(mock(ObjectManager.class), ObjectID.NULL_ID, 0);
     }
 
 }

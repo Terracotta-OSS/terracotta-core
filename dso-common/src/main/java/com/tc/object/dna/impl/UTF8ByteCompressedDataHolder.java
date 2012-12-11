@@ -6,6 +6,7 @@ package com.tc.object.dna.impl;
 import java.util.Arrays;
 
 public class UTF8ByteCompressedDataHolder extends UTF8ByteDataHolder {
+  private static final int HASH_SEED = -1597117597;
 
   // Used only in case of compressed string
   private final int uncompressedLength;  // of original byte[], not original String
@@ -34,7 +35,7 @@ public class UTF8ByteCompressedDataHolder extends UTF8ByteDataHolder {
 
   @Override
   public int hashCode() {
-    return computeHashCode(21);
+    return computeHashCode(HASH_SEED);
   }
 
   @Override

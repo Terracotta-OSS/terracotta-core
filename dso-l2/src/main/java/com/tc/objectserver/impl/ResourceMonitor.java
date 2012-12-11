@@ -20,7 +20,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private static final TCLogger logger        = TCLogging.getLogger(ResourceMonitor.class);
 
-  private final List            listeners     = new CopyOnWriteArrayList();
+  private final List<ResourceEventListener>            listeners     = new CopyOnWriteArrayList<ResourceEventListener>();
 
   private final long            sleepInterval;
 
@@ -28,7 +28,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   private final MonitoredResource   resource;
 
   private final ThreadGroup   threadGroup;
-
+  
   public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
@@ -40,12 +40,12 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       return resource;
   }
   
-  public void registerForMemoryEvents(MemoryEventsListener listener) {
+  public void registerForResourceEvents(ResourceEventListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
   }
 
-  public void unregisterForMemoryEvents(MemoryEventsListener listener) {
+  public void unregisterForResourceEvents(ResourceEventListener listener) {
     listeners.remove(listener);
     stopMonitorIfNecessary();
   }
@@ -76,10 +76,11 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
   }
 
-  private void fireMemoryEvent(MemoryUsage mu) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
-      MemoryEventsListener listener = (MemoryEventsListener) i.next();
-      listener.memoryUsed(mu, false);
+  private void fireMemoryEvent(final MonitoredResource resource, final long count) {
+      DetailedMemoryUsage usage = new DetailedMemoryUsage(resource, count);
+    for (Iterator<ResourceEventListener> i = listeners.iterator(); i.hasNext();) {
+      final ResourceEventListener listener = i.next();
+      listener.resourcesUsed(usage);
     }
   }
 
@@ -104,64 +105,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
         try {
           final long thisCount = counter++;
           
-          MemoryUsage mu = new MemoryUsage() {
-              long cacheMax = -1;
-              long cacheUsed = -1;
-              
-              private long checkUsed() {
-                  if ( cacheUsed < 0 ) {
-                      cacheUsed = resource.getReserved();
-                  }
-                  return cacheUsed;
-              }
-              
-              private long checkMax() {
-                  if ( cacheMax < 0 ) {
-                      cacheMax = resource.getTotal();
-                  }
-                  return cacheMax;
-              }
-              
-                @Override
-                public long getFreeMemory() {
-                    return checkMax() - checkUsed();
-                }
-
-                @Override
-                public String getDescription() {
-                    return resource.getType().toString();
-                }
-
-                @Override
-                public long getMaxMemory() {
-                    return checkMax();
-                }
-
-                @Override
-                public long getUsedMemory() {
-            /* above the critical threshold, return the more accurate value */
-                    return checkUsed();
-                }
-
-                @Override
-                public int getUsedPercentage() {
-                    float num = checkUsed();
-                    float denom = checkMax();
-                    return Math.round((num/denom)*100f);
-                }
-
-                @Override
-                public long getCollectionCount() {
-                    return thisCount;
-                }
-
-                @Override
-                public long getCollectionTime() {
-                    return 0;
-                }
-            };
-          fireMemoryEvent(mu);
-          adjust(mu);
+          fireMemoryEvent(resource,thisCount);
+          adjust(resource);
           Thread.sleep(sleepTime);
         } catch (Throwable t) {
           // for debugging pupose
@@ -175,15 +120,51 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       logger.debug("Stopping Memory Monitor - sleep interval - " + sleepTime);
     }
 
-    private void adjust(MemoryUsage mu) {
-      int remove = Math.round(sleepInterval * (float)Math.sin(mu.getUsedMemory()*1d / mu.getMaxMemory()));
+    private void adjust(MonitoredResource mu) {
+      int remove = Math.round(sleepInterval * mu.getReserved() *1f/ mu.getTotal());
       sleepTime = sleepInterval - (remove);
     }
+  }
+  
+  public long getOffset() {
+      long used = resource.getUsed();
+      long reserved = resource.getReserved();
+    logger.info("MEMCHECK used:" + used + " - " + reserved + ":reserved");
+      if ( used < reserved * .75 || used > reserved * 1.25 ) {
+          return reserved - used;
+      } else {
+          return 0;
+      }
   }
 
   @Override
   public synchronized void shutdown() {
     stopMonitorThread();
+  }
+  
+  static class MemoryConsumer implements MemoryEventsListener {
+      private final MemoryEventsListener delegate;
+      private final boolean detailed;
+      
+      MemoryConsumer(MemoryEventsListener delegate, boolean detailed) {
+          this.delegate = delegate;
+          this.detailed = detailed;
+      }
+
+        public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
+            delegate.memoryUsed(usage, recommendOffheap);
+        }
+      
+      public boolean isDetailed() {
+          return detailed;
+      }
+      
+      public boolean equals(Object o) {
+          if ( o instanceof MemoryConsumer ) {
+              return ((MemoryConsumer)o).delegate == delegate;
+          }
+          return false;
+      }
   }
 
 }

@@ -99,7 +99,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   private void checkAndSetstate() {
-    state.rejoin_in_progress();
+    state = state.rejoin_in_progress();
     runningCondition.signalAll();
   }
 
@@ -766,8 +766,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        // throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-        return REJOIN_IN_PROGRESS;
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -794,8 +793,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        // throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
-        return REJOIN_IN_PROGRESS;
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -866,12 +864,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State unpause() {
-        return RUNNING;
+        throw new AssertionError("unpause is an invalid state transition for " + this);
       }
 
       @Override
       State initialize() {
-        return RUNNING;
+        return STARTING;
       }
 
       @Override

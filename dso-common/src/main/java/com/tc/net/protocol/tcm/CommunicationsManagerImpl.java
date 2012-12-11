@@ -197,14 +197,17 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     startHealthCheckCallbackPortListener(healthCheckerConfig);
   }
 
+  @Override
   public TCConnectionManager getConnectionManager() {
     return this.connectionManager;
   }
 
+  @Override
   public boolean isInShutdown() {
     return shutdown.isSet();
   }
 
+  @Override
   public void shutdown() {
     if (shutdown.attemptSet()) {
       connectionHealthChecker.stop();
@@ -216,20 +219,24 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
   }
 
+  @Override
   public NetworkListener[] getAllListeners() {
     synchronized (listeners) {
       return (NetworkListener[]) listeners.toArray(new NetworkListener[listeners.size()]);
     }
   }
 
+  @Override
   public void addClassMapping(TCMessageType messageType, Class messageClass) {
     messageTypeClassMapping.put(messageType, messageClass);
   }
 
+  @Override
   public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory) {
     messageTypeFactoryMapping.put(messageType, generatedMessageFactory);
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
@@ -237,6 +244,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
@@ -245,6 +253,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                transportFactory, null);
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
@@ -268,7 +277,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
-                                                               new GroupID(addressProvider.getGroupId()), addressProvider.getSecurityInfo(), securityManager);
+                                                               new GroupID(addressProvider.getGroupId()),
+                                                               addressProvider.getSecurityInfo(), securityManager,
+                                                               addressProvider);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
@@ -285,12 +296,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   /**
    * Creates a network listener with a default network stack.
    */
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory) {
     return createListener(sessionProvider, addr, transportDisconnectRemovesChannel, connectionIdFactory, true);
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress address,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIDFactory, Sink httpSink) {
@@ -298,6 +311,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                           httpSink, null);
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, boolean reuseAddr) {
@@ -305,6 +319,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                           new NullSink(), null);
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, WireProtocolMessageSink wireProtoMsgSnk) {
@@ -334,6 +349,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
+      @Override
       public MessageChannelInternal createNewChannel(ChannelID id) {
         return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID);
       }
@@ -356,10 +372,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                  Sink httpSink, WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
+      @Override
       public MessageTransport createNewTransport() {
         throw new AssertionError();
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List transportListeners) {
@@ -369,6 +387,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return rv;
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
                                                  TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,

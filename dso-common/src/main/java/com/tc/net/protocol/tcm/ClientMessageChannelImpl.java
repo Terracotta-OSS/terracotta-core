@@ -9,6 +9,8 @@ import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
+import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -30,22 +32,25 @@ import java.net.UnknownHostException;
  */
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel {
-  private static final TCLogger       logger           = TCLogging.getLogger(ClientMessageChannel.class);
-  private int                         connectAttemptCount;
-  private int                         connectCount;
-  private ChannelID                   channelID;
-  private final ChannelIDProviderImpl cidProvider;
-  private final SessionProvider       sessionProvider;
-  private final SecurityInfo          securityInfo;
-  private final PwProvider            pwProvider;
-  private volatile SessionID          channelSessionID = SessionID.NULL_ID;
+  private static final TCLogger           logger           = TCLogging.getLogger(ClientMessageChannel.class);
+  private int                             connectAttemptCount;
+  private int                             connectCount;
+  private ChannelID                       channelID;
+  private final ChannelIDProviderImpl     cidProvider;
+  private final SessionProvider           sessionProvider;
+  private final SecurityInfo              securityInfo;
+  private final PwProvider                pwProvider;
+  private volatile SessionID              channelSessionID = SessionID.NULL_ID;
+  private final ConnectionAddressProvider addressProvider;
 
   protected ClientMessageChannelImpl(final TCMessageFactory msgFactory, final TCMessageRouter router,
                                      final SessionProvider sessionProvider, final NodeID remoteNodeID,
-                                     final SecurityInfo securityInfo, final PwProvider pwProvider) {
+                                     final SecurityInfo securityInfo, final PwProvider pwProvider,
+                                     final ConnectionAddressProvider addressProvider) {
     super(router, logger, msgFactory, remoteNodeID);
     this.securityInfo = securityInfo;
     this.pwProvider = pwProvider;
+    this.addressProvider = addressProvider;
     this.cidProvider = new ChannelIDProviderImpl();
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider(remoteNodeID);
@@ -66,17 +71,15 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
       String username = null;
-      if(securityInfo.hasCredentials()) {
+      if (securityInfo.hasCredentials()) {
         username = securityInfo.getUsername();
         Assert.assertNotNull("TCSecurityManager", pwProvider);
         Assert.assertNotNull("Password", pw);
       }
-      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(),
-          (((ClientID)getLocalNodeID()).toLong()),
-          username, pw);
+      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
+                                                username, pw);
       ((MessageTransport) this.sendLayer).initConnectionID(cid);
       final NetworkStackID id = this.sendLayer.open();
-      cid.authenticated();
       channelOpened();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));
@@ -88,7 +91,19 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void reopen() {
-    // todo: what about passwd?
+    String username = null;
+    char[] passwd = null;
+    if (securityInfo.hasCredentials()) {
+      username = securityInfo.getUsername();
+      Assert.assertNotNull("TCSecurityManager should not be null", pwProvider);
+      // use user-password of first server in the group
+      ConnectionInfo connectionInfo = addressProvider.getIterator().next();
+      passwd = pwProvider.getPasswordForTC(username, connectionInfo.getHostname(), connectionInfo.getPort());
+    }
+
+    final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong(), username, passwd);
+    ((MessageTransport) this.sendLayer).initConnectionID(cid);
+
     this.sendLayer.reopen();
   }
 

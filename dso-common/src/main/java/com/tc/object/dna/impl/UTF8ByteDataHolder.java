@@ -15,6 +15,8 @@ import java.util.Arrays;
  * UTF-8 encoded bytes and creates String as <code> new String(bytes, "UTF-8"); </code>
  */
 public class UTF8ByteDataHolder implements Serializable {
+  private static final int HASH_SEED = 1704124966;
+  private static final int FNV_32_PRIME = 0x01000193;
 
   private final byte[] bytes;
 
@@ -57,13 +59,14 @@ public class UTF8ByteDataHolder implements Serializable {
 
   @Override
   public int hashCode() {
-    return computeHashCode(37);
+    return computeHashCode(HASH_SEED);
   }
 
-  protected int computeHashCode(int seed) {
-    int hash = seed;
-    for (int i = 0, n = bytes.length; i < n; i++) {
-      hash = 31 * hash + bytes[i++];
+  protected int computeHashCode(int init) {
+    int hash = init;
+    for (byte b : bytes) {
+      hash ^= b;
+      hash *= FNV_32_PRIME;
     }
     return hash;
   }

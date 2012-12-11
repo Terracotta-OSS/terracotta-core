@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -24,6 +25,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
+  private volatile int                                        currentRejoinCount;
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -38,6 +40,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
+    currentRejoinCount++;
   }
 
   @Override
@@ -128,12 +131,8 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public Set<java.util.Map.Entry<K, V>> entrySet() {
+  public Set<Entry<K, V>> entrySet() {
     return new DestroyableSet(map.entrySet());
-  }
-
-  private void exceptionIfDestroyed() {
-    if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
   }
 
   private class DestroyableSet extends DestroyableCollection implements Set {
@@ -144,88 +143,97 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   private class DestroyableCollection implements Collection {
     private final Collection collection;
+    private final int        rejoinCount;
 
     public DestroyableCollection(Collection collection) {
       this.collection = collection;
+      this.rejoinCount = DestroyableToolkitMap.this.currentRejoinCount;
     }
 
     @Override
     public int size() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.size();
     }
 
     @Override
     public boolean isEmpty() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.contains(o);
     }
 
     @Override
     public Iterator iterator() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return new DestroyableIterator(collection.iterator(), DestroyableToolkitMap.this);
     }
 
     @Override
     public Object[] toArray() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.toArray();
     }
 
     @Override
     public Object[] toArray(Object[] a) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.toArray(a);
     }
 
     @Override
     public boolean add(Object e) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.add(e);
     }
 
     @Override
     public boolean remove(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.addAll(c);
     }
 
     @Override
     public boolean removeAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       return collection.retainAll(c);
     }
 
     @Override
     public void clear() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined();
       collection.clear();
     }
+
+    private void exceptionIfDestroyedOrRejoined() {
+      if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
+      if (this.rejoinCount != DestroyableToolkitMap.this.currentRejoinCount) { throw new RejoinException(
+                                                                                                  "This subType is not usable anymore afer rejoin!"); }
+    }
+
   }
 
   @Override

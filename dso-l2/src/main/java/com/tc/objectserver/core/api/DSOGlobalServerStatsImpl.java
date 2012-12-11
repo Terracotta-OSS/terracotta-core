@@ -16,8 +16,8 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   private final SampledCounter           flushCounter;
   private final SampledCounter           txnCounter;
   private final ObjectManagerStatsImpl   objMgrStats;
-  private final SampledRateCounter       evictionRateCounter;
-  private final SampledRateCounter       expirationRateCounter;
+  private final SampledCounter       evictionRateCounter;
+  private final SampledCounter       expirationRateCounter;
 
   private final SampledCounter           broadcastCounter;
   private final SampledCounter           globalLockCounter;
@@ -32,8 +32,8 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
                                   SampledCounter globalLockRecallCounter,
                                   SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter,
-                                  SampledCounter globalLockCounter, SampledRateCounter evictionRateCounter,
-                                  SampledRateCounter expirationRateCounter) {
+                                  SampledCounter globalLockCounter, SampledCounter evictionRateCounter,
+                                  SampledCounter expirationRateCounter) {
     this.flushCounter = flushCounter;
     this.faultCounter = faultCounter;
     this.txnCounter = txnCounter;
@@ -109,12 +109,12 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   }
 
   @Override
-  public SampledRateCounter getEvictionRateCounter() {
+  public SampledCounter getEvictionRateCounter() {
     return evictionRateCounter;
   }
 
   @Override
-  public SampledRateCounter getExpirationRateCounter() {
+  public SampledCounter getExpirationRateCounter() {
     return expirationRateCounter;
   }
 }

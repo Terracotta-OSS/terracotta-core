@@ -25,6 +25,10 @@ import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
     implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedClusteredObjectLookup<S> {
 
@@ -33,6 +37,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   private final WeakValueMap<T>                           localCache;
   private final PlatformService                           platformService;
   private final String                                    rootName;
+  private Set<String>                                     currentKeys = Collections.EMPTY_SET;
 
   protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
@@ -161,7 +166,8 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
   @Override
   public void onRejoinStart() {
-    for (String name : localCache.keySet()) {
+    currentKeys = new HashSet<String>(localCache.keySet());
+    for (String name : currentKeys) {
       T wrapper = localCache.get(name);
       if (wrapper != null) {
         wrapper.rejoinStarted();
@@ -172,14 +178,16 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   @Override
   public void onRejoinComplete() {
     lookupOrCreateRoots();
-    for (String name : localCache.keySet()) {
+    for (String name : currentKeys) {
       T wrapper = localCache.get(name);
       if (wrapper != null) {
         wrapper.rejoinCompleted();
       }
     }
+    currentKeys = Collections.EMPTY_SET;
   }
 
+  @Override
   public void lookupOrCreateRoots() {
     GroupID[] gids = platformService.getGroupIDs();
     for (int i = 0; i < gids.length; i++) {

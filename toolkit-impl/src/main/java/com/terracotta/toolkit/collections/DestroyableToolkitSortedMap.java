@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -26,6 +27,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   private final String                                              name;
   private volatile ToolkitSortedMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup;
+  private volatile int                                              currentRejoinCount;
 
   public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory,
                                      IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
@@ -40,6 +42,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
+    currentRejoinCount++;
   }
 
   @Override
@@ -62,6 +65,12 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   @Override
   public void doDestroy() {
     map.destroy();
+  }
+
+  private void exceptionIfDestroyedOrRejoined(int expectedRejoinCount) {
+    if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
+    if (expectedRejoinCount != DestroyableToolkitSortedMap.this.currentRejoinCount) { throw new RejoinException(
+                                                                                                                "This SubType is not usable anymore after the rejoin has occured!"); }
   }
 
   @Override
@@ -134,10 +143,6 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
     return new DestroyableSet(map.entrySet());
   }
 
-  private void exceptionIfDestroyed() {
-    if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
-  }
-
   private class DestroyableSet extends DestroyableCollection implements Set {
     public DestroyableSet(Set set) {
       super(set);
@@ -146,88 +151,91 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   private class DestroyableCollection implements Collection {
     private final Collection collection;
+    private final int        rejoinCount;
 
     public DestroyableCollection(Collection collection) {
       this.collection = collection;
+      this.rejoinCount = DestroyableToolkitSortedMap.this.currentRejoinCount;
     }
 
     @Override
     public int size() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.size();
     }
 
     @Override
     public boolean isEmpty() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.contains(o);
     }
 
     @Override
     public Iterator iterator() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableIterator(collection.iterator(), DestroyableToolkitSortedMap.this);
     }
 
     @Override
     public Object[] toArray() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.toArray();
     }
 
     @Override
     public Object[] toArray(Object[] a) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.toArray(a);
     }
 
     @Override
     public boolean add(Object e) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.add(e);
     }
 
     @Override
     public boolean remove(Object o) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.addAll(c);
     }
 
     @Override
     public boolean removeAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection c) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return collection.retainAll(c);
     }
 
     @Override
     public void clear() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       collection.clear();
     }
+
   }
 
   @Override
@@ -262,110 +270,112 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   private class DestroyableSortedMap implements SortedMap<K, V> {
     private final SortedMap<K, V> sortedMap;
+    private final int             rejoinCount;
 
     public DestroyableSortedMap(SortedMap<K, V> innerMap) {
       this.sortedMap = innerMap;
+      this.rejoinCount = DestroyableToolkitSortedMap.this.currentRejoinCount;
     }
 
     @Override
     public void clear() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       sortedMap.clear();
     }
 
     @Override
     public boolean containsKey(Object key) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.containsValue(value);
     }
 
     @Override
     public V get(Object key) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.get(key);
     }
 
     @Override
     public boolean isEmpty() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.isEmpty();
     }
 
     @Override
     public V put(K key, V value) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.put(key, value);
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       sortedMap.putAll(m);
     }
 
     @Override
     public V remove(Object key) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.remove(key);
     }
 
     @Override
     public int size() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.size();
     }
 
     @Override
     public Comparator<? super K> comparator() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return null;
     }
 
     @Override
     public Set<java.util.Map.Entry<K, V>> entrySet() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableSet(sortedMap.entrySet());
     }
 
     @Override
     public K firstKey() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.firstKey();
     }
 
     @Override
     public SortedMap<K, V> headMap(K toKey) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableSortedMap(sortedMap.headMap(toKey));
     }
 
     @Override
     public Set<K> keySet() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableSet(sortedMap.keySet());
     }
 
     @Override
     public K lastKey() {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return sortedMap.lastKey();
     }
 
     @Override
     public SortedMap<K, V> subMap(K fromKey, K toKey) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableSortedMap(sortedMap.subMap(fromKey, toKey));
     }
 
     @Override
     public SortedMap<K, V> tailMap(K fromKey) {
-      exceptionIfDestroyed();
+      exceptionIfDestroyedOrRejoined(this.rejoinCount);
       return new DestroyableSortedMap(sortedMap.tailMap(fromKey));
     }
 

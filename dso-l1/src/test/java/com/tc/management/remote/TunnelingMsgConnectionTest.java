@@ -39,10 +39,12 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
     MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, new DSOMBeanConfig() {
       private final UUID uuid = UUID.getUUID();
 
+      @Override
       public String[] getTunneledDomains() {
         return null;
       }
 
+      @Override
       public UUID getUUID() {
         return uuid;
       }
@@ -69,6 +71,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
     System.out.println("XXX tmc = " + tmc);
     Thread t1 = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           tmc.writeMessage(null);
@@ -79,6 +82,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
     });
 
     Thread t2 = new Thread(new Runnable() {
+      @Override
       public void run() {
         mc.notifyTransportDisconnected(null, false);
       }
@@ -103,7 +107,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
     MockClientMessageChannelForTMC() {
       super(new TCMessageFactoryImpl(new NullSessionManager(), new NullMessageMonitor()), null,
-            new NullSessionManager(), null, new SecurityInfo(), null);
+            new NullSessionManager(), null, new SecurityInfo(), null, null);
       queue = new BoundedLinkedQueue(10);
       for (int i = 0; i < queue.capacity(); i++) {
         try {

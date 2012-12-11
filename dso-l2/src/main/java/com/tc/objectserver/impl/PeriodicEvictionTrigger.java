@@ -41,6 +41,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private int excluded = 0;
     private int tti = 0;
     private int ttl = 0;
+    private float ratio = 0.0f;
     private boolean completed = false;
     private volatile boolean stop = false;
     private final ObjectManager  mgr;
@@ -49,6 +50,10 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean runAlways) {
         this(mgr,oid,new ObjectIDSet(),runAlways);
+    }
+    
+    public PeriodicEvictionTrigger duplicate() {
+        return new PeriodicEvictionTrigger(mgr,getId(),runAlways);
     }
     
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, ObjectIDSet exclude, boolean runAlways) {
@@ -134,10 +139,14 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         return boundsCheckSampleSize(sampled);
     }
     
+    
+    public float filterRatio() {
+        return expired * 1.0f / expired + excluded + alive;
+    }
+    
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
                     final int ttlSeconds) {
     final int now = (int) (System.currentTimeMillis() / 1000);
-    
     for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
         if ( stop ) {
  //  don't unset flag, may need it later

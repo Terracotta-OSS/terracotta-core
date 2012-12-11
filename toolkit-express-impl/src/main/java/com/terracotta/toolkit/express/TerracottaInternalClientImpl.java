@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,15 +41,15 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final ClusteredStateLoader            clusteredStateLoader;
   private final AppClassLoader                  appClassLoader;
   private volatile DSOContextControl            contextControl;
-  private final AtomicInteger                   refCount      = new AtomicInteger(0);
+  private final AtomicInteger                   refCount             = new AtomicInteger(0);
   private final TerracottaInternalClientFactory parent;
   private final String                          tcConfig;
   private final boolean                         isUrlConfig;
   private final boolean                         rejoinEnabled;
-  private boolean                               shutdown      = false;
+  private boolean                               shutdown             = false;
   private volatile Object                       dsoContext;
-  private final Set<String>                     tunneledMBeanDomains;
-  private volatile boolean                      isInitialized = false;
+  private final Set<String>                     tunneledMBeanDomains = new HashSet<String>();
+  private volatile boolean                      isInitialized        = false;
 
   TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader,
                                TerracottaInternalClientFactory parent, boolean rejoinEnabled,
@@ -57,7 +58,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     this.tcConfig = tcConfig;
     this.isUrlConfig = isUrlConfig;
     this.parent = parent;
-    this.tunneledMBeanDomains = tunneledMBeanDomains;
+    this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
 
     try {
       this.appClassLoader = new AppClassLoader(appLoader);
@@ -85,7 +86,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   @Override
-  public void init() {
+  public synchronized void init() {
     if (isInitialized) { return; }
 
     try {
@@ -95,12 +96,12 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
       Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
       contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
+      isInitialized = true;
       join(tunneledMBeanDomains);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
-    isInitialized = true;
   }
 
   @Override
@@ -123,7 +124,11 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public synchronized void join(Set<String> tunnelledMBeanDomains) throws ClientShutdownException {
     if (shutdown) throw new ClientShutdownException();
     refCount.incrementAndGet();
-    contextControl.activateTunnelledMBeanDomains(tunnelledMBeanDomains);
+    if (isInitialized) {
+      contextControl.activateTunnelledMBeanDomains(this.tunneledMBeanDomains);
+    } else {
+      this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
+    }
   }
 
   @Override
@@ -263,7 +268,8 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     } catch (Exception e) {
       String message;
       if (backEnd != null) {
-        message = "Couldn't wrap the custom impl. " + backEnd.getClass().getName() + " in an instance of " + EE_SECRET_DELEGATE;
+        message = "Couldn't wrap the custom impl. " + backEnd.getClass().getName() + " in an instance of "
+                  + EE_SECRET_DELEGATE;
       } else {
         message = "Couldn't fetch keystore password from the console";
       }
@@ -274,5 +280,10 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   @Override
   public boolean isOnline() {
     return contextControl.isOnline();
+  }
+
+  @Override
+  public boolean isInitialized() {
+    return isInitialized;
   }
 }

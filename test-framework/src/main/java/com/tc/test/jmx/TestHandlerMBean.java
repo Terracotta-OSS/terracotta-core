@@ -2,6 +2,8 @@ package com.tc.test.jmx;
 
 import com.tc.test.setup.GroupsData;
 
+import java.io.Serializable;
+
 public interface TestHandlerMBean {
 
   /**
@@ -154,5 +156,10 @@ public interface TestHandlerMBean {
    * @return exit code
    */
   public int waitForServerExit(int groupIndex, int serverIndex) throws Exception;
+
+  /**
+   * Execute custom command
+   */
+  public Serializable executeCustomCommand(String cmd, Serializable[] params);
 }
 

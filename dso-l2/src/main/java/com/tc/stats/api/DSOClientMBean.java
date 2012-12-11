@@ -7,7 +7,6 @@ package com.tc.stats.api;
 import com.tc.management.TerracottaMBean;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 
@@ -16,7 +15,7 @@ import javax.management.ObjectName;
 public interface DSOClientMBean extends TerracottaMBean {
   public static final String TUNNELED_BEANS_REGISTERED = "tunneled.beans.registered";
 
-  ClientID getClientID();
+  long getClientID();
 
   String getNodeID();
 

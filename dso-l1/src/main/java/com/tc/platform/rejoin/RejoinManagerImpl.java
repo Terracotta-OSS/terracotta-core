@@ -86,7 +86,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
       if (rejoinInProgress.compareAndSet(true, false)) {
-        // take care of any cleanup/reinitialization
+        // take care of any cleanup/re-initialization
         notifyRejoinComplete();
         return true;
       }

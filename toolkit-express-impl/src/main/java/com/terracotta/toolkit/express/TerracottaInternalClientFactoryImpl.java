@@ -13,9 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
-  private final Map<String, TerracottaInternalClient>      clientsByUrl                                                     = new ConcurrentHashMap<String, TerracottaInternalClient>();
+  private final Map<String, TerracottaInternalClient>      clientsByUrl = new ConcurrentHashMap<String, TerracottaInternalClient>();
 
-  private final ConcurrentMap<String, Map<String, Object>> envByUrl                                                         = new ConcurrentHashMap<String, Map<String, Object>>();
+  private final ConcurrentMap<String, Map<String, Object>> envByUrl     = new ConcurrentHashMap<String, Map<String, Object>>();
 
   // public nullary constructor needed as entry point from SPI
   public TerracottaInternalClientFactoryImpl() {
@@ -66,8 +66,8 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
             client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
             clientsByUrl.put(tcConfig, client);
           } else {
-            // check if existing client is online, if not create a new one else reuse
-            if (client.isOnline()) {
+            // check if existing client is initializing or online, if not create a new one else reuse
+            if (!client.isInitialized() || client.isOnline()) {
               return joinSharedClient(client, tunneledMBeanDomains);
             } else {
               // create a new client and update the mapping too
@@ -112,14 +112,11 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
     if (env == null) {
       synchronized (envByUrl) {
         env = envByUrl.get(tcConfig);
-        if (env != null) {
-          return env;
-        }
+        if (env != null) { return env; }
         env = createNewEnv();
         final Map<String, Object> previous = envByUrl.putIfAbsent(tcConfig, env);
-        if (previous != null) {
-          throw new IllegalStateException("Some environment map was already present for config " + tcConfig);
-        }
+        if (previous != null) { throw new IllegalStateException("Some environment map was already present for config "
+                                                                + tcConfig); }
       }
     }
     return env;

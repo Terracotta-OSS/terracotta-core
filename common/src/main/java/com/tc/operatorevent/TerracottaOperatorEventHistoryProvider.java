@@ -9,4 +9,6 @@ public interface TerracottaOperatorEventHistoryProvider {
   void push(TerracottaOperatorEvent event);
 
   List<TerracottaOperatorEvent> getOperatorEvents();
+
+  List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
 }

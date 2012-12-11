@@ -3,6 +3,7 @@
  */
 package com.terracotta.management.resource;
 
+import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.VersionedEntity;
 
 /**
@@ -14,6 +15,10 @@ import org.terracotta.management.resource.VersionedEntity;
 public abstract class AbstractTsaEntity extends VersionedEntity {
 
   private String agentId;
+
+  public AbstractTsaEntity() {
+    setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+  }
 
   @Override
   public String getAgentId() {

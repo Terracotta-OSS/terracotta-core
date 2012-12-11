@@ -14,7 +14,6 @@ import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
-import com.tc.test.jmx.TestHandlerMBean;
 import com.tc.test.runner.TcTestRunner;
 import com.tc.test.runner.TcTestRunner.Configs;
 import com.tc.test.setup.GroupsData;
@@ -117,15 +116,20 @@ public abstract class AbstractTestBase extends TCTestCase {
           testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome, new FailTestCallback());
           startServers();
         }
-        TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
+        TestHandler testHandlerMBean = new TestHandler(testServerManager, testConfig);
         jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
         jmxServerManager.startJMXServer();
+        configureTestHandlerMBean(testHandlerMBean);
         executeDuringRunningCluster();
       } catch (Throwable e) {
         e.printStackTrace();
         throw new AssertionError(e);
       }
     }
+  }
+
+  protected void configureTestHandlerMBean(TestHandler testHandler) {
+    // empty method - override if necessary
   }
 
   protected void startServers() throws Exception {

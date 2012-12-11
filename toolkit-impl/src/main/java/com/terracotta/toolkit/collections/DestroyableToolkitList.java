@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -23,6 +24,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitList<E>                              list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
+  private volatile int                                         rejoinCount;
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
@@ -36,6 +38,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void rejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
+    rejoinCount++;
   }
 
   @Override
@@ -187,163 +190,167 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   private class SubListWrapper implements List<E> {
     private final List<E> subList;
+    private final int     currentRejoinCount;
 
     public SubListWrapper(List<E> subList) {
       this.subList = subList;
+      this.currentRejoinCount = DestroyableToolkitList.this.rejoinCount;
     }
 
     @Override
     public int size() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.size();
     }
 
     @Override
     public boolean isEmpty() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.contains(o);
     }
 
     @Override
     public Iterator<E> iterator() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return new DestroyableIterator(subList.iterator(), DestroyableToolkitList.this);
     }
 
     @Override
     public Object[] toArray() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.toArray();
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.toArray(a);
     }
 
     @Override
     public boolean add(E e) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.add(e);
     }
 
     @Override
     public boolean remove(Object o) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.addAll(c);
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends E> c) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.addAll(index, c);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.retainAll(c);
     }
 
     @Override
     public void clear() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       subList.clear();
     }
 
     @Override
     public boolean equals(Object o) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.equals(o);
     }
 
     @Override
     public int hashCode() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.hashCode();
     }
 
     @Override
     public E get(int index) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.get(index);
     }
 
     @Override
     public E set(int index, E element) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.set(index, element);
     }
 
     @Override
     public void add(int index, E element) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       subList.add(index, element);
     }
 
     @Override
     public E remove(int index) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.remove(index);
     }
 
     @Override
     public int indexOf(Object o) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.indexOf(o);
     }
 
     @Override
     public int lastIndexOf(Object o) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.lastIndexOf(o);
     }
 
     @Override
     public ListIterator<E> listIterator() {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.listIterator();
     }
 
     @Override
     public ListIterator<E> listIterator(int index) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return subList.listIterator(index);
     }
 
     @Override
     public List<E> subList(int fromIndex, int toIndex) {
-      checkDestroyed();
+      checkDestroyedOrRejoined();
       return new SubListWrapper(subList.subList(fromIndex, toIndex));
     }
 
-    private void checkDestroyed() {
+    private void checkDestroyedOrRejoined() {
       if (isDestroyed()) { throw new IllegalStateException("The List backing this subList is already destroyed."); }
+      if (this.currentRejoinCount != DestroyableToolkitList.this.rejoinCount) { throw new RejoinException(
+                                                                                                   "Rejoin has Occured, This sublist is not usable after rejoin anymore"); }
     }
 
   }

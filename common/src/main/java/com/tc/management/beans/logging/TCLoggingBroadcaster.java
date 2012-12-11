@@ -5,6 +5,7 @@ package com.tc.management.beans.logging;
 
 import com.tc.management.AbstractTerracottaMBean;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
@@ -22,7 +23,8 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final AtomicLong                     sequenceNumber     = new AtomicLong(0L);
+  private final AtomicLong                     sequenceNumber           = new AtomicLong(0L);
+  private final TCLoggingHistoryProvider       tcLoggingHistoryProvider = new TCLoggingHistoryProvider();
 
   public void reset() {
     // nothing to reset
@@ -41,6 +43,17 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
     final Notification notif = new Notification(LOGGING_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
                                                 System.currentTimeMillis(), event);
     sendNotification(notif);
+    tcLoggingHistoryProvider.push(new Notification(notif.getType(), getClass().getName(), notif.getSequenceNumber(),
+        notif.getTimeStamp(), notif.getMessage()));
   }
 
+  @Override
+  public List<Notification> getLogNotifications() {
+    return tcLoggingHistoryProvider.getLogNotifications();
+  }
+
+  @Override
+  public List<Notification> getLogNotificationsSince(long timestamp) {
+    return tcLoggingHistoryProvider.getLogNotificationsSince(timestamp);
+  }
 }
