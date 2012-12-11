@@ -93,10 +93,9 @@ public class ConfigHelper {
 
   private L2SConfigBuilder getL2sConfig() {
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[numOfGroups * numOfServersPerGroup];
-    GroupsConfigBuilder groups = new GroupsConfigBuilder();
+    GroupConfigBuilder[] groups = new GroupConfigBuilder[numOfGroups];
     int i = 0;
     for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
-
       L2ConfigBuilder[] l2Builders = getServersForGroup(groupIndex);
 
       for (L2ConfigBuilder l2 : l2Builders) {
@@ -104,17 +103,12 @@ public class ConfigHelper {
         i++;
       }
 
-      MembersConfigBuilder members = new MembersConfigBuilder();
-      for (L2ConfigBuilder l2 : l2Builders) {
-        members.addMember(l2.getName());
-      }
       GroupConfigBuilder group = new GroupConfigBuilder(getGroupName(groupIndex));
-      group.setMembers(members);
-      groups.addGroupConfigBuilder(group);
+      group.setL2s(l2Builders);
+      groups[groupIndex] = group;
     }
 
     L2SConfigBuilder l2sConfig = new L2SConfigBuilder();
-    l2sConfig.setL2s(l2s);
     l2sConfig.setGroups(groups);
 
     // set client reconnect window

@@ -70,7 +70,7 @@ public class GroupInfoServlet extends HttpServlet {
   protected void addServerGroup(ServerGroups serverGroups, ActiveServerGroupConfig activeServerGroupConfig) {
     ServerGroup group = serverGroups.addNewServerGroup();
     group.setGroupName(activeServerGroupConfig.getGroupName());
-    String[] members = activeServerGroupConfig.getMembers().getMemberArray();
+    String[] members = activeServerGroupConfig.getMembers();
     for (String member : members) {
       ServerInfo serverInfo = group.addNewServerInfo();
       serverInfo.setTsaPort(new BigInteger(serverNameToTsaPort.get(member).intValue() + ""));

@@ -144,7 +144,7 @@ public class HaConfigImpl implements HaConfig {
     List<ActiveServerGroupConfig> asgcs = this.configSetupManager.activeServerGroupsConfig().getActiveServerGroups();
     for (ActiveServerGroupConfig asgc : asgcs) {
       Assert.assertNotNull(asgc);
-      String[] l2Names = asgc.getMembers().getMemberArray();
+      String[] l2Names = asgc.getMembers();
       for (String l2Name : l2Names) {
         try {
           L2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Name);

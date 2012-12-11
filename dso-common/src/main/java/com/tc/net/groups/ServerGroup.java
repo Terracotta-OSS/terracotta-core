@@ -27,15 +27,15 @@ public class ServerGroup {
 
   public ServerGroup(final ActiveServerGroupConfig group) {
     this.groupId = group.getGroupId();
-    this.members = group.getMembers().getMemberArray();
+    this.members = group.getMembers();
     this.nodes = new ConcurrentHashMap();
   }
 
   public ReloadConfigChangeContext reloadGroup(L2ConfigurationSetupManager manager, final ActiveServerGroupConfig group)
       throws ConfigurationSetupException {
     String[] membersBefore = this.members;
-    String[] membersNow = group.getMembers().getMemberArray();
-    this.members = group.getMembers().getMemberArray();
+    String[] membersNow = group.getMembers();
+    this.members = group.getMembers();
 
     ReloadConfigChangeContext context = new ReloadConfigChangeContext();
     addNodes(manager, group, context.getNodesAdded(), membersNow, membersBefore);

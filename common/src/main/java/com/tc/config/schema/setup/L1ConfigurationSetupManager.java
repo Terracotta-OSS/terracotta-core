@@ -28,7 +28,5 @@ public interface L1ConfigurationSetupManager {
 
   void setupLogging();
 
-  String[] applicationNames();
-
   void reloadServersConfiguration() throws ConfigurationSetupException;
 }

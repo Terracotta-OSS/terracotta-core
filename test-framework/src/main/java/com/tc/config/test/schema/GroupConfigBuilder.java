@@ -9,17 +9,13 @@ import java.util.Map;
 
 public class GroupConfigBuilder extends BaseConfigBuilder {
 
-  private final String         groupName;
-  private MembersConfigBuilder members;
-  private Integer              electionTime = null;
+  private final String      groupName;
+  private L2ConfigBuilder[] l2s;
+  private Integer           electionTime = null;
 
   public GroupConfigBuilder(String groupName) {
     super(5, new String[0]);
     this.groupName = groupName;
-  }
-
-  public void setMembers(MembersConfigBuilder members) {
-    this.members = members;
   }
 
   public void setElectionTime(int value) {
@@ -39,10 +35,20 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
 
     out += openElement("mirror-group", attr);
 
-    out += this.members.toString();
+    for (L2ConfigBuilder l2 : l2s) {
+      out += l2.toString();
+    }
 
     out += closeElement("mirror-group");
 
     return out;
+  }
+
+  public void setL2s(L2ConfigBuilder[] l2Builders) {
+    l2s = l2Builders;
+  }
+
+  public L2ConfigBuilder[] getL2s() {
+    return l2s;
   }
 }

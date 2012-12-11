@@ -13,7 +13,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Servers;
 
 import java.util.Arrays;
@@ -26,13 +25,10 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
   public ActiveServerGroupsConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager)
       throws ConfigurationSetupException {
     super(context);
-    context.ensureRepositoryProvides(MirrorGroups.class);
+    context.ensureRepositoryProvides(Servers.class);
 
-    MirrorGroups groups = (MirrorGroups) context.bean();
-    if (groups == null) { throw new AssertionError(
-                                                   "ActiveServerGroups is null!  This should never happen since we make sure default is used."); }
-
-    final MirrorGroup[] groupArray = groups.getMirrorGroupArray();
+    Servers servers = (Servers) context.bean();
+    final MirrorGroup[] groupArray = servers.getMirrorGroupArray();
 
     if (groupArray == null || groupArray.length == 0) { throw new AssertionError(
                                                                                  "ActiveServerGroup array is null!  This should never happen since we make sure default is used."); }
@@ -43,7 +39,8 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
       tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
                                                                   setupManager);
     }
-    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
+    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper
+        .generateGroupInfo(tempGroupConfigArray);
     this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
   }
 
@@ -60,9 +57,7 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
   @Override
   public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
     for (ActiveServerGroupConfig activeServerGroupConfig : groupConfigs) {
-      if(activeServerGroupConfig.isMember(name)) {
-        return activeServerGroupConfig;
-      }
+      if (activeServerGroupConfig.isMember(name)) { return activeServerGroupConfig; }
     }
     return null;
   }
@@ -71,29 +66,16 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
     ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
                                                                  MirrorGroup.class, new ChildBeanFetcher() {
                                                                    @Override
-                                                                  public XmlObject getChild(XmlObject parent) {
+                                                                   public XmlObject getChild(XmlObject parent) {
                                                                      return group;
                                                                    }
                                                                  });
     return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
   }
 
-  public static void createDefaultServerMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
-      throws ConfigurationSetupException {
-    servers.addNewMirrorGroups();
-    ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
-  }
-
-  public static void initializeMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
-      throws ConfigurationSetupException {
-
-    if (!servers.isSetMirrorGroups()) {
-      createDefaultServerMirrorGroups(servers, defaultValueProvider);
-    } else {
-      MirrorGroup[] mirrorGroups = servers.getMirrorGroups().getMirrorGroupArray();
-      if (mirrorGroups.length == 0) {
-        ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
-      }
+  public static void initializeMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider) {
+    if (servers.getMirrorGroupArray() == null || servers.getMirrorGroupArray().length == 0) {
+      ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers);
     }
   }
 }

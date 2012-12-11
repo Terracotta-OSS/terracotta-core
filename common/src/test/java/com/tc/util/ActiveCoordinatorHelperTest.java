@@ -4,9 +4,10 @@
  */
 package com.tc.util;
 
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.TCTestCase;
-import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.Server;
 
 import java.util.Arrays;
 
@@ -18,10 +19,10 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     MirrorGroup[] mirrorGroups = new MirrorGroup[3];
     for (int i = 0; i < groupCount; i++) {
       mirrorGroups[i] = MirrorGroup.Factory.newInstance();
-      Members members = mirrorGroups[i].addNewMembers();
 
       for (int j = 0; j < 2; j++) {
-        members.addMember(serverNames[i * 2 + j]);
+        Server server = mirrorGroups[i].addNewServer();
+        server.setName(serverNames[i * 2 + j]);
       }
     }
 
@@ -32,7 +33,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     for (int i = 0; i < groupCount; i++) {
       Assert.assertEquals(ActiveCoordinatorHelper.GROUP_NAME_PREFIX + i, mirrorGroupsReturned[i].getGroupName());
       String[] members = { serverNames[2 * i], serverNames[2 * i + 1] };
-      Assert.assertTrue(Arrays.equals(members, mirrorGroupsReturned[i].getMembers().getMemberArray()));
+      Assert.assertTrue(Arrays.equals(members, L2DSOConfigObject.getServerNames(mirrorGroupsReturned[i])));
     }
   }
 
@@ -44,10 +45,10 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     MirrorGroup[] mirrorGroups = new MirrorGroup[3];
     for (int i = 0; i < groupCount; i++) {
       mirrorGroups[i] = MirrorGroup.Factory.newInstance();
-      Members members = mirrorGroups[i].addNewMembers();
 
       for (int j = 0; j < 2; j++) {
-        members.addMember(serverNames[i * 2 + j]);
+        Server server = mirrorGroups[i].addNewServer();
+        server.setName(serverNames[i * 2 + j]);
       }
 
       mirrorGroups[i].setGroupName(groupNames[i]);
@@ -60,7 +61,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     for (int i = groupCount - 1; i <= 0; i--) {
       Assert.assertEquals(groupNames[i], mirrorGroupsReturned[i].getGroupName());
       String[] members = { serverNames[2 * i], serverNames[2 * i + 1] };
-      Assert.assertTrue(Arrays.equals(members, mirrorGroupsReturned[i].getMembers().getMemberArray()));
+      Assert.assertTrue(Arrays.equals(members, L2DSOConfigObject.getServerNames(mirrorGroupsReturned[i])));
     }
   }
 
@@ -72,10 +73,10 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     MirrorGroup[] mirrorGroups = new MirrorGroup[3];
     for (int i = 0; i < groupCount; i++) {
       mirrorGroups[i] = MirrorGroup.Factory.newInstance();
-      Members members = mirrorGroups[i].addNewMembers();
 
       for (int j = 0; j < 2; j++) {
-        members.addMember(serverNames[i * 2 + j]);
+        Server server = mirrorGroups[i].addNewServer();
+        server.setName(serverNames[i * 2 + j]);
       }
 
       if (i != 1) {
@@ -92,6 +93,6 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     Assert.assertEquals(ActiveCoordinatorHelper.GROUP_NAME_PREFIX + "2", mirrorGroupsReturned[2].getGroupName());
     String[] members = { serverNames[2], serverNames[3] };
 
-    Assert.assertTrue(Arrays.equals(members, mirrorGroupsReturned[2].getMembers().getMemberArray()));
+    Assert.assertTrue(Arrays.equals(members, L2DSOConfigObject.getServerNames(mirrorGroupsReturned[2])));
   }
 }

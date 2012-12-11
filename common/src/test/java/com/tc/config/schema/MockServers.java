@@ -18,7 +18,7 @@ import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.GarbageCollection;
-import com.terracottatech.config.MirrorGroups;
+import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.NonNegativeInt;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Server;
@@ -41,46 +41,6 @@ public class MockServers implements Servers {
 
   public MockServers() {
     super();
-  }
-
-  @Override
-  public Server[] getServerArray() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public Server getServerArray(int arg0) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public int sizeOfServerArray() {
-    return 1;
-  }
-
-  @Override
-  public void setServerArray(Server[] arg0) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void setServerArray(int arg0, Server arg1) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public Server insertNewServer(int arg0) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public Server addNewServer() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void removeServer(int arg0) {
-    throw new ImplementMe();
   }
 
   @Override
@@ -359,27 +319,12 @@ public class MockServers implements Servers {
   }
 
   @Override
-  public MirrorGroups addNewMirrorGroups() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public UpdateCheck addNewUpdateCheck() {
     throw new ImplementMe();
   }
 
   @Override
-  public MirrorGroups getMirrorGroups() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public UpdateCheck getUpdateCheck() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public boolean isSetMirrorGroups() {
     throw new ImplementMe();
   }
 
@@ -394,17 +339,7 @@ public class MockServers implements Servers {
   }
 
   @Override
-  public void unsetMirrorGroups() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void unsetUpdateCheck() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void setMirrorGroups(MirrorGroups mirrorGroups) {
     throw new ImplementMe();
   }
 
@@ -486,6 +421,86 @@ public class MockServers implements Servers {
 
   @Override
   public void unsetGarbageCollection() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public MirrorGroup[] getMirrorGroupArray() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public MirrorGroup getMirrorGroupArray(int i) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int sizeOfMirrorGroupArray() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setMirrorGroupArray(MirrorGroup[] mirrorGroupArray) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setMirrorGroupArray(int i, MirrorGroup mirrorGroup) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public MirrorGroup insertNewMirrorGroup(int i) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public MirrorGroup addNewMirrorGroup() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void removeMirrorGroup(int i) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Server[] getServerArray() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Server getServerArray(int i) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int sizeOfServerArray() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setServerArray(Server[] serverArray) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setServerArray(int i, Server server) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Server insertNewServer(int i) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Server addNewServer() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void removeServer(int i) {
     throw new ImplementMe();
   }
 }

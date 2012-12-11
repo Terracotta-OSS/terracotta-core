@@ -18,10 +18,8 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.config.test.schema.GroupConfigBuilder;
-import com.tc.config.test.schema.GroupsConfigBuilder;
 import com.tc.config.test.schema.L2ConfigBuilder;
 import com.tc.config.test.schema.L2SConfigBuilder;
-import com.tc.config.test.schema.MembersConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
@@ -124,9 +122,10 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
     L2SConfigBuilder l2sBuilder = new L2SConfigBuilder();
 
-    L2ConfigBuilder[] l2Builders = new L2ConfigBuilder[STRIPE_COUNT];
-    GroupsConfigBuilder groupsBuilder = new GroupsConfigBuilder();
+    GroupConfigBuilder[] groupBuilders = new GroupConfigBuilder[STRIPE_COUNT];
     for (int i = 0; i < STRIPE_COUNT; ++i) {
+      groupBuilders[i] = new GroupConfigBuilder(null);
+
       L2ConfigBuilder l2Builder = new L2ConfigBuilder();
       l2Builder.setName("server" + i);
       l2Builder.setJMXPort(pc.chooseRandomPort());
@@ -135,17 +134,11 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       l2Builder.setTSABindAddress("127.0.0.1");
       l2Builder.setTSAGroupPort(pc.chooseRandomPort());
       l2Builder.setTSAGroupPortBindAddress("127.0.0.1");
-      l2Builders[i] = l2Builder;
 
-      MembersConfigBuilder memberBuilder = new MembersConfigBuilder();
-      memberBuilder.addMember("server" + i);
-      GroupConfigBuilder groupBuilder = new GroupConfigBuilder(null);
-      groupBuilder.setMembers(memberBuilder);
-      groupsBuilder.addGroupConfigBuilder(groupBuilder);
+      groupBuilders[i].setL2s(new L2ConfigBuilder[] { l2Builder });
     }
 
-    l2sBuilder.setL2s(l2Builders);
-    l2sBuilder.setGroups(groupsBuilder);
+    l2sBuilder.setGroups(groupBuilders);
     out.setServers(l2sBuilder);
 
     return out;

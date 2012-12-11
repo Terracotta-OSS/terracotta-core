@@ -10,6 +10,7 @@ import com.tc.config.Loader;
 import com.tc.config.test.schema.L2ConfigBuilder;
 import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.util.PortChooser;
 import com.terracottatech.config.Server;
@@ -66,7 +67,7 @@ public class ExternalDsoServer {
 
       TcConfigDocument tcConfigDocument = new Loader().parse(new FileInputStream(configFile));
       TcConfig tcConfig = tcConfigDocument.getTcConfig();
-      Server[] servers = tcConfig.getServers().getServerArray();
+      Server[] servers = L2DSOConfigObject.getServers(tcConfig.getServers());
 
       if (serverName != null) {
         boolean foundServer = false;

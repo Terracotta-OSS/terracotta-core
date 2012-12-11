@@ -22,7 +22,6 @@ import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -53,8 +52,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
@@ -90,8 +89,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
@@ -130,8 +129,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
@@ -173,8 +172,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
@@ -214,8 +213,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(2, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
@@ -238,7 +237,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
     Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
 
-    server = servers.getServerArray(1);
+    server = servers.getMirrorGroupArray(0).getServerArray(1);
     String host = "testHost2";
     String name = "server2";
     String bind = "4.5.6.7";
@@ -269,8 +268,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "data")
         .getAbsolutePath(), server.getData());
@@ -295,8 +294,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert
         .assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "abc"
@@ -330,8 +329,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
                                  + InetAddress.getLocalHost().getHostName()).getAbsolutePath(), server.getData());
@@ -351,7 +350,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
     Assert.assertFalse(servers.getRestartable().getEnabled());
     Assert.assertEquals(120, servers.getClientReconnectWindow());
@@ -370,8 +369,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
     Assert.assertFalse(server.isSetOffheap());
     Assert.assertFalse(servers.getRestartable().getEnabled());
   }
@@ -389,8 +388,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(9876, servers.getClientReconnectWindow());
     Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
@@ -413,8 +412,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(9876, servers.getClientReconnectWindow());
     Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
@@ -458,7 +457,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
     Assert.assertEquals(9876, servers.getClientReconnectWindow());
     Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
@@ -477,32 +476,23 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(1, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(1, mirrorGroups.getMirrorGroupArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
-    Server server = servers.getServerArray(0);
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(1, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(1, mirrorGroup.getMembers().getMemberArray().length);
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals(1, mirrorGroup.sizeOfServerArray());
     Assert.assertEquals(5, mirrorGroup.getElectionTime());
-    Assert.assertEquals(server.getName(), mirrorGroup.getMembers().getMemberArray(0));
+    Assert.assertEquals("default-group", mirrorGroup.getGroupName());
   }
 
   public void testMirrorGroupWithDefaultHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
-                    + "<server host=\"eng01\" name=\"server1\"></server>"
-                    + "<server host=\"eng02\" name=\"server2\"></server>"
-                    + "<server host=\"eng03\" name=\"server3\"></server>"
-                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
-                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
-                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
-                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
-                    + "<member>server4</member>" + "</members>" + "</mirror-group>" + "</mirror-groups>" + "</servers>"
-                    + "</tc:tc-config>";
+                    + "<mirror-group group-name=\"group1\">" + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\">" + "<server host=\"eng03\" name=\"server3\"></server>"
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>"
+                    + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -510,43 +500,31 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(4, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(2, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(2, mirrorGroups.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(1).getServerArray().length);
 
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(0).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server1", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals("group1", mirrorGroup.getGroupName());
+    Assert.assertEquals("server1", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server2", mirrorGroup.getServerArray(1).getName());
     Assert.assertEquals(5, mirrorGroup.getElectionTime());
 
-    mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(2).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
+    mirrorGroup = servers.getMirrorGroupArray(1);
+    Assert.assertEquals("group2", mirrorGroup.getGroupName());
+    Assert.assertEquals("server3", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server4", mirrorGroup.getServerArray(1).getName());
     Assert.assertEquals(5, mirrorGroup.getElectionTime());
   }
 
   public void testMirrorGroupWithGivenHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
-                    + "<server host=\"eng01\" name=\"server1\"></server>"
-                    + "<server host=\"eng02\" name=\"server2\"></server>"
+                    + "<mirror-group group-name=\"group1\">" + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\" election-time=\"15\">"
                     + "<server host=\"eng03\" name=\"server3\"></server>"
-                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
-                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
-                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
-                    + "<mirror-group group-name=\"group2\" election-time=\"15\">" + "<members>"
-                    + "<member>server3</member>" + "<member>server4</member>" + "</members>" + "</mirror-group>"
-                    + "</mirror-groups>" + "</servers>"
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -555,27 +533,22 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(4, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(2, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(2, mirrorGroups.getMirrorGroupArray().length);
 
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(0).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server1", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
 
-    mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(2).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
+    Assert.assertEquals(2, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(1).getServerArray().length);
+
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals("group1", mirrorGroup.getGroupName());
+    Assert.assertEquals("server1", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server2", mirrorGroup.getServerArray(1).getName());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
+
+    mirrorGroup = servers.getMirrorGroupArray(1);
+    Assert.assertEquals("group2", mirrorGroup.getGroupName());
+    Assert.assertEquals("server3", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server4", mirrorGroup.getServerArray(1).getName());
     Assert.assertEquals(15, mirrorGroup.getElectionTime());
   }
 

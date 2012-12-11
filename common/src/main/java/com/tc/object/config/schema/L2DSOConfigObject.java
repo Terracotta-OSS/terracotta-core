@@ -23,6 +23,7 @@ import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Keychain;
+import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
@@ -32,6 +33,8 @@ import com.terracottatech.config.Ssl;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The standard implementation of {@link L2DSOConfig}.
@@ -151,10 +154,27 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (!config.isSetServers()) {
       config.addNewServers();
     }
+
     Servers servers = config.getServers();
-    if (servers.getServerArray().length == 0) {
-      servers.addNewServer();
+    if (servers.getServerArray().length > 0) {
+      if (servers.getMirrorGroupArray().length > 0) {
+        //
+        throw new ConfigurationSetupException("Cannot use both <server> and <mirror-group> at this level");
+      }
     }
+
+    ActiveServerGroupsConfigObject.initializeMirrorGroups(servers, defaultValueProvider);
+    for (MirrorGroup group : servers.getMirrorGroupArray()) {
+      if (group.getServerArray().length == 0) {
+        group.addNewServer();
+      }
+    }
+
+    if (servers.getServerArray() != null && servers.getServerArray().length != 0) {
+      // Top level Servers should have been placed in the default mirror-group
+      throw new AssertionError("servers are still defined but not in any mirror-group");
+    }
+
     if (!servers.isSetSecure()) {
       servers.setSecure(false);
     }
@@ -163,24 +183,26 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     initializeRestartable(servers, defaultValueProvider);
     initializeGarbageCollection(servers, defaultValueProvider);
 
-    for (int i = 0; i < servers.sizeOfServerArray(); i++) {
-      Server server = servers.getServerArray(i);
-      initializeServerBind(server, defaultValueProvider);
-      initializeTsaPort(server, defaultValueProvider);
-      initializeJmxPort(server, defaultValueProvider);
-      initializeTsaGroupPort(server, defaultValueProvider);
-      // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
-      // and name is supposed to default to 'host:tsa-port'
-      initializeNameAndHost(server, defaultValueProvider);
-      initializeDataDirectory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeSecurity(server, defaultValueProvider);
-      initializeOffHeap(server, defaultValueProvider);
+    for (int i = 0; i < servers.sizeOfMirrorGroupArray(); i++) {
+      MirrorGroup group = servers.getMirrorGroupArray(i);
+      for (int j = 0; j < group.sizeOfServerArray(); j++) {
+        Server server = group.getServerArray(j);
+        initializeServerBind(server, defaultValueProvider);
+        initializeTsaPort(server, defaultValueProvider);
+        initializeJmxPort(server, defaultValueProvider);
+        initializeTsaGroupPort(server, defaultValueProvider);
+        // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
+        // and name is supposed to default to 'host:tsa-port'
+        initializeNameAndHost(server, defaultValueProvider);
+        initializeDataDirectory(server, defaultValueProvider, directoryLoadedFrom);
+        initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);
+        initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
+        initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
+        initializeSecurity(server, defaultValueProvider);
+        initializeOffHeap(server, defaultValueProvider);
+      }
     }
 
-    ActiveServerGroupsConfigObject.initializeMirrorGroups(servers, defaultValueProvider);
     UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
   }
 
@@ -379,8 +401,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
   private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "offheap/enabled"))
-        .getBooleanValue();
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "offheap/enabled")).getBooleanValue();
   }
 
   private static int getDefaultReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)
@@ -426,5 +447,47 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       throws XmlException {
     return ((XmlInteger) defaultValueProvider.defaultFor(servers.schemaType(), "garbage-collection/interval"))
         .getBigIntegerValue().intValue();
+  }
+
+  public static String[] getServerNames(MirrorGroup mirrorGroup) {
+    List<String> names = new ArrayList<String>();
+
+    if (mirrorGroup.getServerArray() != null) {
+      for (Server server : mirrorGroup.getServerArray()) {
+        names.add(server.getName());
+      }
+    }
+
+    return names.toArray(new String[names.size()]);
+  }
+
+  public static String[] getServerNames(Servers servers) {
+    List<String> names = new ArrayList<String>();
+
+    if (servers.getMirrorGroupArray() != null) {
+      for (MirrorGroup group : servers.getMirrorGroupArray()) {
+        for (String name : getServerNames(group)) {
+          names.add(name);
+        }
+      }
+    }
+
+    return names.toArray(new String[names.size()]);
+  }
+
+  public static Server[] getServers(Servers servers) {
+    List<Server> serverList = new ArrayList<Server>();
+
+    if (servers.getMirrorGroupArray() != null) {
+      for (MirrorGroup group : servers.getMirrorGroupArray()) {
+        if (group.getServerArray() != null) {
+          for (Server server : group.getServerArray()) {
+            serverList.add(server);
+          }
+        }
+      }
+    }
+
+    return serverList.toArray(new Server[serverList.size()]);
   }
 }

@@ -26,9 +26,7 @@ import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.GroupData;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
@@ -291,11 +289,15 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private void cleanBeanSetServersIfNeeded(Servers l2s) {
     Assert.assertNotNull(l2s);
 
-    if (l2s.sizeOfServerArray() == 1) {
-      Server l2 = l2s.getServerArray(0);
-      if (l2.getName() != null && l2.getName().equals(DEFAULT_SERVER_NAME) && l2.getHost().equals(DEFAULT_HOST)) {
-        l2s.removeServer(0);
-        if (l2s.sizeOfServerArray() != 0) { throw new AssertionError("Default server has not been cleared"); }
+    if (l2s.getMirrorGroupArray() != null) {
+      for (MirrorGroup group : l2s.getMirrorGroupArray()) {
+        if (group.sizeOfServerArray() == 1) {
+          Server l2 = group.getServerArray(0);
+          if (l2.getName() != null && l2.getName().equals(DEFAULT_SERVER_NAME) && l2.getHost().equals(DEFAULT_HOST)) {
+            group.removeServer(0);
+            if (group.sizeOfServerArray() != 0) { throw new AssertionError("Default server has not been cleared"); }
+          }
+        }
       }
     }
   }
@@ -303,21 +305,15 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private void cleanBeanSetServerGroupsIfNeeded(Servers l2s) {
     Assert.assertNotNull(l2s);
 
-    MirrorGroups groups = l2s.getMirrorGroups();
-    Assert.assertNotNull(groups);
-    if (groups != null) {
-      MirrorGroup[] groupArray = groups.getMirrorGroupArray();
+    MirrorGroup[] groupArray = l2s.getMirrorGroupArray();
 
-      if (groupArray.length == 1) {
-        Members members = groupArray[0].getMembers();
-        Assert.assertNotNull(members);
-        String[] memberNames = members.getMemberArray();
-        Assert.assertNotNull(memberNames);
+    if (groupArray != null && groupArray.length == 1) {
+      String[] memberNames = L2DSOConfigObject.getServerNames(groupArray[0]);
+      Assert.assertNotNull(memberNames);
 
-        if (memberNames.length == 1 && memberNames[0].equals(DEFAULT_SERVER_NAME)) {
-          groups.removeMirrorGroup(0);
-          Assert.assertEquals(0, groups.getMirrorGroupArray().length);
-        }
+      if (memberNames.length == 1 && memberNames[0].equals(DEFAULT_SERVER_NAME)) {
+        l2s.removeMirrorGroup(0);
+        Assert.assertEquals(0, l2s.getMirrorGroupArray().length);
       }
     }
   }
@@ -328,13 +324,13 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     cleanServersForL1s();
     Servers servers = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
 
-    // One by one add all the servers of a group and then add the group
     for (int i = 0; i < grpData.length; i++) {
-      for (int j = 0; j < grpData[i].getServerCount(); j++)
-        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getTsaPorts()[j], grpData[i].getJmxPorts()[j],
-                            false);
+      MirrorGroup group = addServerGroupToL1Config(i, grpData[i].getGroupName());
 
-      addServerGroupToL1Config(i, grpData[i].getGroupName(), grpData[i].getServerNames());
+      for (int j = 0; j < grpData[i].getServerCount(); j++) {
+        addServerToL1Config(group, grpData[i].getServerNames()[j], grpData[i].getTsaPorts()[j],
+                            grpData[i].getJmxPorts()[j], false);
+      }
     }
 
     TcConfig config = TcConfig.Factory.newInstance();
@@ -348,12 +344,9 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   private void cleanServersForL1s() {
     Servers servers = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
-    for (int i = 0; i < servers.getServerArray().length; i++) {
-      servers.removeServer(i);
-    }
 
-    for (int i = 0; i < servers.getMirrorGroups().getMirrorGroupArray().length; i++) {
-      servers.getMirrorGroups().removeMirrorGroup(i);
+    for (int i = 0; i < servers.getMirrorGroupArray().length; i++) {
+      servers.removeMirrorGroup(i);
     }
   }
 
@@ -368,8 +361,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServersIfNeeded(l2s);
 
-    l2s.setServerArray(servers.getServerArray());
-    l2s.setMirrorGroups(servers.getMirrorGroups());
+    l2s.setMirrorGroupArray(servers.getMirrorGroupArray());
     isConfigDone = true;
   }
 
@@ -377,12 +369,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   // Allowing a new stripe be added to existing L1 config. Refer DEV-3989.
   public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] tsaPorts, int[] jmxPorts)
       throws ConfigurationSetupException, XmlException {
+    MirrorGroup group = addServerGroupToL1Config(gn, groupName);
 
     for (int i = 0; i < name.length; i++) {
-      addServerToL1Config(name[i], tsaPorts[i], jmxPorts[i], false);
+      addServerToL1Config(group, name[i], tsaPorts[i], jmxPorts[i], false);
     }
-
-    addServerGroupToL1Config(gn, groupName, name);
 
     TcConfig config = TcConfig.Factory.newInstance();
     Servers servers = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
@@ -401,14 +392,14 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     Assert.assertTrue(tsaPort >= 0);
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServersIfNeeded(l2s);
-    l2s.setServerArray(((Servers) this.sampleL2Manager.serversBeanRepository().bean()).getServerArray());
-    l2s.getServerArray(0).getTsaPort().setIntValue(tsaPort);
-    if (jmxPort > 0) l2s.getServerArray(0).getJmxPort().setIntValue(jmxPort);
+    l2s.setMirrorGroupArray(((Servers) this.sampleL2Manager.serversBeanRepository().bean()).getMirrorGroupArray());
+    l2s.getMirrorGroupArray(0).getServerArray(0).getTsaPort().setIntValue(tsaPort);
+    if (jmxPort > 0) l2s.getMirrorGroupArray(0).getServerArray(0).getJmxPort().setIntValue(jmxPort);
 
     if (bind != null) {
-      l2s.getServerArray(0).setBind(bind);
-      l2s.getServerArray(0).getTsaPort().setBind(bind);
-      l2s.getServerArray(0).getJmxPort().setBind(bind);
+      l2s.getMirrorGroupArray(0).getServerArray(0).setBind(bind);
+      l2s.getMirrorGroupArray(0).getServerArray(0).getTsaPort().setBind(bind);
+      l2s.getMirrorGroupArray(0).getServerArray(0).getJmxPort().setBind(bind);
     }
     isConfigDone = true;
   }
@@ -419,11 +410,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     tcProps.setValue(propertyValue);
   }
 
-  private void addServerToL1Config(String name, int tsaPort, int jmxPort, boolean cleanGroupsBeanSet) {
+  private void addServerToL1Config(MirrorGroup group, String name, int tsaPort, int jmxPort, boolean cleanGroupsBeanSet) {
     Assert.assertTrue(tsaPort >= 0);
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServersIfNeeded(l2s);
-    Server server = l2s.addNewServer();
+    Server server = group.addNewServer();
     server.setName(name);
     server.setHost("%i");
     server.addNewTsaPort().setIntValue(tsaPort);
@@ -432,32 +423,14 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     if (cleanGroupsBeanSet) cleanBeanSetServerGroupsIfNeeded(l2s);
   }
 
-  private void addServerGroupToL1Config(int groupId, String groupName, String[] members) {
-    Assert.assertNotNull(members);
-    Assert.assertTrue(members.length > 0);
+  private MirrorGroup addServerGroupToL1Config(int groupId, String groupName) {
     Assert.assertTrue(groupId >= 0);
     Servers l2s = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     cleanBeanSetServerGroupsIfNeeded(l2s);
 
-    MirrorGroups groups;
-    if (!l2s.isSetMirrorGroups()) {
-      groups = l2s.addNewMirrorGroups();
-    } else {
-      groups = l2s.getMirrorGroups();
-    }
-    if (groups != null) {
-      MirrorGroup group = groups.addNewMirrorGroup();
-      group.setGroupName(groupName);
-      Members newMembers = group.addNewMembers();
-      for (String member : members) {
-        String memberName = member;
-        if (memberName == null || memberName.equals("")) {
-          memberName = DEFAULT_HOST;
-        }
-        newMembers.addMember(member);
-      }
-    }
-
+    MirrorGroup group = l2s.addNewMirrorGroup();
+    group.setGroupName(groupName);
+    return group;
   }
 
   public void setSecurityConfig(final String certificateUri, final String keychainUrl, final String keychainImpl,
@@ -661,7 +634,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     }
 
     final SecurityInfo securityInfo;
-    if(Boolean.getBoolean("tc.test.runSecure")) {
+    if (Boolean.getBoolean("tc.test.runSecure")) {
       securityInfo = new SecurityInfo(Boolean.getBoolean("tc.test.runSecure"), "test");
     } else {
       securityInfo = new SecurityInfo();

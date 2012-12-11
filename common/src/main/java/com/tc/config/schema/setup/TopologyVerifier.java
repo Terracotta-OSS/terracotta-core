@@ -8,6 +8,7 @@ import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.server.ServerConnectionValidator;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.MirrorGroup;
@@ -77,12 +78,11 @@ public class TopologyVerifier {
   }
 
   private boolean isGroupsSizeEqualsOne() {
-    return oldGroupsInfo.getActiveServerGroupCount() == 1
-           && (!newServersBean.isSetMirrorGroups() || newServersBean.getMirrorGroups().getMirrorGroupArray().length == 1);
+    return oldGroupsInfo.getActiveServerGroupCount() == 1 && newServersBean.getMirrorGroupArray().length == 1;
   }
 
   private boolean isGroupNameSpecified() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroups().getMirrorGroupArray();
+    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
 
     // check to see the group names for all new servers are set
     for (MirrorGroup newGroup : newGroupsInfo) {
@@ -92,10 +92,10 @@ public class TopologyVerifier {
   }
 
   private boolean isMemberMovedToDifferentGroup() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroups().getMirrorGroupArray();
+    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
     for (MirrorGroup newGroupInfo : newGroupsInfo) {
       String groupName = newGroupInfo.getGroupName();
-      for (String member : newGroupInfo.getMembers().getMemberArray()) {
+      for (String member : L2DSOConfigObject.getServerNames(newGroupInfo)) {
         String previousGrpName = getPreviousGroupName(member);
         if (previousGrpName != null && !groupName.equals(previousGrpName)) {
           logger.warn(member + " group was changed. This is not supported currently.");
@@ -115,7 +115,7 @@ public class TopologyVerifier {
   }
 
   private boolean isGroupNameSame() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroups().getMirrorGroupArray();
+    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroupArray();
 
     Set<String> newGroupNames = new HashSet<String>();
     for (MirrorGroup newGroup : newGroupsInfo) {
@@ -136,7 +136,7 @@ public class TopologyVerifier {
   }
 
   private TopologyReloadStatus checkExistingServerConfigIsSame() {
-    Server[] oldServerArray = oldServersBean.getServerArray();
+    Server[] oldServerArray = L2DSOConfigObject.getServers(oldServersBean);
     Map<String, Server> oldServersInfo = new HashMap<String, Server>();
     for (Server server : oldServerArray) {
       oldServersInfo.put(server.getName(), server);
@@ -144,7 +144,7 @@ public class TopologyVerifier {
 
     if (!checkGarbageCollection()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
 
-    Server[] newServerArray = newServersBean.getServerArray();
+    Server[] newServerArray = L2DSOConfigObject.getServers(newServersBean);
     boolean isTopologyChanged = !(newServerArray.length == oldServerArray.length);
     for (Server newServer : newServerArray) {
       Server oldServer = oldServersInfo.get(newServer.getName());
@@ -175,13 +175,13 @@ public class TopologyVerifier {
   }
 
   private Set<String> getRemovedMembers() {
-    Server[] oldServerArray = oldServersBean.getServerArray();
+    Server[] oldServerArray = L2DSOConfigObject.getServers(oldServersBean);
     HashSet<String> oldServerNames = new HashSet<String>();
     for (Server server : oldServerArray) {
       oldServerNames.add(server.getName());
     }
 
-    Server[] newServerArray = newServersBean.getServerArray();
+    Server[] newServerArray = L2DSOConfigObject.getServers(newServersBean);
     for (Server newServer : newServerArray) {
       oldServerNames.remove(newServer.getName());
     }

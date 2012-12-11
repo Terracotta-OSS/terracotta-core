@@ -39,7 +39,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -84,7 +83,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private volatile SecurityConfig           securityConfig;
   private volatile boolean                  secure;
 
-  private final Servers serversBean;
+  private final Servers                     serversBean;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -121,23 +120,15 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       throw new ConfigurationSetupException(e2);
     }
 
-    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
-                                                                         new ChildBeanFetcher() {
-                                                                           @Override
-                                                                          public XmlObject getChild(XmlObject parent) {
-                                                                             return ((Servers) serversBeanRepository()
-                                                                                 .bean()).getMirrorGroups();
-                                                                           }
-                                                                         });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(serversBeanRepository(),
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
 
     serversBean = (Servers) serversBeanRepository().bean();
     this.secure = serversBean != null && serversBean.getSecure();
-    Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
+    Server[] servers = serversBean != null ? L2DSOConfigObject.getServers(serversBean) : null;
     Server server = null;
 
     if (thisL2Identifier != null) {
@@ -160,7 +151,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Security.class,
                                                                    new ChildBeanFetcher() {
                                                                      @Override
-                                                                    public XmlObject getChild(XmlObject parent) {
+                                                                     public XmlObject getChild(XmlObject parent) {
                                                                        return s.getSecurity();
                                                                      }
                                                                    });
@@ -169,7 +160,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       securityConfig = null;
     }
 
-
     verifyL2Identifier(servers, this.thisL2Identifier);
     this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
 
@@ -177,6 +167,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     validateGroups();
     validateSecurityConfiguration();
   }
+
 
   @Override
   public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
@@ -195,17 +186,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     configurationCreator().reloadServersConfiguration(serversBeanRepository(), true, true);
     this.l2ConfigData.clear();
 
-    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
-                                                                         new ChildBeanFetcher() {
-                                                                           @Override
-                                                                          public XmlObject getChild(XmlObject parent) {
-                                                                             return ((Servers) serversBeanRepository()
-                                                                                 .bean()).getMirrorGroups();
-                                                                           }
-                                                                         });
-
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(serversBeanRepository(),
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -266,42 +248,27 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private void validateGroups() throws ConfigurationSetupException {
-    Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
+    Server[] serverArray = L2DSOConfigObject.getServers(((Servers) serversBeanRepository().bean()));
     List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
     Set<String> serverPorts = new HashSet<String>();
 
     validateGroupNames(groups);
 
-    for (Server element : serverArray) {
-      verifyServerPortUsed(serverPorts, element);
-      String serverName = element.getName();
+    for (Server server : serverArray) {
+      verifyServerPortUsed(serverPorts, server);
+      String serverName = server.getName();
       boolean found = false;
       int gid = -1;
-      for (ActiveServerGroupConfig element2 : groups) {
-        if (element2.isMember(serverName)) {
+      for (ActiveServerGroupConfig groupConfig : groups) {
+        if (groupConfig.isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 mirror-group:  groups{" + gid
-                                                             + "," + element2.getGroupId() + "}"); }
-          gid = element2.getGroupId().toInt();
+                                                             + "," + groupConfig.getGroupId() + "}"); }
+          gid = groupConfig.getGroupId().toInt();
           found = true;
         }
       }
       if (!found) { throw new ConfigurationSetupException("Server{" + serverName + "} is not part of any mirror-group."); }
-    }
-
-    Set<String> allServers = new HashSet<String>();
-    for (Server server : serverArray) {
-      allServers.add(server.getName());
-    }
-
-    for (ActiveServerGroupConfig element : groups) {
-      for (String member : element.getMembers().getMemberArray()) {
-        if (!allServers.contains(member)) { throw new ConfigurationSetupException(
-                                                                                  "Server{"
-                                                                                      + member
-                                                                                      + "} is not defined but has been added as a member in the group "
-                                                                                      + element.getGroupName()); }
-      }
     }
   }
 
@@ -311,9 +278,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       String grpName = element.getGroupName();
       if (grpName != null) {
         if (groupNames.contains(grpName)) { throw new ConfigurationSetupException(
-                                                                            "Group Name {"
-                                                                                + grpName
-                                                                                + "} is part of more than 1 mirror-group groups"); }
+                                                                                  "Group Name {"
+                                                                                      + grpName
+                                                                                      + "} is part of more than 1 mirror-group groups"); }
         groupNames.add(grpName);
       }
     }
@@ -325,7 +292,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
                                                                  new ChildBeanFetcher() {
                                                                    @Override
-                                                                  public XmlObject getChild(XmlObject parent) {
+                                                                   public XmlObject getChild(XmlObject parent) {
                                                                      UpdateCheck updateCheck = ((Servers) parent)
                                                                          .getUpdateCheck();
 
@@ -394,7 +361,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     private Server findMyL2Bean() throws ConfigurationSetupException {
       Servers servers = (Servers) serversBeanRepository().bean();
-      Server[] l2Array = servers == null ? null : servers.getServerArray();
+      Server[] l2Array = servers == null ? null : L2DSOConfigObject.getServers(servers);
 
       if (l2Array == null || l2Array.length == 0) {
         return null;
@@ -503,7 +470,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
         if (servers == null) {
           list = "[data unavailable]";
         } else {
-          Server[] serverList = servers.getServerArray();
+          Server[] serverList = L2DSOConfigObject.getServers(servers);
           if (serverList == null) {
             list = "[data unavailable]";
           } else {
@@ -537,8 +504,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return out;
   }
 
-  private L2ConfigData setupConfigDataForL2(final String l2Identifier)
-      throws ConfigurationSetupException {
+  private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
     L2ConfigData serverConfigData = configDataFor(l2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
@@ -546,10 +512,11 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private void validateSecurityConfiguration() throws ConfigurationSetupException {
-    Servers servers = (Servers)serversBeanRepository().bean();
-    if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) {
-      throw new ConfigurationSetupException("Security is enabled but server " + thisL2Identifier + " has no configured SSL certificate.");
-    }
+    Servers servers = (Servers) serversBeanRepository().bean();
+    if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) { throw new ConfigurationSetupException(
+                                                                                                                      "Security is enabled but server "
+                                                                                                                          + thisL2Identifier
+                                                                                                                          + " has no configured SSL certificate."); }
   }
 
   @Override
@@ -584,12 +551,14 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   @Override
   public String[] allCurrentlyKnownServers() {
-    Server[] l2s = serversBean == null ? null : serversBean.getServerArray();
-    if (l2s == null || l2s.length == 0) return new String[] { null };
-    else {
+    Server[] l2s = serversBean == null ? null : L2DSOConfigObject.getServers(serversBean);
+    if (l2s == null || l2s.length == 0) {
+      return new String[] { null };
+    } else {
       String[] out = new String[l2s.length];
-      for (int i = 0; i < l2s.length; ++i)
+      for (int i = 0; i < l2s.length; ++i) {
         out[i] = l2s[i].getName();
+      }
       return out;
     }
   }

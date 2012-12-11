@@ -15,6 +15,8 @@ import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
 
@@ -22,8 +24,8 @@ import java.io.File;
 import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
-  private static Class[] exemptedElements = { TcProperties.class, Authentication.class,
-      HttpAuthentication.class, Offheap.class, Security.class, Restartable.class };
+  private static Class[] exemptedElements = { TcProperties.class, Authentication.class, HttpAuthentication.class,
+      Offheap.class, Security.class, Restartable.class };
   private TcConfig       config;
 
   @Override
@@ -32,7 +34,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     SchemaDefaultValueProvider defaultValueProvider = new SchemaDefaultValueProvider();
     L2DSOConfigObject.initializeServers(this.config, new SchemaDefaultValueProvider(), new File("tmp"));
     L1DSOConfigObject.initializeClients(this.config, defaultValueProvider);
-    config.getServers().getMirrorGroups().getMirrorGroupArray(0).setGroupName("test-group");
+    config.getServers().getMirrorGroupArray(0).setGroupName("test-group");
   }
 
   public void testDefaultInitialization() throws Exception {
@@ -51,8 +53,13 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
         Assert.assertTrue("array of type: " + arrayElements.getClass().getSimpleName(), arrayElements.getClass()
             .isArray());
 
-        Assert.assertTrue("array of type: " + arrayElements.getClass().getSimpleName(),
-                          ((Object[]) arrayElements).length > 0);
+        boolean skipCheck = (xmlObject instanceof Servers)
+                            && arrayElements.getClass().getComponentType().equals(Server.class);
+        if (!skipCheck) {
+          Assert.assertTrue("array of type: " + arrayElements.getClass().getSimpleName(),
+                            ((Object[]) arrayElements).length > 0);
+        }
+
         Object[] childern = (Object[]) arrayElements;
         for (Object child : childern) {
           if (child instanceof XmlObject) {

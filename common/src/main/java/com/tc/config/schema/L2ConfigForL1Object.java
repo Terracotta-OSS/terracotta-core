@@ -5,6 +5,7 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.net.TCSocketAddress;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.MirrorGroup;
@@ -51,7 +52,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
 
     Servers servers = (Servers) this.l2sContext.bean();
     boolean securityEnabled = servers.getSecure();
-    Server[] l2Array = servers.getServerArray();
+    Server[] l2Array = getAllServers(servers);
     this.l2sData = new L2Data[l2Array.length];
     for (int i = 0; i < l2Array.length; i++) {
       Server l2 = l2Array[i];
@@ -66,15 +67,25 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     organizeByGroup(servers);
   }
 
+  private static Server[] getAllServers(Servers servers) {
+    List<Server> serverList = new ArrayList<Server>();
+    for (MirrorGroup group : servers.getMirrorGroupArray()) {
+      for (Server server : group.getServerArray()) {
+        serverList.add(server);
+      }
+    }
+    return serverList.toArray(new Server[serverList.size()]);
+  }
+
   private void organizeByGroup(Servers servers) {
-    MirrorGroup[] asgArray = servers.getMirrorGroups().getMirrorGroupArray();
+    MirrorGroup[] asgArray = servers.getMirrorGroupArray();
     Assert.assertNotNull(asgArray);
     Assert.assertTrue(asgArray.length >= 1);
 
     asgArray = ActiveCoordinatorHelper.generateGroupNames(asgArray);
 
     for (int i = 0; i < asgArray.length; i++) {
-      String[] members = asgArray[i].getMembers().getMemberArray();
+      String[] members = L2DSOConfigObject.getServerNames(asgArray[i]);
       List groupList = (List) this.l2DataByGroupId.get(Integer.valueOf(i));
       if (groupList == null) {
         groupList = new ArrayList();

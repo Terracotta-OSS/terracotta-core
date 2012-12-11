@@ -3,19 +3,17 @@
  */
 package com.tc.config.schema;
 
-import org.apache.xmlbeans.XmlObject;
-
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.repository.ChildBeanFetcher;
-import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.net.GroupID;
 import com.tc.util.Assert;
-import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ActiveServerGroupConfigObject extends BaseConfigObject implements ActiveServerGroupConfig {
 
@@ -29,12 +27,15 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
 
   private static final int    DEFAULT_ELECETION_TIME = 5;
 
+  private static final String DEFAULT_GROUP_NAME     = "default-group";
+
   private GroupID             groupId;
   private String              grpName;
-  private final MembersConfig membersConfig;
+  private final Set<String>   members;
   private final MirrorGroup   group;
 
-  public ActiveServerGroupConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager) {
+  public ActiveServerGroupConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager)
+      throws ConfigurationSetupException {
     super(context);
     context.ensureRepositoryProvides(MirrorGroup.class);
     group = (MirrorGroup) context.bean();
@@ -42,7 +43,12 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     String groupName = group.getGroupName();
     this.grpName = groupName;
 
-    membersConfig = new MembersConfigObject(createContext(setupManager));
+    members = new LinkedHashSet<String>(group.sizeOfServerArray());
+    for (Server server : group.getServerArray()) {
+      boolean added = members.add(server.getName());
+      if (!added) { throw new ConfigurationSetupException("Duplicate server name [" + server.getName() + "] in group "
+                                                          + groupName); }
+    }
   }
 
   public void setGroupId(GroupID groupId) {
@@ -65,8 +71,8 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
   }
 
   @Override
-  public MembersConfig getMembers() {
-    return this.membersConfig;
+  public String[] getMembers() {
+    return this.members.toArray(new String[members.size()]);
   }
 
   @Override
@@ -74,46 +80,26 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     return this.groupId;
   }
 
-  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager) {
-    ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,
-                                                                 new ChildBeanFetcher() {
-                                                                   @Override
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     return group.getMembers();
-                                                                   }
-                                                                 });
-    return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
-  }
-
   @Override
   public boolean isMember(String l2Name) {
-    String[] members = getMembers().getMemberArray();
-    for (String member : members) {
-      if (member.equals(l2Name)) { return true; }
-    }
-    return false;
+    return members.contains(l2Name);
   }
 
-  public static void createDefaultMirrorGroup(Servers servers) throws ConfigurationSetupException {
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    Assert.assertEquals(0, servers.getMirrorGroups().getMirrorGroupArray().length);
+  public static void createDefaultMirrorGroup(Servers servers) {
+    Assert.assertEquals(0, servers.getMirrorGroupArray().length);
 
-    MirrorGroup mirrorGroup = servers.getMirrorGroups().addNewMirrorGroup();
+    MirrorGroup mirrorGroup = servers.addNewMirrorGroup();
     mirrorGroup.setElectionTime(DEFAULT_ELECETION_TIME);
-    Members members = mirrorGroup.addNewMembers();
+    mirrorGroup.setGroupName(DEFAULT_GROUP_NAME);
 
     Server[] serverArray = servers.getServerArray();
-
     for (int i = 0; i < serverArray.length; i++) {
-      // name for each server should exist
-      String name = serverArray[i].getName();
-      if (name == null || name.equals("")) { throw new ConfigurationSetupException(
-                                                                                   "server's name not defined... name=["
-                                                                                       + name + "] serverTsaPort=["
-                                                                                       + serverArray[i].getTsaPort()
-                                                                                       + "]"); }
-      members.insertMember(i, serverArray[i].getName());
+      Server server = (Server) serverArray[i].copy();
+      serverArray[i] = server;
     }
+
+    servers.setServerArray(null);
+    mirrorGroup.setServerArray(serverArray);
   }
 
 }
