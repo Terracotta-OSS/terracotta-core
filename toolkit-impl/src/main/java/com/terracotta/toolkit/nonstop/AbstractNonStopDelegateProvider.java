@@ -11,6 +11,7 @@ import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.util.Util;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,19 +43,25 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
   }
 
   protected ToolkitInternal getToolkit() {
+    boolean interrupted = false;
     try {
-      return toolkitDelegateFutureTask.get();
-    } catch (InterruptedException e) {
-      handleInterruptedException(e);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      while (true) {
+        try {
+          return toolkitDelegateFutureTask.get();
+        } catch (InterruptedException e) {
+          handleInterruptedException(e);
+          interrupted = true;
+        } catch (ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(interrupted);
     }
-    throw new AssertionError("Should not come here");
   }
 
   private void handleInterruptedException(InterruptedException e) {
     if (abortableOperationManager.isAborted()) { throw new ToolkitAbortableOperationException(); }
-    throw new RuntimeException(e);
   }
 
   @Override
