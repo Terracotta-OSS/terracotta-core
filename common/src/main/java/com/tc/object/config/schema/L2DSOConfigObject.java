@@ -464,12 +464,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   public static String[] getServerNames(Servers servers) {
     List<String> names = new ArrayList<String>();
 
-    if (servers.getMirrorGroupArray() != null) {
-      for (MirrorGroup group : servers.getMirrorGroupArray()) {
-        for (String name : getServerNames(group)) {
-          names.add(name);
-        }
-      }
+    for (Server server : getServers(servers)) {
+      names.add(server.getName());
     }
 
     return names.toArray(new String[names.size()]);
@@ -485,6 +481,12 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
             serverList.add(server);
           }
         }
+      }
+    }
+
+    if (servers.getServerArray() != null) {
+      for (Server server : servers.getServerArray()) {
+        serverList.add(server);
       }
     }
 
