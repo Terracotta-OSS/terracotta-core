@@ -90,6 +90,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
   private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
 
+
   private final TCLogger                                  consoleLogger;
   private final DistributedObjectServer                   server;
   private final GroupManager                              groupManager;
@@ -279,8 +280,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     if (wasShutdownInPassiveStateInPreviousLife()) {
       while (true) {
         try {
-          logger.warn("Detected that this server was shutdown and restarted in a state state other than ACTIVE-COORDINATOR." +
-                      " Sleeping until ACTIVE server zaps it.");
+          consoleLogger.warn("Waiting for ACTIVE server to start...");
+          logger.warn("Detected that this server was shutdown and restarted in a state other than ACTIVE-COORDINATOR." +
+                      " Sleeping until ACTIVE-COORDINATOR server zaps it.");
           Thread.sleep(60 * 1000);
         } catch (InterruptedException e) {
           // ignore
