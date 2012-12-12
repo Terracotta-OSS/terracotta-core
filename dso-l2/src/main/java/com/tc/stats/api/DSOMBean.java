@@ -67,6 +67,8 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
    */
   List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
 
+  void markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read);
+
   int getLiveObjectCount();
 
   boolean isResident(NodeID node, ObjectID oid);

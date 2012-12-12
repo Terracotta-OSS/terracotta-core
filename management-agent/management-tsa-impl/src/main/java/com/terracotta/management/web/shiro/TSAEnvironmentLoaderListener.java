@@ -38,6 +38,7 @@ import com.terracotta.management.service.ConfigurationService;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.LogsService;
 import com.terracotta.management.service.MonitoringService;
+import com.terracotta.management.service.OperatorEventsService;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.BackupServiceImpl;
@@ -45,6 +46,7 @@ import com.terracotta.management.service.impl.ConfigurationServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.LogsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
+import com.terracotta.management.service.impl.OperatorEventsServiceImpl;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.service.impl.TsaManagementClientServiceImpl;
@@ -109,6 +111,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(ConfigurationService.class, new ConfigurationServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(BackupService.class, new BackupServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(LogsService.class, new LogsServiceImpl(tsaManagementClientService));
+      serviceLocator.loadService(OperatorEventsService.class, new OperatorEventsServiceImpl(tsaManagementClientService));
 
       JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
       AgentService l1Agent;

@@ -25,6 +25,11 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     this(eventType, subSystem, System.currentTimeMillis(), message, collapseString, new HashMap<String, Integer>());
   }
 
+  public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
+                                     long time, String collapseString) {
+    this(eventType, subSystem, time, message, collapseString, new HashMap<String, Integer>());
+  }
+
   private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String message,
                                       String collapseString, Map<String, Integer> nodes) {
     // Using a CHM here can trigger CDV-1377 if event sent/serialized from a custom mode L1
@@ -103,6 +108,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     TerracottaOperatorEventImpl event = (TerracottaOperatorEventImpl) o;
     if (this.eventType != event.eventType) return false;
     if (this.subSystem != event.subSystem) return false;
+    if (this.time != event.time) return false;
     if (!this.collapseString.equals(event.collapseString)) return false;
     return true;
   }

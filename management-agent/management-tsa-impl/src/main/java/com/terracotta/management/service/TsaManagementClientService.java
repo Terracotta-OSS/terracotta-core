@@ -10,6 +10,7 @@ import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.LogEntity;
+import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
@@ -63,4 +64,7 @@ public interface TsaManagementClientService {
 
   Collection<LogEntity> getLogs(Set<String> serverNames, Long sinceWhen) throws ServiceExecutionException;
 
+  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, boolean read) throws ServiceExecutionException;
+
+  void markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
 }
