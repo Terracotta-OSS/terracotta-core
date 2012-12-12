@@ -58,17 +58,19 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     private final int    tsaPort;
     private final int    jmxPort;
     private final String bindAddr;
+    private final int    tsaGroupPort;
 
-    public StartAction(String bindAddr, int tsaPort, int jmxPort) {
+    public StartAction(String bindAddr, int tsaPort, int jmxPort, int tsaGroupPort) {
       this.bindAddr = bindAddr;
       this.tsaPort = tsaPort;
       this.jmxPort = jmxPort;
+      this.tsaGroupPort = tsaGroupPort;
     }
 
     @Override
     public void execute() throws Throwable {
       TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, "false");
-      server = new DistributedObjectServer(createL2Manager(bindAddr, tsaPort, jmxPort), group,
+      server = new DistributedObjectServer(createL2Manager(bindAddr, tsaPort, jmxPort, tsaGroupPort), group,
                                            new NullConnectionPolicy(), new NullTCServerInfo(),
                                            new ObjectStatsRecorder());
       server.start();
@@ -85,9 +87,9 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       String bind = bindAddrs[i];
       int tsaPort = pc.chooseRandomPort();
       int jmxPort = pc.chooseRandomPort();
+      int tsaGroupPort = pc.chooseRandomPort();
 
-
-      new StartupHelper(group, new StartAction(bind, tsaPort, jmxPort)).startUp();
+      new StartupHelper(group, new StartAction(bind, tsaPort, jmxPort, tsaGroupPort)).startUp();
 
       final DistributedObjectServer dsoServer = server;
       WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
@@ -111,7 +113,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       Assert.assertNotNull(server.getJMXConnServer());
       assertEquals(server.getJMXConnServer().getAddress().getHost(), bind);
 
-      testSocketConnect(bind, new int[] { tsaPort, jmxPort }, true);
+      testSocketConnect(bind, new int[] { tsaPort, jmxPort, tsaGroupPort }, true);
 
       server.stop();
       Thread.sleep(3000);
@@ -175,7 +177,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  public L2ConfigurationSetupManager createL2Manager(String bindAddress, int tsaPort, int jmxPort)
+  public L2ConfigurationSetupManager createL2Manager(String bindAddress, int tsaPort, int jmxPort, int tsaGroupPort)
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = super.configFactory();
     L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
@@ -184,6 +186,9 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
 
     manager.commonl2Config().jmxPort().setIntValue(jmxPort);
     manager.commonl2Config().jmxPort().setBind(bindAddress);
+
+    manager.dsoL2Config().tsaGroupPort().setIntValue(tsaGroupPort);
+    manager.dsoL2Config().tsaGroupPort().setBind(bindAddress);
 
     return manager;
   }
