@@ -121,7 +121,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
 
     private void adjust(MonitoredResource mu) {
-      int remove = Math.round(sleepInterval * mu.getReserved() *1f/ mu.getTotal());
+      long remove = Math.round(sleepInterval * Math.sin((mu.getReserved() * Math.PI) / (2.0 * mu.getTotal())));
       sleepTime = sleepInterval - (remove);
     }
   }
