@@ -43,8 +43,8 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         if ( sampled < 0 ) {
             sampled = 0;
         }
-        if ( sampled > 25000 ) {
-            sampled = 25000;
+        if ( sampled > 100000 ) {
+            sampled = 100000;
         }
         return sampled;
     }
