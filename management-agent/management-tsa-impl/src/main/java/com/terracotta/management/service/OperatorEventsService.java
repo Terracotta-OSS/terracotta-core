@@ -50,8 +50,9 @@ public interface OperatorEventsService {
    * Mark an operator even as read or unread.
    * @param operatorEventEntity the operator event to mark.
    * @param read true if the operator even should be marked as read, false otherwise.
+   * @return true if the event was found and marked, false otherwise.
    * @throws ServiceExecutionException
    */
-  void markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
+  boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
 
 }

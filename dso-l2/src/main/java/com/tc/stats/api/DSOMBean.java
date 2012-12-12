@@ -67,7 +67,13 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
    */
   List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
 
-  void markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read);
+  /**
+   * Mark an operator event as read or unread.
+   * @param operatorEvent the event to mark
+   * @param read true if the event should be marked as read, false if it should be marked as unread.
+   * @return true if the event was found and marked, false otherwise.
+   */
+  boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read);
 
   int getLiveObjectCount();
 

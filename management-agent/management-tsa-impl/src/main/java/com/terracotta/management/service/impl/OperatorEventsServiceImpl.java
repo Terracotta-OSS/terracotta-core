@@ -34,7 +34,7 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
   }
 
   @Override
-  public void markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
-    tsaManagementClientService.markOperatorEvent(operatorEventEntity, read);
+  public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
+    return tsaManagementClientService.markOperatorEvent(operatorEventEntity, read);
   }
 }

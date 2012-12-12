@@ -65,7 +65,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
   }
 
   @Override
-  public void markOperatorEventAsRead(UriInfo info, OperatorEventEntity operatorEventEntity) {
+  public boolean markOperatorEventAsRead(UriInfo info, OperatorEventEntity operatorEventEntity) {
     LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsRead: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -87,7 +87,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
         throw new ServiceExecutionException("timestamp must not be 0");
       }
 
-      operatorEventsService.markOperatorEvent(operatorEventEntity, true);
+      return operatorEventsService.markOperatorEvent(operatorEventEntity, true);
     } catch (ServiceExecutionException see) {
       LOG.error("Failed to mark TSA operator event as read.", see.getCause());
       throw new WebApplicationException(
@@ -98,7 +98,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
   }
 
   @Override
-  public void markOperatorEventAsUnread(UriInfo info, OperatorEventEntity operatorEventEntity) {
+  public boolean markOperatorEventAsUnread(UriInfo info, OperatorEventEntity operatorEventEntity) {
     LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsUnread: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -120,7 +120,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
         throw new ServiceExecutionException("timestamp must not be 0");
       }
 
-      operatorEventsService.markOperatorEvent(operatorEventEntity, false);
+      return operatorEventsService.markOperatorEvent(operatorEventEntity, false);
     } catch (ServiceExecutionException see) {
       LOG.error("Failed to mark TSA operator event as unread.", see.getCause());
       throw new WebApplicationException(

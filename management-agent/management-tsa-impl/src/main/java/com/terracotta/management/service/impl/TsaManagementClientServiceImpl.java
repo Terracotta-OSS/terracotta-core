@@ -1070,7 +1070,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public void markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
+  public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -1098,9 +1098,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
               TerracottaOperatorEvent.EventSubsystem.valueOf(operatorEventEntity.getEventSubsystem()),
               operatorEventEntity.getMessage(), operatorEventEntity.getTimestamp(), operatorEventEntity.getCollapseString());
 
-          dsoMBean.markOperatorEvent(terracottaOperatorEvent, read);
-
-          return;
+          return dsoMBean.markOperatorEvent(terracottaOperatorEvent, read);
         }
       }
       throw new ServiceExecutionException("Unable to find back server to mark operator event as read");

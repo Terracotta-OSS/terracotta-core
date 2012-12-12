@@ -194,15 +194,16 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public void markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
+  public boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
     List<TerracottaOperatorEvent> operatorEvents = getOperatorEvents();
     for (TerracottaOperatorEvent event : operatorEvents) {
       if (event.equals(operatorEvent)) {
         if (read) { event.markRead(); }
         else { event.markUnread(); }
-        return;
+        return true;
       }
     }
+    return false;
   }
 
   @Override
