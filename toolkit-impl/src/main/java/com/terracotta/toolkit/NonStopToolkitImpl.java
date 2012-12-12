@@ -52,12 +52,12 @@ import java.util.concurrent.FutureTask;
 
 public class NonStopToolkitImpl implements ToolkitInternal {
   private final FutureTask<ToolkitInternal>    toolkitDelegateFutureTask;
-  private final NonStopManagerImpl             nonStopManager;
-  private final NonStopConfigRegistryImpl      nonStopConfigManager          = new NonStopConfigRegistryImpl();
+  protected final NonStopManagerImpl           nonStopManager;
+  protected final NonStopConfigRegistryImpl    nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
   private final AbortableOperationManager      abortableOperationManager;
-  private final NonStopClusterListener         nonStopClusterListener;
+  protected final NonStopClusterListener       nonStopClusterListener;
   private final NonStop                        nonStopFeature;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
