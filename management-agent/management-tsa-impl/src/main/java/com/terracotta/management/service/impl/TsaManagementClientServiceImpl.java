@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -913,6 +914,15 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             BackupEntity backupEntity = new BackupEntity();
             backupEntity.setSourceId(member.name());
             backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+            String runningBackup = tcServerInfoMBean.getRunningBackup();
+            backupEntity.setName(runningBackup);
+
+            if (runningBackup != null) {
+              String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
+              backupEntity.setStatus(backupStatus);
+            }
+
             backupEntities.add(backupEntity);
           } catch (Exception e) {
             BackupEntity backupEntity = new BackupEntity();
