@@ -66,18 +66,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
-    private static final int L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl
-            .getProperties()
-            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, 80);
-    private static final int L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl
-            .getProperties()
-            .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD, 90);
-     private static final long L2_EVICTION_CRITICALUPPERBOUND = TCPropertiesImpl
-            .getProperties()
-            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALUPPERBOUND, 10l * 1024 * 1024 * 1024);
-     private static final long L2_EVICTION_CRITICALLOWERBOUND = TCPropertiesImpl
-            .getProperties()
-            .getLong(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND, 64l * 1024 * 1024);    /*  4 max offheap pages  */
     private final ServerMapEvictionEngine evictor;
     private final ResourceMonitor trigger;
     private final PersistentManagedObjectStore store;
@@ -163,7 +151,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
         
         this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);      
-        this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
+        this.agent = new ThreadPoolExecutor(4, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
             @Override
             public Thread newThread(Runnable r) {
@@ -188,7 +176,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             logger.info("threshold monitor not registered", uns);
         }
         
-        log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
       this.evictionStats = (SampledCounter)counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
       this.expirationStats = (SampledCounter)counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
     }
@@ -286,9 +273,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
                     PeriodicEvictionTrigger periodic = (PeriodicEvictionTrigger)triggerParam;
                     expirationStats.increment(triggerParam.getCount());
-//                    if (periodic.filterRatio() > .5f ) {
-//                        scheduleEvictionTrigger(periodic.duplicate());
-//                    }
+                    if (periodic.filterRatio() > .5f ) {
+                        scheduleEvictionTrigger(periodic.duplicate());
+                    }
                 } else {
                     evictionStats.increment(triggerParam.getCount());
                 }
@@ -364,9 +351,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     @Override
     public void evict(ObjectID oid, Map samples, String className, String cacheName) {
         evictor.evictFrom(oid, samples, className, cacheName);
-        if (evictor.isLogging() && !samples.isEmpty()) {
-            log("Evicted: " + samples.size() + " from: " + className + "/" + cacheName);
-        }
     }
 
     @Override
@@ -437,10 +421,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                             triggerEmergency(usage);
                         }
                     } else if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
-                        if (currentRun != completedFuture) {
-                            print("Periodic", currentRun);
-                        }
                         currentRun = scheduleEvictionRun();
+                        print("Periodic",currentRun);
                     }
                 }
                 last = current;
@@ -475,6 +457,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private void stopEmergency(DetailedMemoryUsage usage) {
             isEmergency = false;
             currentRun.cancel(false);
+            log("Emergency Eviction Stopped - " + usage.getUsedPercentage());
             if ( isStopped || isThrottling ) {
                clear(usage);
             }
@@ -483,15 +466,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private void triggerEmergency(DetailedMemoryUsage usage) {
             log("Emergency Triggered - " + usage.getUsedPercentage());
             currentRun.cancel(false);
-            if (currentRun != completedFuture) {
-                print("Emergency", currentRun);
-            }
 
-            if ( isEmergency && !isThrottling && !isStopped ) {
+            if ( turnCount > 5 && isEmergency && !isThrottling && !isStopped ) {
                 throttle(usage);
             }
 
             currentRun = emergencyEviction(turnCount++);// if already in emergency situation, really try hard to remove items.
+            print("Emergency",currentRun);
             isEmergency = true;
         }
     /*

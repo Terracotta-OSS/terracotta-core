@@ -110,6 +110,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public String toString() {
         return "AbstractEvictionTrigger{"
                 + "name=" + name + " - " + getId() + (( pinned ) ? " - PINNED" : "")
+                + ", count=" + count
                 + ", started=" + started
                 + ", startTime=" + startTime
                 + ", processed=" + processed
