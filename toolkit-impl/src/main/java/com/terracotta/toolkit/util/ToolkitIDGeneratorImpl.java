@@ -15,31 +15,45 @@ public class ToolkitIDGeneratorImpl implements ToolkitIDGenerator {
     this.name = name;
     this.map = map;
     this.lock = map.createLockForKey(name).writeLock();
-    lock.lock();
-    try {
-      // Need to manually do a put if absent here so that we avoid calling putIfAbsent unconditionally. The problem
-      // is that putIfAbsent will trigger throttling (possibly throwing an exception) if the server is full. This would
-      // prevent toolkit from bootstrapping, thereby preventing the user from spinning up a new toolkit client in order
-      // to recover from the server full situation.
-      Long v = (Long) map.get(name);
-      if (v == null) {
-        map.put(name, 1L);
-      }
-    } finally {
-      lock.unlock();
-    }
+    // do a get first time to init the value
+    getFromMap();
   }
 
   @Override
   public long getId() {
-    return (Long) map.get(name);
+    return getFromMap();
+  }
+
+  private Long getFromMap() {
+    Long rv = (Long) map.get(name);
+    if (rv != null) {
+      return rv;
+    } else {
+      lock.lock();
+      try {
+        // Need to manually do a put if absent here so that we avoid calling putIfAbsent unconditionally. The problem
+        // is that putIfAbsent will trigger throttling (possibly throwing an exception) if the server is full. This
+        // would
+        // prevent toolkit from bootstrapping, thereby preventing the user from spinning up a new toolkit client in
+        // order
+        // to recover from the server full situation.
+        rv = (Long) map.get(name);
+        if (rv == null) {
+          rv = 1L;
+          map.put(name, rv);
+        }
+        return rv;
+      } finally {
+        lock.unlock();
+      }
+    }
   }
 
   @Override
   public void incrementId() {
     lock.lock();
     try {
-      Long result = (Long) map.get(name) + 1;
+      Long result = getFromMap() + 1;
       map.putNoReturn(name, result);
     } finally {
       lock.unlock();
