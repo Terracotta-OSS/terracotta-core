@@ -15,7 +15,6 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
-import com.tc.net.protocol.transport.ReconnectionRejectedHandler.ReconnectionRejectedCleanupAction;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Client implementation of the transport network layer.
  */
-public class ClientMessageTransport extends MessageTransportBase implements ReconnectionRejectedCleanupAction {
+public class ClientMessageTransport extends MessageTransportBase {
   public static final long                  TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT = TCPropertiesImpl
                                                                                    .getProperties()
                                                                                    .getLong(TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
@@ -42,16 +41,13 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
-  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
-
-  // private volatile boolean rejoinExpected = false;
 
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
     this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort,
-         ReconnectionRejectedHandler.DEFAULT_BEHAVIOUR);
+         ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   /**
@@ -71,7 +67,6 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
     this.callbackPort = callbackPort;
-    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
   }
 
   /**
@@ -117,12 +112,14 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
           throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
         case TransportHandshakeError.ERROR_STACK_MISMATCH:
           cleanConnectionWithoutNotifyListeners();
-          throw new CommStackMismatchException("Disconnect due to comm stack mismatch");
+          throw new CommStackMismatchException("Disconnected due to comm stack mismatch");
         case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
-          this.reconnectionRejectedHandler.reconnectionRejected(this);
-          break;
+          cleanConnectionWithoutNotifyListeners();
+          fireTransportReconnectionRejectedEvent();
+          throw new ReconnectionRejectedException(
+                                                  "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
         default:
-          throw new IOException("Disconnect due to transport handshake error");
+          throw new IOException("Disconnected due to transport handshake error");
       }
     }
   }
@@ -137,18 +134,6 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     this.addTransportListeners(tl);
     this.status.reset();
   }
-
-  @Override
-  public void reconnectionRejectedCleanupAction() {
-    Assert.eval("Client Message Transport :" + this.status, this.status.isSynSent());
-    cleanConnectionWithoutNotifyListeners();
-    fireTransportReconnectionRejectedEvent();
-    // this.rejoinExpected = true;
-  }
-
-  // public boolean isRejoinExpected() {
-  // return rejoinExpected;
-  // }
 
   /**
    * Returns true if the MessageTransport was ever in an open state.

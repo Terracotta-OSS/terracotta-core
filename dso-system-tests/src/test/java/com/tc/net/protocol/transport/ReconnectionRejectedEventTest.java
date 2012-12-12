@@ -66,6 +66,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
     // set up the transport factory
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
+      @Override
       public MessageTransport createNewTransport() {
         ClientConnectionEstablisher clientConnectionEstablisher = buildClientConnectionEstablisher(connPort);
         TestClientMessageTransport cmt = new TestClientMessageTransport(clientConnectionEstablisher,
@@ -77,12 +78,14 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
         return cmt;
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List transportListeners) {
         throw new AssertionError();
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionID, TCConnection tcConnection,
                                                  TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -98,7 +101,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
   private ClientConnectionEstablisher buildClientConnectionEstablisher(final int connPort) {
     return new ClientConnectionEstablisher(clientComms.getConnectionManager(), getConnectionAddrProvider(connPort), -1,
-                                           timeout);
+                                           timeout, ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   private ConnectionAddressProvider getConnectionAddrProvider(final int connPort) {
@@ -148,6 +151,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
   private static class RejectedEventListener implements ChannelEventListener {
     private final AtomicInteger counter = new AtomicInteger(0);
 
+    @Override
     public void notifyChannelEvent(ChannelEvent event) {
       if (event.getType() == ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT) {
         counter.incrementAndGet();
@@ -177,7 +181,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
                                       TransportHandshakeMessageFactory messageFactory,
                                       WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
       super(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory,
-            callbackPort, new ReconnectionRejectedExpressRejoinClientBehaviour());
+            callbackPort);
     }
 
     public void fireReconnectionRejectedEvent() {

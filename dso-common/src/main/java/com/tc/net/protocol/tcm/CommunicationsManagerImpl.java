@@ -34,6 +34,8 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL2;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.ServerStackProvider;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
@@ -135,7 +137,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping, securityManager);
+         transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping,
+         ReconnectionRejectedHandlerL2.SINGLETON, securityManager);
     this.serverID = serverID;
   }
 
@@ -149,7 +152,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy, workerCommCount,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping,
-         ReconnectionRejectedHandler.DEFAULT_BEHAVIOUR, securityManager);
+         ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
   }
 
   /**

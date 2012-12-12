@@ -49,11 +49,13 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
   }
 
+  @Override
   public MessageTransport createNewTransport() {
     ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionMgr,
                                                                                               addressProvider,
                                                                                               maxReconnectTries,
-                                                                                              timeout);
+                                                                                              timeout,
+                                                                                              reconnectionRejectedHandler);
     ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher,
                                                               defaultHandshakeErrorHandler, transportMessageFactory,
                                                               new WireProtocolAdaptorFactoryImpl(), callbackport);
@@ -70,12 +72,14 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                       wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler);
   }
 
+  @Override
   public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List transportListeners) {
     throw new AssertionError();
   }
 
+  @Override
   public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
                                              TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,

@@ -25,6 +25,7 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
@@ -58,7 +59,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                       commsMgr.getConnectionManager(),
                                                                       new ConnectionAddressProvider(
                                                                                                     new ConnectionInfo[] { connInfo }),
-                                                                      0, 1000);
+                                                                      0, 1000, ReconnectionRejectedHandlerL1.SINGLETON);
 
     return new ClientMessageTransport(cce, createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
                                       new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT);
@@ -413,6 +414,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
     return new TransportHandshakeErrorHandler() {
 
+      @Override
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
         new ImplementMe(e.toString()).printStackTrace();
       }
