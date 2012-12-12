@@ -78,7 +78,7 @@ public enum EvictionThreshold {
     }
     
     public boolean shouldThrottle(DetailedMemoryUsage usage) {
-        if ( usage.getReservedMemory() > usage.getMaxMemory() - (reserved * .75)) {
+        if ( usage.getReservedMemory() > usage.getMaxMemory() - reserved ) {
             return true;
         }
         return false;
