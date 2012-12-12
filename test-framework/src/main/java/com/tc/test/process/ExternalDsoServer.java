@@ -176,10 +176,13 @@ public class ExternalDsoServer {
 
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
 
-    L2SConfigBuilder servers = builder.getServers();
+    L2SConfigBuilder servers = new L2SConfigBuilder();
+    builder.setServers(servers);
     servers.setRestartable(persistentMode);
 
+    servers.setL2s(new L2ConfigBuilder[] { L2ConfigBuilder.newMinimalInstance() });
     L2ConfigBuilder l2 = servers.getL2s()[0];
+
     l2.setTSAPort(tsaPort);
     l2.setJMXPort(jmxPort);
     l2.setData(workingDir + File.separator + "data");
