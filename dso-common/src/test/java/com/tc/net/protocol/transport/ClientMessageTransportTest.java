@@ -61,7 +61,8 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                       connectionManager,
                                                                       new ConnectionAddressProvider(
                                                                                                     new ConnectionInfo[] { connectionInfo }),
-                                                                      maxRetries, 5000);
+                                                                      maxRetries, 5000,
+                                                                      ReconnectionRejectedHandlerL1.SINGLETON);
     transport = new ClientMessageTransport(cce, handshakeErrorHandler, this.transportMessageFactory,
                                            new WireProtocolAdaptorFactoryImpl(),
                                            TransportHandshakeMessage.NO_CALLBACK_PORT);
@@ -126,7 +127,7 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                       commsMgr.getConnectionManager(),
                                                                       new ConnectionAddressProvider(
                                                                                                     new ConnectionInfo[] { connInfo }),
-                                                                      0, 1000);
+                                                                      0, 1000, ReconnectionRejectedHandlerL1.SINGLETON);
     transport = new ClientMessageTransport(cce, this.handshakeErrorHandler, this.transportMessageFactory,
                                            new WireProtocolAdaptorFactoryImpl(),
                                            TransportHandshakeMessage.NO_CALLBACK_PORT);
@@ -205,6 +206,7 @@ public class ClientMessageTransportTest extends TCTestCase {
 
     // set up the transport factory
     transportFactory = new MessageTransportFactory() {
+      @Override
       public MessageTransport createNewTransport() {
         ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(
                                                                                                   serverCommsMgr
@@ -213,7 +215,9 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                                                                                 new ConnectionInfo[] { new ConnectionInfo(
                                                                                                                                                                           "localhost",
                                                                                                                                                                           port) }),
-                                                                                                  maxRetries, timeout);
+                                                                                                  maxRetries,
+                                                                                                  timeout,
+                                                                                                  ReconnectionRejectedHandlerL1.SINGLETON);
         ClientMessageTransport cmt = new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
                                                                 transportMessageFactory,
                                                                 new WireProtocolAdaptorFactoryImpl(),
@@ -221,12 +225,14 @@ public class ClientMessageTransportTest extends TCTestCase {
         return cmt;
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List transportListeners) {
         throw new AssertionError();
       }
 
+      @Override
       public MessageTransport createNewTransport(ConnectionID connectionID, TCConnection tcConnection,
                                                  TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -259,6 +265,7 @@ public class ClientMessageTransportTest extends TCTestCase {
 
     private boolean stackLayerMismatch = false;
 
+    @Override
     public void handleHandshakeError(TransportHandshakeErrorContext e) {
       if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
     }

@@ -61,6 +61,7 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.CacheConfig;
@@ -437,7 +438,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"),
                                      getMessageTypeClassMapping(), getMessageTypeFactoryMapping(encoding),
-                                     rejoinManager.getReconnectionRejectedHandler(), securityManager);
+                                     ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 

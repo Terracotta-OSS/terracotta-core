@@ -16,9 +16,11 @@ public enum EvictionThreshold {
     HEAP("HEAP",1l * 1024 * 1024 * 1024, 128l * 1024 * 1024,64l * 1024 * 1024),
     MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 128l * 1024 * 1024,96l * 1024 * 1024),
     SMALL("2G",2l * 1024 * 1024 * 1024, 384l * 1024 * 1024,256l * 1024 * 1024),
-    SMALL_MEDIUM("8G",8l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024,512l * 1024 * 1024),
-    MEDIUM("64G",64l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024),
-    LARGE("BIG MEMORY",Long.MAX_VALUE * 1024 * 1024 * 1024, 16l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024);
+    EIGHT("8G",8l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024,512l * 1024 * 1024),
+    SIXTEEN("16G",16l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024),
+    THIRTYTWO("32G",32l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024),
+    SIXTYFOUR("64G",64l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024),
+    BIG("BIG MEMORY",Long.MAX_VALUE * 1024 * 1024 * 1024, 16l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024);
     
     private final String name;
     private final long maxSize;
@@ -54,7 +56,7 @@ public enum EvictionThreshold {
                 return et;
             }
         }
-        return LARGE;
+        return BIG;
     }
     
     public static void main(String[] args) {
@@ -76,7 +78,7 @@ public enum EvictionThreshold {
     }
     
     public boolean shouldThrottle(DetailedMemoryUsage usage) {
-        if ( usage.getReservedMemory() > usage.getMaxMemory() - reserved) {
+        if ( usage.getReservedMemory() > usage.getMaxMemory() - reserved ) {
             return true;
         }
         return false;

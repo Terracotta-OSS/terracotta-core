@@ -52,6 +52,8 @@ public class ClientConnectionEstablisher {
 
   private final AsyncReconnect            connectionEstablisher;
 
+  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
+
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
@@ -64,11 +66,13 @@ public class ClientConnectionEstablisher {
   }
 
   public ClientConnectionEstablisher(TCConnectionManager connManager, ConnectionAddressProvider connAddressProvider,
-                                     int maxReconnectTries, int timeout) {
+                                     int maxReconnectTries, int timeout,
+                                     ReconnectionRejectedHandler reconnectionRejectedHandler) {
     this.connManager = connManager;
     this.connAddressProvider = connAddressProvider;
     this.maxReconnectTries = maxReconnectTries;
     this.timeout = timeout;
+    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
     this.connectionEstablisher = new AsyncReconnect(this);
 
     if (maxReconnectTries == 0) {
@@ -163,13 +167,13 @@ public class ClientConnectionEstablisher {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
 
-          // if (cmt.isRejoinExpected()) {
-          // cmt.logger.warn("Skipping reconnect as it has been rejected. Expecting Rejoin.");
-          // return;
-          // }
           if (reconnectionRejected) {
-            LOGGER.info("Reconnection rejected by L2, no more trying to reconnect - " + cmt);
-            return;
+            if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
+              LOGGER.info("Reconnection rejected by L2, trying again to reconnect - " + cmt);
+            } else {
+              LOGGER.info("Reconnection rejected by L2, no more trying to reconnect - " + cmt);
+              return;
+            }
           }
 
           TCConnection connection = null;
@@ -238,14 +242,14 @@ public class ClientConnectionEstablisher {
     try {
       boolean reconnectionRejected = false;
       while (!connected) {
-        // if (cmt.isRejoinExpected()) {
-        // cmt.logger.warn("Skipping restore as it has been rejected. Expecting Rejoin.");
-        // return;
-        // }
 
         if (reconnectionRejected) {
-          LOGGER.info("Reconnection rejected by L2, no more trying to restore connection - " + cmt);
-          return;
+          if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
+            LOGGER.info("Reconnection rejected by L2, trying again to restore connection - " + cmt);
+          } else {
+            LOGGER.info("Reconnection rejected by L2, no more trying to restore connection - " + cmt);
+            return;
+          }
         }
 
         TCConnection connection = null;

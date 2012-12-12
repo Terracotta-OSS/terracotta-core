@@ -231,22 +231,27 @@ public class MessageTransportTest extends TCTestCase {
   private class HoldsStatusLockListener implements MessageTransportListener {
     boolean holdsStatusLock = false;
 
+    @Override
     public void notifyTransportConnected(MessageTransport transport) {
       holdsStatusLock = Thread.holdsLock(serverTransport.status);
     }
 
+    @Override
     public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
       //
     }
 
+    @Override
     public void notifyTransportConnectAttempt(MessageTransport transport) {
       //
     }
 
+    @Override
     public void notifyTransportClosed(MessageTransport transport) {
       //
     }
 
+    @Override
     public void notifyTransportReconnectionRejected(MessageTransport transport) {
       //
     }
@@ -272,7 +277,8 @@ public class MessageTransportTest extends TCTestCase {
                                                                             connManager,
                                                                             new ConnectionAddressProvider(
                                                                                                           new ConnectionInfo[] { connInfo }),
-                                                                            maxReconnectTries, 0);
+                                                                            maxReconnectTries, 0,
+                                                                            ReconnectionRejectedHandlerL1.SINGLETON);
 
     this.clientTransport = new ClientMessageTransport(cce, createHandshakeErrorHandler(),
                                                       this.transportHandshakeMessageFactory,
@@ -291,6 +297,7 @@ public class MessageTransportTest extends TCTestCase {
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
     return new TransportHandshakeErrorHandler() {
 
+      @Override
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
         new ImplementMe(e.toString()).printStackTrace();
       }

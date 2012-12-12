@@ -22,12 +22,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ClientChannelEventController {
 
   // private static final TCLogger logger = TCLogging.getLogger(ClientChannelEventController.class);
-  private static final TCLogger             DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger             CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private static final TCLogger        DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger        CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
-  private final ClientHandshakeManager      clientHandshakeManager;
-  private final Sink                        pauseSink;
-  private final AtomicBoolean               shutdown       = new AtomicBoolean(false);
+  private final ClientHandshakeManager clientHandshakeManager;
+  private final Sink                   pauseSink;
+  private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
   private final RejoinManager          rejoinManager;
 
   public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
@@ -69,7 +69,12 @@ public class ClientChannelEventController {
   }
 
   private void channelReconnectionRejected(ChannelEvent event) {
-    requestRejoin(event);
+    if (rejoinManager.isRejoinEnabled()) {
+      requestRejoin(event);
+    } else {
+      DSO_LOGGER
+          .fatal("Reconnection was rejected by the L2, but rejoin is not enabled. This client will never be able to join the cluster again.");
+    }
   }
 
   private void requestRejoin(ChannelEvent event) {
@@ -101,7 +106,7 @@ public class ClientChannelEventController {
     public void notifyChannelEvent(ChannelEvent event) {
       final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
-      // logger.info("Got channel event - type: " + event.getType() + ", event: " + event, new Exception());
+      DSO_LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event);
       switch (event.getType()) {
         case TRANSPORT_CONNECTED_EVENT:
           controller.channelConnected(event);

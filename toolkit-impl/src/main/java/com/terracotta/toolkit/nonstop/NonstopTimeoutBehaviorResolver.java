@@ -9,6 +9,8 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.TimeoutBehaviorToolkitCacheImpl;
@@ -75,6 +77,9 @@ public class NonstopTimeoutBehaviorResolver {
   public <E> E create(ToolkitObjectType objectType,
                       NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableOpBehavior,
                       NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableOpBehavior, AtomicReference<E> e) {
+    if (immutableOpBehavior == NonStopReadTimeoutBehavior.EXCEPTION
+        && mutableOpBehavior == NonStopWriteTimeoutBehavior.EXCEPTION) { return (E) createExceptionOnTimeOutBehaviour(objectType,
+                                                                                                                      e); }
     if (objectType != ToolkitObjectType.CACHE && objectType != ToolkitObjectType.STORE) { throw new UnsupportedOperationException(); }
 
     E immutationBehaviourResolver = createImmutableOpBehavior(objectType, immutableOpBehavior, e);

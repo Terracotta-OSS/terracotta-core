@@ -226,7 +226,7 @@ public class StageImpl implements Stage {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.name + " queue depth: " + getSink().size()).flush();
+    out.print("Queue depth: " + getSink().size() + " " + this.name).flush();
     return out;
   }
 

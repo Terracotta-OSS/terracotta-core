@@ -145,7 +145,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     waitForResults(contextsToWaitFor, rv);
   }
 
-  protected Set<AbstractServerMapRequestContext> sendRequestForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+  protected synchronized Set<AbstractServerMapRequestContext> sendRequestForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
       throws AbortedOperationException {
     Set<AbstractServerMapRequestContext> contextsToWaitFor = new HashSet<AbstractServerMapRequestContext>();
     waitUntilRunningAbortable();

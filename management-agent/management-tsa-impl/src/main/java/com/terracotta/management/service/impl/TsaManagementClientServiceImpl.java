@@ -15,11 +15,15 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.objectserver.api.GCStats;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventImpl;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.LogEntity;
+import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
@@ -990,6 +994,124 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       return logEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers logs", e);
+    }
+  }
+
+  @Override
+  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, boolean read) throws ServiceExecutionException {
+    Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            DSOMBean dsoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+
+            List<TerracottaOperatorEvent> operatorEvents;
+            if (sinceWhen == null) {
+              operatorEvents = dsoMBean.getOperatorEvents();
+            } else {
+              operatorEvents = dsoMBean.getOperatorEvents(sinceWhen);
+            }
+
+            for (TerracottaOperatorEvent operatorEvent : operatorEvents) {
+              if (operatorEvent.isRead() && read) {
+                // filter out read events
+                continue;
+              }
+
+              OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
+              operatorEventEntity.setSourceId(member.name());
+              operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+              operatorEventEntity.setMessage(operatorEvent.getEventMessage());
+              operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
+              operatorEventEntity.setCollapseString(operatorEvent.getCollapseString());
+              operatorEventEntity.setEventSubsystem(operatorEvent.getEventSubsystemAsString());
+              operatorEventEntity.setEventType(operatorEvent.getEventTypeAsString());
+              operatorEventEntity.setRead(operatorEvent.isRead());
+
+              operatorEventEntities.add(operatorEventEntity);
+            }
+          } catch (Exception e) {
+            OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
+            operatorEventEntity.setSourceId(member.name());
+            operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            operatorEventEntity.setMessage(e.getMessage());
+
+            operatorEventEntities.add(operatorEventEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return operatorEventEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting operator events", e);
+    }
+  }
+
+  @Override
+  public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (!operatorEventEntity.getSourceId().equals(member.name())) {
+            continue;
+          }
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+          MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+          DSOMBean dsoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+              new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+
+          TerracottaOperatorEventImpl terracottaOperatorEvent = new TerracottaOperatorEventImpl(TerracottaOperatorEvent
+              .EventType
+              .valueOf(operatorEventEntity.getEventType()),
+              TerracottaOperatorEvent.EventSubsystem.valueOf(operatorEventEntity.getEventSubsystem()),
+              operatorEventEntity.getMessage(), operatorEventEntity.getTimestamp(), operatorEventEntity.getCollapseString());
+
+          return dsoMBean.markOperatorEvent(terracottaOperatorEvent, read);
+        }
+      }
+      throw new ServiceExecutionException("Unable to find back server to mark operator event as read");
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error marking operator event as read", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          throw new ServiceExecutionException("error closing jmx connector", ioe);
+        }
+      }
     }
   }
 

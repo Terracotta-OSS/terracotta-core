@@ -90,7 +90,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case PROGRAM_ERROR:
         return "PROGRAM ERROR";
       case NODE_JOINED_WITH_DIRTY_DB:
-        return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
+        return "Newly Joined Node Contains dirty database.";
       case PARTIALLY_SYNCED_PASSIVE_JOINED:
         return "Newly joined node in uninitialized state is already partially synced - this is not supported.";
       case SPLIT_BRAIN:

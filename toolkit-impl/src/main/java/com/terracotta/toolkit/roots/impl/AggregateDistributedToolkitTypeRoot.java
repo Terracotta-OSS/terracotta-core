@@ -37,7 +37,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   private final WeakValueMap<T>                           localCache;
   private final PlatformService                           platformService;
   private final String                                    rootName;
-  private Set<String>                                     currentKeys = Collections.EMPTY_SET;
+  private volatile Set<String>                            currentKeys = Collections.EMPTY_SET;
 
   protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
@@ -108,7 +108,27 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   }
 
   @Override
-  public ToolkitObjectStripe<S>[] lookupStripeObjects(String name) {
+  public ToolkitObjectStripe<S>[] lookupOrCreateStripeObjects(final String name, final ToolkitObjectType type,
+                                                              Configuration config) {
+    lock(type, name);
+    try {
+      final ToolkitObjectStripe<S>[] stripeObjects;
+      // check with first group
+      if (roots[0].getClusteredObject(name) != null) {
+        // this may be a problem, if the ACTIVE L2 of the rest of groups were fresh/clean L2's but not the
+        // first group's active L2
+        stripeObjects = lookupStripeObjects(name);
+      } else {
+        // need to create stripe objects
+        stripeObjects = createStripeObjects(name, config);
+      }
+      return stripeObjects;
+    } finally {
+      unlock(type, name);
+    }
+  }
+
+  private ToolkitObjectStripe<S>[] lookupStripeObjects(String name) {
     final ToolkitObjectStripe<S>[] stripeObjects = new ToolkitObjectStripe[roots.length];
     // already created.. make sure was created in all stripes
     for (int i = 0; i < roots.length; i++) {

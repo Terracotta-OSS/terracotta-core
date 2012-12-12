@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-class RootsHolder {
+class RootsHolder implements ClearableCallback {
   private final Map<GroupID, Map<String, ObjectID>> groupToRoots                = new HashMap<GroupID, Map<String, ObjectID>>();
   private final Map<GroupID, Set<String>>           groupToRootLookupInProgress = new HashMap<GroupID, Set<String>>();
 
@@ -18,6 +18,12 @@ class RootsHolder {
 
   public RootsHolder(GroupID[] groupIds) {
     this.groupIds = groupIds;
+  }
+
+  @Override
+  public synchronized void cleanup() {
+    groupToRoots.clear();
+    groupToRootLookupInProgress.clear();
   }
 
   public synchronized void addRoot(String name, ObjectID oid) {
@@ -80,5 +86,6 @@ class RootsHolder {
 
     return size;
   }
+
 
 }

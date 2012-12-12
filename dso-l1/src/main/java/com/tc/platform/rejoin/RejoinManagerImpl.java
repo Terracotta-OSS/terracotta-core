@@ -6,9 +6,7 @@ package com.tc.platform.rejoin;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,13 +19,11 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private static final TCLogger                logger           = TCLogging.getLogger(RejoinManagerImpl.class);
   private final List<RejoinLifecycleListener>  listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final boolean                        rejoinEnabled;
-  private final ReconnectionRejectedHandler    reconnectionRejectedHandler;
   private final RejoinWorker                   rejoinWorker;
   private final AtomicBoolean                  rejoinInProgress = new AtomicBoolean(false);
 
   public RejoinManagerImpl(boolean isRejoinEnabled) {
     this.rejoinEnabled = isRejoinEnabled;
-    this.reconnectionRejectedHandler = new ReconnectionRejectedHandlerImpl(rejoinEnabled);
     this.rejoinWorker = new RejoinWorker(this);
   }
 
@@ -107,29 +103,6 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
         break;
       } catch (Throwable t) {
         logger.error("Got error while reestablishing channel, going to retry... channel: " + channel, t);
-      }
-    }
-  }
-
-  @Override
-  public ReconnectionRejectedHandler getReconnectionRejectedHandler() {
-    return reconnectionRejectedHandler;
-  }
-
-  private static class ReconnectionRejectedHandlerImpl implements ReconnectionRejectedHandler {
-    private final boolean rejoin;
-
-    public ReconnectionRejectedHandlerImpl(boolean rejoin) {
-      this.rejoin = rejoin;
-    }
-
-    @Override
-    public void reconnectionRejected(ReconnectionRejectedCleanupAction cleanup) throws ReconnectionRejectedException {
-      if (rejoin) {
-        cleanup.reconnectionRejectedCleanupAction();
-        throw new ReconnectionRejectedException("Reconnection rejected due to stack not found. Rejoin Behaviour.");
-      } else {
-        throw new ReconnectionRejectedException("Reconnection rejected due to stack not found. Default Behaviour.");
       }
     }
   }

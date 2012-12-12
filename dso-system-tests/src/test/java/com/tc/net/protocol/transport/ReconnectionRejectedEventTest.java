@@ -101,7 +101,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
   private ClientConnectionEstablisher buildClientConnectionEstablisher(final int connPort) {
     return new ClientConnectionEstablisher(clientComms.getConnectionManager(), getConnectionAddrProvider(connPort), -1,
-                                           timeout);
+                                           timeout, ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   private ConnectionAddressProvider getConnectionAddrProvider(final int connPort) {
@@ -181,7 +181,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
                                       TransportHandshakeMessageFactory messageFactory,
                                       WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
       super(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory,
-            callbackPort, new ReconnectionRejectedExpressRejoinClientBehaviour());
+            callbackPort);
     }
 
     public void fireReconnectionRejectedEvent() {

@@ -202,7 +202,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void rejoinCompleted() {
-    setupStripeObjects(lookup.lookupStripeObjects(name));
+    setupStripeObjects(lookup.lookupOrCreateStripeObjects(name, this.toolkitObjectType, config));
     initializeLocalCache();
   }
 

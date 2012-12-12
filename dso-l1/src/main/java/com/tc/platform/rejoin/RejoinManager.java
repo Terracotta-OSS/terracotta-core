@@ -3,7 +3,6 @@
  */
 package com.tc.platform.rejoin;
 
-import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 
 public interface RejoinManager {
 
@@ -12,8 +11,6 @@ public interface RejoinManager {
   void addListener(RejoinLifecycleListener listener);
 
   void removeListener(RejoinLifecycleListener listener);
-
-  ReconnectionRejectedHandler getReconnectionRejectedHandler();
 
   void shutdown();
 }

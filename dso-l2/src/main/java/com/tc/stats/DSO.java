@@ -194,6 +194,19 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
+  public boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
+    List<TerracottaOperatorEvent> operatorEvents = getOperatorEvents();
+    for (TerracottaOperatorEvent event : operatorEvents) {
+      if (event.equals(operatorEvent)) {
+        if (read) { event.markRead(); }
+        else { event.markUnread(); }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public ObjectName[] getRoots() {
     synchronized (rootObjectNames) {
       return (ObjectName[]) rootObjectNames.toArray(new ObjectName[rootObjectNames.size()]);

@@ -38,7 +38,8 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
     boolean started = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
     try {
       clusterListener.waitUntilOperationsEnabled();
-      return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
+      Object returnValue = invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
+      return workOnReturnValue(returnValue);
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
     } catch (RejoinException e) {
@@ -49,6 +50,10 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
         nonStopManager.finish();
       }
     }
+  }
+
+  protected Object workOnReturnValue(Object returnValue) {
+    return returnValue;
   }
 
   private long getTimeout(NonStopConfiguration nonStopConfiguration) {

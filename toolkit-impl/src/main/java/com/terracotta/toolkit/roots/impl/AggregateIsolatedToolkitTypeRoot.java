@@ -36,7 +36,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   private final WeakValueMap<T>                  isolatedTypes;
   private final PlatformService                  platformService;
   private final String                           rootName;
-  private Set<String>                            currentKeys = Collections.EMPTY_SET;
+  private volatile Set<String>                   currentKeys = Collections.EMPTY_SET;
 
   protected AggregateIsolatedToolkitTypeRoot(String rootName, ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
