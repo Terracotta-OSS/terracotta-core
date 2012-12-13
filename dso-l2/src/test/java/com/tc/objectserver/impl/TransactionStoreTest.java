@@ -4,6 +4,10 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -12,9 +16,9 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.HeapStorageManagerFactory;
-import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
+import com.tc.objectserver.persistence.TransactionPersistorImpl;
+import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.test.TCTestCase;
 import com.tc.util.sequence.Sequence;
@@ -28,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -38,11 +43,13 @@ public class TransactionStoreTest extends TCTestCase {
   private Sequence gidSequence;
   private TransactionStore store;
 
-  public void setUp() {
-    Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
-    persistor.start();
-    transactionPersistor = spy(persistor.getTransactionPersistor());
-    gidSequence = spy(persistor.getGlobalTransactionIDSequence());
+  public void setUp() throws ExecutionException, InterruptedException {
+    Map<String, KeyValueStorageConfig<?,?>> configMap = new HashMap<String, KeyValueStorageConfig<?, ?>>();
+    TransactionPersistorImpl.addConfigsTo(configMap);
+    StorageManager storageManager = new HeapStorageManager(configMap);
+    storageManager.start().get();
+    transactionPersistor = spy(new TransactionPersistorImpl(storageManager));
+    gidSequence = spy(new TestMutableSequence());
     store = new TransactionStoreImpl(transactionPersistor, gidSequence);
   }
 
