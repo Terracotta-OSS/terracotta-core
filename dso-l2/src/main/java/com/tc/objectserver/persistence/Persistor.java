@@ -55,11 +55,15 @@ public class Persistor {
 
   private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs(StorageManagerFactory storageManagerFactory) {
     Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
-    TransactionPersistor.addConfigsTo(configs);
     ClientStatePersistor.addConfigsTo(configs);
     ManagedObjectPersistor.addConfigsTo(configs, objectIDSetMaintainer, storageManagerFactory);
     SequenceManager.addConfigsTo(configs);
+    addAdditionalConfigs(configs, storageManagerFactory);
     return configs;
+  }
+
+  protected void addAdditionalConfigs(Map<String, KeyValueStorageConfig<?, ?>> configMap, StorageManagerFactory storageManagerFactory) {
+    // override in a subclass
   }
 
   public void start() {
@@ -70,13 +74,17 @@ public class Persistor {
     }
 
     sequenceManager = new SequenceManager(storageManager);
-    transactionPersistor = new TransactionPersistor(storageManager);
+    transactionPersistor = createTransactionPersistor(storageManager);
     clientStatePersistor = new ClientStatePersistor(sequenceManager, storageManager);
     managedObjectPersistor = new ManagedObjectPersistor(storageManager, sequenceManager, objectIDSetMaintainer);
 
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
 
     started = true;
+  }
+
+  protected TransactionPersistor createTransactionPersistor(StorageManager storageManager) {
+    return new NullTransactionPersistor();
   }
 
   public void close() {
@@ -133,7 +141,7 @@ public class Persistor {
     return sequenceManager;
   }
 
-  private void checkStarted() {
+  protected final void checkStarted() {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
