@@ -48,7 +48,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +158,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 Thread t = new Thread(evictionGrp, r, "Expiration Thread - " + count++);
                 return t;
             }
-        });
+        },new ThreadPoolExecutor.DiscardPolicy());
         try {
             Runnable rb = new Runnable() {
 
@@ -215,18 +214,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     public void scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
         final SampledRateCounter count = new AggregateSampleRateCounter();
-        try {
-            final Future<SampledRateCounter> run = agent.submit(new Runnable() {
-                @Override
-                public void run()  {
-                    doEvictionOn(triggerParam);
-                    count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
-                }
-            },count);
-            print(triggerParam.getName(), run);
-        } catch ( RejectedExecutionException reject ) {
-            logger.debug("shutting down", reject);
-        }
+        final Future<SampledRateCounter> run = agent.submit(new Runnable() {
+            @Override
+            public void run()  {
+                doEvictionOn(triggerParam);
+                count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
+            }
+        },count);
+        print(triggerParam.getName(), run);
     }
     /*
      * return of false means the map is gone
@@ -332,7 +327,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         return new GroupFuture<SampledRateCounter>(push);
     }
-
+    
     private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
         if (!PersistentCollectionsUtil.isEvictableMapType(state.getType())) {
             throw new AssertionError(
@@ -359,7 +354,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
         
     private void print(final String name, final Future<SampledRateCounter> counter) {
-        try {
             agent.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -380,9 +374,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     }
                 }
             });
-        } catch ( RejectedExecutionException reject ) {
-            logger.debug("can't print logging", reject);
-        }
     }
 
     class Responder implements ResourceEventListener {
@@ -435,8 +426,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
-            } catch ( RejectedExecutionException reject ) {
-                logger.debug("shutting down",reject);
             }
         }
         
