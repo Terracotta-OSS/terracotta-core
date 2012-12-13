@@ -101,10 +101,14 @@ public class TCFileUtils {
         if (!destDir.isDirectory()) { throw new IOException("Destination directory does not exist: " + destDir); }
 
         String[] list = item.getSrc().list();
-        for (int i = 0; i < list.length; i++) {
-          File _src = new File(item.getSrc(), list[i]);
-          File _dest = new File(item.getDest(), list[i]);
-          queue.add(new CopyTask(_src, _dest));
+        if (list != null) {
+          for (int i = 0; i < list.length; i++) {
+            File _src = new File(item.getSrc(), list[i]);
+            File _dest = new File(item.getDest(), list[i]);
+            queue.add(new CopyTask(_src, _dest));
+          }
+        } else {
+          throw new RuntimeException("Error listing contents of [" + item.getSrc() + "]");
         }
       } else if (item.getSrc().isFile()) {
         try {

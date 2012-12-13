@@ -58,8 +58,9 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     this.tcConfig = tcConfig;
     this.isUrlConfig = isUrlConfig;
     this.parent = parent;
-    this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
-
+    if (tunneledMBeanDomains != null) {
+      this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
+    }
     try {
       this.appClassLoader = new AppClassLoader(appLoader);
       this.clusteredStateLoader = createClusteredStateLoader(appLoader);
@@ -127,7 +128,9 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     if (isInitialized) {
       contextControl.activateTunnelledMBeanDomains(this.tunneledMBeanDomains);
     } else {
-      this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
+      if (tunnelledMBeanDomains != null) {
+        this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
+      }
     }
   }
 
