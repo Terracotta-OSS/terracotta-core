@@ -428,10 +428,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testOffHeap2() throws IOException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>" + "</offheap>" + "</persistence>"
+                    + "<offheap>" + "<enabled>true</enabled>" + "</offheap>" + "</server>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
                     + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "</garbage-collection>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -491,8 +491,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
                     + "<mirror-group group-name=\"group1\">" + "<server host=\"eng01\" name=\"server1\"></server>"
                     + "<server host=\"eng02\" name=\"server2\"></server>" + "</mirror-group>"
                     + "<mirror-group group-name=\"group2\">" + "<server host=\"eng03\" name=\"server3\"></server>"
-                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>"
-                    + "</servers>" + "</tc:tc-config>";
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>" + "</servers>"
+                    + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -532,8 +532,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
-
-
 
     Assert.assertEquals(2, servers.getMirrorGroupArray().length);
     Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);

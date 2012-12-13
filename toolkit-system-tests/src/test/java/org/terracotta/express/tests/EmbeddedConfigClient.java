@@ -25,16 +25,11 @@ public class EmbeddedConfigClient extends ClientBase {
   protected void test(Toolkit toolkit) throws Throwable {
     String tcConfig = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">\n" +
       "<servers>\n" +
-        "<server host=\"localhost\" name=\"testserver0\">\n" +
-          "<tsa-port>TSA_PORT</tsa-port>\n" +
-        "</server>\n" +
-        "<mirror-groups>\n" +
-          "<mirror-group group-name=\"testGroup0\">\n" +
-          "<members>\n" +
-              "<member>testserver0</member>\n" +
-            "</members>\n" +
-          "</mirror-group>\n" +
-      "</mirror-groups>\n" +
+        "<mirror-group group-name=\"testGroup0\">\n" +
+          "<server host=\"localhost\" name=\"testserver0\">\n" +
+            "<tsa-port>TSA_PORT</tsa-port>\n" +
+          "</server>\n" +
+        "</mirror-group>\n" +
       "</servers>\n" +
     "</tc:tc-config>";
 
