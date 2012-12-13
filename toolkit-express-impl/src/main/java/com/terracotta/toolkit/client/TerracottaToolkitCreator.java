@@ -73,7 +73,7 @@ public class TerracottaToolkitCreator {
 
     if (enterprise) {
       return internalClient.instantiate(ENTERPRISE_TOOLKIT_IMPL_CLASSNAME, new Class[] { TerracottaL1Instance.class,
-          internalClient.loadClass(TOOLKIT_DEFAULT_CM_PROVIDER), Boolean.class }, new Object[] {
+          internalClient.loadClass(TOOLKIT_DEFAULT_CM_PROVIDER), boolean.class }, new Object[] {
           getTerracottaL1Instance(), defaultToolkitCacheManagerProvider, isNonStop });
     } else {
       return internalClient.instantiate(TOOLKIT_IMPL_CLASSNAME, new Class[] { TerracottaL1Instance.class,
