@@ -106,6 +106,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         int samples = calculateSampleCount(max, map);
 
         if ( stop ) {
+            processSample(Collections.<Object,ObjectID>emptyMap());
             return null;
         }
         

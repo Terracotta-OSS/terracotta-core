@@ -67,6 +67,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
         if ( sample <= 0 ) {
+            processSample(Collections.<Object,ObjectID>emptyMap());
             return null;
         }
         Map samples = map.getRandomSamples(sample, clients);

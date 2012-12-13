@@ -215,14 +215,18 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     public void scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
         final SampledRateCounter count = new AggregateSampleRateCounter();
-        final Future<SampledRateCounter> run = agent.submit(new Runnable() {
-            @Override
-            public void run()  {
-                doEvictionOn(triggerParam);
-                count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
-            }
-        },count);
-        print(triggerParam.getName(), run);
+        try {
+            final Future<SampledRateCounter> run = agent.submit(new Runnable() {
+                @Override
+                public void run()  {
+                    doEvictionOn(triggerParam);
+                    count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
+                }
+            },count);
+            print(triggerParam.getName(), run);
+        } catch ( RejectedExecutionException reject ) {
+            logger.debug("shutting down", reject);
+        }
     }
     /*
      * return of false means the map is gone
@@ -431,6 +435,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
+            } catch ( RejectedExecutionException reject ) {
+                logger.debug("shutting down",reject);
             }
         }
         

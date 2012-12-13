@@ -8,6 +8,7 @@ import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -48,6 +49,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
         Map sampled = map.getRandomSamples(get,clients);
         sampleCount = sampled.size();
         if ( sampled.isEmpty() ) {
+            processSample(Collections.<Object,ObjectID>emptyMap());
             return null;
         } else {
             return new ServerMapEvictionContext(this, processSample(sampled), className, map.getCacheName());
