@@ -6,6 +6,7 @@ package com.terracotta.toolkit.nonstop;
 import static org.terracotta.toolkit.ToolkitObjectType.CACHE;
 import static org.terracotta.toolkit.ToolkitObjectType.LIST;
 import static org.terracotta.toolkit.ToolkitObjectType.LOCK;
+import static org.terracotta.toolkit.ToolkitObjectType.READ_WRITE_LOCK;
 import static org.terracotta.toolkit.ToolkitObjectType.STORE;
 
 import org.terracotta.toolkit.ToolkitObjectType;
@@ -20,7 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   public static final EnumSet<ToolkitObjectType>                      SUPPORTED_TOOLKIT_TYPES  = EnumSet.of(STORE,
                                                                                                             CACHE,
-                                                                                                            LIST, LOCK);
+                                                                                                       LIST, LOCK,
+                                                                                                       READ_WRITE_LOCK);
 
   public static final NonStopConfiguration                            DEFAULT_CONFIG           = new NonStopConfiguration() {
 
