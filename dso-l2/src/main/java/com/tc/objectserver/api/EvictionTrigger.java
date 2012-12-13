@@ -4,6 +4,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Map;
@@ -43,7 +44,7 @@ public interface EvictionTrigger {
      * @param clients   the client object id reference set
      * @return          a map of evictable items
      */
-    Map<Object, ObjectID> collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients);
+    ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients);
     
     long getRuntimeInSeconds();
     
