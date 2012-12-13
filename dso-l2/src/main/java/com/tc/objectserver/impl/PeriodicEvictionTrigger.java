@@ -115,9 +115,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         
         if ( dumpLive ) {
             overflow += grabbed.size();
-        } else {
-            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds());
-            filtered += grabbed.size();
         }
 
         return new PeriodicServerMapEvictionContext(this, processSample(grabbed), className, map.getCacheName());
@@ -278,6 +275,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         public Map<Object, ObjectID> getRandomSamples() {
             if ( cached == null ) {
                 cached = filter(super.getRandomSamples(),tti,ttl);
+                filtered = cached.size();
             }
             return cached;
         }
