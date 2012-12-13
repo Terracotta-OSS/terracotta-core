@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import java.util.Map;
 
@@ -38,82 +39,19 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     }  
 
     @Override
-    public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
         int get = boundsCheckSampleSize(( blowout > 10 ) ? sizeCount : sizeCount * blowout / 10);
-//        int get = boundsCheckSampleSize(sizeCount);
         if ( get < 2 ) {
             get = 2;
         }
         Map sampled = map.getRandomSamples(get,clients);
-//        Map sampled = map.getRandomSamples(sizeCount/5,new ClientObjectReferenceSet(new ClientStateManager() {
-//
-//            @Override
-//            public boolean startupNode(NodeID nodeID) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public void shutdownNode(NodeID deadNode) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public void addReference(NodeID nodeID, ObjectID objectID) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public boolean hasReference(NodeID nodeID, ObjectID objectID) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references, NodeID clientID, Set<ObjectID> objectIDs, Invalidations invalidationsForClient) {
-//                throw new UnsupportedOperationException("Not supported yet.");
-//            }
-//
-//            @Override
-//            public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
-//                return rescueIds;
-//            }
-//
-//            @Override
-//            public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
-//            }
-//
-//            @Override
-//            public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
-//                return oids;
-//            }
-//
-//            @Override
-//            public int getReferenceCount(NodeID nodeID) {
-//                return 0;
-//            }
-//
-//            @Override
-//            public Set<NodeID> getConnectedClientIDs() {
-//                return Collections.<NodeID>emptySet();
-//            }
-//
-//            @Override
-//            public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
-//
-//            }
-//
-//            @Override
-//            public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
-//
-//            }
-//        }));
         sampleCount = sampled.size();
-        return processSample(sampled);
+        if ( sampled.isEmpty() ) {
+            return null;
+        } else {
+            return new ServerMapEvictionContext(this, processSample(sampled), className, map.getCacheName());
+        }
     }
     
     public int getSampleCount() {

@@ -21,6 +21,8 @@ public class ResourceManagerMessageHandler extends AbstractEventHandler {
     if (context instanceof ResourceManagerThrottleMessage) {
       ResourceManagerThrottleMessage msg = (ResourceManagerThrottleMessage)context;
       remoteResourceManager.handleThrottleMessage(msg.getGroupID(), msg.getThrowException(), msg.getThrottle());
+    } else {
+      throw new AssertionError("Wrong context received in Resource Management Message sink. Type " + context.getClass());
     }
   }
 }

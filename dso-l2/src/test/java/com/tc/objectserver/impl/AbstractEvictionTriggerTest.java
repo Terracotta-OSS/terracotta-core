@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Collections;
@@ -57,9 +58,9 @@ public class AbstractEvictionTriggerTest {
     return new AbstractEvictionTrigger(ObjectID.NULL_ID) {
 
       @Override
-      public Map<Object, ObjectID> collectEvictonCandidates(int targetMax, EvictableMap map,
+      public ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map,
                                                             ClientObjectReferenceSet clients) {
-        return processSample(map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
+        return new ServerMapEvictionContext(this, processSample(map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet)), className, map.getCacheName());
       }
     };
   }
@@ -93,11 +94,11 @@ public class AbstractEvictionTriggerTest {
     EvictableMap map = getEvictableMap();
     final AbstractEvictionTrigger et = getTrigger();
     ClientObjectReferenceSet cs = getClientSet();
-    Map<Object, ObjectID> found = null;
+    ServerMapEvictionContext found = null;
     boolean isEvicting = map.isEvicting();
 
     if (et.startEviction(map)) {
-      found = et.collectEvictonCandidates(max, map, cs);
+      found = et.collectEvictonCandidates(max, "MOCK", map, cs);
       et.completeEviction(map);
     }
     if (isEvicting || (max != 0 && map.getSize() > 0)) {

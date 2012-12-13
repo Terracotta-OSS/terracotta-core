@@ -9,6 +9,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
+import com.tc.objectserver.api.ShutdownError;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 
@@ -108,6 +109,9 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
           fireMemoryEvent(resource,thisCount);
           adjust(resource);
           Thread.sleep(sleepTime);
+        } catch (ShutdownError e) {
+          logger.warn("Server is shutting down, stopping resource monitor.");
+          break;
         } catch (Throwable t) {
           // for debugging pupose
           StackTraceElement[] trace = t.getStackTrace();

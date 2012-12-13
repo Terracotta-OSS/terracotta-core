@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -258,7 +259,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 this.objectManager.releaseReadOnly(mo);
                 return true;
             }
-            ServerMapEvictionContext context = doEviction(triggerParam, ev, className, ev.getCacheName());
+            
+            ServerMapEvictionContext context = doEviction(triggerParam, ev, className);
 
             // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
             // to the sink because the sink reached max capacity and blocking
@@ -271,13 +273,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             
             if (context != null) {
                 if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
-                    PeriodicEvictionTrigger periodic = (PeriodicEvictionTrigger)triggerParam;
-                    expirationStats.increment(triggerParam.getCount());
-                    if (periodic.filterRatio() > .5f ) {
-                        scheduleEvictionTrigger(periodic.duplicate());
+                    int size = context.getRandomSamples().size();
+                    expirationStats.increment(size);
+                    if ( size > 1000 ) {
+                        scheduleEvictionTrigger(((PeriodicEvictionTrigger)triggerParam).duplicate());
                     }
                 } else {
-                    evictionStats.increment(triggerParam.getCount());
+                    evictionStats.increment(context.getRandomSamples().size());
                 }
                 this.evictorSink.add(context);
             }
@@ -292,22 +294,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     private ServerMapEvictionContext doEviction(final EvictionTrigger triggerParam, final EvictableMap ev,
-            final String className,
-            final String cacheName) {
+            final String className) {
         int max = ev.getMaxTotalCount();
 
         if (max < 0) {
 //  cache has no count capacity max is MAX_VALUE;
             max = Integer.MAX_VALUE;
         }
-
-        Map samples = triggerParam.collectEvictonCandidates(max, ev, clientObjectReferenceSet);
-
-        if (samples.isEmpty()) {
-            return null;
-        } else {
-            return new ServerMapEvictionContext(triggerParam, samples, className, cacheName);
-        }
+        
+        return triggerParam.collectEvictonCandidates(max, className, ev, clientObjectReferenceSet);
     }
 
     Future<SampledRateCounter> emergencyEviction(final int blowout) {
@@ -360,26 +355,30 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
         
     private void print(final String name, final Future<SampledRateCounter> counter) {
-        agent.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SampledRateCounter rate = counter.get();
-                    if ( rate == null ) {
-                        return;
+        try {
+            agent.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        SampledRateCounter rate = counter.get();
+                        if ( rate == null ) {
+                            return;
+                        }
+                        if (rate.getValue()==0 && evictor.isLogging()) {
+                            log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
+                        } else {
+                            log("Eviction Run:" + name + " " + rate);
+                        }
+                    } catch ( ExecutionException exp ) {
+                        logger.warn("eviction run", exp);
+                    } catch ( InterruptedException it ) {
+                        logger.warn("eviction run", it);
                     }
-                    if (rate.getValue()==0 && evictor.isLogging()) {
-                        log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
-                    } else {
-                        log("Eviction Run:" + name + " " + rate);
-                    }
-                } catch ( ExecutionException exp ) {
-                    logger.warn("eviction run", exp);
-                } catch ( InterruptedException it ) {
-                    logger.warn("eviction run", it);
                 }
-            }
-        });
+            });
+        } catch ( RejectedExecutionException reject ) {
+            logger.debug("can't print logging", reject);
+        }
     }
 
     class Responder implements ResourceEventListener {
