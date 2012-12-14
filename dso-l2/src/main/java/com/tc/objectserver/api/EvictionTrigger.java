@@ -7,8 +7,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
-import java.util.Map;
-
 /**
  * EvictionTriggers signal that an eviction operation needs to occur on a given
  * map.

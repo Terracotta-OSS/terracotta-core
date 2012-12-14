@@ -19,7 +19,6 @@ import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Collections;
-import java.util.Map;
 
 /**
  *
