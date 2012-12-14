@@ -3,10 +3,12 @@
  */
 package com.terracotta.toolkit.collections;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -47,13 +49,10 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void rejoinCompleted() {
-    ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin != null) {
+    if (!isDestroyed()) {
+      ToolkitSortedMapImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.SORTED_MAP, null);
+      Preconditions.checkNotNull(afterRejoin);
       this.map = afterRejoin;
-    } else {
-      // didn't find backing clustered object after rejoin - must have been destroyed
-      // apply destory locally
-      applyDestroy();
     }
   }
 

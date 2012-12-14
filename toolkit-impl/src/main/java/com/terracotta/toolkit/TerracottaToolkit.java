@@ -137,12 +137,12 @@ public class TerracottaToolkit implements ToolkitInternal {
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()
                                                                      .consistency(Consistency.STRONG).build());
-    clusteredAtomicLongFactory = new ToolkitAtomicLongFactoryImpl(atomicLongs, weakValueMapManager);
+    clusteredAtomicLongFactory = new ToolkitAtomicLongFactoryImpl(atomicLongs, weakValueMapManager, platformService);
 
     ToolkitStore barriers = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_BARRIER_MAP_NAME,
                                                               new ToolkitStoreConfigBuilder()
                                                                   .consistency(Consistency.STRONG).build());
-    clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager);
+    clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager, platformService);
 
     clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, context);
   }

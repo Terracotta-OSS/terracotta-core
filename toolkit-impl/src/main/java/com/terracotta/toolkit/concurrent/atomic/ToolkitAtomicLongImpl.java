@@ -7,16 +7,21 @@ import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.store.ToolkitStore;
 
+import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.util.ToolkitIDGenerator;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ToolkitAtomicLongImpl implements ToolkitAtomicLong {
+public class ToolkitAtomicLongImpl implements ToolkitAtomicLong, RejoinCallback {
   private final ToolkitStore<String, ToolkitAtomicLongState> atomicLongs;
   private final String                                       name;
   private final ToolkitLock                                  lock;
   private final long                                         uid;
   private final ToolkitIDGenerator                           longIdGenerator;
+  private final ToolkitSubtypeStatusImpl                     status;
+  private final AtomicInteger                                currentRejoinCount = new AtomicInteger();
 
   public ToolkitAtomicLongImpl(String name, ToolkitStore<String, ToolkitAtomicLongState> clusteredMap,
                                ToolkitIDGenerator longIdGenerator) {
@@ -34,19 +39,50 @@ public class ToolkitAtomicLongImpl implements ToolkitAtomicLong {
     }
     this.longIdGenerator = longIdGenerator;
     this.uid = state.getUid();
+    this.status = new ToolkitSubtypeStatusImpl();
+    this.currentRejoinCount.set(status.getCurrentRejoinCount());
+  }
+
+  @Override
+  public void rejoinStarted() {
+    //
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    status.increaseRejoinCount();
   }
 
   @Override
   public boolean isDestroyed() {
+    return getInternalStateOrNullIfDestroyed() == null;
+  }
+
+  private ToolkitAtomicLongState getInternalStateOrNullIfDestroyed() {
     ToolkitAtomicLongState state = atomicLongs.get(name);
-    if (state == null || state.getUid() != uid) { return true; }
-    return false;
+    if (state == null) {
+      if (currentRejoinCount.get() != status.getCurrentRejoinCount()) {
+        // rejoin happened
+        currentRejoinCount.set(status.getCurrentRejoinCount());
+        state = new ToolkitAtomicLongState(longIdGenerator.getId(), new Long(0));
+        atomicLongs.put(name, state);
+        return state;
+      } else {
+        // no state found, rejoin also didn't happen
+        return null;
+      }
+    } else if (state.getUid() != uid) {
+      // state found, but created with different uid -> destroyed
+      return null;
+    } else {
+      return state;
+    }
   }
 
   private ToolkitAtomicLongState getInternalState() {
-    ToolkitAtomicLongState state = atomicLongs.get(name);
-    if (state == null || state.getUid() != uid) throw new IllegalStateException(
-                                                                                "This AtomicLong is already destroyed !");
+    ToolkitAtomicLongState state = getInternalStateOrNullIfDestroyed();
+    if (state == null) throw new IllegalStateException("ToolkitAtomicLong with name '" + name
+                                                       + "' is already destroyed and no longer exists!");
     return state;
   }
 

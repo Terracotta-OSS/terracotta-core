@@ -45,15 +45,19 @@ public class ToolkitBlockingQueueFactoryImpl extends
                                                               String name, Configuration config,
                                                               ToolkitObjectStripe<ToolkitListImpl> tcClusteredObject) {
       int actualCapacity = assertConfig(name, config, tcClusteredObject);
+      final Configuration blockingQueueConfig = config;
       DestroyableToolkitList listWrapper = new DestroyableToolkitList(
                                                                       factory,
                                                                       new IsolatedClusteredObjectLookup<ToolkitListImpl>() {
 
                                                                         @Override
-                                                                        public ToolkitListImpl lookupClusteredObject(String blockingQName) {
+                                                                        public ToolkitListImpl lookupOrCreateClusteredObject(String blockingQName,
+                                                                                                                             ToolkitObjectType type,
+                                                                                                                             Configuration unused) {
                                                                           ToolkitObjectStripe<ToolkitListImpl> toolkitObjectStripe = lookup
-                                                                              .lookupClusteredObject(blockingQName);
-                                                                          // todo: toolkitObjectStripe may be null
+                                                                              .lookupOrCreateClusteredObject(blockingQName,
+                                                                                                             ToolkitObjectType.BLOCKING_QUEUE,
+                                                                                                             blockingQueueConfig);
                                                                           return toolkitObjectStripe.iterator().next();
                                                                         }
 

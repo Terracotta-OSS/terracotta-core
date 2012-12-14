@@ -7,27 +7,34 @@ import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.store.ToolkitStore;
 
+import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.util.ToolkitIDGenerator;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.io.Serializable;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 
-public class ToolkitBarrierImpl implements ToolkitBarrier {
+public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
   private final String                                    name;
   private final ToolkitStore<String, ToolkitBarrierState> barriers;
   private final int                                       parties;
   private final ToolkitLock                               lock;
   private final long                                      uid;
   private final ToolkitIDGenerator                        longIdGenerator;
+  private final ToolkitSubtypeStatusImpl                  status;
+  private final AtomicInteger                             currentRejoinCount = new AtomicInteger();
+  private final ToolkitIDGenerator                        barrierIdGenerator;
 
   public ToolkitBarrierImpl(String name, int parties, ToolkitStore<String, ToolkitBarrierState> clusteredMap,
                             ToolkitIDGenerator barrierIdGenerator) {
     this.barriers = clusteredMap;
     this.name = name;
     this.parties = parties;
+    this.barrierIdGenerator = barrierIdGenerator;
     lock = barriers.createLockForKey(name).writeLock();
     ToolkitBarrierState state = clusteredMap.get(name);
     if (state == null) {
@@ -46,22 +53,51 @@ public class ToolkitBarrierImpl implements ToolkitBarrier {
                                                                                 + state.getParties()); }
     this.uid = state.getUid();
     this.longIdGenerator = barrierIdGenerator;
+    status = new ToolkitSubtypeStatusImpl();
+    currentRejoinCount.set(status.getCurrentRejoinCount());
   }
 
   @Override
   public boolean isDestroyed() {
+    return getInternalStateOrNullIfDestroyed() == null;
+  }
+
+  private ToolkitBarrierState getInternalStateOrNullIfDestroyed() {
     ToolkitBarrierState state = barriers.get(name);
-    if (state == null || state.getUid() != uid) { return true; }
-    return false;
+    if (state == null) {
+      if (currentRejoinCount.get() != status.getCurrentRejoinCount()) {
+        // rejoin happened
+        currentRejoinCount.set(status.getCurrentRejoinCount());
+        state = new ToolkitBarrierState(name, parties, 0, false, barrierIdGenerator.getId());
+        barriers.put(name, state);
+        return state;
+      } else {
+        // no state found, rejoin also didn't happen
+        return null;
+      }
+    } else if (state.getUid() != uid) {
+      // state found, but created with different uid -> destroyed
+      return null;
+    } else {
+      return state;
+    }
   }
 
   private ToolkitBarrierState getInternalState() {
-    ToolkitBarrierState state = barriers.get(name);
-    if (state == null || state.getUid() != uid) { throw new IllegalStateException(
-                                                                                  "ClusteredBarrier "
-                                                                                      + name
-                                                                                      + " is already destroyed and no longer exist"); }
-    return state;
+    ToolkitBarrierState rv = getInternalStateOrNullIfDestroyed();
+    if (rv == null) { throw new IllegalStateException("ToolkitBarrier with name '" + name
+                                                      + "' is already destroyed and no longer exists!"); }
+    return rv;
+  }
+
+  @Override
+  public void rejoinStarted() {
+    //
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    status.increaseRejoinCount();
   }
 
   @Override

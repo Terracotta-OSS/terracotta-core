@@ -3,10 +3,12 @@
  */
 package com.terracotta.toolkit.collections;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -45,13 +47,10 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public void rejoinCompleted() {
-    ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin != null) {
+    if (!isDestroyed()) {
+      ToolkitMapImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.MAP, null);
+      Preconditions.checkNotNull(afterRejoin);
       this.map = afterRejoin;
-    } else {
-      // didn't find backing clustered object after rejoin - must have been destroyed
-      // so apply destroy locally
-      applyDestroy();
     }
   }
 
@@ -231,7 +230,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     private void exceptionIfDestroyedOrRejoined() {
       if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
       if (this.rejoinCount != DestroyableToolkitMap.this.currentRejoinCount) { throw new RejoinException(
-                                                                                                  "This subType is not usable anymore afer rejoin!"); }
+                                                                                                         "This subType is not usable anymore afer rejoin!"); }
     }
 
   }
