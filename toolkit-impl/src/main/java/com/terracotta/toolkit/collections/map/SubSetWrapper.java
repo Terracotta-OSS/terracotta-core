@@ -14,7 +14,7 @@ class SubSetWrapper<E> implements Set<E> {
   private final ToolkitSubtypeStatus status;
   private final int                  rejoinCount;
   private final String               superTypeName;
-  private final ToolkitObjectType    superTypeClassName;
+  private final ToolkitObjectType    toolkitObjectType;
 
   public SubSetWrapper(Set<E> set, ToolkitSubtypeStatus status, String name, ToolkitObjectType objectType) {
     super();
@@ -22,99 +22,99 @@ class SubSetWrapper<E> implements Set<E> {
     this.set = set;
     this.rejoinCount = status.getCurrentRejoinCount();
     this.superTypeName = name;
-    superTypeClassName = objectType;
+    toolkitObjectType = objectType;
   }
 
   @Override
   public int size() {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.size();
   }
 
   @Override
   public boolean isEmpty() {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.isEmpty();
   }
 
   @Override
   public boolean contains(Object o) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.contains(o);
   }
 
   @Override
   public Iterator iterator() {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.iterator();
   }
 
   @Override
   public Object[] toArray() {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.toArray();
   }
 
   @Override
   public Object[] toArray(Object[] a) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.toArray(a);
   }
 
   @Override
   public boolean add(E e) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.add(e);
   }
 
   @Override
   public boolean remove(Object o) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.remove(o);
   }
 
   @Override
   public boolean containsAll(Collection c) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.containsAll(c);
   }
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.addAll(c);
   }
 
   @Override
   public boolean removeAll(Collection c) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.removeAll(c);
   }
 
   @Override
   public boolean retainAll(Collection c) {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     return set.retainAll(c);
   }
 
   @Override
   public void clear() {
-    checkDestryoedOrRejoined();
+    checkDestroyedOrRejoined();
     set.clear();
   }
 
-  private void checkDestryoedOrRejoined() {
+  private void checkDestroyedOrRejoined() {
     if (status.isDestroyed()) { throw new IllegalStateException(
                                                                 "The object "
                                                                     + this.superTypeName
-                                                                    + " of type"
-                                                                    + this.superTypeClassName
+                                                                    + " of type "
+                                                                    + this.toolkitObjectType
                                                                     + "  has already been destroyed, all SubTypes associated with are unusable "); }
     if (this.rejoinCount != status.getCurrentRejoinCount()) { throw new RejoinException(
                                                                                         "The SubTypes associated with "
                                                                                             + this.superTypeName
                                                                                             + " of type "
-                                                                                            + this.superTypeClassName
+                                                                                            + this.toolkitObjectType
                                                                                             + " are not usable anymore afer rejoin!"); }
   }
 
