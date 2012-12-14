@@ -41,6 +41,7 @@ import com.tc.config.schema.messaging.http.GroupIDMapServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.exception.TCRuntimeException;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
@@ -73,6 +74,8 @@ import com.tc.servlets.L1ReconnectPropertiesServlet;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
+import com.tc.util.Conversion.MetricsFormatException;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.Offheap;
 
@@ -476,7 +479,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       if (updateCheckEnabled()) {
-        UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays());
+        UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays(), getMaxDataSize());
       }
 
       String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
@@ -484,6 +487,19 @@ public class TCServerImpl extends SEDA implements TCServer {
         logger.info("Server started as " + l2Identifier);
       }
     }
+  }
+
+  private long getMaxDataSize() {
+    long maxOffheap = 0L;
+    Offheap offHeapConfig = configurationSetupManager.dsoL2Config().offHeapConfig();
+    if (offHeapConfig.getEnabled()) {
+      try {
+        maxOffheap = Conversion.memorySizeAsLongBytes(offHeapConfig.getMaxDataSize());
+      } catch (MetricsFormatException e) {
+        throw new TCRuntimeException("Problem converting max data size: ", e);
+      }
+    }
+    return maxOffheap;
   }
 
   private boolean updateCheckEnabled() {

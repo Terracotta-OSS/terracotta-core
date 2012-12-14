@@ -9,12 +9,16 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.terracotta.license.License;
+import org.terracotta.license.LicenseException;
 
+import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -33,18 +37,26 @@ class UpdateCheckAction extends TimerTask {
   private static String         UPDATE_PROPERTIES_URL = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
   private static ProductInfo    productInfo           = ProductInfo.getInstance();
 
-  private TCServer              server;
-  private long                  periodMillis;
+  private final TCServer        server;
+  private final long            periodMillis;
+  private final long            maxOffheap;
+  private License               license;
 
-  UpdateCheckAction(TCServer server, int periodDays) {
+  UpdateCheckAction(TCServer server, int periodDays, long maxOffheap) {
     super();
     this.server = server;
     periodMillis = checkPeriodMillis(periodDays);
+    this.maxOffheap = maxOffheap;
     silenceHttpClientLoggers();
+    try {
+      license = LicenseManager.getLicense();
+    } catch (LicenseException e) {
+      // ignore, no license given
+    }
   }
 
-  public static void start(TCServer server, int periodDays) {
-    UpdateCheckAction action = new UpdateCheckAction(server, periodDays);
+  public static void start(TCServer server, int periodDays, long maxOffheap) {
+    UpdateCheckAction action = new UpdateCheckAction(server, periodDays, maxOffheap);
     new Timer("Update Checker", true).schedule(action, 0, action.getCheckPeriodMillis());
   }
 
@@ -57,34 +69,45 @@ class UpdateCheckAction extends TimerTask {
     Logger.getLogger("httpclient.wire").setLevel(Level.OFF);
   }
 
-  public URL constructCheckURL() throws MalformedURLException {
+  public URL constructCheckURL() throws MalformedURLException, UnsupportedEncodingException {
     String propsUrl = System.getProperty("terracotta.update-checker.url", UPDATE_PROPERTIES_URL);
     StringBuffer sb = new StringBuffer(propsUrl);
 
     sb.append(UPDATE_PROPERTIES_URL.equals(propsUrl) ? '&' : '?');
-
     sb.append("id=");
-    sb.append(URLEncoder.encode(Integer.toString(getIpAddress())));
-    sb.append("&os-name=");
-    sb.append(URLEncoder.encode(System.getProperty("os.name")));
-    sb.append("&jvm-name=");
-    sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
-    sb.append("&jvm-version=");
-    sb.append(URLEncoder.encode(System.getProperty("java.version")));
-    sb.append("&platform=");
-    sb.append(URLEncoder.encode(System.getProperty("os.arch")));
+    sb.append(encode(Integer.toString(getIpAddress())));
     sb.append("&tc-version=");
-    sb.append(URLEncoder.encode(productInfo.version()));
+    sb.append(encode(productInfo.version()));
     sb.append("&tc-product=");
-    sb.append(productInfo.isOpenSource() ? "oss" : "ee");
+    if (license != null) {
+      sb.append(encode(license.product() + " " + productInfo.version()));
+      sb.append("&max-client-count=");
+      sb.append(encode(Integer.toString(license.maxClientCount())));
+      sb.append("&storage-size=");
+      sb.append(encode(Long.toString(maxOffheap)));
+      sb.append("&type=");
+      sb.append(encode(license.type()));
+      sb.append("&number=");
+      sb.append(encode(license.number()));
+    } else {
+      sb.append(encode("BigMemory Max " + productInfo.version()));
+    }
+    sb.append("&source=").append(encode("BigMemory L2"));
     sb.append("&uptime-secs=");
     sb.append((System.currentTimeMillis() - server.getStartTime()) / 1000);
-    sb.append("&source=server");
 
     if (productInfo.isPatched()) {
       sb.append("&patch=");
-      sb.append(productInfo.patchLevel());
+      sb.append(encode(productInfo.patchLevel()));
     }
+    sb.append("&os-name=");
+    sb.append(encode(System.getProperty("os.name")));
+    sb.append("&jvm-name=");
+    sb.append(encode(System.getProperty("java.vm.name")));
+    sb.append("&jvm-version=");
+    sb.append(encode(System.getProperty("java.version")));
+    sb.append("&platform=");
+    sb.append(encode(System.getProperty("os.arch")));
 
     return new URL(sb.toString());
   }
@@ -171,6 +194,7 @@ class UpdateCheckAction extends TimerTask {
     showMessage("Update Checker: Next check at " + new Date(System.currentTimeMillis() + periodMillis));
   }
 
+  @Override
   public void run() {
     doUpdateCheck();
   }
@@ -186,5 +210,9 @@ class UpdateCheckAction extends TimerTask {
     }
 
     return nextCheckTime;
+  }
+
+  private static String encode(String param) throws UnsupportedEncodingException {
+    return URLEncoder.encode(param, "UTF-8");
   }
 }
