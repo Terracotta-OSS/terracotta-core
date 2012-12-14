@@ -10,14 +10,10 @@ import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 
-import com.tc.abortable.AbortableOperationManager;
-import com.tc.util.Util;
-import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.AsyncToolkitInitializer;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> implements NonStopDelegateProvider<T> {
@@ -25,43 +21,22 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
   private final NonStopConfigurationRegistry   nonStopConfigRegistry;
   private final NonstopTimeoutBehaviorResolver behaviorResolver;
   private final String                         toolkitObjectName;
-  private final FutureTask<ToolkitInternal>    toolkitDelegateFutureTask;
+  private final AsyncToolkitInitializer        asyncToolkitInitializer;
   private final AtomicReference<T>             delegate  = new AtomicReference<T>();
-  private final AbortableOperationManager      abortableOperationManager;
 
   private final ConcurrentMap<Wrapper, T>      behaviors = new ConcurrentHashMap<Wrapper, T>();
 
-  public AbstractNonStopDelegateProvider(FutureTask<ToolkitInternal> toolkitDelegateFutureTask,
-                                         AbortableOperationManager abortableOperationManager,
+  public AbstractNonStopDelegateProvider(AsyncToolkitInitializer asyncToolkitInitializer,
                                          NonStopConfigRegistryImpl nonStopConfigRegistry,
                                          NonstopTimeoutBehaviorResolver behaviorResolver, String toolkitObjectName) {
-    this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
-    this.abortableOperationManager = abortableOperationManager;
+    this.asyncToolkitInitializer = asyncToolkitInitializer;
     this.nonStopConfigRegistry = nonStopConfigRegistry;
     this.behaviorResolver = behaviorResolver;
     this.toolkitObjectName = toolkitObjectName;
   }
 
   protected ToolkitInternal getToolkit() {
-    boolean interrupted = false;
-    try {
-      while (true) {
-        try {
-          return toolkitDelegateFutureTask.get();
-        } catch (InterruptedException e) {
-          handleInterruptedException(e);
-          interrupted = true;
-        } catch (ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    } finally {
-      Util.selfInterruptIfNeeded(interrupted);
-    }
-  }
-
-  private void handleInterruptedException(InterruptedException e) {
-    if (abortableOperationManager.isAborted()) { throw new ToolkitAbortableOperationException(); }
+    return this.asyncToolkitInitializer.getToolkit();
   }
 
   @Override

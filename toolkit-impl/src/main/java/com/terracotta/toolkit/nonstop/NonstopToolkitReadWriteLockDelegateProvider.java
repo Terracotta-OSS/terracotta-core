@@ -5,21 +5,17 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
-import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.abortable.AbortableOperationManager;
-
-import java.util.concurrent.FutureTask;
+import com.terracotta.toolkit.AsyncToolkitInitializer;
 
 public class NonstopToolkitReadWriteLockDelegateProvider extends AbstractNonStopDelegateProvider<ToolkitReadWriteLock> {
 
-  private final String        name;
+  private final String name;
 
-  public NonstopToolkitReadWriteLockDelegateProvider(AbortableOperationManager abortableOperationManager,
-                                             NonStopConfigRegistryImpl nonStopConfigRegistry,
-                                             NonstopTimeoutBehaviorResolver behaviorResolver,
-                                                     FutureTask<ToolkitInternal> toolkitDelegateFutureTask, String name) {
-    super(toolkitDelegateFutureTask, abortableOperationManager, nonStopConfigRegistry, behaviorResolver, name);
+  public NonstopToolkitReadWriteLockDelegateProvider(NonStopConfigRegistryImpl nonStopConfigRegistry,
+                                                     NonstopTimeoutBehaviorResolver behaviorResolver,
+                                                     AsyncToolkitInitializer asyncToolkitInitializer, String name) {
+    super(asyncToolkitInitializer, nonStopConfigRegistry, behaviorResolver, name);
     this.name = name;
   }
 
