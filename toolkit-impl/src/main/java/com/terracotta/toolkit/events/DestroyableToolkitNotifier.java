@@ -3,10 +3,12 @@
  */
 package com.terracotta.toolkit.events;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 
+import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
@@ -43,17 +45,13 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public void rejoinCompleted() {
-    ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name);
-
-    if (afterRejoin != null) {
+    if (!isDestroyed()) {
+      ToolkitNotifierImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.NOTIFIER, null);
+      Preconditions.checkNotNull(afterRejoin);
       this.notifier = afterRejoin;
       if (listeners.size() > 0) {
         notifier.addNotificationListener(this);
       }
-    } else {
-      // didn't find backing clustered object after rejoin - must have been destroyed
-      // apply destroy locally
-      applyDestroy();
     }
   }
 
