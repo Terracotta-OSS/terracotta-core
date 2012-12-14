@@ -90,7 +90,6 @@ public class ClientChannelEventController {
     ChannelID channelID = event.getChannelID();
     String msg = (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) ? "Channel " + channelID + " closed."
         : "Reconnection rejected event fired, caused by " + channelID;
-    CONSOLE_LOGGER.info(msg);
     DSO_LOGGER.info(msg);
   }
 
