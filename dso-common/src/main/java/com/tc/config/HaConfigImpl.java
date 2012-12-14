@@ -51,7 +51,7 @@ public class HaConfigImpl implements HaConfig {
 
     Set<Node> nodes = makeAllNodes();
     this.thisNode = makeThisNode();
-    thisGroup = getThisGroupFrom(this.groups, this.configSetupManager.getActiveServerGroupForThisL2());
+    this.thisGroup = getThisGroupFrom(this.groups, this.configSetupManager.getActiveServerGroupForThisL2());
     this.thisGroupID = thisGroup.getGroupId();
 
     this.nodeStore = new NodesStoreImpl(nodes, getNodeNamesForThisGroup(), buildServerGroupIDMap(),
