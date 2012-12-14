@@ -81,7 +81,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback,
@@ -143,7 +142,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                                }
 
                                                                              };
-  private final Semaphore                       creationSemaphore            = new Semaphore(1, true);
   private final RootsHolder                     rootsHolder;
   private final AbortableOperationManager       abortableOperationManager;
 
@@ -1269,29 +1267,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
-    canCreate();
-    try {
-      reserveObjectIds(pojos.size(), gid);
+    reserveObjectIds(pojos.size(), gid);
 
-      synchronized (this) {
-        waitUntilRunningAbortable();
-        final List tcObjects = new ArrayList(pojos.size());
-        for (final Iterator i = pojos.iterator(); i.hasNext();) {
-          tcObjects.add(basicCreateIfNecessary(i.next(), gid));
-        }
-        return tcObjects;
+    synchronized (this) {
+      waitUntilRunningAbortable();
+      final List tcObjects = new ArrayList(pojos.size());
+      for (final Iterator i = pojos.iterator(); i.hasNext();) {
+        tcObjects.add(basicCreateIfNecessary(i.next(), gid));
       }
-    } finally {
-      allowCreation();
+      return tcObjects;
     }
-  }
-
-  private void allowCreation() {
-    this.creationSemaphore.release();
-  }
-
-  private void canCreate() {
-    this.creationSemaphore.acquireUninterruptibly();
   }
 
   private void reserveObjectIds(final int size, final GroupID gid) {

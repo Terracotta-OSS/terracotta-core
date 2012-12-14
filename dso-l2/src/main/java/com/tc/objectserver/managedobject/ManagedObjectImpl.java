@@ -30,7 +30,6 @@ import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.TCCollections;
-
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.PrintWriter;

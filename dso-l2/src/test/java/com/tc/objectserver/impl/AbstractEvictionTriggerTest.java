@@ -19,7 +19,6 @@ import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Collections;
-import java.util.Map;
 
 /**
  *
@@ -60,7 +59,7 @@ public class AbstractEvictionTriggerTest {
       @Override
       public ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map,
                                                             ClientObjectReferenceSet clients) {
-        return new ServerMapEvictionContext(this, processSample(map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet)), className, map.getCacheName());
+        return createEvictionContext(className, map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
       }
     };
   }

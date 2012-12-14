@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
@@ -17,6 +18,7 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -31,6 +33,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
   private volatile ToolkitCacheInternal<K, V> localDelegate;
   private final String                        name;
+  private final ToolkitSubtypeStatusImpl      status;
 
   public ToolkitCacheImpl(ToolkitObjectFactory factory, ToolkitInternal toolkit, String name,
                           AggregateServerMap<K, V> delegate) {
@@ -40,12 +43,14 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     this.activeDelegate = aggregateServerMap;
     this.localDelegate = aggregateServerMap;
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
+    status = new ToolkitSubtypeStatusImpl();
   }
 
   @Override
   public void rejoinStarted() {
     this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
     aggregateServerMap.rejoinStarted();
+    status.increaseRejoinCount();
   }
 
   @Override
@@ -58,6 +63,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void applyDestroy() {
     this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
     this.localDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
+    status.setDestroyed();
   }
 
   @Override
@@ -147,7 +153,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Set<K> keySet() {
-    return activeDelegate.keySet();
+    return new SubSetWrapper(activeDelegate.keySet(), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
@@ -157,7 +163,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Set<java.util.Map.Entry<K, V>> entrySet() {
-    return activeDelegate.entrySet();
+    return new SubSetWrapper(activeDelegate.entrySet(), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override

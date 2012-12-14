@@ -5,24 +5,20 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
-import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.abortable.AbortableOperationManager;
-
-import java.util.concurrent.FutureTask;
+import com.terracotta.toolkit.AsyncToolkitInitializer;
 
 public class NonstopToolkitLockDelegateProvider extends AbstractNonStopDelegateProvider<ToolkitLock> {
 
-  private final String        name;
+  private final String                  name;
   private final ToolkitLockTypeInternal lockType;
 
-  public NonstopToolkitLockDelegateProvider(AbortableOperationManager abortableOperationManager,
-                                             NonStopConfigRegistryImpl nonStopConfigRegistry,
-                                             NonstopTimeoutBehaviorResolver behaviorResolver,
-                                            FutureTask<ToolkitInternal> toolkitDelegateFutureTask, String name,
+  public NonstopToolkitLockDelegateProvider(NonStopConfigRegistryImpl nonStopConfigRegistry,
+                                            NonstopTimeoutBehaviorResolver behaviorResolver,
+                                            AsyncToolkitInitializer asyncToolkitInitializer, String name,
                                             ToolkitLockTypeInternal lockType) {
-    super(toolkitDelegateFutureTask, abortableOperationManager, nonStopConfigRegistry, behaviorResolver, name);
+    super(asyncToolkitInitializer, nonStopConfigRegistry, behaviorResolver, name);
     this.name = name;
     this.lockType = lockType;
   }

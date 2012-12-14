@@ -8,7 +8,6 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
-
 import java.util.concurrent.Callable;
 
 /**
@@ -44,13 +43,21 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
     @Override
     public SampledRateCounter call() throws Exception {
         SampledRateCounter counter = new AggregateSampleRateCounter();
-        for (final ObjectID mapID : workingSet) {
-            if ( stopped ) {
-                return null;
+        while (!workingSet.isEmpty()) {
+            ObjectIDSet rollover = new ObjectIDSet();
+            for (final ObjectID mapID : workingSet) {
+                if ( stopped ) {
+                    return counter;
+                }
+                current = new PeriodicEvictionTrigger(objectManager, mapID,elementBasedTTIorTTL);
+                evictor.doEvictionOn(current);
+                counter.increment(current.getCount(),current.getRuntimeInMillis());
+                if ( current.filterRatio() > .66f ) {
+                    rollover.add(mapID);
+                }
             }
-            current = new PeriodicEvictionTrigger(objectManager, mapID,elementBasedTTIorTTL);
-            evictor.doEvictionOn(current);
-            counter.increment(current.getCount(),current.getRuntimeInMillis());
+            workingSet.clear();
+            workingSet.addAll(rollover);
         }
         return counter;
     }

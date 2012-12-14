@@ -27,12 +27,13 @@ public class NonStopManagerImpl implements NonStopManager {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("begin nonstop operation with timeout :" + timeout + "for Thread : " + Thread.currentThread());
     }
+
     if (!timerTasks.containsKey(Thread.currentThread())) {
       abortableOperationManager.begin();
       NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread());
       timerTasks.put(Thread.currentThread(), task);
       // Do not start timer for negative timeouts.
-      if (timeout > 0) {
+      if (timeout > 0 && (timeout + System.currentTimeMillis()) > 0) {
         timer.schedule(task, timeout);
       }
     } else {

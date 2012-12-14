@@ -37,6 +37,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -698,7 +699,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     } catch (ServiceExecutionException see) {
       throw see;
     } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", e);
+      throw new ServiceExecutionException("error making JMX call", getRootCause(e));
     } finally {
       if (jmxConnector != null) {
         try {
@@ -708,6 +709,18 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
     }
+  }
+
+  private static Throwable getRootCause(Throwable t) {
+    Throwable last = null;
+    while (t != null) {
+      last = t;
+      t = t.getCause();
+    }
+    if (last instanceof InvocationTargetException) {
+      last = ((InvocationTargetException)last).getTargetException();
+    }
+    return last;
   }
 
   @Override

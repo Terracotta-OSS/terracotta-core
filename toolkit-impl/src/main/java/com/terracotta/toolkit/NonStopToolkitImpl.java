@@ -32,7 +32,6 @@ import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.platform.PlatformService;
-import com.tc.util.Util;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonStopClusterListener;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
@@ -47,11 +46,9 @@ import com.terracotta.toolkit.nonstop.NonstopToolkitLockDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonstopToolkitReadWriteLockDelegateProvider;
 
 import java.lang.reflect.Proxy;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 public class NonStopToolkitImpl implements ToolkitInternal {
-  private final FutureTask<ToolkitInternal>    toolkitDelegateFutureTask;
   protected final NonStopManagerImpl           nonStopManager;
   protected final NonStopConfigRegistryImpl    nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
@@ -59,9 +56,9 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   private final AbortableOperationManager      abortableOperationManager;
   protected final NonStopClusterListener       nonStopClusterListener;
   private final NonStop                        nonStopFeature;
+  private final AsyncToolkitInitializer        asyncToolkitInitializer;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
-    this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
     abortableOperationManager = platformService.getAbortableOperationManager();
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
     this.nonStopClusterListener = new NonStopClusterListener(toolkitDelegateFutureTask, abortableOperationManager);
@@ -69,24 +66,11 @@ public class NonStopToolkitImpl implements ToolkitInternal {
                                               NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
                                                   .toArray(new ToolkitObjectType[0]));
     this.nonStopFeature = new NonStopImpl(this);
+    this.asyncToolkitInitializer = new AsyncToolkitInitializer(toolkitDelegateFutureTask, abortableOperationManager);
   }
 
   private ToolkitInternal getInitializedToolkit() {
-    ToolkitInternal toolkitInternal = null;
-    boolean interrupted = false;
-
-    while (toolkitInternal == null) {
-      try {
-        toolkitInternal = toolkitDelegateFutureTask.get();
-      } catch (InterruptedException e) {
-        interrupted = true;
-      } catch (ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    Util.selfInterruptIfNeeded(interrupted);
-    return toolkitInternal;
+    return asyncToolkitInitializer.getToolkit();
   }
 
   @Override
@@ -96,12 +80,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getList(name, klazz); }
 
     NonStopDelegateProvider<ToolkitList<E>> nonStopDelegateProvider = new NonstopToolkitListDelegateProvider(
-                                                                                                             abortableOperationManager,
-                                                                                                             nonStopConfigManager,
-                                                                                                             nonstopTimeoutBehaviorFactory,
-                                                                                                             toolkitDelegateFutureTask,
-                                                                                                             name,
-                                                                                                             klazz);
+
+    nonStopConfigManager, nonstopTimeoutBehaviorFactory, asyncToolkitInitializer, name, klazz);
     return (ToolkitList<E>) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitList.class },
                           new NonStopInvocationHandler<ToolkitList<E>>(nonStopManager, nonStopDelegateProvider,
@@ -116,13 +96,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getStore(name, configuration, klazz); }
 
     NonStopDelegateProvider<ToolkitStore<String, V>> nonStopDelegateProvider = new NonStopToolkitStoreDelegateProvider(
-                                                                                                                       abortableOperationManager,
-                                                                                                                       nonStopConfigManager,
-                                                                                                                       nonstopTimeoutBehaviorFactory,
-                                                                                                                       toolkitDelegateFutureTask,
-                                                                                                                       name,
-                                                                                                                       klazz,
-                                                                                                                       configuration);
+
+    nonStopConfigManager, nonstopTimeoutBehaviorFactory, asyncToolkitInitializer, name, klazz, configuration);
     return (ToolkitStore<String, V>) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
             ValuesResolver.class }, new NonStopInvocationHandler<ToolkitStore<String, V>>(nonStopManager,
@@ -173,11 +148,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getReadWriteLock(name); }
 
     NonStopDelegateProvider<ToolkitReadWriteLock> nonStopDelegateProvider = new NonstopToolkitReadWriteLockDelegateProvider(
-                                                                                                                            abortableOperationManager,
-                                                                                                                            nonStopConfigManager,
-                                                                                                                            nonstopTimeoutBehaviorFactory,
-                                                                                                                            toolkitDelegateFutureTask,
-                                                                                                                            name);
+
+    nonStopConfigManager, nonstopTimeoutBehaviorFactory, asyncToolkitInitializer, name);
     return (ToolkitReadWriteLock) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitReadWriteLock.class },
                           new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager, nonStopDelegateProvider,
@@ -221,13 +193,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getCache(name, configuration, klazz); }
 
     NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
-                                                                                                                               abortableOperationManager,
-                                                                                                                               nonStopConfigManager,
-                                                                                                                               nonstopTimeoutBehaviorFactory,
-                                                                                                                               toolkitDelegateFutureTask,
-                                                                                                                               name,
-                                                                                                                               klazz,
-                                                                                                                               configuration);
+
+    nonStopConfigManager, nonstopTimeoutBehaviorFactory, asyncToolkitInitializer, name, klazz, configuration);
     return (ToolkitCache<String, V>) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
                               ValuesResolver.class },
@@ -279,12 +246,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getLock(name); }
 
     NonStopDelegateProvider<ToolkitLock> nonStopDelegateProvider = new NonstopToolkitLockDelegateProvider(
-                                                                                                          abortableOperationManager,
-                                                                                                          nonStopConfigManager,
-                                                                                                          nonstopTimeoutBehaviorFactory,
-                                                                                                          toolkitDelegateFutureTask,
-                                                                                                          name,
-                                                                                                          lockType);
+
+    nonStopConfigManager, nonstopTimeoutBehaviorFactory, asyncToolkitInitializer, name, lockType);
     return (ToolkitLock) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitLock.class },
                                                 new NonStopInvocationHandler<ToolkitLock>(nonStopManager,
                                                                                           nonStopDelegateProvider,

@@ -20,7 +20,7 @@ public enum EvictionThreshold {
     SIXTEEN("16G",16l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024),
     THIRTYTWO("32G",32l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024),
     SIXTYFOUR("64G",64l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024),
-    BIG("BIG MEMORY",Long.MAX_VALUE * 1024 * 1024 * 1024, 16l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024);
+    BIG("BIG MEMORY",Long.MAX_VALUE, 16l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024);
     
     private final String name;
     private final long maxSize;

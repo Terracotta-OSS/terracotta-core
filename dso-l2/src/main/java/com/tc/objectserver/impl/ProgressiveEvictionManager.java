@@ -48,7 +48,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +158,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 Thread t = new Thread(evictionGrp, r, "Expiration Thread - " + count++);
                 return t;
             }
-        });
+        },new ThreadPoolExecutor.DiscardPolicy());
         try {
             Runnable rb = new Runnable() {
 
@@ -272,14 +271,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             this.objectManager.releaseReadOnly(mo);
             
             if (context != null) {
+                int size = context.getRandomSamples().size();
                 if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
-                    int size = context.getRandomSamples().size();
                     expirationStats.increment(size);
-                    if ( size > 1000 ) {
-                        scheduleEvictionTrigger(((PeriodicEvictionTrigger)triggerParam).duplicate());
-                    }
                 } else {
-                    evictionStats.increment(context.getRandomSamples().size());
+                    evictionStats.increment(size);
                 }
                 this.evictorSink.add(context);
             }
@@ -289,7 +285,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 logger.debug(triggerParam);
             }
         }
-
+       
         return true;
     }
 
@@ -328,7 +324,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         return new GroupFuture<SampledRateCounter>(push);
     }
-
+    
     private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
         if (!PersistentCollectionsUtil.isEvictableMapType(state.getType())) {
             throw new AssertionError(
@@ -355,7 +351,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
         
     private void print(final String name, final Future<SampledRateCounter> counter) {
-        try {
             agent.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -376,9 +371,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     }
                 }
             });
-        } catch ( RejectedExecutionException reject ) {
-            logger.debug("can't print logging", reject);
-        }
     }
 
     class Responder implements ResourceEventListener {

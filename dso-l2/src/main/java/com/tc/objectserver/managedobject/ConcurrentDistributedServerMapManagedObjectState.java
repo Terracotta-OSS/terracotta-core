@@ -64,6 +64,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   // This is a transient field tracking the status of the eviction for this CDSM
   private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+  private Iterator<Object> evictionIterator = null;
 
   private boolean        invalidateOnChange;
   private int            maxTTISeconds;
@@ -115,10 +116,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
     writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, dsoLockType);
-    writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTISeconds));
-    writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTLSeconds));
-    writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
-    writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, Boolean.valueOf(this.invalidateOnChange));
+    writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, this.maxTTISeconds);
+    writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, this.maxTTLSeconds);
+    writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, this.targetMaxTotalCount);
+    writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, this.invalidateOnChange);
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
     writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
     writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, compressionEnabled);
@@ -346,9 +347,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
-    final ConcurrentDistributedServerMapManagedObjectState cdmMos = new ConcurrentDistributedServerMapManagedObjectState(
-                                                                                                                         in, factory);
-    return cdmMos;
+    return new ConcurrentDistributedServerMapManagedObjectState(in, factory);
   }
 
   /****************************************************************************
@@ -398,8 +397,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 
-  // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
-  // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   @Override
   public Map<Object, ObjectID> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
       if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
@@ -413,11 +410,17 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final Random r = new Random();
     final int size = getSize();
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
-    for (final Iterator<Object> i = this.references.keySet().iterator(); samples.size() < count && i.hasNext();) {
-      final Object k = i.next();
+    for (int i = 0; samples.size() < count && i < size; i++) {
+      if (evictionIterator == null || !evictionIterator.hasNext()) {
+        evictionIterator = references.keySet().iterator();
+      }
+      final Object k = evictionIterator.next();
+      if ( k == null ) {
+          throw new AssertionError("key is not null");
+      }
       if (r.nextInt(100) < chance) {
         Object value = references.get(k);
-        if (serverMapEvictionClientObjectRefSet.contains(value)) {
+        if (value == null || serverMapEvictionClientObjectRefSet.contains(value)) {
           continue;
         }
         samples.put(k, (ObjectID)value);
@@ -429,7 +432,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
         final Object k = i.next();
         final Object v = references.get(k);
-        if (serverMapEvictionClientObjectRefSet.contains(v)) {
+        if (v == null || serverMapEvictionClientObjectRefSet.contains(v)) {
           continue;
         }
         samples.put(k, (ObjectID)v);

@@ -36,6 +36,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private boolean dumpLive = false;
     private int count = 0;
     private int sampled = 0;
+    private int sampleAmount = 100;
     private int filtered = 0;
     private int alive = 0;
     private int expired = 0;
@@ -55,7 +56,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
     
     public PeriodicEvictionTrigger duplicate() {
-        return new PeriodicEvictionTrigger(mgr,getId(),runAlways);
+        PeriodicEvictionTrigger nt = new PeriodicEvictionTrigger(mgr,getId(),runAlways);
+        nt.sampleAmount = sampleAmount - 5;
+        if ( nt.sampleAmount <= 0 ) {
+            nt.sampleAmount = 1;
+        }
+        return nt;
     }
     
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, ObjectIDSet exclude, boolean runAlways) {
@@ -68,7 +74,11 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     public ObjectIDSet getExclusionList() {
         return passList;
     }
-    
+
+    @Override
+    public int getCount() {
+        return filtered;
+    }
     
     protected ObjectManager getObjectManager() {
         return mgr;
@@ -80,12 +90,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public boolean startEviction(EvictableMap map) {
+        if ( stop ) {
+            return false;
+        }
         tti = map.getTTISeconds();
         ttl = map.getTTLSeconds();
         if ( tti > 0 || 
             ttl > 0 || 
                 runAlways ||
                 map.getSize() > map.getMaxTotalCount() ) {
+            
             return super.startEviction(map);
         }
         return false;
@@ -104,33 +118,38 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
-
-        if ( stop ) {
-            return null;
-        }
         
-        Map<Object, ObjectID> grabbed = map.getRandomSamples(samples, clients);
+        Map<Object, ObjectID> grabbed = ( !stop ) ?
+            map.getRandomSamples(samples, clients) :
+            Collections.<Object,ObjectID>emptyMap();
+
         sampled = grabbed.size();
         
         if ( dumpLive ) {
             overflow += grabbed.size();
-        } else {
-            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds());
-            filtered += grabbed.size();
         }
-
-        return new PeriodicServerMapEvictionContext(this, processSample(grabbed), className, map.getCacheName());
+        
+        return createEvictionContext(className, grabbed);
     }
-      
+
+    @Override
+    protected ServerMapEvictionContext createEvictionContext(String className, Map<Object, ObjectID> sample) {
+        ServerMapEvictionContext cxt = super.createEvictionContext(className, sample);
+        if ( cxt == null ) {
+            return null;
+        }
+        return new PeriodicServerMapEvictionContext(cxt);
+    }
+
     protected int calculateSampleCount(int max, EvictableMap ev) {
         count = ev.getSize();
 
-        sampled = count/15;
+        sampled = count/sampleAmount;
         
         if ( sampled < 100 ) {
             sampled = 100;
-        } else if ( sampled > 100000 ) {
-            sampled = 100000;
+        } else if ( sampled > 25000 ) {
+            sampled = 25000;
         }
         
         if ( max > 0 && count - max > 0 ) {
@@ -143,6 +162,9 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     
     
     public float filterRatio() {
+        if ( expired == 0 ) {
+            return 0f;
+        }
         return expired * 1.0f / expired + excluded + alive;
     }
     
@@ -267,16 +289,18 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
     
     class PeriodicServerMapEvictionContext extends ServerMapEvictionContext {
+        ServerMapEvictionContext root;
         Map<Object, ObjectID> cached;
         
-        public PeriodicServerMapEvictionContext(EvictionTrigger trigger, Map samples, String className, String cacheName) {
-            super(trigger,  tti, ttl, samples, className, cacheName);
+        public PeriodicServerMapEvictionContext(ServerMapEvictionContext root) {
+            super(PeriodicEvictionTrigger.this,  root.getTTISeconds(), root.getTTLSeconds(), root.getRandomSamples(), root.getClassName(), root.getCacheName());
         }
 
         @Override
         public Map<Object, ObjectID> getRandomSamples() {
             if ( cached == null ) {
                 cached = filter(super.getRandomSamples(),tti,ttl);
+                filtered = cached.size();
             }
             return cached;
         }

@@ -197,16 +197,17 @@ public class ServerMapEvictionEngine {
   }
 
   void evictFrom(final ObjectID oid, final Map candidates, final String className, final String cacheName) {
-    if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
-    }
-    
+
     try {
         if ( candidates.isEmpty() ) {
           notifyEvictionCompletedFor(oid);
           return;
         }
 
+        if (EVICTOR_LOGGING) {
+          logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
+        }
+    
         final NodeID localNodeID = this.groupManager.getLocalNodeID();
         final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
         final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
