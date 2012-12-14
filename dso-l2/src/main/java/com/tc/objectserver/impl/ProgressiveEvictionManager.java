@@ -271,14 +271,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             this.objectManager.releaseReadOnly(mo);
             
             if (context != null) {
+                int size = context.getRandomSamples().size();
                 if ( triggerParam instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)triggerParam).isExpirationOnly() ) {
-                    int size = context.getRandomSamples().size();
                     expirationStats.increment(size);
-                    if ( size > 1000 ) {
-                        scheduleEvictionTrigger(((PeriodicEvictionTrigger)triggerParam).duplicate());
-                    }
                 } else {
-                    evictionStats.increment(context.getRandomSamples().size());
+                    evictionStats.increment(size);
                 }
                 this.evictorSink.add(context);
             }
@@ -288,7 +285,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 logger.debug(triggerParam);
             }
         }
-
+       
         return true;
     }
 

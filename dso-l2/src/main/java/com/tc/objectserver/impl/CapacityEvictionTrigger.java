@@ -66,11 +66,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         if ( maxParam == 0 ) {
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
-        if ( sample <= 0 ) {
-            processSample(Collections.<Object,ObjectID>emptyMap());
-            return null;
-        }
-        Map samples = map.getRandomSamples(sample, clients);
+
+        Map samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,ObjectID>emptyMap();
+
         count = samples.size();
  // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
         if ( count < size - maxParam ) {
@@ -78,7 +76,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             clientSetCount = clients.size();
             clientSet = clients;
         }
-        return new ServerMapEvictionContext(this, processSample(samples) , className, map.getCacheName());
+        
+        return createEvictionContext(className, samples);
     } 
     
      @Override
@@ -106,22 +105,17 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             @Override
             public ServerMapEvictionContext collectEvictonCandidates(int maxParam, String className, EvictableMap map, ClientObjectReferenceSet clients) {
                 final int grab = boundsCheckSampleSize(sizeInternal - maxParam);
-                Map sample;
-                if ( grab > 0 ) {
-                    sample = map.getRandomSamples(grab, clients);
-                    clientSetCountInternal = clients.size();
-                } else {
-                    sample = Collections.emptyMap();
-                }
+                Map<Object,ObjectID> sample = ( grab > 0 ) ?
+                    map.getRandomSamples(grab, clients) : Collections.<Object,ObjectID>emptyMap();
+
+                clientSetCountInternal = clients.size();
+                
                 sampleCount = sample.size();
                 if ( sampleCount >= sizeInternal - maxParam ) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
-                if ( sample.isEmpty() ) {
-                    return null;
-                } else {
-                    return new ServerMapEvictionContext(this, processSample(sample) , className, map.getCacheName());
-                }
+                
+                return createEvictionContext(className, sample);
             }
 
             @Override

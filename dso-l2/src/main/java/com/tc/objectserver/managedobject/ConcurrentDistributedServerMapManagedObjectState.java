@@ -415,9 +415,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         evictionIterator = references.keySet().iterator();
       }
       final Object k = evictionIterator.next();
+      if ( k == null ) {
+          throw new AssertionError("key is not null");
+      }
       if (r.nextInt(100) < chance) {
         Object value = references.get(k);
-        if (serverMapEvictionClientObjectRefSet.contains(value)) {
+        if (value == null || serverMapEvictionClientObjectRefSet.contains(value)) {
           continue;
         }
         samples.put(k, (ObjectID)value);
@@ -429,7 +432,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
         final Object k = i.next();
         final Object v = references.get(k);
-        if (serverMapEvictionClientObjectRefSet.contains(v)) {
+        if (v == null || serverMapEvictionClientObjectRefSet.contains(v)) {
           continue;
         }
         samples.put(k, (ObjectID)v);

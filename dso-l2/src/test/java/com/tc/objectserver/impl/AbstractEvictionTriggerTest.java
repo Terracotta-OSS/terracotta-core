@@ -59,7 +59,7 @@ public class AbstractEvictionTriggerTest {
       @Override
       public ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map,
                                                             ClientObjectReferenceSet clients) {
-        return new ServerMapEvictionContext(this, processSample(map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet)), className, map.getCacheName());
+        return createEvictionContext(className, map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
       }
     };
   }
