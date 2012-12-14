@@ -4,8 +4,8 @@
 package com.tc.platform.rejoin;
 
 import com.tc.async.api.Sink;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -21,9 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannelEventController {
 
-  // private static final TCLogger logger = TCLogging.getLogger(ClientChannelEventController.class);
-  private static final TCLogger        DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger        CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private static final TCLogger        DSO_LOGGER = TCLogging.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
   private final Sink                   pauseSink;
