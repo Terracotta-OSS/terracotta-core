@@ -82,7 +82,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     
      @Override
     public void notifyReferenceSetChanged() {
-       mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
+       mgr.scheduleEvictionTrigger(new AbstractEvictionTrigger(getId()) {
             private int sampleCount = 0;
             private int sizeInternal = 0;
             private int maxInternal = 0;
@@ -93,13 +93,18 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             public boolean startEviction(EvictableMap map) {
                 sizeInternal = map.getSize();
                 maxInternal = map.getMaxTotalCount();
+                boolean run = true;
                 if ( sizeInternal <= maxInternal ) {
                     wasOver = false;
-                    clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
-                    return false;
+                    run = false;
                 } else {
-                    return super.startEviction(map);
+                    run = super.startEviction(map);
                 }
+                if ( !run ) {
+                    // someone else will take care of running the eviction
+                    clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
+                }
+                return run;
             }
             
             @Override
