@@ -56,6 +56,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -167,7 +168,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     validateGroups();
     validateSecurityConfiguration();
   }
-
 
   @Override
   public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
@@ -551,16 +551,14 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   @Override
   public String[] allCurrentlyKnownServers() {
-    Server[] l2s = serversBean == null ? null : L2DSOConfigObject.getServers(serversBean);
-    if (l2s == null || l2s.length == 0) {
-      return new String[] { null };
-    } else {
-      String[] out = new String[l2s.length];
-      for (int i = 0; i < l2s.length; ++i) {
-        out[i] = l2s[i].getName();
+    List<String> servers = new ArrayList<String>();
+    for (ActiveServerGroupConfig group : activeServerGroupsConfig.getActiveServerGroups()) {
+      for (String member : group.getMembers()) {
+        servers.add(member);
       }
-      return out;
     }
+
+    return servers.toArray(new String[servers.size()]);
   }
 
   @Override
