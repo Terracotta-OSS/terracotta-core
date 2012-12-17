@@ -33,24 +33,25 @@ class UpdateCheckAction extends TimerTask {
   private static final TCLogger     LOG                   = TCLogging.getLogger(UpdateCheckAction.class);
 
   private static final int          CONNECT_TIMEOUT       = 3000;
+  private static final long         MILLIS_PER_SECOND     = 1000L;
   private static final String       UNKNOWN               = "UNKNOWN";
   private static String             UPDATE_PROPERTIES_URL = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
+  private static final long         START_TIME            = System.currentTimeMillis();
+
   private static ProductInfo        productInfo           = ProductInfo.getInstance();
 
-  private final TCServer            server;
   private final long                periodMillis;
   private final long                maxOffheap;
   private License                   license;
   private final Map<String, String> params                = new HashMap<String, String>();
 
-  UpdateCheckAction(TCServer server, int periodDays, long maxOffheap) {
+  UpdateCheckAction(int periodDays, long maxOffheap) {
     super();
     try {
       license = LicenseManager.getLicense();
     } catch (LicenseException e) {
       // ignore, no license given
     }
-    this.server = server;
     periodMillis = checkPeriodMillis(periodDays);
     this.maxOffheap = maxOffheap;
     silenceHttpClientLoggers();
@@ -79,7 +80,8 @@ class UpdateCheckAction extends TimerTask {
   }
 
   private long getUptimeInSeconds() {
-    return (System.currentTimeMillis() - server.getStartTime()) / 1000;
+    long uptime = System.currentTimeMillis() - START_TIME;
+    return uptime > 0 ? (uptime / MILLIS_PER_SECOND) : 0;
   }
 
   protected void putUrlSafe(String key, String value) {
@@ -114,8 +116,8 @@ class UpdateCheckAction extends TimerTask {
     putUrlSafe("uptime-secs", Long.toString(getUptimeInSeconds()));
   }
 
-  public static void start(TCServer server, int periodDays, long maxOffheap) {
-    UpdateCheckAction action = new UpdateCheckAction(server, periodDays, maxOffheap);
+  public static void start(int periodDays, long maxOffheap) {
+    UpdateCheckAction action = new UpdateCheckAction(periodDays, maxOffheap);
     new Timer("Update Checker", true).schedule(action, 0, action.getCheckPeriodMillis());
   }
 

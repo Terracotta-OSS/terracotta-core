@@ -479,7 +479,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       if (updateCheckEnabled()) {
-        UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays(), getMaxDataSize());
+        UpdateCheckAction.start(updateCheckPeriodDays(), getMaxDataSize());
       }
 
       String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
@@ -503,9 +503,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private boolean updateCheckEnabled() {
-    String s = System.getenv("TC_UPDATE_CHECK_ENABLED");
-    boolean checkEnabled = (s == null) || Boolean.parseBoolean(s);
-    return checkEnabled && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
+    boolean skipped = Boolean.getBoolean("com.tc.skipUpdateCheck");
+    return !skipped && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
   }
 
   private int updateCheckPeriodDays() {
