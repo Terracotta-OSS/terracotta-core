@@ -825,8 +825,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public boolean isRestrictedMode() {
-    return dsoServer.getResourceManager().isThrowException();
+  public String getResourceState() {
+    return dsoServer.getResourceManager().getState().name();
   }
 
   @Override

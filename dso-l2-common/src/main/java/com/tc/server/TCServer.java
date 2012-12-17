@@ -78,5 +78,5 @@ public interface TCServer {
 
   void backup(String name) throws IOException;
 
-  boolean isRestrictedMode();
+  String getResourceState();
 }
