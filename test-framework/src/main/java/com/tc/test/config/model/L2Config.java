@@ -210,6 +210,9 @@ public class L2Config {
    */
   public void setMinHeap(int minHeap) {
     this.minHeap = minHeap;
+    if (maxHeap < minHeap) {
+      maxHeap = minHeap;
+    }
   }
 
   /**
@@ -228,6 +231,9 @@ public class L2Config {
    */
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
+    if (minHeap > maxHeap) {
+      minHeap = maxHeap;
+    }
   }
 
   /**
