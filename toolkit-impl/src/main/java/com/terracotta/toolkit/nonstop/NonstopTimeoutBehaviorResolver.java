@@ -170,4 +170,19 @@ public class NonstopTimeoutBehaviorResolver {
 
   }
 
+  public <E> E resolveTimeoutBehaviorForSubType(ToolkitObjectType parentObjectType,
+                                                NonStopConfiguration nonStopConfiguration, Class<E> klazz) {
+
+    // write behavior will be applicable for subtypes. If user has set localRead it will default to no Op for toolkit
+    // subtypes
+    NonStopWriteTimeoutBehavior writeOpBehavior = nonStopConfiguration.getWriteOpNonStopTimeoutBehavior();
+    switch (writeOpBehavior) {
+      case EXCEPTION:
+        return exceptionOnTimeoutBehaviorResolver.resolve(klazz);
+      case NO_OP:
+        return noOpBehaviorResolver.resolve(klazz);
+    }
+    throw new UnsupportedOperationException();
+  }
+
 }

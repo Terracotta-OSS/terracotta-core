@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ToolkitReadWriteLockFactoryImpl implements ToolkitObjectFactory<ToolkitReadWriteLockImpl> {
   private final WeakValueMap<ToolkitReadWriteLockImpl> localCache;
-  private final PlatformService                    platformService;
+  private final PlatformService                        platformService;
   private final Lock                                   lock;
 
   public ToolkitReadWriteLockFactoryImpl(ToolkitFactoryInitializationContext context) {
@@ -25,7 +25,6 @@ public class ToolkitReadWriteLockFactoryImpl implements ToolkitObjectFactory<Too
     this.platformService = context.getPlatformService();
     this.lock = new ReentrantLock();
   }
-
 
   @Override
   public ToolkitReadWriteLockImpl getOrCreate(String name, Configuration config) {
