@@ -122,14 +122,14 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   @Override
-  public synchronized void join(Set<String> tunnelledMBeanDomains) throws ClientShutdownException {
+  public synchronized void join(Set<String> tunnelledMBeanDomainsParam) throws ClientShutdownException {
     if (shutdown) throw new ClientShutdownException();
     refCount.incrementAndGet();
     if (isInitialized) {
-      contextControl.activateTunnelledMBeanDomains(this.tunneledMBeanDomains);
+      contextControl.activateTunnelledMBeanDomains(tunnelledMBeanDomainsParam);
     } else {
-      if (tunnelledMBeanDomains != null) {
-        this.tunneledMBeanDomains.addAll(tunnelledMBeanDomains);
+      if (tunnelledMBeanDomainsParam != null) {
+        this.tunneledMBeanDomains.addAll(tunnelledMBeanDomainsParam);
       }
     }
   }
