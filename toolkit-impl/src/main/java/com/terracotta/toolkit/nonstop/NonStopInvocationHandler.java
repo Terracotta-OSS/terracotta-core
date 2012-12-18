@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.rejoin.RejoinException;
@@ -14,42 +15,64 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class NonStopInvocationHandler<T> implements InvocationHandler {
-  private final NonStopManager             nonStopManager;
-  private final NonStopDelegateProvider<T> nonStopDelegateProvider;
-  private final NonStopClusterListener     clusterListener;
+  private final NonStopContext      context;
+  private final ToolkitObjectType   toolkitObjectType;
+  private final String              toolkitObjectName;
+  private final ToolkitObjectLookup toolkitObjectLookup;
 
-  public NonStopInvocationHandler(NonStopManager nonStopManager, NonStopDelegateProvider<T> nonStopDelegateProvider,
-                                  NonStopClusterListener clusterListener) {
-    this.nonStopManager = nonStopManager;
-    this.nonStopDelegateProvider = nonStopDelegateProvider;
-    this.clusterListener = clusterListener;
+  public NonStopInvocationHandler(NonStopContext context, ToolkitObjectType toolkitObjectType,
+                                  String toolkitObjectName, ToolkitObjectLookup toolkitObjectLookup) {
+    this.context = context;
+    this.toolkitObjectName = toolkitObjectName;
+    this.toolkitObjectType = toolkitObjectType;
+    this.toolkitObjectLookup = toolkitObjectLookup;
   }
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    NonStopConfiguration nonStopConfiguration = nonStopDelegateProvider.getNonStopConfiguration(method.getName());
+    NonStopConfiguration nonStopConfiguration = context.getNonStopConfigurationRegistry()
+        .getConfigForInstanceMethod(method.getName(), toolkitObjectName, toolkitObjectType);
 
-    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args, nonStopDelegateProvider.getDelegate()); }
+    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args,
+                                                                 toolkitObjectLookup.getInitializedObject()); }
 
-    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !clusterListener.areOperationsEnabled()) { return invokeMethod(method,
-                                                                                                                           args,
-                                                                                                                           nonStopDelegateProvider
-                                                                                                                               .getTimeoutBehavior()); }
-    boolean started = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
+    if (LocalMethodUtil.isLocal(toolkitObjectType, method.getName())) { return invokeLocalMethod(method, args); }
+
+    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { return invokeMethod(method,
+                                                                                                                                               args,
+                                                                                                                                               resolveTimeoutBehavior(nonStopConfiguration)); }
+    boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
     try {
-      clusterListener.waitUntilOperationsEnabled();
-      Object returnValue = invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
+      context.getNonStopClusterListener().waitUntilOperationsEnabled();
+      Object returnValue = invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
       return workOnReturnValue(returnValue);
     } catch (ToolkitAbortableOperationException e) {
-      return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
+      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
     } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
-      return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
+      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
     } finally {
       if (started) {
-        nonStopManager.finish();
+        context.getNonStopManager().finish();
       }
     }
+  }
+
+  private Object invokeLocalMethod(Method method, Object[] args) throws Throwable {
+    Object localDelegate = toolkitObjectLookup.getInitializedObjectOrNull();
+    if (localDelegate == null) {
+      localDelegate = resolveNoOpBehavior();
+    }
+    return invokeMethod(method, args, localDelegate);
+  }
+
+  private Object resolveNoOpBehavior() {
+    return context.getNonstopTimeoutBehaviorResolver().resolveNoOpTimeoutBehavior(toolkitObjectType);
+  }
+
+  private Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
+    return context.getNonstopTimeoutBehaviorResolver().resolveTimeoutBehavior(toolkitObjectType, nonStopConfiguration,
+                                                                              toolkitObjectLookup);
   }
 
   protected Object workOnReturnValue(Object returnValue) {

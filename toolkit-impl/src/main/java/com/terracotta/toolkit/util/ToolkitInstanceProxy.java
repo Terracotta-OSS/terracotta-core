@@ -3,7 +3,12 @@
  */
 package com.terracotta.toolkit.util;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.rejoin.RejoinException;
+
+import com.terracotta.toolkit.nonstop.NonStopContext;
+import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
+import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -33,6 +38,15 @@ public abstract class ToolkitInstanceProxy {
                                   + ") is not usable at the moment as rejoin is in progress");
       }
     };
+
+    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    return proxy;
+  }
+
+  public static <T> T newNonStopProxy(final String name, final ToolkitObjectType toolkitObjectType,
+                                      NonStopContext context, final Class<T> clazz,
+                                      ToolkitObjectLookup toolkitObjectLookup) {
+    InvocationHandler handler = new NonStopInvocationHandler<T>(context, toolkitObjectType, name, toolkitObjectLookup);
 
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
