@@ -83,7 +83,7 @@ public class NonStopClusterInfo implements ClusterInfo {
 
   private void waitForClusterInfoToGetInitialized() {
     boolean interrupted = false;
-    while (delegate != null) {
+    while (delegate == null) {
       try {
         initializer.join();
       } catch (InterruptedException e) {
