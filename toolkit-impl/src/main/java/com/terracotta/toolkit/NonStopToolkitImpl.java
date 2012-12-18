@@ -53,6 +53,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   private final NonStop                        nonStopFeature;
   private final AsyncToolkitInitializer        asyncToolkitInitializer;
   private final NonStopContext                 context;
+  private final NonStopClusterInfo             nonStopClusterInfo;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
     abortableOperationManager = platformService.getAbortableOperationManager();
@@ -66,6 +67,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     this.context = new NonStopContextImpl(nonStopManager, nonStopConfigManager, abortableOperationManager,
                                           nonstopTimeoutBehaviorFactory, asyncToolkitInitializer,
                                           nonStopClusterListener);
+    this.nonStopClusterInfo = new NonStopClusterInfo(asyncToolkitInitializer);
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -140,7 +142,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public ClusterInfo getClusterInfo() {
-    return getInitializedToolkit().getClusterInfo();
+    return nonStopClusterInfo;
   }
 
   @Override
@@ -162,8 +164,15 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   @Override
-  public <E> ToolkitNotifier<E> getNotifier(String name, Class<E> klazz) {
-    return getInitializedToolkit().getNotifier(name, klazz);
+  public <E> ToolkitNotifier<E> getNotifier(final String name, final Class<E> klazz) {
+    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.NOTIFIER, context, ToolkitNotifier.class,
+                                                new AbstractToolkitObjectLookup<ToolkitNotifier<E>>(
+                                                    abortableOperationManager) {
+                                                  @Override
+                                                  public ToolkitNotifier<E> lookupObject() {
+                                                    return getInitializedToolkit().getNotifier(name, klazz);
+                                                  }
+                                                });
   }
 
   @Override

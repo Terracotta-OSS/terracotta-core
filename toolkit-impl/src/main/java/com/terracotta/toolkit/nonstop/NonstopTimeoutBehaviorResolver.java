@@ -12,6 +12,7 @@ import org.terracotta.toolkit.collections.ToolkitSortedSet;
 import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
@@ -159,9 +160,10 @@ public class NonstopTimeoutBehaviorResolver {
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitSortedMap.class);
       case SORTED_SET:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitSortedSet.class);
+      case NOTIFIER:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitNotifier.class);
       case BARRIER:
       case BLOCKING_QUEUE:
-      case NOTIFIER:
         throw new UnsupportedOperationException("Exception on Timeout not supported for type " + objectType);
     }
     throw new UnsupportedOperationException();
