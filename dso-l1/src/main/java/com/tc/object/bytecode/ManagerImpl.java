@@ -1030,7 +1030,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void throttlePutIfNecessary(final ObjectID object) {
+  public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
   }
 }

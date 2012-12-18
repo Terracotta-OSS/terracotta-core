@@ -27,6 +27,7 @@ public class L2Config {
   private int                     proxyWaitTime        = 20 * 1000;
   private int                     proxyDownTime        = 100;
   private final BytemanConfig     bytemanConfig        = new BytemanConfig();
+  private boolean                 autoOffHeapEnable     = true;
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -144,6 +145,9 @@ public class L2Config {
    */
   public void setMinHeap(int minHeap) {
     this.minHeap = minHeap;
+    if (maxHeap < minHeap) {
+      maxHeap = minHeap;
+    }
   }
 
   /**
@@ -162,6 +166,9 @@ public class L2Config {
    */
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
+    if (minHeap > maxHeap) {
+      minHeap = maxHeap;
+    }
   }
 
   /**
@@ -180,6 +187,14 @@ public class L2Config {
    */
   public void setDirectMemorySize(int directMemorySize) {
     this.directMemorySize = directMemorySize;
+  }
+
+  public boolean isAutoOffHeapEnable() {
+    return autoOffHeapEnable;
+  }
+
+  public void setAutoOffHeapEnable(boolean autoOffHeapEnable) {
+    this.autoOffHeapEnable = autoOffHeapEnable;
   }
 
   public int getProxyWaitTime() {

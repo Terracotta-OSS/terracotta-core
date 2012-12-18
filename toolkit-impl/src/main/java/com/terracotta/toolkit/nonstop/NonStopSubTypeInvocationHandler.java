@@ -14,28 +14,25 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class NonStopInvocationHandler<T> implements InvocationHandler {
+public class NonStopSubTypeInvocationHandler<T> implements InvocationHandler {
   private final NonStopContext             context;
   private final NonStopConfigurationLookup nonStopConfigurationLookup;
-  private final ToolkitObjectLookup        toolkitObjectLookup;
+  private final T                          delegate;
+  private final Class                      klazz;
 
-  public NonStopInvocationHandler(NonStopContext context, NonStopConfigurationLookup nonStopConfigurationLookup,
-                                  ToolkitObjectLookup toolkitObjectLookup) {
+  public NonStopSubTypeInvocationHandler(NonStopContext context, NonStopConfigurationLookup nonStopConfigurationLookup,
+                                         T delegate, Class<T> klazz) {
     this.context = context;
     this.nonStopConfigurationLookup = nonStopConfigurationLookup;
-    this.toolkitObjectLookup = toolkitObjectLookup;
+    this.delegate = delegate;
+    this.klazz = klazz;
   }
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(method
-        .getName());
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfiguration();
 
-    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args,
-                                                                 toolkitObjectLookup.getInitializedObject()); }
-
-    if (LocalMethodUtil.isLocal(nonStopConfigurationLookup.getObjectType(), method.getName())) { return invokeLocalMethod(method,
-                                                                                                                          args); }
+    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args, delegate); }
 
     if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { return invokeMethod(method,
                                                                                                                                                args,
@@ -43,7 +40,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
     boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
     try {
       context.getNonStopClusterListener().waitUntilOperationsEnabled();
-      Object returnValue = invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
+      Object returnValue = invokeMethod(method, args, delegate);
       return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
@@ -57,22 +54,9 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
     }
   }
 
-  private Object invokeLocalMethod(Method method, Object[] args) throws Throwable {
-    Object localDelegate = toolkitObjectLookup.getInitializedObjectOrNull();
-    if (localDelegate == null) {
-      localDelegate = resolveNoOpBehavior();
-    }
-    return invokeMethod(method, args, localDelegate);
-  }
-
-  private Object resolveNoOpBehavior() {
-    return context.getNonstopTimeoutBehaviorResolver().resolveNoOpTimeoutBehavior(nonStopConfigurationLookup
-                                                                                      .getObjectType());
-  }
-
   private Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
     return context.getNonstopTimeoutBehaviorResolver()
-        .resolveTimeoutBehavior(nonStopConfigurationLookup.getObjectType(), nonStopConfiguration, toolkitObjectLookup);
+        .resolveTimeoutBehaviorForSubType(nonStopConfigurationLookup.getObjectType(), nonStopConfiguration, klazz);
   }
 
   protected Object createNonStopSubtypeIfNecessary(Object returnValue, Class klazzParam) {

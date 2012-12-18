@@ -1,1 +1,0 @@
-<html><font size=+1><bold>Please note: for Terracotta to function properly,<br>please make sure your JAVA_HOME setting is set</bold></font></html>

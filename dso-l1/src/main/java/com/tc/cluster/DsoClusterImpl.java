@@ -232,9 +232,10 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
             topology.registerDsoNode(otherNodeId);
           }
         }
-        nodeStatus.nodeJoined();
-        nodeStatus.operationsEnabled();
       }
+      nodeStatus.operationsEnabled();
+      LOGGER.info("NODE_JOINED " + currentClientID + " rejoinHappened " + rejoinHappened + " nodeStatus "
+                  + nodeStatus.getState());
     } finally {
       stateWriteLock.unlock();
 
@@ -280,11 +281,15 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     try {
       // We may get a node left event without ever seeing a node joined event, just ignore
       // the node left event in that case
-      if (!nodeStatus.getState().isNodeJoined()) { return; }
+      if (!nodeStatus.getState().isNodeJoined()) {
+        LOGGER.info("ignoring NODE_LEFT " + currentClientID + " because nodeStatus " + nodeStatus.getState());
+        return;
+      }
       if (nodeStatus.getState().areOperationsEnabled()) {
         fireOperationsDisabled = true;
       }
       nodeStatus.nodeLeft();
+      LOGGER.info("NODE_LEFT " + currentClientID + " nodeStatus " + nodeStatus);
     } finally {
       stateWriteLock.unlock();
     }
@@ -338,7 +343,11 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     if (currentNode != null) {
       stateWriteLock.lock();
       try {
-        if (nodeStatus.getState().areOperationsEnabled()) { return; }
+        if (nodeStatus.getState().areOperationsEnabled()) {
+          LOGGER
+              .info("ignoring OPERATIONS_ENABLED " + currentClientID + " because nodeStatus " + nodeStatus.getState());
+          return;
+        }
         nodeStatus.operationsEnabled();
       } finally {
         stateWriteLock.unlock();
@@ -356,7 +365,10 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   public void fireOperationsDisabled() {
     stateWriteLock.lock();
     try {
-      if (!nodeStatus.getState().areOperationsEnabled()) { return; }
+      if (!nodeStatus.getState().areOperationsEnabled()) {
+        LOGGER.info("ignoring OPERATIONS_DISABLED " + currentClientID + " because nodeStatus " + nodeStatus.getState());
+        return;
+      }
       nodeStatus.operationsDisabled();
     } finally {
       stateWriteLock.unlock();
@@ -379,7 +391,9 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
      * use out-of-band notification depending on listener otherwise use the single threaded eventProcessorSink to
      * process the cluster event.
      */
-    if (useOOBNotification(eventType, event, listener)) {
+    boolean useOOB = useOOBNotification(eventType, event, listener);
+    LOGGER.info("event fired |" + eventType + "|" + event.getNode() + "|OOB Notification " + useOOB);
+    if (useOOB) {
       outOfBandNotifier.submit(new Runnable() {
         @Override
         public void run() {

@@ -9,6 +9,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.api.BackupManager;
+import com.tc.objectserver.api.ResourceManager;
 
 import java.util.Map;
 
@@ -316,7 +317,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean isRestrictedMode() {
-    return false;
+  public String getResourceState() {
+    return ResourceManager.State.NORMAL.name();
   }
 }

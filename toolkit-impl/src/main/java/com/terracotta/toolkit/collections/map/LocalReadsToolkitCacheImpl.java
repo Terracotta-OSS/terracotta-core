@@ -12,6 +12,7 @@ import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
+import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
 import com.terracotta.toolkit.object.DestroyableToolkitObject;
 
 import java.io.Serializable;
@@ -19,23 +20,21 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
     DestroyableToolkitObject {
-  private final AtomicReference<ToolkitCacheInternal<K, V>> delegate;
-  private final ToolkitCacheInternal<K, V>                  noOpBehaviourResolver;
+  private final ToolkitObjectLookup<ToolkitCacheInternal<K, V>> delegate;
+  private final ToolkitCacheInternal<K, V>                      noOpBehaviourResolver;
 
-  public LocalReadsToolkitCacheImpl(AtomicReference<ToolkitCacheInternal<K, V>> delegate,
+  public LocalReadsToolkitCacheImpl(ToolkitObjectLookup<ToolkitCacheInternal<K, V>> delegate,
                                     ToolkitCacheInternal<K, V> noOpBehaviourResolver) {
     this.delegate = delegate;
     this.noOpBehaviourResolver = noOpBehaviourResolver;
   }
 
   private ToolkitCacheInternal<K, V> getDelegate() {
-    ToolkitCacheInternal<K, V> rv = delegate.get();
+    ToolkitCacheInternal<K, V> rv = delegate.getInitializedObjectOrNull();
     if (rv == null) { return noOpBehaviourResolver; }
-
     return rv;
   }
 

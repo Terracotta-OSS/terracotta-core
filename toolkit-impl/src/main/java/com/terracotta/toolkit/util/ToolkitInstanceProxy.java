@@ -3,7 +3,14 @@
  */
 package com.terracotta.toolkit.util;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.rejoin.RejoinException;
+
+import com.terracotta.toolkit.nonstop.NonStopConfigurationLookup;
+import com.terracotta.toolkit.nonstop.NonStopContext;
+import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
+import com.terracotta.toolkit.nonstop.NonStopSubTypeInvocationHandler;
+import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -37,4 +44,26 @@ public abstract class ToolkitInstanceProxy {
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
   }
+
+  public static <T> T newNonStopProxy(final String name, final ToolkitObjectType toolkitObjectType,
+                                      final NonStopContext context, final Class<T> clazz,
+                                      final ToolkitObjectLookup toolkitObjectLookup) {
+    NonStopConfigurationLookup nonStopConfigurationLookup = new NonStopConfigurationLookup(context, toolkitObjectType,
+                                                                                           name);
+    InvocationHandler handler = new NonStopInvocationHandler<T>(context, nonStopConfigurationLookup,
+                                                                toolkitObjectLookup);
+
+    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    return proxy;
+  }
+
+  public static <T> T newNonStopSubTypeProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
+                                             final NonStopContext context, final T delegate, final Class<T> clazz) {
+    InvocationHandler handler = new NonStopSubTypeInvocationHandler<T>(context, nonStopConfigurationLookup, delegate,
+                                                                       clazz);
+
+    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    return proxy;
+  }
+
 }

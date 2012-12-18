@@ -43,9 +43,7 @@ public interface EvictionTrigger {
      * @return          a map of evictable items
      */
     ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients);
-    
-    long getRuntimeInSeconds();
-    
+        
     long getRuntimeInMillis();
     
     int getCount();

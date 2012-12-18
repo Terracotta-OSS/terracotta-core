@@ -6,7 +6,11 @@ import com.tc.object.net.DSOChannelManagerEventListener;
  * @author tim
  */
 public interface ResourceManager extends DSOChannelManagerEventListener {
-  boolean isThrowException();
+  public enum State {
+    NORMAL, THROTTLED, RESTRICTED
+  }
+
+  public State getState();
 
   void setThrottle(float ratio);
 

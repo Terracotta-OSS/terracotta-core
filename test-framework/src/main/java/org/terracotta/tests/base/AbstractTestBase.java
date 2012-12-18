@@ -19,6 +19,7 @@ import com.tc.test.runner.TcTestRunner.Configs;
 import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestJMXServerManager;
 import com.tc.test.setup.TestServerManager;
+import com.tc.text.Banner;
 import com.tc.util.PortChooser;
 import com.tc.util.runtime.Vm;
 
@@ -41,19 +42,19 @@ import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  private static final String         DEFAULT_CONFIG       = "default-config";
-  protected static final String       SEP                  = File.pathSeparator;
-  private final TestConfig            testConfig;
-  private final File                  tcConfigFile;
-  protected TestServerManager         testServerManager;
-  protected final File                tempDir;
-  protected File                      javaHome;
-  private TestClientManager           clientRunner;
-  protected TestJMXServerManager      jmxServerManager;
-  private Thread                      duringRunningClusterThread;
-  private volatile Thread             testExecutionThread;
-  private static final String         log4jPrefix          = "log4j.logger.";
-  private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
+  private static final String              DEFAULT_CONFIG   = "default-config";
+  protected static final String            SEP              = File.pathSeparator;
+  private final TestConfig                 testConfig;
+  private final File                       tcConfigFile;
+  protected TestServerManager              testServerManager;
+  protected final File                     tempDir;
+  protected File                           javaHome;
+  private TestClientManager                clientRunner;
+  protected TestJMXServerManager           jmxServerManager;
+  private Thread                           duringRunningClusterThread;
+  private volatile Thread                  testExecutionThread;
+  private static final String              log4jPrefix      = "log4j.logger.";
+  private final Map<String, LogLevel>      tcLoggingConfigs = new HashMap<String, LogLevel>();
   private final AtomicReference<Throwable> testException    = new AtomicReference<Throwable>();
 
   public AbstractTestBase(TestConfig testConfig) {
@@ -91,11 +92,13 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Before
   public void setUp() throws Exception {
     if (!"".equals(System.getProperty("com.tc.productkey.path"))) {
-      if (!testConfig.getL2Config().isOffHeapEnabled()) {
+      if (!testConfig.getL2Config().isOffHeapEnabled() && testConfig.getL2Config().isAutoOffHeapEnable()) {
         System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
         testConfig.getL2Config().setOffHeapEnabled(true);
         testConfig.getL2Config().setDirectMemorySize(1024);
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
+      } else {
+        Banner.warnBanner("Offheap is disabled and auto-enable-offheap is also set to false! L2 may suffer OOME");
       }
     } else {
       if (testConfig.getRestartable()) {
@@ -113,7 +116,8 @@ public abstract class AbstractTestBase extends TCTestCase {
         setJavaHome();
         clientRunner = new TestClientManager(tempDir, this, this.testConfig);
         if (!testConfig.isStandAloneTest()) {
-          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome, new FailTestCallback());
+          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome,
+                                                    new FailTestCallback());
           startServers();
         }
         TestHandler testHandlerMBean = new TestHandler(testServerManager, testConfig);

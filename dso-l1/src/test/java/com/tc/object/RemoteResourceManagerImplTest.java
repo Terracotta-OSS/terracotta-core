@@ -1,15 +1,18 @@
 package com.tc.object;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author tim
@@ -21,7 +24,7 @@ public class RemoteResourceManagerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    remoteResourceManager = new RemoteResourceManagerImpl();
+    remoteResourceManager = new RemoteResourceManagerImpl(Mockito.mock(AbortableOperationManager.class));
     groupID = new GroupID(1);
     objectID = new ObjectID(1);
   }
@@ -56,7 +59,12 @@ public class RemoteResourceManagerImplTest {
     Thread t = new Thread(new Runnable() {
       @Override
       public void run() {
-        remoteResourceManager.throttleIfMutationIfNecessary(objectID);
+        try {
+          remoteResourceManager.throttleIfMutationIfNecessary(objectID);
+        } catch (AbortedOperationException e) {
+          // should not happen
+          e.printStackTrace();
+        }
         finished.set(true);
       }
     });

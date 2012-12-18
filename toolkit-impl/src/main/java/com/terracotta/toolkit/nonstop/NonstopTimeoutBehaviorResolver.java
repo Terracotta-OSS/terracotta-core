@@ -5,144 +5,101 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitList;
+import org.terracotta.toolkit.collections.ToolkitMap;
+import org.terracotta.toolkit.collections.ToolkitSet;
+import org.terracotta.toolkit.collections.ToolkitSortedMap;
+import org.terracotta.toolkit.collections.ToolkitSortedSet;
+import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;
+import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.TimeoutBehaviorToolkitCacheImpl;
-import com.terracotta.toolkit.collections.map.ValuesResolver;
-import com.terracotta.toolkit.type.DistributedToolkitType;
-
-import java.lang.reflect.Proxy;
-import java.util.EnumMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class NonstopTimeoutBehaviorResolver {
 
-  private final EnumMap<ToolkitObjectType, Object> exceptionOnTimeoutBehaviorMap = new EnumMap<ToolkitObjectType, Object>(
-                                                                                                                          ToolkitObjectType.class);
-  private final EnumMap<ToolkitObjectType, Object> noOpOnTimeoutBehaviorMap      = new EnumMap<ToolkitObjectType, Object>(
-                                                                                                                          ToolkitObjectType.class);
+  private final ExceptionOnTimeoutBehaviorResolver exceptionOnTimeoutBehaviorResolver = new ExceptionOnTimeoutBehaviorResolver();
+  private final NoOpBehaviorResolver               noOpBehaviorResolver               = new NoOpBehaviorResolver();
 
-  public NonstopTimeoutBehaviorResolver() {
-    Object cacheExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] {
-                                                                        ToolkitCacheInternal.class,
-                                                                        DistributedToolkitType.class,
-                                                                        ValuesResolver.class },
-                                                                    new ExceptionOnTimeoutInvocationHandler());
-    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.CACHE, cacheExceptionOnTimeOutBehavior);
-    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.STORE, cacheExceptionOnTimeOutBehavior);
-
-    Object cacheNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] {
-        ToolkitCacheInternal.class, DistributedToolkitType.class, ValuesResolver.class }, new NoOpInvocationHandler());
-    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.CACHE, cacheNoOpOnTimeOutBehavior);
-    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.STORE, cacheNoOpOnTimeOutBehavior);
-
-    Object listExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                                   new Class[] { ToolkitList.class },
-                                                                   new ExceptionOnTimeoutInvocationHandler());
-    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.LIST, listExceptionOnTimeOutBehavior);
-
-    Object listNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                              new Class[] { ToolkitList.class },
-                                                              new NoOpInvocationHandler());
-    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.LIST, listNoOpOnTimeOutBehavior);
-
-    Object lockExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                                   new Class[] { ToolkitLock.class },
-                                                                   new ExceptionOnTimeoutInvocationHandler());
-    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.LOCK, lockExceptionOnTimeOutBehavior);
-
-    Object lockNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                              new Class[] { ToolkitLock.class },
-                                                              new NoOpInvocationHandler());
-    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.LOCK, lockNoOpOnTimeOutBehavior);
-
-    Object rwLockExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                                     new Class[] { ToolkitReadWriteLock.class },
-                                                                     new ExceptionOnTimeoutInvocationHandler());
-    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.READ_WRITE_LOCK, rwLockExceptionOnTimeOutBehavior);
-
-    Object rwLockNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                                                                new Class[] { ToolkitReadWriteLock.class },
-                                                                new NoOpInvocationHandler());
-    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.READ_WRITE_LOCK, rwLockNoOpOnTimeOutBehavior);
-
-  }
-
-  public <E> E create(ToolkitObjectType objectType,
-                      NonStopConfigurationFields.NonStopReadTimeoutBehavior immutableOpBehavior,
-                      NonStopConfigurationFields.NonStopWriteTimeoutBehavior mutableOpBehavior, AtomicReference<E> e) {
-    if (immutableOpBehavior == NonStopReadTimeoutBehavior.EXCEPTION
-        && mutableOpBehavior == NonStopWriteTimeoutBehavior.EXCEPTION) { return (E) createExceptionOnTimeOutBehaviour(objectType,
-                                                                                                                      e); }
-    if (objectType != ToolkitObjectType.CACHE && objectType != ToolkitObjectType.STORE) { throw new UnsupportedOperationException(); }
-
-    E immutationBehaviourResolver = createImmutableOpBehavior(objectType, immutableOpBehavior, e);
-    E mutationBehaviourResolver = createMutableOpBehavior(objectType, mutableOpBehavior, e);
-    TimeoutBehaviorToolkitCacheImpl behaviorToolkitCacheImpl = new TimeoutBehaviorToolkitCacheImpl(
-                                                                                                   (ToolkitCacheInternal) immutationBehaviourResolver,
-                                                                                                   (ToolkitCacheInternal) mutationBehaviourResolver);
-    return (E) behaviorToolkitCacheImpl;
-  }
-
-  private <E> E createMutableOpBehavior(ToolkitObjectType objectType,
-                                        NonStopConfigurationFields.NonStopWriteTimeoutBehavior nonStopBehavior,
-                                        AtomicReference<E> e) {
-    switch (nonStopBehavior) {
-      case EXCEPTION:
-        return createExceptionOnTimeOutBehaviour(objectType, e.get());
-      case NO_OP:
-        return createNoOpBehaviour(objectType, e.get());
+  public <E extends ToolkitObject> E resolveTimeoutBehavior(ToolkitObjectType objectType,
+                                                            NonStopConfiguration nonStopConfiguration,
+                                                            ToolkitObjectLookup<E> toolkitObjectLookup) {
+    if (nonStopConfiguration.getReadOpNonStopTimeoutBehavior() == NonStopReadTimeoutBehavior.EXCEPTION
+        && nonStopConfiguration.getWriteOpNonStopTimeoutBehavior() == NonStopWriteTimeoutBehavior.EXCEPTION) {
+      return (E) resolveExceptionOnTimeoutBehavior(objectType);
+    } else if (nonStopConfiguration.getReadOpNonStopTimeoutBehavior() == NonStopReadTimeoutBehavior.NO_OP
+               && nonStopConfiguration.getWriteOpNonStopTimeoutBehavior() == NonStopWriteTimeoutBehavior.NO_OP) {
+      return (E) resolveNoOpTimeoutBehavior(objectType);
+    } else {
+      // create separate behaviors for mutable and immutable ops.
+      return resolveReadWriteTimeoutBehavior(objectType, nonStopConfiguration, toolkitObjectLookup);
     }
-    return null;
   }
 
-  private <E> E createImmutableOpBehavior(ToolkitObjectType objectType,
-                                          NonStopConfigurationFields.NonStopReadTimeoutBehavior nonStopBehavior,
-                                          AtomicReference<E> e) {
-    switch (nonStopBehavior) {
+  private <E extends ToolkitObject> E resolveReadWriteTimeoutBehavior(ToolkitObjectType objectType,
+                                                                      NonStopConfiguration nonStopConfiguration,
+                                                                      ToolkitObjectLookup<E> toolkitObjectLookup) {
+    if (objectType != ToolkitObjectType.CACHE && objectType != ToolkitObjectType.STORE) { throw new UnsupportedOperationException(
+                                                                                                                                  "Read TimeoutBehavior "
+                                                                                                                                      + nonStopConfiguration
+                                                                                                                                          .getReadOpNonStopTimeoutBehavior()
+                                                                                                                                      + " Write Timeout Behavior "
+                                                                                                                                      + nonStopConfiguration
+                                                                                                                                          .getWriteOpNonStopTimeoutBehavior()
+                                                                                                                                      + " not supported for object type : "
+                                                                                                                                      + objectType); }
+    E readTimeoutBehavior = resolveReadTimeoutBehavior(objectType,
+                                                       nonStopConfiguration.getReadOpNonStopTimeoutBehavior(),
+                                                       toolkitObjectLookup);
+    E writeTimeoutBehavior = resolveWriteTimeoutBehavior(objectType,
+                                                         nonStopConfiguration.getWriteOpNonStopTimeoutBehavior(),
+                                                         toolkitObjectLookup);
+    return (E) new TimeoutBehaviorToolkitCacheImpl((ToolkitCacheInternal) readTimeoutBehavior,
+                                                   (ToolkitCacheInternal) writeTimeoutBehavior);
+
+  }
+
+  private <E extends ToolkitObject> E resolveWriteTimeoutBehavior(ToolkitObjectType objectType,
+                                                                  NonStopWriteTimeoutBehavior behavior,
+                                                                  ToolkitObjectLookup<E> toolkitObjectLookup) {
+    switch (behavior) {
       case EXCEPTION:
-        return createExceptionOnTimeOutBehaviour(objectType, e.get());
+        return (E) resolveExceptionOnTimeoutBehavior(objectType);
       case NO_OP:
-        return createNoOpBehaviour(objectType, e.get());
+        return (E) resolveNoOpTimeoutBehavior(objectType);
+    }
+    throw new UnsupportedOperationException();
+
+  }
+
+  private <E extends ToolkitObject> E resolveReadTimeoutBehavior(ToolkitObjectType objectType,
+                                                                 NonStopReadTimeoutBehavior behavior,
+                                                                 ToolkitObjectLookup<E> toolkitObjectLookup) {
+    switch (behavior) {
+      case EXCEPTION:
+        return (E) resolveExceptionOnTimeoutBehavior(objectType);
       case LOCAL_READS:
-        E noOpBehavior = createNoOpBehaviour(objectType, e.get());
-        return createLocalReadsBehaviour(objectType, e, noOpBehavior);
+        return resolveLocalReadTimeoutBehavior(objectType, toolkitObjectLookup);
+      case NO_OP:
+        return (E) resolveNoOpTimeoutBehavior(objectType);
     }
-    return null;
-  }
-
-  private <E> E createNoOpBehaviour(ToolkitObjectType objectType, E e) {
-
-    Object noOpOnTimeOutBehavior = noOpOnTimeoutBehaviorMap.get(objectType);
-    if (noOpOnTimeOutBehavior == null) { throw new UnsupportedOperationException(
-                                                                                 "NonStop Not Supported for ToolkitType "
-                                                                                     + objectType); }
-    return (E) noOpOnTimeOutBehavior;
+    throw new UnsupportedOperationException();
 
   }
 
-  private <E> E createExceptionOnTimeOutBehaviour(ToolkitObjectType objectType, E e) {
-
-    Object exceptionOnTimeOutBehavior = exceptionOnTimeoutBehaviorMap.get(objectType);
-    if (exceptionOnTimeOutBehavior == null) { throw new UnsupportedOperationException(
-                                                                                      "NonStop Not Supported for ToolkitType "
-                                                                                          + objectType); }
-    return (E) exceptionOnTimeOutBehavior;
-
-  }
-
-  private <E> E createLocalReadsBehaviour(ToolkitObjectType objectType, AtomicReference<E> delegate, E noOpBehavior) {
-
+  private <E extends ToolkitObject> E resolveLocalReadTimeoutBehavior(ToolkitObjectType objectType,
+                                                                      ToolkitObjectLookup<E> toolkitObjectLookup) {
     switch (objectType) {
       case CACHE:
       case STORE:
-        return (E) new LocalReadsToolkitCacheImpl(delegate, (ToolkitCacheInternal) noOpBehavior);
+        return (E) new LocalReadsToolkitCacheImpl(toolkitObjectLookup,
+                                                  (ToolkitCacheInternal) resolveNoOpTimeoutBehavior(objectType));
       case ATOMIC_LONG:
       case BARRIER:
       case BLOCKING_QUEUE:
@@ -157,5 +114,75 @@ public class NonstopTimeoutBehaviorResolver {
         throw new UnsupportedOperationException("NonStop local reads Not Supported for ToolkitType " + objectType);
     }
     return null;
+
   }
+
+  public Object resolveNoOpTimeoutBehavior(ToolkitObjectType objectType) {
+    switch (objectType) {
+      case STORE:
+      case CACHE:
+        return noOpBehaviorResolver.resolve(ToolkitCacheInternal.class);
+      case MAP:
+      case SET:
+      case SORTED_MAP:
+      case SORTED_SET:
+      case LIST:
+      case ATOMIC_LONG:
+      case LOCK:
+      case READ_WRITE_LOCK:
+      case BARRIER:
+      case BLOCKING_QUEUE:
+      case NOTIFIER:
+        throw new UnsupportedOperationException("No op not supported for type " + objectType);
+    }
+    throw new UnsupportedOperationException();
+
+  }
+
+  private Object resolveExceptionOnTimeoutBehavior(ToolkitObjectType objectType) {
+    switch (objectType) {
+      case ATOMIC_LONG:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitAtomicLong.class);
+      case STORE:
+      case CACHE:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitCacheInternal.class);
+      case LIST:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitList.class);
+      case LOCK:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitLock.class);
+      case MAP:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitMap.class);
+      case READ_WRITE_LOCK:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitReadWriteLock.class);
+      case SET:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitSet.class);
+      case SORTED_MAP:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitSortedMap.class);
+      case SORTED_SET:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitSortedSet.class);
+      case NOTIFIER:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitNotifier.class);
+      case BARRIER:
+      case BLOCKING_QUEUE:
+        throw new UnsupportedOperationException("Exception on Timeout not supported for type " + objectType);
+    }
+    throw new UnsupportedOperationException();
+
+  }
+
+  public <E> E resolveTimeoutBehaviorForSubType(ToolkitObjectType parentObjectType,
+                                                NonStopConfiguration nonStopConfiguration, Class<E> klazz) {
+
+    // write behavior will be applicable for subtypes. If user has set localRead it will default to no Op for toolkit
+    // subtypes
+    NonStopWriteTimeoutBehavior writeOpBehavior = nonStopConfiguration.getWriteOpNonStopTimeoutBehavior();
+    switch (writeOpBehavior) {
+      case EXCEPTION:
+        return exceptionOnTimeoutBehaviorResolver.resolve(klazz);
+      case NO_OP:
+        return noOpBehaviorResolver.resolve(klazz);
+    }
+    throw new UnsupportedOperationException();
+  }
+
 }

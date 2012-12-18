@@ -173,5 +173,6 @@ public interface DSOClientBuilder {
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 
-  RemoteResourceManager createRemoteResourceManager(final DSOClientMessageChannel dsoChannel);
+  RemoteResourceManager createRemoteResourceManager(DSOClientMessageChannel dsoChannel,
+                                                    AbortableOperationManager abortableOperationManager);
 }

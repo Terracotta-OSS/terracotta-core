@@ -393,7 +393,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     // to the passive crashing randomly at some point in the future, or maybe even during passive sync.
     if (!response.getResourceType().equals(resource.getType().name()) || response.getResourceSize() < resource.getTotal()) {
       groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
-          "Node " + response.messageFrom() + " does not have enough resource to join the cluster.");
+          "Node " + response.messageFrom() + " does not have enough resource to join the cluster. Resource type " +
+          response.getResourceType() + " (expected " + resource.getType().name() + "). Resource size " +
+          response.getResourceSize() + " (expected at least " + resource.getTotal() + ").");
       return false;
     } else {
       return true;

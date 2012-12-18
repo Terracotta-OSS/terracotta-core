@@ -6,14 +6,12 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
-import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.util.ObjectIDSet;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -148,8 +146,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         
         if ( sampled < 100 ) {
             sampled = 100;
-        } else if ( sampled > 25000 ) {
-            sampled = 25000;
         }
         
         if ( max > 0 && count - max > 0 ) {
@@ -182,12 +178,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
   //  didn't find the object, ignore this one
             iterator.remove();
             missing += 1;
-        } else if ( expiresIn < 0 ) {
-//            candidates.put(e.getKey(), e.getValue());
-            expired+=1;
         } else if ( exclusionList != null && exclusionList.contains(e.getValue()) ) {
             iterator.remove();
             excluded += 1;
+        } else if ( expiresIn < 0 ) {
+//            candidates.put(e.getKey(), e.getValue());
+            expired+=1;
         } else {
             alive+=1;
  //  know what we have already tested
@@ -196,7 +192,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
            passList.add(e.getValue());
         }
     }
-
     return samples;
  }   
   /**
@@ -218,10 +213,9 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     try {
       final EvictableEntry ev = getEvictableEntryFrom(mo);
       if (ev != null) {
-        int time = ev.expiresIn(now, ttiSeconds, ttlSeconds);
-        return time;
+        return ev.expiresIn(now, ttiSeconds, ttlSeconds);
       } else {
-        return Integer.MIN_VALUE;
+        return 0;
       }
     } finally {
       this.mgr.releaseReadOnly(mo);

@@ -1,5 +1,6 @@
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 
 /**
@@ -8,5 +9,5 @@ import com.tc.net.GroupID;
 public interface RemoteResourceManager {
   void handleThrottleMessage(GroupID groupID, boolean exception, float throttle);
 
-  void throttleIfMutationIfNecessary(ObjectID parentObject);
+  void throttleIfMutationIfNecessary(ObjectID parentObject) throws AbortedOperationException;
 }

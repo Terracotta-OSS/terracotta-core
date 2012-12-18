@@ -71,7 +71,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         if ( !processed ) {
             throw new AssertionError("sample not processed");
         }
-        endTime = System.currentTimeMillis();
+        endTime = System.currentTimeMillis() + 1;
         if ( !evicting ) {
             map.evictionCompleted();
         }
@@ -93,15 +93,6 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         return new ServerMapEvictionContext(this, sample, className, name);
         
     }
-    
-    @Override
-    public long getRuntimeInSeconds() {
-        if ( startTime == 0 || endTime == 0 ) {
-            return 0;
-        }
-        return ( endTime - startTime ) / 1000;
-    }
-    
         
     @Override
     public long getRuntimeInMillis() {

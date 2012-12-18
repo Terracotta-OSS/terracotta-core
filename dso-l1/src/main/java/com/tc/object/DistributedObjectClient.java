@@ -641,7 +641,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dumpHandler.registerForDump(txnMgrDumpAdapter);
 
     // Setup Remote Resource Manager
-    remoteResourceManager = dsoClientBuilder.createRemoteResourceManager(channel);
+    remoteResourceManager = dsoClientBuilder.createRemoteResourceManager(channel, abortableOperationManager);
     final Stage resourceManagerStage = stageManager.createStage(ClientConfigurationContext.RESOURCE_MANAGER_STAGE,
         new ResourceManagerMessageHandler(remoteResourceManager), 1, maxSize);
 

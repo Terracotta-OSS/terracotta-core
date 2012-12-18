@@ -103,6 +103,6 @@ public interface PlatformService {
 
   boolean isRejoinEnabled();
 
-  void throttlePutIfNecessary(ObjectID object);
+  void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 
 }
