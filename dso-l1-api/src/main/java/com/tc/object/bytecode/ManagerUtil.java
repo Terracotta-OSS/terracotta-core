@@ -986,7 +986,7 @@ public class ManagerUtil {
     return mgr.getAbortableOperationManager();
   }
 
-  public static void throttlePutIfNecessary(ObjectID object) {
+  public static void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException {
     getManager().throttlePutIfNecessary(object);
   }
 }

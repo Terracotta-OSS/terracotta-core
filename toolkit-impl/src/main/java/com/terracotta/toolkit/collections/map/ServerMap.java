@@ -1430,8 +1430,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return meta;
   }
 
-  private void throttleIfNecessary() {
-    platformService.throttlePutIfNecessary(tcObjectServerMap.getObjectID());
+  private void throttleIfNecessary() throws ToolkitAbortableOperationException {
+    try {
+      platformService.throttlePutIfNecessary(tcObjectServerMap.getObjectID());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override

@@ -395,7 +395,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void throttlePutIfNecessary(final ObjectID object) {
+  public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     try {
       delegate.throttlePutIfNecessary(object);
     } catch (PlatformRejoinException e) {

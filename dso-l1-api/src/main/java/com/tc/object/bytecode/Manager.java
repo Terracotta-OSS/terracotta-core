@@ -422,5 +422,5 @@ public interface Manager extends TerracottaLocking {
 
   PlatformService getPlatformService();
 
-  void throttlePutIfNecessary(ObjectID object);
+  void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 }

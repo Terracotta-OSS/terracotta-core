@@ -245,7 +245,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void throttlePutIfNecessary(final ObjectID object) {
+  public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     ManagerUtil.throttlePutIfNecessary(object);
   }
 }
