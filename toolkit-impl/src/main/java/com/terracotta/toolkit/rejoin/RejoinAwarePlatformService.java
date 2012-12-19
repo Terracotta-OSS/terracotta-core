@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.rejoin;
 
+import org.terracotta.toolkit.rejoin.InvalidLockStateAfterRejoinException;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.abortable.AbortableOperationManager;
@@ -155,7 +156,7 @@ public class RejoinAwarePlatformService implements PlatformService {
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     } catch (IllegalMonitorStateException e) {
-      if (isLockedBeforeRejoin(lockID)) { throw new RejoinException(e); }
+      if (isLockedBeforeRejoin(lockID)) { throw new InvalidLockStateAfterRejoinException(e); }
       throw e;
     }
   }
