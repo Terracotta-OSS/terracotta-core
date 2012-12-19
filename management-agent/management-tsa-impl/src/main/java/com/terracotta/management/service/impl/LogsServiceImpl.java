@@ -39,7 +39,11 @@ public class LogsServiceImpl implements LogsService {
     if (sinceWhen == null) {
       return getLogs(serverNames);
     } else {
-      return getLogs(serverNames, TimeStringParser.parseTime(sinceWhen));
+      try {
+        return getLogs(serverNames, TimeStringParser.parseTime(sinceWhen));
+      } catch (NumberFormatException nfe) {
+        throw new ServiceExecutionException("Illegal time string: [" + sinceWhen + "]", nfe);
+      }
     }
   }
 
