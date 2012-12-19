@@ -34,12 +34,12 @@ public interface OperatorEventsResourceService {
   @Path("/read")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  boolean markOperatorEventAsRead(@Context UriInfo info, OperatorEventEntity operatorEventEntity);
+  boolean markOperatorEventAsRead(@Context UriInfo info, Collection<OperatorEventEntity> operatorEventEntities);
 
   @POST
   @Path("/unread")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  boolean markOperatorEventAsUnread(@Context UriInfo info, OperatorEventEntity operatorEventEntity);
+  boolean markOperatorEventAsUnread(@Context UriInfo info, Collection<OperatorEventEntity> operatorEventEntities);
 
 }
