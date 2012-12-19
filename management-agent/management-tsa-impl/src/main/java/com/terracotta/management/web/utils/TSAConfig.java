@@ -60,11 +60,6 @@ public class TSAConfig {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceLocation");
-
-      if (response == null) {
-        throw new RuntimeException("Missing configuration entry for security service location");
-      }
-
       return (String)response;
     } catch (RuntimeException re) {
       throw re;

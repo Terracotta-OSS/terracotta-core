@@ -198,13 +198,27 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   @Override
-  public <E extends Comparable<? super E>> ToolkitSortedSet<E> getSortedSet(String name, Class<E> klazz) {
-    return getInitializedToolkit().getSortedSet(name, klazz);
+  public <E extends Comparable<? super E>> ToolkitSortedSet<E> getSortedSet(final String name, final Class<E> klazz) {
+    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.SORTED_SET, context, ToolkitSortedSet.class,
+                                                new AbstractToolkitObjectLookup<ToolkitSortedSet<E>>(
+                                                    abortableOperationManager) {
+                                                  @Override
+                                                  public ToolkitSortedSet<E> lookupObject() {
+                                                    return getInitializedToolkit().getSortedSet(name, klazz);
+                                                  }
+                                                });
   }
 
   @Override
-  public <E> ToolkitSet<E> getSet(String name, Class<E> klazz) {
-    return getInitializedToolkit().getSet(name, klazz);
+  public <E> ToolkitSet<E> getSet(final String name, final Class<E> klazz) {
+    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.SET, context, ToolkitSet.class,
+                                                new AbstractToolkitObjectLookup<ToolkitSet<E>>(
+                                                    abortableOperationManager) {
+                                                  @Override
+                                                  public ToolkitSet<E> lookupObject() {
+                                                    return getInitializedToolkit().getSet(name, klazz);
+                                                  }
+                                                });
   }
 
   @Override

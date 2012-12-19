@@ -49,10 +49,9 @@ public class TCLoggingTest extends TestCase {
 
     File[] listFiles = logDirFolder.listFiles();
     int logFileCount = 0;
-    for(File file:listFiles){
-      if (!file.isHidden()) {
+    for (File file : listFiles) {
+      if (!file.isHidden() && Files.getFileExtension(file.getName()).equals("log")) {
         logFileCount++;
-        Assert.assertEquals(Files.getFileExtension(file.getName()), "log");
       }
     }
     // Always one extra file is created by log4j

@@ -4,15 +4,13 @@
 package com.terracotta.management.service.impl.util;
 
 import org.joda.time.DateTime;
-import org.terracotta.management.ServiceExecutionException;
 
 /**
  * @author Ludovic Orban
  */
 public class TimeStringParser {
 
-  public static long parseTime(String timeString) throws ServiceExecutionException {
-    try {
+  public static long parseTime(String timeString) throws NumberFormatException {
       if (timeString.endsWith("d")) {
         String days = timeString.substring(0, timeString.length() - 1);
 
@@ -34,11 +32,8 @@ public class TimeStringParser {
         DateTime dateTime = new DateTime();
         return dateTime.minusSeconds(Integer.parseInt(seconds)).getMillis();
       } else {
-        throw new ServiceExecutionException("Illegal time string: [" + timeString + "]");
+        return new DateTime(Long.parseLong(timeString)).getMillis();
       }
-    } catch (NumberFormatException nfe) {
-      throw new ServiceExecutionException("Illegal time string: [" + timeString + "]", nfe);
-    }
   }
 
 }

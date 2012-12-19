@@ -29,7 +29,11 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
     if (sinceWhen == null) {
       return tsaManagementClientService.getOperatorEvents(serverNames, null, read);
     } else {
-      return tsaManagementClientService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), read);
+      try {
+        return tsaManagementClientService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), read);
+      } catch (NumberFormatException nfe) {
+        throw new ServiceExecutionException("Illegal time string: [" + sinceWhen + "]", nfe);
+      }
     }
   }
 

@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.rejoin.InvalidLockStateAfterRejoinException;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -47,6 +49,11 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+    } catch (InvalidLockStateAfterRejoinException e) {
+      if (nonStopConfigurationLookup.getObjectType() != ToolkitObjectType.LOCK) { return invokeMethod(method,
+                                                                                                      args,
+                                                                                                      resolveTimeoutBehavior(nonStopConfiguration)); }
+      throw e;
     } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));

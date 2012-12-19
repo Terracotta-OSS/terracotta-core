@@ -97,7 +97,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public List<ToolkitNotificationListener<T>> getNotificationListeners() {
-    return Collections.unmodifiableList(notifier.getNotificationListeners());
+    return Collections.unmodifiableList(listeners);
   }
 
   @Override

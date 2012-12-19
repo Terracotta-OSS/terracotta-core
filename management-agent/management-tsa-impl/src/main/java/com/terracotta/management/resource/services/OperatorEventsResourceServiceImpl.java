@@ -65,69 +65,83 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
   }
 
   @Override
-  public boolean markOperatorEventAsRead(UriInfo info, OperatorEventEntity operatorEventEntity) {
+  public boolean markOperatorEventAsRead(UriInfo info, Collection<OperatorEventEntity> operatorEventEntities) {
     LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsRead: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    try {
-      if (operatorEventEntity.getEventType() == null) {
-        throw new ServiceExecutionException("eventType must not be null");
-      }
-      if (operatorEventEntity.getEventSubsystem() == null) {
-        throw new ServiceExecutionException("eventSubsystem must not be null");
-      }
-      if (operatorEventEntity.getCollapseString() == null) {
-        throw new ServiceExecutionException("collapseString must not be null");
-      }
-      if (operatorEventEntity.getSourceId() == null) {
-        throw new ServiceExecutionException("sourceId must not be null");
-      }
-      if (operatorEventEntity.getTimestamp() == 0L) {
-        throw new ServiceExecutionException("timestamp must not be 0");
-      }
+    boolean rc = true;
+    for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
+      try {
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
+        }
+        if (operatorEventEntity.getEventSubsystem() == null) {
+          throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getCollapseString() == null) {
+          throw new ServiceExecutionException("collapseString must not be null");
+        }
+        if (operatorEventEntity.getSourceId() == null) {
+          throw new ServiceExecutionException("sourceId must not be null");
+        }
+        if (operatorEventEntity.getTimestamp() == 0L) {
+          throw new ServiceExecutionException("timestamp must not be 0");
+        }
 
-      return operatorEventsService.markOperatorEvent(operatorEventEntity, true);
-    } catch (ServiceExecutionException see) {
-      LOG.error("Failed to mark TSA operator event as read.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to mark TSA operator event as read: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+        rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, true);
+      } catch (ServiceExecutionException see) {
+        LOG.error("Failed to mark TSA operator event as read.", see);
+        Throwable cause = see.getCause();
+        String causeClassName = cause == null ? see.getClass().getName() : cause.getClass().getName();
+        String causeMessage = cause == null ? see.getMessage() : cause.getMessage();
+        throw new WebApplicationException(
+            Response.status(Response.Status.BAD_REQUEST)
+                .entity("Failed to mark TSA operator event as read: " + causeClassName + ": " + causeMessage).build());
+      }
     }
+
+    return rc;
   }
 
   @Override
-  public boolean markOperatorEventAsUnread(UriInfo info, OperatorEventEntity operatorEventEntity) {
+  public boolean markOperatorEventAsUnread(UriInfo info, Collection<OperatorEventEntity> operatorEventEntities) {
     LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsUnread: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
-    try {
-      if (operatorEventEntity.getEventType() == null) {
-        throw new ServiceExecutionException("eventType must not be null");
-      }
-      if (operatorEventEntity.getEventSubsystem() == null) {
-        throw new ServiceExecutionException("eventSubsystem must not be null");
-      }
-      if (operatorEventEntity.getCollapseString() == null) {
-        throw new ServiceExecutionException("collapseString must not be null");
-      }
-      if (operatorEventEntity.getSourceId() == null) {
-        throw new ServiceExecutionException("sourceId must not be null");
-      }
-      if (operatorEventEntity.getTimestamp() == 0L) {
-        throw new ServiceExecutionException("timestamp must not be 0");
-      }
+    boolean rc = true;
+    for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
+      try {
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
+        }
+        if (operatorEventEntity.getEventSubsystem() == null) {
+          throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getCollapseString() == null) {
+          throw new ServiceExecutionException("collapseString must not be null");
+        }
+        if (operatorEventEntity.getSourceId() == null) {
+          throw new ServiceExecutionException("sourceId must not be null");
+        }
+        if (operatorEventEntity.getTimestamp() == 0L) {
+          throw new ServiceExecutionException("timestamp must not be 0");
+        }
 
-      return operatorEventsService.markOperatorEvent(operatorEventEntity, false);
-    } catch (ServiceExecutionException see) {
-      LOG.error("Failed to mark TSA operator event as unread.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to mark TSA operator event as unread: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+        rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, false);
+      } catch (ServiceExecutionException see) {
+        LOG.error("Failed to mark TSA operator event as unread.", see);
+        Throwable cause = see.getCause();
+        String causeClassName = cause == null ? see.getClass().getName() : cause.getClass().getName();
+        String causeMessage = cause == null ? see.getMessage() : cause.getMessage();
+        throw new WebApplicationException(
+            Response.status(Response.Status.BAD_REQUEST)
+                .entity("Failed to mark TSA operator event as unread: " + causeClassName + ": " + causeMessage).build());
+      }
     }
+
+    return rc;
   }
 
 }
