@@ -8,7 +8,9 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.Loader;
 import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.L2SConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.util.PortChooser;
 import com.terracottatech.config.Server;
@@ -39,7 +41,7 @@ public class ExternalDsoServer {
   private final File                serverLog;
   private final File                configFile;
   private boolean                   persistentMode;
-  private int                       dsoPort;
+  private int                       tsaPort;
   private int                       jmxPort;
   private final List                jvmArgs                = new ArrayList();
   private final File                workingDir;
@@ -51,7 +53,7 @@ public class ExternalDsoServer {
   public ExternalDsoServer(File workingDir, InputStream configInput) throws IOException {
     this(workingDir, configInput, null);
   }
-  
+
   public ExternalDsoServer(File workingDir, InputStream configInput, String serverName) throws IOException {
     this(workingDir, saveToFile(configInput, workingDir), serverName);
   }
@@ -65,7 +67,7 @@ public class ExternalDsoServer {
 
       TcConfigDocument tcConfigDocument = new Loader().parse(new FileInputStream(configFile));
       TcConfig tcConfig = tcConfigDocument.getTcConfig();
-      Server[] servers = tcConfig.getServers().getServerArray();
+      Server[] servers = L2DSOConfigObject.getServers(tcConfig.getServers());
 
       if (serverName != null) {
         boolean foundServer = false;
@@ -73,14 +75,14 @@ public class ExternalDsoServer {
           if (server.getName().equals(serverName)) {
             foundServer = true;
             jmxPort = server.getJmxPort().getIntValue();
-            dsoPort = server.getDsoPort().getIntValue();
+            tsaPort = server.getTsaPort().getIntValue();
             break;
           }
         }
         if (!foundServer) { throw new RuntimeException("Can't find " + serverName + " from config input"); }
       } else {
         jmxPort = servers[0].getJmxPort().getIntValue();
-        dsoPort = servers[0].getDsoPort().getIntValue();
+        tsaPort = servers[0].getTsaPort().getIntValue();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -90,7 +92,7 @@ public class ExternalDsoServer {
   public File getWorkingDir() {
     return this.workingDir;
   }
-  
+
   private static File saveToFile(InputStream configInput, File workingDir) throws IOException  {
     File config = new File(workingDir, SERVER_CONFIG_FILENAME);
     FileOutputStream out = new FileOutputStream(config);
@@ -102,7 +104,7 @@ public class ExternalDsoServer {
   public ExternalDsoServer(File workingDir) {
     PortChooser portChooser = new PortChooser();
     this.workingDir = workingDir;
-    this.dsoPort = portChooser.chooseRandomPort();
+    this.tsaPort = portChooser.chooseRandomPort();
     this.jmxPort = portChooser.chooseRandomPort();
     this.serverLog = new File(workingDir, "dso-server.log");
     try {
@@ -129,7 +131,7 @@ public class ExternalDsoServer {
 
   private void initStart() throws FileNotFoundException {
     logOutputStream = new FileOutputStream(serverLog);
-    serverProc = new ExtraProcessServerControl("localhost", dsoPort, jmxPort, configFile.getAbsolutePath(), false);
+    serverProc = new ExtraProcessServerControl("localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
     serverProc.getJvmArgs().addAll(jvmArgs);
@@ -173,17 +175,18 @@ public class ExternalDsoServer {
     File theConfigFile = new File(workingDir, SERVER_CONFIG_FILENAME);
 
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
-    builder.getSystem().setConfigurationModel("development");
 
-    L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
-    l2.setDSOPort(dsoPort);
+    L2SConfigBuilder servers = new L2SConfigBuilder();
+    builder.setServers(servers);
+    servers.setRestartable(persistentMode);
+
+    servers.setL2s(new L2ConfigBuilder[] { L2ConfigBuilder.newMinimalInstance() });
+    L2ConfigBuilder l2 = servers.getL2s()[0];
+
+    l2.setTSAPort(tsaPort);
     l2.setJMXPort(jmxPort);
     l2.setData(workingDir + File.separator + "data");
     l2.setLogs(workingDir + File.separator + "logs");
-    l2.setStatistics(workingDir + File.separator + "stats");
-    if (persistentMode) {
-      l2.setRestartable(true);
-    }
 
     String configAsString = builder.toString();
 
@@ -196,11 +199,11 @@ public class ExternalDsoServer {
 
   @Override
   public String toString() {
-    return "DSO server; serverport:" + dsoPort + "; adminPort:" + jmxPort;
+    return "DSO server; serverport:" + tsaPort + "; adminPort:" + jmxPort;
   }
 
   public int getServerPort() {
-    return dsoPort;
+    return tsaPort;
   }
 
   public int getAdminPort() {

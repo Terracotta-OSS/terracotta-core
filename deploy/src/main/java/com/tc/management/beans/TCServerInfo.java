@@ -259,13 +259,13 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public int getDSOListenPort() {
-    return server.getDSOListenPort();
+  public int getTSAListenPort() {
+    return server.getTSAListenPort();
   }
 
   @Override
-  public int getDSOGroupPort() {
-    return server.getDSOGroupPort();
+  public int getTSAGroupPort() {
+    return server.getTSAGroupPort();
   }
 
   @Override
@@ -366,11 +366,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public boolean getRestartable() {
     return server.getRestartable();
-  }
-
-  @Override
-  public String getFailoverMode() {
-    return server.getFailoverMode();
   }
 
   @Override
@@ -485,11 +480,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public boolean isProduction() {
-    return server.isProduction();
-  }
-
-  @Override
   public boolean isSecure() {
     return server.isSecure();
   }
@@ -501,7 +491,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   @Override
   public String getSecurityHostname() {
-    server.getDSOListenPort();
+    server.getTSAListenPort();
     return server.getSecurityHostname();
   }
 

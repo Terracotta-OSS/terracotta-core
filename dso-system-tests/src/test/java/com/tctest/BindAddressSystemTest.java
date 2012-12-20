@@ -37,30 +37,25 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     return true;
   }
 
-  public void testDsoPortBinding() throws Exception {
+  public void testTsaPortBinding() throws Exception {
     tcConfig = getTempFile("server-tc-config-bind-address-test.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                     + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
                     + "\n      <server name=\"server1\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
-                    + "\n      <dso-port bind=\""
+                    + "\n      <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
-                    + "\">9510</dso-port>"
+ + "\">9510</tsa-port>"
                     + "\n      </server>"
                     + "\n      <server name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
-                    + "\n      <dso-port bind=\""
+                    + "\n      <tsa-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
-                    + "\">8510</dso-port>"
+                    + "\">8510</tsa-port>"
                     + "\n      </server>"
-                    + "\n      <ha>"
-                    + "\n        <mode>networked-active-passive</mode>"
-                    + "\n        <networked-active-passive>"
-                    + "\n           <election-time>5</election-time>"
-                    + "\n         </networked-active-passive>"
-                    + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
+                    + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();
@@ -95,22 +90,18 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <server name=\"server1\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
-                    + "\n      <l2-group-port bind=\""
+                    + "\n      <tsa-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
-                    + "\">9510</l2-group-port>"
+                    + "\">9510</tsa-group-port>"
                     + "\n      </server>"
                     + "\n      <server name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
                     + "\">"
-                    + "\n      <l2-group-port bind=\""
+                    + "\n      <tsa-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
-                    + "\">8510</l2-group-port>"
+                    + "\">8510</tsa-group-port>"
                     + "\n      </server>"
-                    + "\n      <ha>"
-                    + "\n        <mode>networked-active-passive</mode>"
-                    + "\n        <networked-active-passive>"
-                    + "\n           <election-time>5</election-time>"
-                    + "\n         </networked-active-passive>" + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
+                    + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();

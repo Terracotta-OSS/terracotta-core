@@ -123,8 +123,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
                                                               ObjectRequestManager objRequestMgr,
                                                               ServerMapRequestManager serverTCMapRequestManager,
-                                                              PersistentManagedObjectStore objStore, LockManager lockMgr,
-                                                              DSOChannelManager channelManager,
+                                                              PersistentManagedObjectStore objStore,
+                                                              LockManager lockMgr, DSOChannelManager channelManager,
                                                               ClientStateManager clientStateMgr,
                                                               ServerTransactionManager txnMgr,
                                                               TransactionalObjectManager txnObjectMgr,
@@ -159,8 +159,9 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
-                                      ObjectIDSequence objectIDSequence, final MonitoredResource resource);
+                                      DGCSequenceProvider dgcSequenceProvider,
+                                      SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
+                                      final MonitoredResource resource, int electionTimeInSecs);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   L2ConfigurationSetupManager configSetupManager,

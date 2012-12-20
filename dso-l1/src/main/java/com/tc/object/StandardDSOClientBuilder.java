@@ -54,7 +54,6 @@ import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.locks.ClientLockManagerImpl;
 import com.tc.object.locks.RemoteLockManager;
 import com.tc.object.locks.RemoteLockManagerImpl;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -173,7 +172,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   @Override
   public ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                                      final DSOClientConfigHelper dsoConfig,
-                                                     final ObjectIDProvider idProvider, final RuntimeLogger rtLogger,
+                                                     final ObjectIDProvider idProvider,
                                                      final ClientIDProvider clientIDProvider,
                                                      final ClassProvider classProviderLocal,
                                                      final TCClassFactory classFactory,
@@ -183,7 +182,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                      final ToggleableReferenceManager toggleRefMgr,
                                                      TCObjectSelfStore tcObjectSelfStore,
                                                      AbortableOperationManager abortableOperationManager) {
-    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, rtLogger, clientIDProvider,
+    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, clientIDProvider,
                                        classProviderLocal, classFactory, objectFactory, portability, dsoChannel,
                                        toggleRefMgr, tcObjectSelfStore, abortableOperationManager);
   }
@@ -287,10 +286,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public L1Management createL1Management(final TunnelingEventHandler teh,
-                                         final RuntimeLogger runtimeLogger, final String rawConfigText,
+  public L1Management createL1Management(final TunnelingEventHandler teh, final String rawConfigText,
                                          final DistributedObjectClient distributedObjectClient) {
-    return new L1Management(teh, runtimeLogger, rawConfigText, distributedObjectClient);
+    return new L1Management(teh, rawConfigText, distributedObjectClient);
   }
 
   @Override

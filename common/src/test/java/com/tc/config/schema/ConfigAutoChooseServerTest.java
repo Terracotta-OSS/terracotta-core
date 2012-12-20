@@ -28,12 +28,9 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server1-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server1-stats</statistics>"
-                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <tsa-port>9510</tsa-port>"
                       + "\n       <jmx-port>9520</jmx-port>"
-                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n       <tsa-group-port>9530</tsa-group-port>"
                       + "\n      </server>"
                       + "\n      <server name=\"server2\" host=\"11.0.1.2\">"
                       + "\n       <data>"
@@ -42,10 +39,7 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>8510</dso-port>"
+                      + "\n       <tsa-port>8510</tsa-port>"
                       + "\n</server>"
                       + "\n      <server name=\"server3\" host=\"11.0.1.3\">"
                       + "\n       <data>"
@@ -54,11 +48,8 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n       <logs>"
                       + System.getProperty("user.home")
                       + "/terracotta/server2-logs</logs>"
-                      + "\n       <statistics>"
-                      + System.getProperty("user.home")
-                      + "/terracotta/server2-stats</statistics>"
-                      + "\n       <dso-port>7510</dso-port>"
-                      + "\n       <l2-group-port>7555</l2-group-port>"
+                      + "\n       <tsa-port>7510</tsa-port>"
+                      + "\n       <tsa-group-port>7555</tsa-group-port>"
                       + "\n</server>"
                       + "\n</servers>"
                       + "\n</tc:tc-config>";
@@ -67,9 +58,9 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                                                                                               new FatalIllegalConfigurationChangeHandler());
 
       L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
-      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
+      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getIntValue());
 
     } catch (Throwable e) {
       throw new AssertionError(e);

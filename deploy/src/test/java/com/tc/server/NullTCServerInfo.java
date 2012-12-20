@@ -52,12 +52,12 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public int getDSOListenPort() {
+  public int getTSAListenPort() {
     return 0;
   }
 
   @Override
-  public int getDSOGroupPort() {
+  public int getTSAGroupPort() {
     return 0;
   }
 
@@ -153,11 +153,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
 
   @Override
   public byte[] takeCompressedThreadDump(long requestMillis) {
-    return null;
-  }
-
-  @Override
-  public String getFailoverMode() {
     return null;
   }
 
@@ -284,11 +279,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   @Override
   public String[] getProcessArguments() {
     return null;
-  }
-
-  @Override
-  public boolean isProduction() {
-    return false;
   }
 
   @Override

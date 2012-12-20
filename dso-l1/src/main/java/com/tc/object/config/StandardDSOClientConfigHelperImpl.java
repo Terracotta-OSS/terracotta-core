@@ -19,8 +19,6 @@ import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.schema.DSORuntimeLoggingOptions;
-import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
@@ -102,16 +100,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   @Override
   public CommonL1Config getNewCommonL1Config() {
     return configSetupManager.commonL1Config();
-  }
-
-  @Override
-  public DSORuntimeLoggingOptions runtimeLoggingOptions() {
-    return this.configSetupManager.dsoL1Config().runtimeLoggingOptions();
-  }
-
-  @Override
-  public DSORuntimeOutputOptions runtimeOutputOptions() {
-    return this.configSetupManager.dsoL1Config().runtimeOutputOptions();
   }
 
   private void doPreInstrumentedAutoconfig() {
@@ -307,7 +295,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       ServerInfo[] serverInfos = grpArray[i].getServerInfoArray();
       for (int j = 0; j < serverInfos.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(serverInfos[j].getName()), serverInfos[j]
-            .getDsoPort().intValue(), i * j + j, grpName); // No security info neither, only carrying to compare the hosts, ports & groups
+            .getTsaPort().intValue(), i * j + j, grpName); // No security info neither, only carrying to compare the
+                                                           // hosts, ports & groups
         connInfoFromL2.add(connectionIn);
       }
     }

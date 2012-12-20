@@ -31,7 +31,6 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
@@ -86,8 +85,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                       final ClientObjectManager clientObjectManager,
                                       final ClientTransactionFactory txFactory,
                                       final ClientLockManager clientLockManager,
-                                      final RemoteTransactionManager remoteTxManager,
-                                      final RuntimeLogger runtimeLogger, final SampledCounter txCounter,
+                                      final RemoteTransactionManager remoteTxManager, final SampledCounter txCounter,
                                       TCObjectSelfStore tcObjectSelfStore,
                                       AbortableOperationManager abortableOperationManager) {
     this.cidProvider = cidProvider;

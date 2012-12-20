@@ -16,21 +16,17 @@ import java.util.ArrayList;
  */
 public class L2Config {
 
-  private boolean                 dgcEnabled            = false;
-  private int                     dgcIntervalInSec      = 3600;
-  private boolean                 offHeapEnabled        = false;
-  private boolean                 restartable           = false;
-  private int                     clientReconnectWindow = 15;
-  private int                     maxOffHeapDataSize    = 128;
+  private boolean                 offHeapEnabled       = false;
+  private int                     maxOffHeapDataSize   = 128;
   private final ArrayList<String> extraServerJvmArgs;
-  private boolean                 isProxyL2groupPorts   = false;
-  private boolean                 isProxyDsoPorts       = false;
-  private int                     minHeap               = 256;
-  private int                     maxHeap               = 256;
-  private int                     directMemorySize      = -1;
-  private int                     proxyWaitTime         = 20 * 1000;
-  private int                     proxyDownTime         = 100;
-  private final BytemanConfig     bytemanConfig         = new BytemanConfig();
+  private boolean                 isProxyTsaGroupPorts = false;
+  private boolean                 isProxyTsaPorts      = false;
+  private int                     minHeap              = 256;
+  private int                     maxHeap              = 256;
+  private int                     directMemorySize     = -1;
+  private int                     proxyWaitTime        = 20 * 1000;
+  private int                     proxyDownTime        = 100;
+  private final BytemanConfig     bytemanConfig        = new BytemanConfig();
   private boolean                 autoOffHeapEnable     = true;
 
   /**
@@ -44,38 +40,6 @@ public class L2Config {
    */
   public L2Config() {
     extraServerJvmArgs = new ArrayList<String>();
-  }
-
-  /**
-   * Is DGC enabled
-   * 
-   * @return true if dgc is enabled
-   */
-  public boolean isDgcEnabled() {
-    return dgcEnabled;
-  }
-
-  /**
-   * enable/disable dgc
-   * 
-   * @param dgcEnabled true if dgc to be enabled. false otherwise
-   */
-  public void setDgcEnabled(boolean dgcEnabled) {
-    this.dgcEnabled = dgcEnabled;
-  }
-
-  /**
-   * @return dgc interveal in seconds
-   */
-  public int getDgcIntervalInSec() {
-    return dgcIntervalInSec;
-  }
-
-  /**
-   * sets the dgc interval in seconds
-   */
-  public void setDgcIntervalInSec(int dgcIntervalInSec) {
-    this.dgcIntervalInSec = dgcIntervalInSec;
   }
 
   /**
@@ -96,35 +60,6 @@ public class L2Config {
     this.offHeapEnabled = offHeapEnabled;
   }
 
-  /**
-   * Persistence mode for the L2
-   */
-  public boolean getRestartable() {
-    return restartable;
-  }
-
-  /**
-   * Sets whether the L2 should be restartable
-   * 
-   * @param restartable true to enable restartable
-   */
-  public void setRestartable(boolean restartable) {
-    this.restartable = restartable;
-  }
-
-  /**
-   * client reconnect window in secs
-   */
-  public int getClientReconnectWindow() {
-    return clientReconnectWindow;
-  }
-
-  /**
-   * sets client reconnect window in seconds
-   */
-  public void setClientReconnectWindow(int clientReconnectWindow) {
-    this.clientReconnectWindow = clientReconnectWindow;
-  }
 
   /**
    * max off heap data size in MBs
@@ -163,35 +98,35 @@ public class L2Config {
   /**
    * @return true if proxy is enabled between two mirror groups communication
    */
-  public boolean isProxyL2groupPorts() {
-    return isProxyL2groupPorts;
+  public boolean isProxyTsaGroupPorts() {
+    return isProxyTsaGroupPorts;
   }
 
   /**
-   * Enable/Disable l2 group proxy between two mirror groups
+   * Enable/Disable tsa group proxy between two mirror groups
    * 
-   * @param isProxyL2groupPorts
+   * @param isProxyTsaGroupPorts
    */
-  public void setProxyL2groupPorts(boolean isProxyL2groupPorts) {
-    this.isProxyL2groupPorts = isProxyL2groupPorts;
+  public void setProxyTsaGroupPorts(boolean isProxyTsaGroupPorts) {
+    this.isProxyTsaGroupPorts = isProxyTsaGroupPorts;
   }
 
   /**
-   * is L2 started with a proxy port in bertween the server and client
+   * is L2 started with a proxy port in between the server and client
    * 
    * @return
    */
-  public boolean isProxyDsoPorts() {
-    return isProxyDsoPorts;
+  public boolean isProxyTsaPorts() {
+    return isProxyTsaPorts;
   }
 
   /**
-   * Enable/Disable l2 proxy for dso port
+   * Enable/Disable l2 proxy for tsa port
    * 
-   * @param isProxyDsoPorts
+   * @param isProxyTsaPorts
    */
-  public void setProxyDsoPorts(boolean isProxyDsoPorts) {
-    this.isProxyDsoPorts = isProxyDsoPorts;
+  public void setProxyTsaPorts(boolean isProxyTsaPorts) {
+    this.isProxyTsaPorts = isProxyTsaPorts;
   }
 
   /**

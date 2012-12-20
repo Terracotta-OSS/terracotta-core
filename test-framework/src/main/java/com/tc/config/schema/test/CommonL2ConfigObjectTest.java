@@ -26,13 +26,13 @@ public class CommonL2ConfigObjectTest extends ConfigObjectTestBase {
     TcConfig config = TcConfig.Factory.newInstance();
     super.setUp(Server.class);
     L2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory());
-    setBean(config.getServers().getServerArray(0));
+    setBean(config.getServers().getMirrorGroupArray(0).getServerArray(0));
     this.object = new CommonL2ConfigObject(context());
   }
 
   @Override
   protected XmlObject getBeanFromTcConfig(TcConfig domainConfig) throws Exception {
-    return domainConfig.getServers().getServerArray(0);
+    return domainConfig.getServers().getMirrorGroupArray(0).getServerArray(0);
   }
 
   public void testConstruction() throws Exception {

@@ -21,7 +21,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.SequenceID;
@@ -51,7 +50,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     clientTxnFactory, new MockClientLockManager(), rmtTxnMgr,
-                                                    new NullRuntimeLogger(), SampledCounter.NULL_SAMPLED_COUNTER, null,
+                                                    SampledCounter.NULL_SAMPLED_COUNTER, null,
                                                     abortableOperationManager);
   }
 

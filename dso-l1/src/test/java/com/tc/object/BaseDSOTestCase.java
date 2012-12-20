@@ -115,7 +115,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
 
   // TODO: fix this
   protected synchronized final void makeClientUsePort(int whichPort) {
-    configFactory.l2DSOConfig().dsoPort().setIntValue(whichPort);
+    configFactory.l2DSOConfig().tsaPort().setIntValue(whichPort);
   }
 
   public BaseDSOTestCase() {

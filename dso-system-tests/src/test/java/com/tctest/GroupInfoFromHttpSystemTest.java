@@ -32,7 +32,7 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
   private TcConfigBuilder configBuilder;
   private ExternalDsoServer server_1, server_2;
   private int               jmxPort_1, jmxPort_2;
-  private int               dsoPort_1, dsoPort_2;
+  private int               tsaPort_1, tsaPort_2;
 
   @Override
   protected boolean cleanTempDir() {
@@ -47,8 +47,8 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
     jmxPort_1 = configBuilder.getJmxPort(0);
     jmxPort_2 = configBuilder.getJmxPort(1);
 
-    dsoPort_1 = configBuilder.getDsoPort(0);
-    dsoPort_2 = configBuilder.getDsoPort(1);
+    tsaPort_1 = configBuilder.getTsaPort(0);
+    tsaPort_2 = configBuilder.getTsaPort(1);
 
     server_1 = createServer("server-1");
     server_2 = createServer("server-2");
@@ -65,16 +65,16 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
   }
 
   public void testGetGroupInfo() throws Exception {
-    testGroupInfoForServer(dsoPort_1, true);
-    testGroupInfoForServer(dsoPort_2, false);
+    testGroupInfoForServer(tsaPort_1, true);
+    testGroupInfoForServer(tsaPort_2, false);
     server_1.stop();
     waitTillBecomeActive(jmxPort_2);
-    testGroupInfoForServer(dsoPort_1, false);
-    testGroupInfoForServer(dsoPort_2, true);
+    testGroupInfoForServer(tsaPort_1, false);
+    testGroupInfoForServer(tsaPort_2, true);
   }
 
-  private void testGroupInfoForServer(int dsoPort, boolean shouldPass) throws MalformedURLException {
-    ServerURL theURL = new ServerURL("localhost", dsoPort, TCServerImpl.GROUP_INFO_SERVLET_PATH, new SecurityInfo());
+  private void testGroupInfoForServer(int tsaPort, boolean shouldPass) throws MalformedURLException {
+    ServerURL theURL = new ServerURL("localhost", tsaPort, TCServerImpl.GROUP_INFO_SERVLET_PATH, new SecurityInfo());
     InputStream l1PropFromL2Stream = null;
     System.out.println("Trying to get groupinfo from " + theURL.toString());
     int trials = 0;
@@ -85,7 +85,7 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
         break;
       } catch (IOException e) {
         if (shouldPass) {
-          System.out.println("should have connected to [localhost:" + dsoPort + "]. trials so far: " + ++trials);
+          System.out.println("should have connected to [localhost:" + tsaPort + "]. trials so far: " + ++trials);
         } else {
           break;
         }

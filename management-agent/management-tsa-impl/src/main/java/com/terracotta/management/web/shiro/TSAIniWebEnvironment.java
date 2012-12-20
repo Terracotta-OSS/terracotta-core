@@ -14,7 +14,7 @@ public class TSAIniWebEnvironment extends IniWebEnvironment {
 
   private static final String NOIA_SECURE_INI_RESOURCE_PATH = "classpath:shiro-ssl-noIA.ini";
   private final static String SECURE_INI_RESOURCE_PATH = "classpath:shiro-ssl.ini";
-  private final static String UNSECURE_INI_RESOURCE_PATH = "classpath:shiro.ini";;
+  private final static String UNSECURE_INI_RESOURCE_PATH = "classpath:shiro.ini";
 
   @Override
   protected String[] getDefaultConfigLocations() {

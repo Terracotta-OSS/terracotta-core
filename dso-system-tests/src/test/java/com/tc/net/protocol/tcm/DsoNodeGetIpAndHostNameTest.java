@@ -52,20 +52,20 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
    */
   public void testDsoNodeGetIpAndHostName() throws Exception {
     final PortChooser pc = new PortChooser();
-    final int dsoPort = pc.chooseRandomPort();
+    final int tsaPort = pc.chooseRandomPort();
     final int jmxPort = pc.chooseRandomPort();
     DsoClusterImpl dsoCluster1;
     DsoClusterImpl dsoCluster2;
     final DistributedObjectClient client1;
     final DistributedObjectClient client2;
-    final TCServerImpl server = (TCServerImpl) startupServer(dsoPort, jmxPort);
-    configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
+    final TCServerImpl server = (TCServerImpl) startupServer(tsaPort, jmxPort);
+    configFactory().addServerToL1Config("127.0.0.1", tsaPort, jmxPort);
 
     try {
-      final ManagerImpl mgr1 = startupClient(dsoPort, jmxPort);
+      final ManagerImpl mgr1 = startupClient(tsaPort, jmxPort);
       client1 = mgr1.getDso();
       dsoCluster1 = (DsoClusterImpl) mgr1.getDsoCluster();
-      final ManagerImpl mgr2 = startupClient(dsoPort, jmxPort);
+      final ManagerImpl mgr2 = startupClient(tsaPort, jmxPort);
       client2 = mgr2.getDso();
       dsoCluster2 = (DsoClusterImpl) mgr2.getDsoCluster();
 
@@ -167,14 +167,14 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
 
   }
 
-  protected TCServer startupServer(final int dsoPort, final int jmxPort) {
-    StartAction start_action = new StartAction(dsoPort, jmxPort);
+  protected TCServer startupServer(final int tsaPort, final int jmxPort) {
+    StartAction start_action = new StartAction(tsaPort, jmxPort);
     new StartupHelper(group, start_action).startUp();
     final TCServer server = start_action.getServer();
     return server;
   }
 
-  protected ManagerImpl startupClient(final int dsoPort, final int jmxPort) throws ConfigurationSetupException {
+  protected ManagerImpl startupClient(final int tsaPort, final int jmxPort) throws ConfigurationSetupException {
     L1ConfigurationSetupManager manager = super.createL1ConfigManager();
     StandardDSOClientConfigHelperImpl configHelper = new StandardDSOClientConfigHelperImpl(manager);
     PreparedComponentsFromL2Connection l2Connection = new PreparedComponentsFromL2Connection(manager);
@@ -191,17 +191,17 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
                                                               .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
-    private final int dsoPort;
+    private final int tsaPort;
     private final int jmxPort;
     private TCServer  server = null;
 
-    private StartAction(final int dsoPort, final int jmxPort) {
-      this.dsoPort = dsoPort;
+    private StartAction(final int tsaPort, final int jmxPort) {
+      this.tsaPort = tsaPort;
       this.jmxPort = jmxPort;
     }
 
-    public int getDsoPort() {
-      return dsoPort;
+    public int getTsaPort() {
+      return tsaPort;
     }
 
     public int getJmxPort() {
@@ -217,8 +217,8 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();
       L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
-      manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
-      manager.dsoL2Config().dsoPort().setBind("127.0.0.1");
+      manager.dsoL2Config().tsaPort().setIntValue(tsaPort);
+      manager.dsoL2Config().tsaPort().setBind("127.0.0.1");
 
       manager.commonl2Config().jmxPort().setIntValue(jmxPort);
       manager.commonl2Config().jmxPort().setBind("127.0.0.1");

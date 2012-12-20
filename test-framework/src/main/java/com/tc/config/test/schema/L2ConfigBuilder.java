@@ -15,18 +15,17 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private String            host;
   private String            name;
   private PortConfigBuilder jmxPortBuilder   = null;
-  private PortConfigBuilder dsoPortBuilder   = null;
+  private PortConfigBuilder tsaPortBuilder   = null;
   private PortConfigBuilder groupPortBuilder = null;
-  private boolean           offheapEnabled  = false;
+  private boolean           offheapEnabled   = false;
   private String            offheapMaxDataSize;
-  private boolean           security_enabled  = false;
+  private boolean           security_enabled = false;
   private String            security_certificateUri;
   private String            security_keychainUrl;
   private String            security_keychainImpl;
   private String            security_secretProviderImpl;
   private String            security_authUrl;
   private String            security_authImpl;
-  private boolean           restartable = false;
 
   public L2ConfigBuilder() {
     super(3, ALL_PROPERTIES);
@@ -48,10 +47,6 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("data", data);
   }
 
-  public void setStatistics(String statistics) {
-    setProperty("statistics", statistics);
-  }
-
   public void setServerDbBackup(String serverDbBackup) {
     setProperty("data-backup", serverDbBackup);
   }
@@ -60,18 +55,18 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", logs);
   }
 
-  public synchronized void setDSOPort(int data) {
-    if (this.dsoPortBuilder == null) {
-      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+  public synchronized void setTSAPort(int data) {
+    if (this.tsaPortBuilder == null) {
+      this.tsaPortBuilder = new PortConfigBuilder(PortType.TSAPORT);
     }
-    this.dsoPortBuilder.setBindPort(data);
+    this.tsaPortBuilder.setBindPort(data);
   }
 
-  public synchronized void setDSOBindAddress(String data) {
-    if (this.dsoPortBuilder == null) {
-      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+  public synchronized void setTSABindAddress(String data) {
+    if (this.tsaPortBuilder == null) {
+      this.tsaPortBuilder = new PortConfigBuilder(PortType.TSAPORT);
     }
-    this.dsoPortBuilder.setBindAddress(data);
+    this.tsaPortBuilder.setBindAddress(data);
   }
 
   public synchronized void setJMXPort(int data) {
@@ -88,14 +83,14 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     this.jmxPortBuilder.setBindAddress(data);
   }
 
-  public synchronized void setL2GroupPort(int data) {
+  public synchronized void setTSAGroupPort(int data) {
     if (this.groupPortBuilder == null) {
       this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
     }
     this.groupPortBuilder.setBindPort(data);
   }
 
-  public synchronized void setL2GroupPortBindAddress(String data) {
+  public synchronized void setTSAGroupPortBindAddress(String data) {
     if (this.groupPortBuilder == null) {
       this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
     }
@@ -108,39 +103,6 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
   public void setAccessFile(String data) {
     setProperty("access-file", data);
-  }
-
-  public void setRestartable(boolean data) {
-    setProperty("restartable", data);
-    restartable = data;
-  }
-
-  public void setGCEnabled(boolean data) {
-    setProperty("enabled", data);
-  }
-
-  public void setGCEnabled(String data) {
-    setProperty("enabled", data);
-  }
-
-  public void setGCVerbose(boolean data) {
-    setProperty("verbose", data);
-  }
-
-  public void setGCVerbose(String data) {
-    setProperty("verbose", data);
-  }
-
-  public void setGCInterval(int data) {
-    setProperty("interval", data);
-  }
-
-  public void setReconnectWindowForPrevConnectedClients(int secs) {
-    setProperty("client-reconnect-window", secs);
-  }
-
-  public void setGCInterval(String data) {
-    setProperty("interval", data);
   }
 
   public void setOffHeapEnabled(final boolean enabled) {
@@ -183,18 +145,11 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     security_authImpl = authImpl;
   }
 
-  private static final String[] L2                   = new String[] { "data", "logs", "data-backup", "statistics" };
+  private static final String[] L2             = new String[] { "data", "logs", "data-backup" };
 
-  private static final String[] DSO_PERSISTENCE_RESTARTABLE = new String[] { "restartable" };
-  private static final String[] DSO_PERSISTENCE      = concat(new Object[] { DSO_PERSISTENCE_RESTARTABLE });
+  private static final String[] AUTHENTICATION = new String[] { "password-file", "access-file" };
 
-  private static final String[] DSO_RECONNECTWINDOW  = new String[] { "client-reconnect-window" };
-  private static final String[] DSO_GC               = new String[] { "enabled", "verbose", "interval" };
-  private static final String[] AUTHENTICATION       = new String[] { "password-file", "access-file" };
-
-  private static final String[] DSO                  = concat(new Object[] { DSO_RECONNECTWINDOW, DSO_PERSISTENCE,
-      DSO_GC                                        });
-  private static final String[] ALL_PROPERTIES       = concat(new Object[] { L2, AUTHENTICATION, DSO });
+  private static final String[] ALL_PROPERTIES = concat(new Object[] { L2, AUTHENTICATION });
 
   @Override
   public String toString() {
@@ -203,19 +158,12 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += indent() + "<server host=" + (this.host != null ? "\"" + this.host + "\"" : "\"%i\"")
            + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
-    out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
-           + elements(DSO_RECONNECTWINDOW) + openElement("persistence", DSO_PERSISTENCE)
-           + getRestartable() + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
-           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO) + getSecurityConfig();
+    out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + getOffHeapConfig()
+           + getSecurityConfig();
 
     out += closeElement("server");
 
     return out;
-  }
-
-  private String getRestartable() {
-    if (!restartable) return "\n";
-    return "\n<restartable enabled=\"" + restartable + "\"/>\n";
   }
 
   private String getOffHeapConfig() {
@@ -251,8 +199,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private String getPortsConfig() {
     String out = "";
 
-    if (this.dsoPortBuilder != null) {
-      out += this.dsoPortBuilder.toString() + "\n";
+    if (this.tsaPortBuilder != null) {
+      out += this.tsaPortBuilder.toString() + "\n";
     }
     if (this.jmxPortBuilder != null) {
       out += this.jmxPortBuilder.toString() + "\n";

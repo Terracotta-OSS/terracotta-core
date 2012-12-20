@@ -6,8 +6,8 @@ package com.tc.config.schema.messaging.http;
 import org.apache.commons.io.IOUtils;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
-import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
+import org.terracotta.groupConfigForL1.ServerInfo;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -25,14 +25,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class GroupInfoServlet extends HttpServlet {
-  public static final String                      GROUP_INFO_ATTRIBUTE = GroupInfoServlet.class.getName()
-                                                                         + ".groupinfo";
+  public static final String                   GROUP_INFO_ATTRIBUTE = GroupInfoServlet.class.getName() + ".groupinfo";
 
   private volatile L2ConfigurationSetupManager configSetupManager;
-  private ServerGroupsDocument                    serverGroupsDocument = null;
-  private Map<String, Integer>                    serverNameToDsoPort;
-  private Map<String, String>                     serverNameToHostName;
+  private ServerGroupsDocument                 serverGroupsDocument = null;
+  private Map<String, Integer>                 serverNameToTsaPort;
+  private Map<String, String>                  serverNameToHostName;
 
+  @Override
   public void init() {
     // NO OP
   }
@@ -40,7 +40,7 @@ public class GroupInfoServlet extends HttpServlet {
   private void createDocumentToSend() {
     configSetupManager = (L2ConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
     serverGroupsDocument = ServerGroupsDocument.Factory.newInstance();
-    createServerNameToDsoPortAndHostname();
+    createServerNameToTsaPortAndHostname();
     ServerGroups serverGroups = serverGroupsDocument.addNewServerGroups();
     List<ActiveServerGroupConfig> activeServerGroupConfigs = configSetupManager.activeServerGroupsConfig()
         .getActiveServerGroups();
@@ -49,35 +49,36 @@ public class GroupInfoServlet extends HttpServlet {
     }
   }
 
-  private void createServerNameToDsoPortAndHostname() {
-    serverNameToDsoPort = new HashMap<String, Integer>();
+  private void createServerNameToTsaPortAndHostname() {
+    serverNameToTsaPort = new HashMap<String, Integer>();
     serverNameToHostName = new HashMap<String, String>();
     String[] allServerNames = configSetupManager.allCurrentlyKnownServers();
-    for (int i = 0; i < allServerNames.length; i++) {
+    for (String allServerName : allServerNames) {
       int port = 0;
       String host = null;
       try {
-        port = configSetupManager.dsoL2ConfigFor(allServerNames[i]).dsoPort().getIntValue();
-        host = configSetupManager.dsoL2ConfigFor(allServerNames[i]).host();
+        port = configSetupManager.dsoL2ConfigFor(allServerName).tsaPort().getIntValue();
+        host = configSetupManager.dsoL2ConfigFor(allServerName).host();
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }
-      serverNameToDsoPort.put(allServerNames[i], port);
-      serverNameToHostName.put(allServerNames[i], host);
+      serverNameToTsaPort.put(allServerName, port);
+      serverNameToHostName.put(allServerName, host);
     }
   }
 
   protected void addServerGroup(ServerGroups serverGroups, ActiveServerGroupConfig activeServerGroupConfig) {
     ServerGroup group = serverGroups.addNewServerGroup();
     group.setGroupName(activeServerGroupConfig.getGroupName());
-    String[] members = activeServerGroupConfig.getMembers().getMemberArray();
-    for (int i = 0; i < members.length; i++) {
+    String[] members = activeServerGroupConfig.getMembers();
+    for (String member : members) {
       ServerInfo serverInfo = group.addNewServerInfo();
-      serverInfo.setDsoPort(new BigInteger(serverNameToDsoPort.get(members[i]).intValue() + ""));
-      serverInfo.setName(serverNameToHostName.get(members[i]));
+      serverInfo.setTsaPort(new BigInteger(serverNameToTsaPort.get(member).intValue() + ""));
+      serverInfo.setName(serverNameToHostName.get(member));
     }
   }
 
+  @Override
   protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     createDocumentToSend();
     OutputStream out = response.getOutputStream();

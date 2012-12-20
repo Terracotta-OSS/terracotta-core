@@ -8,8 +8,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.net.core.SecurityInfo;
 import com.tc.object.Portability;
-import com.tc.object.config.schema.DSORuntimeLoggingOptions;
-import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 
@@ -31,17 +29,11 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig {
 
   boolean addTunneledMBeanDomain(String tunneledMBeanDomain);
 
-  // HACK: is also in IStandardDSOClientConfigHelper
   TransparencyClassSpec getOrCreateSpec(String className);
 
-  // HACK: is also in IStandardDSOClientConfigHelper
   TransparencyClassSpec getOrCreateSpec(String className, String applicator);
 
   TransparencyClassSpec getSpec(String className);
-
-  DSORuntimeLoggingOptions runtimeLoggingOptions();
-
-  DSORuntimeOutputOptions runtimeOutputOptions();
 
   int getFaultCount();
 

@@ -4,7 +4,6 @@
  */
 package com.tc.object.bytecode.hook.impl;
 
-import org.apache.commons.io.CopyUtils;
 import org.apache.log4j.Hierarchy;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -28,21 +27,11 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
-import com.tc.util.Util;
-import com.tc.util.io.ServerURL;
-import com.terracottatech.config.ConfigurationModel;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
@@ -58,7 +47,7 @@ public class DSOContextImpl implements DSOContext {
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient,
                                                    TCSecurityManager securityManager, SecurityInfo securityInfo) {
-    ManagerImpl manager = new ManagerImpl(true, null, null, null, null, null, null, true, null, loader,
+    ManagerImpl manager = new ManagerImpl(true, null, null, null, null, null, null, true, loader,
                                           expressRejoinClient, securityManager);
     DSOContextImpl context = createContext(manager, expressRejoinClient, configSpec, securityManager, securityInfo);
     return context;
@@ -82,10 +71,9 @@ public class DSOContextImpl implements DSOContext {
     }
 
     DSOClientConfigHelper configHelperLocal = new StandardDSOClientConfigHelperImpl(config);
-    RuntimeLoggerImpl runtimeLogger = new RuntimeLoggerImpl(configHelperLocal);
 
     this.configHelper = configHelperLocal;
-    manager.set(configHelper, l2Connection, runtimeLogger);
+    manager.set(configHelper, l2Connection);
 
     try {
       startToolkitConfigurator();
@@ -158,72 +146,11 @@ public class DSOContextImpl implements DSOContext {
   }
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1ConfigurationSetupManager config,
-                                                                             final TCSecurityManager securityManager)
-      throws UnknownHostException, IOException, TCTimeoutException {
+                                                                             final TCSecurityManager securityManager) {
     L2Data[] l2Data = config.l2Config().l2Data();
     Assert.assertNotNull(l2Data);
 
-    if (false && !config.loadedFromTrustedSource()) {
-      String serverConfigMode = getServerConfigMode(l2Data[0].host(), l2Data[0].dsoPort(), config.getSecurityInfo());
-
-      if (serverConfigMode != null && serverConfigMode.equals(ConfigurationModel.PRODUCTION)) {
-        String text = "Configuration constraint violation: "
-                      + "untrusted client configuration not allowed against production server";
-        throw new AssertionError(text);
-      }
-    }
-
     return new PreparedComponentsFromL2Connection(config, securityManager);
-  }
-
-  private static final long MAX_HTTP_FETCH_TIME       = 30 * 1000; // 30 seconds
-  private static final long HTTP_FETCH_RETRY_INTERVAL = 1 * 1000; // 1 second
-
-  private static String getServerConfigMode(String serverHost, int httpPort, SecurityInfo securityInfo)
-      throws TCTimeoutException, IOException {
-
-    ServerURL theURL = new ServerURL(serverHost, httpPort, "/config?query=mode", securityInfo);
-
-    long startTime = System.currentTimeMillis();
-    long lastTrial = 0;
-
-    boolean interrupted = false;
-    try {
-      while (System.currentTimeMillis() < (startTime + MAX_HTTP_FETCH_TIME)) {
-        try {
-          long untilNextTrial = HTTP_FETCH_RETRY_INTERVAL - (System.currentTimeMillis() - lastTrial);
-
-          if (untilNextTrial > 0) {
-            try {
-              Thread.sleep(untilNextTrial);
-            } catch (InterruptedException ie) {
-              interrupted = true;
-            }
-          }
-
-          logger.debug("Opening connection to: " + theURL + " to fetch server configuration.");
-
-          lastTrial = System.currentTimeMillis();
-          InputStream in = theURL.openStream();
-          logger.debug("Got input stream to: " + theURL);
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-          CopyUtils.copy(in, baos);
-
-          return baos.toString();
-        } catch (ConnectException ce) {
-          logger.warn("Unable to fetch configuration mode from L2 at '" + theURL + "'; trying again. "
-                      + "(Is an L2 running at that address?): " + ce.getLocalizedMessage());
-          // oops -- try again
-        }
-      }
-    } finally {
-      Util.selfInterruptIfNeeded(interrupted);
-    }
-
-    throw new TCTimeoutException("We tried for " + (int) ((System.currentTimeMillis() - startTime) / 1000)
-                                 + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '"
-                                 + theURL + "'. Is the L2 running?");
   }
 
   @Override

@@ -23,9 +23,9 @@ public interface ProxyConnectManager {
 
   int getProxyPort();
 
-  void setDsoPort(int port);
+  void setTsaPort(int port);
 
-  int getDsoPort();
+  int getTsaPort();
 
   void setProxyDownTime(int milliseconds);
 

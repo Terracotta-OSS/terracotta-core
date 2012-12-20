@@ -63,7 +63,7 @@ public class TestBaseUtil {
     StringBuilder tcUrl = new StringBuilder();
     for (GroupsData groupData : groupsData) {
       for (int i = 0; i < groupData.getServerCount(); i++) {
-        tcUrl.append(ConfigHelper.HOST + ":" + groupData.getDsoPort(i) + ",");
+        tcUrl.append(ConfigHelper.HOST + ":" + groupData.getTsaPort(i) + ",");
       }
     }
 
@@ -145,7 +145,7 @@ public class TestBaseUtil {
     testConfig.getL2Config().setOffHeapEnabled(true);
     testConfig.getL2Config().setDirectMemorySize(maxDirectMemory);
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
-    testConfig.getL2Config().setRestartable(true);
+    testConfig.setRestartable(true);
 
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE, "1m");
@@ -212,12 +212,12 @@ public class TestBaseUtil {
       String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
       ObjectName name = new ObjectName(hotSpotDiagName);
       String operationName = "dumpHeap";
-  
+
       new File("heapDumps").mkdirs();
       File tempFile = new File("heapDumps/" + dumpName + "_" + (System.currentTimeMillis()) + ".hprof");
       tempFile.delete();
       String dumpFilename = tempFile.getAbsolutePath();
-  
+
       Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
       String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
       try {
@@ -226,7 +226,7 @@ public class TestBaseUtil {
         System.out.println("heap dump failed: " + e);
         return;
       }
-  
+
       System.out.println("dumped heap in file " + dumpFilename);
     } catch (Exception e) {
       System.out.println("Caught exception while trying to heap dump:");

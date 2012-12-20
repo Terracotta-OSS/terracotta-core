@@ -5,14 +5,14 @@ package com.tc.config.test.schema;
 
 class PortConfigBuilder extends BaseConfigBuilder {
   public static enum PortType {
-    JMXPORT, DSOPORT, GROUPPORT
+    JMXPORT, TSAPORT, GROUPPORT
   }
 
   private static final String   BIND           = "bind";
-  private static final String   DSO_PORT       = "dso-port";
+  private static final String   TSA_PORT       = "tsa-port";
   private static final String   JMX_PORT       = "jmx-port";
-  private static final String   GROUP_PORT     = "l2-group-port";
-  private static final String[] ALL_PROPERTIES = concat(new Object[] { BIND, DSO_PORT, JMX_PORT, GROUP_PORT });
+  private static final String   GROUP_PORT     = "tsa-group-port";
+  private static final String[] ALL_PROPERTIES = concat(new Object[] { BIND, TSA_PORT, JMX_PORT, GROUP_PORT });
 
   private String                bindAddress;
   private int                   bindPort;
@@ -33,8 +33,8 @@ class PortConfigBuilder extends BaseConfigBuilder {
       case JMXPORT:
         this.portType = JMX_PORT;
         break;
-      case DSOPORT:
-        this.portType = DSO_PORT;
+      case TSAPORT:
+        this.portType = TSA_PORT;
         break;
       case GROUPPORT:
         this.portType = GROUP_PORT;

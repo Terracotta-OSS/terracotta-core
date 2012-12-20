@@ -21,13 +21,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.DsoServerData;
-import com.terracottatech.config.Ha;
-import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.MirrorGroups;
-import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -58,37 +52,36 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    Assert.assertEquals(9510, server.getDsoPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
+    Assert.assertEquals(9510, server.getTsaPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaPort().getBind());
 
-    int tempGroupPort = 9510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = 9510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = 9510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = 9510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
-
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
   }
 
   public void testServerDefaults2() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<dso-port>8513</dso-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<tsa-port>8513</tsa-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -96,39 +89,39 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
+    int tsaPort = 8513;
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaPort().getBind());
 
-    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = tsaPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
 
   }
 
   public void testServerDefaults3() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<tsa-port bind=\"1.2.3.4\">8513</tsa-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -136,41 +129,41 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
-    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int tempGroupPort = tsaPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT;
     int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
         : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int tempJmxPort = tsaPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
     int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
         : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
 
-    Assert.assertEquals(defaultGroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(server.getBind(), server.getL2GroupPort().getBind());
+    Assert.assertEquals(defaultGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
 
   }
 
   public void testServerDefaults4() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>" + "</servers>"
+                    + "<tsa-port bind=\"1.2.3.4\">8513</tsa-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<tsa-group-port bind=\"5.6.7.8\">7513</tsa-group-port>" + "</server>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -179,39 +172,39 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     int jmxPort = 9513;
     String jmxBind = "4.3.2.1";
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    int l2GroupPort = 7513;
-    String l2GroupBind = "5.6.7.8";
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    int tsaGroupPort = 7513;
+    String tsaGroupBind = "5.6.7.8";
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
   }
 
   public void testServerDefaults5() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>"
+                    + "<tsa-port bind=\"1.2.3.4\">8513</tsa-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<tsa-group-port bind=\"5.6.7.8\">7513</tsa-group-port>" + "</server>"
                     + "<server host=\"testHost2\" name=\"server2\" bind=\"4.5.6.7\">"
-                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>" + "</servers>"
+                    + "<tsa-port bind=\"1.2.3.4\">8513</tsa-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<tsa-group-port bind=\"5.6.7.8\">7513</tsa-group-port>" + "</server>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -220,31 +213,31 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(2, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getHost());
     Assert.assertEquals("0.0.0.0", server.getBind());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getDsoPort().getIntValue(),
+    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress() + ":" + server.getTsaPort().getIntValue(),
                         server.getName());
 
-    int dsoPort = 8513;
-    String dsoBind = "1.2.3.4";
+    int tsaPort = 8513;
+    String tsaBind = "1.2.3.4";
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     int jmxPort = 9513;
     String jmxBind = "4.3.2.1";
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    int l2GroupPort = 7513;
-    String l2GroupBind = "5.6.7.8";
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    int tsaGroupPort = 7513;
+    String tsaGroupBind = "5.6.7.8";
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
 
-    server = servers.getServerArray(1);
+    server = servers.getMirrorGroupArray(0).getServerArray(1);
     String host = "testHost2";
     String name = "server2";
     String bind = "4.5.6.7";
@@ -253,14 +246,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(bind, server.getBind());
     Assert.assertEquals(name, server.getName());
 
-    Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
-    Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
+    Assert.assertEquals(tsaPort, server.getTsaPort().getIntValue());
+    Assert.assertEquals(tsaBind, server.getTsaPort().getBind());
 
     Assert.assertEquals(jmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(jmxBind, server.getJmxPort().getBind());
 
-    Assert.assertEquals(l2GroupPort, server.getL2GroupPort().getIntValue());
-    Assert.assertEquals(l2GroupBind, server.getL2GroupPort().getBind());
+    Assert.assertEquals(tsaGroupPort, server.getTsaGroupPort().getIntValue());
+    Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
 
   }
 
@@ -275,8 +268,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "data")
         .getAbsolutePath(), server.getData());
@@ -292,8 +285,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
                     + "<data>abc/xyz/123</data>" + "<logs>xyz/abc/451</logs>"
-                    + "<data-backup>/qrt/opt/pqr</data-backup>" + "<statistics>/opq/pqr/123/or</statistics>"
-                    + "<index>/rta/try/456</index>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<data-backup>/qrt/opt/pqr</data-backup>" + "<index>/rta/try/456</index>" + "</server>"
+                    + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -301,8 +294,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert
         .assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "abc"
@@ -327,8 +320,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testServerSubsitutedDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
-                    + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>"
-                    + "<statistics>%n</statistics>" + "</server>" + "</servers>" + "</tc:tc-config>";
+                    + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>" + "</server>"
+                    + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -336,8 +329,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
                                  + InetAddress.getLocalHost().getHostName()).getAbsolutePath(), server.getData());
@@ -357,14 +350,13 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
-    Assert.assertFalse(server.getDso().getPersistence().getRestartable().getEnabled());
-    Assert.assertEquals(120, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(3600, server.getDso().getGarbageCollection().getInterval());
+    Assert.assertFalse(servers.getRestartable().getEnabled());
+    Assert.assertEquals(120, servers.getClientReconnectWindow());
+    Assert.assertEquals(true, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(false, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(3600, servers.getGarbageCollection().getInterval());
   }
 
   public void testDefaultPersistence() throws IOException, ConfigurationSetupException {
@@ -377,22 +369,18 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
-    Assert.assertTrue(server.isSetDso());
-    DsoServerData dsoServerData = server.getDso();
-    Assert.assertTrue(dsoServerData.isSetPersistence());
-    Persistence persistence = dsoServerData.getPersistence();
-    Assert.assertFalse(persistence.isSetOffheap());
-    Assert.assertFalse(persistence.getRestartable().getEnabled());
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
+    Assert.assertFalse(server.isSetOffheap());
+    Assert.assertFalse(servers.getRestartable().getEnabled());
   }
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
+                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -400,25 +388,23 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
-
-    Assert.assertFalse(server.getDso().getPersistence().isSetOffheap());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
+    Assert.assertFalse(server.isSetOffheap());
   }
 
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
-                    + "<maxDataSize>5628m</maxDataSize>" + "</offheap>" + "</persistence>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<offheap>" + "<enabled>true</enabled>" + "<maxDataSize>5628m</maxDataSize>" + "</offheap>"
+                    + "</server>" + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -426,27 +412,26 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
+    Server server = servers.getMirrorGroupArray(0).getServerArray(0);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
 
-    Assert.assertTrue(server.getDso().getPersistence().isSetOffheap());
-    Assert.assertEquals(true, server.getDso().getPersistence().getOffheap().getEnabled());
-    Assert.assertEquals("5628m", server.getDso().getPersistence().getOffheap().getMaxDataSize());
+    Assert.assertTrue(server.isSetOffheap());
+    Assert.assertEquals(true, server.getOffheap().getEnabled());
+    Assert.assertEquals("5628m", server.getOffheap().getMaxDataSize());
   }
 
   public void testOffHeap2() throws IOException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
-                    + "</offheap>" + "</persistence>" + "<client-reconnect-window>9876</client-reconnect-window>"
-                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
-                    + "<interval>1234</interval>" + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>"
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<offheap>" + "<enabled>true</enabled>" + "</offheap>" + "</server>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
+                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
+                    + "</garbage-collection>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -461,11 +446,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<restartable enabled=\"true\"/>" + "</persistence>"
-                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
-                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
-                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
+                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>" + "<restartable enabled=\"true\"/>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -473,14 +457,13 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Server server = servers.getServerArray(0);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
-    Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
-    Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
-    Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
-    Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
-    Assert.assertTrue(server.getDso().getPersistence().getRestartable().getEnabled());
+    Assert.assertEquals(9876, servers.getClientReconnectWindow());
+    Assert.assertEquals(false, servers.getGarbageCollection().getEnabled());
+    Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
+    Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
+    Assert.assertTrue(servers.getRestartable().getEnabled());
   }
 
   public void testMirrorGroupDefaults() throws IOException, ConfigurationSetupException {
@@ -493,35 +476,22 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(1, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(1, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(1, mirrorGroups.getMirrorGroupArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(1, servers.getMirrorGroupArray(0).getServerArray().length);
 
-    Server server = servers.getServerArray(0);
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(1, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(1, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(server.getName(), mirrorGroup.getMembers().getMemberArray(0));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals(1, mirrorGroup.sizeOfServerArray());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
+    Assert.assertEquals("default-group", mirrorGroup.getGroupName());
   }
 
   public void testMirrorGroupWithDefaultHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
-                    + "<server host=\"eng01\" name=\"server1\"></server>"
-                    + "<server host=\"eng02\" name=\"server2\"></server>"
-                    + "<server host=\"eng03\" name=\"server3\"></server>"
-                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
-                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
-                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
-                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
-                    + "<member>server4</member>" + "</members>" + "</mirror-group>" + "</mirror-groups>" + "</servers>"
+                    + "<mirror-group group-name=\"group1\">" + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\">" + "<server host=\"eng03\" name=\"server3\"></server>"
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -530,53 +500,32 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(4, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(2, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(2, mirrorGroups.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(1).getServerArray().length);
 
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(0).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server1", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals("group1", mirrorGroup.getGroupName());
+    Assert.assertEquals("server1", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server2", mirrorGroup.getServerArray(1).getName());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
 
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
-
-    mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(2).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    defaultHa = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, defaultHa.getMode());
-    Assert.assertEquals(5, defaultHa.getNetworkedActivePassive().getElectionTime());
+    mirrorGroup = servers.getMirrorGroupArray(1);
+    Assert.assertEquals("group2", mirrorGroup.getGroupName());
+    Assert.assertEquals("server3", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server4", mirrorGroup.getServerArray(1).getName());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
   }
 
   public void testMirrorGroupWithGivenHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
-                    + "<server host=\"eng01\" name=\"server1\"></server>"
-                    + "<server host=\"eng02\" name=\"server2\"></server>"
+                    + "<mirror-group group-name=\"group1\">" + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\" election-time=\"15\">"
                     + "<server host=\"eng03\" name=\"server3\"></server>"
-                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
-                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
-                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
-                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
-                    + "<member>server4</member>" + "</members>" + "<ha>" + "<mode>networked-active-passive</mode>"
-                    + "<networked-active-passive>" + "<election-time>15</election-time>"
-                    + "</networked-active-passive>" + "</ha>" + "</mirror-group>" + "</mirror-groups>" + "<ha>"
-                    + "<mode>disk-based-active-passive</mode>" + "</ha>" + "</servers>" + "</tc:tc-config>";
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "</mirror-group>" + "</servers>"
+                    + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -584,36 +533,21 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
-    Assert.assertEquals(4, servers.getServerArray().length);
-    Assert.assertTrue(servers.isSetMirrorGroups());
-    MirrorGroups mirrorGroups = servers.getMirrorGroups();
-    Assert.assertEquals(2, mirrorGroups.sizeOfMirrorGroupArray());
-    Assert.assertEquals(2, mirrorGroups.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(0).getServerArray().length);
+    Assert.assertEquals(2, servers.getMirrorGroupArray(1).getServerArray().length);
 
-    MirrorGroup mirrorGroup = mirrorGroups.getMirrorGroupArray(0);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(0).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server1", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(1).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server2", mirrorGroup.getMembers().getMemberArray(1));
+    MirrorGroup mirrorGroup = servers.getMirrorGroupArray(0);
+    Assert.assertEquals("group1", mirrorGroup.getGroupName());
+    Assert.assertEquals("server1", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server2", mirrorGroup.getServerArray(1).getName());
+    Assert.assertEquals(5, mirrorGroup.getElectionTime());
 
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    Ha ha = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.DISK_BASED_ACTIVE_PASSIVE, ha.getMode());
-
-    mirrorGroup = mirrorGroups.getMirrorGroupArray(1);
-    Assert.assertEquals(2, mirrorGroup.getMembers().sizeOfMemberArray());
-    Assert.assertEquals(2, mirrorGroup.getMembers().getMemberArray().length);
-    Assert.assertEquals(servers.getServerArray(2).getName(), mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals("server3", mirrorGroup.getMembers().getMemberArray(0));
-    Assert.assertEquals(servers.getServerArray(3).getName(), mirrorGroup.getMembers().getMemberArray(1));
-    Assert.assertEquals("server4", mirrorGroup.getMembers().getMemberArray(1));
-
-    Assert.assertTrue(mirrorGroup.isSetHa());
-    ha = mirrorGroup.getHa();
-    Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, ha.getMode());
-    Assert.assertEquals(15, ha.getNetworkedActivePassive().getElectionTime());
+    mirrorGroup = servers.getMirrorGroupArray(1);
+    Assert.assertEquals("group2", mirrorGroup.getGroupName());
+    Assert.assertEquals("server3", mirrorGroup.getServerArray(0).getName());
+    Assert.assertEquals("server4", mirrorGroup.getServerArray(1).getName());
+    Assert.assertEquals(15, mirrorGroup.getElectionTime());
   }
 
   public void testUpdateCheckDefault() throws IOException, ConfigurationSetupException {
@@ -714,37 +648,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("node123", client.getLogs());
-  }
-
-  public void testSystemDefaultConfigModel() throws IOException, ConfigurationSetupException {
-    this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "</tc:tc-config>";
-
-    writeConfigFile(config);
-
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
-
-    com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
-        .bean();
-
-    Assert.assertTrue(system.isSetConfigurationModel());
-    Assert.assertEquals(ConfigurationModel.DEVELOPMENT, system.getConfigurationModel());
-  }
-
-  public void testSystemConfigModel() throws IOException, ConfigurationSetupException {
-    this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<system>"
-                    + "<configuration-model>production</configuration-model>" + "</system>" + "</tc:tc-config>";
-
-    writeConfigFile(config);
-
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
-
-    com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
-        .bean();
-
-    Assert.assertTrue(system.isSetConfigurationModel());
-    Assert.assertEquals(ConfigurationModel.PRODUCTION, system.getConfigurationModel());
   }
 
   private BaseConfigurationSetupManager initializeAndGetBaseTVSConfigSetupManager(boolean isClient)

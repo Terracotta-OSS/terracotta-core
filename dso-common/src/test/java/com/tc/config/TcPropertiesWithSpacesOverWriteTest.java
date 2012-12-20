@@ -21,7 +21,7 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
   public void testOverWrite() throws Exception {
       tcConfig = getTempFile("tc-config-testHaMode1.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">"
                       + "<tc-properties>"
                       +   "<property name=\" l1.cachemanager.enabled \" value=\"    false    \" />"
                       +   "<property name=\"   logging.maxLogFileSize  \" value=\"   1234\" />"
@@ -29,12 +29,12 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
                       +   "<property name=\"    l1.cachemanager.leastCount    \" value=\"  9000   \" />"
                       + "</tc-properties>"
                       + "\n<servers>"
-                      + "\n      <server name=\"server1\">" 
-                      + "\n      <dso-port bind=\"127.8.9.0\">6510</dso-port>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n      <tsa-port bind=\"127.8.9.0\">6510</tsa-port>"
                       + "\n      <jmx-port bind=\"127.8.9.1\">6520</jmx-port>"
-                      + "\n      <l2-group-port bind=\"127.8.9.2\">6530</l2-group-port>"  
+                      + "\n      <tsa-group-port bind=\"127.8.9.2\">6530</tsa-group-port>"
                       + "\n      </server>"
-                      + "\n</servers>" 
+                      + "\n</servers>"
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
       TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
@@ -42,7 +42,7 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
                                                                                                     null,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
       factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
-      
+
       TCProperties tcProps = TCPropertiesImpl.getProperties();
       Assert.assertEquals(false, tcProps.getBoolean("l1.cachemanager.enabled"));
       Assert.assertEquals(1234, tcProps.getInt("logging.maxLogFileSize"));

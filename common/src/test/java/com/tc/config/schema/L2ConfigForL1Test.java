@@ -35,7 +35,7 @@ public class L2ConfigForL1Test extends TCTestCase {
 
     L2ConfigForL1.L2Data config = new L2ConfigForL1.L2Data("foobar", 20);
     assertEquals("foobar", config.host());
-    assertEquals(20, config.dsoPort());
+    assertEquals(20, config.tsaPort());
 
     EqualityChecker.checkArraysForEquality(
         new Object[] {

@@ -21,7 +21,7 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     protected void doTsaTest() throws Throwable {
 
       for (int i = 0; i < 2; i++) {
-        int port = getGroupData(0).getL2GroupPort(i);
+        int port = getGroupData(0).getTsaGroupPort(i);
         String host = ConfigHelper.HOST;
 
         String result = httpGet("http://" + host + ":" + port + "/tc-management-api/agents/topologies");
@@ -41,21 +41,21 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
         JSONObject attributes0 = (JSONObject)((JSONObject)servers.get(0)).get("attributes");
         if (attributes0.get("Name").equals("testserver0")) {
-          assertEquals((long)getGroupData(0).getL2GroupPort(0), attributes0.get("DSOGroupPort"));
+          assertEquals((long) getGroupData(0).getTsaGroupPort(0), attributes0.get("TSAGroupPort"));
           assertEquals("ACTIVE-COORDINATOR", attributes0.get("State"));
         } else {
           assertEquals("testserver1", attributes0.get("Name"));
-          assertEquals((long)getGroupData(0).getL2GroupPort(1), attributes0.get("DSOGroupPort"));
+          assertEquals((long) getGroupData(0).getTsaGroupPort(1), attributes0.get("TSAGroupPort"));
           assertEquals("PASSIVE-STANDBY", attributes0.get("State"));
         }
 
         JSONObject attributes1 = (JSONObject)((JSONObject)servers.get(1)).get("attributes");
         if (attributes1.get("Name").equals("testserver1")) {
-          assertEquals((long)getGroupData(0).getL2GroupPort(1), attributes1.get("DSOGroupPort"));
+          assertEquals((long) getGroupData(0).getTsaGroupPort(1), attributes1.get("TSAGroupPort"));
           assertEquals("PASSIVE-STANDBY", attributes1.get("State"));
         } else {
           assertEquals("testserver0", attributes1.get("Name"));
-          assertEquals((long)getGroupData(0).getL2GroupPort(0), attributes1.get("DSOGroupPort"));
+          assertEquals((long) getGroupData(0).getTsaGroupPort(0), attributes1.get("TSAGroupPort"));
           assertEquals("ACTIVE-COORDINATOR", attributes1.get("State"));
         }
       }

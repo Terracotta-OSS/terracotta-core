@@ -13,7 +13,7 @@ public abstract class AbstractExpressActivePassiveTest extends AbstractToolkitTe
     super(testConfig, c);
     testConfig.setNumOfGroups(1);
     testConfig.getGroupConfig().setMemberCount(2);
-    testConfig.getL2Config().setRestartable(false);
+    testConfig.setRestartable(false);
     testConfig.getCrashConfig().setCrashMode(ServerCrashMode.NO_CRASH);
   }
 

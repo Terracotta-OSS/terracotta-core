@@ -4,63 +4,70 @@
  */
 package com.tc.test.proxy;
 
+import com.tc.net.proxy.TCPProxy;
+import com.tc.util.PortChooser;
+
 import java.io.File;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.tc.net.proxy.TCPProxy;
-import com.tc.util.PortChooser;
-
 public class ProxyConnectManagerImpl implements ProxyConnectManager {
   private TCPProxy         proxy         = null;
-  private int              proxyPort, dsoPort;
+  private int              proxyPort, tsaPort;
   private int              downtime      = 100;
   private int              waittime      = 20 * 1000;
   private Thread           td            = null;
   private volatile boolean toStop        = false;
   private volatile boolean manualControl = false;
-  
+
   public ProxyConnectManagerImpl() {
     PortChooser pc = new PortChooser();
     proxyPort = pc.chooseRandomPort();
-    dsoPort = pc.chooseRandomPort();
+    tsaPort = pc.chooseRandomPort();
   }
 
   public ProxyConnectManagerImpl(int port, int proxyPort) {
     this.proxyPort = proxyPort;
-    this.dsoPort = port;
+    this.tsaPort = port;
   }
 
+  @Override
   public void setupProxy() {
     try {
-      proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), dsoPort, 0L, false, new File("."));
+      proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), tsaPort, 0L, false, new File("."));
       proxy.setReuseAddress(true);
     } catch (Exception x) {
       throw new RuntimeException("setupProxy failed! " + x);
     }
   }
 
+  @Override
   public void setProxyPort(int port) {
     proxyPort = port;
   }
 
+  @Override
   public int getProxyPort() {
     return (proxyPort);
   }
 
-  public void setDsoPort(int port) {
-    dsoPort = port;
+  @Override
+  public void setTsaPort(int port) {
+    tsaPort = port;
   }
 
-  public int getDsoPort() {
-    return (dsoPort);
+  @Override
+  public int getTsaPort() {
+    return tsaPort;
   }
 
+  @Override
   public void setManualControl(boolean manualControl) {
     this.manualControl = manualControl;
   }
 
+  @Override
   public boolean isManualControl() {
     return manualControl;
   }
@@ -70,11 +77,13 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     return (formatter.format(new Date()));
   }
 
+  @Override
   public void proxyDown() {
     System.out.println("XXX " + timeStamp() + " stop proxy");
     proxy.fastStop();
   }
 
+  @Override
   public void proxyUp() {
     // wait until backend is ready
     int i = 0;
@@ -88,13 +97,14 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     }
 
     try {
-      System.out.println("XXX " + timeStamp() + " start proxy at " + proxyPort + " to " + dsoPort);
+      System.out.println("XXX " + timeStamp() + " start proxy at " + proxyPort + " to " + tsaPort);
       proxy.start();
     } catch (Exception x) {
       throw new RuntimeException("proxyUp failed! " + x);
     }
   }
 
+  @Override
   public void stopProxyTest() {
     if (isManualControl()) {
       // Nothing to stop in manual control mode
@@ -114,6 +124,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     System.out.println("XXX " + timeStamp() + " proxy thread stopped");
   }
 
+  @Override
   public void startProxyTest() {
     if (isManualControl()) {
       System.out.println("Manual proxy control mode, not starting proxy control thread.");
@@ -121,6 +132,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     }
     toStop = false;
     td = new Thread(new Runnable() {
+      @Override
       public void run() {
         runProxy();
       }
@@ -151,26 +163,32 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     proxyUp();
   }
 
+  @Override
   public void setProxyDownTime(int milliseconds) {
     downtime = milliseconds;
   }
 
+  @Override
   public int getProxyDownTime() {
     return (downtime);
   }
 
+  @Override
   public void setProxyWaitTime(int milliseconds) {
     waittime = milliseconds;
   }
 
+  @Override
   public int getProxyWaitTime() {
     return (waittime);
   }
 
+  @Override
   public void close() {
     this.proxy.stop();
   }
 
+  @Override
   public void closeClientConnections() {
     this.proxy.closeClientConnections(true, true);
   }

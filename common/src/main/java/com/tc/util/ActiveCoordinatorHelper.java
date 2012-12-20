@@ -6,6 +6,7 @@ package com.tc.util;
 import com.tc.config.schema.ActiveServerGroupConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.net.GroupID;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.MirrorGroup;
 
 import java.util.Arrays;
@@ -63,7 +64,7 @@ public class ActiveCoordinatorHelper {
     for (ActiveServerGroupConfigObject asgco : asgcos) {
       String groupName = null;
       if (groupNameNotSet(asgco)) {
-        groupName = getGroupNameFrom(asgco.getMembers().getMemberArray());
+        groupName = getGroupNameFrom(asgco.getMembers());
       } else {
         groupName = asgco.getGroupName();
       }
@@ -79,7 +80,7 @@ public class ActiveCoordinatorHelper {
     for (MirrorGroup mirrorGroup : mirrorGroups) {
       String groupName = null;
       if (groupNameNotSet(mirrorGroup)) {
-        groupName = getGroupNameFrom(mirrorGroup.getMembers().getMemberArray());
+        groupName = getGroupNameFrom(L2DSOConfigObject.getServerNames(mirrorGroup));
       } else {
         groupName = mirrorGroup.getGroupName();
       }
@@ -88,6 +89,7 @@ public class ActiveCoordinatorHelper {
     }
     return groupNamesToGroup;
   }
+
 
   private static boolean groupNameNotSet(ActiveServerGroupConfigObject asgco) {
     return asgco.getGroupName() == null || asgco.getGroupName() == "";

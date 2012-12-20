@@ -7,6 +7,7 @@ import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.sysinfo.EnvStats;
 import com.tc.util.ArchiveBuilder;
 import com.tc.util.ZipBuilder;
@@ -172,7 +173,7 @@ public final class ArchiveUtil {
   private Server[] getServersElement(TcConfig configBeans) {
     Servers servers = configBeans.getServers();
     if (servers == null) quit("The Terracotta config specified doesn't contain the <servers> element");
-    return servers.getServerArray();
+    return L2DSOConfigObject.getServers(servers);
   }
 
   private File[] getServerLogsLocation(TcConfig configBeans) {

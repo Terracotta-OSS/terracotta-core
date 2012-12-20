@@ -7,7 +7,6 @@ package com.tctest;
 import com.tc.config.test.schema.L1ConfigBuilder;
 import com.tc.config.test.schema.L2ConfigBuilder;
 import com.tc.config.test.schema.L2SConfigBuilder;
-import com.tc.config.test.schema.SystemConfigBuilder;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.process.Exec;
@@ -79,9 +78,6 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   private String createConfig(String clientLogs, String[] serverLogs, String[] serverData) {
     TerracottaConfigBuilder builder = new TerracottaConfigBuilder();
-    SystemConfigBuilder sysBuilder = new SystemConfigBuilder();
-    sysBuilder.setConfigurationModel("production");
-    builder.setSystem(sysBuilder);
     L2ConfigBuilder[] l2Builder = new L2ConfigBuilder[serverLogs.length];
     for (int i = 0; i < l2Builder.length; i++) {
       l2Builder[i] = new L2ConfigBuilder();

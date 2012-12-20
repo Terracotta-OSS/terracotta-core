@@ -31,7 +31,7 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
     for (String serverName : serverNames) {
       try {
         L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverName);
-        this.nodeNameToServerName.put(l2Config.host() + ":" + l2Config.dsoPort().getIntValue(), serverName);
+        this.nodeNameToServerName.put(l2Config.host() + ":" + l2Config.tsaPort().getIntValue(), serverName);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }

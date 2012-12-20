@@ -40,8 +40,6 @@ public interface TCServer {
 
   boolean getRestartable();
 
-  String getFailoverMode();
-
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();
@@ -50,9 +48,9 @@ public interface TCServer {
 
   void startBeanShell(int port);
 
-  int getDSOListenPort();
+  int getTSAListenPort();
 
-  int getDSOGroupPort();
+  int getTSAGroupPort();
 
   void waitUntilShutdown();
 
@@ -61,8 +59,6 @@ public interface TCServer {
   void dumpClusterState();
 
   void reloadConfiguration() throws ConfigurationSetupException;
-
-  boolean isProduction();
 
   boolean isSecure();
 

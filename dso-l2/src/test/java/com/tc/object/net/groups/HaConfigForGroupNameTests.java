@@ -23,6 +23,7 @@ public class HaConfigForGroupNameTests implements HaConfig {
     this.set = new ClusterInfoImpl(tempSet);
   }
 
+  @Override
   public GroupID getActiveCoordinatorGroupID() {
     throw new ImplementMe();
   }
@@ -35,14 +36,17 @@ public class HaConfigForGroupNameTests implements HaConfig {
     throw new ImplementMe();
   }
 
+  @Override
   public GroupID getThisGroupID() {
     throw new ImplementMe();
   }
 
+  @Override
   public GroupID[] getGroupIDs() {
     throw new ImplementMe();
   }
 
+  @Override
   public ClusterInfo getClusterInfo() {
     return this.set;
   }
@@ -55,14 +59,17 @@ public class HaConfigForGroupNameTests implements HaConfig {
     throw new ImplementMe();
   }
 
+  @Override
   public Node getThisNode() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isActiveActive() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isActiveCoordinatorGroup() {
     throw new ImplementMe();
   }
@@ -75,10 +82,12 @@ public class HaConfigForGroupNameTests implements HaConfig {
     throw new ImplementMe();
   }
 
+  @Override
   public ReloadConfigChangeContext reloadConfiguration() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodesStore getNodesStore() {
     throw new ImplementMe();
   }
@@ -90,6 +99,7 @@ public class HaConfigForGroupNameTests implements HaConfig {
       this.serverNamesForThisGroup.addAll(set);
     }
 
+    @Override
     public boolean hasServerInGroup(String serverName) {
       return serverNamesForThisGroup.contains(serverName);
     }
@@ -108,16 +118,18 @@ public class HaConfigForGroupNameTests implements HaConfig {
       this.serverNamesForThisGroup = tmp;
     }
 
+    @Override
     public GroupID getGroupIDFromServerName(String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean hasServerInCluster(String name) {
       throw new ImplementMe();
     }
-
   }
 
+  @Override
   public String getNodeName(String member) {
     return null;
   }

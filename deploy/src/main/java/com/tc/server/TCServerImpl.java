@@ -31,8 +31,6 @@ import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.ConfigurationModel;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.ServerGroupInfo;
@@ -154,7 +152,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     validateEnterpriseFeatures(manager);
     this.configurationSetupManager = manager;
 
-    if(configurationSetupManager.isSecure()) {
+    if (configurationSetupManager.isSecure()) {
       this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
     } else {
       this.securityManager = null;
@@ -162,14 +160,15 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   protected TCSecurityManager createSecurityManager(final SecurityConfig securityConfig) {
-    throw new UnsupportedOperationException("Only Terracotta EE supports the security feature, " +
-                                            "you're currently running an OS version");
+    throw new UnsupportedOperationException("Only Terracotta EE supports the security feature, "
+                                            + "you're currently running an OS version");
   }
 
   private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
     if (!LicenseManager.enterpriseEdition()) return;
-    if (manager.dsoL2Config().getPersistence().isSetOffheap()) {
-      Offheap offHeapConfig = manager.dsoL2Config().getPersistence().getOffheap();
+
+    Offheap offHeapConfig = manager.dsoL2Config().getOffheap();
+    if (offHeapConfig.getEnabled()) {
       LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
     }
     if (manager.commonl2Config().authentication()) {
@@ -338,23 +337,17 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public boolean getRestartable() {
-    return configurationSetupManager.dsoL2Config().getPersistence().getRestartable().getEnabled();
+    return configurationSetupManager.dsoL2Config().getRestartable().getEnabled();
   }
 
   @Override
-  public String getFailoverMode() {
-    HaConfigSchema haConfig = this.configurationSetupManager.haConfig();
-    return haConfig.getHa().getMode().toString();
-  }
-
-  @Override
-  public int getDSOListenPort() {
+  public int getTSAListenPort() {
     if (this.dsoServer != null) { return this.dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
   }
 
   @Override
-  public int getDSOGroupPort() {
+  public int getTSAGroupPort() {
     if (this.dsoServer != null) { return this.dsoServer.getGroupPort(); }
     throw new IllegalStateException("DSO Server not running");
   }
@@ -556,15 +549,14 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServletContextHandler context = new ServletContextHandler(null, "/", ServletContextHandler.NO_SESSIONS
                                                                          | ServletContextHandler.SECURITY);
 
-    if(commonL2Config.isSecure()) {
+    if (commonL2Config.isSecure()) {
       final String pathSpec = "/*";
       final TCUserRealm userRealm = new TCUserRealm(securityManager);
       setupBasicAuth(context, pathSpec, userRealm, HTTP_SECURITY_ROLE);
       logger.info("HTTPS Authentication enabled for path '" + pathSpec + "'");
     } else if (commonL2Config.httpAuthentication()) {
       final HashLoginService userRealm = new HashLoginService("Terracotta Statistics Gatherer",
-                                                              commonL2Config
-          .httpAuthenticationUserRealmFile());
+                                                              commonL2Config.httpAuthenticationUserRealmFile());
       setupBasicAuth(context, STATISTICS_GATHERER_SERVLET_PATH, userRealm, HTTP_AUTHENTICATION_ROLE_STATISTICS);
       logger.info("HTTP Authentication enabled for path '" + STATISTICS_GATHERER_SERVLET_PATH
                   + "', using user realm file '" + commonL2Config.httpAuthenticationUserRealmFile() + "'");
@@ -687,8 +679,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void setupBasicAuth(final ServletContextHandler context, final String pathSpec,
-                              final LoginService loginService,
-                              String... roles) {
+                              final LoginService loginService, String... roles) {
     Constraint constraint = new Constraint();
     constraint.setName(Constraint.__BASIC_AUTH);
     constraint.setRoles(roles);
@@ -830,12 +821,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public boolean isProduction() {
-    ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
-    return configurationModel.equals(ConfigurationModel.PRODUCTION);
-  }
-
-  @Override
   public boolean isSecure() {
     return securityManager != null;
   }
@@ -891,7 +876,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       if (user == null) {
         String[] roles = new String[0];
         if (securityManager.isUserInRole(authenticatedUser, HTTP_SECURITY_ROLE)) {
-          roles = new String[] {HTTP_SECURITY_ROLE};
+          roles = new String[] { HTTP_SECURITY_ROLE };
         }
         user = putUser(username, new Password((String) credentials), roles);
       }
@@ -908,6 +893,5 @@ public class TCServerImpl extends SEDA implements TCServer {
       /**/
     }
   }
-
 
 }

@@ -13,7 +13,6 @@ import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ClientIDLogger;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -35,7 +34,6 @@ import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.Namespace;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -126,7 +124,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private StoppableThread                       reaper                       = null;
   private final TCLogger                        logger;
-  private final RuntimeLogger                   runtimeLogger;
   private final NonPortableEventContextFactory  appEventContextFactory;
 
   private final Portability                     portability;
@@ -150,21 +147,21 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
-                                 final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
+                                 final ClientIDProvider provider,
                                  final ClassProvider classProvider, final TCClassFactory classFactory,
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager,
                                  TCObjectSelfStore tcObjectSelfStore,
                                  AbortableOperationManager abortableOperationManager) {
-    this(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
+    this(remoteObjectManager, clientConfiguration, idProvider, provider, classProvider, classFactory,
          objectFactory, portability, channel, referenceManager, tcObjectSelfStore,
          new RootsHolder(new GroupID[] { new GroupID(0) }), abortableOperationManager);
   }
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
-                                 final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
+                                 final ClientIDProvider provider,
                                  final ClassProvider classProvider, final TCClassFactory classFactory,
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
@@ -175,7 +172,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.remoteObjectManager = remoteObjectManager;
     this.clientConfiguration = clientConfiguration;
     this.idProvider = idProvider;
-    this.runtimeLogger = runtimeLogger;
     this.portability = portability;
     this.channel = channel;
     this.referenceManager = referenceManager;
@@ -681,9 +677,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           } else {
             obj.hydrate(dna, false, newWeakObjectReference(id, pojo));
           }
-          if (this.runtimeLogger.getFaultDebug()) {
-            this.runtimeLogger.updateFaultStats(dna.getTypeName());
-          }
         } catch (AbortedOperationException t) {
           exception = true;
           if (!quiet) {
@@ -732,9 +725,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       }
 
       this.remoteObjectManager.removed(tcoSelf.getObjectID());
-    }
-    if (ClientObjectManagerImpl.this.runtimeLogger.getFlushDebug()) {
-      this.runtimeLogger.updateFlushStats(tcoSelf.getClass().getName());
     }
   }
 
@@ -869,7 +859,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         reason.setUltimateNonPortableFieldName(fullyQualifiedFieldname);
         reason.addDetail(NonPortableFieldSetContext.FIELD_NAME_LABEL, fullyQualifiedFieldname);
       }
-      dumpObjectHierarchy(context.getPojo(), context);
       if (this.sendErrors) {
         storeObjectHierarchy(context.getPojo(), context);
       }
@@ -883,7 +872,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     final NonPortableReason reason = checkPortabilityOf(root);
     if (reason != null) {
       final NonPortableRootContext context = this.appEventContextFactory.createNonPortableRootContext(rootName, root);
-      dumpObjectHierarchy(root, context);
       if (this.sendErrors) {
         storeObjectHierarchy(root, context);
       }
@@ -899,7 +887,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (reason != null) {
       final NonPortableFieldSetContext context = this.appEventContextFactory
           .createNonPortableFieldSetContext(pojo, fieldName, fieldValue);
-      dumpObjectHierarchy(fieldValue, context);
       if (this.sendErrors) {
         storeObjectHierarchy(pojo, context);
       }
@@ -954,7 +941,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (reason != null) {
       final NonPortableEventContext context = this.appEventContextFactory
           .createNonPortableLogicalInvokeContext(pojo, methodName, params, index);
-      dumpObjectHierarchy(params[index], context);
       if (this.sendErrors) {
         storeObjectHierarchy(cloneAndInvokeLogicalOperation(pojo, methodName, params), context);
       }
@@ -1195,25 +1181,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void dumpObjectHierarchy(final Object root, final NonPortableEventContext context) {
-    // the catch is not in the called method so that when/if there is an OOME, the logging might have a chance of
-    // actually working (as opposed to just throwing another OOME)
-    try {
-      dumpObjectHierarchy0(root, context);
-    } catch (final Throwable t) {
-      this.logger.error("error walking non-portable object instance of type " + root.getClass().getName(), t);
-    }
-  }
-
-  private void dumpObjectHierarchy0(final Object root, final NonPortableEventContext context) {
-    if (this.runtimeLogger.getNonPortableDump()) {
-      final NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(CustomerLogging.getDSORuntimeLogger(), this,
-                                                                        this.clientConfiguration, root);
-      final ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
-      walker.walk();
-    }
-  }
-
   @Override
   public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
     final JMXMessage jmxMsg = this.channel.getJMXMessage();
@@ -1295,9 +1262,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                         pojo.getClass(), true);
       this.clientTxManager.createObject(obj);
       basicAddLocal(obj, false);
-      if (this.runtimeLogger.getNewManagedObjectDebug()) {
-        this.runtimeLogger.newManagedObject(obj);
-      }
     }
     return obj;
   }
@@ -1364,11 +1328,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   @Override
   public WeakReference newWeakObjectReference(final ObjectID oid, final Object referent) {
-    if (this.runtimeLogger.getFlushDebug()) {
-      return new LoggingWeakObjectReference(oid, referent, this.referenceQueue);
-    } else {
-      return new WeakObjectReference(oid, referent, this.referenceQueue);
-    }
+    return new WeakObjectReference(oid, referent, this.referenceQueue);
   }
 
   @Override
@@ -1400,9 +1360,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
             if (wor != null) {
               final ObjectID objectID = wor.getObjectID();
               reap(objectID);
-              if (ClientObjectManagerImpl.this.runtimeLogger.getFlushDebug()) {
-                updateFlushStats(wor);
-              }
             }
           } catch (final InterruptedException e) {
             return;
@@ -1412,14 +1369,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     };
     this.reaper.setDaemon(true);
     this.reaper.start();
-  }
-
-  private void updateFlushStats(final WeakObjectReference wor) {
-    String className = wor.getObjectType();
-    if (className == null) {
-      className = "UNKNOWN";
-    }
-    this.runtimeLogger.updateFlushStats(className);
   }
 
   // XXX::: Cache eviction doesn't clear it from the cache. it happens in reap().

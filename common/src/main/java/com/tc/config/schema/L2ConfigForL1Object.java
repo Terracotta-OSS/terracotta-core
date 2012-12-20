@@ -5,12 +5,12 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.net.TCSocketAddress;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     this(l2sContext, systemContext, null);
   }
 
-  public L2ConfigForL1Object(final ConfigContext l2sContext, final ConfigContext systemContext, final int[] dsoPorts) {
+  public L2ConfigForL1Object(final ConfigContext l2sContext, final ConfigContext systemContext, final int[] tsaPorts) {
     Assert.assertNotNull(l2sContext);
     Assert.assertNotNull(systemContext);
 
@@ -52,30 +52,40 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
 
     Servers servers = (Servers) this.l2sContext.bean();
     boolean securityEnabled = servers.getSecure();
-    Server[] l2Array = servers.getServerArray();
+    Server[] l2Array = getAllServers(servers);
     this.l2sData = new L2Data[l2Array.length];
     for (int i = 0; i < l2Array.length; i++) {
       Server l2 = l2Array[i];
-      String host = l2.getDsoPort().getBind();
+      String host = l2.getTsaPort().getBind();
       if (TCSocketAddress.WILDCARD_IP.equals(host)) {
         host = l2.getHost();
       }
       String name = l2.getName();
-      this.l2sData[i] = new L2Data(host, l2.getDsoPort().getIntValue(), securityEnabled);
+      this.l2sData[i] = new L2Data(host, l2.getTsaPort().getIntValue(), securityEnabled);
       this.l2DataByName.put(name, this.l2sData[i]);
     }
     organizeByGroup(servers);
   }
 
+  private static Server[] getAllServers(Servers servers) {
+    List<Server> serverList = new ArrayList<Server>();
+    for (MirrorGroup group : servers.getMirrorGroupArray()) {
+      for (Server server : group.getServerArray()) {
+        serverList.add(server);
+      }
+    }
+    return serverList.toArray(new Server[serverList.size()]);
+  }
+
   private void organizeByGroup(Servers servers) {
-    MirrorGroup[] asgArray = servers.getMirrorGroups().getMirrorGroupArray();
+    MirrorGroup[] asgArray = servers.getMirrorGroupArray();
     Assert.assertNotNull(asgArray);
     Assert.assertTrue(asgArray.length >= 1);
 
     asgArray = ActiveCoordinatorHelper.generateGroupNames(asgArray);
 
     for (int i = 0; i < asgArray.length; i++) {
-      String[] members = asgArray[i].getMembers().getMemberArray();
+      String[] members = L2DSOConfigObject.getServerNames(asgArray[i]);
       List groupList = (List) this.l2DataByGroupId.get(Integer.valueOf(i));
       if (groupList == null) {
         groupList = new ArrayList();
@@ -95,10 +105,12 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     }
   }
 
+  @Override
   public L2Data[] l2Data() {
     return this.l2sData;
   }
 
+  @Override
   public synchronized L2Data[][] getL2DataByGroup() {
     if (this.l2DataByGroup == null) {
       createL2DataByGroup();

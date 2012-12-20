@@ -15,7 +15,6 @@ import com.tc.object.TestClientObjectManager;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.stats.counter.sampled.SampledCounter;
 
 import junit.framework.TestCase;
@@ -29,12 +28,12 @@ public class ClientTransactionManagerTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
-    clientTxnFactory = new ClientTransactionFactoryImpl(new NullRuntimeLogger());
+    clientTxnFactory = new ClientTransactionFactoryImpl();
     rmtTxnMgr = new TestRemoteTransactionManager();
     objMgr = new TestClientObjectManager();
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     clientTxnFactory, new MockClientLockManager(), rmtTxnMgr,
-                                                    new NullRuntimeLogger(), SampledCounter.NULL_SAMPLED_COUNTER, null,
+                                                    SampledCounter.NULL_SAMPLED_COUNTER, null,
                                                     new NullAbortableOperationManager());
   }
 

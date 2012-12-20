@@ -14,6 +14,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -194,7 +195,7 @@ public class ServerStat {
       throw new RuntimeException("Error parsing " + configFilePath + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
-    Server[] servers = tcConfig.getServers().getServerArray();
+    Server[] servers = L2DSOConfigObject.getServers(tcConfig.getServers());
     for (Server server : servers) {
       String host = server.getHost();
       String hostName = server.getName();

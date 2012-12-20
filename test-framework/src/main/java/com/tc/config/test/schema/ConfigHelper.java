@@ -2,7 +2,6 @@ package com.tc.config.test.schema;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.test.config.model.GroupConfig;
 import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
@@ -94,10 +93,9 @@ public class ConfigHelper {
 
   private L2SConfigBuilder getL2sConfig() {
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[numOfGroups * numOfServersPerGroup];
-    GroupsConfigBuilder groups = new GroupsConfigBuilder();
+    GroupConfigBuilder[] groups = new GroupConfigBuilder[numOfGroups];
     int i = 0;
     for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
-
       L2ConfigBuilder[] l2Builders = getServersForGroup(groupIndex);
 
       for (L2ConfigBuilder l2 : l2Builders) {
@@ -105,30 +103,33 @@ public class ConfigHelper {
         i++;
       }
 
-      MembersConfigBuilder members = new MembersConfigBuilder();
-      for (L2ConfigBuilder l2 : l2Builders) {
-        members.addMember(l2.getName());
-      }
       GroupConfigBuilder group = new GroupConfigBuilder(getGroupName(groupIndex));
-      group.setMembers(members);
-      groups.addGroupConfigBuilder(group);
+      group.setL2s(l2Builders);
+      groups[groupIndex] = group;
     }
 
     L2SConfigBuilder l2sConfig = new L2SConfigBuilder();
-    l2sConfig.setL2s(l2s);
     l2sConfig.setGroups(groups);
 
-    HaConfigBuilder ha = new HaConfigBuilder(3);
-    GroupConfig gc = testConfig.getGroupConfig();
-    ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
-    ha.setElectionTime(String.valueOf(gc.getElectionTime()));
-    l2sConfig.setHa(ha);
+    // set client reconnect window
+    l2sConfig.setReconnectWindowForPrevConnectedClients(testConfig.getClientReconnectWindow());
+
+    // set persistence
+    l2sConfig.setRestartable(testConfig.getRestartable());
+
+    // set DGC props
+    GarbageCollectionConfigBuilder gc = new GarbageCollectionConfigBuilder();
+    gc.setGCEnabled(testConfig.isDgcEnabled());
+    gc.setGCInterval(testConfig.getDgcIntervalInSec());
+    gc.setGCVerbose(testConfig.getDgcVerbose());
+    l2sConfig.setGarbageCollection(gc);
 
     return l2sConfig;
   }
 
   private L2ConfigBuilder[] getServersForGroup(int groupIndex) {
     L2ConfigBuilder[] l2ConfigBuilders = new L2ConfigBuilder[this.numOfServersPerGroup];
+
     for (int serverIndex = 0; serverIndex < l2ConfigBuilders.length; serverIndex++) {
       l2ConfigBuilders[serverIndex] = new L2ConfigBuilder();
       // set host and name
@@ -136,27 +137,17 @@ public class ConfigHelper {
       l2ConfigBuilders[serverIndex].setName(getServerName(groupIndex, serverIndex));
 
       // set ports
-      l2ConfigBuilders[serverIndex].setDSOPort(getDsoPort(groupIndex, serverIndex));
+      l2ConfigBuilders[serverIndex].setTSAPort(getTsaPort(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setJMXPort(getJmxPort(groupIndex, serverIndex));
-      l2ConfigBuilders[serverIndex].setL2GroupPort(getL2GroupPort(groupIndex, serverIndex));
+      l2ConfigBuilders[serverIndex].setTSAGroupPort(getTsaGroupPort(groupIndex, serverIndex));
 
       // set logs
       l2ConfigBuilders[serverIndex].setLogs(getLogDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setData(getDataDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setServerDbBackup(getBackupDirectoryPath(groupIndex, serverIndex));
-      l2ConfigBuilders[serverIndex].setStatistics(getStatisticsDirectoryPath(groupIndex, serverIndex));
 
       // set test level things
       L2Config l2Config = testConfig.getL2Config(groupIndex, serverIndex);
-      // set client reconnect window
-      l2ConfigBuilders[serverIndex].setReconnectWindowForPrevConnectedClients(l2Config.getClientReconnectWindow());
-
-      // set persistence
-      l2ConfigBuilders[serverIndex].setRestartable(l2Config.getRestartable());
-
-      // set DGC props
-      l2ConfigBuilders[serverIndex].setGCEnabled(l2Config.isDgcEnabled());
-      l2ConfigBuilders[serverIndex].setGCInterval(l2Config.getDgcIntervalInSec());
 
       // set offheap props
       l2ConfigBuilders[serverIndex].setOffHeapEnabled(l2Config.isOffHeapEnabled());
@@ -170,41 +161,41 @@ public class ConfigHelper {
   private void setServerPorts() {
     for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
       String groupName = getGroupName(groupIndex);
-      int[] dsoPorts = new int[numOfServersPerGroup];
+      int[] tsaPorts = new int[numOfServersPerGroup];
       int[] jmxPorts = new int[numOfServersPerGroup];
-      int[] l2GroupPorts = new int[numOfServersPerGroup];
+      int[] tsaGroupPorts = new int[numOfServersPerGroup];
       String[] serverNames = new String[numOfServersPerGroup];
       String[] dataDirectoryPath = new String[numOfServersPerGroup];
       String[] logDirectoryPath = new String[numOfServersPerGroup];
       String[] backupDirectoryPath = new String[numOfServersPerGroup];
-      int[] proxyL2GroupPorts = null;
-      int[] proxyDsoPorts = null;
+      int[] proxyTsaGroupPorts = null;
+      int[] proxyTsaPorts = null;
       for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
         final int portNum = portChooser.chooseRandomPorts(3);
         jmxPorts[serverIndex] = portNum;
-        dsoPorts[serverIndex] = portNum + 1;
-        l2GroupPorts[serverIndex] = portNum + 2;
+        tsaPorts[serverIndex] = portNum + 1;
+        tsaGroupPorts[serverIndex] = portNum + 2;
         String serverName = SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
         serverNames[serverIndex] = serverName;
         backupDirectoryPath[serverIndex] = new File(tempDir, serverName + File.separator + "backup").getAbsolutePath();
         dataDirectoryPath[serverIndex] = new File(tempDir, serverName + File.separator + "data").getAbsolutePath();
         logDirectoryPath[serverIndex] = new File(tempDir, serverName).getAbsolutePath();
       }
-      if (isProxyDsoPort()) {
-        proxyDsoPorts = new int[numOfServersPerGroup];
+      if (isProxyTsaPort()) {
+        proxyTsaPorts = new int[numOfServersPerGroup];
         for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
-          proxyDsoPorts[serverIndex] = portChooser.chooseRandomPort();
+          proxyTsaPorts[serverIndex] = portChooser.chooseRandomPort();
         }
       }
-      if (isProxyL2GroupPort()) {
-        proxyL2GroupPorts = new int[numOfServersPerGroup];
+      if (isProxyTsaGroupPort()) {
+        proxyTsaGroupPorts = new int[numOfServersPerGroup];
         for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
-          proxyL2GroupPorts[serverIndex] = portChooser.chooseRandomPort();
+          proxyTsaGroupPorts[serverIndex] = portChooser.chooseRandomPort();
         }
       }
 
-      groupData[groupIndex] = new GroupsData(groupName, dsoPorts, jmxPorts, l2GroupPorts, serverNames, proxyDsoPorts,
-                                             proxyL2GroupPorts, dataDirectoryPath, logDirectoryPath, backupDirectoryPath, groupIndex);
+      groupData[groupIndex] = new GroupsData(groupName, tsaPorts, jmxPorts, tsaGroupPorts, serverNames, proxyTsaPorts,
+                                             proxyTsaGroupPorts, dataDirectoryPath, logDirectoryPath, backupDirectoryPath, groupIndex);
     }
   }
 
@@ -212,10 +203,10 @@ public class ConfigHelper {
     return this.tcConfigFile;
   }
 
-  public int getDsoPort(final int groupIndex, final int serverIndex) {
+  public int getTsaPort(final int groupIndex, final int serverIndex) {
     validateIndexes(groupIndex, serverIndex);
 
-    return groupData[groupIndex].getDsoPort(serverIndex);
+    return groupData[groupIndex].getTsaPort(serverIndex);
 
   }
 
@@ -233,10 +224,10 @@ public class ConfigHelper {
 
   }
 
-  public int getL2GroupPort(final int groupIndex, final int serverIndex) {
+  public int getTsaGroupPort(final int groupIndex, final int serverIndex) {
     validateIndexes(groupIndex, serverIndex);
 
-    return groupData[groupIndex].getL2GroupPort(serverIndex);
+    return groupData[groupIndex].getTsaGroupPort(serverIndex);
 
   }
 
@@ -252,12 +243,12 @@ public class ConfigHelper {
     return groupData[groupIndex];
   }
 
-  private boolean isProxyL2GroupPort() {
-    return testConfig.getL2Config().isProxyL2groupPorts();
+  private boolean isProxyTsaGroupPort() {
+    return testConfig.getL2Config().isProxyTsaGroupPorts();
   }
 
-  private boolean isProxyDsoPort() {
-    return testConfig.getL2Config().isProxyDsoPorts();
+  private boolean isProxyTsaPort() {
+    return testConfig.getL2Config().isProxyTsaPorts();
   }
 
   protected String getDataDirectoryPath(final int groupIndex, final int serverIndex) {
@@ -271,9 +262,4 @@ public class ConfigHelper {
   protected String getBackupDirectoryPath(final int groupIndex, final int serverIndex) {
     return groupData[groupIndex].getBackupDirectoryPath(serverIndex);
   }
-
-  private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {
-    return new File(tempDir, getServerName(groupIndex, serverIndex) + File.separator + "statistics").getAbsolutePath();
-  }
-
 }

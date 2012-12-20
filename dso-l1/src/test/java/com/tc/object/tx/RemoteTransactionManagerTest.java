@@ -23,7 +23,6 @@ import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
@@ -525,7 +524,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     int num = this.number.increment();
     LockID lid = new StringLockID("lock" + num);
     TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, TxnType.NORMAL);
-    ClientTransaction txn = new ClientTransactionImpl(new NullRuntimeLogger());
+    ClientTransaction txn = new ClientTransactionImpl();
     txn.setTransactionContext(tc);
     txn.fieldChanged(new MockTCObject(new ObjectID(num), this), "class", "class.field", new ObjectID(num), -1);
     return txn;

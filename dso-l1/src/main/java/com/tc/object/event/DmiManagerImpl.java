@@ -16,7 +16,6 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.util.Assert;
 import com.tc.util.VicariousThreadLocal;
@@ -35,17 +34,14 @@ public class DmiManagerImpl implements DmiManager {
 
   private final ClassProvider       classProvider;
   private final ClientObjectManager objMgr;
-  private final RuntimeLogger       runtimeLogger;
   private final ThreadLocal         feedBack;
   private final ThreadLocal         nesting;
 
-  public DmiManagerImpl(ClassProvider cp, ClientObjectManager om, RuntimeLogger rl) {
+  public DmiManagerImpl(ClassProvider cp, ClientObjectManager om) {
     Assert.pre(cp != null);
     Assert.pre(om != null);
-    Assert.pre(rl != null);
     this.classProvider = cp;
     this.objMgr = om;
-    this.runtimeLogger = rl;
     this.feedBack = new ThreadLocal();
     this.nesting = new VicariousThreadLocal();
   }
@@ -63,9 +59,7 @@ public class DmiManagerImpl implements DmiManager {
     final String methodName = method.substring(0, method.indexOf('('));
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
-    if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(),
-                                                                                       dmc.getMethodName(),
-                                                                                       dmc.getParameterDesc());
+
     objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
@@ -95,16 +89,13 @@ public class DmiManagerImpl implements DmiManager {
   @Override
   public void invoke(DistributedMethodCall dmc) {
     try {
-      if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(dmc.getReceiver().getClass()
-          .getName(), dmc.getMethodName(), dmc.getParameterDesc());
       feedBack.set(TRUE);
       invoke0(dmc);
     } catch (Throwable e) {
       // FIXME: debug code
       e.printStackTrace();
       // FIXME: end debug code
-      runtimeLogger.distributedMethodCallError(dmc.getReceiver().getClass().getName(), dmc.getMethodName(),
-                                               dmc.getParameterDesc(), e);
+
       if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
     } finally {
       feedBack.remove();

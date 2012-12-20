@@ -39,7 +39,6 @@ import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -115,7 +114,7 @@ public interface DSOClientBuilder {
 
   ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                               final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,
-                                              final RuntimeLogger rtLogger, final ClientIDProvider clientIDProvider,
+                                              final ClientIDProvider clientIDProvider,
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                               final Portability portability, final DSOClientMessageChannel dsoChannel,
@@ -162,7 +161,7 @@ public interface DSOClientBuilder {
                                                       final Collection<ClientHandshakeCallback> callbacks,
                                                       Collection<ClearableCallback> clearCallbacks);
 
-  L1Management createL1Management(TunnelingEventHandler teh, RuntimeLogger runtimeLogger, String rawConfigText,
+  L1Management createL1Management(TunnelingEventHandler teh, String rawConfigText,
                                   DistributedObjectClient distributedObjectClient);
 
   void registerForOperatorEvents(L1Management management);

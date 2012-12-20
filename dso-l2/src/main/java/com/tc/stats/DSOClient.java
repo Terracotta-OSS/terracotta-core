@@ -13,8 +13,6 @@ import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.RuntimeLoggingMBean;
-import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -53,10 +51,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
   private final ObjectName                     l1DumperBeanName;
-  private ObjectName                           runtimeLoggingBeanName;
-  private RuntimeLoggingMBean                  runtimeLoggingBean;
-  private ObjectName                           runtimeOutputOptionsBeanName;
-  private RuntimeOutputOptionsMBean            runtimeOutputOptionsBean;
   private ObjectName                           l1OperatorEventsBeanName;
   private TerracottaOperatorEventsMBean        l1OperatorEventsBean;
   private final MessageChannel                 channel;
@@ -102,8 +96,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
         .getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
 
     this.l1InfoBeanName = getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
-    this.runtimeLoggingBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
-    this.runtimeOutputOptionsBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     this.l1OperatorEventsBeanName = getTunneledBeanName(MBeanNames.OPERATOR_EVENTS_PUBLIC);
     this.enterpriseMBeanName = getTunneledBeanName(L1MBeanNames.ENTERPRISE_TC_CLIENT);
     this.l1DumperBeanName = getTunneledBeanName(MBeanNames.L1DUMPER_INTERNAL);
@@ -141,16 +133,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     if ((beanName = queryClientBean(l1InfoBeanName)) != null) {
       l1InfoBeanName = beanName;
       setupL1InfoBean();
-    }
-
-    if ((beanName = queryClientBean(runtimeLoggingBeanName)) != null) {
-      runtimeLoggingBeanName = beanName;
-      setupRuntimeLoggingBean();
-    }
-
-    if ((beanName = queryClientBean(runtimeOutputOptionsBeanName)) != null) {
-      runtimeOutputOptionsBeanName = beanName;
-      setupRuntimeOutputOptionsBean();
     }
 
     if ((beanName = queryClientBean(this.l1OperatorEventsBeanName)) != null) {
@@ -252,26 +234,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   @Override
-  public ObjectName getRuntimeLoggingBeanName() {
-    return runtimeLoggingBeanName;
-  }
-
-  @Override
-  public RuntimeLoggingMBean getRuntimeLoggingBean() {
-    return runtimeLoggingBean;
-  }
-
-  @Override
-  public ObjectName getRuntimeOutputOptionsBeanName() {
-    return runtimeOutputOptionsBeanName;
-  }
-
-  @Override
-  public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
-    return runtimeOutputOptionsBean;
-  }
-
-  @Override
   public ObjectName getL1OperatorEventsBeanName() {
     return l1OperatorEventsBeanName;
   }
@@ -367,18 +329,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
                                                                               false);
   }
 
-  private void setupRuntimeLoggingBean() {
-    runtimeLoggingBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, runtimeLoggingBeanName,
-                                                                       RuntimeLoggingMBean.class, false);
-  }
-
-  private void setupRuntimeOutputOptionsBean() {
-    runtimeOutputOptionsBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, runtimeOutputOptionsBeanName,
-                                                                             RuntimeOutputOptionsMBean.class, false);
-  }
-
   private boolean haveAllTunneledBeans() {
-    return l1InfoBean != null && runtimeLoggingBean != null && runtimeOutputOptionsBean != null;
+    return l1InfoBean != null;
   }
 
   /**
@@ -400,16 +352,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
       if (l1InfoBean == null && matchesClientBeanName(l1InfoBeanName, beanName)) {
         l1InfoBeanName = beanName;
         setupL1InfoBean();
-      }
-
-      if (runtimeLoggingBean == null && matchesClientBeanName(runtimeLoggingBeanName, beanName)) {
-        runtimeLoggingBeanName = beanName;
-        setupRuntimeLoggingBean();
-      }
-
-      if (runtimeOutputOptionsBean == null && matchesClientBeanName(runtimeOutputOptionsBeanName, beanName)) {
-        runtimeOutputOptionsBeanName = beanName;
-        setupRuntimeOutputOptionsBean();
       }
 
       if (!isEnterpriseBeanNameSet && matchesClientBeanName(enterpriseMBeanName, beanName)) {

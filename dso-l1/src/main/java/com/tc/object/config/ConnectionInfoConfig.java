@@ -45,11 +45,11 @@ public class ConnectionInfoConfig {
       for (int i = 0; i < count; i++) {
         String[] serverDesc = StringUtils.split(serverDescs[i], ":");
         String host = serverDesc.length > 0 ? serverDesc[0] : "localhost";
-        int dsoPort = 9510;
+        int tsaPort = 9510;
 
         if (serverDesc.length == 2) {
           try {
-            dsoPort = Integer.parseInt(serverDesc[1]);
+            tsaPort = Integer.parseInt(serverDesc[1]);
           } catch (NumberFormatException nfe) {
             consoleLogger.warn("Cannot parse port for tc.server element '" + serverDescs[i]
                                + "'; Using default of 9510.");
@@ -70,27 +70,29 @@ public class ConnectionInfoConfig {
           host = host.substring(userSeparatorIndex + 1);
         }
 
-        out[i] = new ConnectionInfo(host, dsoPort, new SecurityInfo(secure, urlUsername));
+        out[i] = new ConnectionInfo(host, tsaPort, new SecurityInfo(secure, urlUsername));
       }
     } else {
       out = new ConnectionInfo[l2sData.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].dsoPort(), l2sData[i].getGroupId(), l2sData[i].getGroupName(), securityInfo);
+        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].tsaPort(), l2sData[i].getGroupId(),
+                                    l2sData[i].getGroupName(), securityInfo);
       }
     }
 
     return out;
   }
-  
+
   public ConnectionInfo[] getConnectionInfos(){
     return this.connectionInfos;
   }
 
+  @Override
   public String toString() {
     StringBuilder l2sDataString = new StringBuilder();
-    for(int i = 0; i < this.connectionInfos.length; i++){
-      l2sDataString.append(this.connectionInfos[i].toString());
+    for (ConnectionInfo connectionInfo : this.connectionInfos) {
+      l2sDataString.append(connectionInfo.toString());
     }
     return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).appendSuper(l2sDataString.toString()).toString();
   }

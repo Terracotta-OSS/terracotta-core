@@ -17,12 +17,9 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
-import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SecurityConfigObject;
-import com.tc.config.schema.SystemConfig;
-import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -42,12 +39,9 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.MirrorGroups;
-import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.UpdateCheck;
@@ -62,6 +56,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -79,17 +74,17 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map<String, L2ConfigData>   l2ConfigData;
-  private final HaConfigSchema              haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
   private final L2ConfigData                myConfigData;
   private final ConfigTCProperties          configTCProperties;
   private final Set<InetAddress>            localInetAddresses;
 
-  private SystemConfig                      systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
   private volatile SecurityConfig           securityConfig;
   private volatile boolean                  secure;
+
+  private final Servers                     serversBean;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -110,7 +105,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
 
-    this.systemConfig = null;
     this.l2ConfigData = new HashMap<String, L2ConfigData>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
@@ -127,22 +121,15 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       throw new ConfigurationSetupException(e2);
     }
 
-    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
-                                                                         new ChildBeanFetcher() {
-                                                                           public XmlObject getChild(XmlObject parent) {
-                                                                             return ((Servers) serversBeanRepository()
-                                                                                 .bean()).getMirrorGroups();
-                                                                           }
-                                                                         });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(serversBeanRepository(),
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
 
-    Servers serversBean = (Servers) serversBeanRepository().bean();
+    serversBean = (Servers) serversBeanRepository().bean();
     this.secure = serversBean != null && serversBean.getSecure();
-    Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
+    Server[] servers = serversBean != null ? L2DSOConfigObject.getServers(serversBean) : null;
     Server server = null;
 
     if (thisL2Identifier != null) {
@@ -164,6 +151,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       final Server s = server;
       ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Security.class,
                                                                    new ChildBeanFetcher() {
+                                                                     @Override
                                                                      public XmlObject getChild(XmlObject parent) {
                                                                        return s.getSecurity();
                                                                      }
@@ -173,19 +161,15 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       securityConfig = null;
     }
 
-
     verifyL2Identifier(servers, this.thisL2Identifier);
     this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
 
-    this.haConfig = getHaConfig();
-
     // do this after servers and groups have been processed
     validateGroups();
-    validateDSOClusterPersistenceMode();
-    validateHaConfiguration();
     validateSecurityConfiguration();
   }
 
+  @Override
   public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
                                                   TerracottaOperatorEventLogger opEventLogger)
       throws ConfigurationSetupException {
@@ -202,16 +186,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     configurationCreator().reloadServersConfiguration(serversBeanRepository(), true, true);
     this.l2ConfigData.clear();
 
-    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
-                                                                         new ChildBeanFetcher() {
-                                                                           public XmlObject getChild(XmlObject parent) {
-                                                                             return ((Servers) serversBeanRepository()
-                                                                                 .bean()).getMirrorGroups();
-                                                                           }
-                                                                         });
-
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(serversBeanRepository(),
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -219,14 +195,17 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }
 
+  @Override
   public boolean isSecure() {
     return secure;
   }
 
+  @Override
   public String getL2Identifier() {
     return this.thisL2Identifier;
   }
 
+  @Override
   public SecurityConfig getSecurity() {
     return this.securityConfig;
   }
@@ -237,8 +216,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                          "The server "
                                                                                              + hostport
                                                                                              + " is specified more than once in tc-config."
-                                                                                             + "\nPlease provide different server name or port numbers(dso-port, jmx-port, "
-                                                                                             + "\nl2-group-port) in tc-config."); }
+                                                                                             + "\nPlease provide different server name or port numbers(tsa-port, jmx-port, "
+                                                                                             + "\ntsa-group-port) in tc-config."); }
   }
 
   private void verifyL2Identifier(final Server[] servers, final String l2Identifier) throws ConfigurationSetupException {
@@ -263,48 +242,33 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
     String hostname = server.getHost();
-    if (server.isSetDsoPort()) verifyPortUsed(serverPorts, hostname, server.getDsoPort().getIntValue());
+    if (server.isSetTsaPort()) verifyPortUsed(serverPorts, hostname, server.getTsaPort().getIntValue());
     if (server.isSetJmxPort()) verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
-    if (server.isSetL2GroupPort()) verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
+    if (server.isSetTsaGroupPort()) verifyPortUsed(serverPorts, hostname, server.getTsaGroupPort().getIntValue());
   }
 
   private void validateGroups() throws ConfigurationSetupException {
-    Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
+    Server[] serverArray = L2DSOConfigObject.getServers(((Servers) serversBeanRepository().bean()));
     List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
     Set<String> serverPorts = new HashSet<String>();
 
     validateGroupNames(groups);
 
-    for (Server element : serverArray) {
-      verifyServerPortUsed(serverPorts, element);
-      String serverName = element.getName();
+    for (Server server : serverArray) {
+      verifyServerPortUsed(serverPorts, server);
+      String serverName = server.getName();
       boolean found = false;
       int gid = -1;
-      for (ActiveServerGroupConfig element2 : groups) {
-        if (element2.isMember(serverName)) {
+      for (ActiveServerGroupConfig groupConfig : groups) {
+        if (groupConfig.isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 mirror-group:  groups{" + gid
-                                                             + "," + element2.getGroupId() + "}"); }
-          gid = element2.getGroupId().toInt();
+                                                             + "," + groupConfig.getGroupId() + "}"); }
+          gid = groupConfig.getGroupId().toInt();
           found = true;
         }
       }
       if (!found) { throw new ConfigurationSetupException("Server{" + serverName + "} is not part of any mirror-group."); }
-    }
-
-    Set<String> allServers = new HashSet<String>();
-    for (Server server : serverArray) {
-      allServers.add(server.getName());
-    }
-
-    for (ActiveServerGroupConfig element : groups) {
-      for (String member : element.getMembers().getMemberArray()) {
-        if (!allServers.contains(member)) { throw new ConfigurationSetupException(
-                                                                                  "Server{"
-                                                                                      + member
-                                                                                      + "} is not defined but has been added as a member in the group "
-                                                                                      + element.getGroupName()); }
-      }
     }
   }
 
@@ -314,24 +278,12 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       String grpName = element.getGroupName();
       if (grpName != null) {
         if (groupNames.contains(grpName)) { throw new ConfigurationSetupException(
-                                                                            "Group Name {"
-                                                                                + grpName
-                                                                                + "} is part of more than 1 mirror-group groups"); }
+                                                                                  "Group Name {"
+                                                                                      + grpName
+                                                                                      + "} is part of more than 1 mirror-group groups"); }
         groupNames.add(grpName);
       }
     }
-  }
-
-  // make sure there is at most one of these
-  private HaConfigSchema getHaConfig() {
-    HaConfigSchema newHaConfig = null;
-    if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
-      ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
-      if (groupConfig != null) {
-        newHaConfig = groupConfig.getHaHolder();
-      }
-    }
-    return newHaConfig;
   }
 
   private UpdateCheckConfig getUpdateCheckConfig() throws XmlException {
@@ -339,6 +291,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
                                                                  new ChildBeanFetcher() {
+                                                                   @Override
                                                                    public XmlObject getChild(XmlObject parent) {
                                                                      UpdateCheck updateCheck = ((Servers) parent)
                                                                          .getUpdateCheck();
@@ -383,14 +336,15 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     private final CommonL2Config      commonL2Config;
     private final L2DSOConfig         dsoL2Config;
 
-    public L2ConfigData(String name) throws ConfigurationSetupException {
+    public L2ConfigData(String name, Servers serversBean) throws ConfigurationSetupException {
       this.name = name;
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
       this.commonL2Config = new CommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()), secure);
       this.dsoL2Config = new L2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
-          .directoryConfigurationLoadedFrom()));
+          .directoryConfigurationLoadedFrom()), serversBean.getGarbageCollection(),
+                                               serversBean.getClientReconnectWindow(), serversBean.getRestartable());
     }
 
     public CommonL2Config commonL2Config() {
@@ -407,7 +361,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     private Server findMyL2Bean() throws ConfigurationSetupException {
       Servers servers = (Servers) serversBeanRepository().bean();
-      Server[] l2Array = servers == null ? null : servers.getServerArray();
+      Server[] l2Array = servers == null ? null : L2DSOConfigObject.getServers(servers);
 
       if (l2Array == null || l2Array.length == 0) {
         return null;
@@ -437,6 +391,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
 
     private class BeanFetcher implements ChildBeanFetcher {
+      @Override
       public XmlObject getChild(XmlObject parent) {
         try {
           return findMyL2Bean();
@@ -498,6 +453,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return localAddresses;
   }
 
+  @Override
   public String describeSources() {
     return this.configurationCreator().describeSources();
   }
@@ -506,7 +462,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     L2ConfigData out = this.l2ConfigData.get(name);
 
     if (out == null) {
-      out = new L2ConfigData(name);
+      out = new L2ConfigData(name, serversBean);
 
       if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
         Servers servers = (Servers) this.serversBeanRepository().bean();
@@ -514,7 +470,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
         if (servers == null) {
           list = "[data unavailable]";
         } else {
-          Server[] serverList = servers.getServerArray();
+          Server[] serverList = L2DSOConfigObject.getServers(servers);
           if (serverList == null) {
             list = "[data unavailable]";
           } else {
@@ -549,162 +505,63 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
-    this.systemConfig = new SystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
-        .directoryConfigurationLoadedFrom()));
     L2ConfigData serverConfigData = configDataFor(l2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
     return serverConfigData;
   }
 
-  private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
-    validatePersistenceModeInGroups();
-    List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
-
-    Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
-    for (ActiveServerGroupConfig element : groups) {
-      boolean isNwAP = element.getHaHolder().isNetworkedActivePassive();
-      String[] members = element.getMembers().getMemberArray();
-      for (String member : members) {
-        serversToMode.put(member, isNwAP);
-      }
-    }
-
-    if (super.serversBeanRepository().bean() != null) {
-      Server[] servers = ((Servers) super.serversBeanRepository().bean()).getServerArray();
-      Set<String> badServers = new HashSet<String>();
-
-      if (servers != null && servers.length > 1) {
-        // We have clustered DSO; they must all be in permanent-store
-        // mode
-        for (Server server : servers) {
-          String name = server.getName();
-          L2ConfigData data = configDataFor(name);
-
-          Assert.assertNotNull(data);
-          boolean isNwAP = serversToMode.get(name);
-          if (!isNwAP && (!isRestartable(data.dsoL2Config().getPersistence()))) {
-            badServers.add(name);
-          }
-        }
-      }
-
-      if (badServers.size() > 0) {
-        // formatting
-        throw new ConfigurationSetupException(
-                                              "At least one server defined in the Terracotta configuration file is\n"
-                                                  + "not restartable. (Servers in this mode:\n"
-                                                  + badServers
-                                                  + ".) \n\n"
-                                                  + "If even one server is not restartable"
-                                                  + ", \nthen High Availability mode must be set to 'networked-active-passive'"
-                                                  + "\n\nFor servers in a mirror group, High Availability mode can be set per"
-                                                  + "\nmirror group. A mirror-group High Availability setting overrides the main"
-                                                  + "\nHigh Availability for that mirror group.\n\n"
-                                                  + "See the Terracotta documentation for more details.");
-      }
-    }
-  }
-
-  private void validatePersistenceModeInGroups() throws ConfigurationSetupException {
-    List<ActiveServerGroupConfig> groupArray = this.activeServerGroupsConfig.getActiveServerGroups();
-
-    for (ActiveServerGroupConfig group : groupArray) {
-      String[] members = group.getMembers().getMemberArray();
-      if (members.length > 1) {
-        boolean isRestartable = isRestartable(configDataFor(members[0]).dsoL2Config().getPersistence());
-        for (int i = 1; i < members.length; i++) {
-          L2ConfigData memberData = configDataFor(members[i]);
-          if (isRestartable(memberData.dsoL2Config.getPersistence()) != isRestartable) {
-            StringBuilder msg = new StringBuilder();
-            msg.append("The persistence mode of the servers in the group ").append(group.getGroupName())
-                .append(" with servers {");
-            for (String member : members) {
-              msg.append(member).append(" ");
-            }
-            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
-            throw new ConfigurationSetupException(msg.toString());
-          }
-        }
-      }
-    }
-
-  }
-
-  private static boolean isRestartable(Persistence persistence) {
-    return persistence.getRestartable().getEnabled();
-  }
-
-  public void validateHaConfiguration() throws ConfigurationSetupException {
-    int networkedHa = 0;
-    int diskbasedHa = 0;
-    List<ActiveServerGroupConfig> asgcArray = activeServerGroupsConfig.getActiveServerGroups();
-    for (ActiveServerGroupConfig asgc : asgcArray) {
-      if (asgc.getHaHolder().isNetworkedActivePassive()) {
-        ++networkedHa;
-      } else {
-        ++diskbasedHa;
-      }
-    }
-    if (networkedHa > 0 && diskbasedHa > 0) { throw new ConfigurationSetupException(
-                                                                                    "All mirror-groups must be set to the same High Availability mode. Your tc-config.xml has "
-                                                                                        + networkedHa
-                                                                                        + " group(s) set to networked HA and "
-                                                                                        + diskbasedHa
-                                                                                        + " group(s) set to disk-based HA."); }
-  }
-
   private void validateSecurityConfiguration() throws ConfigurationSetupException {
-    Servers servers = (Servers)serversBeanRepository().bean();
-    if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) {
-      throw new ConfigurationSetupException("Security is enabled but server " + thisL2Identifier + " has no configured SSL certificate.");
-    }
+    Servers servers = (Servers) serversBeanRepository().bean();
+    if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) { throw new ConfigurationSetupException(
+                                                                                                                      "Security is enabled but server "
+                                                                                                                          + thisL2Identifier
+                                                                                                                          + " has no configured SSL certificate."); }
   }
 
+  @Override
   public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).commonL2Config();
   }
 
+  @Override
   public CommonL2Config commonl2Config() {
     return this.myConfigData.commonL2Config();
   }
 
-  public SystemConfig systemConfig() {
-    return this.systemConfig;
-  }
-
+  @Override
   public L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).dsoL2Config();
   }
 
+  @Override
   public L2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
   }
 
-  public HaConfigSchema haConfig() {
-    return haConfig;
-  }
-
+  @Override
   public UpdateCheckConfig updateCheckConfig() {
     return updateCheckConfig;
   }
 
+  @Override
   public ActiveServerGroupsConfig activeServerGroupsConfig() {
     return activeServerGroupsConfig;
   }
 
+  @Override
   public String[] allCurrentlyKnownServers() {
-    Servers serversBean = (Servers) serversBeanRepository().bean();
-    Server[] l2s = serversBean == null ? null : serversBean.getServerArray();
-    if (l2s == null || l2s.length == 0) return new String[] { null };
-    else {
-      String[] out = new String[l2s.length];
-      for (int i = 0; i < l2s.length; ++i)
-        out[i] = l2s[i].getName();
-      return out;
+    List<String> servers = new ArrayList<String>();
+    for (ActiveServerGroupConfig group : activeServerGroupsConfig.getActiveServerGroups()) {
+      for (String member : group.getMembers()) {
+        servers.add(member);
+      }
     }
+
+    return servers.toArray(new String[servers.size()]);
   }
 
+  @Override
   public InputStream rawConfigFile() {
     String text = configurationCreator().rawConfigText();
     try {
@@ -714,6 +571,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
   }
 
+  @Override
   public InputStream effectiveConfigFile() {
     // This MUST piece together the configuration from our currently-active
     // bean repositories. If we just read the
@@ -728,11 +586,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     TcConfigDocument.TcConfig config = doc.addNewTcConfig();
 
     TcProperties tcProperties = (TcProperties) this.tcPropertiesRepository().bean();
-    System system = (System) this.systemBeanRepository().bean();
     Client client = (Client) this.clientBeanRepository().bean();
     Servers servers = (Servers) this.serversBeanRepository().bean();
 
-    if (system != null) config.setSystem(system);
     if (client != null) config.setClients(client);
     if (servers != null) config.setServers(servers);
     if (tcProperties != null) config.setTcProperties(tcProperties);
@@ -766,6 +622,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     tcProps.overwriteTcPropertiesFromConfig(propMap);
   }
 
+  @Override
   public ActiveServerGroupConfig getActiveServerGroupForThisL2() {
     return this.activeServerGroupsConfig.getActiveServerGroupForL2(this.thisL2Identifier);
   }

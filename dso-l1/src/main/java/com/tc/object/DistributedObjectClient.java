@@ -105,7 +105,6 @@ import com.tc.object.locks.ClientLockManagerConfigImpl;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.locks.LocksRecallServiceImpl;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -230,7 +229,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final Manager                              manager;
   private final DsoClusterInternal                   dsoCluster;
   private final TCThreadGroup                        threadGroup;
-  private final RuntimeLogger                        runtimeLogger;
   private final ThreadIDMap                          threadIDMap;
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
@@ -269,17 +267,17 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                 final DsoClusterInternal dsoCluster,
                                  final AbortableOperationManager abortableOperationManager,
                                  final RejoinManagerInternal rejoinManager) {
     this(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
-         runtimeLogger, ClientMode.DSO_MODE, null, abortableOperationManager, rejoinManager);
+         ClientMode.DSO_MODE, null, abortableOperationManager, rejoinManager);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                 final DsoClusterInternal dsoCluster,
                                  final ClientMode clientMode, final TCSecurityManager securityManager,
                                  final AbortableOperationManager abortableOperationManager,
                                  final RejoinManagerInternal rejoinManager) {
@@ -294,7 +292,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoCluster = dsoCluster;
     this.threadGroup = threadGroup;
     this.threadIDMap = new ThreadIDMapImpl();
-    this.runtimeLogger = runtimeLogger;
     this.dsoClientBuilder = createClientBuilder();
     this.rejoinManager = rejoinManager;
   }
@@ -470,7 +467,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     TerracottaOperatorEventLogging.setNodeNameProvider(new ClientNameProvider(this.dsoCluster));
 
-    final ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(this.runtimeLogger);
+    final ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl();
 
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.counterManager
@@ -568,7 +565,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final TCObjectFactory objectFactory = new TCObjectFactoryImpl(classFactory);
 
     this.objectManager = this.dsoClientBuilder.createObjectManager(remoteObjectManager, this.config, idProvider,
-                                                                   this.runtimeLogger,
                                                                    this.channel.getClientIDProvider(),
                                                                    this.classProvider, classFactory, objectFactory,
                                                                    this.config.getPortability(), this.channel,
@@ -615,8 +611,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config,
                                                                                    teh);
 
-    this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.runtimeLogger,
-                                                                 this.config.rawConfigText(), this);
+    this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.config.rawConfigText(), this);
     this.l1Management.start(this.createDedicatedMBeanServer);
 
     // register the terracotta operator event logger
@@ -639,8 +634,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Setup the transaction manager
     this.clientTxnManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(), this.objectManager,
                                                              txFactory, this.lockManager, this.remoteTxnManager,
-                                                             this.runtimeLogger,
-                                                      txnCounter, globalLocalCacheManager, abortableOperationManager);
+                                                             txnCounter, globalLocalCacheManager, abortableOperationManager);
 
     final CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.clientTxnManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(txnMgrDumpAdapter);
@@ -659,7 +653,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                          new ReceiveRootIDHandler(), 1, maxSize);
     final Stage receiveObject = stageManager.createStage(ClientConfigurationContext.RECEIVE_OBJECT_STAGE,
                                                          new ReceiveObjectHandler(), 1, maxSize);
-    this.dmiManager = new DmiManagerImpl(this.classProvider, this.objectManager, this.runtimeLogger);
+    this.dmiManager = new DmiManagerImpl(this.classProvider, this.objectManager);
     final Stage dmiStage = stageManager.createStage(ClientConfigurationContext.DMI_STAGE,
                                                     new DmiHandler(this.dmiManager), 1, maxSize);
 

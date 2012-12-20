@@ -101,7 +101,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         Banner.warnBanner("Offheap is disabled and auto-enable-offheap is also set to false! L2 may suffer OOME");
       }
     } else {
-      if (testConfig.getL2Config().getRestartable()) {
+      if (testConfig.getRestartable()) {
         System.out.println("============== Disabling opensource restartable tests ===============");
         disableTest();
       }

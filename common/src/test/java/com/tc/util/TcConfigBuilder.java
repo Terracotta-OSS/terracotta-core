@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
@@ -61,7 +62,11 @@ public class TcConfigBuilder {
   }
 
   public Server[] getServers() {
-    return tcConfig.getServers().getServerArray();
+    return L2DSOConfigObject.getServers(tcConfig.getServers());
+  }
+
+  public Server getServer(int index) {
+    return getServers()[index];
   }
 
   public InputStream newInputStream() {
@@ -70,26 +75,26 @@ public class TcConfigBuilder {
 
   public void setDsoHost(String host) {
     ensureServers();
-    tcConfig.getServers().getServerArray(0).setHost(host);
+    getServer(0).setHost(host);
   }
 
   public String getDsoHost() {
     ensureServers();
-    return tcConfig.getServers().getServerArray(0).getHost();
+    return getServer(0).getHost();
   }
 
-  public void setDsoPort(int portNo) {
-    setDsoPort(0, portNo);
+  public void setTsaPort(int portNo) {
+    setTsaPort(0, portNo);
   }
 
-  public void setDsoPort(int serverIndex, int portNo) {
+  public void setTsaPort(int serverIndex, int portNo) {
     ensureServers();
-    Server server = tcConfig.getServers().getServerArray(serverIndex);
+    Server server = getServer(serverIndex);
     Assert.assertNotNull(server);
-    if (!server.isSetDsoPort()) {
-      server.addNewDsoPort();
+    if (!server.isSetTsaPort()) {
+      server.addNewTsaPort();
     }
-    server.getDsoPort().setIntValue(portNo);
+    server.getTsaPort().setIntValue(portNo);
   }
 
   public void setGroupPort(int portNo) {
@@ -98,22 +103,22 @@ public class TcConfigBuilder {
 
   public void setGroupPort(int serverIndex, int portNo) {
     ensureServers();
-    Server server = tcConfig.getServers().getServerArray(serverIndex);
+    Server server = getServer(serverIndex);
     Assert.assertNotNull(server);
-    if (!server.isSetL2GroupPort()) {
-      server.addNewL2GroupPort();
+    if (!server.isSetTsaGroupPort()) {
+      server.addNewTsaGroupPort();
     }
-    server.getL2GroupPort().setIntValue(portNo);
+    server.getTsaGroupPort().setIntValue(portNo);
   }
 
-  public int getDsoPort() {
-    return getDsoPort(0);
+  public int getTsaPort() {
+    return getTsaPort(0);
   }
 
-  public int getDsoPort(int serverIndex) {
+  public int getTsaPort(int serverIndex) {
     ensureServers();
-    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
-    return tcConfig.getServers().getServerArray(serverIndex).getDsoPort().getIntValue();
+    Assert.assertNotNull(getServer(serverIndex));
+    return getServer(serverIndex).getTsaPort().getIntValue();
   }
 
   public int getGroupPort() {
@@ -122,8 +127,8 @@ public class TcConfigBuilder {
 
   public int getGroupPort(int serverIndex) {
     ensureServers();
-    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
-    return tcConfig.getServers().getServerArray(serverIndex).getL2GroupPort().getIntValue();
+    Assert.assertNotNull(getServer(serverIndex));
+    return getServer(serverIndex).getTsaGroupPort().getIntValue();
   }
 
   public void setJmxPort(int portNo) {
@@ -132,7 +137,7 @@ public class TcConfigBuilder {
 
   public void setJmxPort(int serverIndex, int portNo) {
     ensureServers();
-    Server server = tcConfig.getServers().getServerArray(serverIndex);
+    Server server = getServer(serverIndex);
     Assert.assertNotNull(server);
     if (!server.isSetJmxPort()) {
       server.addNewJmxPort();
@@ -146,8 +151,8 @@ public class TcConfigBuilder {
 
   public int getJmxPort(int serverIndex) {
     ensureServers();
-    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
-    return tcConfig.getServers().getServerArray(serverIndex).getJmxPort().getIntValue();
+    Assert.assertNotNull(getServer(serverIndex));
+    return getServer(serverIndex).getJmxPort().getIntValue();
   }
 
   public void addProperty(String key, String value) {
@@ -159,22 +164,22 @@ public class TcConfigBuilder {
 
   public void setServerLogs(String path) {
     ensureServers();
-    tcConfig.getServers().getServerArray(0).setLogs(path);
+    getServer(0).setLogs(path);
   }
 
   public void setServerData(String path) {
     ensureServers();
-    tcConfig.getServers().getServerArray(0).setData(path);
+    getServer(0).setData(path);
   }
 
   public void setServerLogs(int index, String path) {
     ensureServers();
-    tcConfig.getServers().getServerArray(index).setLogs(path);
+    getServer(index).setLogs(path);
   }
 
   public void setServerData(int index, String path) {
     ensureServers();
-    tcConfig.getServers().getServerArray(index).setData(path);
+    getServer(index).setData(path);
   }
 
   public void setClientLogs(String path) {
@@ -186,14 +191,14 @@ public class TcConfigBuilder {
     PortChooser pc = new PortChooser();
     Server[] servers = getServers();
     for (Server server : servers) {
-      if (!server.isSetDsoPort()) server.addNewDsoPort();
-      server.getDsoPort().setIntValue(pc.chooseRandomPort());
+      if (!server.isSetTsaPort()) server.addNewTsaPort();
+      server.getTsaPort().setIntValue(pc.chooseRandomPort());
 
       if (!server.isSetJmxPort()) server.addNewJmxPort();
       server.getJmxPort().setIntValue(pc.chooseRandomPort());
 
-      if (!server.isSetL2GroupPort()) server.addNewL2GroupPort();
-      server.getL2GroupPort().setIntValue(pc.chooseRandomPort());
+      if (!server.isSetTsaGroupPort()) server.addNewTsaGroupPort();
+      server.getTsaGroupPort().setIntValue(pc.chooseRandomPort());
     }
   }
 

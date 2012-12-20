@@ -124,11 +124,12 @@ public class GroupServerManager {
     seed = srandom.nextLong();
     random = new Random(seed);
     // setup proxy
-    if (isProxyL2GroupPort()) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers = new ProxyConnectManager[groupData.getServerCount()];
       System.out.println("trying to setUp Proxy");
       for (int i = 0; i < groupData.getServerCount(); ++i) {
-        proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getL2GroupPort(i), groupData.getProxyL2GroupPort(i));
+        proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getTsaGroupPort(i),
+                                                         groupData.getProxyTsaGroupPort(i));
         proxyL2Managers[i].setProxyWaitTime(this.testConfig.getL2Config().getProxyWaitTime());
         proxyL2Managers[i].setProxyDownTime(this.testConfig.getL2Config().getProxyDownTime());
         proxyL2Managers[i].setupProxy();
@@ -137,10 +138,10 @@ public class GroupServerManager {
     }
     System.out.println("********");
 
-    if (isProxyDsoPort()) {
+    if (isProxyTsaPort()) {
       proxyL1Managers = new ProxyConnectManager[groupData.getServerCount()];
       for (int i = 0; i < groupData.getServerCount(); ++i) {
-        proxyL1Managers[i] = new ProxyConnectManagerImpl(groupData.getDsoPort(i), groupData.getProxyDsoPort(i));
+        proxyL1Managers[i] = new ProxyConnectManagerImpl(groupData.getTsaPort(i), groupData.getProxyTsaPort(i));
         proxyL1Managers[i].setupProxy();
       }
     }
@@ -161,17 +162,17 @@ public class GroupServerManager {
       ArrayList<String> perServerJvmArgs = new ArrayList<String>();
       L2Config l2Config = testConfig.getL2Config(groupData.getGroupIndex(), i);
       perServerJvmArgs.addAll(l2Config.getExtraServerJvmArgs());
-      if (isProxyL2GroupPort()) {
+      if (isProxyTsaGroupPort()) {
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
-                             + groupData.getL2GroupPort(i));
+                             + groupData.getTsaGroupPort(i));
       }
       if (shouldDebugServer(i)) {
         int debugPort = 11000 + i;
         perServerJvmArgs.add("-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=" + debugPort);
         Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
       }
-      serverControl[i] = getServerControl(groupData.getDsoPort(i), groupData.getJmxPort(i),
+      serverControl[i] = getServerControl(groupData.getTsaPort(i), groupData.getJmxPort(i),
                                           groupData.getServerNames()[i], perServerJvmArgs, l2Config);
       expectedServerRunning[i] = false;
     }
@@ -201,7 +202,7 @@ public class GroupServerManager {
                  + Thread.currentThread().getName() + "]");
     for (int i = 0; i < serverControl.length; i++) {
       if (expectedServerRunning[i]) {
-        debugPrintln("***** startAllServers():  Not starting already running server [" + serverControl[i].getDsoPort()
+        debugPrintln("***** startAllServers():  Not starting already running server [" + serverControl[i].getTsaPort()
                      + "]  threadId=[" + Thread.currentThread().getName() + "]");
         continue;
       }
@@ -215,12 +216,12 @@ public class GroupServerManager {
 
   public synchronized void startServer(int index) throws Exception {
     verifyIndex(index);
-    System.out.println("*** Starting server [" + serverControl[index].getDsoPort() + "] ... ");
+    System.out.println("*** Starting server [" + serverControl[index].getTsaPort() + "] ... ");
     serverControl[index].start();
-    if (isProxyL2GroupPort()) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers[index].proxyUp();
       proxyL2Managers[index].startProxyTest();
-      debugPrintln("***** Caching tcServerInfoMBean for server=[" + serverControl[index].getDsoPort() + "]");
+      debugPrintln("***** Caching tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]");
       tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
     }
     expectedServerRunning[index] = true;
@@ -228,15 +229,15 @@ public class GroupServerManager {
     if (expectedRunningServerCount() == 1) {
       startL1ProxyOnActiveServer();
     }
-    System.out.println("*** Server started [" + serverControl[index].getDsoPort() + "]");
+    System.out.println("*** Server started [" + serverControl[index].getTsaPort() + "]");
   }
 
   public synchronized void startServerNoWait(int index) throws Exception {
     verifyIndex(index);
-    System.out.println("*** Starting server [" + serverControl[index].getDsoPort() + "] expecting a crash. ");
+    System.out.println("*** Starting server [" + serverControl[index].getTsaPort() + "] expecting a crash. ");
     serverControl[index].startWithoutWait();
     expectedServerRunning[index] = false;
-    System.out.println("*** Server started [" + serverControl[index].getDsoPort() + "]");
+    System.out.println("*** Server started [" + serverControl[index].getTsaPort() + "]");
   }
 
   private void verifyIndex(int serverIndex) {
@@ -261,7 +262,7 @@ public class GroupServerManager {
   }
 
   private void startL1ProxyOnActiveServer() {
-    if (isProxyDsoPort()) {
+    if (isProxyTsaPort()) {
       asyncExecutor.submit(new Runnable() {
         @Override
         public void run() {
@@ -278,9 +279,9 @@ public class GroupServerManager {
   }
 
   private void startL1Proxy(int index) {
-    if (isProxyDsoPort()) {
+    if (isProxyTsaPort()) {
       System.out.println("*** Starting the DSO proxy with proxy port as " + proxyL1Managers[index].getProxyPort()
-                         + " and DSO port as " + proxyL1Managers[index].getDsoPort());
+                         + " and DSO port as " + proxyL1Managers[index].getTsaPort());
       proxyL1Managers[index].proxyUp();
       proxyL1Managers[index].startProxyTest();
     }
@@ -304,16 +305,16 @@ public class GroupServerManager {
 
     if (!expectedServerRunning[index]) {
       System.out.println("***Server not expected to be running. not stopping server ["
-                         + serverControl[index].getDsoPort() + "]");
+                         + serverControl[index].getTsaPort() + "]");
       return;
     }
     boolean active = isActive(index);
-    System.out.println("*** stopping server [" + serverControl[index].getDsoPort() + "]");
+    System.out.println("*** stopping server [" + serverControl[index].getTsaPort() + "]");
     ServerControl sc = serverControl[index];
 
     if (!sc.isRunning()) { throw new AssertionError(
                                                     "Server["
-                                                        + serverControl[index].getDsoPort()
+                                                        + serverControl[index].getTsaPort()
                                                         + "] is not running as expected. State Found:[STOPPED] Expected:[RUNNING]!"); }
     sc.shutdown();
     stopL2GroupProxy(index);
@@ -325,28 +326,28 @@ public class GroupServerManager {
       }
     }
 
-    System.out.println("*** Server stopped [" + serverControl[index].getDsoPort() + "]");
+    System.out.println("*** Server stopped [" + serverControl[index].getTsaPort() + "]");
   }
 
   private void stopL2GroupProxy(int index) {
-    if (isProxyL2GroupPort()) {
+    if (isProxyTsaGroupPort()) {
       proxyL2Managers[index].proxyDown();
     }
   }
 
   private void stopL1Proxy(int index) {
-    if (isProxyDsoPort()) {
+    if (isProxyTsaPort()) {
       proxyL1Managers[index].proxyDown();
     }
   }
 
   private void cleanupServerDB(int index) throws Exception {
-    if (testConfig.getL2Config().getRestartable()) {
+    if (testConfig.getRestartable()) {
       if (renameDataDir) {
-        System.out.println("Moving data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        System.out.println("Moving data directory for server=[" + serverControl[index].getTsaPort() + "]");
         renameDir(groupData.getDataDirectoryPath(index));
       } else {
-        System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        System.out.println("Deleting data directory for server=[" + serverControl[index].getTsaPort() + "]");
         deleteDirectory(groupData.getDataDirectoryPath(index));
       }
     }
@@ -407,7 +408,7 @@ public class GroupServerManager {
       try {
         jmxConnectors[i].close();
       } catch (Exception e) {
-        System.out.println("JMXConnector for server=[" + serverControl[i].getDsoPort() + "] already closed.");
+        System.out.println("JMXConnector for server=[" + serverControl[i].getTsaPort() + "] already closed.");
         e.printStackTrace();
       }
       jmxConnectors[i] = null;
@@ -427,7 +428,7 @@ public class GroupServerManager {
       try {
         mbeans.add(getDsoMBean(i));
       } catch (IOException e) {
-        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getTsaPort() + "], jmxPort:"
                            + serverControl[i].getAdminPort());
       }
     }
@@ -440,7 +441,7 @@ public class GroupServerManager {
       try {
         mbeans.add(getLocalDGCMBean(i));
       } catch (IOException e) {
-        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getTsaPort() + "], jmxPort:"
                            + serverControl[i].getAdminPort());
       }
     }
@@ -493,7 +494,7 @@ public class GroupServerManager {
   public synchronized void crashPassive(int passiveToCrash) throws Exception {
     verifyIndex(passiveToCrash);
     if (isActive(passiveToCrash)) { throw new AssertionError("**** Trying to crash server ["
-                                                             + serverControl[passiveToCrash].getDsoPort()
+                                                             + serverControl[passiveToCrash].getTsaPort()
                                                              + "] as passive server but it is in ACTIVE state."); }
     crashServer(passiveToCrash);
   }
@@ -514,7 +515,7 @@ public class GroupServerManager {
     System.out.println("******** Crashing active Server");
 
     boolean active = isActive(index);
-    System.out.println("Crashing active server: dsoPort=[" + serverControl[index].getDsoPort() + "]");
+    System.out.println("Crashing active server: dsoPort=[" + serverControl[index].getTsaPort() + "]");
     if (expectedRunningServerCount() > 1) {
       waituntilPassiveStandBy();
     }
@@ -547,7 +548,7 @@ public class GroupServerManager {
       if (serverControl[lastCrashedIndex].isRunning()) { throw new AssertionError(
                                                                                   "Server["
                                                                                       + serverControl[lastCrashedIndex]
-                                                                                          .getDsoPort()
+                                                                                          .getTsaPort()
                                                                                       + "] is not down as expected!"); }
       restartCrashedServer(lastCrashedIndex);
     } else {
@@ -560,7 +561,7 @@ public class GroupServerManager {
     debugPrintln("*****  restarting crashed server");
 
     if (serverControl[serverIndex].isRunning()) { throw new AssertionError("Server["
-                                                                           + serverControl[serverIndex].getDsoPort()
+                                                                           + serverControl[serverIndex].getTsaPort()
                                                                            + "] is not down as expected!"); }
     startServer(serverIndex);
     if (serverIndex == lastCrashedIndex) {
@@ -604,12 +605,12 @@ public class GroupServerManager {
     }
   }
 
-  private boolean isProxyL2GroupPort() {
-    return testConfig.getL2Config().isProxyL2groupPorts();
+  private boolean isProxyTsaGroupPort() {
+    return testConfig.getL2Config().isProxyTsaGroupPorts();
   }
 
-  private boolean isProxyDsoPort() {
-    return testConfig.getL2Config().isProxyDsoPorts();
+  private boolean isProxyTsaPort() {
+    return testConfig.getL2Config().isProxyTsaPorts();
   }
 
   public boolean dumpClusterState(int dumpCount, long dumpInterval) throws Exception {
@@ -632,7 +633,7 @@ public class GroupServerManager {
   private boolean dumpClusterStateInternal(int dumpCount, long dumpInterval, int serverIndex) throws IOException,
       InterruptedException, Exception {
     if (serverControl[serverIndex].isRunning()) {
-      System.out.println("Dumping server=[" + serverControl[serverIndex].getDsoPort() + "]");
+      System.out.println("Dumping server=[" + serverControl[serverIndex].getTsaPort() + "]");
 
       MBeanServerConnection mbs;
       try {
@@ -641,7 +642,7 @@ public class GroupServerManager {
         }
         mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
       } catch (IOException ioe) {
-        System.out.println("Need to recreate jmxConnector for server=[" + serverControl[serverIndex].getDsoPort()
+        System.out.println("Need to recreate jmxConnector for server=[" + serverControl[serverIndex].getTsaPort()
                            + "]...");
         jmxConnectors[serverIndex] = getJMXConnector(serverControl[serverIndex].getAdminPort());
         mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
@@ -659,7 +660,7 @@ public class GroupServerManager {
 
       mbean.setThreadDumpCount(dumpCount);
       mbean.setThreadDumpInterval(dumpInterval);
-      System.out.println("Thread dumping server=[" + serverControl[serverIndex].getDsoPort() + "] ");
+      System.out.println("Thread dumping server=[" + serverControl[serverIndex].getTsaPort() + "] ");
       mbean.doThreadDump();
 
     }
@@ -686,7 +687,7 @@ public class GroupServerManager {
           passives++;
         }
       } catch (Exception e) {
-        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getDsoPort() + "]... ["
+        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getTsaPort() + "]... ["
                            + e.getMessage() + "]");
         try {
           tcServerInfoMBeans[i] = getTcServerInfoMBean(i);
@@ -707,7 +708,7 @@ public class GroupServerManager {
       try {
         if (tcServerInfoMBeans[i].isPassiveStandby()) { return true; }
       } catch (Exception e) {
-        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getDsoPort() + "]... ["
+        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getTsaPort() + "]... ["
                            + e.getMessage() + "]");
         try {
           tcServerInfoMBeans[i] = getTcServerInfoMBean(i);
@@ -726,7 +727,7 @@ public class GroupServerManager {
     try {
       isActive = tcServerInfoMBeans[index].isActive();
     } catch (Exception e) {
-      System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[index].getDsoPort() + "]...");
+      System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]...");
       try {
         tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
         isActive = tcServerInfoMBeans[index].isActive();
@@ -748,7 +749,7 @@ public class GroupServerManager {
     this.serverCrasher.stop();
   }
 
-  public void stopDsoProxy() {
+  public void stopTsaProxy() {
     for (ProxyConnectManager proxy : this.proxyL1Managers) {
       proxy.closeClientConnections();
     }

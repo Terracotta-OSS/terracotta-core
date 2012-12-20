@@ -84,7 +84,6 @@ import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
-import com.tc.util.BlockingStartupLock;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -100,13 +99,14 @@ import java.util.List;
 import javax.management.MBeanServer;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
-  private final HaConfig          haConfig;
-  private final GroupID           thisGroupID;
+  private final HaConfig            haConfig;
+  private final GroupID             thisGroupID;
 
   protected final TCSecurityManager securityManager;
   protected final TCLogger          logger;
 
-  public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger, final TCSecurityManager securityManager) {
+  public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger,
+                                  final TCSecurityManager securityManager) {
     this.logger = logger;
     this.securityManager = securityManager;
     this.logger.info("Standard DSO Server created");
@@ -291,13 +291,15 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
                                              final DGCSequenceProvider dgcSequenceProvider,
-                                             final SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence,
-                                             final MonitoredResource resource) {
+                                             final SequenceGenerator indexSequenceGenerator,
+                                             final ObjectIDSequence objectIDSequence, final MonitoredResource resource,
+                                             int electionTimeInSecs) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence, resource);
+                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence,
+                               resource, electionTimeInSecs);
   }
 
   @Override
@@ -328,13 +330,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public StartupLock createStartupLock(final TCFile location, final boolean retries) {
-    if (this.haConfig.isNetworkedActivePassive()) {
-      return new NonBlockingStartupLock(location, retries);
-    } else if (this.haConfig.isDiskedBasedActivePassive()) {
-      return new BlockingStartupLock(location, retries);
-    } else {
-      throw new AssertionError("Invalid HA mode");
-    }
+    return new NonBlockingStartupLock(location, retries);
   }
 
   @Override

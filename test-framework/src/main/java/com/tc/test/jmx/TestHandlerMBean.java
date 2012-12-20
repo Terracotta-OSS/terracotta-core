@@ -106,7 +106,7 @@ public interface TestHandlerMBean {
   /**
    * returns the tc url <br>
    * e.g if there are two mirror groups having two servers in each this will return
-   * "server1Host:server1DsoPort,server2Host:server2DsoPort,server3Host:serverOne3Port,server4Host:server4DsoPort"
+   * "server1Host:server1TsaPort,server2Host:server2TsaPort,server3Host:server3TsaPort,server4Host:server4TsaPort"
    * 
    * @return
    */
@@ -162,3 +162,4 @@ public interface TestHandlerMBean {
    */
   public Serializable executeCustomCommand(String cmd, Serializable[] params);
 }
+

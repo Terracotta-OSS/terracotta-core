@@ -20,7 +20,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.locks.ClientLockManager;
-import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.impl.MockSerializedEntry;
@@ -61,7 +60,6 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
                                                                                            .mock(ClientLockManager.class),
                                                                                        Mockito
                                                                                            .mock(RemoteTransactionManager.class),
-                                                                                       new NullRuntimeLogger(),
                                                                                        SampledCounter.NULL_SAMPLED_COUNTER,
                                                                                        store,
                                                                                        new NullAbortableOperationManager());

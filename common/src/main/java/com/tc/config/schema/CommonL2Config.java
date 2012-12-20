@@ -12,7 +12,6 @@ import java.io.File;
  */
 public interface CommonL2Config extends Config {
 
-  public static final short DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT = 10;
   public static final int   MIN_PORTNUMBER                      = 0x0FFF;
   public static final int   MAX_PORTNUMBER                      = 0xFFFF;
 

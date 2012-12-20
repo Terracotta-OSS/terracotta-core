@@ -29,7 +29,7 @@ public class HTTPConnectionLeakTest extends BaseDSOTestCase {
   private TcConfigBuilder      configBuilder;
   private ExternalDsoServer    server;
   private int                  jmxPort;
-  private int                  dsoPort;
+  private int                  tsaPort;
   private ServerMBeanRetriever serverMBeanRetriever;
 
   @Override
@@ -38,7 +38,7 @@ public class HTTPConnectionLeakTest extends BaseDSOTestCase {
     configBuilder.randomizePorts();
     server = new ExternalDsoServer(getWorkDir("server1"), configBuilder.newInputStream(), "server1");
     jmxPort = configBuilder.getJmxPort(0);
-    dsoPort = configBuilder.getDsoPort(0);
+    tsaPort = configBuilder.getTsaPort(0);
     serverMBeanRetriever = new ServerMBeanRetriever("localhost", jmxPort);
     server.start();
     System.out.println("server1 started");
@@ -47,12 +47,12 @@ public class HTTPConnectionLeakTest extends BaseDSOTestCase {
   }
 
   public void testLeak() throws Exception {
-    int initialConnectionCount = getNetInfoEstablishedConnectionsCount(dsoPort);
-    System.out.println("http://localhost:" + dsoPort + "/config");
+    int initialConnectionCount = getNetInfoEstablishedConnectionsCount(tsaPort);
+    System.out.println("http://localhost:" + tsaPort + "/config");
     for (int i = 0; i < 20; i++) {
       fetchConfig();
     }
-    int finalConnectionCount = getNetInfoEstablishedConnectionsCount(dsoPort);
+    int finalConnectionCount = getNetInfoEstablishedConnectionsCount(tsaPort);
     System.out.println("initialConnectioncount : " + initialConnectionCount + " finalConnectionCount : "
                        + finalConnectionCount);
     Assert.assertEquals(initialConnectionCount, finalConnectionCount);
@@ -60,7 +60,7 @@ public class HTTPConnectionLeakTest extends BaseDSOTestCase {
 
   private void fetchConfig() throws Exception {
     List<String> URLsToFetch = new ArrayList<String>();
-    URLsToFetch.add("http://localhost:" + dsoPort + "/config");
+    URLsToFetch.add("http://localhost:" + tsaPort + "/config");
     LinkedJavaProcess fetchURLProcess = new LinkedJavaProcess(URLFetcher.class.getName(), URLsToFetch, null);
     fetchURLProcess.start();
     Result result = Exec.execute(fetchURLProcess, fetchURLProcess.getCommand(), null, null, null);

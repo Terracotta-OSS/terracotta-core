@@ -30,8 +30,6 @@ import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.TestLocksRecallService;
-import com.tc.object.logging.NullRuntimeLogger;
-import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.MockTransactionManager;
@@ -61,7 +59,6 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     objectFactory.tcObject = tcObject;
     this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
                                                          new ObjectIDProviderImpl(new SimpleSequence()),
-                                                         new NullRuntimeLogger(),
                                                          new ClientIDProviderImpl(new TestChannelIDProvider()),
                                                          new MockClassProvider(), new TestClassFactory(),
                                                          objectFactory, tcObjectSelfStore);
@@ -99,11 +96,11 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class MockClientObjectManagerImpl extends ClientObjectManagerImpl {
     public MockClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                        final DSOClientConfigHelper clientConfiguration,
-                                       final ObjectIDProvider idProvider, final RuntimeLogger runtimeLogger,
+                                       final ObjectIDProvider idProvider,
                                        final ClientIDProvider provider, final ClassProvider classProvider,
                                        final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                        final TCObjectSelfStore tcObjectSelfStore) {
-      super(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
+      super(remoteObjectManager, clientConfiguration, idProvider, provider, classProvider, classFactory,
             objectFactory, new TestPortability(), null, null, tcObjectSelfStore, new NullAbortableOperationManager());
     }
 

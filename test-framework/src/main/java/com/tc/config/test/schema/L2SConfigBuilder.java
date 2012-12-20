@@ -4,34 +4,53 @@
  */
 package com.tc.config.test.schema;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Allows you to build valid config for the L2s. This class <strong>MUST NOT</strong> invoke the actual XML beans to do
  * its work; one of its purposes is, in fact, to test that those beans are set up correctly.
  */
 public class L2SConfigBuilder extends BaseConfigBuilder {
 
-  private L2ConfigBuilder[]        l2s;
-  private HaConfigBuilder          ha;
-  private GroupsConfigBuilder      groups;
-  private UpdateCheckConfigBuilder updateCheck;
+  private GroupConfigBuilder[]           groups;
+  private UpdateCheckConfigBuilder       updateCheck;
+  private GarbageCollectionConfigBuilder gc;
+  private boolean                        restartable = false;
 
   public L2SConfigBuilder() {
-    super(1, new String[] { "l2s", "ha", "groups", "update-check" });
+    super(1, new String[] { "groups", "update-check", "garbage-collection", "client-reconnect-window", "restartable" });
   }
 
-  public void setL2s(L2ConfigBuilder[] l2s) {
-    this.l2s = l2s;
-    setProperty("l2s", l2s);
-  }
-
-  public void setHa(HaConfigBuilder ha) {
-    this.ha = ha;
-    setProperty("ha", ha);
-  }
-
-  public void setGroups(GroupsConfigBuilder groups) {
+  public void setGroups(GroupConfigBuilder[] groups) {
+    if (this.groups != null) { throw new IllegalStateException("groups already set"); }
     this.groups = groups;
     setProperty("groups", groups);
+  }
+
+  public L2ConfigBuilder[] getL2s() {
+    List<L2ConfigBuilder> l2s = new ArrayList<L2ConfigBuilder>();
+
+    if (groups != null) {
+      for (GroupConfigBuilder group : groups) {
+        for (L2ConfigBuilder l2 : group.getL2s()) {
+          l2s.add(l2);
+        }
+      }
+    }
+
+    return l2s.toArray(new L2ConfigBuilder[l2s.size()]);
+  }
+
+  public void setL2s(L2ConfigBuilder[] l2Builder) {
+    if (groups != null) {
+      //
+      throw new IllegalStateException("groups have already been set. The L2s must be set in the groups config");
+    }
+
+    GroupConfigBuilder group = new GroupConfigBuilder("auto-generated");
+    group.setL2s(l2Builder);
+    setGroups(new GroupConfigBuilder[] { group });
   }
 
   public void setUpdateCheck(UpdateCheckConfigBuilder updateCheck) {
@@ -39,15 +58,21 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     setProperty("update-check", updateCheck);
   }
 
-  public L2ConfigBuilder[] getL2s() {
-    return l2s;
+  public void setGarbageCollection(GarbageCollectionConfigBuilder gc) {
+    this.gc = gc;
+    setProperty("garbage-collection", gc);
   }
 
-  public HaConfigBuilder getHa() {
-    return ha;
+  public void setRestartable(boolean data) {
+    setProperty("restartable", data);
+    restartable = data;
   }
 
-  public GroupsConfigBuilder getGroups() {
+  public void setReconnectWindowForPrevConnectedClients(int secs) {
+    setProperty("client-reconnect-window", secs);
+  }
+
+  public GroupConfigBuilder[] getGroups() {
     return groups;
   }
 
@@ -55,36 +80,40 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     return updateCheck;
   }
 
+  @Override
   public String toString() {
     String out = "";
-    if (isSet("l2s")) {
-      out += l2sToString();
-    }
+
     if (isSet("groups")) {
-      out += groups.toString();
+      for (GroupConfigBuilder group : groups) {
+        out += group.toString();
+      }
     }
-    if (isSet("ha")) {
-      out += ha.toString();
-    }
+
     if (isSet("update-check")) {
       out += updateCheck.toString();
     }
+
+    if (isSet("garbage-collection")) {
+      out += gc.toString();
+    }
+
+    out += getRestartable();
+
+    if (isSet("client-reconnect-window")) {
+      out += element("client-reconnect-window");
+    }
+
     return out;
   }
 
-  private String l2sToString() {
-    String val = "";
-    for (int i = 0; i < l2s.length; i++) {
-      val += l2s[i].toString();
-    }
-    return val;
+  private String getRestartable() {
+    if (!restartable) return "\n";
+    return "\n<restartable enabled=\"" + restartable + "\"/>\n";
   }
 
   public static L2SConfigBuilder newMinimalInstance() {
-    L2ConfigBuilder l2 = new L2ConfigBuilder();
-    L2SConfigBuilder out = new L2SConfigBuilder();
-    out.setL2s(new L2ConfigBuilder[] { l2 });
-    return out;
+    return new L2SConfigBuilder();
   }
 
 }

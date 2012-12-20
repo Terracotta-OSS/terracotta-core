@@ -14,14 +14,9 @@ import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcProperties;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A base class for all TVS configuration setup managers.
@@ -37,9 +32,6 @@ public class BaseConfigurationSetupManager {
   protected final DefaultValueProvider            defaultValueProvider;
   private final XmlObjectComparator               xmlObjectComparator;
   private final IllegalConfigurationChangeHandler illegalConfigurationChangeHandler;
-
-  private final Map                               dsoApplicationConfigs;
-  private final Map                               springApplicationConfigs;
 
   public BaseConfigurationSetupManager(ConfigurationCreator configurationCreator,
                                        DefaultValueProvider defaultValueProvider,
@@ -68,9 +60,6 @@ public class BaseConfigurationSetupManager {
     this.defaultValueProvider = defaultValueProvider;
     this.xmlObjectComparator = xmlObjectComparator;
     this.illegalConfigurationChangeHandler = illegalConfigurationChangeHandler;
-
-    this.dsoApplicationConfigs = new HashMap();
-    this.springApplicationConfigs = new HashMap();
   }
 
   public String[] processArguments() {
@@ -105,15 +94,6 @@ public class BaseConfigurationSetupManager {
     this.configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
                                                                   systemBeanRepository, tcPropertiesRepository,
                                                                   isClient);
-  }
-
-  public String[] applicationNames() {
-    Set names = new HashSet();
-
-    names.addAll(this.dsoApplicationConfigs.keySet());
-    names.addAll(this.springApplicationConfigs.keySet());
-
-    return (String[]) names.toArray(new String[names.size()]);
   }
 
   public final ConfigContext createContext(BeanRepository beanRepository, File configFilePath) {

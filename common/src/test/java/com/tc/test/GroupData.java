@@ -6,41 +6,41 @@ package com.tc.test;
 
 public class GroupData {
   private final String   groupName;
-  private int[]          dsoPorts;
+  private int[]          tsaPorts;
   private final int[]    jmxPorts;
-  private final int[]    l2GroupPorts;
+  private final int[]    tsaGroupPorts;
   private final String[] serverNames;
 
-  public GroupData(int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames) {
-    this(null, dsoPorts, jmxPorts, l2GroupPorts, serverNames);
+  public GroupData(int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames) {
+    this(null, tsaPorts, jmxPorts, tsaGroupPorts, serverNames);
   }
 
-  public GroupData(String groupName, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames) {
+  public GroupData(String groupName, int[] tsaPorts, int[] jmxPorts, int[] tsaGroupPorts, String[] serverNames) {
     this.groupName = groupName;
     this.serverNames = serverNames;
-    this.dsoPorts = dsoPorts;
+    this.tsaPorts = tsaPorts;
     this.jmxPorts = jmxPorts;
-    this.l2GroupPorts = l2GroupPorts;
+    this.tsaGroupPorts = tsaGroupPorts;
   }
 
-  public void setDsoPorts(int[] dsoPorts) {
-    this.dsoPorts = dsoPorts;
+  public void setTsaPorts(int[] tsaPorts) {
+    this.tsaPorts = tsaPorts;
   }
 
   public String getGroupName() {
     return this.groupName;
   }
 
-  public int[] getDsoPorts() {
-    return dsoPorts;
+  public int[] getTsaPorts() {
+    return tsaPorts;
   }
 
   public int[] getJmxPorts() {
     return jmxPorts;
   }
 
-  public int[] getL2GroupPorts() {
-    return l2GroupPorts;
+  public int[] getTsaGroupPorts() {
+    return tsaGroupPorts;
   }
 
   public String[] getServerNames() {
@@ -48,7 +48,7 @@ public class GroupData {
   }
 
   public int getServerCount() {
-    return dsoPorts.length;
+    return tsaPorts.length;
   }
 
 }

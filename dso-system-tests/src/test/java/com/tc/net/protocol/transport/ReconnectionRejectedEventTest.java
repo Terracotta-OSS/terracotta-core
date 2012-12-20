@@ -49,7 +49,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
     this.clientComms = new CommunicationsManagerImpl("ClientTestCommsMgr", new NullMessageMonitor(),
                                                      new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
     this.listener = serverComms.createListener(new NullSessionManager(),
-                                               new TCSocketAddress("localhost", proxyMgr.getDsoPort()), true,
+                                               new TCSocketAddress("localhost", proxyMgr.getTsaPort()), true,
                                                new DefaultConnectionIdFactory());
     this.listener.start(Collections.EMPTY_SET);
   }
@@ -110,7 +110,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
   public void testReconnectionRejectedEventReceived() {
     RejectedEventListener eventListener = new RejectedEventListener();
-    ClientMessageChannel channel = createClientMessageChannel(proxyMgr.getDsoPort());
+    ClientMessageChannel channel = createClientMessageChannel(proxyMgr.getTsaPort());
     channel.addListener(eventListener); // fire transport ReconnectionRejectedEvent
     getTestClientMessageTransport().fireReconnectionRejectedEvent();
     Assert.assertEquals(1, eventListener.waitForEventCount(1, 10 * 1000));

@@ -6,13 +6,14 @@ package com.tc.config.schema;
 import com.tc.net.GroupID;
 
 public interface ActiveServerGroupConfig extends Config {
-  MembersConfig getMembers();
+  String[] getMembers();
 
   boolean isMember(String l2Name);
 
-  HaConfigSchema getHaHolder();
-
   GroupID getGroupId();
-  
+
   String getGroupName();
+
+  int getElectionTimeInSecs();
+
 }
