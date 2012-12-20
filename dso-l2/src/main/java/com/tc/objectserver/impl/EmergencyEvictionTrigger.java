@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * This trigger is fired by the resource monitor if the monitored resource goes
- * over the critical threshold of resource (default is 90% but can be set by TC Property
+ * over the critical threshold of resource (can be set by TC Property
  * l2.eviction.criticalThreshold).  
  * 
  * The sample count is defined by the percentage of the mapSize required to achieve

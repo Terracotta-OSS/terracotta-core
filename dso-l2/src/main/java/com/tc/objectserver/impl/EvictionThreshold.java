@@ -59,48 +59,39 @@ public enum EvictionThreshold {
         return BIG;
     }
     
-    public static void main(String[] args) {
-        EvictionThreshold[] list = EvictionThreshold.values();
-        Arrays.sort(list, new Comparator<EvictionThreshold> () {
-
-            @Override
-            public int compare(EvictionThreshold t, EvictionThreshold t1) {
-                if ( t.maxSize == t.maxSize ) {
-                    return 0;
-                }
-                return (t.maxSize > t1.maxSize) ? -1 : 1;
-            }
-            
-        });
-        for ( EvictionThreshold et : list ) {
-            System.out.println(et);
-        }
-    }
-    
-    public boolean shouldThrottle(DetailedMemoryUsage usage) {
+    public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak) {
         if ( usage.getReservedMemory() > usage.getMaxMemory() - reserved ) {
             return true;
         }
         return false;
     }
     
-    public boolean shouldNormalize(DetailedMemoryUsage usage) {
-        if ( usage.getReservedMemory() < usage.getMaxMemory() - reserved - (used - reserved)/2 ) {
+    public boolean shouldNormalize(DetailedMemoryUsage usage,int usedTweak)  {
+        long lused = getUsed(usedTweak);
+        if ( usage.getReservedMemory() < usage.getMaxMemory() - reserved - (lused - reserved)/2 ) {
             return true;
         }
         return false;
     }
     
-    public boolean isAboveThreshold(DetailedMemoryUsage usage) {
+    public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak)  {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();
+        long lused = getUsed(usedTweak);
         if ( usage.getReservedMemory() > max - reserved ) {
             return true;
         }
-        if ( reserve > max - used && usage.getUsedMemory() > max - used ) {
+        if ( reserve > max - lused && usage.getUsedMemory() > max - lused ) {
             return true;
         }
         return false;
+    }
+    
+    public long getUsed(int tweak) {
+        if ( tweak < 0 ) {
+            return used;
+        }
+        return reserved + (tweak * reserved);
     }
 
     @Override

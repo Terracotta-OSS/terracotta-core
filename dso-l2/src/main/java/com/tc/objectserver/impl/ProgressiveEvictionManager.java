@@ -63,7 +63,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private static final long L2_EVICTION_RESOURCEPOLLINGINTERVAL = TCPropertiesImpl
             .getProperties()
             .getLong(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL, -1);
-      private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
+    private static final int L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl
+            .getProperties()
+            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, -1);
+    private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
     private final ServerMapEvictionEngine evictor;
@@ -400,13 +403,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                 
                throttleIfNeeded(threshold, usage);
 
-               if (threshold.isAboveThreshold(usage)) {  
+               if (threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD)) {  
                     if ( !isEmergency || currentRun.isDone() ) {
                         triggerEmergency(usage);
                     }
                } else {
                     if ( isEmergency ) {
-                        if ( !threshold.isAboveThreshold(usage) ) {
+                        if ( !threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
                             stopEmergency(usage);
                         } else if ( currentRun.isDone() ) {
                             triggerEmergency(usage);
@@ -435,11 +438,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
 
             if ( isThrottling ) {
-                if ( threshold.shouldNormalize(usage) ) {
+                if ( threshold.shouldNormalize(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
                     clear(usage);
                 }
             } else if ( isEmergency ) {
-                if ( threshold.shouldThrottle(usage) ) {
+                if ( threshold.shouldThrottle(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
                     throttle(usage);
                 }
             } 
