@@ -58,10 +58,6 @@ public class GCLogger {
     if (verboseGC()) logGC(id, "deleting garbage: " + count + " objects");
   }
 
-  public void log_deleteStart(GarbageCollectionID id, long toDeleteSize) {
-    if (verboseGC()) logGC(id, "delete start : " + toDeleteSize + " objects");
-  }
-
   public void log_cycleComplete(GarbageCollectionID id, GarbageCollectionInfo gcInfo) {
     if (verboseGC()) {
       logGC(id, "notifying gc complete...");
@@ -74,9 +70,6 @@ public class GCLogger {
       if (gcInfo.getPausedStageTime() != NOT_INITIALIZED) {
         logGC(id, "paused gc time  : " + gcInfo.getPausedStageTime() + " ms.");
       }
-      if (gcInfo.getDeleteStageTime() != NOT_INITIALIZED) {
-        logGC(id, "delete in-memory garbage time  : " + gcInfo.getDeleteStageTime() + " ms.");
-      }
       if (gcInfo.getTotalMarkCycleTime() != NOT_INITIALIZED) {
         logGC(id, "total mark cycle time   : " + gcInfo.getTotalMarkCycleTime() + " ms.");
       }
@@ -86,10 +79,10 @@ public class GCLogger {
     }
   }
 
-  public void log_complete(GarbageCollectionID id, long deleteGarbageSize, long deleteStageTime, long totalElapsedTime) {
+  public void log_complete(GarbageCollectionID id, long deleteGarbageSize, long totalElapsedTime) {
     if (verboseGC()) {
-      logGC(id, "delete completed : removed " + deleteGarbageSize + " objects in " + deleteStageTime
-                + " ms. Total elapsed time: " + totalElapsedTime);
+      logGC(id, "delete completed : removed " + deleteGarbageSize + " objects. "
+                + "Total elapsed time: " + totalElapsedTime);
     }
   }
 

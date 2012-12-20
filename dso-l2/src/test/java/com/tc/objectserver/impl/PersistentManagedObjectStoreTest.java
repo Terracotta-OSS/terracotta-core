@@ -4,13 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.DGCResultContext;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.util.ObjectIDSet;
 
@@ -18,18 +12,19 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 public class PersistentManagedObjectStoreTest extends TestCase {
 
-  private Sink                         gcSink;
   private ManagedObjectPersistor persistor;
   private PersistentManagedObjectStore objectStore;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    gcSink = mock(Sink.class);
     persistor = mock(ManagedObjectPersistor.class);
-    objectStore = new PersistentManagedObjectStore(persistor, gcSink);
+    objectStore = new PersistentManagedObjectStore(persistor);
   }
 
   public void testGetObjectByID() throws Exception {
@@ -44,17 +39,9 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     verify(persistor).containsObject(objectID);
   }
 
-  public void testRemoveAllObjectsByIDNow() throws Exception {
+  public void testRemoveObjectsByID() throws Exception {
     ObjectIDSet objectIDs = new ObjectIDSet(Arrays.asList(new ObjectID(1), new ObjectID(2)));
-    objectStore.removeAllObjectsByIDNow(objectIDs);
+    objectStore.removeAllObjectsByID(objectIDs);
     verify(persistor).deleteAllObjects(objectIDs);
-  }
-
-  public void testRemoveObjectIDs() throws Exception {
-    ObjectIDSet objectIDs = new ObjectIDSet(Arrays.asList(new ObjectID(1), new ObjectID(2)));
-    DGCResultContext dgcResultContext = new DGCResultContext(objectIDs, GarbageCollectionInfo.NULL_INFO);
-    objectStore.removeAllObjectsByID(dgcResultContext);
-    verify(persistor).deleteAllObjects(objectIDs);
-    verify(gcSink).add(dgcResultContext);
   }
 }

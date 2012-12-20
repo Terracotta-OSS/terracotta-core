@@ -11,7 +11,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.GarbageCollectContext;
 import com.tc.objectserver.context.InlineGCContext;
 import com.tc.objectserver.context.PeriodicGarbageCollectContext;
@@ -31,9 +30,6 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class GarbageCollectHandler extends AbstractEventHandler {
-  private static final GarbageCollectionInfo   INLINE_GC_INFO = new GarbageCollectionInfo(
-                                                                                          GarbageCollectionID.NULL_ID,
-                                                                                          GarbageCollectionInfo.Type.INLINE_GC);
   private static final TCLogger                logger         = TCLogging.getLogger(GarbageCollectHandler.class);
 
   private final Timer                          timer          = new Timer("GarbageCollectHandler Timer");
@@ -81,6 +77,7 @@ public class GarbageCollectHandler extends AbstractEventHandler {
         }
       }
     } else if (context instanceof InlineGCContext) {
+      GarbageCollectionInfo gcInfo = new GarbageCollectionInfo(GarbageCollectionID.NULL_ID, GarbageCollectionInfo.Type.INLINE_GC);
       collector.waitToStartInlineGC();
       final ObjectIDSet objectsToDelete = garbageCollectionManager.nextObjectsToDelete();
       if (logger.isDebugEnabled()) {
@@ -88,10 +85,12 @@ public class GarbageCollectHandler extends AbstractEventHandler {
       }
 
       if (!objectsToDelete.isEmpty()) {
-        objectManager.deleteObjects(new DGCResultContext(objectsToDelete, INLINE_GC_INFO));
+        objectManager.deleteObjects(objectsToDelete);
       }
       collector.notifyGCComplete();
-      gcPublisher.fireGCCycleCompletedEvent(INLINE_GC_INFO, objectsToDelete);
+      gcInfo.setActualGarbageCount(objectsToDelete.size());
+      gcPublisher.fireGCCycleCompletedEvent(gcInfo, objectsToDelete);
+      gcPublisher.fireGCCompletedEvent(gcInfo);
       garbageCollectionManager.scheduleInlineGarbageCollectionIfNecessary();
     } else {
       throw new AssertionError("Unknown context type: " + context.getClass().getName());

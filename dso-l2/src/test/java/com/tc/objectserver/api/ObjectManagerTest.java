@@ -4,12 +4,8 @@
  */
 package com.tc.objectserver.api;
 
-import static org.mockito.Mockito.mock;
-
 import org.mockito.Mockito;
 
-import com.tc.async.api.Sink;
-import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
@@ -98,6 +94,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * @author steve
  */
@@ -135,7 +133,7 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initObjectManager() {
-    this.objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), Mockito.mock(Sink.class));
+    this.objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
     initObjectManager(this.objectStore);
   }
 
@@ -713,10 +711,7 @@ public class ObjectManagerTest extends TCTestCase {
    * recall in TransactionalObjectManager in persistence mode
    */
   public void testRecallNewObjects() throws Exception {
-    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
-                                                                                            persistor
-                                                                                                .getManagedObjectPersistor(),
-                                                                                            new MockSink());
+    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
     initObjectManager(this.objectStore);

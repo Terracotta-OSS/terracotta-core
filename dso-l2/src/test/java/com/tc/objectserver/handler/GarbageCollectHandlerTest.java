@@ -3,8 +3,6 @@
  */
 package com.tc.objectserver.handler;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
 import org.junit.Assert;
 import org.mockito.Mockito;
 
@@ -52,6 +50,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class GarbageCollectHandlerTest extends TCTestCase {
   {
@@ -435,8 +435,8 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void deleteObjects(DGCResultContext dgcResultContext) {
-      deletedObjects.addAll(dgcResultContext.getGarbageIDs());
+    public void deleteObjects(Set<ObjectID> objectsToDelete) {
+      deletedObjects.addAll(objectsToDelete);
       inlineGCCount.incrementAndGet();
     }
   }

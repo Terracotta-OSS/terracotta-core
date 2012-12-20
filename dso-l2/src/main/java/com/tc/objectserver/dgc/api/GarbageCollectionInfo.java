@@ -23,7 +23,6 @@ public class GarbageCollectionInfo implements TCSerializable {
   private long                              beginObjectCount      = NOT_INITIALIZED;
   private long                              markStageTime         = NOT_INITIALIZED;
   private long                              pauseStageTime        = NOT_INITIALIZED;
-  private long                              deleteStageTime       = NOT_INITIALIZED;
   private long                              elapsedTime           = NOT_INITIALIZED;
   private long                              endObjectCount        = NOT_INITIALIZED;
   private long                              totalMarkCycleTime    = NOT_INITIALIZED;
@@ -131,14 +130,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     return this.pauseStageTime;
   }
 
-  public void setDeleteStageTime(long time) {
-    this.deleteStageTime = time;
-  }
-
-  public long getDeleteStageTime() {
-    return this.deleteStageTime;
-  }
-
   public void setElapsedTime(long time) {
     this.elapsedTime = time;
   }
@@ -209,9 +200,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     if (this.pauseStageTime != NOT_INITIALIZED) {
       gcInfo.append(" pauseStageTime = " + this.pauseStageTime);
     }
-    if (this.deleteStageTime != NOT_INITIALIZED) {
-      gcInfo.append(" deleteStageTime = " + this.deleteStageTime);
-    }
     if (this.elapsedTime != NOT_INITIALIZED) {
       gcInfo.append(" elapsedTime = " + this.elapsedTime);
     }
@@ -249,7 +237,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     this.endObjectCount = serialInput.readLong();
     this.markStageTime = serialInput.readLong();
     this.pauseStageTime = serialInput.readLong();
-    this.deleteStageTime = serialInput.readLong();
     this.elapsedTime = serialInput.readLong();
     this.totalMarkCycleTime = serialInput.readLong();
     this.candidateGarbageCount = serialInput.readLong();
@@ -270,7 +257,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     serialOutput.writeLong(this.endObjectCount);
     serialOutput.writeLong(this.markStageTime);
     serialOutput.writeLong(this.pauseStageTime);
-    serialOutput.writeLong(this.deleteStageTime);
     serialOutput.writeLong(this.elapsedTime);
     serialOutput.writeLong(this.totalMarkCycleTime);
     serialOutput.writeLong(this.candidateGarbageCount);

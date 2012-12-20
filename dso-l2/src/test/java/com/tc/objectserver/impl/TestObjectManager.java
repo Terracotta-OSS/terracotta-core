@@ -186,7 +186,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
-  public void deleteObjects(DGCResultContext dgcResultContext) {
+  public void deleteObjects(Set<ObjectID> objectsToDelete) {
     throw new ImplementMe();
   }
 

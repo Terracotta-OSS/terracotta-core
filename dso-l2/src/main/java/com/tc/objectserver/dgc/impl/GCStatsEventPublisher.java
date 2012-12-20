@@ -10,7 +10,6 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GCStatsImpl;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -18,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter {
 
-  private final List               gcStatsEventListeners = new CopyOnWriteArrayList();
+  private final List<GCStatsEventListener>               gcStatsEventListeners = new CopyOnWriteArrayList<GCStatsEventListener>();
 
   private final LossyLinkedHashMap gcHistory             = new LossyLinkedHashMap(1500);
   private GCStats                  lastGCStat            = null;
@@ -70,14 +69,6 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   }
 
   @Override
-  public void garbageCollectorDelete(GarbageCollectionInfo info) {
-    if (info.isInlineDGC()) { return; }
-    GCStatsImpl gcStats = getGCStats(info);
-    gcStats.setDeleteState();
-    fireGCStatsEvent(gcStats);
-  }
-
-  @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
@@ -103,7 +94,6 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     gcStats.setActualGarbageCount(info.getActualGarbageCount());
     gcStats.setBeginObjectCount(info.getBeginObjectCount());
     gcStats.setCandidateGarbageCount(info.getCandidateGarbageCount());
-    gcStats.setDeleteStageTime(info.getDeleteStageTime());
     gcStats.setElapsedTime(info.getElapsedTime());
     gcStats.setMarkStageTime(info.getMarkStageTime());
     gcStats.setPausedStageTime(info.getPausedStageTime());
@@ -117,8 +107,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   }
 
   public void fireGCStatsEvent(GCStats gcStats) {
-    for (Iterator iter = gcStatsEventListeners.iterator(); iter.hasNext();) {
-      GCStatsEventListener listener = (GCStatsEventListener) iter.next();
+    for (GCStatsEventListener listener : gcStatsEventListeners) {
       listener.update(gcStats);
     }
   }
@@ -133,9 +122,8 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
     @Override
     protected boolean removeEldestEntry(Entry<GarbageCollectionID, GCStatsImpl> eldest) {
-      return (size() < size) ? false : true;
+      return size() >= size;
     }
-
   }
 
 }

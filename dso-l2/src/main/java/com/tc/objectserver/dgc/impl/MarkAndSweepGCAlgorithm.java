@@ -122,7 +122,6 @@ final class MarkAndSweepGCAlgorithm {
     gcInfo.setRescue1Time(0);
     gcInfo.setRescue2Time(0);
     gcInfo.setPausedStageTime(0);
-    gcInfo.setDeleteStageTime(0);
     gcInfo.setActualGarbageCount(0);
     gcInfo.setEndObjectCount(gcHook.getLiveObjectCount());
     long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
@@ -150,7 +149,7 @@ final class MarkAndSweepGCAlgorithm {
   }
 
   private void collectRoot(Filter filter, ObjectID rootId, Set managedObjectIds, LifeCycleState lifeCycleState) {
-    Set toBeVisited = new ObjectIDSet();
+    Set<ObjectID> toBeVisited = new ObjectIDSet();
     toBeVisited.add(rootId);
 
     while (!toBeVisited.isEmpty() && !managedObjectIds.isEmpty()) {
@@ -158,11 +157,10 @@ final class MarkAndSweepGCAlgorithm {
       for (Iterator i = new ObjectIDSet(toBeVisited).iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
         ObjectID id = (ObjectID) i.next();
         if (lifeCycleState.isStopRequested()) return;
-        Set references = gcHook.getObjectReferencesFrom(id);
+        Set<ObjectID> references = gcHook.getObjectReferencesFrom(id);
         toBeVisited.remove(id);
 
-        for (Iterator r = references.iterator(); r.hasNext();) {
-          ObjectID mid = (ObjectID) r.next();
+        for (final ObjectID mid : references) {
           if (mid == null) {
             // see CDV-765
             MarkAndSweepGarbageCollector.logger.error("null value returned from getObjectReferences() on " + id);
@@ -177,12 +175,11 @@ final class MarkAndSweepGCAlgorithm {
   }
 
   private ObjectIDSet rescue(final ObjectIDSet gcResults) {
-    Set rescueIds = gcHook.getRescueIDs();
+    Set<ObjectID> rescueIds = gcHook.getRescueIDs();
     rescueIds.retainAll(gcResults);
 
     Filter rescueFilter = new SelectiveFilter(gcResults);
-    ObjectIDSet rv = collect(rescueFilter, rescueIds, gcResults, gcState);
-    return rv;
+    return collect(rescueFilter, rescueIds, gcResults, gcState);
   }
 
   private void logstart_collect(Collection rootIds, Set managedObjectIds) {

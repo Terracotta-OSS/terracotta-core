@@ -6,9 +6,6 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -181,7 +178,6 @@ import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
 import com.tc.objectserver.handler.GarbageCollectHandler;
-import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.InvalidateObjectsHandler;
 import com.tc.objectserver.handler.JMXEventsHandler;
@@ -294,6 +290,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -528,12 +527,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverBuilder
         .registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider, getMBeanServer());
 
-    final int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
-    final Sink gcDisposerSink = stageManager.createStage(ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
-                                                         new GarbageDisposeHandler(gcPublisher), gcDeleteThreads,
-                                                         maxStageSize).getSink();
-
-    this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
+    this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor());
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,

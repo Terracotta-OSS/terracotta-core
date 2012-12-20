@@ -4,7 +4,6 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -562,7 +561,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
         statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
         statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
-        statisticsEntity.getStatistics().put("DeleteStageTime", gcStat.getDeleteStageTime());
         statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
         statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
         statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());

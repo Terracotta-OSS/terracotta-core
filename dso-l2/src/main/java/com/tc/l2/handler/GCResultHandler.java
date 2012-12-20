@@ -27,7 +27,6 @@ public class GCResultHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     if (context instanceof GCResultMessage) {
       GCResultMessage msg = (GCResultMessage) context;
-       logger.info("Scheduling to process GC results when all current transactions are completed : " + msg);
       transactionManager.callBackOnTxnsInSystemCompletion(new GCResultCallback(msg, gcResultSink));
     } else {
       GCResultCallback callback = (GCResultCallback) context;
@@ -59,6 +58,13 @@ public class GCResultHandler extends AbstractEventHandler {
 
     public void onCompletion() {
       sink.add(this);
+    }
+
+    @Override
+    public String toString() {
+      return "GCResultCallback{" +
+             "msg=" + msg +
+             '}';
     }
   }
 }

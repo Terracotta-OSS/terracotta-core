@@ -26,7 +26,6 @@ public class GCStatsImpl implements GCStats, Serializable {
   private long                   actualGarbageCount    = NOT_INITIALIZED;
   private long                   markStageTime         = NOT_INITIALIZED;
   private long                   pausedStageTime       = NOT_INITIALIZED;
-  private long                   deleteStageTime       = NOT_INITIALIZED;
   private State                  state                 = GCStats.GC_START;
   private final boolean          fullGC;
 
@@ -54,10 +53,6 @@ public class GCStatsImpl implements GCStats, Serializable {
 
   public synchronized void setCompleteState() {
     this.state = GC_COMPLETE;
-  }
-
-  public synchronized void setDeleteState() {
-    this.state = GC_DELETE;
   }
 
   public synchronized void setCanceledState() {
@@ -96,10 +91,6 @@ public class GCStatsImpl implements GCStats, Serializable {
     return this.pausedStageTime;
   }
 
-  public synchronized long getDeleteStageTime() {
-    return this.deleteStageTime;
-  }
-
   public synchronized String getStatus() {
     return state.getName();
   }
@@ -132,10 +123,6 @@ public class GCStatsImpl implements GCStats, Serializable {
     this.pausedStageTime = time;
   }
 
-  public synchronized void setDeleteStageTime(long time) {
-    this.deleteStageTime = time;
-  }
-
   public synchronized void setElapsedTime(long time) {
     this.elapsedTime = time;
   }
@@ -157,10 +144,9 @@ public class GCStatsImpl implements GCStats, Serializable {
     return "DGCStats[ iteration: " + getIteration() + "; type: " + getType() + "; status: " + getStatus()
            + " ] : startTime = " + formatAsDate(this.startTime) + "; elapsedTime = " + formatTime(this.elapsedTime)
            + "; markStageTime = " + formatTime(markStageTime) + "; pausedStageTime = "
-           + formatTime(this.pausedStageTime) + "; deleteStageTime = " + formatTime(this.deleteStageTime)
-           + "; beginObjectCount = " + this.beginObjectCount + "; endObjectCount = " + this.endObjectCount
-           + "; candidateGarbageCount = " + this.candidateGarbageCount + "; actualGarbageCount = "
-           + this.actualGarbageCount;
+           + formatTime(this.pausedStageTime) + "; beginObjectCount = " + this.beginObjectCount + "; endObjectCount = "
+           + this.endObjectCount + "; candidateGarbageCount = " + this.candidateGarbageCount +
+           "; actualGarbageCount = " + this.actualGarbageCount;
   }
 
 }

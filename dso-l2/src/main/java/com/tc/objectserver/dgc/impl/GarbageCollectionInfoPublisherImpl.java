@@ -98,13 +98,6 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
-  public void fireGCDeleteEvent(GarbageCollectionInfo info) {
-    for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-      GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-      listener.garbageCollectorDelete(info);
-    }
-  }
-
   public void fireGCCycleCompletedEvent(GarbageCollectionInfo info, ObjectIDSet toDelete) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();

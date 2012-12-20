@@ -11,6 +11,7 @@ import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -74,9 +75,16 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   }
 
   public void deleteGarbage(final DGCResultContext dgcResultContext) {
-    this.youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
-    this.objectManager.notifyGCComplete(dgcResultContext);
+    youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
+    objectManager.notifyGCComplete(dgcResultContext);
     notifyGCComplete();
+
+    GarbageCollectionInfo gcInfo = dgcResultContext.getGCInfo();
+    gcInfo.setEndObjectCount(objectManager.getLiveObjectCount());
+    gcInfo.setActualGarbageCount(dgcResultContext.getGarbageIDs().size());
+    final long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
+    gcInfo.setElapsedTime(elapsedTime);
+    gcPublisher.fireGCCompletedEvent(gcInfo);
   }
 
   public void startMonitoringReferenceChanges() {

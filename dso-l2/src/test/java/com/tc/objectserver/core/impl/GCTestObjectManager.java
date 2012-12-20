@@ -7,15 +7,12 @@ package com.tc.objectserver.core.impl;
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.cache.CacheStats;
-import com.tc.object.cache.Evictable;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
@@ -31,24 +28,23 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class GCTestObjectManager implements ObjectManager, Evictable {
+public class GCTestObjectManager implements ObjectManager {
 
-  protected Set                            roots               = new HashSet<ObjectID>();
-  protected Map                            managed             = new LinkedHashMap<ObjectID, ManagedObjectReference>();
-  protected Map                            swappedToDisk       = new HashMap<ObjectID, ManagedObjectReference>();
+  protected Set<ObjectID>                  roots               = new HashSet<ObjectID>();
+  protected Map<ObjectID, ManagedObjectReference> managed             = new LinkedHashMap<ObjectID, ManagedObjectReference>();
+  protected Map<ObjectID, ManagedObjectReference> swappedToDisk       = new HashMap<ObjectID, ManagedObjectReference>();
   protected GarbageCollector               gcCollector;
-  protected Set                            gced                = new HashSet<ObjectID>();
+  protected Set<ObjectID>                  gced                = new HashSet<ObjectID>();
 
-  protected Set                            lookedUp            = null;
-  protected Set                            released            = null;
+  protected Set<ObjectID>                  lookedUp            = null;
+  protected Set<ObjectID>                  released            = null;
   protected TransactionProvider transactionProvider = null;
   protected GarbageCollectionInfoPublisher gcPublisher;
 
-  public GCTestObjectManager(Set lookedUp, Set released, TransactionProvider transactionProvider) {
+  public GCTestObjectManager(Set<ObjectID> lookedUp, Set<ObjectID> released, TransactionProvider transactionProvider) {
     this.lookedUp = lookedUp;
     this.released = released;
     this.transactionProvider = transactionProvider;
@@ -60,24 +56,23 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
   public ManagedObject getObjectByID(ObjectID id) {
     lookedUp.add(id);
-    ManagedObjectReference ref = (ManagedObjectReference) managed.get(id);
-    if (ref == null) ref = (ManagedObjectReference) swappedToDisk.get(id);
+    ManagedObjectReference ref = managed.get(id);
+    if (ref == null) ref = swappedToDisk.get(id);
     return (ref == null) ? null : ref.getObject();
   }
 
   public Set getGCedObjectIDs() {
-    HashSet hs = new HashSet(gced);
+    HashSet hs = new HashSet<ObjectID>(gced);
     gced.clear();
     return hs;
   }
 
   public void release(ManagedObject object) {
     released.add(object.getID());
-    return;
   }
 
   public void releaseAll(Collection c) {
-    return;
+    //
   }
 
   public void stop() {
@@ -122,7 +117,6 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
   public void releaseReadOnly(ManagedObject object) {
     released.add(object.getID());
-    return;
   }
 
   public void releaseAllReadOnly(Collection objects) {
@@ -144,7 +138,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   public Set getRootIDs() {
-    return new HashSet(roots);
+    return new HashSet<ObjectID>(roots);
   }
 
   public Map getRootNamesToIDsMap() {
@@ -171,13 +165,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return mo;
   }
 
-  // TODO: just garbage collector complete interface.
   public void notifyGCComplete(DGCResultContext dgcResultContext) {
-    GarbageCollectionInfo gcInfo = dgcResultContext.getGCInfo();
-
-    gcPublisher.fireGCDeleteEvent(gcInfo);
-    long start = System.currentTimeMillis();
-
     SortedSet<ObjectID> ids = dgcResultContext.getGarbageIDs();
     for (Object element : ids) {
       ObjectID objectID = (ObjectID) element;
@@ -187,38 +175,16 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     int b4 = gced.size();
     gced.addAll(ids);
     Assert.assertEquals(b4 + ids.size(), gced.size());
-
-    long elapsed = System.currentTimeMillis() - start;
-    gcInfo.setDeleteStageTime(elapsed);
-    long endMillis = System.currentTimeMillis();
-    gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
-    gcInfo.setEndObjectCount(managed.size());
-
-    gcPublisher.fireGCCompletedEvent(gcInfo);
   }
 
   public ObjectIDSet getObjectIDsInCache() {
     return new ObjectIDSet(managed.keySet());
   }
 
-  public void evictCache(CacheStats stat) {
-    int count = stat.getObjectCountToEvict(managed.size());
-    Iterator i = managed.entrySet().iterator();
-    List evicted = new ArrayList();
-    while (count-- > 0 && i.hasNext()) {
-      Map.Entry e = (Entry) i.next();
-      ManagedObjectReference mor = (ManagedObjectReference) e.getValue();
-      swappedToDisk.put(e.getKey(), mor);
-      i.remove();
-      evicted.add(mor.getObject());
-    }
-    gcCollector.notifyObjectsEvicted(evicted);
-  }
-
   public void evict(ObjectID id) {
-    ManagedObjectReference swapped = (ManagedObjectReference) managed.remove(id);
+    ManagedObjectReference swapped = managed.remove(id);
     swappedToDisk.put(id, swapped);
-    ArrayList evicted = new ArrayList();
+    List<ManagedObject> evicted = new ArrayList<ManagedObject>();
     evicted.add(swapped.getObject());
     gcCollector.notifyObjectsEvicted(evicted);
   }
@@ -250,16 +216,8 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     }
   }
 
-  public String getObjectTypeFromID(ObjectID id, boolean cacheOnly) {
-    return null;
-  }
-
   public int getLiveObjectCount() {
     return managed.size();
-  }
-
-  public int getCachedObjectCount() {
-    return 0;
   }
 
   public Iterator getRootNames() {
@@ -274,7 +232,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return getObjectByID(id);
   }
 
-  public void deleteObjects(final DGCResultContext dgcResultContext) {
+  public void deleteObjects(final Set<ObjectID> objectsToDelete) {
     //
   }
 }

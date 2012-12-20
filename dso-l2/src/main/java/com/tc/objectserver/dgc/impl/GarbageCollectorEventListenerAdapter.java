@@ -20,10 +20,6 @@ public abstract class GarbageCollectorEventListenerAdapter implements GarbageCol
     //
   }
 
-  public void garbageCollectorDelete(GarbageCollectionInfo info) {
-    //
-  }
-
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
     //
   }

@@ -24,8 +24,6 @@ public interface GarbageCollectorEventListener {
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info);
 
-  public void garbageCollectorDelete(GarbageCollectionInfo info);
-
   public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete);
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info);

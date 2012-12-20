@@ -4,11 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
@@ -18,17 +16,14 @@ import com.tc.util.ObjectIDSet;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 public class PersistentManagedObjectStore {
 
   private final ManagedObjectPersistor objectPersistor;
-  private final Sink                   gcDisposerSink;
   private volatile boolean             inShutdown;
 
-  public PersistentManagedObjectStore(final ManagedObjectPersistor persistor, final Sink gcDisposerSink) {
+  public PersistentManagedObjectStore(final ManagedObjectPersistor persistor) {
     this.objectPersistor = persistor;
-    this.gcDisposerSink = gcDisposerSink;
   }
 
   public int getObjectCount() {
@@ -74,20 +69,14 @@ public class PersistentManagedObjectStore {
     this.objectPersistor.saveAllObjects(tx, managed);
   }
 
-  public void removeAllObjectsByIDNow(final SortedSet<ObjectID> ids) {
-    assertNotInShutdown();
-    this.objectPersistor.deleteAllObjects(ids);
-  }
-
   /**
-   * This method is used by the GC to trigger removing Garbage.
+   * Remove all objects by objectID
+   *
+   * @param toDelete objects to delete
    */
-  public void removeAllObjectsByID(final DGCResultContext dgcResultContext) {
+  public void removeAllObjectsByID(final Set<ObjectID> toDelete) {
     assertNotInShutdown();
-    // NOTE:: Calling removeAllObjectIDs to remove the object IDs in-line so that the next DGC cycle doesn't pick up
-    // the same GCed object IDs again if the delete stage is falling behind.
-    this.objectPersistor.deleteAllObjects(dgcResultContext.getGarbageIDs());
-    this.gcDisposerSink.add(dgcResultContext);
+    this.objectPersistor.deleteAllObjects(toDelete);
   }
 
   public ObjectIDSet getAllObjectIDs() {

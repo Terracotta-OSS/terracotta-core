@@ -28,8 +28,6 @@ public interface GarbageCollectionInfoPublisher {
 
   public void fireGCMarkCompleteEvent(GarbageCollectionInfo info);
 
-  public void fireGCDeleteEvent(GarbageCollectionInfo info);
-
   public void fireGCCycleCompletedEvent(GarbageCollectionInfo info, ObjectIDSet toDelete);
 
   public void fireGCCompletedEvent(GarbageCollectionInfo info);

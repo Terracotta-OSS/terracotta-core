@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * @author tim
@@ -84,7 +83,7 @@ public class ManagedObjectPersistor  {
     }
   }
 
-  public void deleteAllObjects(SortedSet<ObjectID> ids) {
+  public void deleteAllObjects(Set<ObjectID> ids) {
     objectMap.removeAll(ids);
   }
 

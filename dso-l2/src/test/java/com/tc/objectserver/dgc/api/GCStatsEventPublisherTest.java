@@ -35,15 +35,11 @@ public class GCStatsEventPublisherTest extends TestCase {
   protected TestManagedObject              root1;
   protected TestManagedObject              root2;
   protected GarbageCollector               collector;
-  protected Set                            lookedUp;
-  protected Set                            released;
+  protected Set<ObjectID>                  lookedUp;
+  protected Set<ObjectID>                  released;
   protected GCTestObjectManager            objectManager;
   protected TransactionProvider transactionProvider = new NullTransactionProvider();
   protected GarbageCollectionManager       garbageCollectionManager;
-
-  public GCStatsEventPublisherTest(String arg0) {
-    super(arg0);
-  }
 
   /*
    * @see TestCase#setUp()
@@ -193,36 +189,33 @@ public class GCStatsEventPublisherTest extends TestCase {
     public void garbageCollectorCompleted(GarbageCollectionInfo info) {
       super.garbageCollectorCompleted(info);
       assertFalse(info.getElapsedTime() == GarbageCollectionInfo.NOT_INITIALIZED);
-      assertFalse(info.getDeleteStageTime() == GarbageCollectionInfo.NOT_INITIALIZED);
     }
 
   }
 
   private static class TestGarbageCollectorEventListener implements GarbageCollectorEventListener {
 
-    protected List startList           = new ArrayList();
+    protected List<GarbageCollectionInfo> startList           = new ArrayList<GarbageCollectionInfo>();
 
-    protected List markList            = new ArrayList();
+    protected List<GarbageCollectionInfo> markList            = new ArrayList<GarbageCollectionInfo>();
 
-    protected List markResultsList     = new ArrayList();
+    protected List<GarbageCollectionInfo> markResultsList     = new ArrayList<GarbageCollectionInfo>();
 
-    protected List rescue1CompleteList = new ArrayList();
+    protected List<GarbageCollectionInfo> rescue1CompleteList = new ArrayList<GarbageCollectionInfo>();
 
-    protected List pausingList         = new ArrayList();
+    protected List<GarbageCollectionInfo> pausingList         = new ArrayList<GarbageCollectionInfo>();
 
-    protected List pausedList          = new ArrayList();
+    protected List<GarbageCollectionInfo> pausedList          = new ArrayList<GarbageCollectionInfo>();
 
-    protected List rescue2StartList    = new ArrayList();
+    protected List<GarbageCollectionInfo> rescue2StartList    = new ArrayList<GarbageCollectionInfo>();
 
-    protected List markCompleteList    = new ArrayList();
+    protected List<GarbageCollectionInfo> markCompleteList    = new ArrayList<GarbageCollectionInfo>();
 
-    protected List deleteList          = new ArrayList();
+    protected List<GarbageCollectionInfo> cycleCompletedList  = new ArrayList<GarbageCollectionInfo>();
 
-    protected List cycleCompletedList  = new ArrayList();
+    protected List<GarbageCollectionInfo> completedList       = new ArrayList<GarbageCollectionInfo>();
 
-    protected List completedList       = new ArrayList();
-
-    protected List cancelList          = new ArrayList();
+    protected List<GarbageCollectionInfo> cancelList          = new ArrayList<GarbageCollectionInfo>();
 
     public void garbageCollectorStart(GarbageCollectionInfo info) {
       this.startList.add(info);
@@ -254,10 +247,6 @@ public class GCStatsEventPublisherTest extends TestCase {
 
     public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
       this.markCompleteList.add(info);
-    }
-
-    public void garbageCollectorDelete(GarbageCollectionInfo info) {
-      this.deleteList.add(info);
     }
 
     public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {

@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import static org.mockito.Mockito.mock;
-
-import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -48,7 +45,7 @@ public abstract class ManagedObjectStateSerializationTestBase extends TCTestCase
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
 
-    store = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), mock(Sink.class));
+    store = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
   }
 
   @Override

@@ -70,16 +70,9 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
   }
 
   @Override
-  public void garbageCollectorDelete(GarbageCollectionInfo info) {
-    if (info.isInlineDGC()) { return; }
-    gcLogger.log_deleteStart(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
-  }
-
-  @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     if (info.isInlineDGC()) { return; }
-    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getDeleteStageTime(),
-                          info.getElapsedTime());
+    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getElapsedTime());
   }
 
   @Override
