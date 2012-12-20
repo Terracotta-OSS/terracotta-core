@@ -320,4 +320,9 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getResourceState() {
     return ResourceManager.State.NORMAL.name();
   }
+
+  @Override
+  public Map<String, String> getBackupStatuses() {
+    return null;
+  }
 }

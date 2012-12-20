@@ -2,6 +2,7 @@ package com.tc.objectserver.api;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Map;
 
 /**
  * @author tim
@@ -27,6 +28,8 @@ public interface BackupManager {
   }
 
   BackupStatus getBackupStatus(String name) throws IOException;
+
+  Map<String, BackupStatus> getBackupStatuses() throws IOException;
 
   String getRunningBackup();
 

@@ -11,6 +11,8 @@ import com.tc.objectserver.search.IndexManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,6 +54,20 @@ public class BackupManagerImpl implements BackupManager {
     } finally {
       raf.close();
     }
+  }
+
+  @Override
+  public Map<String, BackupStatus> getBackupStatuses() throws IOException {
+    Map<String, BackupStatus> result = new HashMap<String, BackupStatus>();
+    Object contents = backupPath.list();
+
+    if (contents != null) {
+      for (String name : (String[]) contents) {
+        result.put(name, getBackupStatus(name));
+      }
+    }
+
+    return result;
   }
 
   @Override

@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 
@@ -73,7 +74,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   private static final int ZIP_BUFFER_SIZE = 2048;
   private static final String[]  SERVER_ENTITY_ATTRIBUTE_NAMES      = new String[] { "Version", "BuildID",
       "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
-      "StartTime", "ActivateTime", "Restartable", "RestrictedMode" };
+      "StartTime", "ActivateTime", "Restartable", "ResourceState" };
 
   private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
       "ObjectFlushRate", "TransactionRate"                         };
@@ -865,23 +866,24 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
 
-            BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setSourceId(member.name());
-
-            String runningBackup = tcServerInfoMBean.getRunningBackup();
-            backupEntity.setName(runningBackup);
-
-            if (runningBackup != null) {
-              String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
-              backupEntity.setStatus(backupStatus);
+            if ("ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState())) {
+              try {
+                Map<String, String> backups = tcServerInfoMBean.getBackupStatuses();
+                for (String name : backups.keySet()) {
+                  BackupEntity backupEntity = new BackupEntity();
+                  backupEntity.setSourceId(member.name());
+                  backupEntity.setName(name);
+                  backupEntity.setStatus(backups.get(name));
+      
+                  backupEntities.add(backupEntity);
+                }
+              } catch (Exception e) {
+                BackupEntity backupEntity = new BackupEntity();
+                backupEntity.setSourceId(member.name());
+                backupEntity.setError(e.getMessage());
+                backupEntities.add(backupEntity);
+              }
             }
-
-            backupEntities.add(backupEntity);
-          } catch (Exception e) {
-            BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setSourceId(member.name());
-            backupEntity.setError(e.getMessage());
-            backupEntities.add(backupEntity);
           } finally {
             if (jmxConnector != null) {
               jmxConnector.close();
@@ -921,28 +923,35 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
-
-            tcServerInfoMBean.backup(backupName);
-
-            BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setSourceId(member.name());
-            backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-            String runningBackup = tcServerInfoMBean.getRunningBackup();
-            backupEntity.setName(runningBackup);
-
-            if (runningBackup != null) {
-              String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
-              backupEntity.setStatus(backupStatus);
+            
+            if ("ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState())) {
+              try {
+                tcServerInfoMBean.backup(backupName);
+    
+                BackupEntity backupEntity = new BackupEntity();
+                backupEntity.setSourceId(member.name());
+                backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+    
+                String runningBackup = tcServerInfoMBean.getRunningBackup();
+                backupEntity.setName(runningBackup);
+    
+                if (runningBackup != null) {
+                  String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
+                  backupEntity.setStatus(backupStatus);
+                }
+                
+                backupEntities.add(backupEntity);
+              } catch (Exception e) {
+                BackupEntity backupEntity = new BackupEntity();
+                backupEntity.setSourceId(member.name());
+                backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+                backupEntity.setError(e.getMessage());
+                backupEntities.add(backupEntity);
+              }
             }
-
-            backupEntities.add(backupEntity);
           } catch (Exception e) {
-            BackupEntity backupEntity = new BackupEntity();
-            backupEntity.setSourceId(member.name());
-            backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-            backupEntity.setError(e.getMessage());
-            backupEntities.add(backupEntity);
+            e.printStackTrace();
+            LOG.error("Fuck", e);
           } finally {
             if (jmxConnector != null) {
               jmxConnector.close();

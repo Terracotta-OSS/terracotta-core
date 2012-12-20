@@ -130,6 +130,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getBackupStatus(String name) throws IOException;
 
+  Map<String, String> getBackupStatuses() throws IOException;
+
   void backup(String name) throws IOException;
 
   String getResourceState();

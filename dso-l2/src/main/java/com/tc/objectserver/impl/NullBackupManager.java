@@ -2,6 +2,8 @@ package com.tc.objectserver.impl;
 
 import com.tc.objectserver.api.BackupManager;
 
+import java.util.Map;
+
 /**
  * @author tim
  */
@@ -21,5 +23,10 @@ public class NullBackupManager implements BackupManager {
   @Override
   public void backup(final String name) {
     throw new UnsupportedOperationException("Backups not supported for non-restartable mode.");
+  }
+
+  @Override
+  public Map<String, BackupStatus> getBackupStatuses() {
+    return null;
   }
 }

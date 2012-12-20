@@ -89,7 +89,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -808,6 +810,16 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public String getBackupStatus(final String name) throws IOException {
     return dsoServer.getBackupManager().getBackupStatus(name).toString();
+  }
+
+  @Override
+  public Map<String, String> getBackupStatuses() throws IOException {
+    Map<String, String> result = new HashMap<String, String>();
+    Map<String, ? extends Object> backups = dsoServer.getBackupManager().getBackupStatuses();
+    for (String name : backups.keySet()) {
+      result.put(name, backups.get(name).toString());
+    }
+    return result;
   }
 
   @Override

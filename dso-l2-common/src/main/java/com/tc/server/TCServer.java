@@ -8,6 +8,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
 import java.io.IOException;
+import java.util.Map;
 
 public interface TCServer {
   String[] processArguments();
@@ -71,6 +72,8 @@ public interface TCServer {
   String getRunningBackup();
 
   String getBackupStatus(String name) throws IOException;
+
+  Map<String, String> getBackupStatuses() throws IOException;
 
   void backup(String name) throws IOException;
 
