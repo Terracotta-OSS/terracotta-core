@@ -3,46 +3,21 @@
  */
 package com.terracotta.toolkit.nonstop;
 
-import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterListener;
-import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NonStopClusterListener implements ClusterListener {
-  private final AtomicBoolean             operationsEnabled = new AtomicBoolean(true);
+  // Initally Operations are Disabled.
+  private final AtomicBoolean             operationsEnabled = new AtomicBoolean(false);
   private final AbortableOperationManager abortableOperationManager;
 
-  public NonStopClusterListener(FutureTask<ToolkitInternal> toolkitDelegateFutureTask,
-                                AbortableOperationManager abortableOperationManager) {
-    registerToToolkit(toolkitDelegateFutureTask);
+  public NonStopClusterListener(AbortableOperationManager abortableOperationManager) {
     this.abortableOperationManager = abortableOperationManager;
-  }
-
-  private void registerToToolkit(final FutureTask<ToolkitInternal> toolkitDelegateFutureTask) {
-    Thread t = new Thread("Non Stop Cluster Listener register") {
-      @Override
-      public void run() {
-        getToolkit(toolkitDelegateFutureTask).getClusterInfo().addClusterListener(NonStopClusterListener.this);
-      }
-
-      private Toolkit getToolkit(FutureTask<ToolkitInternal> toolkitDelegate) {
-        try {
-          return toolkitDelegate.get();
-        } catch (Exception e) {
-          // TODO
-          e.printStackTrace();
-        }
-        return null;
-      }
-    };
-    t.setDaemon(true);
-    t.start();
   }
 
   @Override

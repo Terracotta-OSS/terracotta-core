@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class LocalMethodUtil {
+class LocalMethodUtil {
   private static final Map<ToolkitObjectType, Set<String>> localMethods = new HashMap<ToolkitObjectType, Set<String>>();
   static {
     Set<String> cacheLocalMethodSet = new HashSet<String>();
