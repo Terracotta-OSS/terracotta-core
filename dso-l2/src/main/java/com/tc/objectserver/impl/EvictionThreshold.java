@@ -59,26 +59,31 @@ public enum EvictionThreshold {
         return BIG;
     }
     
-    public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak) {
-        if ( usage.getReservedMemory() > usage.getMaxMemory() - reserved ) {
+    public String log(int usedTweak, int reservedTweak) {
+        return "used:" + getUsed(usedTweak) + ",reserved:" + getReserved(usedTweak);
+    }
+    
+    public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak,int reservedTweak) {
+        if ( usage.getReservedMemory() > usage.getMaxMemory() - getReserved(reservedTweak)/2 ) {
             return true;
         }
         return false;
     }
     
-    public boolean shouldNormalize(DetailedMemoryUsage usage,int usedTweak)  {
+    public boolean shouldNormalize(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
         long lused = getUsed(usedTweak);
-        if ( usage.getReservedMemory() < usage.getMaxMemory() - reserved - (lused - reserved)/2 ) {
+        long lres = getReserved(reservedTweak);
+        if ( usage.getReservedMemory() < usage.getMaxMemory() - lres - ((lused - lres)/2) ) {
             return true;
         }
         return false;
     }
     
-    public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak)  {
+    public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();
         long lused = getUsed(usedTweak);
-        if ( usage.getReservedMemory() > max - reserved ) {
+        if ( usage.getReservedMemory() > max - getReserved(reservedTweak) ) {
             return true;
         }
         if ( reserve > max - lused && usage.getUsedMemory() > max - lused ) {
@@ -87,11 +92,18 @@ public enum EvictionThreshold {
         return false;
     }
     
-    public long getUsed(int tweak) {
+    private long getReserved(int tweak) {
+        if ( tweak < 0 ) {
+            return reserved;
+        }
+        return Math.round((tweak/100d) * reserved);
+    }
+    
+    private long getUsed(int tweak) {
         if ( tweak < 0 ) {
             return used;
         }
-        return reserved + (tweak * reserved);
+        return reserved + Math.round((tweak/100d) * reserved);
     }
 
     @Override

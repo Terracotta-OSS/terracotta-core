@@ -66,6 +66,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private static final int L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl
             .getProperties()
             .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, -1);
+    private static final int L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl
+            .getProperties()
+            .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD, -1);
     private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
@@ -152,6 +155,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         this.threshold = EvictionThreshold.configure(monitored);
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
+        log(this.threshold.log(L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD));
         
         this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);      
         this.agent = new ThreadPoolExecutor(4, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
@@ -403,13 +407,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                 
                throttleIfNeeded(threshold, usage);
 
-               if (threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD)) {  
+               if (threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {  
                     if ( !isEmergency || currentRun.isDone() ) {
                         triggerEmergency(usage);
                     }
                } else {
                     if ( isEmergency ) {
-                        if ( !threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
+                        if ( !threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
                             stopEmergency(usage);
                         } else if ( currentRun.isDone() ) {
                             triggerEmergency(usage);
@@ -438,11 +442,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
 
             if ( isThrottling ) {
-                if ( threshold.shouldNormalize(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
+                if ( threshold.shouldNormalize(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
                     clear(usage);
                 }
             } else if ( isEmergency ) {
-                if ( threshold.shouldThrottle(usage,L2_EVICTION_CRITICALTHRESHOLD) ) {
+                if ( threshold.shouldThrottle(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
                     throttle(usage);
                 }
             } 
@@ -452,13 +456,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             isEmergency = false;
             currentRun.cancel(false);
             log("Emergency Eviction Stopped - " + usage.getUsedPercentage());
+            turnCount = 1;
             if ( isStopped || isThrottling ) {
                clear(usage);
             }
         }
         
         private void triggerEmergency(DetailedMemoryUsage usage) {
-            log("Emergency Triggered - " + usage.getUsedPercentage());
+            log("Emergency Triggered - " + usage.getUsedPercentage() + "/" + (usage.getReservedMemory()*100/usage.getMaxMemory()) + " turns:" + turnCount);
             currentRun.cancel(false);
 
             if ( turnCount > 5 && isEmergency && !isThrottling && !isStopped ) {
@@ -508,7 +513,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             isStopped = false;
             isThrottling = false;
-            turnCount = 1;
             resourceManager.clear();
             TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
