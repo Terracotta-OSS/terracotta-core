@@ -6,18 +6,19 @@ package com.terracotta.toolkit.collections;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
-import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.google.common.base.Preconditions;
+import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
+import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   private final String                                        name;
   private volatile ToolkitMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
-  private volatile int                                        currentRejoinCount;
+  private final ToolkitSubtypeStatusImpl                      status;
 
   public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
                                IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
@@ -36,13 +37,14 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     this.lookup = lookup;
     this.map = map;
     this.name = name;
+    status = new ToolkitSubtypeStatusImpl();
     map.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
   public void rejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
-    currentRejoinCount++;
+    status.incrementRejoinCount();
   }
 
   @Override
@@ -121,118 +123,17 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public Set<K> keySet() {
-    return new DestroyableSet(map.keySet());
+    return new SubTypeWrapperSet<K>(map.keySet(), status, this.name, ToolkitObjectType.MAP);
   }
 
   @Override
   public Collection<V> values() {
-    return new DestroyableCollection(map.values());
+    return new SubTypeWrapperCollection<V>(map.values(), status, this.name, ToolkitObjectType.MAP);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return new DestroyableSet(map.entrySet());
-  }
-
-  private class DestroyableSet extends DestroyableCollection implements Set {
-    public DestroyableSet(Set set) {
-      super(set);
-    }
-  }
-
-  private class DestroyableCollection implements Collection {
-    private final Collection collection;
-    private final int        rejoinCount;
-
-    public DestroyableCollection(Collection collection) {
-      this.collection = collection;
-      this.rejoinCount = DestroyableToolkitMap.this.currentRejoinCount;
-    }
-
-    @Override
-    public int size() {
-      exceptionIfDestroyedOrRejoined();
-      return collection.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      exceptionIfDestroyedOrRejoined();
-      return collection.isEmpty();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.contains(o);
-    }
-
-    @Override
-    public Iterator iterator() {
-      exceptionIfDestroyedOrRejoined();
-      return new DestroyableIterator(collection.iterator(), DestroyableToolkitMap.this);
-    }
-
-    @Override
-    public Object[] toArray() {
-      exceptionIfDestroyedOrRejoined();
-      return collection.toArray();
-    }
-
-    @Override
-    public Object[] toArray(Object[] a) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.toArray(a);
-    }
-
-    @Override
-    public boolean add(Object e) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.add(e);
-    }
-
-    @Override
-    public boolean remove(Object o) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.remove(o);
-    }
-
-    @Override
-    public boolean containsAll(Collection c) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.containsAll(c);
-    }
-
-    @Override
-    public boolean addAll(Collection c) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.addAll(c);
-    }
-
-    @Override
-    public boolean removeAll(Collection c) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.removeAll(c);
-    }
-
-    @Override
-    public boolean retainAll(Collection c) {
-      exceptionIfDestroyedOrRejoined();
-      return collection.retainAll(c);
-    }
-
-    @Override
-    public void clear() {
-      exceptionIfDestroyedOrRejoined();
-      collection.clear();
-    }
-
-    private void exceptionIfDestroyedOrRejoined() {
-      if (isDestroyed()) { throw new IllegalStateException("This object has already been destroyed"); }
-      if (this.rejoinCount != DestroyableToolkitMap.this.currentRejoinCount) { throw new RejoinException(
-                                                                                                         "This subType is not usable anymore afer rejoin!"); }
-    }
-
+    return new SubTypeWrapperSet<Entry<K, V>>(map.entrySet(), status, this.name, ToolkitObjectType.MAP);
   }
 
   @Override

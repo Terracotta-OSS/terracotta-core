@@ -50,7 +50,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void rejoinStarted() {
     this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
     aggregateServerMap.rejoinStarted();
-    status.increaseRejoinCount();
+    status.incrementRejoinCount();
   }
 
   @Override
@@ -153,17 +153,18 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Set<K> keySet() {
-    return new SubSetWrapper(activeDelegate.keySet(), status, this.name, ToolkitObjectType.CACHE);
+    return new SubTypeWrapperSet(activeDelegate.keySet(), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
   public Collection<V> values() {
-    return activeDelegate.values();
+    return new SubTypeWrapperCollection<V>(activeDelegate.values(), status, this.name,
+                                                             ToolkitObjectType.CACHE);
   }
 
   @Override
-  public Set<java.util.Map.Entry<K, V>> entrySet() {
-    return new SubSetWrapper(activeDelegate.entrySet(), status, this.name, ToolkitObjectType.CACHE);
+  public Set<Entry<K, V>> entrySet() {
+    return new SubTypeWrapperSet(activeDelegate.entrySet(), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
@@ -218,12 +219,14 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Map<K, V> getAll(Collection<? extends K> keys) {
-    return activeDelegate.getAll(keys);
+    return new SubTypeWrapperMap<K, V>(activeDelegate.getAll(keys), status, this.name,
+                                                         ToolkitObjectType.CACHE);
   }
 
   @Override
   public Map<K, V> getAllQuiet(Collection<K> keys) {
-    return activeDelegate.getAllQuiet(keys);
+    return new SubTypeWrapperMap<K, V>(activeDelegate.getAllQuiet(keys), status, this.name,
+                                                         ToolkitObjectType.CACHE);
   }
 
   @Override
