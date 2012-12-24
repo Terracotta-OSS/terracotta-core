@@ -1297,6 +1297,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Set existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
+    this.context.getClientHandshakeManager().startReconnectWindow();
     consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
                        + " successfully, and is now ready for work.");
   }

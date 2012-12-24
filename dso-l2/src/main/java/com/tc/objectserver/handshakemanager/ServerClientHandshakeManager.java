@@ -218,19 +218,21 @@ public class ServerClientHandshakeManager {
         this.existingUnconnectedClients.add(this.channelManager.getClientIDFor(new ChannelID(((ConnectionID) i.next())
             .getChannelID())));
       }
+    }
+  }
 
-      String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
-                       + this.existingUnconnectedClients.size() + " clients to connect.";
-      if (this.existingUnconnectedClients.size() <= 10) {
-        message += " Unconnected Clients - " + this.existingUnconnectedClients;
-      }
-      this.consoleLogger.info(message);
+  public void startReconnectWindow() {
+    String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+                     + this.existingUnconnectedClients.size() + " clients to connect.";
+    if (this.existingUnconnectedClients.size() <= 10) {
+      message += " Unconnected Clients - " + this.existingUnconnectedClients;
+    }
+    this.consoleLogger.info(message);
 
-      if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
-        this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
-      } else {
-        this.timer.schedule(this.reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
-      }
+    if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
+      this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
+    } else {
+      this.timer.schedule(this.reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
     }
   }
 
