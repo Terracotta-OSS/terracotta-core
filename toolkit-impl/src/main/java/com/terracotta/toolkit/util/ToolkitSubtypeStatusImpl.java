@@ -16,7 +16,7 @@ public class ToolkitSubtypeStatusImpl implements ToolkitSubtypeStatus {
     return rejoinCount.get();
   }
 
-  public void increaseRejoinCount() {
+  public void incrementRejoinCount() {
     this.rejoinCount.incrementAndGet();
   }
 
