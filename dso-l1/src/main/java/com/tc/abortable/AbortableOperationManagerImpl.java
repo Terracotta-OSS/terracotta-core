@@ -20,13 +20,14 @@ public class AbortableOperationManagerImpl implements AbortableOperationManager 
 
   @Override
   public void begin() {
-    if (threadStates.putIfAbsent(new ThreadWrapper(Thread.currentThread()), OperationState.INIT) != null) { throw new AssertionError(); }
+    if (threadStates.putIfAbsent(new ThreadWrapper(Thread.currentThread()), OperationState.INIT) != null) { throw new IllegalStateException(); }
   }
 
   @Override
   public void finish() {
     OperationState state = threadStates.remove(new ThreadWrapper(Thread.currentThread()));
-    if (state != null && state == OperationState.ABORTED) {
+    if (state == null) { throw new IllegalStateException(); }
+    if (state == OperationState.ABORTED) {
       // TODO: Clearing the interrupted status
       // This is wrong ... But what to do ?
       // We could clear the actual interrupt to the App thread
@@ -41,6 +42,8 @@ public class AbortableOperationManagerImpl implements AbortableOperationManager 
         LOGGER.debug("Interrupting thread :" + thread);
       }
       thread.interrupt();
+    } else {
+      throw new IllegalStateException();
     }
   }
 
@@ -50,7 +53,7 @@ public class AbortableOperationManagerImpl implements AbortableOperationManager 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("checking isAborted for thread :" + Thread.currentThread() + " State : " + operationState);
     }
-    return operationState == OperationState.ABORTED;
+    return operationState == null ? false : operationState == OperationState.ABORTED;
   }
 
   private static class ThreadWrapper {

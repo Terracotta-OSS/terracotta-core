@@ -178,15 +178,20 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, toolkitTypeName);
     nonStopConfig = allConfigs.get(nonStopConfigKey);
 
+    // try for instance
+    if (nonStopConfig == null) {
+      nonStopConfigKey = new NonStopConfigKey(null, type, toolkitTypeName);
+      nonStopConfig = allConfigs.get(nonStopConfigKey);
+    }
+
     // try method & type
     if (nonStopConfig == null) {
       nonStopConfigKey = new NonStopConfigKey(methodName, type, null);
       nonStopConfig = allConfigs.get(nonStopConfigKey);
     }
-
-    // try for instance
+    // try config for type
     if (nonStopConfig == null) {
-      nonStopConfig = getConfigForInstance(toolkitTypeName, type);
+      nonStopConfig = getConfigForType(type);
     }
 
     return nonStopConfig;
