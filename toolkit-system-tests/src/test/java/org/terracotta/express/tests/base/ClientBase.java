@@ -13,7 +13,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import java.util.concurrent.BrokenBarrierException;
 
 public abstract class ClientBase extends AbstractClientBase {
-  private ToolkitBarrier      barrier;
+  private ToolkitBarrier    barrier;
   protected ToolkitInternal clusteringToolkit;
 
   public ClientBase(String args[]) {

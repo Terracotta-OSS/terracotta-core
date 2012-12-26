@@ -3,6 +3,7 @@
  */
 package org.terracotta.express.tests.base;
 
+import org.mockito.Mockito;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
@@ -23,6 +24,7 @@ public abstract class AbstractToolkitTestBase extends AbstractTestBase {
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
     String clientBase = TestBaseUtil.jarFor(ClientBase.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);
-    return makeClasspath(expressRuntime, clientBase, l2Mbean);
+    String mockito = TestBaseUtil.jarFor(Mockito.class);
+    return makeClasspath(expressRuntime, clientBase, l2Mbean, mockito);
   }
 }
