@@ -100,6 +100,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
                                                Mockito.mock(ServerMapEvictionManager.class), this.lockResponseSink,
                                                this.objectIDRequestSink, this.timer, reconnectTimeout, false, logger);
     this.hm.setStarting(convertToConnectionIds(this.existingUnconnectedClients));
+    this.hm.startReconnectWindow();
   }
 
   private Set convertToConnectionIds(final Set s) {
