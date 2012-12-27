@@ -4,11 +4,15 @@
 package com.terracotta.toolkit.util;
 
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
+import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookup;
 import com.terracotta.toolkit.nonstop.NonStopConfigurationLookup;
 import com.terracotta.toolkit.nonstop.NonStopContext;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
+import com.terracotta.toolkit.nonstop.NonStopLockImpl;
 import com.terracotta.toolkit.nonstop.NonStopSubTypeInvocationHandler;
 import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
 
@@ -45,11 +49,15 @@ public abstract class ToolkitInstanceProxy {
     return proxy;
   }
 
-  public static <T> T newNonStopProxy(final String name, final ToolkitObjectType toolkitObjectType,
-                                      final NonStopContext context, final Class<T> clazz,
-                                      final ToolkitObjectLookup toolkitObjectLookup) {
+  public static <T extends ToolkitObject> T newNonStopProxy(final String name,
+                                                            final ToolkitObjectType toolkitObjectType,
+                                                            final NonStopContext context, final Class<T> clazz,
+                                                            final ToolkitObjectLookup toolkitObjectLookup) {
     NonStopConfigurationLookup nonStopConfigurationLookup = new NonStopConfigurationLookup(context, toolkitObjectType,
                                                                                            name);
+    if (toolkitObjectType == ToolkitObjectType.LOCK) { return (T) new NonStopLockImpl(context,
+                                                                                      nonStopConfigurationLookup,
+                                                                                      toolkitObjectLookup); }
     InvocationHandler handler = new NonStopInvocationHandler<T>(context, nonStopConfigurationLookup,
                                                                 toolkitObjectLookup);
 
@@ -59,11 +67,21 @@ public abstract class ToolkitInstanceProxy {
 
   public static <T> T newNonStopSubTypeProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
                                              final NonStopContext context, final T delegate, final Class<T> clazz) {
+    if (clazz.equals(ToolkitLock.class)) {
+      ToolkitObjectLookup<ToolkitLock> lookup = new AbstractToolkitObjectLookup<ToolkitLock>(
+          context.getAbortableOperationManager()) {
+
+        @Override
+        protected ToolkitLock lookupObject() {
+          return (ToolkitLock) delegate;
+        }
+      };
+      return (T) new NonStopLockImpl(context, nonStopConfigurationLookup, lookup);
+    }
     InvocationHandler handler = new NonStopSubTypeInvocationHandler<T>(context, nonStopConfigurationLookup, delegate,
                                                                        clazz);
 
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
   }
-
 }

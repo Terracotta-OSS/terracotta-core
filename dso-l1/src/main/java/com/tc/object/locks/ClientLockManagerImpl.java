@@ -35,8 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods,
-    PrettyPrintable {
+public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods, PrettyPrintable {
   private static final WaitListener               NULL_LISTENER       = new WaitListener() {
                                                                         @Override
                                                                         public void handleWaitEvent() {
@@ -49,12 +48,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final Timer                             lockLeaseTimer      = TCTimerService
                                                                           .getInstance()
                                                                           .getTimer("ClientLockManager Lock Lease Timer");
-  private final ConcurrentMap<LockID, ClientLock>     locks;
+  private final ConcurrentMap<LockID, ClientLock> locks;
   private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
   private final Condition                         runningCondition    = this.stateGuard.writeLock().newCondition();
   private State                                   state               = State.RUNNING;
 
-  private final RemoteLockManager           remoteLockManager;
+  private final RemoteLockManager                 remoteLockManager;
   private final ThreadIDManager                   threadManager;
   private final SessionManager                    sessionManager;
   private final TCLogger                          logger;
@@ -221,7 +220,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
-    waitUntilRunning();
+    checkState();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     lockState.unlock(this.remoteLockManager, this.threadManager.getThreadID(), level);
 
@@ -717,7 +716,16 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       this.stateGuard.writeLock().unlock();
       Util.selfInterruptIfNeeded(interrupted);
     }
+  }
 
+  private void checkState() {
+    this.stateGuard.readLock().lock();
+    try {
+      if (isShutdown()) { throw new TCNotRunningException(); }
+      if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
+    } finally {
+      this.stateGuard.readLock().unlock();
+    }
   }
 
   /**

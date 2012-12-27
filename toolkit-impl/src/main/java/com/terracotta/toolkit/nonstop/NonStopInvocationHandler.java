@@ -3,10 +3,9 @@
  */
 package com.terracotta.toolkit.nonstop;
 
-import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
-import org.terracotta.toolkit.rejoin.InvalidLockStateAfterRejoinException;
+import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -16,13 +15,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class NonStopInvocationHandler<T> implements InvocationHandler {
+public class NonStopInvocationHandler<T extends ToolkitObject> implements InvocationHandler {
   private final NonStopContext             context;
   private final NonStopConfigurationLookup nonStopConfigurationLookup;
-  private final ToolkitObjectLookup        toolkitObjectLookup;
+  private final ToolkitObjectLookup<T>     toolkitObjectLookup;
 
   public NonStopInvocationHandler(NonStopContext context, NonStopConfigurationLookup nonStopConfigurationLookup,
-                                  ToolkitObjectLookup toolkitObjectLookup) {
+                                  ToolkitObjectLookup<T> toolkitObjectLookup) {
     this.context = context;
     this.nonStopConfigurationLookup = nonStopConfigurationLookup;
     this.toolkitObjectLookup = toolkitObjectLookup;
@@ -49,11 +48,6 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
-    } catch (InvalidLockStateAfterRejoinException e) {
-      if (nonStopConfigurationLookup.getObjectType() != ToolkitObjectType.LOCK) { return invokeMethod(method,
-                                                                                                      args,
-                                                                                                      resolveTimeoutBehavior(nonStopConfiguration)); }
-      throw e;
     } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
