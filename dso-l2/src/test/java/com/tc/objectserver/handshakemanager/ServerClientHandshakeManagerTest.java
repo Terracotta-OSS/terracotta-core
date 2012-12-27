@@ -24,12 +24,12 @@ import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.StringLockID;
-import com.tc.object.locks.TestLockManager;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.TestLockManager;
 import com.tc.object.locks.TestLockManager.ReestablishLockContext;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -410,22 +410,27 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     public final Set            clientIDs          = new HashSet();
     private static final String serverVersion      = "N/A";
 
+    @Override
     public void closeAll(final Collection theChannelIDs) {
       this.closeAllChannelIDs.addAll(theChannelIDs);
     }
 
+    @Override
     public MessageChannel getActiveChannel(final NodeID id) {
       return null;
     }
 
+    @Override
     public MessageChannel[] getActiveChannels() {
       return null;
     }
 
+    @Override
     public TCConnection[] getAllActiveClientConnections() {
       return null;
     }
 
+    @Override
     public String getChannelAddress(final NodeID nid) {
       return null;
     }
@@ -445,22 +450,27 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return msg;
     }
 
+    @Override
     public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid) {
       throw new ImplementMe();
     }
 
+    @Override
     public void addEventListener(final DSOChannelManagerEventListener listener) {
       throw new ImplementMe();
     }
 
+    @Override
     public Set getAllClientIDs() {
       return this.clientIDs;
     }
 
+    @Override
     public boolean isActiveID(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       final ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
       ackMsg.initialize(persistent, getAllClientIDsString(), clientID, serverVersion, null, null, null);
@@ -476,14 +486,17 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return s;
     }
 
+    @Override
     public void makeChannelActiveNoAck(final MessageChannel channel) {
       //
     }
 
+    @Override
     public ClientID getClientIDFor(final ChannelID channelID) {
       return new ClientID(channelID.toLong());
     }
 
+    @Override
     public void makeChannelRefuse(ClientID clientID, String message) {
       throw new ImplementMe();
 
@@ -509,10 +522,12 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       this.sendQueue.put(new Object());
     }
 
+    @Override
     public boolean getPersistentServer() {
       return this.persistent;
     }
 
+    @Override
     public void initialize(final boolean isPersistent, final Set<ClientID> allNodes, final ClientID thisNodeID,
                            final String sv, final GroupID thisGroup, final StripeID stripeID,
                            final Map<GroupID, StripeID> sidMap) {
@@ -525,14 +540,17 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return this.channel;
     }
 
+    @Override
     public ClientID[] getAllNodes() {
       throw new ImplementMe();
     }
 
+    @Override
     public ClientID getThisNodeId() {
       throw new ImplementMe();
     }
 
+    @Override
     public String getServerVersion() {
       return this.serverVersion;
     }
@@ -542,14 +560,17 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return this.clientID;
     }
 
+    @Override
     public GroupID getGroupID() {
       throw new ImplementMe();
     }
 
+    @Override
     public StripeID getStripeID() {
       throw new ImplementMe();
     }
 
+    @Override
     public Map<GroupID, StripeID> getStripeIDMap() {
       throw new ImplementMe();
     }
