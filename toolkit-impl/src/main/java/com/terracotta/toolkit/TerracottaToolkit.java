@@ -169,6 +169,10 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public <V> ToolkitStore<String, V> getStore(String name, Configuration configuration, Class<V> klazz) {
+    if (configuration == null) {
+      configuration = new ToolkitCacheConfigBuilder().build();
+    }
+
     return clusteredStoreFactory.getOrCreate(name, configuration);
   }
 
@@ -259,6 +263,10 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public <V> ToolkitCache<String, V> getCache(String name, Configuration configuration, Class<V> klazz) {
+    if (configuration == null) {
+      configuration = new ToolkitCacheConfigBuilder().build();
+    }
+
     return clusteredCacheFactory.getOrCreate(name, configuration);
   }
 
