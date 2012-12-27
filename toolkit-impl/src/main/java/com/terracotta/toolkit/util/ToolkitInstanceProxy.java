@@ -8,7 +8,6 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
-import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookup;
 import com.terracotta.toolkit.nonstop.NonStopConfigurationLookup;
 import com.terracotta.toolkit.nonstop.NonStopContext;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
@@ -68,11 +67,15 @@ public abstract class ToolkitInstanceProxy {
   public static <T> T newNonStopSubTypeProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
                                              final NonStopContext context, final T delegate, final Class<T> clazz) {
     if (clazz.equals(ToolkitLock.class)) {
-      ToolkitObjectLookup<ToolkitLock> lookup = new AbstractToolkitObjectLookup<ToolkitLock>(
-          context.getAbortableOperationManager()) {
+      ToolkitObjectLookup<ToolkitLock> lookup = new ToolkitObjectLookup<ToolkitLock>() {
 
         @Override
-        protected ToolkitLock lookupObject() {
+        public ToolkitLock getInitializedObject() {
+          return (ToolkitLock) delegate;
+        }
+
+        @Override
+        public ToolkitLock getInitializedObjectOrNull() {
           return (ToolkitLock) delegate;
         }
       };
