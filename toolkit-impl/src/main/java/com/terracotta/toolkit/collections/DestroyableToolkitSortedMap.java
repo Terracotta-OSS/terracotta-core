@@ -8,8 +8,8 @@ import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.google.common.base.Preconditions;
-import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
+import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSortedMap;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -170,7 +170,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public SortedMap<K, V> tailMap(K fromKey) {
-    return new SubTypeWrapperSortedMap<K, V>(map.headMap(fromKey), status, this.name,
+    return new SubTypeWrapperSortedMap<K, V>(map.tailMap(fromKey), status, this.name,
                                                                ToolkitObjectType.SORTED_MAP);
   }
 
