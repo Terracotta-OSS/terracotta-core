@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -290,9 +293,6 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1297,7 +1297,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Set existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
-    this.context.getClientHandshakeManager().startReconnectWindow();
+    if (!existingConnections.isEmpty()) {
+      this.context.getClientHandshakeManager().startReconnectWindow();
+    }
     consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
                        + " successfully, and is now ready for work.");
   }
