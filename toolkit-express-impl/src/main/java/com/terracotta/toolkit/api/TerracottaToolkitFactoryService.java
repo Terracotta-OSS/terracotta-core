@@ -115,6 +115,8 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
   }
 
   private String getTerracottaUrlFromSubName(String subName) throws ToolkitInstantiationException {
+    StringBuilder tcUrl = new StringBuilder();
+
     // toolkitUrl is of form: 'toolkit:terracotta://server:port'
     if (subName == null || !subName.startsWith("//")) {
       //
@@ -133,11 +135,11 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
     }
     // ignore last comma, if any
     terracottaUrl = terracottaUrl.trim();
-    if (terracottaUrl.charAt(terracottaUrl.length() - 1) == COMMA) {
-      terracottaUrl = terracottaUrl.substring(0, terracottaUrl.length() - 2);
-    }
     String[] serverPortTokens = terracottaUrl.split(",");
     for (String serverPortToken : serverPortTokens) {
+      if (serverPortToken.equals("")) {
+        continue;
+      }
       String[] tokens = serverPortToken.split(":");
       if (tokens.length != 2) {
         //
@@ -152,8 +154,11 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
                                                     + serverPortToken + "', 'port' is not a valid integer - "
                                                     + tokens[1]);
       }
+      tcUrl.append(tokens[0] + ":");
+      tcUrl.append(tokens[1] + ",");
     }
-    return terracottaUrl;
+    tcUrl.deleteCharAt(tcUrl.lastIndexOf(","));
+    return tcUrl.toString();
   }
 
   private boolean isValidInteger(String value) {
