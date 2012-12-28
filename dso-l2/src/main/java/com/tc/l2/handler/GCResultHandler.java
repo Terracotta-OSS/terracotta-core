@@ -10,20 +10,17 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 
 public class GCResultHandler extends AbstractEventHandler {
 
-  private static final TCLogger    logger = TCLogging.getLogger(GCResultHandler.class);
-
   private ReplicatedObjectManager  rObjectManager;
   private ServerTransactionManager transactionManager;
   private Sink                     gcResultSink;
 
+  @Override
   public void handleEvent(EventContext context) {
     if (context instanceof GCResultMessage) {
       GCResultMessage msg = (GCResultMessage) context;
@@ -34,6 +31,7 @@ public class GCResultHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
@@ -56,6 +54,7 @@ public class GCResultHandler extends AbstractEventHandler {
       return msg;
     }
 
+    @Override
     public void onCompletion() {
       sink.add(this);
     }

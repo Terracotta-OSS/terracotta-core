@@ -83,7 +83,7 @@ public class Persistor {
     started = true;
   }
 
-  protected TransactionPersistor createTransactionPersistor(StorageManager storageManager) {
+  protected TransactionPersistor createTransactionPersistor(StorageManager storageManagerParam) {
     return new NullTransactionPersistor();
   }
 

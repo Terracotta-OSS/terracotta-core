@@ -12,7 +12,7 @@ public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
 
   private boolean          arrayOperatorInstrumentationReq;
   private boolean          arraycopyInstrumentationReq;
-  private boolean          fieldInstrumentationReq;
+  // private boolean fieldInstrumentationReq;
   private boolean          waitNotifyInstrumentationReq;
   private boolean          monitorInstrumentationReq;
   private boolean          forceUncheckedFieldAccess                 = false;
@@ -69,7 +69,7 @@ public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
 
   @Override
   public void setFieldInstrumentationReq(boolean fieldInstrumentationReq) {
-    this.fieldInstrumentationReq = fieldInstrumentationReq;
+    // this.fieldInstrumentationReq = fieldInstrumentationReq;
   }
 
   @Override

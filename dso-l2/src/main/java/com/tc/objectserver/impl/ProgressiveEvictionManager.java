@@ -157,7 +157,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
         log(this.threshold.log(L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD));
         
-        this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);      
+        this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
         this.agent = new ThreadPoolExecutor(4, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
             @Override
@@ -219,6 +219,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         return completedFuture;
     }
     
+    @Override
     public void scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
         final SampledRateCounter count = new AggregateSampleRateCounter();
         final Future<SampledRateCounter> run = agent.submit(new Runnable() {
@@ -407,7 +408,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                 
                throttleIfNeeded(threshold, usage);
 
-               if (threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {  
+               if (threshold.isAboveThreshold(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
                     if ( !isEmergency || currentRun.isDone() ) {
                         triggerEmergency(usage);
                     }
@@ -433,23 +434,23 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
         }
         
-        private void throttleIfNeeded(EvictionThreshold threshold, DetailedMemoryUsage usage) {
+    private void throttleIfNeeded(EvictionThreshold thresholdParam, DetailedMemoryUsage usage) {
  //  if we are this low, stop no matter what
-            if ( usage.getReservedMemory() >= usage.getMaxMemory() - (32l * 1024 * 1024) ) {  
+            if ( usage.getReservedMemory() >= usage.getMaxMemory() - (32l * 1024 * 1024) ) {
                 stop(usage);
-            } else if ( usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024) ) {  
+            } else if ( usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024) ) {
                 throttle(usage);
             }
 
             if ( isThrottling ) {
-                if ( threshold.shouldNormalize(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
+        if (thresholdParam.shouldNormalize(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
                     clear(usage);
                 }
             } else if ( isEmergency ) {
-                if ( threshold.shouldThrottle(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD) ) {
+        if (thresholdParam.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
                     throttle(usage);
                 }
-            } 
+            }
         }
         
         private void stopEmergency(DetailedMemoryUsage usage) {

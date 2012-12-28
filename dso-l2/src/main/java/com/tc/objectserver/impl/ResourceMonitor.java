@@ -13,7 +13,6 @@ import com.tc.objectserver.api.ShutdownError;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -77,10 +76,9 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
   }
 
-  private void fireMemoryEvent(final MonitoredResource resource, final long count) {
-      DetailedMemoryUsage usage = new DetailedMemoryUsage(resource, count);
-    for (Iterator<ResourceEventListener> i = listeners.iterator(); i.hasNext();) {
-      final ResourceEventListener listener = i.next();
+  private void fireMemoryEvent(final MonitoredResource resourceParam, final long count) {
+    DetailedMemoryUsage usage = new DetailedMemoryUsage(resourceParam, count);
+    for (ResourceEventListener listener : listeners) {
       listener.resourcesUsed(usage);
     }
   }
@@ -155,6 +153,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
           this.detailed = detailed;
       }
 
+        @Override
         public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
             delegate.memoryUsed(usage, recommendOffheap);
         }
@@ -163,6 +162,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
           return detailed;
       }
       
+      @Override
       public boolean equals(Object o) {
           if ( o instanceof MemoryConsumer ) {
               return ((MemoryConsumer)o).delegate == delegate;
