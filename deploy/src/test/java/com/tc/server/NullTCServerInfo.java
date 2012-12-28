@@ -52,6 +52,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public String getL2Identifier() {
+    return null;
+  }
+
+  @Override
   public int getTSAListenPort() {
     return 0;
   }

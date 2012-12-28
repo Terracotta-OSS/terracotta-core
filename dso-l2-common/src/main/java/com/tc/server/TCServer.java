@@ -45,6 +45,8 @@ public interface TCServer {
 
   L2Info[] infoForAllL2s();
 
+  String getL2Identifier();
+
   ServerGroupInfo[] serverGroups();
 
   void startBeanShell(int port);
@@ -78,4 +80,5 @@ public interface TCServer {
   void backup(String name) throws IOException;
 
   String getResourceState();
+
 }

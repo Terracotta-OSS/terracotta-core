@@ -241,6 +241,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
+  public String getL2Identifier() {
+    return configurationSetupManager.getL2Identifier();
+  }
+
+  @Override
   public String getDescriptionOfCapabilities() {
     if (ProductInfo.getInstance().isEnterprise()) {
       return LicenseManager.licensedCapabilities();
