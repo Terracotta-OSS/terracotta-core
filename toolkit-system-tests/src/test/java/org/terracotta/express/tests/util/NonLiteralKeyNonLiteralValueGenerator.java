@@ -3,7 +3,7 @@
  */
 package org.terracotta.express.tests.util;
 
-public class NonLiteralKeyNonLiteralValueGenerator implements KeyValueGenerator {
+public class NonLiteralKeyNonLiteralValueGenerator implements KeyValueGenerator<TCInt, TCInt> {
   @Override
   public TCInt getKey(int i) {
     return new TCInt(i);

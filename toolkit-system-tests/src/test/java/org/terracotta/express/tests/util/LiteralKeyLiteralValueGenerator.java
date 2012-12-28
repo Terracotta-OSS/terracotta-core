@@ -3,7 +3,7 @@
  */
 package org.terracotta.express.tests.util;
 
-public class LiteralKeyLiteralValueGenerator implements KeyValueGenerator {
+public class LiteralKeyLiteralValueGenerator implements KeyValueGenerator<String, String> {
 
   @Override
   public String getKey(int i) {

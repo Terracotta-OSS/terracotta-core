@@ -3,7 +3,7 @@
  */
 package org.terracotta.express.tests.util;
 
-public class IntIntKeyValueGenerator implements KeyValueGenerator {
+public class IntIntKeyValueGenerator implements KeyValueGenerator<Integer, Integer> {
 
   @Override
   public Integer getKey(int i) {
