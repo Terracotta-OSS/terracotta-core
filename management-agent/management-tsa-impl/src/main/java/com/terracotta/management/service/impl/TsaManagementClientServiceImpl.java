@@ -1145,6 +1145,59 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
+  @Override
+  public void shutdownServers(Set<String> serverNames) throws ServiceExecutionException {
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      String localL2Name = (String)mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Identifier");
+
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+          if (member.name().equals(localL2Name)) {
+            // don't shut down the local L2 now, it must be the last one
+            continue;
+          }
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+            tcServerInfoMBean.shutdown();
+
+          } catch (Exception e) {
+            // ignore
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      if (serverNames == null || serverNames.contains(localL2Name)) {
+        TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServer,
+            new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+        tcServerInfoMBean.shutdown();
+      }
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error shutting down server", e);
+    }
+  }
+
   private JMXConnector findActiveServer() throws JMException, IOException, InterruptedException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
