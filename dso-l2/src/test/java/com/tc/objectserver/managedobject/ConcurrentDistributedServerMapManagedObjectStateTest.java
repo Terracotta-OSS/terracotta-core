@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
@@ -11,6 +13,7 @@ import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
+import com.tc.util.OperationCountChangeEvent;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
@@ -42,6 +45,27 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     state3.apply(new ObjectID(3), cursor3, new ApplyTransactionInfo());
     assertTrue(state3.references.size() == 0);
 
+  }
+
+  public void testShouldSendOperationCountChangeEventOnEachPut() throws Exception {
+    final TestDNACursor cursor = createDNACursor();
+    final ConcurrentDistributedServerMapManagedObjectState state = (ConcurrentDistributedServerMapManagedObjectState)
+        createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE, cursor, new ObjectID(3));
+    final EventBus eventBus = new EventBus("test-bus");
+    state.setEventBus(eventBus);
+    final OperationCountChangeEventListener listener = new OperationCountChangeEventListener();
+    eventBus.register(listener);
+    state.apply(new ObjectID(3), cursor, new ApplyTransactionInfo());
+    assertEquals(500, listener.count);
+  }
+
+  private static final class OperationCountChangeEventListener {
+    private int count;
+
+    @Subscribe
+    public void recordOperationCountChangeEvent(OperationCountChangeEvent event) {
+      this.count += event.getDelta();
+    }
   }
 
   private TestDNACursor createDNACursor() {

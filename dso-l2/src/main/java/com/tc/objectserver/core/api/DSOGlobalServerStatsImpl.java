@@ -24,6 +24,8 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   private final SampledCounter           globalLockRecallCounter;
   private final SampledRateCounter       changesPerBroadcast;
   private final SampledRateCounter       transactionSizeCounter;
+  private SampledCounter                 operationCounter;
+
   private SampledCumulativeCounter serverMapGetSizeRequestsCounter;
   private SampledCumulativeCounter serverMapGetValueRequestsCounter;
   private SampledCumulativeCounter serverMapGetSnapshotRequestsCounter;
@@ -47,6 +49,17 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.globalLockCounter = globalLockCounter;
   }
   
+  public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
+                                  ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
+                                  SampledCounter globalLockRecallCounter,
+                                  SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter,
+                                  SampledCounter globalLockCounter, SampledCounter evictionRateCounter,
+                                  SampledCounter expirationRateCounter, SampledCounter operationCounter) {
+    this(flushCounter, faultCounter, txnCounter, objMgrStats, broadcastCounter, globalLockRecallCounter, changesPerBroadcast,
+        transactionSizeCounter, globalLockCounter, evictionRateCounter, expirationRateCounter);
+    this.operationCounter = operationCounter;
+  }
+
   public DSOGlobalServerStatsImpl serverMapGetSizeRequestsCounter(final SampledCumulativeCounter counter) {
     this.serverMapGetSizeRequestsCounter = counter;
     return this;
@@ -94,6 +107,11 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCounter getGlobalLockCounter() {
     return this.globalLockCounter;
+  }
+
+  @Override
+  public SampledCounter getOperationCounter() {
+    return operationCounter;
   }
 
   public SampledCumulativeCounter getServerMapGetSizeRequestsCounter() {

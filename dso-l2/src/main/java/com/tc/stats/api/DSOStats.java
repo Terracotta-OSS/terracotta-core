@@ -32,4 +32,6 @@ public interface DSOStats {
 
   long getGlobalServerMapGetValueRequestsRate();
 
+  long getOperationRate();
+
 }

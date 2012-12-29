@@ -517,6 +517,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
+  public long getOperationRate() {
+    return getStats().getOperationRate();
+  }
+
+  @Override
   public Map<ObjectName, Long> getServerMapGetSizeRequestsCount() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {

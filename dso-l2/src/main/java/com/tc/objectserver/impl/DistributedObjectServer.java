@@ -6,9 +6,8 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -260,6 +259,8 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
+import com.tc.util.EventBusFactory;
+import com.tc.util.OperationCountChangeEvent;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
@@ -293,6 +294,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -359,6 +363,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
+  private EventBus eventBus = EventBusFactory.getEventBus();
+
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
@@ -404,6 +410,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected DSOServerBuilder getServerBuilder() {
     return this.serverBuilder;
+  }
+
+  public void setEventBus(final EventBus eventBus) {
+    this.eventBus = eventBus;
   }
 
   @Override
@@ -724,6 +734,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                   transactionBatchManager);
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
+
+    // DEV-8737. Count map mutation operations
+    final SampledCounter globalOperationCounter = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    this.eventBus.register(new OperationCountChangeEventListener(globalOperationCounter));
 
     final SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
@@ -1053,8 +1068,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               changesPerBroadcast,
                                                                               transactionSizeCounter, globalLockCount,
                                                                               serverMapEvictor.getEvictionStatistics(),
-                                                                              serverMapEvictor
-                                                                                  .getExpirationStatistics());
+                                                                              serverMapEvictor.getExpirationStatistics(),
+                                                                              globalOperationCounter);
 
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
         .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
@@ -1113,6 +1128,24 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startL1Listener();
     }
     setLoggerOnExit();
+  }
+
+  /**
+   * Counts map operations using events from {@link ConcurrentDistributedServerMapManagedObjectState}.
+   *
+   * @see EventBus
+   */
+  private static final class OperationCountChangeEventListener {
+    private final SampledCounter counter;
+
+    private OperationCountChangeEventListener(final SampledCounter counter) {
+      this.counter = counter;
+    }
+
+    @Subscribe
+    private void recordOperationCountChangeEvent(OperationCountChangeEvent event) {
+      this.counter.increment(event.getDelta());
+    }
   }
 
   private boolean isNetworkHA() {

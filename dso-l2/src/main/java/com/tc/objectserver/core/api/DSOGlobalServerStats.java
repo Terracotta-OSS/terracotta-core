@@ -36,4 +36,6 @@ public interface DSOGlobalServerStats {
   SampledCumulativeCounter getServerMapGetSizeRequestsCounter();
 
   SampledCumulativeCounter getServerMapGetValueRequestsCounter();
+
+  SampledCounter getOperationCounter();
 }

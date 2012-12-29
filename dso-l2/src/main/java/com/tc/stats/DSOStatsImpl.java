@@ -116,4 +116,9 @@ public class DSOStatsImpl implements DSOStats {
   public long getGlobalServerMapGetValueRequestsRate() {
     return serverStats.getServerMapGetValueRequestsCounter().getMostRecentSample().getCounterValue();
   }
+
+  @Override
+  public long getOperationRate() {
+    return serverStats.getOperationCounter().getMostRecentSample().getCounterValue();
+  }
 }

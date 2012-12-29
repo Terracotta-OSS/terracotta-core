@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.eventbus.EventBus;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -18,6 +19,8 @@ import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.EventBusFactory;
+import com.tc.util.OperationCountChangeEvent;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -53,6 +56,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected int                 dsoLockType;
 
   private static final double   OVERSHOOT                      = getOvershoot();
+
+  // a default initialization, can be also injected thru the setter
+  private EventBus eventBus = EventBusFactory.getEventBus();
 
   static {
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
@@ -90,6 +96,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
     super(classId, id, factory);
+  }
+
+  public void setEventBus(EventBus eventBus) {
+    this.eventBus = eventBus;
   }
 
   @Override
@@ -168,6 +178,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         final LogicalAction logicalAction = (LogicalAction) action;
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
+
+        // DEV-8737. Notify subscribers about the map mutation.
+        if (method == SerializationUtil.PUT) {
+          eventBus.post(new OperationCountChangeEvent());
+        }
+
         applyMethod(objectID, applyInfo, method, params);
         if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
             || method == SerializationUtil.DESTROY) {
