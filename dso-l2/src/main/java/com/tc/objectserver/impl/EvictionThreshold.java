@@ -79,6 +79,15 @@ public enum EvictionThreshold {
         return false;
     }
     
+    public boolean isInThresholdRegion(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
+        long max = usage.getMaxMemory();
+        long reserve = usage.getReservedMemory();
+        if ( reserve > max - getUsed(usedTweak) && reserve < max - getReserved(reservedTweak) ) {
+            return true;
+        }
+        return false;
+    }
+    
     public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();

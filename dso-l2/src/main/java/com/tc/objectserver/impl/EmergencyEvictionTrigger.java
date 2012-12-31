@@ -31,18 +31,12 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
         super(oid);
         this.blowout = blowout;
-    }
-
-    @Override
-    public boolean startEviction(EvictableMap map) {
-        sizeCount = map.getSize();
-        return super.startEviction(map);
-    }  
+    } 
 
     @Override
     public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
-        int get = boundsCheckSampleSize(( blowout > 10 ) ? sizeCount : sizeCount * blowout / 10);
+        int get = boundsCheckSampleSize(( blowout > 6 ) ? sizeCount : (int)Math.round(sizeCount * Math.pow(10,blowout-6)));
         if ( get < 2 ) {
             get = 2;
         }

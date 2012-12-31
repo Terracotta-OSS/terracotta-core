@@ -309,7 +309,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         return triggerParam.collectEvictonCandidates(max, className, ev, clientObjectReferenceSet);
     }
 
-    Future<SampledRateCounter> emergencyEviction(final int blowout) {
+    Future<SampledRateCounter> emergencyEviction(final boolean pre, final int blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
         List<Future<SampledRateCounter>> push = new ArrayList<Future<SampledRateCounter>>(evictableObjects.size());
         Random r = new Random();
@@ -322,7 +322,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             push.add(agent.submit(new Callable<SampledRateCounter>() {
                 @Override
                 public SampledRateCounter call() throws Exception {
-                    EmergencyEvictionTrigger triggerLocal = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
+                    EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID , blowout) : new EmergencyEvictionTrigger(objectManager, mapID , blowout);
                     doEvictionOn(triggerLocal);
                     rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
                     return rate;
@@ -389,6 +389,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private boolean isEmergency = false;
         private boolean isThrottling = false;
         private boolean isStopped = false;
+        private long brake = 0;
         private int turnCount = 1;
 
         Future<SampledRateCounter> currentRun = completedFuture;
@@ -419,6 +420,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         } else if ( currentRun.isDone() ) {
                             triggerEmergency(usage);
                         }
+//   wait for generational eviction to do this.                         
+//                    } else if ( currentRun.isDone() && brake < usage.getReservedMemory() && threshold.isInThresholdRegion(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD)) {
+//                        currentRun = emergencyEviction(true, 1);
+//                        brake = usage.getReservedMemory();
                     } else if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
                         currentRun = scheduleEvictionRun();
                         print("Periodic",currentRun);
@@ -471,7 +476,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 throttle(usage);
             }
 
-            currentRun = emergencyEviction(turnCount++);// if already in emergency situation, really try hard to remove items.
+            currentRun = emergencyEviction(false, turnCount++);// if already in emergency situation, really try hard to remove items.
             print("Emergency",currentRun);
             isEmergency = true;
         }
@@ -514,6 +519,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             isStopped = false;
             isThrottling = false;
+            brake = 0;
             resourceManager.clear();
             TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
