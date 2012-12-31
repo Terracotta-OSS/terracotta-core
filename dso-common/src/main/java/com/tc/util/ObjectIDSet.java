@@ -29,7 +29,7 @@ import java.util.SortedSet;
 public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable, TCSerializable {
 
   public static enum ObjectIDSetType {
-    RANGE_BASED_SET, BITSET_BASED_SET
+    RANGE_BASED_SET, BITSET_BASED_SET, MASK_BASED_SET
   }
 
   /**
@@ -50,6 +50,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET) {
       this.type = ObjectIDSetType.RANGE_BASED_SET;
       this.oidSet = new RangeObjectIDSet();
+    } else if ( oidSetType == ObjectIDSetType.MASK_BASED_SET ) {
+      this.type = ObjectIDSetType.MASK_BASED_SET;
+      this.oidSet = new MaskingObjectIDSet();
     } else {
       this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
@@ -65,6 +68,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
       } else if (o.type == ObjectIDSetType.RANGE_BASED_SET) {
         this.type = ObjectIDSetType.RANGE_BASED_SET;
         this.oidSet = new RangeObjectIDSet(o.oidSet);
+      } else if ( o.type == ObjectIDSetType.MASK_BASED_SET ) {
+        this.type = ObjectIDSetType.MASK_BASED_SET;
+        this.oidSet = new MaskingObjectIDSet(o.oidSet);
       } else {
         throw new AssertionError("wrong ObjectIDSet type: " + o.type);
       }

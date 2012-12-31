@@ -16,7 +16,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-final class BitSetObjectIDSet extends ObjectIDSetBase {
+class BitSetObjectIDSet extends ObjectIDSetBase {
 
   public BitSetObjectIDSet(final Collection c) {
     super();
