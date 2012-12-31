@@ -134,6 +134,7 @@
                 <argument>-Xms512m</argument>
                 <argument>-Xmx512m</argument>
                 <argument>-XX:+HeapDumpOnOutOfMemoryError</argument>
+                <argument>-Dcom.tc.management.war=${basedir}/../management-agent/management-tsa-war/target/management-tsa-war-${project.version}.war</argument>
                 <argument>-Dcom.sun.management.jmxremote</argument>
                 <argument>-Dsun.rmi.dgc.server.gcInterval=31536000</argument>
                 <argument>-classpath</argument>
