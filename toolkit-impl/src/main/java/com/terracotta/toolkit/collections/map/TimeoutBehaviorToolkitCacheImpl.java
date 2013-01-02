@@ -11,16 +11,14 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
-import com.tc.object.ObjectID;
 import com.terracotta.toolkit.object.DestroyableToolkitObject;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheInternal<K, V>,
     DestroyableToolkitObject {
   private final ToolkitCacheInternal<K, V> mutationBehaviourResolver;
   private final ToolkitCacheInternal<K, V> immutationBehaviourResolver;
@@ -48,16 +46,12 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
 
   @Override
   public V getQuiet(Object key) {
-    return immutationBehaviourResolver.unsafeLocalGet(key);
+    return immutationBehaviourResolver.getQuiet(key);
   }
 
   @Override
   public Map<K, V> getAllQuiet(Collection<K> keys) {
-    Map<K, V> rv = new HashMap<K, V>();
-    for (K key : keys) {
-      rv.put(key, getQuiet(key));
-    }
-    return rv;
+    return immutationBehaviourResolver.getAllQuiet(keys);
   }
 
   @Override
@@ -108,7 +102,7 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
 
   @Override
   public Map<K, V> getAll(Collection<? extends K> keys) {
-    return getAllQuiet((Collection<K>) keys);
+    return immutationBehaviourResolver.getAll(keys);
   }
 
   @Override
@@ -129,7 +123,6 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
 
   @Override
   public ToolkitReadWriteLock createLockForKey(K key) {
-    // TODO: return nonstop lock when supporting nonstop for locks.
     return immutationBehaviourResolver.createLockForKey(key);
   }
 
@@ -160,22 +153,22 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
 
   @Override
   public int size() {
-    return immutationBehaviourResolver.localSize();
+    return immutationBehaviourResolver.size();
   }
 
   @Override
   public boolean isEmpty() {
-    return immutationBehaviourResolver.localSize() == 0;
+    return immutationBehaviourResolver.isEmpty();
   }
 
   @Override
   public boolean containsKey(Object key) {
-    return containsLocalKey(key);
+    return immutationBehaviourResolver.containsKey(key);
   }
 
   @Override
   public V get(Object key) {
-    return getQuiet(key);
+    return immutationBehaviourResolver.get(key);
   }
 
   @Override
@@ -200,27 +193,17 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
 
   @Override
   public Set<K> keySet() {
-    return immutationBehaviourResolver.localKeySet();
+    return immutationBehaviourResolver.keySet();
   }
 
   @Override
   public Collection<V> values() {
-    Map<K, V> allValuesMap = getAllLocalKeyValuesMap();
-    return allValuesMap.values();
+    return immutationBehaviourResolver.values();
   }
 
   @Override
   public Set<java.util.Map.Entry<K, V>> entrySet() {
-    Map<K, V> allValuesMap = getAllLocalKeyValuesMap();
-    return allValuesMap.entrySet();
-  }
-
-  private Map<K, V> getAllLocalKeyValuesMap() {
-    Map<K, V> allValuesMap = new HashMap<K, V>(immutationBehaviourResolver.localSize());
-    for (K key : immutationBehaviourResolver.keySet()) {
-      allValuesMap.put(key, getQuiet(key));
-    }
-    return allValuesMap;
+    return immutationBehaviourResolver.entrySet();
   }
 
   @Override
@@ -231,23 +214,20 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
   @Override
   public void unlockedPutNoReturn(K k, V v, int createTime, int customTTI, int customTTL) {
     mutationBehaviourResolver.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
-
   }
 
   @Override
   public void unlockedRemoveNoReturn(Object k) {
     mutationBehaviourResolver.unlockedRemoveNoReturn(k);
-
   }
 
   @Override
   public V unlockedGet(Object k, boolean quiet) {
-    return getQuiet(k);
+    return immutationBehaviourResolver.unlockedGet(k, quiet);
   }
 
   @Override
   public void clearLocalCache() {
-    // TODO: discuss
     mutationBehaviourResolver.clearLocalCache();
   }
 
@@ -325,12 +305,6 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
   @Override
   public void doDestroy() {
     ((DestroyableToolkitObject) mutationBehaviourResolver).doDestroy();
-  }
-
-  @Override
-  public V get(K key, ObjectID valueOid) {
-    // TODO: discuss change in behavior for search here.
-    return immutationBehaviourResolver.unsafeLocalGet(key);
   }
 
   @Override
