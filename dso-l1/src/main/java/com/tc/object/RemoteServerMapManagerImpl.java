@@ -346,6 +346,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   synchronized void requestOutstanding() {
+    logger.info("Sending outstanding servermap requests, num msgs: " + outstandingRequests.size());
     for (final AbstractServerMapRequestContext context : this.outstandingRequests.values()) {
       sendRequestNow(context);
     }
