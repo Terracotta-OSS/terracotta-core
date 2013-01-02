@@ -13,6 +13,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.platform.rejoin.RejoinManagerInternal;
+import com.tc.util.UUID;
 import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.Map;
@@ -26,9 +27,9 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final Manager manager, final DsoClusterInternal dsoCluster,
                                               final ClientMode clientMode, final TCSecurityManager securityManager,
                                               final AbortableOperationManager abortableOperationManager,
-                                              final RejoinManagerInternal rejoinManager) {
-    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager,
-                                       dsoCluster, clientMode, securityManager, abortableOperationManager, rejoinManager);
+                                              final RejoinManagerInternal rejoinManager, UUID uuid) {
+    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
+                                       clientMode, securityManager, abortableOperationManager, rejoinManager, uuid);
   }
 
   @Override

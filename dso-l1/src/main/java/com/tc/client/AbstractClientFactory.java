@@ -13,6 +13,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.platform.rejoin.RejoinManagerInternal;
+import com.tc.util.UUID;
 import com.tc.util.factory.AbstractFactory;
 import com.tcclient.cluster.DsoClusterInternal;
 
@@ -32,7 +33,7 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        Manager manager, DsoClusterInternal dsoCluster,
                                                        ClientMode clientMode, TCSecurityManager securityManager,
                                                        AbortableOperationManager abortableOperationManager,
-                                                       RejoinManagerInternal rejoinManager);
+                                                       RejoinManagerInternal rejoinManager, UUID uuid);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

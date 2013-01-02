@@ -56,6 +56,7 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
+import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -82,7 +83,7 @@ public interface DSOClientBuilder {
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour,
                                                     TCSecurityManager securityManager);
 
-  TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
+  TunnelingEventHandler createTunnelingEventHandler(ClientMessageChannel ch, DSOMBeanConfig config, UUID uuid);
 
   TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
                                                     final TunnelingEventHandler teh);
@@ -175,4 +176,5 @@ public interface DSOClientBuilder {
 
   RemoteResourceManager createRemoteResourceManager(DSOClientMessageChannel dsoChannel,
                                                     AbortableOperationManager abortableOperationManager);
+
 }

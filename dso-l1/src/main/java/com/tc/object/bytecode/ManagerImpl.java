@@ -68,6 +68,7 @@ import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
+import com.tc.util.UUID;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tcclient.cluster.DsoClusterInternal;
@@ -114,6 +115,7 @@ public class ManagerImpl implements Manager {
   private final AbortableOperationManager             abortableOperationManager = new AbortableOperationManagerImpl();
   private final PlatformServiceImpl                   platformService;
   private final RejoinManagerInternal                 rejoinManager;
+  private final UUID                                  uuid;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -146,6 +148,8 @@ public class ManagerImpl implements Manager {
     this.connectionComponents = connectionComponents;
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
     this.dsoCluster = new DsoClusterImpl(rejoinManager);
+    this.uuid = UUID.getUUID();
+
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
       // Register a shutdown hook for the DSO client
@@ -194,7 +198,7 @@ public class ManagerImpl implements Manager {
 
   @Override
   public String getUUID() {
-    return this.config.getUUID().toString();
+    return this.uuid.toString();
   }
 
   @Override
@@ -251,7 +255,7 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.clientMode,
                                                           ManagerImpl.this.securityManager,
                                                           ManagerImpl.this.abortableOperationManager,
-                                                          ManagerImpl.this.rejoinManager);
+                                                          ManagerImpl.this.rejoinManager, uuid);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);

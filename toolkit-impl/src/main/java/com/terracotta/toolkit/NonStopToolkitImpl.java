@@ -54,9 +54,11 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   private final AsyncToolkitInitializer        asyncToolkitInitializer;
   private final NonStopContext                 context;
   private final NonStopClusterInfo             nonStopClusterInfo;
+  private final PlatformService                platformService;
 
   public NonStopToolkitImpl(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
-    abortableOperationManager = platformService.getAbortableOperationManager();
+    this.platformService = platformService;
+    this.abortableOperationManager = platformService.getAbortableOperationManager();
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
     this.nonStopConfigManager.registerForType(NonStopConfigRegistryImpl.DEFAULT_CONFIG,
                                               NonStopConfigRegistryImpl.SUPPORTED_TOOLKIT_TYPES
@@ -265,7 +267,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   public void stop() {
     NonStopConfiguration configuration = nonStopConfigManager.deregisterForThread();
 
-    if (configuration.isEnabled()) {
+    if (configuration != null && configuration.isEnabled()) {
       nonStopManager.finish();
     }
   }
@@ -299,7 +301,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public String getClientUUID() {
-    return getInitializedToolkit().getClientUUID();
+    return platformService.getUUID();
   }
 
   @Override

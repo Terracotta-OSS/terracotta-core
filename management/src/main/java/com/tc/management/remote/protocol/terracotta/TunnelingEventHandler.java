@@ -43,7 +43,9 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
 
   private boolean                    stopAccept = false;
 
-  public TunnelingEventHandler(final MessageChannel channel, final DSOMBeanConfig config) {
+  private final UUID                 uuid;
+
+  public TunnelingEventHandler(final MessageChannel channel, final DSOMBeanConfig config, UUID uuid) {
     this.channel = channel;
     this.config = config;
     acceptOk = false;
@@ -51,6 +53,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     localJmxServerReady = new SetOnceFlag();
     transportConnected = false;
     sentReadyMessage = false;
+    this.uuid = uuid;
   }
 
   @Override
@@ -70,7 +73,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   public UUID getUUID() {
-    return config.getUUID();
+    return uuid;
   }
 
   @Override

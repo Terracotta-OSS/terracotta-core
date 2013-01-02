@@ -16,6 +16,8 @@ public class NonStopImpl implements NonStop {
 
   @Override
   public void start(NonStopConfiguration nonStopConfig) {
+    if (nonStopConfig == null) { return; }
+
     nonStopToolkitImpl.start(nonStopConfig);
   }
 

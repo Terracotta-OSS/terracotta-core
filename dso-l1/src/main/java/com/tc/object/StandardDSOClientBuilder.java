@@ -77,6 +77,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.ToggleableReferenceManager;
+import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -124,8 +125,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config) {
-    return new TunnelingEventHandler(ch, config);
+  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config,
+                                                           UUID uuid) {
+    return new TunnelingEventHandler(ch, config, uuid);
   }
 
   @Override

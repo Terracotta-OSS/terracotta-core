@@ -133,7 +133,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
   private class MockTunnelingEventHandler extends TunnelingEventHandler {
     public MockTunnelingEventHandler(MessageChannel channel, DSOMBeanConfig config) {
-      super(channel, config);
+      super(channel, config, UUID.NULL_ID);
     }
 
     @Override
