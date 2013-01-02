@@ -37,6 +37,7 @@ public class NonPortableFieldSetContext extends NonPortableEventContext {
     return fieldValue;
   }
 
+  @Override
   public void addDetailsTo(NonPortableReason reason) {
     super.addDetailsTo(reason);
     reason.addDetail(FIELD_NAME_LABEL, fieldName);

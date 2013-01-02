@@ -15,11 +15,13 @@ public class RecallObjectsHandler extends AbstractEventHandler implements EventH
 
   private TransactionalObjectManager txnObjectMgr;
 
+  @Override
   public void handleEvent(EventContext context) {
     RecallObjectsContext roc = (RecallObjectsContext) context;
     txnObjectMgr.recallCheckedoutObject(roc);
   }
   
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

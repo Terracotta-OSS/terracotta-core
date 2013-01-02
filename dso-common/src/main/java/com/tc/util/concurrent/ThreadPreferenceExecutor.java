@@ -49,6 +49,7 @@ public class ThreadPreferenceExecutor implements Executor {
     this.logger = logger;
   }
 
+  @Override
   public void execute(Runnable command) {
     if (queue.offer(command)) { return; }
 
@@ -92,6 +93,7 @@ public class ThreadPreferenceExecutor implements Executor {
       this.firstCommand = firstCommand;
     }
 
+    @Override
     public void run() {
       try {
         while (true) {
@@ -131,6 +133,7 @@ public class ThreadPreferenceExecutor implements Executor {
       this.executorName = executorName;
     }
 
+    @Override
     public Thread newThread(Runnable r) {
       Thread t = new Thread(r, executorName + "-" + sequence.getAndIncrement());
       t.setDaemon(true);

@@ -17,10 +17,12 @@ public class LockMBeanImpl implements LockMBean, Serializable {
     this.contexts = contexts;
   }
 
+  @Override
   public ServerLockContextBean[] getContexts() {
     return contexts;
   }
 
+  @Override
   public LockID getLockID() {
     return lockID;
   }

@@ -43,14 +43,17 @@ public class TestClientObjectManager implements ClientObjectManager {
     return this.isManaged;
   }
 
+  @Override
   public boolean isManaged(final Object pojo) {
     return this.object2TCObject.containsKey(pojo) || this.isManaged;
   }
 
+  @Override
   public boolean isPortableInstance(final Object pojo) {
     return true;
   }
 
+  @Override
   public boolean isPortableClass(final Class clazz) {
     return true;
   }
@@ -61,6 +64,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     }
   }
 
+  @Override
   public synchronized TCObject lookupOrCreate(final Object obj) {
     // System.out.println(this + ".lookupOrCreate(" + obj + ")");
     TCObject rv = lookup(obj);
@@ -74,6 +78,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return rv;
   }
 
+  @Override
   public synchronized TCObject lookupOrCreate(final Object obj, GroupID gid) {
     return lookupOrCreate(obj);
   }
@@ -83,6 +88,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return rv;
   }
 
+  @Override
   public Object lookupOrCreateRoot(final String name, final Object candidate) {
     Object rv = null;
     if (candidate == null) {
@@ -94,55 +100,68 @@ public class TestClientObjectManager implements ClientObjectManager {
     return rv;
   }
 
+  @Override
   public TCObject lookupIfLocal(final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public TCObject lookup(final ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
     return (TCObject) this.objects.get(id);
   }
 
+  @Override
   public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object lookupObjectQuiet(final ObjectID id) {
     return lookupObject(id);
   }
 
+  @Override
   public Object lookupObject(final ObjectID id) {
     return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
+  @Override
   public Object lookupObject(final ObjectID id, final ObjectID parentContext) {
     return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
+  @Override
   public TCClass getOrCreateClass(final Class clazz) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setTransactionManager(final ClientTransactionManager txManager) {
     this.txManager = txManager;
   }
 
+  @Override
   public ObjectID lookupExistingObjectID(final Object obj) {
     return ((TCObject) this.object2TCObject.get(obj)).getObjectID();
   }
 
+  @Override
   public void shutdown() {
     //
   }
 
+  @Override
   public ClientTransactionManager getTransactionManager() {
     return this.txManager;
   }
 
+  @Override
   public Class getClassFor(final String className) {
     throw new ImplementMe();
   }
 
+  @Override
   public TCObject lookupExistingOrNull(final Object pojo) {
     // if (isManaged) {
     // lookupOrCreate(pojo);
@@ -151,80 +170,99 @@ public class TestClientObjectManager implements ClientObjectManager {
     return (TCObject) this.object2TCObject.get(pojo);
   }
 
+  @Override
   public Object lookupRoot(final String name) {
     throw new ImplementMe();
   }
 
+  @Override
   public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo)
       throws TCNonPortableObjectError {
     return;
   }
 
+  @Override
   public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
                                               final Object pojo) throws TCNonPortableObjectError {
     return;
   }
 
+  @Override
   public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {
     throw new ImplementMe();
   }
 
+  @Override
   public void replaceRootIDIfNecessary(final String rootName, final ObjectID newRootID) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object lookupOrCreateRoot(final String name, final Object obj, final boolean dsoFinal) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isCreationInProgress() {
     return false;
   }
 
+  @Override
   public Object lookupObjectNoDepth(final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object lookupOrCreateRootNoDepth(final String rootName, final Object object) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object createOrReplaceRoot(final String rootName, final Object r) {
     throw new ImplementMe();
   }
 
+  @Override
   public void storeObjectHierarchy(final Object pojo, final ApplicationEventContext context) {
     throw new ImplementMe();
   }
 
+  @Override
   public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object cloneAndInvokeLogicalOperation(final Object pojo, final String methodName, final Object[] parameters) {
     throw new ImplementMe();
   }
 
+  @Override
   public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
     throw new ImplementMe();
   }
 
+  @Override
   public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {
     return new WeakObjectReference(objectID, peer, this.referenceQueue);
   }
 
+  @Override
   public boolean isLocal(final ObjectID objectID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void preFetchObject(final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public void removedTCObjectSelfFromStore(TCObjectSelf value) {
     throw new ImplementMe();
   }
 
+  @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcoObjectSelf) {
     throw new ImplementMe();
 

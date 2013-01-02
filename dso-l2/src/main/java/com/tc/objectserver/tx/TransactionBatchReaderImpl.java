@@ -77,6 +77,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     }
   }
 
+  @Override
   public boolean containsSyncWriteTransaction() {
     return this.containsSyncWriteTransaction;
   }
@@ -98,10 +99,12 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return larray;
   }
 
+  @Override
   public NodeID getNodeID() {
     return this.source;
   }
 
+  @Override
   public ServerTransaction getNextTransaction() throws IOException {
     if (this.txnToRead == 0) {
       final int bytesRemaining = this.in.available();
@@ -182,18 +185,22 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
                                                    metaDataReadersArr, numApplictionTxn, highwaterMarks);
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return this.batchID;
   }
 
+  @Override
   public int getNumberForTxns() {
     return this.numTxns;
   }
 
+  @Override
   public TCByteBuffer[] getBackingBuffers() {
     return this.data;
   }
 
+  @Override
   public TCByteBuffer[] getBackingBuffers(final ServerTransactionID from, final ServerTransactionID to) {
     if (!from.getSourceID().equals(this.source) || !to.getSourceID().equals(this.source)) {
       // Not the same source
@@ -221,6 +228,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return fullContents;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return this.serializer;
   }

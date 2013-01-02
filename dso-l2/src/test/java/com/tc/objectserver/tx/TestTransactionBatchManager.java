@@ -20,34 +20,42 @@ public class TestTransactionBatchManager implements TransactionBatchManager {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean batchComponentComplete(NodeID committerID, TransactionID txnID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void defineBatch(NodeID node, int numTxns) {
     throw new ImplementMe();
   }
 
+  @Override
   public void shutdownNode(NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addTransactionBatch(CommitTransactionMessage ctm) {
     throw new ImplementMe();
   }
 
+  @Override
   public void processTransactions(TransactionBatchContext incomingTransactionBatchContext) {
     this.txns.add(incomingTransactionBatchContext);
   }
 
+  @Override
   public void nodeConnected(NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
     // Ignore
   }
 
+  @Override
   public void registerForBatchTransaction(TransactionBatchListener listener) {
     throw new ImplementMe();
   }

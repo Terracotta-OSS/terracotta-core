@@ -81,6 +81,7 @@ public class VerifierClient implements Runnable {
   }
 
   private class Sink implements GenericNetworkMessageSink {
+    @Override
     public void putMessage(GenericNetworkMessage msg) {
       try {
         verifier.putMessage(msg);
@@ -104,6 +105,7 @@ public class VerifierClient implements Runnable {
     error.set(t);
   }
 
+  @Override
   public void run() {
     try {
       run0();
@@ -132,6 +134,7 @@ public class VerifierClient implements Runnable {
       }
 
       msg.setSentCallback(new Runnable() {
+        @Override
         public void run() {
           synchronized (sentCallbacks) {
             ((SetOnceFlag) sentCallbacks.get(msg)).set();

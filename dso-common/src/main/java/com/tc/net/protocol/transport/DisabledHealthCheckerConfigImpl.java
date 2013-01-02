@@ -10,46 +10,57 @@ package com.tc.net.protocol.transport;
  */
 public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
 
+  @Override
   public boolean isHealthCheckerEnabled() {
     return false;
   }
 
+  @Override
   public long getPingIdleTimeMillis() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public long getPingIntervalMillis() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public int getPingProbes() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public String getHealthCheckerName() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public boolean isSocketConnectOnPingFail() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public int getSocketConnectMaxCount() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public int getSocketConnectTimeout() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public String getCallbackPortListenerBindAddress() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public int getCallbackPortListenerBindPort() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  @Override
   public boolean isCallbackPortListenerNeeded() {
     return false;
   }

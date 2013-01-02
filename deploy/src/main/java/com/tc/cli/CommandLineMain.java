@@ -104,10 +104,12 @@ public class CommandLineMain {
       this.commands = commands;
     }
 
+    @Override
     public String description() {
       return "command lists all the commands available on the Terracotta command-line utility";
     }
 
+    @Override
     public void execute(String[] args) {
       println("Usage: <command> [args]");   
       println("Terracotta command-line utility, version " + ProductInfo.getInstance().version());
@@ -139,14 +141,17 @@ public class CommandLineMain {
       }
     }
 
+    @Override
     public String name() {
       return "Help";
     }
 
+    @Override
     public String optionName() {
       return "help";
     }
 
+    @Override
     public void printUsage() {
       println("");
     }

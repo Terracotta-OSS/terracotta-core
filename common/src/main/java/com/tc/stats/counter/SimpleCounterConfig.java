@@ -11,10 +11,12 @@ public class SimpleCounterConfig implements CounterConfig {
     this.initialValue = initialValue;
   }
 
+  @Override
   public long getInitialValue() {
     return initialValue;
   }
 
+  @Override
   public Counter createCounter() {
     return new CounterImpl(initialValue);
   }

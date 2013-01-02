@@ -830,6 +830,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the key
    * @throws NullPointerException if the specified key or value is null
    */
+  @Override
   public V putIfAbsent(K key, V value) {
     if (value == null) throw new NullPointerException();
     int hash = hash(key.hashCode());
@@ -867,6 +868,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * 
    * @throws NullPointerException if the specified key is null
    */
+  @Override
   public boolean remove(Object key, Object value) {
     int hash = hash(key.hashCode());
     if (value == null) { throw new NullPointerException(); }
@@ -879,6 +881,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * 
    * @throws NullPointerException if any of the arguments are null
    */
+  @Override
   public boolean replace(K key, V oldValue, V newValue) {
     if (oldValue == null || newValue == null) throw new NullPointerException();
     int hash = hash(key.hashCode());
@@ -891,6 +894,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the key
    * @throws NullPointerException if the specified key or value is null
    */
+  @Override
   public V replace(K key, V value) {
     if (value == null) throw new NullPointerException();
     int hash = hash(key.hashCode());
@@ -1035,20 +1039,24 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   }
 
   final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+    @Override
     public K next() {
       return super.nextEntry().key;
     }
 
+    @Override
     public K nextElement() {
       return super.nextEntry().key;
     }
   }
 
   final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+    @Override
     public V next() {
       return super.nextEntry().value;
     }
 
+    @Override
     public V nextElement() {
       return super.nextEntry().value;
     }
@@ -1078,6 +1086,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   }
 
   final class EntryIterator extends HashIterator implements Iterator<Entry<K, V>> {
+    @Override
     public Map.Entry<K, V> next() {
       HashEntry<K, V> e = super.nextEntry();
       return new WriteThroughEntry(e.key, e.value);
@@ -1245,14 +1254,17 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       this.value = e.getValue();
     }
 
+    @Override
     public K getKey() {
       return key;
     }
 
+    @Override
     public V getValue() {
       return value;
     }
 
+    @Override
     public V setValue(V value) {
       V oldValue = this.value;
       this.value = value;

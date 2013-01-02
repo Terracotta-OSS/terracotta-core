@@ -19,6 +19,7 @@ public class ClientLockStatisticsHandler extends AbstractEventHandler {
     this.lockStatsManager = lockStatsManager;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     LockStatisticsResponseMessageImpl lsrm = (LockStatisticsResponseMessageImpl)context;
     NodeID nodeID = lsrm.getSourceNodeID();

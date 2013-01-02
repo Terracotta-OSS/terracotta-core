@@ -35,10 +35,12 @@ public class CompletedTransactionLowWaterMarkMessage extends DSOMessageBase impl
     this.lowWaterMark = lwm;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(LOW_WATER_MARK, lowWaterMark.toLong());
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case LOW_WATER_MARK:

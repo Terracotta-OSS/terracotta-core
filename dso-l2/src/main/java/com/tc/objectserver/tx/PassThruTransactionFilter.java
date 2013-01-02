@@ -13,19 +13,23 @@ public class PassThruTransactionFilter implements TransactionFilter, PostInit {
 
   private TransactionBatchManager transactionBatchManager;
 
+  @Override
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionBatchManager = scc.getTransactionBatchManager();
   }
 
+  @Override
   public void addTransactionBatch(final TransactionBatchContext transactionBatchContext) {
     this.transactionBatchManager.processTransactions(transactionBatchContext);
   }
 
+  @Override
   public boolean shutdownNode(final NodeID nodeID) {
     return true;
   }
 
+  @Override
   public void notifyServerHighWaterMark(final NodeID nodeID, final long serverHighWaterMark) {
     // NOP
   }

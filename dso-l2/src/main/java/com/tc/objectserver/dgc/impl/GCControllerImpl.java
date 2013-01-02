@@ -16,14 +16,17 @@ public class GCControllerImpl implements GCController {
     this.collector = collector;
   }
 
+  @Override
   public boolean isGCStarted() {
     return this.collector.isStarted();
   }
 
+  @Override
   public boolean isGCDisabled() {
     return this.collector.isDisabled();
   }
 
+  @Override
   public void startGC() {
     this.collector.doGC(GCType.FULL_GC);
   }

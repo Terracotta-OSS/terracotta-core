@@ -36,6 +36,7 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     this.remap = isRemap;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
@@ -48,6 +49,7 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     remap = in.readBoolean();
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
     new NodeIDSerializer(groupID).serializeTo(out);
@@ -56,6 +58,7 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     out.writeBoolean(remap);
   }
 
+  @Override
   public String toString() {
     return "StripeIDGroupMessage [ " + this.stripeID + " " + this.groupID + " isActive: " + this.isActive + " isRemap:"
            + this.remap + " ]";

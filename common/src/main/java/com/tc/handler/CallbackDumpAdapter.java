@@ -19,6 +19,7 @@ public class CallbackDumpAdapter implements CallbackOnExitHandler {
     this.dumpObject = dumpObject;
   }
 
+  @Override
   public void callbackOnExit(CallbackOnExitState state) {
     DumpLoggerWriter writer = new DumpLoggerWriter();
     writer.write("\n***********************************************************************************\n");

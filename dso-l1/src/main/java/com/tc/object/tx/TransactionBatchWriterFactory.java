@@ -24,6 +24,7 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
     this.foldingConfig = foldingConfig;
   }
 
+  @Override
   public synchronized ClientTransactionBatch nextBatch(GroupID groupID) {
     return new ClientTransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence),
                                             new ObjectStringSerializerImpl(), encoding, messageFactory, foldingConfig);

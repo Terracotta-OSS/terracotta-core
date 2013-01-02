@@ -16,10 +16,12 @@ public class TCGroupMemberDiscoveryHandler extends AbstractEventHandler {
     this.manager = manager;
   }
   
+  @Override
   public void handleEvent(EventContext context) {
     manager.getDiscover().discoveryHandler(context);
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
   }

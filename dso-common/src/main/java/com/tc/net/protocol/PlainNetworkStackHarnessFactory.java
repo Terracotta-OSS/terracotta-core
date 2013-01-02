@@ -27,12 +27,14 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
     this.allowConnectionReplace = allowConnectionReplace;
   }
 
+  @Override
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
     return new PlainNetworkStackHarness(channelFactory, transport);
   }
 
+  @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
@@ -49,6 +51,7 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
       super(transportFactory, channel);
     }
 
+    @Override
     protected void connectStack() {
       channel.setSendLayer(transport);
       transport.setReceiveLayer(channel);
@@ -65,6 +68,7 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
       }
     }
 
+    @Override
     protected void createIntermediateLayers() {
       // No intermediate layers to create.
     }

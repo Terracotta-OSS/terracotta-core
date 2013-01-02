@@ -20,6 +20,7 @@ public class UpdateCheckConfigObject extends BaseConfigObject implements UpdateC
     context.ensureRepositoryProvides(UpdateCheck.class);
   }
 
+  @Override
   public UpdateCheck getUpdateCheck() {
     return (UpdateCheck) this.context.bean();
   }

@@ -34,6 +34,7 @@ public class MockNetworkStackProvider implements NetworkStackProvider {
     throw new ImplementMe();
   }
 
+  @Override
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection) {
     throw new ImplementMe();
   }

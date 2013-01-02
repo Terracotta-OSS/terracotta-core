@@ -23,6 +23,7 @@ public class SessionID extends AbstractIdentifier {
     super(id);
   }
 
+  @Override
   public String getIdentifierType() {
     return "SessionID";
   }

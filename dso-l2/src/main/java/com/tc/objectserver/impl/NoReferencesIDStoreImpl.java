@@ -26,14 +26,17 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
     }
   }
 
+  @Override
   public void addToNoReferences(final ManagedObject mo) {
     this.delegate.addToNoReferences(mo);
   }
 
+  @Override
   public void clearFromNoReferencesStore(final ObjectID id) {
     this.delegate.clearFromNoReferencesStore(id);
   }
 
+  @Override
   public boolean hasNoReferences(final ObjectID id) {
     return this.delegate.hasNoReferences(id);
   }
@@ -41,16 +44,19 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
   private static class OidSetStore implements NoReferencesIDStore {
     private final StripedObjectIDSet store = new StripedObjectIDSet();
 
+    @Override
     public void addToNoReferences(final ManagedObject mo) {
       if (mo.getManagedObjectState().hasNoReferences()) {
         this.store.add(mo.getID());
       }
     }
 
+    @Override
     public void clearFromNoReferencesStore(final ObjectID id) {
       this.store.remove(id);
     }
 
+    @Override
     public boolean hasNoReferences(final ObjectID id) {
       return this.store.contains(id);
     }

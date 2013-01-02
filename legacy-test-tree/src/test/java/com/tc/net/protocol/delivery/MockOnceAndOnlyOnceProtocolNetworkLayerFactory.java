@@ -10,10 +10,12 @@ public class MockOnceAndOnlyOnceProtocolNetworkLayerFactory implements OnceAndOn
 
   public OnceAndOnlyOnceProtocolNetworkLayer layer;
 
+  @Override
   public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(ReconnectConfig reconnectConfig) {
     return layer;
   }
 
+  @Override
   public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(ReconnectConfig reconnectConfig) {
     return layer;
   }

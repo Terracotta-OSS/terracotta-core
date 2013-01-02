@@ -120,6 +120,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     serverComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE,
                                                                                   new TCMessageSink() {
+                                                                                    @Override
                                                                                     public void putMessage(TCMessage message)
                                                                                         throws UnsupportedMessageTypeException {
                                                                                       try {

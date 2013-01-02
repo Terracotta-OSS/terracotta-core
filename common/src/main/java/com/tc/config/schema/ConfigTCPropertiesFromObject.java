@@ -24,6 +24,7 @@ public class ConfigTCPropertiesFromObject implements ConfigTCProperties {
     }
   }
 
+  @Override
   public TcProperty[] getTcPropertiesArray() {
     return tcProperties;
   }

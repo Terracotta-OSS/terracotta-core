@@ -16,6 +16,7 @@ public class BasicObjectDifferenceTest extends TCTestCase {
 
   private DifferenceContext context;
 
+  @Override
   public void setUp() throws Exception {
     this.context = DifferenceContext.createInitial().sub("a");
   }
@@ -27,10 +28,12 @@ public class BasicObjectDifferenceTest extends TCTestCase {
       this.a = a;
     }
 
+    @Override
     public boolean equals(Object that) {
       return (that instanceof OtherDiff) && ((OtherDiff) that).a.equals(this.a);
     }
 
+    @Override
     public void addDifferences(DifferenceContext context, Object that) {
       throw new ImplementMe();
     }
@@ -104,6 +107,7 @@ public class BasicObjectDifferenceTest extends TCTestCase {
 
   public void testUsesStringifier() throws Exception {
     Stringifier myStringifier = new Stringifier() {
+      @Override
       public String toString(Object o) {
         return "XX" + o + "YY";
       }
@@ -119,6 +123,7 @@ public class BasicObjectDifferenceTest extends TCTestCase {
 
   public void testEquals() throws Exception {
     Stringifier myStringifier = new Stringifier() {
+      @Override
       public String toString(Object o) {
         return "XX" + o + "YY";
       }

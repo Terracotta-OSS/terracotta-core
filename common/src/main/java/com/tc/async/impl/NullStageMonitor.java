@@ -11,14 +11,17 @@ public class NullStageMonitor implements StageMonitor {
     return;
   }
 
+  @Override
   public void eventBegin(int queueDepth) {
     return;
   }
 
+  @Override
   public void flush() {
     return;
   }
 
+  @Override
   public Analysis analyze() {
     return null;
   }

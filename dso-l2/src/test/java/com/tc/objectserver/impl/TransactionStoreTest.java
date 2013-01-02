@@ -43,6 +43,7 @@ public class TransactionStoreTest extends TCTestCase {
   private Sequence gidSequence;
   private TransactionStore store;
 
+  @Override
   public void setUp() throws ExecutionException, InterruptedException {
     Map<String, KeyValueStorageConfig<?,?>> configMap = new HashMap<String, KeyValueStorageConfig<?, ?>>();
     TransactionPersistorImpl.addConfigsTo(configMap);

@@ -32,42 +32,52 @@ public final class ServerMapEvictionDNA implements DNAInternal {
     this.cacheName = cacheName;
   }
 
+  @Override
   public int getArraySize() {
     return 0;
   }
 
+  @Override
   public DNACursor getCursor() {
     return new ServerMapEvictionDNACursor(this.evictionCandidates);
   }
 
+  @Override
   public ObjectID getObjectID() throws DNAException {
     return this.oid;
   }
 
+  @Override
   public ObjectID getParentObjectID() throws DNAException {
     return ObjectID.NULL_ID;
   }
 
+  @Override
   public String getTypeName() {
     return this.className;
   }
 
+  @Override
   public long getVersion() {
     return DNA.NULL_VERSION;
   }
 
+  @Override
   public boolean hasLength() {
     return false;
   }
 
+  @Override
   public boolean isDelta() {
     return true;
   }
 
+  @Override
   public MetaDataReader getMetaDataReader() {
     return new ServerMapEvictionMetaDataReader(oid, cacheName, evictionCandidates);
   }
 
+  @Override
   public boolean hasMetaData() {
     return true;
   }
@@ -86,22 +96,27 @@ public final class ServerMapEvictionDNA implements DNAInternal {
       this.actionsCount = candidates.size() + 1; // plus one for evictionComplete action
     }
 
+    @Override
     public Object getAction() {
       return this.currentAction;
     }
 
+    @Override
     public int getActionCount() {
       return actionsCount;
     }
 
+    @Override
     public LogicalAction getLogicalAction() {
       return this.currentAction;
     }
 
+    @Override
     public PhysicalAction getPhysicalAction() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean next() {
       if (this.actions.hasNext()) {
         final Entry e = this.actions.next();
@@ -117,10 +132,12 @@ public final class ServerMapEvictionDNA implements DNAInternal {
       return false;
     }
 
+    @Override
     public boolean next(final DNAEncoding arg) {
       return next();
     }
 
+    @Override
     public void reset() throws UnsupportedOperationException {
       throw new UnsupportedOperationException("Reset is not supported by this class");
     }

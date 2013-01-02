@@ -15,6 +15,7 @@ public class EqualsEqualityComparator implements EqualityComparator {
     // Use INSTANCE instead.
   }
 
+  @Override
   public boolean isEquals(Object one, Object two) {
     if ((one == null) != (two == null)) return false;
     if (one == null) return true;

@@ -34,34 +34,42 @@ public class TestProtocolMessage implements OOOProtocolMessage {
     //
   }
 
+  @Override
   public long getAckSequence() {
     return ack;
   }
 
+  @Override
   public long getSent() {
     return sent;
   }
 
+  @Override
   public boolean isHandshake() {
     return isHandshake;
   }
 
+  @Override
   public boolean isHandshakeReplyOk() {
     return isHandshakeReplyOk;
   }
 
+  @Override
   public boolean isHandshakeReplyFail() {
     return isHandshakeReplyFail;
   }
 
+  @Override
   public boolean isSend() {
     return isSend;
   }
 
+  @Override
   public boolean isAck() {
     return isAck;
   }
 
+  @Override
   public UUID getSessionId() {
     return (sessionId);
   }
@@ -74,62 +82,77 @@ public class TestProtocolMessage implements OOOProtocolMessage {
    * TCNetworkMessage stuff
    */
 
+  @Override
   public TCNetworkHeader getHeader() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCNetworkMessage getMessagePayload() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCByteBuffer[] getPayload() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCByteBuffer[] getEntireMessageData() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isSealed() {
     throw new ImplementMe();
   }
 
+  @Override
   public void seal() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getDataLength() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getHeaderLength() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getTotalLength() {
     throw new ImplementMe();
   }
 
+  @Override
   public void wasSent() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setSentCallback(Runnable callback) {
     throw new ImplementMe();
   }
 
+  @Override
   public Runnable getSentCallback() {
     throw new ImplementMe();
   }
 
+  @Override
   public void recycle() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isGoodbye() {
     return isGoodbye;
   }
 
+  @Override
   public void reallyDoRecycleOnWrite() {
     //
   }

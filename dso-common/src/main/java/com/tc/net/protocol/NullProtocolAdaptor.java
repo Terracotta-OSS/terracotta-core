@@ -16,11 +16,13 @@ public class NullProtocolAdaptor implements TCProtocolAdaptor {
     super();
   }
 
+  @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) {
     logger.warn("Null Protocol Adaptor isn't suppose to receive any data from the network.");
     return;
   }
 
+  @Override
   public TCByteBuffer[] getReadBuffers() {
     return TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096);
   }

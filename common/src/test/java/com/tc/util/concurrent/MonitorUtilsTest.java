@@ -25,6 +25,7 @@ public class MonitorUtilsTest extends TCTestCase {
     final SynchronizedRef ref = new SynchronizedRef(null);
 
     Thread t = new Thread() {
+      @Override
       public void run() {
         setName("thread");
         log("started");

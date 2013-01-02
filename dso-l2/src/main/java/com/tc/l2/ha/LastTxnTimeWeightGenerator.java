@@ -22,11 +22,13 @@ public class LastTxnTimeWeightGenerator implements WeightGenerator, TransactionB
    * return (weight-generation-time - last-batch-transaction-time) return 0 if none txn yet.
    * negative weight, closest one win.
    */
+  @Override
   public long getWeight() {
     long last = lastTxnTime.get();
     return (last == Long.MIN_VALUE) ? last : last - System.nanoTime();
   }
 
+  @Override
   public void notifyTransactionBatchAdded(CommitTransactionMessage ctm) {
     lastTxnTime.set(System.nanoTime());
   }

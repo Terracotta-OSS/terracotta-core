@@ -23,16 +23,19 @@ class TCMemoryManagerJdk15Basic implements JVMMemoryManager {
     }
   }
   
+  @Override
   public boolean isMemoryPoolMonitoringSupported() {
     return false;
   }
 
+  @Override
   public MemoryUsage getMemoryUsage() {
     java.lang.management.MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
     // TODO:: Supporting collectionCount in future. Get a cumulative collectionCount from every collector
     return new Jdk15MemoryUsage(heapUsage, "VM 1.5 Heap Usage");
   }
 
+  @Override
   public MemoryUsage getOldGenUsage() {
     throw new UnsupportedOperationException();
   }

@@ -20,6 +20,7 @@ public class LongGCLogger implements MemoryEventsListener {
     this.gcTimeout = gcTimeOut;
   }
 
+  @Override
   public void memoryUsed(MemoryUsage currentUsage, boolean recommendOffheap) {
     if (lastMemoryUsage == null) {
       lastMemoryUsage = currentUsage;

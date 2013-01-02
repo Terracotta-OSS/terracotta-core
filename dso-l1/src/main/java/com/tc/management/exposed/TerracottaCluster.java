@@ -43,18 +43,22 @@ public class TerracottaCluster extends AbstractTerracottaMBean implements Terrac
     return new UnsupportedOperationException(msg);
   }
 
+  @Override
   public void reset() {
     // nothing to do
   }
 
+  @Override
   public String getNodeId() {
     throw createUnsupportedOperationException();
   }
 
+  @Override
   public String[] getNodesInCluster() {
     throw createUnsupportedOperationException();
   }
 
+  @Override
   public boolean isConnected() {
     throw createUnsupportedOperationException();
   }

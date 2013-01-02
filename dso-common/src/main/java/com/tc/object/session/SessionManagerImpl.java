@@ -17,26 +17,31 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
     this.sequenceFactory = sequenceFactory;
   }
 
+  @Override
   public boolean isCurrentSession(NodeID nid, SessionID sessionID) {
     Provider provider = getProvider(nid);
     return provider.isCurrentSession(sessionID);
   }
 
+  @Override
   public void newSession(NodeID nid) {
     Provider provider = getProvider(nid);
     provider.newSession();
   }
 
+  @Override
   public SessionID getSessionID(NodeID nid) {
     Provider provider = getProvider(nid);
     return provider.getSessionID();
   }
 
+  @Override
   public SessionID nextSessionID(NodeID nid) {
     Provider provider = getProvider(nid);
     return provider.nextSessionID();
   }
 
+  @Override
   public void initProvider(NodeID nid) {
     synchronized (providersMap) {
       Provider provider = new Provider(sequenceFactory.newSequence());
@@ -45,6 +50,7 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
     }
   }
 
+  @Override
   public void resetSessionProvider() {
     synchronized (providersMap) {
       providersMap.clear();

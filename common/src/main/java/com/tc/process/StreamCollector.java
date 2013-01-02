@@ -15,6 +15,7 @@ public class StreamCollector extends StreamCopier {
     super(stream, new ByteArrayOutputStream());
   }
   
+  @Override
   public String toString() {
     return new String(((ByteArrayOutputStream) this.out).toByteArray());
   }

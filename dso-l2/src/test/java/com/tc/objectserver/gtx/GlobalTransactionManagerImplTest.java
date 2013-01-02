@@ -197,6 +197,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
 
   private static FutureTask<Void> noopFuture() {
     return new FutureTask<Void>(new Callable<Void>() {
+      @Override
       public Void call() {
         return null;
       }

@@ -11,10 +11,12 @@ public class MockChannel implements Channel {
 
   private boolean isOpen = true;
 
+  @Override
   public final synchronized boolean isOpen() {
     return isOpen;
   }
 
+  @Override
   public final synchronized void close() {
     isOpen = false;
   }

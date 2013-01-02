@@ -11,6 +11,7 @@ public class ManagedObjectChangeListenerProviderImpl implements ManagedObjectCha
     this.listener = listener;
   }
   
+  @Override
   public ManagedObjectChangeListener getListener() {
     if (this.listener == null) throw new AssertionError("Listener is null.");
     return this.listener;

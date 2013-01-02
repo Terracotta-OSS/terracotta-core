@@ -20,6 +20,7 @@ public class CompoundConfigItemListenerTest extends TCTestCase {
   private Object                     newValue1;
   private Object                     newValue2;
 
+  @Override
   public void setUp() throws Exception {
     this.listener1 = new MockConfigItemListener();
     this.listener2 = new MockConfigItemListener();

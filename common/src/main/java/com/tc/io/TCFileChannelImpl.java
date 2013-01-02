@@ -16,14 +16,17 @@ public class TCFileChannelImpl implements TCFileChannel {
     this.channel = channel;
   }
 
+  @Override
   public TCFileLock lock() throws IOException, OverlappingFileLockException {
     return new TCFileLockImpl(channel.lock());
   }
 
+  @Override
   public void close() throws IOException {
     channel.close();
   }
 
+  @Override
   public TCFileLock tryLock() throws IOException, OverlappingFileLockException {
     FileLock lock = channel.tryLock();
     if (lock != null) { return new TCFileLockImpl(lock); }

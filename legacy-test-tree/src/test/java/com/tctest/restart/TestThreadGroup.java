@@ -16,6 +16,7 @@ public class TestThreadGroup extends ThreadGroup {
 
   private final Set throwables = Collections.synchronizedSet(new HashSet());
 
+  @Override
   public void uncaughtException(Thread thread, Throwable throwable) {
     super.uncaughtException(thread, throwable);
     throwables.add(throwable);

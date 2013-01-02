@@ -35,6 +35,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     this.channelFactory = channelFactory;
   }
 
+  @Override
   public MessageChannelInternal createNewChannel(ChannelID id) {
     MessageChannelInternal channel = channelFactory.createNewChannel(id);
     synchronized (this) {
@@ -58,14 +59,17 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     }
   }
 
+  @Override
   public synchronized MessageChannelInternal getChannel(ChannelID id) {
     return (MessageChannelInternal) channels.get(id);
   }
 
+  @Override
   public synchronized MessageChannelInternal[] getChannels() {
     return (MessageChannelInternal[]) channels.values().toArray(EMPTY_CHANNEL_ARARY);
   }
 
+  @Override
   public synchronized void closeAllChannels() {
     MessageChannelInternal[] channelsCopy = getChannels();
     for (MessageChannelInternal element : channelsCopy) {
@@ -74,10 +78,12 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     Assert.assertEquals(0, channels.size());
   }
 
+  @Override
   public synchronized Set getAllChannelIDs() {
     return new HashSet(channels.keySet());
   }
 
+  @Override
   public synchronized boolean isValidID(ChannelID channelID) {
     if (channelID == null) { return false; }
 
@@ -91,6 +97,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     return true;
   }
 
+  @Override
   public void notifyChannelEvent(ChannelEvent event) {
     MessageChannel channel = event.getChannel();
 
@@ -117,6 +124,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     fireChannelRemovedEvent(channel);
   }
 
+  @Override
   public synchronized void addEventListener(ChannelManagerEventListener listener) {
     if (listener == null) { throw new IllegalArgumentException("listener must be non-null"); }
     this.eventListeners.add(listener);

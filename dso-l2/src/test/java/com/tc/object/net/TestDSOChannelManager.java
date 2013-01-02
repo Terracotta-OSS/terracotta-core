@@ -19,6 +19,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
 
   private final MessageChannel[] allChannels = new MessageChannel[0];
 
+  @Override
   public void closeAll(Collection channelIDs) {
     throw new ImplementMe();
   }
@@ -31,6 +32,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
+  @Override
   public String getChannelAddress(NodeID nid) {
     throw new ImplementMe();
   }
@@ -43,46 +45,57 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
+  @Override
   public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addEventListener(DSOChannelManagerEventListener listener) {
     throw new ImplementMe();
   }
 
+  @Override
   public MessageChannel getActiveChannel(NodeID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public MessageChannel[] getActiveChannels() {
     return allChannels;
   }
 
+  @Override
   public TCConnection[] getAllActiveClientConnections() {
     throw new ImplementMe();
   }
 
+  @Override
   public Set getAllClientIDs() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isActiveID(NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void makeChannelActive(ClientID clientID, boolean persistent) {
     throw new ImplementMe();
   }
 
+  @Override
   public void makeChannelActiveNoAck(MessageChannel channel) {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientID getClientIDFor(ChannelID channelID) {
     return new ClientID(channelID.toLong());
   }
 
+  @Override
   public void makeChannelRefuse(ClientID clientID, String message) {
     throw new ImplementMe();
 

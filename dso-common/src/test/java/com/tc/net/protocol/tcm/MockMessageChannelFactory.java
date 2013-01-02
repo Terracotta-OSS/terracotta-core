@@ -9,6 +9,7 @@ public class MockMessageChannelFactory implements ServerMessageChannelFactory {
   public MessageChannelInternal channel;
   public int                    callCount;
 
+  @Override
   public MessageChannelInternal createNewChannel(ChannelID id) {
     callCount++;
     return channel;

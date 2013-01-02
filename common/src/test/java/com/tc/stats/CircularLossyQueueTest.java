@@ -72,6 +72,7 @@ public class CircularLossyQueueTest extends TCTestCase {
 
   public void testWithMultiThreaded() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (int i = 1; i <= SIZE / 2; i++) {
           queue.push(new TimeStampedCounterValue(System.currentTimeMillis(), i));

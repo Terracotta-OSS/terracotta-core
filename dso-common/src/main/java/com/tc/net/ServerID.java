@@ -67,10 +67,12 @@ public class ServerID implements NodeID, Serializable {
     return "NodeID[" + getName() + "]";
   }
 
+  @Override
   public boolean isNull() {
     return NULL_ID.equals(this);
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
     int length = in.readInt();
@@ -84,6 +86,7 @@ public class ServerID implements NodeID, Serializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     Assert.assertTrue(this.name != UNINITIALIZED);
     out.writeString(this.name);
@@ -92,10 +95,12 @@ public class ServerID implements NodeID, Serializable {
     out.write(this.uid);
   }
 
+  @Override
   public byte getNodeType() {
     return SERVER_NODE_TYPE;
   }
 
+  @Override
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }

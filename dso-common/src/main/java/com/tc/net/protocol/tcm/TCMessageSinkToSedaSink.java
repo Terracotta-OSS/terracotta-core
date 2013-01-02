@@ -15,6 +15,7 @@ class TCMessageSinkToSedaSink implements TCMessageSink {
     this.hydrateSink = hydrateSink;
   }
 
+  @Override
   public void putMessage(TCMessage message) {    
     HydrateContext context = new HydrateContext(message, destSink);
     hydrateSink.add(context);

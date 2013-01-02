@@ -22,6 +22,7 @@ public class UnlockedSharedObjectEvent extends AbstractLockEvent {
     return (UnlockedSharedObjectEventContext) getApplicationEventContext();
   }
 
+  @Override
   public String getMessage() {
     return "Attempt to access a shared object outside the scope of a shared lock.  "
            + "All access to shared objects must be within the scope of one or more shared locks defined in your Terracotta configuration.";

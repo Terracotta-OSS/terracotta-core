@@ -257,6 +257,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
       this.next = (BitSet) (this.nodes.hasNext() ? this.nodes.next() : null);
     }
 
+    @Override
     public boolean hasNext() {
       return (this.next != null) || (this.current != null && !isPointingToLast());
     }
@@ -266,6 +267,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
       return true;
     }
 
+    @Override
     public Object next() {
       if (this.current == null) { throw new NoSuchElementException(); }
       if (this.expectedModCount != BitSetObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
@@ -306,6 +308,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
      * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
      * only for validation of no concurrent modification while iterating the set
      */
+    @Override
     @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
     public void remove() {
       if (this.lastReturned == null) { throw new IllegalStateException(); }
@@ -413,6 +416,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
      * while comparing we only care about start since that tells us the starting point of the sets of integer in this
      * bit set
      */
+    @Override
     public int compareTo(final BitSet o) {
       final BitSet other = o;
       if (this.start < other.start) {
@@ -439,6 +443,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
       return (int) (this.start * 31 + nextLongs);
     }
 
+    @Override
     public void swapPayload(final Node<BitSet> other) {
       if (other instanceof BitSet) {
         final BitSet r = (BitSet) other;
@@ -453,6 +458,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
       }
     }
 
+    @Override
     public BitSet getPayload() {
       return this;
     }

@@ -80,10 +80,12 @@ public class SinglyLinkedListTest extends TestCase {
       this.id = id;
     }
 
+    @Override
     public Node getNext() {
       return this.next;
     }
 
+    @Override
     public Node setNext(Node n) {
       Node old = this.next;
       this.next = n;

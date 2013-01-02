@@ -68,6 +68,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(REQUEST_TYPE, (byte) requestType.ordinal());
     switch (requestType) {
@@ -117,6 +118,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     }
   }
 
+  @Override
   protected String describePayload() {
     StringBuffer rv = new StringBuffer();
 
@@ -136,6 +138,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     return rv.toString();
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case LOCK_ID:
@@ -249,6 +252,7 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     this.waitMillis = millis;
   }
 
+  @Override
   public Object getKey() {
     return this.getSourceNodeID();
   }

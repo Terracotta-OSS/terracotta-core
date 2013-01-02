@@ -65,14 +65,17 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (longAry);
   }
 
+  @Override
   public OidLongArray getAndSet(ObjectID id, Transaction tx) {
     return (getAndModify(id.toLong(), true, tx));
   }
 
+  @Override
   public OidLongArray getAndClr(ObjectID id, Transaction tx) {
     return (getAndModify(id.toLong(), false, tx));
   }
 
+  @Override
   public boolean contains(ObjectID id) {
     long oid = id.toLong();
     Long mapIndex = oidIndex(oid);
@@ -83,10 +86,12 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (false);
   }
 
+  @Override
   public void clear() {
     this.map.clear();
   }
 
+  @Override
   public int size() {
     return this.map.size();
   }

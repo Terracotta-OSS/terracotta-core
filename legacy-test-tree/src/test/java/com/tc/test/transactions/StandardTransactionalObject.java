@@ -62,6 +62,7 @@ public class StandardTransactionalObject implements TransactionalObject {
       this.sequenceNumber = sequenceNumber;
     }
 
+    @Override
     public boolean isAfter(Timing rawOther) {
       SequencedTiming other = (SequencedTiming) rawOther;
       if (other == null) return true;
@@ -69,6 +70,7 @@ public class StandardTransactionalObject implements TransactionalObject {
              || (this.actualTime == other.actualTime && this.sequenceNumber > other.sequenceNumber);
     }
 
+    @Override
     public boolean isBefore(Timing rawOther) {
       SequencedTiming other = (SequencedTiming) rawOther;
       if (other == null) return false;
@@ -76,14 +78,17 @@ public class StandardTransactionalObject implements TransactionalObject {
              || (this.actualTime == other.actualTime && this.sequenceNumber < other.sequenceNumber);
     }
 
+    @Override
     public boolean isAfterOrEqual(Timing other) {
       return isAfter(other) || equals(other);
     }
 
+    @Override
     public boolean isBeforeOrEqual(Timing other) {
       return isBefore(other) || equals(other);
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!(that instanceof SequencedTiming)) return false;
       SequencedTiming thatTiming = (SequencedTiming) that;
@@ -92,10 +97,12 @@ public class StandardTransactionalObject implements TransactionalObject {
           .isEquals();
     }
 
+    @Override
     public long rawTime() {
       return this.actualTime;
     }
 
+    @Override
     public String toString() {
       return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).append("actual time", this.actualTime)
           .append("sequence number", this.sequenceNumber).toString();
@@ -109,36 +116,43 @@ public class StandardTransactionalObject implements TransactionalObject {
       this.time = time;
     }
 
+    @Override
     public boolean isAfter(Timing rawOther) {
       if (rawOther == null) return true;
       BasicTiming other = (BasicTiming) rawOther;
       return this.time > other.time;
     }
 
+    @Override
     public boolean isBefore(Timing rawOther) {
       if (rawOther == null) return false;
       BasicTiming other = (BasicTiming) rawOther;
       return this.time < other.time;
     }
 
+    @Override
     public boolean isAfterOrEqual(Timing other) {
       return isAfter(other) || equals(other);
     }
 
+    @Override
     public boolean isBeforeOrEqual(Timing other) {
       return isBefore(other) || equals(other);
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!(that instanceof BasicTiming)) return false;
       BasicTiming thatTiming = (BasicTiming) that;
       return new EqualsBuilder().append(this.time, thatTiming.time).isEquals();
     }
 
+    @Override
     public long rawTime() {
       return this.time;
     }
 
+    @Override
     public String toString() {
       return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).append("time", this.time).toString();
     }
@@ -177,6 +191,7 @@ public class StandardTransactionalObject implements TransactionalObject {
       return this.value;
     }
 
+    @Override
     public String toString() {
       return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).append("value", value).append("started at",
                                                                                                       startedAt)
@@ -196,6 +211,7 @@ public class StandardTransactionalObject implements TransactionalObject {
       return this.startedAt;
     }
 
+    @Override
     public String toString() {
       return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).append("started at", startedAt).toString();
     }
@@ -257,10 +273,12 @@ public class StandardTransactionalObject implements TransactionalObject {
     return ++this.lastSequence;
   }
 
+  @Override
   public synchronized Context startWrite(Object value) {
     return startWrite(value, System.currentTimeMillis());
   }
 
+  @Override
   public synchronized Context startWrite(Object value, long now) {
     Assert.eval(now >= 0);
 
@@ -271,10 +289,12 @@ public class StandardTransactionalObject implements TransactionalObject {
     return out;
   }
 
+  @Override
   public synchronized void endWrite(Context rawWrite) {
     endWrite(rawWrite, System.currentTimeMillis());
   }
 
+  @Override
   public synchronized void endWrite(Context rawWrite, long now) {
     Assert.assertNotNull(rawWrite);
     Assert.eval(now >= 0);
@@ -287,10 +307,12 @@ public class StandardTransactionalObject implements TransactionalObject {
     write.commit(createTiming(now));
   }
 
+  @Override
   public synchronized Context startRead() {
     return startRead(System.currentTimeMillis());
   }
 
+  @Override
   public synchronized Context startRead(long now) {
     Assert.eval(now >= 0);
 
@@ -301,10 +323,12 @@ public class StandardTransactionalObject implements TransactionalObject {
     return out;
   }
 
+  @Override
   public synchronized void endRead(Context rawRead, Object result) {
     endRead(rawRead, result, System.currentTimeMillis());
   }
 
+  @Override
   public synchronized void endRead(Context rawRead, Object result, long now) {
     Assert.assertNotNull(rawRead);
     Assert.eval(now >= 0);
@@ -392,6 +416,7 @@ public class StandardTransactionalObject implements TransactionalObject {
     return one.equals(two);
   }
 
+  @Override
   public String toString() {
     return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).append("name", this.name).append("slop",
                                                                                                        this.slop)

@@ -83,18 +83,22 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     }
   }
 
+  @Override
   public ObjectRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public ObjectIDSet getRequestedObjectIDs() {
     return this.objectIDs;
   }
 
+  @Override
   public ObjectIDSet getRemoved() {
     return this.removed;
   }
 
+  @Override
   public void initialize(ObjectRequestID rid, Set<ObjectID> requestedObjectIDs, int depth, ObjectIDSet removeObjects) {
     this.requestID = rid;
     this.objectIDs.addAll(requestedObjectIDs);
@@ -103,22 +107,27 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     this.threadName = Thread.currentThread().getName();
   }
 
+  @Override
   public int getRequestDepth() {
     return this.requestDepth;
   }
 
+  @Override
   public String getRequestingThreadName() {
     return this.threadName;
   }
 
+  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
 
+  @Override
   public Object getKey() {
     return getSourceNodeID();
   }
 
+  @Override
   public LOOKUP_STATE getLookupState() {
     return LOOKUP_STATE.CLIENT;
   }

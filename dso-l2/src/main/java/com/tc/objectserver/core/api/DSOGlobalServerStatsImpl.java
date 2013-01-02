@@ -73,38 +73,47 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.serverMapGetSnapshotRequestsCounter = counter;
     return this;
   }
+  @Override
   public SampledCounter getObjectFlushCounter() {
     return this.flushCounter;
   }
 
+  @Override
   public SampledCounter getObjectFaultCounter() {
     return this.faultCounter;
   }
 
+  @Override
   public ObjectManagerStats getObjectManagerStats() {
     return this.objMgrStats;
   }
 
+  @Override
   public SampledCounter getTransactionCounter() {
     return this.txnCounter;
   }
 
+  @Override
   public SampledCounter getBroadcastCounter() {
     return broadcastCounter;
   }
 
+  @Override
   public SampledCounter getGlobalLockRecallCounter() {
     return globalLockRecallCounter;
   }
 
+  @Override
   public SampledRateCounter getChangesPerBroadcastCounter() {
     return changesPerBroadcast;
   }
 
+  @Override
   public SampledRateCounter getTransactionSizeCounter() {
     return transactionSizeCounter;
   }
 
+  @Override
   public SampledCounter getGlobalLockCounter() {
     return this.globalLockCounter;
   }
@@ -114,10 +123,12 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     return operationCounter;
   }
 
+  @Override
   public SampledCumulativeCounter getServerMapGetSizeRequestsCounter() {
     return serverMapGetSizeRequestsCounter;
   }
 
+  @Override
   public SampledCumulativeCounter getServerMapGetValueRequestsCounter() {
     return serverMapGetValueRequestsCounter;
   }

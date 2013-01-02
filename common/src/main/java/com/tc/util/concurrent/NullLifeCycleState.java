@@ -9,14 +9,17 @@ public class NullLifeCycleState implements LifeCycleState {
     super();
   }
 
+  @Override
   public void start()  {
     return;
   }
   
+  @Override
   public boolean isStopRequested() {
     return false;
   }
 
+  @Override
   public boolean stopAndWait(long waitTime) {
     return true;
   }

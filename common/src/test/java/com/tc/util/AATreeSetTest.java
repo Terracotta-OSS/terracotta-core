@@ -351,6 +351,7 @@ public class AATreeSetTest extends TestCase {
       this.i = i;
     }
 
+    @Override
     public int compareTo(MyInt o) {
       return this.i - o.i;
     }
@@ -371,6 +372,7 @@ public class AATreeSetTest extends TestCase {
       return "MyInt[" + this.i + "]";
     }
 
+    @Override
     public void swapPayload(Node<MyInt> node) {
       MyInt myInt = (MyInt) node;
       int temp = myInt.i;
@@ -378,6 +380,7 @@ public class AATreeSetTest extends TestCase {
       this.i = temp;
     }
 
+    @Override
     public MyInt getPayload() {
       return this;
     }

@@ -14,18 +14,22 @@ public interface OffheapJMXStats extends OffheapStats, PrettyPrintable {
 
   public static final OffheapJMXStats NULL_OFFHEAP_JMXSTATS = new OffheapJMXStats() {
 
+                                                              @Override
                                                               public long getOffheapReservedSize() {
                                                                 return 0;
                                                               }
 
+                                                              @Override
                                                               public long getOffheapUsedSize() {
                                                                 return 0;
                                                               }
 
+                                                              @Override
                                                               public long getOffheapMaxSize() {
                                                                 return 0;
                                                               }
 
+                                                              @Override
                                                               public PrettyPrinter prettyPrint(PrettyPrinter out) {
                                                                 return out;
                                                               }

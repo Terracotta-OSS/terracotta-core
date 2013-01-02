@@ -74,6 +74,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     this.isOutgoing = false;
   }
 
+  @Override
   public TCMessageType getMessageType() {
     return type;
   }
@@ -108,6 +109,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Prepares all instance data into the payload byte buffer array in preparation for sending it.
    */
+  @Override
   public void dehydrate() {
     dehydrate(null);
   }
@@ -150,6 +152,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * network before it is released to the client for use. XXX:: This synchronization is there to create proper memory
    * boundary.
    */
+  @Override
   public synchronized void hydrate() throws IOException, UnknownNameException {
     if (processed.attemptSet()) {
       try {
@@ -354,6 +357,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return channel.getChannelID();
   }
 
+  @Override
   public MessageChannel getChannel() {
     return channel;
   }
@@ -362,6 +366,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * (non-Javadoc)
    * @see com.tc.net.protocol.tcm.ApplicationMessage#send()
    */
+  @Override
   public void send() {
     if (isSent.attemptSet()) {
       dehydrate();
@@ -384,10 +389,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     }
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return isOutgoing ? channel.getLocalNodeID() : channel.getRemoteNodeID();
   }
 
+  @Override
   public NodeID getDestinationNodeID() {
     return isOutgoing ? channel.getRemoteNodeID() : channel.getLocalNodeID();
   }

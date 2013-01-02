@@ -63,46 +63,57 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     this.socketConnectTimeout = socketConnectTimeout;
   }
 
+  @Override
   public boolean isSocketConnectOnPingFail() {
     return doSocketConnect;
   }
 
+  @Override
   public boolean isHealthCheckerEnabled() {
     return enable;
   }
 
+  @Override
   public long getPingIdleTimeMillis() {
     return this.pingIdleTime;
   }
 
+  @Override
   public long getPingIntervalMillis() {
     return this.pingInterval;
   }
 
+  @Override
   public int getPingProbes() {
     return this.pingProbes;
   }
 
+  @Override
   public String getHealthCheckerName() {
     return this.name;
   }
 
+  @Override
   public int getSocketConnectMaxCount() {
     return this.socketConnectMaxCount;
   }
 
+  @Override
   public int getSocketConnectTimeout() {
     return this.socketConnectTimeout;
   }
 
+  @Override
   public String getCallbackPortListenerBindAddress() {
     throw new AssertionError("CallbackPort Listener not needed for servers");
   }
 
+  @Override
   public int getCallbackPortListenerBindPort() {
     throw new AssertionError("CallbackPort Listener not needed for servers");
   }
 
+  @Override
   public boolean isCallbackPortListenerNeeded() {
     return false;
   }

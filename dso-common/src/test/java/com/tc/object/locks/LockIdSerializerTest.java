@@ -126,6 +126,7 @@ public class LockIdSerializerTest extends TestCase {
 
     static ClassLoader CLASS_LOADER = LockIDSerializer.class.getClassLoader();
 
+    @Override
     public Class getClassFor(String className) {
       throw new AssertionError();
     }
@@ -138,6 +139,7 @@ public class LockIdSerializerTest extends TestCase {
       return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && LiteralValues.isLiteralInstance(o);
     }
 
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if ("getClassProvider".equals(method.getName())) {
         return this;

@@ -26,6 +26,7 @@ public class DSORoot extends AbstractTerracottaMBean implements DSORootMBean {
     this.rootName = name;
   }
 
+  @Override
   public String getRootName() {
     return this.rootName;
   }
@@ -33,15 +34,18 @@ public class DSORoot extends AbstractTerracottaMBean implements DSORootMBean {
   /**
    * NOTE: this only works in a non-AA cluster. Leaving it here because RootTool uses it.
    */
+  @Override
   @Deprecated
   public ManagedObjectFacade lookupFacade(int limit) throws NoSuchObjectException {
     return this.objMgr.lookupFacade(this.objectID, limit);
   }
 
+  @Override
   public ObjectID getObjectID() {
     return objectID;
   }
 
+  @Override
   public void reset() {
     /**/
   }

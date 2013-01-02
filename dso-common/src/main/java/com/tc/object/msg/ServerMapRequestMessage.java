@@ -10,6 +10,7 @@ import com.tc.object.ServerMapRequestType;
 
 public interface ServerMapRequestMessage extends TCMessage {
 
+  @Override
   public void send();
 
   public ClientID getClientID();
@@ -18,5 +19,6 @@ public interface ServerMapRequestMessage extends TCMessage {
 
   public int getRequestCount();
   
+  @Override
   public MessageChannel getChannel();
 }

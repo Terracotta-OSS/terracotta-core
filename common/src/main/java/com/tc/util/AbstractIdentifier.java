@@ -49,6 +49,7 @@ public abstract class AbstractIdentifier implements Comparable, Serializable {
     return id;
   }
 
+  @Override
   public String toString() {
     return getIdentifierType() + "=" + "[" + id + "]";
   }
@@ -59,6 +60,7 @@ public abstract class AbstractIdentifier implements Comparable, Serializable {
    */
   abstract public String getIdentifierType();
 
+  @Override
   public int hashCode() {
     return (int) (this.id ^ (this.id >>> 32));
   }
@@ -66,6 +68,7 @@ public abstract class AbstractIdentifier implements Comparable, Serializable {
   /**
    * Equality is based on the id value and the identifier class.
    */
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof AbstractIdentifier) {
       AbstractIdentifier other = (AbstractIdentifier) obj;
@@ -74,6 +77,7 @@ public abstract class AbstractIdentifier implements Comparable, Serializable {
     return false;
   }
 
+  @Override
   public int compareTo(Object o) {
     AbstractIdentifier other = (AbstractIdentifier) o;
     return (id < other.id ? -1 : (id == other.id ? 0 : 1));

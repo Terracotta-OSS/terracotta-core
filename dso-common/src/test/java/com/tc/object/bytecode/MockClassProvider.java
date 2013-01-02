@@ -11,6 +11,7 @@ public class MockClassProvider implements ClassProvider {
     super();
   }
 
+  @Override
   public Class getClassFor(String className) throws ClassNotFoundException {
     return getClass().getClassLoader().loadClass(className);
   }

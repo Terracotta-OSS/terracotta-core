@@ -92,6 +92,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     writerComm.cleanupChannel(channel, callback);
   }
 
+  @Override
   public void closeEvent(TCListenerEvent event) {
     listenerRemoved(event.getSource());
   }
@@ -206,6 +207,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
   }
 
+  @Override
   public void closeEvent(TCConnectionEvent event) {
     synchronized (managedConnectionsMap) {
       Assert.eval(managedConnectionsMap.containsKey(event.getSource()));
@@ -216,14 +218,17 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
   }
 
+  @Override
   public void connectEvent(TCConnectionEvent event) {
     //
   }
 
+  @Override
   public void endOfFileEvent(TCConnectionEvent event) {
     //
   }
 
+  @Override
   public void errorEvent(TCConnectionErrorEvent errorEvent) {
     //
   }
@@ -365,6 +370,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       if (Thread.currentThread() != this) {
         final CountDownLatch latch = new CountDownLatch(1);
         this.addSelectorTask(new Runnable() {
+          @Override
           public void run() {
             CommThread.this.unregister(channel);
             latch.countDown();
@@ -388,6 +394,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     void stopListener(final ServerSocketChannel ssc, final Runnable callback) {
       if (Thread.currentThread() != this) {
         Runnable task = new Runnable() {
+          @Override
           public void run() {
             CommThread.this.stopListener(ssc, callback);
           }
@@ -423,6 +430,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         }
 
         addSelectorTask(new Runnable() {
+          @Override
           public void run() {
             CommThread.this.cleanupChannel(ch, callback);
           }
@@ -712,6 +720,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         final CommThread commTh = req.getCommNIOServiceThread();
         Assert.assertNotNull(commTh);
         commTh.addSelectorTask(new Runnable() {
+          @Override
           public void run() {
             commTh.handleRequest(req);
           }

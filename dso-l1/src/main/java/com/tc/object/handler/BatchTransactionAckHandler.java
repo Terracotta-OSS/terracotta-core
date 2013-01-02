@@ -14,11 +14,13 @@ public class BatchTransactionAckHandler extends AbstractEventHandler {
 
   private ClientTransactionManager transactionManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     BatchTransactionAcknowledgeMessage msg = (BatchTransactionAcknowledgeMessage) context;
     transactionManager.receivedBatchAcknowledgement(msg.getBatchID(), msg.getSourceNodeID());
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext cc = (ClientConfigurationContext) context;

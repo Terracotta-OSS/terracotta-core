@@ -116,38 +116,47 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return (this.flags & offset) == offset;
   }
 
+  @Override
   public boolean isNew() {
     return getFlag(IS_NEW_OFFSET);
   }
 
+  @Override
   public boolean isNewInDB() {
     return getFlag(IS_DB_NEW_OFFSET);
   }
 
+  @Override
   public void setIsNew(final boolean isNew) {
     setBasicIsNew(isNew);
   }
 
+  @Override
   public boolean isDirty() {
     return getFlag(IS_DIRTY_OFFSET);
   }
 
+  @Override
   public void setIsDirty(final boolean isDirty) {
     setBasicIsDirty(isDirty);
   }
 
+  @Override
   public ObjectID getID() {
     return this.id;
   }
 
+  @Override
   public Set getObjectReferences() {
     return (state == null ? TCCollections.EMPTY_OBJECT_ID_SET : this.state.getObjectReferences());
   }
 
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     this.state.addObjectReferencesTo(traverser);
   }
 
+  @Override
   public void apply(final DNA dna, final TransactionID txnID, final ApplyTransactionInfo applyInfo,
                     final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) {
     final boolean isUninitialized = isUninitialized();
@@ -209,6 +218,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return ManagedObjectStateFactory.getInstance();
   }
 
+  @Override
   public ManagedObjectState getManagedObjectState() {
     return this.state;
   }
@@ -216,6 +226,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   /**
    * Writes the data in the object to the DNA strand supplied.
    */
+  @Override
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType type) {
     final DNAWriter writer = new ObjectDNAWriterImpl(out, this.id, getClassname(), serializer, DNA_STORAGE_ENCODING,
                                                      this.version, false);
@@ -232,6 +243,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return writer.getBuffer().toString();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     final PrettyPrinter rv = out;
     out = out.print("ManagedObjectImpl").duplicateAndIndent().println();
@@ -246,6 +258,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return rv;
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final int limit) {
     return this.state.createFacade(this.id, getClassname(), limit);
   }
@@ -257,6 +270,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return this.state == null ? "UNKNOWN" : this.state.getClassName();
   }
 
+  @Override
   public ManagedObjectReference getReference() {
     return this;
   }
@@ -264,35 +278,43 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   /*********************************************************************************************************************
    * ManagedObjectReference Interface
    */
+  @Override
   public ManagedObject getObject() {
     return this;
   }
 
+  @Override
   public boolean isRemoveOnRelease() {
     // Serialized entries are always remove on release
     return (state != null && state instanceof TDCSerializedEntryManagedObjectState) || getFlag(REMOVE_ON_RELEASE_OFFSET);
   }
   
+  @Override
   public boolean markReference() {
     return compareAndSetFlag(REFERENCED_OFFSET, false, true);
   }
 
+  @Override
   public boolean unmarkReference() {
     return compareAndSetFlag(REFERENCED_OFFSET, true, false);
   }
 
+  @Override
   public boolean isReferenced() {
     return getFlag(REFERENCED_OFFSET);
   }
 
+  @Override
   public void setRemoveOnRelease(final boolean removeOnRelease) {
     setFlag(REMOVE_ON_RELEASE_OFFSET, removeOnRelease);
   }
 
+  @Override
   public ObjectID getObjectID() {
     return getID();
   }
 
+  @Override
   public long getVersion() {
     return this.version;
   }

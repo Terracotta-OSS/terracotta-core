@@ -47,10 +47,12 @@ public class PingMessage extends DSOMessageBase {
     return rv;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(SEQUENCE, sequence);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case SEQUENCE:

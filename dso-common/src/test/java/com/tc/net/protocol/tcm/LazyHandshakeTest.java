@@ -52,6 +52,7 @@ public class LazyHandshakeTest extends TCTestCase {
   private ClientMessageChannel  channel[]          = new ClientMessageChannel[CLIENT_COUNT];
   private int                   currentClient      = 0;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -90,6 +91,7 @@ public class LazyHandshakeTest extends TCTestCase {
                                  .getBindAddress().getHostAddress(), proxyPort) }));
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }
@@ -99,6 +101,7 @@ public class LazyHandshakeTest extends TCTestCase {
     // imitating TCGroupManager implementation of StaticMemberDiscovery on handshake timeouts
 
     Thread lazyThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         lazySetUp();
         handshaker();
@@ -120,6 +123,7 @@ public class LazyHandshakeTest extends TCTestCase {
     for (currentClient = 0; currentClient < 3; currentClient++) {
       System.out.println("Connecting to peer node. Attempt :" + currentClient);
       Thread t = new Thread(new Runnable() {
+        @Override
         public void run() {
           channel[currentClient] = createClientMessageChannel();
           try {

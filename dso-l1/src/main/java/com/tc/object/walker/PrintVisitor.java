@@ -23,6 +23,7 @@ public class PrintVisitor implements Visitor {
     this.formatter = formatter;
   }
 
+  @Override
   public void visitRootObject(MemberValue value) {
     outputLine(typeDisplay(value.getValueObject().getClass()) + " (id " + value.getId() + ")");
   }
@@ -31,6 +32,7 @@ public class PrintVisitor implements Visitor {
     out.output(line);
   }
 
+  @Override
   public void visitValue(MemberValue value, int depth) {
     StringBuffer buf = new StringBuffer();
     boolean isLiteral = !walkTest.shouldTraverse(value);
@@ -116,6 +118,7 @@ public class PrintVisitor implements Visitor {
     }
   }
 
+  @Override
   public void visitMapEntry(int index, int depth) {
     StringBuffer buf = new StringBuffer();
     indent(depth, buf);

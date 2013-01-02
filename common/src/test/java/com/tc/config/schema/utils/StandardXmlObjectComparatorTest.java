@@ -157,6 +157,7 @@ public class StandardXmlObjectComparatorTest extends TCTestCase {
 
   private StandardXmlObjectComparator comparator;
 
+  @Override
   public void setUp() throws Exception {
     comparator = new StandardXmlObjectComparator();
   }

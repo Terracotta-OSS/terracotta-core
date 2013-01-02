@@ -76,6 +76,7 @@ public class Version implements Comparable<Version> {
     return this.qualifier;
   }
 
+  @Override
   public int compareTo(Version otherVersion) {
     int majorDiff = major - otherVersion.major();
     if (majorDiff != 0) { return majorDiff; }

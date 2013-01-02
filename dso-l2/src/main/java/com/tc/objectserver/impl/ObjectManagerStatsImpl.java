@@ -22,11 +22,13 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
     this.newObjectCounter = newObjectCounter;
   }
 
+  @Override
   public void newObjectCreated() {
     this.objectsCreated.incrementAndGet();
     this.newObjectCounter.increment();
   }
 
+  @Override
   public long getTotalObjectsCreated() {
     return this.objectsCreated.get();
   }

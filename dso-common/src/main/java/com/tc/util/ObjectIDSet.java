@@ -96,6 +96,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     this.oidSet = oidSet;
   }
 
+  @Override
   public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
     int oidSetType = in.readInt();
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
@@ -111,6 +112,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this;
   }
 
+  @Override
   public void serializeTo(final TCByteBufferOutput out) {
     out.writeInt(this.type.ordinal());
     this.oidSet.serializeTo(out);
@@ -192,6 +194,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.toShortString();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(toShortString());
     return out;
@@ -199,26 +202,32 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
 
   // =======================SortedSet Interface Methods==================================
 
+  @Override
   public ObjectID first() {
     return this.oidSet.first();
   }
 
+  @Override
   public ObjectID last() {
     return this.oidSet.last();
   }
 
+  @Override
   public Comparator comparator() {
     return null;
   }
 
+  @Override
   public SortedSet headSet(final ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SortedSet subSet(final ObjectID arg0, final ObjectID arg1) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SortedSet tailSet(final ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
@@ -240,14 +249,17 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
       return new Iterator() {
         Iterator i = UnmodifiableObjectIDSet.super.iterator();
 
+        @Override
         public boolean hasNext() {
           return this.i.hasNext();
         }
 
+        @Override
         public Object next() {
           return this.i.next();
         }
 
+        @Override
         public void remove() {
           throw new UnsupportedOperationException();
         }

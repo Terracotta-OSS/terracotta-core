@@ -35,6 +35,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public NodeID getNodeID() {
     return nodeID;
   }
@@ -42,6 +43,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean applyCommitted(final TransactionID requestID) {
     synchronized (this.txnIDsToState) {
       ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
@@ -59,6 +61,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean skipApplyAndCommit(final TransactionID requestID) {
     synchronized (this.txnIDsToState) {
       ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
@@ -76,12 +79,14 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void addAllPendingServerTransactionIDsTo(Set<ServerTransactionID> txnsInSystem) {
     synchronized (txnIDsToState) {
       txnsInSystem.addAll(txnIDsToState.keySet());
     }
   }
 
+  @Override
   public void addObjectsSyncedTo(final NodeID to, final TransactionID txnID) {
     throw new AssertionError("Objects can't be synced from Passive Server");
   }
@@ -89,6 +94,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void incomingTransactions(Set<ServerTransactionID> serverTxnsIDs) {
     synchronized (txnIDsToState) {
       for (ServerTransactionID transactionID : serverTxnsIDs) {
@@ -102,6 +108,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void nodeDead(CallBackOnComplete callBack) {
     synchronized (txnIDsToState) {
       this.callback = callBack;
@@ -116,6 +123,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @param TransactionID requestID
    * @return boolean
    */
+  @Override
   public boolean hasWaitees(TransactionID requestID) {
     return false;
   }
@@ -125,6 +133,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @param TransactionID requestID
    * @throws AssertionError always, should not be called.
    */
+  @Override
   public void addWaitee(NodeID waitee, TransactionID requestID) {
     throw new AssertionError("Transactions should never be broadcasted in Passive Server : " + waitee + " , "
                              + requestID);
@@ -135,6 +144,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @return boolean
    * @throws AssertionError always, should not be called.
    */
+  @Override
   public boolean broadcastCompleted(TransactionID requestID) {
     throw new AssertionError("Transactions should never be broadcasted in Passive Server");
   }
@@ -143,6 +153,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @param TransactionID requestID
    * @return boolean true when the TransactionState for the requestID is complete.
    */
+  @Override
   public boolean processMetaDataCompleted(TransactionID requestID) {
     synchronized (this.txnIDsToState) {
       ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
@@ -162,6 +173,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @return boolean
    * @throws AssertionError always, should not be called.
    */
+  @Override
   public boolean removeWaitee(NodeID waitee, TransactionID requestID) {
     throw new AssertionError("Transactions should never be ACKED to Passive Server");
   }
@@ -171,6 +183,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @return boolean
    * @throws AssertionError always, should not be called.
    */
+  @Override
   public boolean relayTransactionComplete(TransactionID requestID) {
     throw new AssertionError("Transactions should never be relayed from Passive Server");
   }
@@ -181,6 +194,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @param NodeID waitee
    * @return Set set
    */
+  @Override
   public Set requestersWaitingFor(NodeID waitee) {
     return Collections.EMPTY_SET;
   }

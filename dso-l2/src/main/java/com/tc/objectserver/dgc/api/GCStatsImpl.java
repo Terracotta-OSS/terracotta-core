@@ -35,6 +35,7 @@ public class GCStatsImpl implements GCStats, Serializable {
     this.startTime = startTime;
   }
 
+  @Override
   public int getIteration() {
     return this.number;
   }
@@ -59,42 +60,52 @@ public class GCStatsImpl implements GCStats, Serializable {
     this.state = GC_CANCELED;
   }
 
+  @Override
   public synchronized long getStartTime() {
     return this.startTime;
   }
 
+  @Override
   public synchronized long getElapsedTime() {
     return this.elapsedTime;
   }
 
+  @Override
   public synchronized long getBeginObjectCount() {
     return this.beginObjectCount;
   }
 
+  @Override
   public synchronized long getEndObjectCount() {
     return this.endObjectCount;
   }
 
+  @Override
   public synchronized long getCandidateGarbageCount() {
     return this.candidateGarbageCount;
   }
 
+  @Override
   public synchronized long getActualGarbageCount() {
     return this.actualGarbageCount;
   }
 
+  @Override
   public synchronized long getMarkStageTime() {
     return this.markStageTime;
   }
 
+  @Override
   public synchronized long getPausedStageTime() {
     return this.pausedStageTime;
   }
 
+  @Override
   public synchronized String getStatus() {
     return state.getName();
   }
 
+  @Override
   public synchronized String getType() {
     return fullGC ? FULL_GENERATION : YOUNG_GENERATION;
   }

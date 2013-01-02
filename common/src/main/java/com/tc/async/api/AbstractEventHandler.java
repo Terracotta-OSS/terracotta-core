@@ -19,8 +19,10 @@ public abstract class AbstractEventHandler implements EventHandler {
   private ConfigurationContext configContext;
   private TCLogger             logger;
 
+  @Override
   public abstract void handleEvent(EventContext context) throws EventHandlerException;
 
+  @Override
   public void handleEvents(Collection contexts) throws EventHandlerException {
     for (Iterator i = contexts.iterator(); i.hasNext();) {
       EventContext eh = (EventContext) i.next();
@@ -28,6 +30,7 @@ public abstract class AbstractEventHandler implements EventHandler {
     }
   }
 
+  @Override
   public synchronized final void initializeContext(ConfigurationContext context) {
     if (context == null) {
       this.logger = TCLogging.getLogger(this.getClass());
@@ -47,6 +50,7 @@ public abstract class AbstractEventHandler implements EventHandler {
     return logger;
   }
 
+  @Override
   public synchronized void destroy() {
     configContext = null;
   }

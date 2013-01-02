@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 
 public interface NodeNameProvider {
   public static final NodeNameProvider DEFAULT_NODE_NAME_PROVIDER = new NodeNameProvider() {
+                                                                    @Override
                                                                     public String getNodeName() {
                                                                       try {
                                                                         return InetAddress.getLocalHost().getHostName();

@@ -32,11 +32,13 @@ public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_START, batchStart);
     putNVPair(BATCH_END, batchEnd);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case BATCH_START:

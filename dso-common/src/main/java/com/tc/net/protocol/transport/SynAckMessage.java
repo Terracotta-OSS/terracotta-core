@@ -11,10 +11,12 @@ public interface SynAckMessage extends TransportHandshakeMessage {
 
   public boolean hasErrorContext();
 
+  @Override
   public boolean isMaxConnectionsExceeded();
 
   int getCallbackPort();
 
+  @Override
   public int getMaxConnections();
 
 }

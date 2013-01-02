@@ -25,6 +25,7 @@ public class TCConnectionEvent {
     return connection;
   }
   
+  @Override
   public String toString() {
     return connection.toString();
   }

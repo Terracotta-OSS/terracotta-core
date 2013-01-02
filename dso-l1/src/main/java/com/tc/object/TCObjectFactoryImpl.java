@@ -27,10 +27,12 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     this.clazzFactory = clazzFactory;
   }
 
+  @Override
   public void setObjectManager(ClientObjectManager objectManager) {
     this.objectManager = objectManager;
   }
 
+  @Override
   public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew) {
     TCClass tcc = clazzFactory.getOrCreate(clazz, objectManager);
     TCObject rv = tcc.createTCObject(id, peer, isNew);
@@ -42,6 +44,7 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     return rv;
   }
 
+  @Override
   public void initClazzIfRequired(Class clazz, TCObjectSelf tcObjectSelf) {
     TCClass tcc = clazzFactory.getOrCreate(clazz, objectManager);
     tcObjectSelf.initClazzIfRequired(tcc);
@@ -51,20 +54,24 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
   // return getNewInstance(id, null, clazz, isNew);
   // }
 
+  @Override
   public Object getNewPeerObject(TCClass type, DNA dna) throws IOException, ClassNotFoundException {
     return type.getNewInstanceFromNonDefaultConstructor(dna);
   }
 
+  @Override
   public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException,
       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
     // This one is for non-static inner classes
     return getNewPeerObject(type.getConstructor(), EMPTY_OBJECT_ARRAY, type, parent);
   }
 
+  @Override
   public Object getNewArrayInstance(TCClass type, int size) {
     return Array.newInstance(type.getComponentType(), size);
   }
 
+  @Override
   public Object getNewPeerObject(TCClass type) throws IllegalArgumentException, InstantiationException,
       IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException {
     Constructor ctor = type.getConstructor();

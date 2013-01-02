@@ -26,6 +26,7 @@ public interface TCObject extends Cacheable {
    * 
    * @return Object identifier
    */
+  @Override
   public ObjectID getObjectID();
 
   /**
@@ -305,10 +306,12 @@ public interface TCObject extends Cacheable {
 
   String getFieldNameByOffset(long fieldOffset);
 
+  @Override
   void clearAccessed();
 
   void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index);
 
+  @Override
   boolean recentlyAccessed();
 
 }

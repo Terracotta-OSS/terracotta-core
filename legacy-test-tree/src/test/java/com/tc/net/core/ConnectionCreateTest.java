@@ -32,6 +32,7 @@ public class ConnectionCreateTest extends TestCase {
     serverConnMgr = new TCConnectionManagerImpl();
 
     TCListener lsnr = serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
+      @Override
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();
       }
@@ -47,6 +48,7 @@ public class ConnectionCreateTest extends TestCase {
     final LinkedQueue queue = new LinkedQueue();
 
     class ConnectTask implements Runnable {
+      @Override
       public void run() {
         while (true) {
           try {

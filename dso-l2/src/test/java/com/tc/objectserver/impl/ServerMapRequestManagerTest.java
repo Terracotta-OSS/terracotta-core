@@ -262,61 +262,74 @@ public class ServerMapRequestManagerTest extends TestCase {
   public class TestClientStateManager implements ClientStateManager {
     private final Set<ObjectID> set = new ObjectIDSet();
 
+    @Override
     public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
       return null;
     }
 
+    @Override
     public void addReference(NodeID nodeID, ObjectID objectID) {
       throw new ImplementMe();
     }
 
+    @Override
     public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
       set.addAll(oids);
       return oids;
     }
 
+    @Override
     public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
                                                          NodeID clientID, Set<ObjectID> objectIDs,
                                                          Invalidations invalidationsForClient) {
       throw new ImplementMe();
     }
 
+    @Override
     public Set<NodeID> getConnectedClientIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getReferenceCount(NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean hasReference(NodeID nodeID, ObjectID objectID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void shutdownNode(NodeID deadNode) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public boolean startupNode(NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
       throw new ImplementMe();
 
@@ -335,54 +348,66 @@ public class ServerMapRequestManagerTest extends TestCase {
   private static class TestSink implements Sink {
     private Object lastAdded;
 
+    @Override
     public void add(EventContext context) {
       lastAdded = context;
     }
 
+    @Override
     public boolean addLossy(EventContext context) {
       throw new ImplementMe();
     }
 
+    @Override
     public void addMany(Collection contexts) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void clear() {
       throw new ImplementMe();
 
     }
 
+    @Override
     public AddPredicate getPredicate() {
       throw new ImplementMe();
     }
 
+    @Override
     public void setAddPredicate(AddPredicate predicate) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public int size() {
       throw new ImplementMe();
     }
 
+    @Override
     public void enableStatsCollection(boolean enable) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public Stats getStats(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStatsAndReset(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isStatsCollectionEnabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void resetStats() {
       throw new ImplementMe();
 

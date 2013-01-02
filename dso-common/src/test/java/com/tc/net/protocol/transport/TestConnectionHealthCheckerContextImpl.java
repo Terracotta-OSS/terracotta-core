@@ -16,11 +16,13 @@ public class TestConnectionHealthCheckerContextImpl extends ConnectionHealthChec
     super(mtb, config, connMgr);
   }
 
+  @Override
   protected TCConnection getNewConnection(TCConnectionManager connectionManager) {
     TCConnection connection = connectionManager.createConnection(new NullProtocolAdaptor());
     return connection;
   }
 
+  @Override
   protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection,
                                                                        MessageTransportBase transportBase,
                                                                        TCLogger loger, HealthCheckerConfig cnfg) {

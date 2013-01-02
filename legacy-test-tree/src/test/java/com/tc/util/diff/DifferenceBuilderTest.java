@@ -196,6 +196,7 @@ public class DifferenceBuilderTest extends TCTestCase {
            new double[] { 0.4, 0.5, 0.6 }, ao);
     }
 
+    @Override
     public void addDifferences(DifferenceContext context, Object rawThat) {
       TestObject that = (TestObject) rawThat;
 
@@ -308,6 +309,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       this.a = a;
     }
 
+    @Override
     public void addDifferences(DifferenceContext context, Object that) {
       if (USE_REFLECTION) {
         new DifferenceBuilder(context).reflectionDifference(this, that);
@@ -419,6 +421,7 @@ public class DifferenceBuilderTest extends TCTestCase {
 
   private void checkStringifier() throws Exception {
     Stringifier s = new Stringifier() {
+      @Override
       public String toString(Object o) {
         return "X" + o + "Y";
       }

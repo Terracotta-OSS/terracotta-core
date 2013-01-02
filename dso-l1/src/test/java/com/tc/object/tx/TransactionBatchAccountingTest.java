@@ -17,6 +17,7 @@ public class TransactionBatchAccountingTest extends TestCase {
   private TransactionBatchAccounting acct;
   private Sequence                   sequence;
 
+  @Override
   public void setUp() throws Exception {
     acct = new TransactionBatchAccounting();
     sequence = new Sequence();

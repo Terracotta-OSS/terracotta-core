@@ -42,6 +42,7 @@ public class IndexSyncCompleteMessage extends AbstractGroupMessage implements Or
     out.writeLong(this.sequenceID);
   }
 
+  @Override
   public long getSequenceID() {
     return this.sequenceID;
   }

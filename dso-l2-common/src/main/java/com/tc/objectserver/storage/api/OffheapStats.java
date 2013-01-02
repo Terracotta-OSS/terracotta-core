@@ -8,14 +8,17 @@ import java.io.Serializable;
 public interface OffheapStats extends Serializable {
   public static final OffheapStats NULL_OFFHEAP_STATS = new OffheapStats() {
 
+                                                        @Override
                                                         public long getOffheapMaxSize() {
                                                           return 0;
                                                         }
 
+                                                        @Override
                                                         public long getOffheapReservedSize() {
                                                           return 0;
                                                         }
 
+                                                        @Override
                                                         public long getOffheapUsedSize() {
                                                           return 0;
                                                         }

@@ -300,6 +300,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     for (int i = 0; i < segments.length; i++) {
       out.duplicateAndIndent().indent().print("segment " + i + ":").flush();
@@ -397,6 +398,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
       }
     }
 
+    @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       this.readLock().lock();
       try {

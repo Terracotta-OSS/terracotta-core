@@ -16,33 +16,40 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
     super(config);
   }
 
+  @Override
   public synchronized void setValue(long numerator, long denominator) {
     this.numeratorValue = numerator;
     this.denominatorValue = denominator;
   }
 
+  @Override
   public synchronized void increment(long numerator, long denominator) {
     this.numeratorValue += numerator;
     this.denominatorValue += denominator;
   }
 
+  @Override
   public synchronized void decrement(long numerator, long denominator) {
     this.numeratorValue -= numerator;
     this.denominatorValue -= denominator;
   }
 
+  @Override
   public synchronized void setDenominatorValue(long newValue) {
     this.denominatorValue = newValue;
   }
 
+  @Override
   public synchronized void setNumeratorValue(long newValue) {
     this.numeratorValue = newValue;
   }
 
+  @Override
   public synchronized long getValue() {
     return denominatorValue == 0 ? 0 : (numeratorValue / denominatorValue);
   }
 
+  @Override
   public synchronized long getAndReset() {
     long prevVal = getValue();
     setValue(0, 0);
@@ -51,18 +58,22 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
 
   // ====== unsupported operations. These operations need multiple params for this class
 
+  @Override
   public long getAndSet(long newValue) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
+  @Override
   public synchronized void setValue(long newValue) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
+  @Override
   public long decrement() {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
+  @Override
   public long decrement(long amount) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
@@ -75,10 +86,12 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
+  @Override
   public long increment() {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
+  @Override
   public long increment(long amount) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }

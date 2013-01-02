@@ -11,17 +11,20 @@ public class ObjectIDSequenceProvider implements ObjectIDSequence {
     this.current = start;
   }
 
+  @Override
   public synchronized long nextObjectIDBatch(int batchSize) {
     final long start = current;
     current += batchSize;
     return start;
   }
 
+  @Override
   public void setNextAvailableObjectID(long startID) {
     if (current > startID) { throw new AssertionError("Current value + " + current + " is greater than " + startID); }
     current = startID;
   }
 
+  @Override
   public long currentObjectIDValue() {
     return this.current;
   }

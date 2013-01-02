@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
  * @author Ludovic Orban
  */
 public class ClearTextBufferManagerFactory implements BufferManagerFactory {
+  @Override
   public BufferManager createBufferManager(SocketChannel socketChannel, boolean client) {
     return new ClearTextBufferManager(socketChannel);
   }

@@ -35,6 +35,7 @@ public class DifferenceContextTest extends TCTestCase {
         .stringifier());
 
     Stringifier s = new Stringifier() {
+      @Override
       public String toString(Object o) {
         return "X" + o + "Y";
       }

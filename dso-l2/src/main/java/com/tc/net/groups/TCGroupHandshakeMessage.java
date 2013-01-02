@@ -76,6 +76,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     this.nodeID = aNodeID;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(MESSAGE_TYPE, messageType);
     switch (messageType) {
@@ -88,6 +89,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     }
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case MESSAGE_TYPE:

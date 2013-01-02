@@ -166,6 +166,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     return tcbb;
   }
 
+  @Override
   public long getSequenceID() {
     return this.sequenceID;
   }

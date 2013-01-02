@@ -48,6 +48,7 @@ public class StoppableThread extends Thread implements LifeCycleState {
     super(group, target, name, stackSize);
   }
 
+  @Override
   public boolean isStopRequested() {
     return stopRequested;
   }
@@ -56,6 +57,7 @@ public class StoppableThread extends Thread implements LifeCycleState {
     this.stopRequested = true;
   }
 
+  @Override
   public boolean stopAndWait(long timeout) {
     requestStop();
     try {

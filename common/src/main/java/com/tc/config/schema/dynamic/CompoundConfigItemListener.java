@@ -29,6 +29,7 @@ public class CompoundConfigItemListener implements ConfigItemListener {
     this.listeners.remove(listener);
   }
 
+  @Override
   public void valueChanged(Object oldValue, Object newValue) {
     ConfigItemListener[] duplicate;
 

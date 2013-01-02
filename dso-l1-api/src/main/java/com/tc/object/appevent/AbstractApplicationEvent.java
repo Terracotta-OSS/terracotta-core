@@ -20,9 +20,11 @@ public abstract class AbstractApplicationEvent implements ApplicationEvent {
     this.applicationEventContext = context;
   }
 
+  @Override
   public ApplicationEventContext getApplicationEventContext() {
     return applicationEventContext;
   }
 
+  @Override
   public abstract String getMessage();
 }

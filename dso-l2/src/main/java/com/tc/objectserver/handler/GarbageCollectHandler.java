@@ -120,6 +120,7 @@ public class GarbageCollectHandler extends AbstractEventHandler {
   private class GCState implements LifeCycleState {
     private volatile boolean stopRequested = false;
 
+    @Override
     public void start() {
       if (fullGCEnabled) {
         if (youngGCEnabled) {
@@ -130,10 +131,12 @@ public class GarbageCollectHandler extends AbstractEventHandler {
       }
     }
 
+    @Override
     public boolean isStopRequested() {
       return stopRequested;
     }
 
+    @Override
     public boolean stopAndWait(long waitTime) {
       logger.info("Garbage collection is stopping, clearing out remaining contexts.");
       stopRequested = true;

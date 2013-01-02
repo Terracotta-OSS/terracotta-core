@@ -36,6 +36,7 @@ public class TCConnectionErrorEvent extends TCConnectionEvent {
     return context;
   }
 
+  @Override
   public String toString() {
     return getSource() + ", exception: " + ((exception != null) ? exception.toString() : "[null exception]")
            + ", message context: " + ((context != null) ? context.toString() : "[no message context]");

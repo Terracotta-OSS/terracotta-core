@@ -26,11 +26,13 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
     this.batchSize = batchSize;
   }
 
+  @Override
   public synchronized long next() {
     requestMoreIDsIfNecessary();
     return this.current.next();
   }
 
+  @Override
   public synchronized long current() {
     return this.current.current();
   }
@@ -64,6 +66,7 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
     this.requestInProgress = true;
   }
 
+  @Override
   public synchronized void setNextBatch(long start, long end) {
     this.nextBatch = new SequenceBatch(start, end);
     this.requestInProgress = false;
@@ -72,6 +75,7 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
 
   // The currentBatch is not considered here as we want to greedily get the next set even if the
   // current set has some available.
+  @Override
   public synchronized boolean isBatchRequestPending() {
     return !this.nextBatch.hasNext();
   }

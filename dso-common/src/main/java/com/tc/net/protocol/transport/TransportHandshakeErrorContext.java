@@ -24,14 +24,17 @@ public class TransportHandshakeErrorContext implements TransportHandshakeError {
     this.errorType = errorType;
   }
 
+  @Override
   public String getMessage() {
     return message;
   }
 
+  @Override
   public short getErrorType() {
     return errorType;
   }
 
+  @Override
   public String toString() {
     StringBuffer rv = new StringBuffer(getClass().getName() + ": " + this.message);
     if (this.throwable != null) {

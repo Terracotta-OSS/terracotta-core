@@ -78,6 +78,7 @@ public class SegmentedLRUTest extends TestCase {
       this.numOfLoops = numOfLoops;
     }
 
+    @Override
     public void run() {
       int start = id * numOfLoops;
       for (int i = start; i < start + numOfLoops; i++) {
@@ -99,6 +100,7 @@ public class SegmentedLRUTest extends TestCase {
       this.numOfLoops = numOfLoops;
     }
 
+    @Override
     public void run() {
       int start = id * numOfLoops;
       for (int i = start; i < start + numOfLoops; i++) {

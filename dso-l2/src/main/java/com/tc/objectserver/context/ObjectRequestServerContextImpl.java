@@ -34,30 +34,37 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
   /**
    * This is mutated outside, don't give a copy
    */
+  @Override
   public SortedSet<ObjectID> getRequestedObjectIDs() {
     return this.lookupIDs;
   }
 
+  @Override
   public int getRequestDepth() {
     return this.requestDepth;
   }
 
+  @Override
   public ObjectRequestID getRequestID() {
     return this.objectRequestID;
   }
 
+  @Override
   public ClientID getClientID() {
     return this.requestedNodeID;
   }
 
+  @Override
   public String getRequestingThreadName() {
     return this.requestingThreadName;
   }
 
+  @Override
   public LOOKUP_STATE getLookupState() {
     return this.lookupState;
   }
 
+  @Override
   public Object getKey() {
     return this.requestedNodeID;
   }

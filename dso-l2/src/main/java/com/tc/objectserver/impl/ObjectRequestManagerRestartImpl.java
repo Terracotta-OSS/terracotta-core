@@ -124,6 +124,7 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
            + c.getRequestID() + " : " + c.getRequestDepth() + " : " + c.getRequestingThreadName() + "] ";
   }
 
+  @Override
   public void requestObjects(final ObjectRequestServerContext requestContext) {
     if (this.state != STARTED) {
       this.pendingRequests.add(requestContext);
@@ -136,6 +137,7 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     this.delegate.requestObjects(requestContext);
   }
 
+  @Override
   public void sendObjects(final ClientID requestedNodeID, final Collection objs, final ObjectIDSet requestedObjectIDs,
                           final ObjectIDSet missingObjectIDs, final LOOKUP_STATE lookupState, final int maxRequestDepth) {
 
@@ -144,6 +146,7 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
 
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getSimpleName()).flush();
     out.indent().print("State: " + this.state).flush();
@@ -156,22 +159,27 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     return out;
   }
 
+  @Override
   public int getLiveObjectCount() {
     return this.objectManager.getLiveObjectCount();
   }
 
+  @Override
   public Iterator getRootNames() {
     return this.objectManager.getRootNames();
   }
 
+  @Override
   public Iterator getRoots() {
     return this.objectManager.getRoots();
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
     return this.objectManager.lookupFacade(id, limit);
   }
 
+  @Override
   public ObjectID lookupRootID(final String name) {
     return this.objectManager.lookupRootID(name);
   }

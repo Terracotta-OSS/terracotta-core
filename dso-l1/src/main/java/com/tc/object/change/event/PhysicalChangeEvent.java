@@ -28,6 +28,7 @@ public class PhysicalChangeEvent implements TCChangeBufferEvent {
     return newValue instanceof ObjectID;
   }
 
+  @Override
   public void write(DNAWriter writer) {
     writer.addPhysicalAction(fieldname, newValue);
   }

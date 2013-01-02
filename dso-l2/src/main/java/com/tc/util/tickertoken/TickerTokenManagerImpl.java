@@ -45,6 +45,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     this.timerPeriod = timerPeriod;
   }
 
+  @Override
   public int getId() {
     return this.id;
   }
@@ -69,6 +70,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     return handle;
   }
 
+  @Override
   public TickerTokenHandle startTicker(String identifier, Class tickerTokenType) {
     AtomicBoolean triggerToken = new AtomicBoolean(false);
     TickerTokenHandleImpl handle = createHandle(identifier, tickerTokenType, triggerToken);
@@ -84,6 +86,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     return handle;
   }
 
+  @Override
   public void cancelTicker(String identifier) {
     TickerTokenHandle handle;
     if ((handle = this.lookupMap.remove(identifier)) != null) {
@@ -98,6 +101,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     }
   }
 
+  @Override
   public void send(TickerToken token) {
     TickerTokenMessage message = getTickerTokenFactory(token.getClass()).createMessage(token);
     sendMessage(message);
@@ -105,6 +109,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
 
   public abstract void sendMessage(TickerTokenMessage message);
 
+  @Override
   public void receive(TickerToken token) {
     TickerTokenProcessor processor = getTickerTokenProcessor(token.getClass());
     processor.processToken(token);

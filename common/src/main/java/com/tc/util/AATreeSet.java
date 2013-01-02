@@ -85,22 +85,27 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     return root == terminal();
   }
 
+  @Override
   public Comparator<? super T> comparator() {
     return null;
   }
 
+  @Override
   public SortedSet<T> subSet(T fromElement, T toElement) {
     return new SubSet(fromElement, toElement);
   }
 
+  @Override
   public SortedSet<T> headSet(T toElement) {
     return new SubSet(null, toElement);
   }
 
+  @Override
   public SortedSet<T> tailSet(T fromElement) {
     return new SubSet(fromElement, null);
   }
 
+  @Override
   public T first() {
     Node<T> leftMost = root;
     while (leftMost.getLeft() != terminal()) {
@@ -109,6 +114,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     return leftMost.getPayload();
   }
 
+  @Override
   public T last() {
     Node<T> rightMost = root;
     while (rightMost.getRight() != terminal()) {
@@ -273,34 +279,42 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       this.level = level;
     }
 
+    @Override
     public void setLeft(Node<E> node) {
       left = node;
     }
 
+    @Override
     public void setRight(Node<E> node) {
       right = node;
     }
 
+    @Override
     public Node<E> getLeft() {
       return left;
     }
 
+    @Override
     public Node<E> getRight() {
       return right;
     }
 
+    @Override
     public int getLevel() {
       return level;
     }
 
+    @Override
     public void setLevel(int value) {
       level = value;
     }
 
+    @Override
     public int decrementLevel() {
       return --level;
     }
 
+    @Override
     public int incrementLevel() {
       return ++level;
     }
@@ -315,10 +329,12 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       this.payload = payload;
     }
 
+    @Override
     public int compareTo(E data) {
       return payload.compareTo(data);
     }
 
+    @Override
     public void swapPayload(Node<E> node) {
       if (node instanceof TreeNode<?>) {
         TreeNode<E> treeNode = (TreeNode<E>) node;
@@ -330,6 +346,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public E getPayload() {
       return payload;
     }
@@ -351,6 +368,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       super.setRight(this);
     }
 
+    @Override
     public int compareTo(E data) {
       return 0;
     }
@@ -380,10 +398,12 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       throw new AssertionError();
     }
 
+    @Override
     public void swapPayload(Node<E> payload) {
       throw new AssertionError();
     }
 
+    @Override
     public E getPayload() {
       return null;
     }
@@ -437,10 +457,12 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       return !iterator().hasNext();
     }
 
+    @Override
     public Comparator<? super T> comparator() {
       return null;
     }
 
+    @Override
     public SortedSet<T> subSet(T fromElement, T toElement) {
       if (inRangeInclusive(fromElement) && inRangeInclusive(toElement)) {
         return new SubSet(fromElement, toElement);
@@ -449,6 +471,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public SortedSet<T> headSet(T toElement) {
       if (inRangeInclusive(toElement)) {
         return new SubSet(start, toElement);
@@ -457,6 +480,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public SortedSet<T> tailSet(T fromElement) {
       if (inRangeInclusive(fromElement)) {
         return new SubSet(fromElement, end);
@@ -465,6 +489,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public T first() {
       if (start == null) {
         return AATreeSet.this.first();
@@ -473,6 +498,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public T last() {
       if (end == null) {
         return AATreeSet.this.last();
@@ -532,10 +558,12 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public boolean hasNext() {
       return next != terminal();
     }
 
+    @Override
     public T next() {
       Node<T> current = next;
       advance();
@@ -555,6 +583,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }

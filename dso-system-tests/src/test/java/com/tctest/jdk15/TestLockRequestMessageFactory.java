@@ -16,6 +16,7 @@ import com.tc.object.session.SessionID;
 
 public class TestLockRequestMessageFactory implements LockRequestMessageFactory {
 
+  @Override
   public LockRequestMessage newLockRequestMessage(final NodeID nodeId) {
     TestMessageChannel channel = new TestMessageChannel();
     channel.channelID = new ChannelID(100);

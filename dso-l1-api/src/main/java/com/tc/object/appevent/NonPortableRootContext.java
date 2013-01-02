@@ -35,6 +35,7 @@ public class NonPortableRootContext extends NonPortableEventContext {
     return getPojo();
   }
 
+  @Override
   public void addDetailsTo(NonPortableReason reason) {
     super.addDetailsTo(reason);
     reason.addDetail(ROOT_NAME_LABEL, rootName);

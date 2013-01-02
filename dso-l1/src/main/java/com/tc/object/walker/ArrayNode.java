@@ -16,10 +16,12 @@ public class ArrayNode extends AbstractNode implements Node {
     length = Array.getLength(o);
   }
 
+  @Override
   public boolean done() {
     return index >= length;
   }
 
+  @Override
   public MemberValue next() {
     return MemberValue.elementValue(index, Array.get(getObject(), index++));
   }

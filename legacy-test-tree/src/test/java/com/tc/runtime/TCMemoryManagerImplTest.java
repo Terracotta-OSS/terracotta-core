@@ -72,6 +72,7 @@ public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEv
     }
   }
 
+  @Override
   public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
     int usedPercentage = usage.getUsedPercentage();
     if (callCount.increment() % 10 == 1 || type == CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD) {

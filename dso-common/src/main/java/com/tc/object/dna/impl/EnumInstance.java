@@ -22,6 +22,7 @@ public class EnumInstance implements Serializable {
     return enumName;
   }
 
+  @Override
   public String toString() {
     return enumName.asString();
   }

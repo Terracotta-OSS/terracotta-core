@@ -37,12 +37,14 @@ public class BaseConfigObject implements Config {
       this.item = item;
     }
 
+    @Override
     public void valueChanged(Object oldValue, Object newValue) {
       logger.warn("The attempt to change the value of " + item + " from " + oldValue + " to " + newValue
                   + " was ignored; runtime changes in this configuration value are not yet supported.");
     }
   }
 
+  @Override
   public void changesInItemIgnored(ConfigItem item) {
     Assert.assertNotNull(item);
     item.addListener(new IgnoringConfigItemListener(item));
@@ -71,6 +73,7 @@ public class BaseConfigObject implements Config {
       } else return one == two;
     }
 
+    @Override
     public void valueChanged(Object oldValue, Object newValue) {
       if (oldValue == null) return;
       if (newValue != null && isEqual(oldValue, newValue)) return;
@@ -79,15 +82,18 @@ public class BaseConfigObject implements Config {
     }
   }
 
+  @Override
   public void changesInItemForbidden(ConfigItem item) {
     Assert.assertNotNull(item);
     item.addListener(new ForbiddenConfigItemListener(item));
   }
 
+  @Override
   public String toString() {
     return ClassUtils.getShortClassName(getClass()) + " around bean:\n" + context.bean();
   }
 
+  @Override
   public XmlObject getBean() {
     return this.context.bean();
   }

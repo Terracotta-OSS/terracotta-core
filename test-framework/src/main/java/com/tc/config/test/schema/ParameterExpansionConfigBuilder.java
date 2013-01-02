@@ -24,6 +24,7 @@ public class ParameterExpansionConfigBuilder extends BaseConfigBuilder {
     this.query = query;
   }
 
+  @Override
   public String toString() {
     String out = indent() + "<parameter-expansion";
     if (this.matchType != null) out += " match-type=\"" + this.matchType + "\"";

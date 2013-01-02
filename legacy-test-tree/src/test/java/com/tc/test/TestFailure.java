@@ -21,6 +21,7 @@ public class TestFailure {
     this.throwable= throwable;
   }
   
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer( new Date(timestamp) + " " + thread + message );
     if (this.throwable != null) {

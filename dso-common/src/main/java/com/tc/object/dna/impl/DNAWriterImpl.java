@@ -69,6 +69,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     }
   }
 
+  @Override
   public DNAWriter createAppender() {
     if (contiguous) {
       contiguous = !hasMetaData && (output.getBytesWritten() == lastStreamPos);
@@ -78,10 +79,12 @@ public class DNAWriterImpl implements DNAWriterInternal {
     return appender;
   }
 
+  @Override
   public boolean isContiguous() {
     return contiguous;
   }
 
+  @Override
   public void markSectionEnd() {
     if (lastStreamPos != UNINITIALIZED) { throw new IllegalStateException("lastStreamPos=" + lastStreamPos); }
     if (totalLength != UNINITIALIZED) { throw new IllegalStateException("totalLength=" + totalLength); }
@@ -96,6 +99,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     totalLength += appenderLength;
   }
 
+  @Override
   public void addLogicalAction(int method, Object[] parameters) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.LOGICAL_ACTION_TYPE);
@@ -107,6 +111,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     }
   }
 
+  @Override
   public void addSubArrayAction(int start, Object array, int length) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.SUB_ARRAY_ACTION_TYPE);
@@ -120,6 +125,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
    * But since that can only happens in Physical applicator and it correctly calls the other interface, this is left
    * intact for now.
    */
+  @Override
   public void addPhysicalAction(String fieldName, Object value) {
     addPhysicalAction(fieldName, value, value instanceof ObjectID);
   }
@@ -129,6 +135,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
    * 
    * @see PhysicalStateClassLoader.createBasicDehydrateMethod()
    */
+  @Override
   public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
     if (value == null) {
       // Normally null values are converted into Null ObjectID much earlier, but this is not true when there are
@@ -151,6 +158,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     encoding.encode(value, output);
   }
 
+  @Override
   public void addArrayElementAction(int index, Object value) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.ARRAY_ELEMENT_ACTION_TYPE);
@@ -158,18 +166,21 @@ public class DNAWriterImpl implements DNAWriterInternal {
     encoding.encode(value, output);
   }
 
+  @Override
   public void addEntireArray(Object value) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.ENTIRE_ARRAY_ACTION_TYPE);
     encoding.encodeArray(value, output);
   }
 
+  @Override
   public void addLiteralValue(Object value) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.LITERAL_VALUE_ACTION_TYPE);
     encoding.encode(value, output);
   }
 
+  @Override
   public void addMetaData(MetaDataDescriptorInternal md) {
     addMetaData(md, false);
   }
@@ -199,6 +210,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     }
   }
 
+  @Override
   public void finalizeHeader() {
     if (Conversion.getFlag(flags, DNA.IS_DELTA) && actionCount == 0) {
       // this scenario (empty delta DNA) should be caught when txns are committed
@@ -227,12 +239,14 @@ public class DNAWriterImpl implements DNAWriterInternal {
     this.headerMark.write(lengths);
   }
 
+  @Override
   public void setParentObjectID(ObjectID id) {
     checkVariableHeaderEmpty();
     flags = Conversion.setFlag(flags, DNA.HAS_PARENT_ID, true);
     output.writeLong(id.toLong());
   }
 
+  @Override
   public void setArrayLength(int length) {
     checkVariableHeaderEmpty();
     flags = Conversion.setFlag(flags, DNA.HAS_ARRAY_LENGTH, true);
@@ -245,10 +259,12 @@ public class DNAWriterImpl implements DNAWriterInternal {
     Assert.assertFalse(Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH));
   }
 
+  @Override
   public int getActionCount() {
     return actionCount;
   }
 
+  @Override
   public void copyTo(TCByteBufferOutput dest) {
     if (hasMetaData) {
       headerMark.copyTo(dest, 0, metaDataOffset == UNINITIALIZED ? firstLength : metaDataOffset);
@@ -308,34 +324,42 @@ public class DNAWriterImpl implements DNAWriterInternal {
       return appendSectionLength - metaDataOffset;
     }
 
+    @Override
     public void addArrayElementAction(int index, Object value) {
       parent.addArrayElementAction(index, value);
     }
 
+    @Override
     public void addEntireArray(Object value) {
       parent.addEntireArray(value);
     }
 
+    @Override
     public void addLiteralValue(Object value) {
       parent.addLiteralValue(value);
     }
 
+    @Override
     public void addLogicalAction(int method, Object[] parameters) {
       parent.addLogicalAction(method, parameters);
     }
 
+    @Override
     public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
       parent.addPhysicalAction(fieldName, value, canBeReferenced);
     }
 
+    @Override
     public void addPhysicalAction(String fieldName, Object value) {
       parent.addPhysicalAction(fieldName, value);
     }
 
+    @Override
     public void addSubArrayAction(int start, Object array, int length) {
       parent.addSubArrayAction(start, array, length);
     }
 
+    @Override
     public void addMetaData(MetaDataDescriptorInternal md) {
       if (metaDataOffset == UNINITIALIZED) {
         metaDataOffset = output.getBytesWritten() - startMark.getPosition();
@@ -343,35 +367,43 @@ public class DNAWriterImpl implements DNAWriterInternal {
       parent.addMetaData(md, true);
     }
 
+    @Override
     public int getActionCount() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setArrayLength(int length) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setParentObjectID(ObjectID id) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public DNAWriter createAppender() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isContiguous() {
       return parent.isContiguous();
     }
 
+    @Override
     public void markSectionEnd() {
       appendSectionLength = output.getBytesWritten() - startMark.getPosition();
       parent.appenderSectionEnd(appendSectionLength);
     }
 
+    @Override
     public void copyTo(TCByteBufferOutput dest) {
       startMark.copyTo(dest, appendSectionLength);
     }
 
+    @Override
     public void finalizeHeader() {
       throw new UnsupportedOperationException();
     }

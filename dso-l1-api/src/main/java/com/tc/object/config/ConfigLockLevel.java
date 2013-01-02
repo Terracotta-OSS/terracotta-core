@@ -102,6 +102,7 @@ public class ConfigLockLevel {
     return level.toInt();
   }
 
+  @Override
   public String toString() {
     return lockLevelName;
   }

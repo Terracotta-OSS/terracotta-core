@@ -33,6 +33,7 @@ public class ConfigurationChangeListenerSet implements ConfigurationChangeListen
     this.changeListeners.remove(listener);
   }
 
+  @Override
   public void configurationChanged(XmlObject oldConfig, XmlObject newConfig) {
     Set dup;
 

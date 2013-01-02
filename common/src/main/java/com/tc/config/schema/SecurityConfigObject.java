@@ -16,6 +16,7 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     context.ensureRepositoryProvides(Security.class);
   }
 
+  @Override
   public String getSslCertificateUri() {
     Security bean = (Security)this.context.bean();
     if (bean == null) { return null; }
@@ -24,42 +25,49 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     return ssl.getCertificate();
   }
 
+  @Override
   public String getKeyChainImplClass() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getClass1();
   }
 
+  @Override
   public String getSecretProviderImplClass() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getSecretProvider();
   }
 
+  @Override
   public String getKeyChainUrl() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getUrl();
   }
 
+  @Override
   public String getRealmImplClass() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getAuth().getRealm();
   }
 
+  @Override
   public String getRealmUrl() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getAuth().getUrl();
   }
 
+  @Override
   public String getUser() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getAuth().getUser();
   }
 
+  @Override
   public String getSecurityServiceLocation() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
@@ -68,6 +76,7 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     return management.getIa();
   }
 
+  @Override
   public Integer getSecurityServiceTimeout() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
@@ -76,6 +85,7 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     return management.getTimeout();
   }
 
+  @Override
   public String getSecurityHostname() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }

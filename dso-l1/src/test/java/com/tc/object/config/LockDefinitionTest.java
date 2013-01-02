@@ -21,6 +21,7 @@ public class LockDefinitionTest extends TestCase {
   private String          ld3LockName;
   private ConfigLockLevel ld3LockType;
 
+  @Override
   public void setUp() throws Exception {
     lockName = "myLockName";
     lockType = ConfigLockLevel.WRITE;

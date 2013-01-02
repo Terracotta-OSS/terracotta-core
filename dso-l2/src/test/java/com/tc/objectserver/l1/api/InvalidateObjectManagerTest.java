@@ -179,10 +179,12 @@ public class InvalidateObjectManagerTest extends TCTestCase {
 
   private class TestConfigurationContext implements ConfigurationContext {
 
+    @Override
     public TCLogger getLogger(Class clazz) {
       return null;
     }
 
+    @Override
     public Stage getStage(String name) {
       Stage stage = Mockito.mock(Stage.class);
       if (name.equals(ServerConfigurationContext.INVALIDATE_OBJECTS_STAGE)) {
@@ -199,6 +201,7 @@ public class InvalidateObjectManagerTest extends TCTestCase {
   private class TestSinkAdaptor implements Sink {
     private final ArrayList list = new ArrayList();
 
+    @Override
     public void add(EventContext context) {
       list.add(context);
     }
@@ -207,46 +210,57 @@ public class InvalidateObjectManagerTest extends TCTestCase {
       return list;
     }
 
+    @Override
     public boolean addLossy(EventContext context) {
       throw new ImplementMe();
     }
 
+    @Override
     public void addMany(Collection contexts) {
       throw new ImplementMe();
     }
 
+    @Override
     public void clear() {
       throw new ImplementMe();
     }
 
+    @Override
     public AddPredicate getPredicate() {
       throw new ImplementMe();
     }
 
+    @Override
     public void setAddPredicate(AddPredicate predicate) {
       throw new ImplementMe();
     }
 
+    @Override
     public int size() {
       throw new ImplementMe();
     }
 
+    @Override
     public void enableStatsCollection(boolean enable) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStats(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStatsAndReset(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isStatsCollectionEnabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void resetStats() {
       throw new ImplementMe();
     }

@@ -29,6 +29,7 @@ public class RecallBatchContext implements TCSerializable {
     lrm.addRecallBatchContext(this);
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     LockIDSerializer ls = new LockIDSerializer();
     ls.deserializeFrom(in);
@@ -41,6 +42,7 @@ public class RecallBatchContext implements TCSerializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     LockIDSerializer ls = new LockIDSerializer(lockID);
     ls.serializeTo(out);

@@ -16,12 +16,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOn
   public static final String RESTORE_TIMERTHREAD_NAME = "OOO Connection Restore Timer";
   private Timer              restoreConnectTimer      = null;
 
+  @Override
   public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
     return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, reconnectConfig, true);
   }
 
+  @Override
   public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(ReconnectConfig reconnectConfig) {
     // ooo connection restore timers are needed only for servers
     if (restoreConnectTimer == null) {

@@ -44,22 +44,27 @@ public class GenericTCField implements TCField {
     return true;
   }
 
+  @Override
   public TCClass getDeclaringTCClass() {
     return tcClass;
   }
 
+  @Override
   public boolean isPortable() {
     return isPortable;
   }
 
+  @Override
   public boolean isArray() {
     return this.isArray;
   }
 
+  @Override
   public String getName() {
     return fieldName;
   }
 
+  @Override
   public boolean canBeReference() {
     return this.canBeReference;
   }

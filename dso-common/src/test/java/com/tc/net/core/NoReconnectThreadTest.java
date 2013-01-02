@@ -223,6 +223,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     super.tearDown();
   }
 
+  @Override
   public void notifyChannelEvent(ChannelEvent event) {
     MessageChannel channel = event.getChannel();
 

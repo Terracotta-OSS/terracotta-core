@@ -14,14 +14,17 @@ import java.io.ObjectOutput;
  */
 public final class FloatSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeFloat(((Float)o).floatValue());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return Float.valueOf(in.readFloat());
   }
 
+  @Override
   public byte getSerializerID() {
     return FLOAT;
   }

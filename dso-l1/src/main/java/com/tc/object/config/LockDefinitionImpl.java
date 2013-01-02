@@ -30,38 +30,46 @@ public class LockDefinitionImpl implements LockDefinition {
     this(lockName, lockLevel, NULL_CONFIGURATION_TEST);
   }
 
+  @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
   }
 
+  @Override
   public void setLockName(String lockName) {
     commitWriteCheck();
     this.lockName = lockName;
   }
 
+  @Override
   public String getLockName() {
     commitReadCheck();
     return this.lockName;
   }
 
+  @Override
   public void setLockLevel(ConfigLockLevel lt) {
     commitWriteCheck();
     this.lockLevel = lt;
   }
 
+  @Override
   public ConfigLockLevel getLockLevel() {
     commitReadCheck();
     return this.lockLevel;
   }
 
+  @Override
   public int getLockLevelAsInt() {
     return getLockLevel().getLockLevelAsInt();
   }
   
+  @Override
   public String getLockContextInfo() {
     return lockContextInfo;
   }
 
+  @Override
   public boolean isAutolock() {
     commitReadCheck();
     return autolock;
@@ -70,6 +78,7 @@ public class LockDefinitionImpl implements LockDefinition {
   /**
    * Creates the serialized lock name which is the lock name encoded with the lock type.
    */
+  @Override
   public synchronized void commit() {
     if (!isCommitted) {
       normalizeLockName();
@@ -78,6 +87,7 @@ public class LockDefinitionImpl implements LockDefinition {
     isCommitted = true;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == null) { return false; }
 
@@ -91,6 +101,7 @@ public class LockDefinitionImpl implements LockDefinition {
     return lockName.equals(compare.lockName) && lockLevel.equals(compare.lockLevel);
   }
 
+  @Override
   public int hashCode() {
     if (lockName == null || lockLevel == null) { return 1; }
     return lockName.hashCode() | lockLevel.toString().hashCode();

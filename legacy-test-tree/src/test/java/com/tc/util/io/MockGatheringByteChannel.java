@@ -12,6 +12,7 @@ import java.nio.channels.GatheringByteChannel;
  */
 public class MockGatheringByteChannel extends MockWritableByteChannel implements GatheringByteChannel {
 
+  @Override
   public synchronized long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
     checkOpen();
     if (srcs == null) { throw new IOException("null ByteBuffer[] passed in to write(ByteBuffer[], int, int)"); }
@@ -19,6 +20,7 @@ public class MockGatheringByteChannel extends MockWritableByteChannel implements
     throw new IOException("Not yet implemented");
   }
 
+  @Override
   public synchronized long write(ByteBuffer[] srcs) throws IOException {
     checkOpen();
     if (srcs == null) { throw new IOException("null ByteBuffer[] passed in to write(ByteBuffer[])"); }

@@ -96,82 +96,102 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.garbageCollectionManager = garbageCollectionManager;
   }
 
+  @Override
   public L2Coordinator getL2Coordinator() {
     return l2Coordinator;
   }
 
+  @Override
   public ObjectManager getObjectManager() {
     return objectManager;
   }
 
+  @Override
   public ObjectRequestManager getObjectRequestManager() {
     return objectRequestManager;
   }
 
+  @Override
   public ServerMapRequestManager getServerMapRequestManager() {
     return serverMapRequestManager;
   }
 
+  @Override
   public LockManager getLockManager() {
     return lockManager;
   }
 
+  @Override
   public DSOChannelManager getChannelManager() {
     return channelManager;
   }
 
+  @Override
   public ClientStateManager getClientStateManager() {
     return clientStateManager;
   }
 
+  @Override
   public ServerTransactionManager getTransactionManager() {
     return transactionManager;
   }
 
+  @Override
   public TransactionalObjectManager getTransactionalObjectManager() {
     return txnObjectManager;
   }
 
+  @Override
   public PersistentManagedObjectStore getObjectStore() {
     return this.persistor;
   }
 
+  @Override
   public ServerClientHandshakeManager getClientHandshakeManager() {
     return clientHandshakeManager;
   }
 
+  @Override
   public ChannelStats getChannelStats() {
     return this.channelStats;
   }
 
+  @Override
   public TransactionBatchReaderFactory getTransactionBatchReaderFactory() {
     return this.transactionBatchReaderFactory;
   }
 
+  @Override
   public TransactionBatchManager getTransactionBatchManager() {
     return this.transactionBatchManager;
   }
 
+  @Override
   public ServerGlobalTransactionManager getServerGlobalTransactionManager() {
     return this.serverGlobalTransactionManager;
   }
 
+  @Override
   public ServerClusterMetaDataManager getClusterMetaDataManager() {
     return serverClusterMetaDataManager;
   }
 
+  @Override
   public MetaDataManager getMetaDataManager() {
     return metaDataManager;
   }
 
+  @Override
   public IndexManager getIndexManager() {
     return indexManager;
   }
 
+  @Override
   public SearchRequestManager getSearchRequestManager() {
     return searchRequestManager;
   }
 
+  @Override
   public GarbageCollectionManager getGarbageCollectionManager() {
     return garbageCollectionManager;
   }

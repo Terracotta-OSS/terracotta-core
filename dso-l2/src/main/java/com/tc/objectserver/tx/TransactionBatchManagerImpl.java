@@ -66,6 +66,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     this.syncWriteTxnRecvdSink = syncWriteTxnRecvdSink;
   }
 
+  @Override
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
@@ -79,6 +80,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
+  @Override
   public void addTransactionBatch(final CommitTransactionMessage ctm) {
     fireBatchTxnEvent(ctm);
     try {
@@ -121,6 +123,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
+  @Override
   public void processTransactions(final TransactionBatchContext batchContext) {
     final List<ServerTransaction> txns = batchContext.getTransactions();
     final NodeID nodeID = batchContext.getSourceNodeID();
@@ -151,6 +154,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
+  @Override
   public synchronized void defineBatch(final NodeID nid, final int numTxns) {
     final BatchStats batchStats = getOrCreateStats(nid);
     batchStats.defineBatch(numTxns);
@@ -165,20 +169,24 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     return bs;
   }
 
+  @Override
   public synchronized boolean batchComponentComplete(final NodeID nid, final TransactionID txnID) {
     final BatchStats bs = this.map.get(nid);
     Assert.assertNotNull(bs);
     return bs.batchComplete(txnID);
   }
 
+  @Override
   public void nodeConnected(final NodeID nodeID) {
     this.transactionManager.nodeConnected(nodeID);
   }
 
+  @Override
   public void notifyServerHighWaterMark(final NodeID nodeID, final long serverHighWaterMark) {
     this.filter.notifyServerHighWaterMark(nodeID, serverHighWaterMark);
   }
 
+  @Override
   public void shutdownNode(final NodeID nodeID) {
     if (this.filter.shutdownNode(nodeID)) {
       shutdownBatchStats(nodeID);
@@ -280,6 +288,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
+  @Override
   public void registerForBatchTransaction(final TransactionBatchListener listener) {
     this.txnListeners.add(listener);
   }
@@ -290,6 +299,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.print("BatchStats: " + this.map.size()).flush();

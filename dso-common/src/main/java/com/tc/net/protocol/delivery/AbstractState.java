@@ -14,14 +14,17 @@ public class AbstractState implements State {
     this.name = name;
   }
 
+  @Override
   public void enter() {
     // override me if you want
   }
 
+  @Override
   public void execute(OOOProtocolMessage protocolMessage) {
     // override me if you want
   }
 
+  @Override
   public String toString() {
     return name;
   }

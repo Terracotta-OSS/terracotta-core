@@ -30,6 +30,7 @@ public class StateChangedEvent implements EventContext {
     return from;
   }
 
+  @Override
   public String toString() {
     return "StateChangedEvent [ " + from + " - > " + to + " ]";
   }

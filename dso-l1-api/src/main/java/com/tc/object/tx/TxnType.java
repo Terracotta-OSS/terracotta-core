@@ -47,10 +47,12 @@ public class TxnType {
     return this == CONCURRENT;
   }
 
+  @Override
   public boolean equals(Object other) {
     return this == other;
   }
 
+  @Override
   public int hashCode() {
     return this.type;
   }
@@ -68,6 +70,7 @@ public class TxnType {
     return type;
   }
 
+  @Override
   public String toString() {
     switch (type) {
       case TYPE_NORMAL: {

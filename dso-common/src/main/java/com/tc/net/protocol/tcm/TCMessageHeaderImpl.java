@@ -28,22 +28,27 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     setHeaderLength((short) (MIN_LENGTH / 4));
   }
 
+  @Override
   public int getHeaderByteLength() {
     return getHeaderLength() * 4;
   }
 
+  @Override
   public short getVersion() {
     return data.getUbyte(0);
   }
 
+  @Override
   public int getHeaderLength() {
     return data.getUbyte(1);
   }
 
+  @Override
   public int getMessageType() {
     return data.getUshort(2);
   }
 
+  @Override
   public int getMessageTypeVersion() {
     return data.getUshort(4);
   }
@@ -52,19 +57,23 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     data.putUbyte(0, version);
   }
 
+  @Override
   protected void setHeaderLength(short length) {
     Assert.eval(length <= MAX_LENGTH);
     data.putUbyte(1, length);
   }
 
+  @Override
   public void setMessageType(int type) {
     data.putUshort(2, type);
   }
 
+  @Override
   public void setMessageTypeVersion(int version) {
     data.putUshort(4, version);
   }
 
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
 
@@ -83,6 +92,7 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     return buf.toString();
   }
 
+  @Override
   public void validate() throws TCProtocolException {
     final short version = getVersion();
     final short expect = VERSION_1;
@@ -92,6 +102,7 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     // XXX: validate other fields
   }
 
+  @Override
   protected boolean isHeaderLengthAvail() {
     return data.position() > 1;
   }

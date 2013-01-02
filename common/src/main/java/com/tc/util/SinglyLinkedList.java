@@ -32,11 +32,14 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
 
   public interface SinglyLinkedListIterator<I extends LinkedNode> extends Iterator<I> {
 
+    @Override
     public boolean hasNext();
 
+    @Override
     public I next();
 
     // Removes the last returned element from the list
+    @Override
     public void remove();
 
     // Adds the element e next to the last returned element, if its not removed. Else throws IllegalStateException.
@@ -137,6 +140,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return null;
   }
 
+  @Override
   public SinglyLinkedListIterator<E> iterator() {
     return new ListIterator();
   }
@@ -156,10 +160,12 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       this.next = SinglyLinkedList.this.head;
     }
 
+    @Override
     public boolean hasNext() {
       return this.next != null;
     }
 
+    @Override
     public E next() {
       if (this.next == null) { throw new NoSuchElementException(); }
       this.prev = this.current;
@@ -168,6 +174,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       return this.current;
     }
 
+    @Override
     public void addNext(final E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.next);
@@ -178,6 +185,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       this.next = e;
     }
 
+    @Override
     public void addPrevious(final E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.current);
@@ -189,6 +197,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       this.prev = e;
     }
 
+    @Override
     public void remove() {
       if (this.current == null) { throw new IllegalStateException(); }
       if (this.prev == null) {

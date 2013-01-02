@@ -10,6 +10,7 @@ public class ExceptionWrapperImpl implements ExceptionWrapper {
 
   private static final int MAX_STAR_COUNT = 79;
 
+  @Override
   public String wrap(String message) {
     message = String.valueOf(message);
     int starCount = longestLineCharCount(message);

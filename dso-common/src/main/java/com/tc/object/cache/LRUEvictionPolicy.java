@@ -35,6 +35,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     this.evictionSize = (evictionSize <= 0 ? 1 : evictionSize);
   }
 
+  @Override
   public synchronized boolean add(final Cacheable obj) {
     // Assert.eval(!contains(obj));
     if (logger.isDebugEnabled()) {
@@ -50,6 +51,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     return (this.capacity > 0 && this.cache.size() > this.capacity);
   }
 
+  @Override
   public synchronized Collection getRemovalCandidates(int maxCount) {
     if (this.capacity > 0) {
       if (!isCacheFull()) { return Collections.EMPTY_LIST; }
@@ -80,6 +82,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     return rv;
   }
 
+  @Override
   public synchronized void remove(final Cacheable obj) {
     if (logger.isDebugEnabled()) {
       logger.debug("Removing: " + obj);
@@ -94,6 +97,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     return obj != null && (obj.getNext() != null || obj.getPrevious() != null);
   }
 
+  @Override
   public synchronized void markReferenced(final Cacheable obj) {
     moveToTail(obj);
   }
@@ -105,6 +109,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     }
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     final PrettyPrinter rv = out;
     out.println(getClass().getName());
@@ -113,6 +118,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     return rv;
   }
 
+  @Override
   public int getCacheCapacity() {
     return this.capacity;
   }

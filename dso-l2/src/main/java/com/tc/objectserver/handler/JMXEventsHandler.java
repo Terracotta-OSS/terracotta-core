@@ -16,6 +16,7 @@ public class JMXEventsHandler extends AbstractEventHandler {
     this.appEvents = appEvents;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     if (context instanceof JMXMessage) {
       appEvents.addMessage((JMXMessage) context);

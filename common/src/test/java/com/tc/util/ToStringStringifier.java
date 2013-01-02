@@ -15,6 +15,7 @@ public class ToStringStringifier implements Stringifier {
     // Use INSTANCE instead.
   }
 
+  @Override
   public String toString(Object o) {
     if (o == null) return "<null>";
     else return o.toString();

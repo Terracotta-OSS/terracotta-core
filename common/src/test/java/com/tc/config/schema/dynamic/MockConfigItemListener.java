@@ -22,6 +22,7 @@ public class MockConfigItemListener implements ConfigItemListener {
     this.lastNewValue = null;
   }
 
+  @Override
   public void valueChanged(Object oldValue, Object newValue) {
     ++this.numValueChangeds;
     this.lastOldValue = oldValue;

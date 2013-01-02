@@ -42,6 +42,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     super();
   }
 
+  @Override
   public void stop() {
     throw new ImplementMe();
   }
@@ -50,12 +51,14 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext context, int maxCount) {
     return basicLookup(nodeID, context, maxCount);
   }
 
   public LinkedQueue lookupObjectForCreateIfNecessaryContexts = new LinkedQueue();
 
+  @Override
   public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
     Object[] args = new Object[] { nodeID, context };
     try {
@@ -88,6 +91,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     return results;
   }
 
+  @Override
   public Iterator getRoots() {
     throw new ImplementMe();
   }
@@ -96,14 +100,17 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void createRoot(String name, ObjectID id) {
     //
   }
 
+  @Override
   public ObjectID lookupRootID(String name) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setGarbageCollector(GarbageCollector gc) {
     throw new ImplementMe();
   }
@@ -112,12 +119,14 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public ManagedObject getObjectByID(ObjectID id) {
     throw new ImplementMe();
   }
 
   public final LinkedQueue releaseContextQueue = new LinkedQueue();
 
+  @Override
   public void release(ManagedObject object) {
     try {
       releaseContextQueue.put(object);
@@ -126,6 +135,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     }
   }
 
+  @Override
   public void releaseReadOnly(ManagedObject object) {
     try {
       releaseContextQueue.put(object);
@@ -136,6 +146,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final LinkedQueue releaseAllQueue = new LinkedQueue();
 
+  @Override
   public void releaseAll(Collection collection) {
     try {
       releaseAllQueue.put(collection);
@@ -150,26 +161,32 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final NoExceptionLinkedQueue startCalls = new NoExceptionLinkedQueue();
 
+  @Override
   public void start() {
     startCalls.put(new Object());
   }
 
+  @Override
   public void setStatsListener(ObjectManagerStatsListener listener) {
     throw new ImplementMe();
   }
 
+  @Override
   public void releaseAllReadOnly(Collection objects) {
     releaseAll(objects);
   }
 
+  @Override
   public int getCheckedOutCount() {
     return 0;
   }
 
+  @Override
   public Set getRootIDs() {
     return new HashSet();
   }
 
+  @Override
   public ObjectIDSet getAllObjectIDs() {
     return new ObjectIDSet();
   }
@@ -178,22 +195,27 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     return this;
   }
 
+  @Override
   public void waitUntilReadyToGC() {
     throw new ImplementMe();
   }
 
+  @Override
   public void notifyGCComplete(DGCResultContext dgcResultContext) {
     throw new ImplementMe();
   }
 
+  @Override
   public void deleteObjects(Set<ObjectID> objectsToDelete) {
     throw new ImplementMe();
   }
 
+  @Override
   public Map getRootNamesToIDsMap() {
     throw new ImplementMe();
   }
 
+  @Override
   public GarbageCollector getGarbageCollector() {
     throw new ImplementMe();
   }
@@ -207,18 +229,22 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   }
 
+  @Override
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
     // Nop
   }
 
+  @Override
   public void createNewObjects(Set ids) {
     throw new ImplementMe();
   }
 
+  @Override
   public ManagedObject getObjectByIDReadOnly(ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public ObjectIDSet getObjectIDsInCache() {
     throw new ImplementMe();
   }
@@ -227,14 +253,17 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     throw new ImplementMe();
   }
 
+  @Override
   public String getObjectTypeFromID(ObjectID id) {
     return "";
   }
 
+  @Override
   public int getLiveObjectCount() {
     return 0;
   }
@@ -243,14 +272,17 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     return 0;
   }
 
+  @Override
   public Iterator getRootNames() {
     return null;
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 
+  @Override
   public ManagedObject getQuietObjectByID(ObjectID id) {
     return getObjectByID(id);
   }

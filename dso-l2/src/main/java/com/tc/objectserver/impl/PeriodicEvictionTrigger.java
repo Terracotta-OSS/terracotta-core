@@ -247,6 +247,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
       return e;
     }
 
+    @Override
     public int compareTo(Object o) {
       return expiresIn - ((ExpiryKey) o).expiresIn;
     }

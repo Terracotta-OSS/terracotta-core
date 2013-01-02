@@ -28,18 +28,22 @@ public class YoungGCHook extends AbstractGCHook {
     this.youngGenChangeCollector = youngGenChangeCollector;
   }
 
+  @Override
   public String getDescription() {
     return "YoungGen";
   }
 
+  @Override
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
     return new GarbageCollectionInfo(id, GarbageCollectionInfo.Type.YOUNG_GC);
   }
 
+  @Override
   public ObjectIDSet getGCCandidates() {
     return (ObjectIDSet) this.youngGenChangeCollector.addYoungGenCandidateObjectIDsTo(new ObjectIDSet());
   }
 
+  @Override
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs) {
     Set idsInMemory = this.objectManager.getObjectIDsInCache();
     idsInMemory.removeAll(candidateIDs);
@@ -50,14 +54,17 @@ public class YoungGCHook extends AbstractGCHook {
     return new ObjectIDSet(youngGenRoots);
   }
 
+  @Override
   public Filter getCollectCycleFilter(Set candidateIDs) {
     return new SelectiveFilter(candidateIDs);
   }
 
+  @Override
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
     return getObjectReferencesFrom(id, true);
   }
 
+  @Override
   public ObjectIDSet getRescueIDs() {
     ObjectIDSet rescueIds = new ObjectIDSet();
     this.stateManager.addAllReferencedIdsTo(rescueIds);

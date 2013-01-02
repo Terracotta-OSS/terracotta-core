@@ -17,15 +17,18 @@ public class State implements Serializable {
     return name;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof State)) { return false; }
     return name.equals(((State) o).name);
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }
 
+  @Override
   public String toString() {
     return "State[ " + this.name + " ]";
   }

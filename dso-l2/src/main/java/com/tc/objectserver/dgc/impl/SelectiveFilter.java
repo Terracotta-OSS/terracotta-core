@@ -15,6 +15,7 @@ final class SelectiveFilter implements Filter {
     this.keys = keys;
   }
 
+  @Override
   public boolean shouldVisit(ObjectID referencedObject) {
     return keys.contains(referencedObject);
   }

@@ -12,11 +12,13 @@ public class MockMessageTransportFactory implements MessageTransportFactory {
   public MessageTransport transport;
   public int              callCount;
 
+  @Override
   public MessageTransport createNewTransport() {
     callCount++;
     return transport;
   }
 
+  @Override
   public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List transportListeners) {
@@ -25,6 +27,7 @@ public class MockMessageTransportFactory implements MessageTransportFactory {
     return transport;
   }
 
+  @Override
   public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
                                              TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,

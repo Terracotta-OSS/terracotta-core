@@ -60,12 +60,14 @@ public class LossyTCLogger implements TCLogger {
     this.logCount = 0;
   }
 
+  @Override
   public void debug(Object message) {
     if (this.decider.canLog(message)) {
       this.logger.debug(message + this.lossyInfo);
     }
   }
 
+  @Override
   public void debug(Object message, Throwable t) {
     if (this.decider.canLog(message)) {
       this.logger.debug(message + this.lossyInfo, t);
@@ -73,66 +75,79 @@ public class LossyTCLogger implements TCLogger {
 
   }
 
+  @Override
   public void error(Object message) {
     // Errors are always logged
     this.logger.error(message);
   }
 
+  @Override
   public void error(Object message, Throwable t) {
     // Errors are always logged
     this.logger.error(message, t);
   }
 
+  @Override
   public void fatal(Object message) {
     // Fatal messages are always logged
     this.logger.fatal(message);
   }
 
+  @Override
   public void fatal(Object message, Throwable t) {
     // Fatal messages are always logged
     this.logger.fatal(message, t);
   }
 
+  @Override
   public void info(Object message) {
     if (this.decider.canLog(message)) {
       this.logger.info(message);
     }
   }
 
+  @Override
   public void info(Object message, Throwable t) {
     if (this.decider.canLog(message)) {
       this.logger.info(message, t);
     }
   }
 
+  @Override
   public void warn(Object message) {
     if (this.decider.canLog(message)) {
       this.logger.warn(message + this.lossyInfo);
     }
   }
 
+  @Override
   public void warn(Object message, Throwable t) {
     if (this.decider.canLog(message)) {
       this.logger.warn(message, t);
     }
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return this.logger.isDebugEnabled();
   }
 
+  @Override
   public boolean isInfoEnabled() {
     return this.logger.isInfoEnabled();
   }
 
+  @Override
   public void setLevel(LogLevel level) {
     this.logger.setLevel(level);
   }
 
+  @Override
   public LogLevel getLevel() {
     return this.logger.getLevel();
   }
 
+  @Override
   public String getName() {
     return this.logger.getName();
   }
@@ -167,6 +182,7 @@ public class LossyTCLogger implements TCLogger {
       this.lossyLogOnlyIfSameContent = lossyLogOnlyIfSameContent;
     }
 
+    @Override
     public synchronized boolean canLog(final Object message) {
       long now = System.currentTimeMillis();
 
@@ -188,6 +204,7 @@ public class LossyTCLogger implements TCLogger {
       return false;
     }
 
+    @Override
     public boolean isLoggingEnabledNow() {
       return (System.currentTimeMillis() > (this.then + this.timeInterval));
     }
@@ -205,6 +222,7 @@ public class LossyTCLogger implements TCLogger {
       this.count = 0;
     }
 
+    @Override
     public synchronized boolean canLog(final Object message) {
       if (this.lossyLogOnlyIfSameContent) {
         if ((this.prevMessage == null) || !(this.prevMessage.equals(message))) {
@@ -224,6 +242,7 @@ public class LossyTCLogger implements TCLogger {
       return false;
     }
 
+    @Override
     public boolean isLoggingEnabledNow() {
       long remainder = (this.count % this.countInterval);
       if (remainder != 0) {

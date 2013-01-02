@@ -35,6 +35,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
       TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
 
+      @Override
       public void logOperatorEvent(TerracottaOperatorEvent event) {
         if (event.getEventType() == EventType.WARN) {
           logger.warn(event);
@@ -60,6 +61,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
       TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
 
+      @Override
       public void logOperatorEvent(TerracottaOperatorEvent event) {
         if (event.getEventType() == EventType.WARN) {
           logger.warn(event);
@@ -83,6 +85,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
   private void createThreadAndCollectGarbage() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         createGarbage();
       }

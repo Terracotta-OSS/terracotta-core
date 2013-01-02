@@ -44,10 +44,12 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
     return true;
   }
 
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
+  @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
@@ -81,6 +83,7 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
     return type;
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
     final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
     return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
@@ -91,22 +94,27 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
     return fields;
   }
 
+  @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     writer.addEntireArray(this.value);
   }
 
+  @Override
   public final String getClassName() {
     return getStateFactory().getClassName(this.classID);
   }
 
+  @Override
   public Set getObjectReferences() {
     return Collections.EMPTY_SET;
   }
 
+  @Override
   public byte getType() {
     return ManagedObjectStateStaticConfig.SERIALIZED_CLUSTER_OBJECT.getStateObjectType();
   }
 
+  @Override
   public void writeTo(final ObjectOutput out) throws IOException {
     out.writeLong(this.classID);
     if (this.value != null) {

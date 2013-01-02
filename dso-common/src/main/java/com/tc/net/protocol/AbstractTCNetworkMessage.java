@@ -50,31 +50,37 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     }
   }
 
+  @Override
   public final int getDataLength() {
     checkSealed();
     return dataLength;
   }
 
+  @Override
   public final int getHeaderLength() {
     checkSealed();
     return headerLength;
   }
 
+  @Override
   public final int getTotalLength() {
     checkSealed();
     return totalLength;
   }
 
+  @Override
   public final TCNetworkHeader getHeader() {
     checkNotRecycled();
     return header;
   }
 
+  @Override
   public final TCNetworkMessage getMessagePayload() {
     checkNotRecycled();
     return messagePayload;
   }
 
+  @Override
   public final TCByteBuffer[] getPayload() {
     checkNotRecycled();
     return payloadData;
@@ -107,6 +113,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     }
   }
 
+  @Override
   public final TCByteBuffer[] getEntireMessageData() {
     checkSealed();
 
@@ -214,10 +221,12 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     return toRet.toString();
   }
 
+  @Override
   public final boolean isSealed() {
     return sealed.isSet();
   }
 
+  @Override
   public final void seal() {
     if (sealed.attemptSet()) {
       final int size = 1 + payloadData.length;
@@ -240,6 +249,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     }
   }
 
+  @Override
   public final void wasSent() {
     fireSentCallback();
     doRecycleOnWrite();
@@ -250,6 +260,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     recycle();
   }
 
+  @Override
   public void recycle() {
     if (entireMessageData != null) {
       int i = 0;
@@ -285,10 +296,12 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     }
   }
 
+  @Override
   public final void setSentCallback(Runnable callback) {
     this.sentCallback = callback;
   }
 
+  @Override
   public final Runnable getSentCallback() {
     return this.sentCallback;
   }

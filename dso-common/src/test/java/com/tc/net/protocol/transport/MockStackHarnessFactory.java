@@ -12,12 +12,14 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 public class MockStackHarnessFactory implements NetworkStackHarnessFactory {
   public NetworkStackHarness harness;
 
+  @Override
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
     return harness;
   }
 
+  @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {

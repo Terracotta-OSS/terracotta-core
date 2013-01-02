@@ -21,10 +21,12 @@ public final class JarBuilder extends ZipBuilder {
     super(archiveFile, false);
   }
 
+  @Override
   protected final ZipEntry createEntry(String name) {
     return new JarEntry(name);
   }
   
+  @Override
   protected final ZipOutputStream getArchiveOutputStream(File archiveFile) throws IOException {
     if (isInit) super.getArchiveOutputStream(archiveFile); // throws Exception
     isInit = true;

@@ -74,10 +74,12 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
   }
 
+  @Override
   public ObjectID getID() {
     return this.id;
   }
 
+  @Override
   public synchronized Set<ObjectID> getObjectReferences() {
     return new HashSet<ObjectID>(this.references);
   }
@@ -91,18 +93,22 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return;
   }
 
+  @Override
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType dnaType) {
     throw new ImplementMe();
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final int limit) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isDirty() {
     return this.isDirty;
   }
 
+  @Override
   public void setIsDirty(final boolean isDirty) {
     this.isDirty = isDirty;
   }
@@ -126,10 +132,12 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
   }
 
+  @Override
   public boolean isNew() {
     return this.isNew;
   }
 
+  @Override
   public boolean isNewInDB() {
     return false;
   }
@@ -138,22 +146,26 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     this.setTransientStateCalls.put(stateFactory);
   }
 
+  @Override
   public ManagedObjectReference getReference() {
     return this;
   }
 
   boolean removeOnRelease;
 
+  @Override
   public void setRemoveOnRelease(final boolean removeOnRelease) {
     this.removeOnRelease = removeOnRelease;
   }
 
+  @Override
   public boolean isRemoveOnRelease() {
     return this.removeOnRelease;
   }
 
   boolean referenced = false;
 
+  @Override
   public synchronized boolean markReference() {
     if (!this.referenced) {
       this.referenced = true;
@@ -162,6 +174,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return false;
   }
 
+  @Override
   public synchronized boolean unmarkReference() {
     if (this.referenced) {
       this.referenced = false;
@@ -170,18 +183,22 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return false;
   }
 
+  @Override
   public synchronized boolean isReferenced() {
     return this.referenced;
   }
 
+  @Override
   public ManagedObject getObject() {
     return this;
   }
 
+  @Override
   public ObjectID getObjectID() {
     return getID();
   }
 
+  @Override
   public ManagedObjectState getManagedObjectState() {
     return this.noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
   }
@@ -191,19 +208,23 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return "TestManagedObject[" + this.id + "]";
   }
 
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
+  @Override
   public void apply(final DNA dna, final TransactionID txnID, final ApplyTransactionInfo includeIDs,
                     final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) throws DNAException {
     // TODO: do i need to implement this?
   }
 
+  @Override
   public long getVersion() {
     return 0;
   }
 
+  @Override
   public void setIsNew(final boolean newFlag) {
     this.isNew = newFlag;
   }
@@ -231,34 +252,42 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType dnaType) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public String getClassName() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public Set getObjectReferences() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public byte getType() {
       return type;
     }
 
+    @Override
     public void writeTo(final ObjectOutput o) {
       // Nothing to write, it's null.
     }

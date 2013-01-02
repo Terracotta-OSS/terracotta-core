@@ -31,6 +31,7 @@ public class DSOMessageBase extends TCMessageImpl implements EventContext {
     this.localSessionID = sessionID;
   }
 
+  @Override
   public SessionID getLocalSessionID() {
     return localSessionID;
   }

@@ -14,34 +14,42 @@ public class NullTransactionalObject implements TransactionalObject {
 
   private static final Context CONTEXT = new NullContext();
 
+  @Override
   public Context startWrite(Object value) {
     return CONTEXT;
   }
 
+  @Override
   public Context startWrite(Object value, long now) {
     return CONTEXT;
   }
 
+  @Override
   public void endWrite(Context rawWrite) {
     // Nothing here.
   }
 
+  @Override
   public void endWrite(Context rawWrite, long now) {
     // Nothing here.
   }
 
+  @Override
   public Context startRead() {
     return CONTEXT;
   }
 
+  @Override
   public Context startRead(long now) {
     return CONTEXT;
   }
 
+  @Override
   public void endRead(Context rawRead, Object result) {
     // Nothing here.
   }
 
+  @Override
   public void endRead(Context rawRead, Object result, long now) {
     // Nothing here.
   }

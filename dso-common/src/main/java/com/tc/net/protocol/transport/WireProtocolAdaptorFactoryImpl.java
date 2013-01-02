@@ -20,6 +20,7 @@ public class WireProtocolAdaptorFactoryImpl implements WireProtocolAdaptorFactor
     this(null);
   }
 
+  @Override
   public TCProtocolAdaptor newWireProtocolAdaptor(WireProtocolMessageSink sink) {
     if (httpSink != null) { return new ProtocolSwitch(new WireProtocolAdaptorImpl(sink), httpSink); }
     return new WireProtocolAdaptorImpl(sink);

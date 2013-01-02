@@ -28,6 +28,7 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     stat = statElement.getStats();
   }
 
+  @Override
   public void recordLockRequested(NodeID nodeID, ThreadID threadID, long requestTimeInMillis,
                                   int numberOfPendingRequests, StackTraceElement[] stackTraces, String contextInfo) {
     statElement.recordLockRequested(nodeID, threadID, requestTimeInMillis, numberOfPendingRequests, contextInfo,
@@ -41,6 +42,7 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return recordedFrequency;
   }
 
+  @Override
   public boolean recordLockAwarded(NodeID nodeID, ThreadID threadID, boolean isGreedy, long awardedTimeInMillis,
                                    int nestedLockDepth) {
     boolean rv = statElement.recordLockAwarded(nodeID, threadID, isGreedy, awardedTimeInMillis, nestedLockDepth);
@@ -50,6 +52,7 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return rv;
   }
 
+  @Override
   public boolean recordLockReleased(NodeID nodeID, ThreadID threadID) {
     boolean rv = statElement.recordLockReleased(nodeID, threadID);
     if (gatherInterval > 0) {
@@ -65,6 +68,7 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     }
   }
 
+  @Override
   public void recordLockRejected(NodeID nodeID, ThreadID threadID) {
     statElement.recordLockRejected(nodeID, threadID);
     if (gatherInterval > 0) {
@@ -72,51 +76,63 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     }
   }
 
+  @Override
   public void aggregateLockHoldersData() {
     statElement.aggregateLockHoldersData(stat, 0);
   }
 
+  @Override
   public LockID getLockID() {
     return lockID;
   }
 
+  @Override
   public LockStats getServerStats() {
     throw new TCNotSupportedMethodException();
   }
 
+  @Override
   public LockStats getClientStats() {
     return stat;
   }
 
+  @Override
   public long getNumberOfLockRequested() {
     return -1;
   }
 
+  @Override
   public long getNumberOfLockHopRequested() {
     return -1;
   }
 
+  @Override
   public long getNumberOfLockReleased() {
     return stat.getNumOfLockReleased();
   }
 
+  @Override
   public long getNumberOfPendingRequests() {
     return stat.getNumOfLockPendingRequested();
   }
 
+  @Override
   public boolean hasChildren() {
     return statElement.hasChildren();
   }
 
+  @Override
   public Collection children() {
     return statElement.children();
   }
 
+  @Override
   public LockStatElement getLockStatElement() {
     return statElement;
   }
 
   // TODO: return empty string for now
+  @Override
   public String getObjectType() {
     return "";
   }

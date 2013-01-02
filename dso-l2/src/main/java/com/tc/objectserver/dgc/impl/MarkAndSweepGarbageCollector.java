@@ -56,6 +56,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 
+  @Override
   public void doGC(final GCType type) {
     GCHook hook = null;
     switch (type) {
@@ -74,6 +75,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     gcAlgo.doGC();
   }
 
+  @Override
   public void deleteGarbage(final DGCResultContext dgcResultContext) {
     youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
     objectManager.notifyGCComplete(dgcResultContext);
@@ -97,18 +99,22 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     this.youngGenReferenceCollector.stopMonitoringChanges();
   }
 
+  @Override
   public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
     this.referenceCollector.changed(changedObject, oldReference, newReference);
   }
 
+  @Override
   public void notifyObjectCreated(final ObjectID id) {
     this.youngGenReferenceCollector.notifyObjectCreated(id);
   }
 
+  @Override
   public void notifyNewObjectInitalized(final ObjectID id) {
     this.youngGenReferenceCollector.notifyObjectInitalized(id);
   }
 
+  @Override
   public void notifyObjectsEvicted(final Collection evicted) {
     this.youngGenReferenceCollector.notifyObjectsEvicted(evicted);
   }
@@ -135,6 +141,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
+  @Override
   public void start() {
     if (this.objectManagerConfig.isYoungGenDGCEnabled()) {
       this.youngGenReferenceCollector = new YoungGenChangeCollectorImpl();
@@ -144,6 +151,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     garbageCollectionManager.scheduleInlineCleanupIfNecessary();
   }
 
+  @Override
   public void stop() {
     this.started = false;
     int count = 0;
@@ -153,14 +161,17 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     }
   }
 
+  @Override
   public boolean isStarted() {
     return this.started;
   }
 
+  @Override
   public void setState(final LifeCycleState st) {
     this.gcState = st;
   }
 
+  @Override
   public void addListener(final GarbageCollectorEventListener listener) {
     this.gcPublisher.addListener(listener);
   }

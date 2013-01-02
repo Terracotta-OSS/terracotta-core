@@ -34,14 +34,17 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     this.garbageCollectionEventListeners = listeners;
   }
 
+  @Override
   public void addListener(GarbageCollectorEventListener listener) {
     this.garbageCollectionEventListeners.add(listener);
   }
 
+  @Override
   public void removeListener(GarbageCollectorEventListener listener) {
     this.garbageCollectionEventListeners.remove(listener);
   }
 
+  @Override
   public void fireGCStartEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -49,6 +52,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCMarkEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -56,6 +60,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCMarkResultsEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -63,6 +68,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCRescue1CompleteEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -70,6 +76,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCPausingEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -77,6 +84,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCRescue2StartEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -84,6 +92,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCPausedEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -91,6 +100,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCMarkCompleteEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -98,6 +108,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCCycleCompletedEvent(GarbageCollectionInfo info, ObjectIDSet toDelete) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -105,6 +116,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCCompletedEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
@@ -112,6 +124,7 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
+  @Override
   public void fireGCCanceledEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();

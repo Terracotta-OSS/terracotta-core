@@ -28,6 +28,7 @@ public class ChannelID extends AbstractIdentifier {
     super();
   }
 
+  @Override
   public String getIdentifierType() {
     return "ChannelID";
   }

@@ -91,6 +91,7 @@ public class DmiDescriptor implements TCSerializable, EventContext {
    * @param in Input stream
    * @return this
    */
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     receiverId = new ObjectID(in.readLong());
     dmiCallId = new ObjectID(in.readLong());
@@ -109,6 +110,7 @@ public class DmiDescriptor implements TCSerializable, EventContext {
    * 
    * @param out Output stream
    */
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     out.writeLong(receiverId.toLong());
     out.writeLong(dmiCallId.toLong());

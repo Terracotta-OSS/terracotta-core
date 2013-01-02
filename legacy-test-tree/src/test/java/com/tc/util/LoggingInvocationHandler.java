@@ -38,6 +38,7 @@ public class LoggingInvocationHandler implements InvocationHandler {
     this.furtherProxies = furtherProxies;
   }
 
+  @Override
   public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
     Thread theThread = Thread.currentThread();
     StringBuffer message = new StringBuffer();

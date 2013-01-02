@@ -72,6 +72,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     super(buffer, HEADER_LENGTH, HEADER_LENGTH);
   }
 
+  @Override
   public int getHeaderByteLength() {
     return HEADER_LENGTH;
   }

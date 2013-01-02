@@ -65,18 +65,22 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
 
   private static class TestObjectRequestContext implements ObjectRequestContext {
 
+    @Override
     public ObjectRequestID getRequestID() {
       return new ObjectRequestID(1);
     }
 
+    @Override
     public ClientID getClientID() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getRequestedObjectIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getRequestDepth() {
       return 10;
     }

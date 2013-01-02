@@ -18,6 +18,7 @@ public class NullConfigItemListener implements ConfigItemListener {
     // Nothing here.
   }
   
+  @Override
   public void valueChanged(Object oldValue, Object newValue) {
     // Nothing here.
   }

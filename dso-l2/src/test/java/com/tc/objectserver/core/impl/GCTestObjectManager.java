@@ -54,6 +54,7 @@ public class GCTestObjectManager implements ObjectManager {
     this.gcPublisher = gcPublisher;
   }
 
+  @Override
   public ManagedObject getObjectByID(ObjectID id) {
     lookedUp.add(id);
     ManagedObjectReference ref = managed.get(id);
@@ -67,88 +68,109 @@ public class GCTestObjectManager implements ObjectManager {
     return hs;
   }
 
+  @Override
   public void release(ManagedObject object) {
     released.add(object.getID());
   }
 
+  @Override
   public void releaseAll(Collection c) {
     //
   }
 
+  @Override
   public void stop() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext, int maxCount) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
     throw new ImplementMe();
   }
 
+  @Override
   public Iterator getRoots() {
     throw new ImplementMe();
   }
 
+  @Override
   public void createRoot(String name, ObjectID id) {
     roots.add(id);
   }
 
+  @Override
   public ObjectID lookupRootID(String name) {
     throw new ImplementMe();
   }
 
+  @Override
   public GarbageCollector getGarbageCollector() {
     return this.gcCollector;
   }
 
+  @Override
   public void setGarbageCollector(GarbageCollector gc) {
     this.gcCollector = gc;
   }
 
+  @Override
   public void setStatsListener(ObjectManagerStatsListener listener) {
     throw new ImplementMe();
   }
 
+  @Override
   public void start() {
     this.gcCollector.start();
   }
 
+  @Override
   public void releaseReadOnly(ManagedObject object) {
     released.add(object.getID());
   }
 
+  @Override
   public void releaseAllReadOnly(Collection objects) {
     releaseAll(objects);
   }
 
+  @Override
   public int getCheckedOutCount() {
     return 0;
   }
 
+  @Override
   public ObjectIDSet getAllObjectIDs() {
     ObjectIDSet oids = new ObjectIDSet(managed.keySet());
     oids.addAll(swappedToDisk.keySet());
     return oids;
   }
 
+  @Override
   public void waitUntilReadyToGC() {
     gcCollector.notifyReadyToGC();
   }
 
+  @Override
   public Set getRootIDs() {
     return new HashSet<ObjectID>(roots);
   }
 
+  @Override
   public Map getRootNamesToIDsMap() {
     throw new ImplementMe();
   }
 
+  @Override
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
     throw new ImplementMe();
   }
 
+  @Override
   public void createNewObjects(Set ids) {
     throw new ImplementMe();
   }
@@ -159,12 +181,14 @@ public class GCTestObjectManager implements ObjectManager {
     gcCollector.notifyNewObjectInitalized(id);
   }
 
+  @Override
   public ManagedObject getObjectByIDReadOnly(ObjectID id) {
     ManagedObject mo = getObjectByID(id);
     if (mo != null && mo.isNew()) { return null; }
     return mo;
   }
 
+  @Override
   public void notifyGCComplete(DGCResultContext dgcResultContext) {
     SortedSet<ObjectID> ids = dgcResultContext.getGarbageIDs();
     for (Object element : ids) {
@@ -177,6 +201,7 @@ public class GCTestObjectManager implements ObjectManager {
     Assert.assertEquals(b4 + ids.size(), gced.size());
   }
 
+  @Override
   public ObjectIDSet getObjectIDsInCache() {
     return new ObjectIDSet(managed.keySet());
   }
@@ -197,6 +222,7 @@ public class GCTestObjectManager implements ObjectManager {
     }
   }
 
+  @Override
   public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     if (cacheOnly) {
       ManagedObject obj = getObjectFromCacheByIDOrNull(id);
@@ -216,22 +242,27 @@ public class GCTestObjectManager implements ObjectManager {
     }
   }
 
+  @Override
   public int getLiveObjectCount() {
     return managed.size();
   }
 
+  @Override
   public Iterator getRootNames() {
     return null;
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 
+  @Override
   public ManagedObject getQuietObjectByID(ObjectID id) {
     return getObjectByID(id);
   }
 
+  @Override
   public void deleteObjects(final Set<ObjectID> objectsToDelete) {
     //
   }

@@ -42,10 +42,12 @@ public class GroupEventsDispatchHandler extends AbstractEventHandler {
       this.sink = sink;
     }
 
+    @Override
     public void nodeJoined(NodeID nodeID) {
       sink.add(new GroupEvent(nodeID, true));
     }
 
+    @Override
     public void nodeLeft(NodeID nodeID) {
       sink.add(new GroupEvent(nodeID, false));
     }

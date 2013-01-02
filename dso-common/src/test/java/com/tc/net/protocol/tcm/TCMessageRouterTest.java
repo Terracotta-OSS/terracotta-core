@@ -27,6 +27,7 @@ public class TCMessageRouterTest extends TestCase {
 
     final SynchronizedRef msg = new SynchronizedRef(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
+      @Override
       public void putMessage(TCMessage message) {
         msg.set(message);
       }
@@ -37,6 +38,7 @@ public class TCMessageRouterTest extends TestCase {
 
     msg.set(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
+      @Override
       public void putMessage(TCMessage m) {
         // ignore it
       }
@@ -48,6 +50,7 @@ public class TCMessageRouterTest extends TestCase {
   public void testRouteByType() {
     final SynchronizedRef defmsg = new SynchronizedRef(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
+      @Override
       public void putMessage(TCMessage m) {
         defmsg.set(m);
       }
@@ -55,6 +58,7 @@ public class TCMessageRouterTest extends TestCase {
 
     final SynchronizedRef msg = new SynchronizedRef(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
+      @Override
       public void putMessage(TCMessage m) {
         msg.set(m);
       }
@@ -77,6 +81,7 @@ public class TCMessageRouterTest extends TestCase {
     final SynchronizedRef error = new SynchronizedRef(null);
     final SetOnceFlag stop = new SetOnceFlag();
     final TCMessageSink nullSink = new TCMessageSink() {
+      @Override
       public void putMessage(TCMessage message) {
         // nada
       }
@@ -84,6 +89,7 @@ public class TCMessageRouterTest extends TestCase {
     final TCMessageRouter router = new TCMessageRouterImpl(nullSink);
 
     final Runnable putter = new Runnable() {
+      @Override
       public void run() {
         TCMessage msg = createMessage();
         try {
@@ -100,6 +106,7 @@ public class TCMessageRouterTest extends TestCase {
     };
 
     final Runnable changer = new Runnable() {
+      @Override
       public void run() {
         try {
           while (true) {

@@ -35,11 +35,13 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public void initialize(Set missingObjectIDs, long batchId) {
     this.missingOids = missingObjectIDs;
     this.batchID = batchId;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_ID, batchID);
     for (Iterator i = missingOids.iterator(); i.hasNext();) {
@@ -48,6 +50,7 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
     }
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case BATCH_ID:
@@ -64,10 +67,12 @@ public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements Object
     }
   }
 
+  @Override
   public long getBatchID() {
     return batchID;
   }
 
+  @Override
   public Set getMissingObjectIDs() {
     return missingOids;
   }

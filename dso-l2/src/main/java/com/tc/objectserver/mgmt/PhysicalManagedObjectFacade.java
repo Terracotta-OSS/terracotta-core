@@ -66,10 +66,12 @@ public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements
     return rv;
   }
 
+  @Override
   public String getClassName() {
     return this.className;
   }
 
+  @Override
   public String[] getFields() {
     return this.fieldNames.clone();
   }
@@ -80,49 +82,60 @@ public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements
     return this.fields.get(fieldName);
   }
 
+  @Override
   public boolean isPrimitive(String fieldName) {
     Object value = getFieldValue(fieldName);
     return !(value instanceof ObjectID);
   }
 
+  @Override
   public ObjectID getObjectId() {
     return this.objectID;
   }
 
+  @Override
   public boolean isInnerClass() {
     return this.isInner;
   }
 
+  @Override
   public ObjectID getParentObjectId() {
     if (!this.isInner) { throw new IllegalStateException("Not an inner class"); }
     return this.parentID;
   }
 
+  @Override
   public boolean isArray() {
     return this.isArray;
   }
 
+  @Override
   public int getArrayLength() {
     if (!this.isArray) { throw new IllegalStateException("Not an array"); }
     return this.arrayLength;
   }
 
+  @Override
   public boolean isList() {
     return false;
   }
 
+  @Override
   public boolean isSet() {
     return false;
   }
 
+  @Override
   public boolean isMap() {
     return false;
   }
 
+  @Override
   public int getFacadeSize() {
     throw new UnsupportedOperationException("Not a collection");
   }
 
+  @Override
   public int getTrueObjectSize() {
     throw new UnsupportedOperationException("Not a collection");
   }

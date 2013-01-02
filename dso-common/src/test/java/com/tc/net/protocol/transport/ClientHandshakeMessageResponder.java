@@ -16,6 +16,7 @@ class ClientHandshakeMessageResponder extends HandshakeMessageResponderBase {
     super(sentQueue, receivedQueue, messageFactory, assignedConnectionId, transport, errorRef);
   }
 
+  @Override
   public void handleHandshakeMessage(TransportHandshakeMessage message) {
     if (message.isSyn()) {
 

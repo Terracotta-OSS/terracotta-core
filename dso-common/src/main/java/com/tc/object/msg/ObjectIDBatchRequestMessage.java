@@ -29,10 +29,12 @@ public class ObjectIDBatchRequestMessage extends DSOMessageBase implements Objec
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_SIZE, batchSize);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case BATCH_SIZE:
@@ -47,10 +49,12 @@ public class ObjectIDBatchRequestMessage extends DSOMessageBase implements Objec
     this.batchSize = size;
   }
 
+  @Override
   public int getBatchSize() {
     return batchSize;
   }
 
+  @Override
   public NodeID getRequestingNodeID() {
     return getSourceNodeID();
   }

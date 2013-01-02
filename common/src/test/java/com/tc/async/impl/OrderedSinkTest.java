@@ -90,6 +90,7 @@ public class OrderedSinkTest extends TCTestCase {
       id = i;
     }
 
+    @Override
     public long getSequenceID() {
       return id;
     }

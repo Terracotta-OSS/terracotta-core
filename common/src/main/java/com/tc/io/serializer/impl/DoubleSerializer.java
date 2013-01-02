@@ -14,14 +14,17 @@ import java.io.ObjectOutput;
  */
 public final class DoubleSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeDouble(((Double)o).doubleValue());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return Double.valueOf(in.readDouble());
   }
 
+  @Override
   public byte getSerializerID() {
     return DOUBLE;
   }

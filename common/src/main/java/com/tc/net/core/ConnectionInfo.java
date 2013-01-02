@@ -51,6 +51,7 @@ public class ConnectionInfo implements java.io.Serializable {
     return groupName;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o instanceof ConnectionInfo) {
@@ -65,12 +66,14 @@ public class ConnectionInfo implements java.io.Serializable {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }
 
   private String s;
 
+  @Override
   public String toString() {
     return (s == null ? (s = hostname + ":" + port + (groupName != null ? ":" + groupName : "")) : s);
   }

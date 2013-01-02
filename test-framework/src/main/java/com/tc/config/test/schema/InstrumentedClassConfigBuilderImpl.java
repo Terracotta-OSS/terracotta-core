@@ -26,31 +26,38 @@ public class InstrumentedClassConfigBuilderImpl extends BaseConfigBuilder implem
     setArrayPropertyTagName("on-load", "method");
   }
 
+  @Override
   public void setIsInclude(boolean isInclude) {
     this.isInclude = isInclude;
   }
 
+  @Override
   public void setClassExpression(String value) {
     if (isInclude) setProperty("class-expression", value);
     else setProperty("exclude", value);
   }
 
+  @Override
   public void setHonorTransient(String value) {
     setProperty("honor-transient", value);
   }
 
+  @Override
   public void setHonorTransient(boolean value) {
     setProperty("honor-transient", value);
   }
 
+  @Override
   public void setCallConstructorOnLoad(String value) {
     setProperty("call-constructor-on-load", value);
   }
 
+  @Override
   public void setCallConstructorOnLoad(boolean value) {
     setProperty("call-constructor-on-load", value);
   }
   
+  @Override
   public void setCallMethodOnLoad(String value) {
     setProperty("on-load", new Object[]{value});
   }
@@ -58,6 +65,7 @@ public class InstrumentedClassConfigBuilderImpl extends BaseConfigBuilder implem
   private static final String[] ALL_PROPERTIES = new String[] { "class-expression", "honor-transient",
       "call-constructor-on-load", "exclude", "on-load"              };
 
+  @Override
   public String toString() {
     String out = "";
 

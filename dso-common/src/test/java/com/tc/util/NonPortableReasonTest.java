@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 public class NonPortableReasonTest extends TestCase {
   private NonPortableReason reason;
 
+  @Override
   public void setUp() {
     this.reason = new NonPortableReason(getClass(), NonPortableReason.TEST_REASON);
   }
@@ -48,22 +49,27 @@ public class NonPortableReasonTest extends TestCase {
     public final List formatInstructionsTextCalls = new LinkedList();
     public final List flushCalls = new LinkedList();
 
+    @Override
     public void formatReasonText(String reasonText) {
       formatReasonTextCalls.add(reasonText);
     }
 
+    @Override
     public void formatDetail(NonPortableDetail detail) {
       formatDetailsCalls.add(detail);
     }
 
+    @Override
     public void formatInstructionsText(String instructionsText) {
       formatInstructionsTextCalls.add(instructionsText);
     }
 
+    @Override
     public void flush() {
       flushCalls.add(new Object());
     }
 
+    @Override
     public void formatReasonTypeName(byte reasonType) {
       return;
     }

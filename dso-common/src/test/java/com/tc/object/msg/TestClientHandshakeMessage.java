@@ -59,6 +59,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return this.clientID;
   }
 
+  @Override
   public Set getObjectIDs() {
     return this.clientObjectIds;
   }
@@ -84,69 +85,85 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return 0;
   }
 
+  @Override
   public Collection getLockContexts() {
     return this.lockContexts;
   }
 
+  @Override
   public List getTransactionSequenceIDs() {
     return this.transactionSequenceIDs;
   }
 
+  @Override
   public void addTransactionSequenceIDs(List ids) {
     this.transactionSequenceIDs = ids;
     this.setTransactionSequenceIDsCalls.put(this.transactionSequenceIDs);
   }
 
+  @Override
   public void addResentTransactionIDs(List resentTransactionIDs) {
     this.transactionIDs = resentTransactionIDs;
     this.setTransactionIDsCalls.put(resentTransactionIDs);
 
   }
 
+  @Override
   public List getResentTransactionIDs() {
     return this.transactionIDs;
   }
 
+  @Override
   public void setIsObjectIDsRequested(boolean request) {
     this.requestedObjectIDs = request;
   }
 
+  @Override
   public boolean isObjectIDsRequested() {
     return this.requestedObjectIDs;
   }
 
+  @Override
   public String getClientVersion() {
     return this.clientVersion;
   }
 
+  @Override
   public void setClientVersion(String v) {
     this.clientVersion = v;
   }
 
+  @Override
   public long getServerHighWaterMark() {
     return 0;
   }
 
+  @Override
   public void setServerHighWaterMark(long serverHighWaterMark) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addLockContext(ClientServerExchangeLockContext ctxt) {
     this.lockContexts.add(ctxt);
   }
 
+  @Override
   public boolean enterpriseClient() {
     return this.enterpriseClient;
   }
 
+  @Override
   public void setEnterpriseClient(boolean isEnterpirseClient) {
     this.enterpriseClient = isEnterpirseClient;
   }
 
+  @Override
   public Invalidations getObjectIDsToValidate() {
     return validateObjectIds;
   }
 
+  @Override
   public long getLocalTimeMills() {
     return System.currentTimeMillis();
   }

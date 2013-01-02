@@ -20,10 +20,12 @@ public class InBandMoveToNextSink implements SpecializedEventContext {
     this.nodeID = nodeID;
   }
 
+  @Override
   public void execute() {
     sink.add(event);
   }
 
+  @Override
   public Object getKey() {
     return nodeID;
   }

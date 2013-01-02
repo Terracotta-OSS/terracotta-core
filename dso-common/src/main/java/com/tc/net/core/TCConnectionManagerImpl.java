@@ -96,6 +96,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return rv;
   }
 
+  @Override
   public TCConnection[] getAllConnections() {
     synchronized (connections) {
       return (TCConnection[]) connections.toArray(EMPTY_CONNECTION_ARRAY);
@@ -106,6 +107,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
    * Connection is active if and only if it is Transport Established and the idle time is less than the HC max idle
    * time.
    */
+  @Override
   public TCConnection[] getAllActiveConnections() {
     synchronized (connections) {
       ArrayList activeConnections = new ArrayList();
@@ -124,17 +126,20 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     }
   }
 
+  @Override
   public TCListener[] getAllListeners() {
     synchronized (listeners) {
       return (TCListener[]) listeners.toArray(EMPTY_LISTENER_ARRAY);
     }
   }
 
+  @Override
   public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory)
       throws IOException {
     return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, true);
   }
 
+  @Override
   public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory,
                                                       int backlog, boolean reuseAddr) throws IOException {
     checkShutdown();
@@ -149,6 +154,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return rv;
   }
 
+  @Override
   public final synchronized TCConnection createConnection(TCProtocolAdaptor adaptor) {
     checkShutdown();
 
@@ -158,10 +164,12 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return rv;
   }
 
+  @Override
   public synchronized void closeAllConnections(long timeout) {
     closeAllConnections(false, timeout);
   }
 
+  @Override
   public synchronized void asynchCloseAllConnections() {
     closeAllConnections(true, 0);
   }
@@ -186,6 +194,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     }
   }
 
+  @Override
   public synchronized void closeAllListeners() {
     TCListener[] list;
 
@@ -202,10 +211,12 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     }
   }
 
+  @Override
   public TCComm getTcComm() {
     return this.comm;
   }
 
+  @Override
   public final synchronized void shutdown() {
     if (shutdown.attemptSet()) {
       closeAllListeners();
@@ -241,18 +252,21 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   static class ConnectionEvents implements TCConnectionEventListener {
+    @Override
     public final void connectEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("connect event: " + event.toString());
       }
     }
 
+    @Override
     public final void closeEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("close event: " + event.toString());
       }
     }
 
+    @Override
     public final void errorEvent(TCConnectionErrorEvent event) {
       try {
         final Throwable err = event.getException();
@@ -271,6 +285,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
       }
     }
 
+    @Override
     public final void endOfFileEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("EOF event: " + event.toString());
@@ -281,6 +296,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   class ListenerEvents implements TCListenerEventListener {
+    @Override
     public void closeEvent(TCListenerEvent event) {
       synchronized (listeners) {
         listeners.remove(event.getSource());

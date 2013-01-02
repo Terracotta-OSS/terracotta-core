@@ -19,10 +19,12 @@ public class MapNode extends PlainNode {
     entryIterator = map.entrySet().iterator();
   }
 
+  @Override
   public boolean done() {
     return super.done() && !entryIterator.hasNext();
   }
 
+  @Override
   public MemberValue next() {
     if (!super.done()) {
       return super.next();

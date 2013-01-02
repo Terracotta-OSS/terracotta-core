@@ -48,6 +48,7 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void start() {
     this.startCalls.add(new Object());
   }
@@ -93,25 +94,30 @@ public class TestLockManager implements LockManager {
     return null;
   }
 
+  @Override
   public void clearAllLocksFor(ClientID cid) {
     return;
   }
 
+  @Override
   public void enableLockStatsForNodeIfNeeded(ClientID cid) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void interrupt(LockID lid, ClientID cid, ThreadID threadID) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void lock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public NotifiedWaiters notify(LockID lid, ClientID cid, ThreadID tid, NotifyAction action,
                                 NotifiedWaiters addNotifiedWaitersTo) {
     boolean isAll = false;
@@ -122,16 +128,19 @@ public class TestLockManager implements LockManager {
     return addNotifiedWaitersTo;
   }
 
+  @Override
   public void queryLock(LockID lid, ClientID cid, ThreadID threadID) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void recallCommit(LockID lid, ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void reestablishState(ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts) {
     for (ClientServerExchangeLockContext lockContext : serverLockContexts) {
       if (lockContext.getState().getType() == Type.HOLDER || lockContext.getState().getType() == Type.GREEDY_HOLDER) {
@@ -142,16 +151,19 @@ public class TestLockManager implements LockManager {
     }
   }
 
+  @Override
   public void tryLock(LockID lid, ClientID cid, ThreadID threadID, ServerLockLevel level, long timeout) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void unlock(LockID lid, ClientID receiverID, ThreadID threadID) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void wait(LockID lid, ClientID cid, ThreadID tid, long timeout) {
     throw new ImplementMe();
 

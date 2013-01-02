@@ -53,6 +53,7 @@ public class AbstractIdentifierTest extends TCTestCase {
     public RedFishID(long id) {
       super(id);
     }
+    @Override
     public String getIdentifierType() {
       return "RedFish";
     }
@@ -65,6 +66,7 @@ public class AbstractIdentifierTest extends TCTestCase {
     public BlueFishID(long id) {
       super(id);
     }
+    @Override
     public String getIdentifierType() {
       return "BlueFishID";
     }

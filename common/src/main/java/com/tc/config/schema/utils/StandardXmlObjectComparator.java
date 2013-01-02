@@ -18,6 +18,7 @@ import java.util.List;
  */
 public class StandardXmlObjectComparator implements XmlObjectComparator {
 
+  @Override
   public boolean equals(XmlObject one, XmlObject two) {
     try {
       checkEquals(one, two);
@@ -27,6 +28,7 @@ public class StandardXmlObjectComparator implements XmlObjectComparator {
     }
   }
 
+  @Override
   public void checkEquals(XmlObject one, XmlObject two) throws NotEqualException {
     checkEquals(one, two, "");
   }

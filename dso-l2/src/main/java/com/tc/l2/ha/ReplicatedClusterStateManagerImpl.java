@@ -53,6 +53,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     factory.registerForConnectionIDEvents(this);
   }
 
+  @Override
   public synchronized void goActiveAndSyncState() {
     state.generateStripeIDIfNeeded();
     state.syncActiveState();
@@ -64,6 +65,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     notifyAll();
   }
 
+  @Override
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
     ClusterStateMessage msg = (ClusterStateMessage) groupManager
@@ -96,28 +98,33 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   // TODO:: Sync only once a while to the passives
+  @Override
   public synchronized void publishNextAvailableObjectID(long minID) {
     state.setNextAvailableObjectID(minID);
     publishToAll(ClusterStateMessageFactory.createNextAvailableObjectIDMessage(state));
   }
 
+  @Override
   public synchronized void publishNextAvailableDGCID(long nextGcIteration) {
     state.setNextAvailableDGCId(nextGcIteration);
     publishToAll(ClusterStateMessageFactory.createNextAvailableDGCIterationMessage(state));
   }
 
   // TODO:: Sync only once a while to the passives
+  @Override
   public void publishNextAvailableGlobalTransactionID(long minID) {
     state.setNextAvailableGlobalTransactionID(minID);
     publishToAll(ClusterStateMessageFactory.createNextAvailableGlobalTransactionIDMessage(state));
   }
 
+  @Override
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
     state.addNewConnection(connectionID);
     publishToAll(ClusterStateMessageFactory.createNewConnectionCreatedMessage(connectionID));
   }
 
+  @Override
   public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
     state.removeConnection(connectionID);
@@ -137,6 +144,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
   }
 
+  @Override
   public void messageReceived(NodeID fromNode, GroupMessage msg) {
     if (msg instanceof ClusterStateMessage) {
       ClusterStateMessage clusterMsg = (ClusterStateMessage) msg;
@@ -199,15 +207,18 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
   }
 
+  @Override
   public void fireNodeLeftEvent(NodeID nodeID) {
     // this is needed to clean up some data structures internally
     channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID));
   }
 
+  @Override
   public synchronized void setCurrentState(State currentState) {
     this.state.setCurrentState(currentState);
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(ReplicatedClusterStateManagerImpl.class.getSimpleName() + " [ ");

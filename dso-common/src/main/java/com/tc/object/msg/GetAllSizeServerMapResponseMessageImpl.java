@@ -40,6 +40,7 @@ public class GetAllSizeServerMapResponseMessageImpl extends DSOMessageBase imple
     super(sessionID, monitor, out, channel, type);
   }
 
+  @Override
   public void initializeGetAllSizeResponse(final GroupID smGroupID, final ServerMapRequestID smRequestID,
                                            final Long mapSize) {
     this.groupID = smGroupID;
@@ -74,23 +75,28 @@ public class GetAllSizeServerMapResponseMessageImpl extends DSOMessageBase imple
     }
   }
 
+  @Override
   public GroupID getGroupID() {
     return this.groupID;
   }
 
+  @Override
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public Long getSize() {
     return this.size;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_SIZE;
   }
 
   // XXX inherited but not used
+  @Override
   public ObjectID getMapID() {
     return null;
   }

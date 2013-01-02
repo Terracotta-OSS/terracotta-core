@@ -9,18 +9,22 @@ import java.util.ArrayList;
 
 public class NullLockInfoByThreadIDImpl implements LockInfoByThreadID {
 
+  @Override
   public ArrayList getHeldLocks(ThreadID threadID) {
     return new ArrayList();
   }
 
+  @Override
   public ArrayList getPendingLocks(ThreadID threadID) {
     return new ArrayList();
   }
 
+  @Override
   public ArrayList getWaitOnLocks(ThreadID threadID) {
     return new ArrayList();
   }
 
+  @Override
   public void addLock(LockState lockState, ThreadID threadID, String lockID) {
     //
   }

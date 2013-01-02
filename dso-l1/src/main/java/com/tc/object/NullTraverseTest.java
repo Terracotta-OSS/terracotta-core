@@ -11,10 +11,12 @@ import com.tc.object.appevent.NonPortableEventContext;
  */
 public class NullTraverseTest implements TraverseTest {
 
+  @Override
   public boolean shouldTraverse(Object object) {
     return true;
   }
 
+  @Override
   public void checkPortability(TraversedReference reference, Class referringClass, NonPortableEventContext context)
       throws TCNonPortableObjectError {
     return;

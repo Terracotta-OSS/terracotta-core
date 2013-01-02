@@ -36,6 +36,7 @@ public class StreamCopier extends Thread {
     setDaemon(true);
   }
 
+  @Override
   public void run() {
     String line;
     try {

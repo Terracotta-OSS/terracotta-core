@@ -21,6 +21,7 @@ public class LogSettingConfigItemListener implements ConfigItemListener {
     this.processType = processType;
   }
 
+  @Override
   public void valueChanged(Object oldValue, Object newValue) {
     if (newValue != null) {
       TCLogging.setLogDirectory((File) newValue, processType);

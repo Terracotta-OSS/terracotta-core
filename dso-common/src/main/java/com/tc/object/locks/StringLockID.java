@@ -57,6 +57,7 @@ public class StringLockID implements LockID {
     return false;
   }
   
+  @Override
   public int compareTo(Object o) {
     if (o instanceof StringLockID) {
       StringLockID other = (StringLockID)o;
@@ -71,15 +72,18 @@ public class StringLockID implements LockID {
     throw new ClassCastException(o + " is not an instance of LockID");
   }
 
+  @Override
   public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readString();
     return this;
   }
 
+  @Override
   public void serializeTo(final TCByteBufferOutput serialOutput) {
     serialOutput.writeString(this.id);
   }
 
+  @Override
   public LockIDType getLockType() {
     return LockIDType.STRING;
   }

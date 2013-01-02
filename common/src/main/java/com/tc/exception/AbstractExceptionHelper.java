@@ -20,6 +20,7 @@ public abstract class AbstractExceptionHelper<V extends Throwable> implements Ex
    * @param t Throwable
    * @return True if t instanceof
    */
+  @Override
   public boolean accepts(Throwable t) {
     return tClass.isInstance(t);
   }
@@ -30,6 +31,7 @@ public abstract class AbstractExceptionHelper<V extends Throwable> implements Ex
    * @param t RuntimeException
    * @return Cause of t
    */
+  @Override
   public Throwable getProximateCause(Throwable t) {
     return (accepts(t) && t.getCause() != null) ? t.getCause() : t;
   }
@@ -40,6 +42,7 @@ public abstract class AbstractExceptionHelper<V extends Throwable> implements Ex
    * @param t Param ignored
    * @return Always AssertionError
    */
+  @Override
   public Throwable getUltimateCause(Throwable t) {
     throw new AssertionError();
   }

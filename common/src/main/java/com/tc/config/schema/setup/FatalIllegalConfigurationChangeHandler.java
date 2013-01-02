@@ -33,6 +33,7 @@ public class FatalIllegalConfigurationChangeHandler implements IllegalConfigurat
     return logger;
   }
   
+  @Override
   public void changeFailed(ConfigItem item, Object oldValue, Object newValue) {
     String text = "Error: Terracotta is using an inconsistent configuration.\n\n"
                   + "The configuration that this client is using is different from the one used by\n"

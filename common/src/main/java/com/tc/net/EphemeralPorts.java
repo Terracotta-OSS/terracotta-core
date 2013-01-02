@@ -86,6 +86,7 @@ public class EphemeralPorts {
       this.ndd = isHpux ? "/usr/bin/ndd" : "/usr/sbin/ndd";
     }
 
+    @Override
     public Range getRange() {
       Exec exec = new Exec(new String[] { ndd, "/dev/tcp", "tcp_smallest_anon_port" });
       final String lower;
@@ -112,6 +113,7 @@ public class EphemeralPorts {
 
   private static class Windows implements RangeGetter {
 
+    @Override
     public Range getRange() {
       String osName = System.getProperty("os.name");
 
@@ -196,6 +198,7 @@ public class EphemeralPorts {
   }
 
   private static class Mac implements RangeGetter {
+    @Override
     public Range getRange() {
       Exec exec = new Exec(new String[] { "sysctl", "net.inet.ip.portrange" });
       final String output;
@@ -225,6 +228,7 @@ public class EphemeralPorts {
     /*
      * File creation with a proc filesystem path - this is okay as this is linux specific code.
      */
+    @Override
     @FindbugsSuppressWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     public Range getRange() {
       File src = new File(source);
@@ -257,6 +261,7 @@ public class EphemeralPorts {
   }
 
   private static class Aix implements RangeGetter {
+    @Override
     public Range getRange() {
       Exec exec = new Exec(new String[] { "/usr/sbin/no", "-a" });
       final String output;

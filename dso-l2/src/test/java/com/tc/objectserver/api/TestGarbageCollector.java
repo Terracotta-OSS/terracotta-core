@@ -127,14 +127,17 @@ public class TestGarbageCollector implements GarbageCollector {
     return this.collected;
   }
 
+  @Override
   public synchronized boolean isPausingOrPaused() {
     return this.isPausing || this.isPaused;
   }
 
+  @Override
   public synchronized boolean isPaused() {
     return this.isPaused;
   }
 
+  @Override
   public synchronized void notifyReadyToGC() {
     try {
       if (isPausing) {
@@ -196,6 +199,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return this.blockUntilReadyToGCCalls.peek() != null;
   }
 
+  @Override
   public synchronized void notifyGCComplete() {
     try {
       this.isPausing = false;
@@ -224,6 +228,7 @@ public class TestGarbageCollector implements GarbageCollector {
     }
   }
 
+  @Override
   public synchronized void requestGCPause() {
     try {
       this.isPausing = true;
@@ -235,6 +240,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return out.print(getClass().getName());
   }
@@ -244,10 +250,12 @@ public class TestGarbageCollector implements GarbageCollector {
     return collect(traverser, roots, managedObjectIds);
   }
 
+  @Override
   public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
     //
   }
 
+  @Override
   public void doGC(final GCType type) {
     collectedObjects = collect(null, this.objectProvider.getRootIDs(), this.objectProvider.getAllObjectIDs(),
                                new NullLifeCycleState());
@@ -256,59 +264,73 @@ public class TestGarbageCollector implements GarbageCollector {
     this.deleteGarbage(new DGCResultContext(collectedObjects, new GarbageCollectionInfo()));
   }
 
+  @Override
   public void start() {
     // Nop
   }
 
+  @Override
   public void stop() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setState(final LifeCycleState st) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addListener(final GarbageCollectorEventListener listener) {
     //
   }
 
+  @Override
   public void waitToDisableGC() {
     // do nothing
   }
 
+  @Override
   public boolean requestDisableGC() {
     return false;
   }
 
+  @Override
   public void enableGC() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isDisabled() {
     return false;
   }
 
+  @Override
   public boolean isStarted() {
     return false;
   }
 
+  @Override
   public void deleteGarbage(final DGCResultContext resultContext) {
     this.notifyGCComplete();
     this.objectProvider.notifyGCComplete(resultContext);
   }
 
+  @Override
   public void notifyNewObjectInitalized(final ObjectID id) {
     // NOP
   }
 
+  @Override
   public void notifyObjectCreated(final ObjectID id) {
     // NOP
   }
 
+  @Override
   public void notifyObjectsEvicted(final Collection evicted) {
     // NOP
   }
 
+  @Override
   public synchronized boolean requestGCStart() {
     if (!this.isStarted) {
       this.isStarted = true;
@@ -317,26 +339,32 @@ public class TestGarbageCollector implements GarbageCollector {
     return false;
   }
 
+  @Override
   public void waitToStartInlineGC() {
     // do nothing
   }
 
+  @Override
   public void waitToStartGC() {
     // do nothing
   }
 
+  @Override
   public void setPeriodicEnabled(boolean periodicEnabled) {
     // do nothing
   }
 
+  @Override
   public boolean isPeriodicEnabled() {
     return false;
   }
 
+  @Override
   public boolean isDelete() {
     return isDelete;
   }
 
+  @Override
   public boolean requestGCDeleteStart() {
     return isDelete = true;
   }

@@ -33,35 +33,43 @@ class Jdk15MemoryUsage implements MemoryUsage {
     this(usage, desc, -1, -1);
   }
 
+  @Override
   public String getDescription() {
     return desc;
   }
 
+  @Override
   public long getFreeMemory() {
     return free;
   }
 
+  @Override
   public int getUsedPercentage() {
     return usedPercentage;
   }
 
+  @Override
   public long getMaxMemory() {
     return max;
   }
 
+  @Override
   public long getUsedMemory() {
     return used;
   }
 
+  @Override
   public String toString() {
     return "Jdk15MemoryUsage ( max = " + max + ", used = " + used + ", free = " + free + ", used % = " + usedPercentage
            + ", collectionCount = " + collectionCount + " )";
   }
 
+  @Override
   public long getCollectionCount() {
     return collectionCount;
   }
 
+  @Override
   public long getCollectionTime() {
     return collectionTime;
   }

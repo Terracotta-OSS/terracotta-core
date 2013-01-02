@@ -57,6 +57,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     currentState = newState;
   }
 
+  @Override
   public synchronized SocketConnectStartStatus start() {
     Assert.eval(!currentState.equals(SOCKETCONNECT_IN_PROGRESS));
     socketConnectNoReplyWaitCount = 0;
@@ -84,12 +85,14 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     }
   }
 
+  @Override
   public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
     if (!listeners.addIfAbsent(socketConnectListener)) { throw new AssertionError(
                                                                                   "Attempt to add same socket connect event listener moere than once: "
                                                                                       + socketConnectListener); }
   }
 
+  @Override
   public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
     if (!listeners.remove(socketConnectListener)) { throw new AssertionError(
                                                                              "Attempt to remove non registered socket connect event listener"); }
@@ -98,6 +101,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   /*
    * Returns true if connection is still in progress.
    */
+  @Override
   public synchronized boolean probeConnectStatus() {
     if (currentState == SOCKETCONNECT_FAIL) {
       // prev async connect failed
@@ -118,10 +122,12 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     return true;
   }
 
+  @Override
   public synchronized void closeEvent(TCConnectionEvent event) {
     //
   }
 
+  @Override
   public void connectEvent(TCConnectionEvent event) {
 
     synchronized (this) {
@@ -134,6 +140,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     }
   }
 
+  @Override
   public void endOfFileEvent(TCConnectionEvent event) {
 
     synchronized (this) {
@@ -150,6 +157,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     }
   }
 
+  @Override
   public void errorEvent(TCConnectionErrorEvent errorEvent) {
 
     synchronized (this) {

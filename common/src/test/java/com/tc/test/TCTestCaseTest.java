@@ -24,6 +24,7 @@ public class TCTestCaseTest extends TCTestCase {
 
   private File[] getHprofs() throws IOException {
     return getTempDirectory().listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(".hprof");
       }

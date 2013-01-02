@@ -18,6 +18,7 @@ public class TempDirectoryHelperTest extends TestCase {
   private File                expectedDir;
   private TempDirectoryHelper helper;
 
+  @Override
   public void setUp() throws Exception {
 
     String root = TestConfigObject.getInstance().tempDirectoryRoot() + File.separator + "temp-TempDirectoryHelperTest";

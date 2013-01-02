@@ -45,6 +45,7 @@ public class ZipBuilder implements ArchiveBuilder {
     this.verbose = verbose;
   }
 
+  @Override
   public final void putTraverseDirectory(File dir, String dirName) throws IOException {
     if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
     putDirEntry(dirName);
@@ -59,6 +60,7 @@ public class ZipBuilder implements ArchiveBuilder {
     }
   }
 
+  @Override
   public final void putDirEntry(String file) throws IOException {
     if (dirSet.contains(file)) return;
     dirSet.add(file);
@@ -70,6 +72,7 @@ public class ZipBuilder implements ArchiveBuilder {
     if (verbose) System.out.println(dirEntry);
   }
 
+  @Override
   public final void putEntry(String file, byte[] bytes) throws IOException {
     if (entrySet.contains(file.toString())) return;
     entrySet.add(file.toString());
@@ -82,10 +85,12 @@ public class ZipBuilder implements ArchiveBuilder {
     if (verbose) System.out.println(fileEntry);
   }
 
+  @Override
   public final void finish() throws IOException {
     zout.close();
   }
 
+  @Override
   public final byte[] readFile(File file) throws IOException {
     BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
     byte[] bytes = new byte[in.available()];

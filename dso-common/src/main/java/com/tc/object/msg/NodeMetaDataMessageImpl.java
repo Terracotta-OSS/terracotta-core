@@ -36,18 +36,22 @@ public class NodeMetaDataMessageImpl extends DSOMessageBase implements NodeMetaD
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public ThreadID getThreadID() {
     return threadID;
   }
 
+  @Override
   public void setThreadID(final ThreadID threadID) {
     this.threadID = threadID;
   }
 
+  @Override
   public NodeID getNodeID() {
     return nodeID;
   }
 
+  @Override
   public void setNodeID(final NodeID nodeID) {
     this.nodeID = nodeID;
   }

@@ -21,6 +21,7 @@ public class FullGCHook extends AbstractGCHook {
   private static final TCLogger logger      = TCLogging.getLogger(FullGCHook.class);
 
   private static final Filter   NULL_FILTER = new Filter() {
+                                              @Override
                                               public boolean shouldVisit(ObjectID referencedObject) {
                                                 return true;
                                               }
@@ -31,31 +32,38 @@ public class FullGCHook extends AbstractGCHook {
     super(collector, objectManager, stateManager, inlineCleanup);
   }
 
+  @Override
   public String getDescription() {
     return "Full";
   }
 
+  @Override
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
     return new GarbageCollectionInfo(id, inlineCleanup ? GarbageCollectionInfo.Type.INLINE_CLEANUP
         : GarbageCollectionInfo.Type.FULL_GC);
   }
 
+  @Override
   public ObjectIDSet getGCCandidates() {
     return this.objectManager.getAllObjectIDs();
   }
 
+  @Override
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs) {
     return new ObjectIDSet(this.objectManager.getRootIDs());
   }
 
+  @Override
   public Filter getCollectCycleFilter(Set candidateIDs) {
     return NULL_FILTER;
   }
 
+  @Override
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
     return getObjectReferencesFrom(id, false);
   }
 
+  @Override
   public ObjectIDSet getRescueIDs() {
     ObjectIDSet rescueIds = new ObjectIDSet();
     this.stateManager.addAllReferencedIdsTo(rescueIds);

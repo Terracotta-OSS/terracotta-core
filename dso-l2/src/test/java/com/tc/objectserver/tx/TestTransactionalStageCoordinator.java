@@ -18,14 +18,17 @@ public class TestTransactionalStageCoordinator implements TransactionalStageCoor
   public MockSink recallSink        = new MockSink();
   public MockSink applySink         = new MockSink();
 
+  @Override
   public void addToApplyStage(ApplyTransactionContext context) {
     applySink.add(context);
   }
 
+  @Override
   public void initiateLookup() {
     lookupSink.addLossy(new LookupEventContext());
   }
 
+  @Override
   public void initiateRecallAll() {
     recallSink.add(new RecallObjectsContext(Collections.EMPTY_LIST, true));
   }

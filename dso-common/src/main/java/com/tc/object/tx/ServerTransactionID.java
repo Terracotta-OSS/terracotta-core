@@ -104,6 +104,7 @@ public class ServerTransactionID implements Comparable {
     }
   }
 
+  @Override
   public int compareTo(Object o) {
     ServerTransactionID other = (ServerTransactionID) o;
     int cmp = sourceID.compareTo(other.sourceID);

@@ -17,6 +17,7 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
     this.transactionBatchManager = transactionBatchManager;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     final CommitTransactionMessage ctm = (CommitTransactionMessage) context;
     transactionBatchManager.addTransactionBatch(ctm);

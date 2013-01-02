@@ -77,8 +77,10 @@ public abstract class CollectionMismatch {
     return this.describer.toString(this.comparedAgainst);
   }
 
+  @Override
   public abstract String toString();
 
+  @Override
   public boolean equals(Object that) {
     if (!(that instanceof CollectionMismatch)) return false;
 

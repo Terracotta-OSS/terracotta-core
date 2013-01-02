@@ -85,6 +85,7 @@ class MessageTransportStatus {
     return this.state.equals(MessageTransportState.STATE_END);
   }
 
+  @Override
   public String toString() {
     return state.toString();
   }

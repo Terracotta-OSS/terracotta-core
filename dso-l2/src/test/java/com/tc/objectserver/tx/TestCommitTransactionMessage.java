@@ -32,6 +32,7 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     this.clientID = clientID;
   }
 
+  @Override
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
     setBatchCalls.add(batch);
     this.serializer = serializer;
@@ -42,6 +43,7 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     }
   }
 
+  @Override
   public TCByteBuffer[] getBatchData() {
     TCByteBuffer[] tcbb = new TCByteBuffer[tcByteBufferList.size()];
     int count = 0;
@@ -51,46 +53,57 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     return tcbb;
   }
 
+  @Override
   public void send() {
     this.sendCalls.add(new Object());
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return serializer;
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return clientID;
   }
 
+  @Override
   public void dehydrate() {
     throw new ImplementMe();
   }
 
+  @Override
   public MessageChannel getChannel() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getDestinationNodeID() {
     throw new ImplementMe();
   }
 
+  @Override
   public SessionID getLocalSessionID() {
     throw new ImplementMe();
   }
 
+  @Override
   public TCMessageType getMessageType() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getTotalLength() {
     throw new ImplementMe();
   }
 
+  @Override
   public void hydrate() {
     throw new ImplementMe();
   }
 
+  @Override
   public void recycle() {
     throw new ImplementMe();
   }

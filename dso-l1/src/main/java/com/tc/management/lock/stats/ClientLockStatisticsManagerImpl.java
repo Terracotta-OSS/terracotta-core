@@ -56,11 +56,13 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     return message;
   }
 
+  @Override
   public void start(DSOClientMessageChannel clientMessageChannel, Sink sinkArg) {
     this.channel = clientMessageChannel;
     this.sink = sinkArg;
   }
 
+  @Override
   public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo, int numberOfPendingLockRequests) {
     if (!isEnabled()) { return; }
 
@@ -69,6 +71,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
                               numberOfPendingLockRequests);
   }
 
+  @Override
   public synchronized void recordLockAwarded(LockID lockID, ThreadID threadID) {
     if (!isEnabled()) { return; }
 
@@ -76,6 +79,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     super.recordLockAwarded(lockID, NULL_NODE_ID, threadID, false, System.currentTimeMillis(), depth);
   }
 
+  @Override
   public synchronized void recordLockReleased(LockID lockID, ThreadID threadID) {
     if (!isEnabled()) { return; }
 
@@ -83,6 +87,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     super.recordLockReleased(lockID, NULL_NODE_ID, threadID);
   }
 
+  @Override
   public synchronized void recordLockHopped(LockID lockID, ThreadID threadID) {
     if (!isEnabled()) { return; }
 
@@ -94,6 +99,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     }
   }
 
+  @Override
   public synchronized void recordLockRejected(LockID lockID, ThreadID threadID) {
     if (!isEnabled()) { return; }
 
@@ -117,6 +123,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     super.clear();
   }
 
+  @Override
   public boolean isEnabled() {
     return lockStatisticsEnabled;
   }
@@ -206,6 +213,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     return false;
   }
 
+  @Override
   public void requestLockSpecs(NodeID nodeID) {
     Collection allTCLockStatElements = new ArrayList();
 

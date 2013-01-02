@@ -20,6 +20,7 @@ class PackagePrivateClass implements TestInterface {
   }
 
   // from the public test interface
+  @Override
   public void method() {
     System.out.println("I am number " + number);
   }

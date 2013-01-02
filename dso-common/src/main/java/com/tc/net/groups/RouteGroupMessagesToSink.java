@@ -18,6 +18,7 @@ public class RouteGroupMessagesToSink implements GroupMessageListener {
     this.sink = sink;
   }
 
+  @Override
   public void messageReceived(NodeID fromNode, GroupMessage msg) {
     if (!(msg instanceof EventContext)) {
       Assert.failure(this.toString());
@@ -25,6 +26,7 @@ public class RouteGroupMessagesToSink implements GroupMessageListener {
     sink.add((EventContext) msg);
   }
 
+  @Override
   public String toString() {
     return "MessageRouter [ " + name + " ] - > " + sink;
   }

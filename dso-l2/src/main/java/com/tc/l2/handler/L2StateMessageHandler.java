@@ -14,11 +14,13 @@ public class L2StateMessageHandler extends AbstractEventHandler {
 
   private StateManager stateManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     L2StateMessage clusterMsg = (L2StateMessage) context;
     stateManager.handleClusterStateMessage(clusterMsg);
   }
   
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

@@ -27,6 +27,7 @@ public class MockSink implements Sink {
     }
   }
 
+  @Override
   public boolean addLossy(EventContext context) {
     if (queue.size() < 1) {
       try {
@@ -40,6 +41,7 @@ public class MockSink implements Sink {
     }
   }
 
+  @Override
   public void addMany(Collection contexts) {
     for (Iterator i = contexts.iterator(); i.hasNext();)
       try {
@@ -49,6 +51,7 @@ public class MockSink implements Sink {
       }
   }
 
+  @Override
   public void add(EventContext context) {
     try {
       this.queue.put(context);
@@ -57,14 +60,17 @@ public class MockSink implements Sink {
     }
   }
 
+  @Override
   public void setAddPredicate(AddPredicate predicate) {
     throw new ImplementMe();
   }
 
+  @Override
   public AddPredicate getPredicate() {
     throw new ImplementMe();
   }
 
+  @Override
   public int size() {
     return this.queue.size();
   }
@@ -77,6 +83,7 @@ public class MockSink implements Sink {
     throw new ImplementMe();
   }
 
+  @Override
   public void clear() {
     throw new ImplementMe();
 
@@ -92,22 +99,27 @@ public class MockSink implements Sink {
 
   }
 
+  @Override
   public void enableStatsCollection(boolean enable) {
     throw new ImplementMe();
   }
 
+  @Override
   public Stats getStats(long frequency) {
     throw new ImplementMe();
   }
 
+  @Override
   public Stats getStatsAndReset(long frequency) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isStatsCollectionEnabled() {
     throw new ImplementMe();
   }
 
+  @Override
   public void resetStats() {
     throw new ImplementMe();
   }

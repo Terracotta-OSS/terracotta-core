@@ -86,6 +86,7 @@ public class AppServerInfo {
     return minor;
   }
 
+  @Override
   public String toString() {
     return name + "-" + major + "." + minor;
   }

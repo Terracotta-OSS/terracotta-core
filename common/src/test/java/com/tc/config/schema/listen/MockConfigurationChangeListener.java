@@ -24,6 +24,7 @@ public class MockConfigurationChangeListener implements ConfigurationChangeListe
     this.lastNewConfig = null;
   }
 
+  @Override
   public void configurationChanged(XmlObject oldConfig, XmlObject newConfig) {
     ++this.numConfigurationChangeds;
     this.lastOldConfig = oldConfig;

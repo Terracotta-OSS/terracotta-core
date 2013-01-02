@@ -16,19 +16,23 @@ import java.util.Set;
 
 public class DummyDsoCluster implements DsoCluster {
 
+  @Override
   public void addClusterListener(DsoClusterListener listener) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public boolean areOperationsEnabled() {
     throw new ImplementMe();
   }
 
+  @Override
   public DsoClusterTopology getClusterTopology() {
     throw new ImplementMe();
   }
 
+  @Override
   public DsoNode getCurrentNode() {
     throw new ImplementMe();
   }
@@ -53,15 +57,18 @@ public class DummyDsoCluster implements DsoCluster {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isNodeJoined() {
     throw new ImplementMe();
   }
 
+  @Override
   public void removeClusterListener(DsoClusterListener listener) {
     throw new ImplementMe();
 
   }
   
+  @Override
   public DsoNode waitUntilNodeJoinsCluster() {
     throw new ImplementMe();
   }

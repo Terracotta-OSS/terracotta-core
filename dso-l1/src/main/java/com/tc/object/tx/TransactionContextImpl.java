@@ -31,22 +31,27 @@ public class TransactionContextImpl implements TransactionContext {
     this.lockIDs = lockIDs;    
   }
   
+  @Override
   public TxnType getLockType() {
     return lockTxType;
   }
 
+  @Override
   public TxnType getEffectiveType() {
     return effectiveTxType;
   }
   
+  @Override
   public LockID getLockID() {
     return lockID;
   }
 
+  @Override
   public List getAllLockIDs() {
     return lockIDs;
   }
 
+  @Override
   public void removeLock(LockID id) {
     lockIDs.remove(id);
   }

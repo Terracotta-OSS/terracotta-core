@@ -18,6 +18,7 @@ public class BeanWithErrorsTest extends TCTestCase {
   
   private BeanWithErrors beanWithErrors;
 
+  @Override
   public void setUp() throws Exception {
     this.xmlObject = new MockXmlObject();
     this.errors = new XmlError[] { XmlError.forMessage("foobar"), XmlError.forMessage("bazbar") };

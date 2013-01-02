@@ -95,6 +95,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     }
   }
 
+  @Override
   public void initialize(final boolean persistent, final Set<ClientID> allNodeIDs, final ClientID thisNodeID,
                          final String sv, final GroupID l2GroupID, StripeID l2StripeID, Map<GroupID, StripeID> sidMap) {
     this.persistentServer = persistent;
@@ -107,30 +108,37 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     this.stripeIDMap = sidMap;
   }
 
+  @Override
   public boolean getPersistentServer() {
     return persistentServer;
   }
 
+  @Override
   public ClientID[] getAllNodes() {
     return allNodes.toArray(new ClientID[] {});
   }
 
+  @Override
   public ClientID getThisNodeId() {
     return thisNodeId;
   }
 
+  @Override
   public String getServerVersion() {
     return serverVersion;
   }
 
+  @Override
   public GroupID getGroupID() {
     return groupID;
   }
 
+  @Override
   public StripeID getStripeID() {
     return this.stripeID;
   }
 
+  @Override
   public Map<GroupID, StripeID> getStripeIDMap() {
     return this.stripeIDMap;
   }

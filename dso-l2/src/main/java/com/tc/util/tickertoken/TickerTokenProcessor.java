@@ -7,6 +7,7 @@ public interface TickerTokenProcessor {
   
   public static final TickerTokenProcessor NULL_TICKER_TOKEN_PROCESSOR = new TickerTokenProcessor() {
 
+    @Override
     public TickerToken processToken(TickerToken token) {
       return token;
     }

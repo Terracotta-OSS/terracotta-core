@@ -43,11 +43,13 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
     this.enrollment = e;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     this.enrollment = new Enrollment();
     this.enrollment.deserializeFrom(in);
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     this.enrollment.serializeTo(out);
   }
@@ -57,6 +59,7 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
     return enrollment;
   }
 
+  @Override
   public String toString() {
     return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + "]";
   }

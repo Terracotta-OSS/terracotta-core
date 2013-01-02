@@ -35,10 +35,12 @@ public class GroupID implements NodeID, Serializable {
     return groupNumber;
   }
 
+  @Override
   public boolean isNull() {
     return (groupNumber == NULL_NUMBER);
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof GroupID) {
       GroupID other = (GroupID) obj;
@@ -47,27 +49,33 @@ public class GroupID implements NodeID, Serializable {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return groupNumber;
   }
 
+  @Override
   public String toString() {
     return "GroupID[" + groupNumber + "]";
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     groupNumber = serialInput.readInt();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(toInt());
   }
 
+  @Override
   public byte getNodeType() {
     return GROUP_NODE_TYPE;
   }
 
+  @Override
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }

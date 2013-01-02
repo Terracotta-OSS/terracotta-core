@@ -69,6 +69,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
   private ManagedObjectPersistor managedObjectPersistor;
 
+  @Override
   public void setUp() {
     StorageManager storageManager = mock(StorageManager.class);
     when(storageManager.getKeyValueStorage(any(String.class), any(Class.class), any(Class.class))).then(new Answer<KeyValueStorage>() {
@@ -187,6 +188,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
+    @Override
     public void messageReceived(final NodeID fromNode, final GroupMessage msg) {
       this.queue.put(msg);
     }

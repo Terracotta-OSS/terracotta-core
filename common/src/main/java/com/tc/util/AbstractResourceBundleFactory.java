@@ -16,6 +16,7 @@ public abstract class AbstractResourceBundleFactory extends AbstractFactory impl
     return (AbstractResourceBundleFactory)getFactory(FACTORY_SERVICE_ID, STANDARD_BUNDLE_FACTORY_CLASS);
   }
 
+  @Override
   public abstract ResourceBundle createBundle(Class clas);
   
   public static ResourceBundle getBundle(Class clas) {

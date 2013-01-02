@@ -80,6 +80,7 @@ public class SetOnceRefTest extends TestCase {
     final SetOnceRef ref = new SetOnceRef();
 
     Thread other = new Thread(new Runnable() {
+      @Override
       public void run() {
         ref.set(val);
       }

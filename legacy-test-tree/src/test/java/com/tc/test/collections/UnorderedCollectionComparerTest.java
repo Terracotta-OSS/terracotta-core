@@ -8,6 +8,7 @@ package com.tc.test.collections;
  */
 public class UnorderedCollectionComparerTest extends CollectionComparerTestBase {
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     this.comparer = new UnorderedCollectionComparer(this.equalityComparator, this.describer);

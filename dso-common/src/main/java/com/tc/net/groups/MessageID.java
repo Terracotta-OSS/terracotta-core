@@ -17,6 +17,7 @@ public class MessageID extends AbstractIdentifier {
     super();
   }
 
+  @Override
   public String getIdentifierType() {
     return "MessageID";
   }

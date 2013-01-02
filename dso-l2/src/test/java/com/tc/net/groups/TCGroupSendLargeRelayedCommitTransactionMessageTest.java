@@ -181,6 +181,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       this.queue.put(msg);
     }

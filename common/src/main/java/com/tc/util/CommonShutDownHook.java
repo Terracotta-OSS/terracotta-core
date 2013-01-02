@@ -50,6 +50,7 @@ public class CommonShutDownHook implements Runnable {
     }
   }
 
+  @Override
   public void run() {
     runHooks();
   }

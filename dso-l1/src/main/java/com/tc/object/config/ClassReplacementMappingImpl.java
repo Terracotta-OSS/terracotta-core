@@ -19,6 +19,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
   private final Map<String, String>            classNamesSlashesReverseMapping = new HashMap();
   private final Map<String, String>            asmTypesReverseMapping          = new HashMap();
 
+  @Override
   public synchronized void addMapping(String originalClassName, String replacementClassName, URL replacementResource,
                                       ClassReplacementTest test) {
     // XXX: why are these not errors?
@@ -41,6 +42,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
     asmTypesReverseMapping.put(ensureAsmType(replacementClassNameSlashes), ensureAsmType(originalClassNameSlashes));
   }
 
+  @Override
   public synchronized Replacement getReplacement(String originalClassName, ClassLoader loader) {
     List<Replacement> replacements = classNamesMapping.get(originalClassName);
     if (replacements == null) { return null; }
@@ -59,6 +61,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
     return null;
   }
 
+  @Override
   public synchronized String getOriginalClassNameSlashes(String replacement) {
     String original = classNamesSlashesReverseMapping.get(replacement);
     if (null == original) {
@@ -67,6 +70,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
     return original;
   }
 
+  @Override
   public synchronized String getOriginalAsmType(String replacement) {
     String original = asmTypesReverseMapping.get(replacement);
     if (null == original) {
@@ -75,6 +79,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
     return original;
   }
 
+  @Override
   public synchronized String ensureOriginalAsmTypes(String s) {
     if (s != null) {
       Iterator it = asmTypesReverseMapping.entrySet().iterator();

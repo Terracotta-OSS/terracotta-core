@@ -169,6 +169,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
       activeChannels = channels;
     }
 
+    @Override
     public TCConnection[] getAllActiveClientConnections() {
       return new TCConnection[activeChannels];
     }
@@ -177,31 +178,38 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
   private static class TestTransactionBatchManager implements TransactionBatchManager {
     private final List<TransactionBatchListener> txnListeners = new CopyOnWriteArrayList<TransactionBatchListener>();
 
+    @Override
     public void addTransactionBatch(CommitTransactionMessage ctm) {
       fireBatchTxnEvent(ctm);
     }
 
+    @Override
     public boolean batchComponentComplete(NodeID committerID, TransactionID txnID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void defineBatch(NodeID node, int numTxns) {
       throw new ImplementMe();
     }
 
+    @Override
     public void nodeConnected(NodeID nodeID) {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void processTransactions(TransactionBatchContext batchContext) {
       throw new ImplementMe();
     }
 
+    @Override
     public void registerForBatchTransaction(TransactionBatchListener listener) {
       txnListeners.add(listener);
     }
@@ -212,6 +220,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
       }
     }
 
+    @Override
     public void shutdownNode(NodeID nodeID) {
       throw new ImplementMe();
     }
@@ -222,6 +231,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
     private boolean    isActive          = false;
     private AtomicLong numOfTransactions = new AtomicLong(0);
 
+    @Override
     public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
       if (isActive) this.numOfTransactions.addAndGet(txnIDs.size());
     }
@@ -230,6 +240,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
       isActive = active;
     }
 
+    @Override
     public long getTotalNumOfActiveTransactions() {
       return numOfTransactions.get();
     }

@@ -56,6 +56,7 @@ class NetworkListenerImpl implements NetworkListener {
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified
    *         port/address)
    */
+  @Override
   public synchronized void start(final Set initialConnectionIDs) throws IOException {
     this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
                                                   this.connectionIdFactory, this.httpSink, this.wireProtoMsgSnk);
@@ -63,6 +64,7 @@ class NetworkListenerImpl implements NetworkListener {
     this.commsMgr.registerListener(this);
   }
 
+  @Override
   public synchronized void stop(final long timeout) throws TCTimeoutException {
     if (!this.started) { return; }
 
@@ -80,15 +82,18 @@ class NetworkListenerImpl implements NetworkListener {
     this.tcmRouter.routeMessageType(messageType, sink);
   }
 
+  @Override
   public ChannelManager getChannelManager() {
     return this.channelManager;
   }
 
+  @Override
   public synchronized InetAddress getBindAddress() {
     if (!this.started) { throw new IllegalStateException("Listener not running"); }
     return this.lsnr.getBindAddress();
   }
 
+  @Override
   public synchronized int getBindPort() {
     if (!this.started) { throw new IllegalStateException("Listener not running"); }
     return this.lsnr.getBindPort();

@@ -28,6 +28,7 @@ public class HealthCheckerConfigClientImpl extends HealthCheckerConfigImpl {
     this.callbackportListenerBindPort = bindPort;
   }
 
+  @Override
   public boolean isCallbackPortListenerNeeded() {
     return true;
   }

@@ -28,6 +28,7 @@ public class SequenceBatch {
     return end;
   }
 
+  @Override
   public String toString() {
     return "SequenceBatch@" + System.identityHashCode(this) + "[ next = " + next + " , end = " + end + " ]";
   }

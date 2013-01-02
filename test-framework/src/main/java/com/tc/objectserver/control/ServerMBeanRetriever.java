@@ -69,6 +69,7 @@ public class ServerMBeanRetriever {
   public static DSOMBean getDSOMBean(final String host, final int jmxPort) throws Exception {
     final AtomicReference<DSOMBean> dsoMBeanRef = new AtomicReference<DSOMBean>();
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
         try {
@@ -91,6 +92,7 @@ public class ServerMBeanRetriever {
     // non-destructive check method.
     final AtomicReference<L2DumperMBean> l2DumperRef = new AtomicReference<L2DumperMBean>();
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
         try {
@@ -110,6 +112,7 @@ public class ServerMBeanRetriever {
   public static TCServerInfoMBean getTCServerInfoMBean(final String host, final int jmxPort) throws Exception {
     final AtomicReference<TCServerInfoMBean> tcServerInfoMBeanRef = new AtomicReference<TCServerInfoMBean>();
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
       public Boolean call() throws Exception {
         JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
         try {

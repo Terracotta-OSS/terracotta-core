@@ -19,6 +19,7 @@ public class LockStatisticsEnableDisableHandler extends AbstractEventHandler {
     this.clientLockStatManager = statManager;
   }
   
+  @Override
   public void handleEvent(EventContext context) {
     LockStatisticsMessage msg = (LockStatisticsMessage) context;
     if (msg.isLockStatsEnable()) {

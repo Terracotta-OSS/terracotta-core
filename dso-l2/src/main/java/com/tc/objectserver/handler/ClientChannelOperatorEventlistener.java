@@ -13,11 +13,13 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
 
   private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
+  @Override
   public void channelCreated(MessageChannel channel) {
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(channel
         .getRemoteNodeID().toString()));
   }
 
+  @Override
   public void channelRemoved(MessageChannel channel) {
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(channel
         .getRemoteNodeID().toString()));

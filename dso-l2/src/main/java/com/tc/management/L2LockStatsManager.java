@@ -23,6 +23,7 @@ public interface L2LockStatsManager {
     private SampledCounter              globalLockCounter;
     private SampledCounter              globalLockRecallCounter;
     
+    @Override
     public void start(DSOChannelManager dsoChannelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objStatsHelper) {
       SampledCounter lockCounter = serverStats == null ? null : serverStats.getGlobalLockCounter();
       this.globalLockCounter = lockCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockCounter;
@@ -30,78 +31,97 @@ public interface L2LockStatsManager {
       this.globalLockRecallCounter = lockRecallCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockRecallCounter;
     }
     
+    @Override
     public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
       // do nothing
     }
     
+    @Override
     public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int numberOfPendingRequests) {
       // do nothing
     }
     
+    @Override
     public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp) {
       globalLockCounter.increment();
     }
     
+    @Override
     public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public long getNumberOfLockRequested(LockID lockID) {
       return 0;
     }
     
+    @Override
     public long getNumberOfLockReleased(LockID lockID) {
       return 0;
     }
     
+    @Override
     public long getNumberOfPendingRequests(LockID lockID) {
       return 0;
     }
     
+    @Override
     public long getNumberOfLockHopRequests(LockID lockID) {
       return 0;
     }
     
+    @Override
     public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements) {
       // do nothing
     }
     
+    @Override
     public int getTraceDepth() {
       return 0;
     }
 
+    @Override
     public int getGatherInterval() {
       return 0;
     }
     
+    @Override
     public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
       // do nothing
     }
 
+    @Override
     public boolean isLockStatisticsEnabled() {
       return false;
     }
     
+    @Override
     public void clearAllStatsFor(NodeID nodeID) {
       //
     }
     
+    @Override
     public void enableStatsForNodeIfNeeded(NodeID nodeID) {
       //
     }
 
+    @Override
     public void recordLockHopRequested(LockID lockID) {
       globalLockRecallCounter.increment();
     }
     
+    @Override
     public Collection<LockSpec> getLockSpecs() {
       return Collections.EMPTY_LIST;
     }
     
+    @Override
     public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
       return globalLockRecallCounter.getMostRecentSample();
     }

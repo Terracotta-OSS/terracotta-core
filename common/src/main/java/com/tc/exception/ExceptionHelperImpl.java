@@ -15,6 +15,7 @@ public class ExceptionHelperImpl implements ExceptionHelper {
   private final List helpers = new LinkedList();
   private final ExceptionHelper nullHelper = new NullExceptionHelper();
   
+  @Override
   public boolean accepts(Throwable t) {
     return true;
   }
@@ -27,10 +28,12 @@ public class ExceptionHelperImpl implements ExceptionHelper {
     helpers.add(helper);
   }
 
+  @Override
   public Throwable getProximateCause(Throwable t) {
     return getHelperFor(t).getProximateCause(t);
   }
 
+  @Override
   public Throwable getUltimateCause(Throwable t) {
     Throwable rv = getProximateCause(t);
     while (rv != getProximateCause(rv)) {
@@ -51,14 +54,17 @@ public class ExceptionHelperImpl implements ExceptionHelper {
   
   private static final class NullExceptionHelper implements ExceptionHelper{
 
+    @Override
     public boolean accepts(Throwable t) {
       return true;
     }
     
+    @Override
     public Throwable getProximateCause(Throwable t) {
       return t;
     }
 
+    @Override
     public Throwable getUltimateCause(Throwable t) {
       return t;
     }

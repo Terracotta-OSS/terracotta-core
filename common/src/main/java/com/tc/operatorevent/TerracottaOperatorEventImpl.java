@@ -44,22 +44,27 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
 
   }
 
+  @Override
   public String getEventMessage() {
     return this.eventMessage;
   }
 
+  @Override
   public Date getEventTime() {
     return new Date(this.time);
   }
 
+  @Override
   public EventType getEventType() {
     return this.eventType;
   }
 
+  @Override
   public String getEventTypeAsString() {
     return this.eventType.name();
   }
 
+  @Override
   public synchronized String getNodeName() {
     StringBuilder val = new StringBuilder();
     for (Entry<String, Integer> node : this.nodes.entrySet()) {
@@ -73,6 +78,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     return val.toString();
   }
 
+  @Override
   public synchronized void addNodeName(String nodeId) {
     Integer numOfSuchEvents = this.nodes.get(nodeId);
     if (numOfSuchEvents == null) {
@@ -82,22 +88,27 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     }
   }
 
+  @Override
   public EventSubsystem getEventSubsystem() {
     return this.subSystem;
   }
 
+  @Override
   public String getEventSubsystemAsString() {
     return this.subSystem.name();
   }
 
+  @Override
   public String getCollapseString() {
     return collapseString;
   }
 
+  @Override
   public int compareTo(TerracottaOperatorEventImpl o) {
     return (int) (this.time - o.time);
   }
 
+  @Override
   public boolean isRead() {
     return this.isRead;
   }
@@ -124,10 +135,12 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     return result;
   }
 
+  @Override
   public void markRead() {
     this.isRead = true;
   }
 
+  @Override
   public void markUnread() {
     this.isRead = false;
   }
@@ -138,10 +151,12 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
            + getEventMessage();
   }
 
+  @Override
   public String extractAsText() {
     return toString();
   }
 
+  @Override
   public TerracottaOperatorEvent cloneEvent() {
     Map<String, Integer> nodesCopy;
     synchronized (this) {

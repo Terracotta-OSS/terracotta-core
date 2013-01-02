@@ -21,6 +21,7 @@ public class MetaDataProcessingContext implements ProcessingContext {
     this.txnManager = txnManager;
   }
 
+  @Override
   public synchronized void processed() {
     if (isCountSet()) {
       if (processed + 1 > expected) {

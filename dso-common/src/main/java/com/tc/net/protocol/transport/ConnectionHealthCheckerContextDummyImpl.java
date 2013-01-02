@@ -15,6 +15,7 @@ import com.tc.logging.TCLogging;
 public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealthCheckerContext {
   private static final TCLogger logger = TCLogging.getLogger(ConnectionHealthCheckerContextDummyImpl.class);
 
+  @Override
   public boolean receiveProbe(HealthCheckerProbeMessage message) {
     if (!message.isPing()) {
       logger.error("Unexpected probe message received by Dummy HealthCheckerContext: " + message);
@@ -22,10 +23,12 @@ public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealth
     return true;
   }
 
+  @Override
   public boolean probeIfAlive() {
     throw new AssertionError("Dummy HealthCheckerContext.");
   }
 
+  @Override
   public void refresh() {
     throw new AssertionError("Dummy HealthCheckerContext.");
   }

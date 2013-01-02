@@ -22,6 +22,7 @@ public class RestfulServlet extends HttpServlet {
 
   private volatile String     path;
 
+  @Override
   protected void service(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
     ensureServletPath(request);
 

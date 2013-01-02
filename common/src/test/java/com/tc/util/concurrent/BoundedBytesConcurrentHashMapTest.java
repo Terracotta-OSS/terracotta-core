@@ -103,6 +103,7 @@ public class BoundedBytesConcurrentHashMapTest extends TCTestCase {
     System.err.println("testBounded Map total size is " + boundedBytesConcurrentHashMap.getMaxSize());
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (int i = 100; i < 300; i++) {
           System.err.println("testBounded Put " + ("key" + i) + "; currentSize : "
@@ -141,6 +142,7 @@ public class BoundedBytesConcurrentHashMapTest extends TCTestCase {
     System.err.println("Segment size is " + boundedBytesConcurrentHashMap.getMaxSize());
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (int i = 100; i < 300; i++) {
           Assert.assertNull(boundedBytesConcurrentHashMap.put("key" + i, i));
@@ -182,6 +184,7 @@ public class BoundedBytesConcurrentHashMapTest extends TCTestCase {
                                                                                                                                               32L);
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (int i = 0; i < 64; i++) {
           Assert.assertNull(boundedBytesConcurrentHashMap.put("key" + i, i));

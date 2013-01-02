@@ -91,32 +91,39 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
       this.channelRemCounter = channelRemCounter;
     }
 
+    @Override
     public Counter getCounter(MessageChannel channel, String name) {
       throw new RuntimeException(name);
     }
 
+    @Override
     public void notifyTransaction(NodeID nodeID, int numTxns) {
       throw new ImplementMe();
     }
 
+    @Override
     public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
       this.channelRemCounter.increment(numObjectsRemoved);
     }
 
+    @Override
     public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
       this.channelReqCounter.increment(numObjectsRequested);
     }
 
+    @Override
     public void notifyTransactionAckedFrom(NodeID nodeID) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void notifyServerMapRequest(ServerMapRequestType type, MessageChannel channel, int numRequests) {
       throw new ImplementMe();
     }

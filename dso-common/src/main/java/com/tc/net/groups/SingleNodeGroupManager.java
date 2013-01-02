@@ -22,11 +22,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SingleNodeGroupManager implements GroupManager {
 
   private static final GroupResponse DUMMY_RESPONSE  = new GroupResponse() {
-                                                       public List getResponses() {
+                                                       @Override
+                                                      public List getResponses() {
                                                          return Collections.EMPTY_LIST;
                                                        }
 
-                                                       public GroupMessage getResponse(NodeID nodeID) {
+                                                       @Override
+                                                      public GroupMessage getResponse(NodeID nodeID) {
                                                          return null;
                                                        }
                                                      };
@@ -44,75 +46,92 @@ public class SingleNodeGroupManager implements GroupManager {
     this(new ServerID("CurrentNode", CURRENT_NODE_ID));
   }
 
+  @Override
   public NodeID join(final Node thisN, final NodesStore nodesStore) throws GroupException {
     if (!joined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
 
     return this.thisNode;
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     return this.thisNode;
   }
 
+  @Override
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
     // NOP : Since this doesn't talk to the network, this should never get any message
   }
 
+  @Override
   public void routeMessages(Class msgClass, Sink sink) {
     // NOP : Since this doesn't talk to the network, this should never get any message
   }
 
+  @Override
   public void sendAll(GroupMessage msg) {
     // NOP : No Network, no one to write to
   }
 
+  @Override
   public void sendAll(GroupMessage msg, Set nodeIDs) {
     // NOP
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) {
     // NOP : No Network, no one to write to, hen no response too
     return DUMMY_RESPONSE;
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) {
     // NOP : No Network, no one to write to, hen no response too
     return DUMMY_RESPONSE;
   }
 
+  @Override
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     throw new GroupException("Can't write to Node : " + node + " Node Not found !");
   }
 
+  @Override
   public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) {
     // Come back
     return null;
   }
 
+  @Override
   public void registerForGroupEvents(GroupEventsListener listener) {
     // NOP : No network, no one joins or leaves
   }
 
+  @Override
   public void zapNode(NodeID nodeID, int type, String reason) {
     // what node ?
   }
 
+  @Override
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
     // NOP
   }
 
+  @Override
   public boolean isNodeConnected(NodeID sid) {
     return true;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return out;
   }
 
+  @Override
   public boolean isServerConnected(String nodeName) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void closeMember(ServerID serverID) {
     // NOP
   }

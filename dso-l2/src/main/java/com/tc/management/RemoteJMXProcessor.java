@@ -40,6 +40,7 @@ public class RemoteJMXProcessor implements Sink {
                                             TCLogging.getLogger(RemoteJMXProcessor.class));
   }
 
+  @Override
   public void add(final EventContext context) {
     final CallbackExecuteContext callbackContext = (CallbackExecuteContext) context;
 
@@ -48,6 +49,7 @@ public class RemoteJMXProcessor implements Sink {
       while (true) {
         try {
           executor.execute(new Runnable() {
+            @Override
             public void run() {
               Thread currentThread = Thread.currentThread();
               ClassLoader prevLoader = currentThread.getContextClassLoader();
@@ -77,46 +79,57 @@ public class RemoteJMXProcessor implements Sink {
     }
   }
 
+  @Override
   public boolean addLossy(EventContext context) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void addMany(Collection contexts) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void clear() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public AddPredicate getPredicate() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setAddPredicate(AddPredicate predicate) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public int size() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void enableStatsCollection(boolean enable) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Stats getStats(long frequency) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Stats getStatsAndReset(long frequency) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isStatsCollectionEnabled() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void resetStats() {
     throw new UnsupportedOperationException();
   }

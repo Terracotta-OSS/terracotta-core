@@ -17,14 +17,17 @@ public class ObjectChangeIterator implements Iterator {
     this.iter = objects.iterator();
   }
 
+  @Override
   public void remove() {
     throw new UnsupportedOperationException("remove() not suppored");
   }
 
+  @Override
   public boolean hasNext() {
     return this.iter.hasNext();
   }
 
+  @Override
   public Object next() {
     return this.iter.next();
   }

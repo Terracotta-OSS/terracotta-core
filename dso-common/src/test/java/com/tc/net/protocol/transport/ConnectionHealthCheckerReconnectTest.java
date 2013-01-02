@@ -99,6 +99,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
                                                                                   new TCMessageSink() {
 
+                                                                                    @Override
                                                                                     public void putMessage(TCMessage message)
                                                                                         throws UnsupportedMessageTypeException {
 
@@ -143,6 +144,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     commsMgr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMessageRouter.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
 
+      @Override
       public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
         PingMessage pingMsg = (PingMessage) message;
         try {

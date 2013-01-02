@@ -52,14 +52,17 @@ public abstract class ServerMapRequestContext implements ObjectManagerResultsCon
            + getRequestType() + " requestID : " + getRequestID() + "]";
   }
 
+  @Override
   public ObjectIDSet getLookupIDs() {
     return this.lookupIDs;
   }
 
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     return TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
+  @Override
   public void setResults(final ObjectManagerLookupResults results) {
     final ObjectIDSet missingObjects = results.getMissingObjectIDs();
 

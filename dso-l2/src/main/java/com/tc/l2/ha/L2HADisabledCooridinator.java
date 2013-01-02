@@ -44,31 +44,38 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
     this.startedWithCleanDB = isCleanDB(persistentMapStore);
   }
 
+  @Override
   public GroupManager getGroupManager() {
     return groupManager;
   }
 
+  @Override
   public ReplicatedClusterStateManager getReplicatedClusterStateManager() {
     return clusterStateMgr;
   }
 
+  @Override
   public ReplicatedObjectManager getReplicatedObjectManager() {
     return replicatedObjMgr;
   }
 
+  @Override
   public StateManager getStateManager() {
     return stateMgr;
   }
 
+  @Override
   public void start() {
     // Give the state manager an opportunity to notify that we are active to interested parties.
     stateMgr.startElection();
   }
 
+  @Override
   public ReplicatedTransactionManager getReplicatedTransactionManager() {
     return replicatedTxnMgr;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getSimpleName()).flush();
     StringBuilder strBuffer = new StringBuilder();
@@ -79,18 +86,22 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
     return out;
   }
 
+  @Override
   public StateSyncManager getStateSyncManager() {
     return stateSyncManager;
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     //
   }
 
+  @Override
   public L2ObjectStateManager getL2ObjectStateManager() {
     return objectStateManager;
   }
 
+  @Override
   public boolean isStartedWithCleanDB() {
     return startedWithCleanDB;
   }

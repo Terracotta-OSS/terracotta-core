@@ -28,6 +28,7 @@ public class RemoteObjectIDBatchSequenceProvider extends AbstractEventHandler im
     this.receiver = receiver;
   }
 
+  @Override
   public void requestBatch(BatchSequenceReceiver r, int size) {
     Assert.assertTrue(receiver == r);
     ObjectIDBatchRequestMessage m = mf.newObjectIDBatchRequestMessage();
@@ -35,6 +36,7 @@ public class RemoteObjectIDBatchSequenceProvider extends AbstractEventHandler im
     m.send();
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     ObjectIDBatchRequestResponseMessage m = (ObjectIDBatchRequestResponseMessage) context;
     receiver.setNextBatch(m.getBatchStart(), m.getBatchEnd());

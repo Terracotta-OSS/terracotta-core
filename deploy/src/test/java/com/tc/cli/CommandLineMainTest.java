@@ -99,22 +99,27 @@ public class CommandLineMainTest extends TestCase {
 
     boolean executeCall = false;
 
+    @Override
     public String description() {
       return "test command";
     }
 
+    @Override
     public void execute(String[] args) {
       executeCall = true;
     }
 
+    @Override
     public String name() {
       return "Test Command";
     }
 
+    @Override
     public String optionName() {
       return "test";
     }
 
+    @Override
     public void printUsage() {
       System.out.println("Usage: test command object");
     }

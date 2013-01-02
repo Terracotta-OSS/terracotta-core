@@ -30,12 +30,14 @@ public class BoundedCounter extends CounterImpl {
     }
   }
 
+  @Override
   public synchronized long decrement() {
     long current = getValue();
     if (current <= minBound) { return current; }
     return super.decrement();
   }
 
+  @Override
   public synchronized long decrement(long amount) {
     long current = getValue();
     if (current - amount <= minBound) {
@@ -45,6 +47,7 @@ public class BoundedCounter extends CounterImpl {
     return super.decrement(amount);
   }
 
+  @Override
   public synchronized long getAndSet(long newValue) {
     if (newValue < minBound) {
       newValue = minBound;
@@ -54,12 +57,14 @@ public class BoundedCounter extends CounterImpl {
     return super.getAndSet(newValue);
   }
 
+  @Override
   public synchronized long increment() {
     long current = getValue();
     if (current >= maxBound) { return current; }
     return super.increment();
   }
 
+  @Override
   public synchronized long increment(long amount) {
     long current = getValue();
     if (current + amount >= maxBound) {
@@ -69,6 +74,7 @@ public class BoundedCounter extends CounterImpl {
     return super.increment(amount);
   }
 
+  @Override
   public synchronized void setValue(long newValue) {
     if (newValue < minBound) {
       newValue = minBound;

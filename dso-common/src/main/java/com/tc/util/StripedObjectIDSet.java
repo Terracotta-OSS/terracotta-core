@@ -37,6 +37,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     }
   }
 
+  @Override
   public boolean add(ObjectID o) {
     final int index = getIndex(o);
     final ReentrantReadWriteLock lock = locks[index];
@@ -53,6 +54,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Take a lock on all interested ObjectIDSets and add.
    */
+  @Override
   public boolean addAll(Collection<? extends ObjectID> collection) {
     boolean success = true;
 
@@ -65,6 +67,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return success;
   }
 
+  @Override
   public void clear() {
     for (int index = 0; index < concurrency; index++) {
       Lock l = locks[index].writeLock();
@@ -77,6 +80,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     }
   }
 
+  @Override
   public boolean contains(Object o) {
     if (!(o instanceof ObjectID)) { return false; }
 
@@ -92,6 +96,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     }
   }
 
+  @Override
   public boolean containsAll(Collection<?> collection) {
     for (Object oid : collection) {
       if (!contains(oid)) { return false; }
@@ -112,6 +117,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     }
   }
 
+  @Override
   public boolean isEmpty() {
     lockAll();
     try {
@@ -124,6 +130,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return true;
   }
 
+  @Override
   public boolean remove(Object o) {
     if (!(o instanceof ObjectID)) { return false; }
 
@@ -139,6 +146,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     }
   }
 
+  @Override
   public boolean removeAll(Collection<?> collection) {
     boolean success = true;
     for (Object oid : collection) {
@@ -150,6 +158,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return success;
   }
 
+  @Override
   public boolean retainAll(Collection<?> collection) {
     boolean success = false;
     for (int index = 0; index < concurrency; index++) {
@@ -168,6 +177,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return success;
   }
 
+  @Override
   public int size() {
     int size = 0;
     lockAll();
@@ -182,10 +192,12 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return size;
   }
 
+  @Override
   public Object[] toArray() {
     return toArray(new Object[0]);
   }
 
+  @Override
   public <T> T[] toArray(T[] a) {
     final SortedSet<ObjectID> sortedSet = new ObjectIDSet();
 
@@ -220,6 +232,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return a;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print("Striped ObjectIDSet: concurreny = " + concurrency).flush();
     lockAll();
@@ -243,6 +256,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public ObjectID first() {
     throw new UnsupportedOperationException();
   }
@@ -250,6 +264,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public ObjectID last() {
     throw new UnsupportedOperationException();
   }
@@ -257,6 +272,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public SortedSet<ObjectID> headSet(ObjectID toElement) {
     throw new UnsupportedOperationException();
   }
@@ -264,6 +280,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public SortedSet<ObjectID> subSet(ObjectID fromElement, ObjectID toElement) {
     throw new UnsupportedOperationException();
   }
@@ -271,6 +288,7 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public SortedSet<ObjectID> tailSet(ObjectID fromElement) {
     throw new UnsupportedOperationException();
   }
@@ -278,10 +296,12 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   /**
    * Implement it when the need arises
    */
+  @Override
   public Iterator<ObjectID> iterator() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Comparator<? super ObjectID> comparator() {
     return null;
   }

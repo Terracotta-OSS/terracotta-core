@@ -21,6 +21,7 @@ public class DummyStateManager implements StateManager {
     this.localNodeID = localNodeID;
   }
 
+  @Override
   public void fireStateChangedEvent(StateChangedEvent sce) {
     for (StateChangeListener element : stateListeners) {
       StateChangeListener listener = element;
@@ -28,10 +29,12 @@ public class DummyStateManager implements StateManager {
     }
   }
 
+  @Override
   public State getCurrentState() {
     return new State("NO_STATE");
   }
 
+  @Override
   public boolean isActiveCoordinator() {
     return true;
   }
@@ -40,35 +43,43 @@ public class DummyStateManager implements StateManager {
     return false;
   }
 
+  @Override
   public void moveNodeToPassiveStandby(NodeID nodeID) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void registerForStateChangeEvents(StateChangeListener listener) {
     stateListeners.add(listener);
   }
 
+  @Override
   public void startElection() {
     // No need to start election, if we are here, we are active, notify it.
     fireStateChangedEvent(new StateChangedEvent(StateManager.PASSIVE_STANDBY, StateManager.ACTIVE_COORDINATOR));
   }
 
+  @Override
   public void publishActiveState(NodeID nodeID) {
     // Nop
   }
 
+  @Override
   public void startElectionIfNecessary(NodeID disconnectedNode) {
     // Nop
   }
 
+  @Override
   public void moveToPassiveStandbyState() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void handleClusterStateMessage(L2StateMessage clusterMsg) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public NodeID getActiveNodeID() {
     return localNodeID;
   }

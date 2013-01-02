@@ -28,6 +28,7 @@ import java.util.LinkedList;
 public class RequestLockUnLockHandler extends AbstractEventHandler {
   private LockManager lockManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     LockRequestMessage lrm = (LockRequestMessage) context;
 
@@ -68,6 +69,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

@@ -31,6 +31,7 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     this.evictionSize = (evictionSize <= 0 ? 1 : evictionSize);
   }
 
+  @Override
   public synchronized boolean add(final Cacheable obj) {
     Assert.assertTrue(obj.getNext() == null && obj.getPrevious() == null);
     if (this.hand == null) {
@@ -50,6 +51,7 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     }
   }
 
+  @Override
   public synchronized Collection getRemovalCandidates(int maxCount) {
     if (this.capacity > 0) {
       if (!isCacheFull()) { return Collections.EMPTY_LIST; }
@@ -79,6 +81,7 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     this.save = this.hand;
   }
 
+  @Override
   public synchronized void remove(final Cacheable obj) {
     if (this.hand != null && obj == this.hand) {
       this.hand = (Cacheable) this.hand.getPrevious();
@@ -86,10 +89,12 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     this.cache.remove(obj);
   }
 
+  @Override
   public void markReferenced(final Cacheable obj) {
     obj.markAccessed();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return null;
   }
@@ -119,6 +124,7 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     return found;
   }
 
+  @Override
   public int getCacheCapacity() {
     return this.capacity;
   }

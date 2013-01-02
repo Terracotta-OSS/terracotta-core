@@ -52,10 +52,12 @@ public class MessageMonitorImpl implements MessageMonitor {
     this.timer.scheduleAtFixedRate(task, 0, intervalSeconds * 1000);
   }
 
+  @Override
   public void newIncomingMessage(TCMessage message) {
     getOrCreateMessageCounter(message.getMessageType()).newIncomingMessage(message);
   }
 
+  @Override
   public void newOutgoingMessage(TCMessage message) {
     getOrCreateMessageCounter(message.getMessageType()).newOutgoingMessage(message);
   }
@@ -145,6 +147,7 @@ public class MessageMonitorImpl implements MessageMonitor {
 
   private static class TCMessageTypeComparator implements Comparator, Serializable {
 
+    @Override
     public int compare(Object o1, Object o2) {
       TCMessageType t1 = (TCMessageType) o1;
       TCMessageType t2 = (TCMessageType) o2;

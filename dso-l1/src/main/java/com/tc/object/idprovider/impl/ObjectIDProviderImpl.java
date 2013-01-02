@@ -22,6 +22,7 @@ public class ObjectIDProviderImpl implements ObjectIDProvider {
     this.sequence = sequence;
   }
 
+  @Override
   public synchronized ObjectID next(ClientTransaction txn, Object pojo, GroupID gid) {
     long oidLong = -1;
     if (cachedObjectIds.size() > 0) {
@@ -34,6 +35,7 @@ public class ObjectIDProviderImpl implements ObjectIDProvider {
     return new ObjectID(oidLong);
   }
 
+  @Override
   public synchronized void reserve(int size, GroupID gid) {
     int sizeNeeded = size - cachedObjectIds.size();
     for (int i = 0; i < sizeNeeded; i++) {

@@ -6,6 +6,7 @@ package com.tc.util;
 import java.util.ResourceBundle;
 
 public class StandardResourceBundleFactory extends AbstractResourceBundleFactory {
+  @Override
   public ResourceBundle createBundle(Class c) {
     return ResourceBundle.getBundle(c.getName()+"Bundle");
   }

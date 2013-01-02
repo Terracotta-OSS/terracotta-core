@@ -11,6 +11,7 @@ public class TerracottaOperatorEventCallbackLogger implements TerracottaOperator
 
   private final TCLogger logger = CustomerLogging.getOperatorEventLogger();
 
+  @Override
   public void logOperatorEvent(TerracottaOperatorEvent event) {
     EventType eventType = event.getEventType();
     switch (eventType) {

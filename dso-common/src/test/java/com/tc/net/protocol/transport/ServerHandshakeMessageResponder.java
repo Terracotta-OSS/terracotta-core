@@ -21,6 +21,7 @@ class ServerHandshakeMessageResponder extends HandshakeMessageResponderBase {
     super(sentQueue, receivedQueue, messageFactory, assignedConnectionId, transport, errorRef);
   }
 
+  @Override
   public void handleHandshakeMessage(final TransportHandshakeMessage message) {
     try {
       if (message.isSynAck()) {

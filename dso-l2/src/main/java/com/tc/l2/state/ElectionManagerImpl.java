@@ -48,6 +48,7 @@ public class ElectionManagerImpl implements ElectionManager {
     electionTime = stateManagerConfig.getElectionTimeInSecs() * 1000;
   }
 
+  @Override
   public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.START_ELECTION, msg.getType());
     if (state == ELECTION_IN_PROGRESS && (myVote.isANewCandidate() || !msg.getEnrollment().isANewCandidate())) {
@@ -80,6 +81,7 @@ public class ElectionManagerImpl implements ElectionManager {
     }
   }
 
+  @Override
   public synchronized void handleElectionAbort(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.ABORT_ELECTION, msg.getType());
     debugInfo("Handling election abort");
@@ -92,6 +94,7 @@ public class ElectionManagerImpl implements ElectionManager {
     }
   }
 
+  @Override
   public synchronized void handleElectionResultMessage(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.ELECTION_RESULT, msg.getType());
     debugInfo("Handling election result");
@@ -128,6 +131,7 @@ public class ElectionManagerImpl implements ElectionManager {
   /**
    * This method is called by the winner of the election to announce to the world
    */
+  @Override
   public synchronized void declareWinner(NodeID myNodeId) {
     Assert.assertEquals(winner.getNodeID(), myNodeId);
     GroupMessage msg = createElectionWonMessage(this.winner);
@@ -137,6 +141,7 @@ public class ElectionManagerImpl implements ElectionManager {
     reset(winner);
   }
 
+  @Override
   public synchronized void reset(Enrollment winningEnrollment) {
     this.winner = winningEnrollment;
     this.state = INIT;
@@ -145,6 +150,7 @@ public class ElectionManagerImpl implements ElectionManager {
     notifyAll();
   }
 
+  @Override
   public NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
@@ -268,6 +274,7 @@ public class ElectionManagerImpl implements ElectionManager {
     return L2StateMessageFactory.createElectionStartedMessage(msg, e);
   }
 
+  @Override
   public long getElectionTime() {
     return electionTime;
   }

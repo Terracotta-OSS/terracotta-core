@@ -21,6 +21,7 @@ public class DistributedMethodSpec {
     return runOnAllNodes;
   }
 
+  @Override
   public String toString() {
     return "DistributedMethodSpec{methodExpression=" + methodExpression + ", runOnAllNodes=" + runOnAllNodes + "}";
   }

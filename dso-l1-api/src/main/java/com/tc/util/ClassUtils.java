@@ -133,14 +133,17 @@ public class ClassUtils {
       throw new ParseException("Not a fully qualified fieldname: " + fieldName, position);
     }
 
+    @Override
     public String getFullyQualifiedClassName() {
       return this.fullyQualifiedClassName;
     }
 
+    @Override
     public String getShortFieldName() {
       return this.shortFieldName;
     }
 
+    @Override
     public String toString() {
       return "ClassSpec[classname=" + fullyQualifiedClassName + ", shortFieldName=" + shortFieldName + "]";
     }

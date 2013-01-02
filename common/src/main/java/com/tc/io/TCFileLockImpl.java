@@ -14,6 +14,7 @@ public class TCFileLockImpl implements TCFileLock {
     this.lock = lock;
   }
 
+  @Override
   public void release() throws IOException {
     lock.release();
   }

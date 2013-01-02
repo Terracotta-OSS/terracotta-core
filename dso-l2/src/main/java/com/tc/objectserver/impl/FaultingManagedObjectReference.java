@@ -27,36 +27,44 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     this.inProgress = false;
   }
 
+  @Override
   public void setRemoveOnRelease(final boolean removeOnRelease) {
     // NOP
   }
 
+  @Override
   public boolean isRemoveOnRelease() {
     return true;
   }
 
+  @Override
   public boolean markReference() {
     // This Object is always referenced.
     return false;
   }
 
+  @Override
   public boolean unmarkReference() {
     // This Object is always referenced.
     return false;
   }
 
+  @Override
   public boolean isReferenced() {
     return this.inProgress;
   }
 
+  @Override
   public boolean isNew() {
     return false;
   }
 
+  @Override
   public ManagedObject getObject() {
     throw new AssertionError("This should never be called");
   }
 
+  @Override
   public ObjectID getObjectID() {
     return this.id;
   }

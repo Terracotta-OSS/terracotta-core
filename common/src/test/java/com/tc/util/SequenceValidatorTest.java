@@ -15,6 +15,7 @@ public class SequenceValidatorTest extends TestCase {
 
   private SequenceValidator sv;
 
+  @Override
   public void setUp() throws Exception {
     this.sv = new SequenceValidator(INITIAL_VALUE);
   }

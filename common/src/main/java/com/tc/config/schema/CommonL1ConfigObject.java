@@ -21,6 +21,7 @@ public class CommonL1ConfigObject extends BaseConfigObject implements CommonL1Co
     this.context.ensureRepositoryProvides(Client.class);
   }
 
+  @Override
   public File logsPath() {
     final Client client = (Client) this.context.bean();
     return new File(client.getLogs());

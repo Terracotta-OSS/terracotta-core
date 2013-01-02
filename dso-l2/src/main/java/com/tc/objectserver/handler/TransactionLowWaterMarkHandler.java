@@ -18,6 +18,7 @@ public class TransactionLowWaterMarkHandler extends AbstractEventHandler {
     this.gtxm = gtxm;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     CompletedTransactionLowWaterMarkMessage mdg = (CompletedTransactionLowWaterMarkMessage) context;
     ServerTransactionID sid = new ServerTransactionID(mdg.getSourceNodeID(),mdg.getLowWaterMark());

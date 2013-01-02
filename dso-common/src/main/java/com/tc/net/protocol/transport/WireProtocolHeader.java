@@ -363,6 +363,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     return WireProtocolHeader.MIN_LENGTH;
   }
 
+  @Override
   public int getHeaderByteLength() {
     return 4 * getHeaderLength();
   }

@@ -59,6 +59,7 @@ public class BatchSequenceTest extends TestCase {
     public volatile int      size  = -1;
     public final LinkedQueue queue = new LinkedQueue();
 
+    @Override
     public void requestBatch(BatchSequenceReceiver theProvider, int theSize) {
       this.size = theSize;
       try {

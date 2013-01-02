@@ -59,70 +59,87 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public Collection getLockContexts() {
     return this.lockContexts;
   }
 
+  @Override
   public Set getObjectIDs() {
     return this.objectIDs;
   }
 
+  @Override
   public Invalidations getObjectIDsToValidate() {
     return this.objectsToValidate;
   }
 
+  @Override
   public List getTransactionSequenceIDs() {
     return this.sequenceIDs;
   }
 
+  @Override
   public List getResentTransactionIDs() {
     return this.txnIDs;
   }
 
+  @Override
   public boolean isObjectIDsRequested() {
     return this.requestObjectIDs;
   }
 
+  @Override
   public String getClientVersion() {
     return this.clientVersion;
   }
 
+  @Override
   public void addTransactionSequenceIDs(List seqIDs) {
     this.sequenceIDs.addAll(seqIDs);
   }
 
+  @Override
   public void addResentTransactionIDs(List resentTransactionIDs) {
     this.txnIDs.addAll(resentTransactionIDs);
   }
 
+  @Override
   public void setIsObjectIDsRequested(boolean request) {
     this.requestObjectIDs = request;
   }
 
+  @Override
   public void setClientVersion(String version) {
     this.clientVersion = version;
   }
 
+  @Override
   public void addLockContext(ClientServerExchangeLockContext ctxt) {
     this.lockContexts.add(ctxt);
   }
 
+  @Override
   public long getServerHighWaterMark() {
     return this.serverHighWaterMark;
   }
 
+  @Override
   public void setServerHighWaterMark(long serverHWM) {
     this.serverHighWaterMark = serverHWM;
   }
 
+  @Override
   public boolean enterpriseClient() {
     return this.enterpriseClient;
   }
 
+  @Override
   public void setEnterpriseClient(boolean isEnterpriseClient) {
     this.enterpriseClient = isEnterpriseClient;
   }
 
+  @Override
   public long getLocalTimeMills() {
     return this.currentLocalTimeMills;
   }

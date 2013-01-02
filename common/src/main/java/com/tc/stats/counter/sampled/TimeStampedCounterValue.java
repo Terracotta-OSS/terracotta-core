@@ -25,6 +25,7 @@ public class TimeStampedCounterValue implements Serializable {
     return this.timestamp;
   }
 
+  @Override
   public String toString() {
     return "value: " + this.counterValue + ", timestamp: " + this.timestamp;
   }

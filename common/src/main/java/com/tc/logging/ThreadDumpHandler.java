@@ -18,6 +18,7 @@ public class ThreadDumpHandler implements CallbackOnExitHandler {
     this.lockInfoDumpHandler = lockInfoDumpHandler;
   }
 
+  @Override
   public void callbackOnExit(CallbackOnExitState state) {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
     ThreadIDMap threadIDMap = this.lockInfoDumpHandler.getThreadIDMap();

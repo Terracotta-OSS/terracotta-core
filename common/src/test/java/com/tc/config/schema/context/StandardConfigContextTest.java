@@ -22,6 +22,7 @@ public class StandardConfigContextTest extends TCTestCase {
 
   private ConfigContext                         context;
 
+  @Override
   public void setUp() throws Exception {
     this.schemaType = new MockSchemaType();
     this.beanRepository = new MockBeanRepository();

@@ -13,6 +13,7 @@ public class TCObjectLogical extends TCObjectImpl {
     super(id, peer, tcc, isNew);
   }
 
+  @Override
   public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
     getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
   }
@@ -37,6 +38,7 @@ public class TCObjectLogical extends TCObjectImpl {
     return clearable.__tc_clearReferences(toClear);
   }
 
+  @Override
   public void unresolveReference(final String fieldName) {
     throw new AssertionError();
   }

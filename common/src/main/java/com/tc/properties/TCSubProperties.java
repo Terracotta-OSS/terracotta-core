@@ -16,6 +16,7 @@ class TCSubProperties implements TCProperties {
     this.category = category;
   }
 
+  @Override
   public TCProperties getPropertiesFor(String category2) {
     return properties.getPropertiesFor(getActualKey(category2));
   }
@@ -24,6 +25,7 @@ class TCSubProperties implements TCProperties {
     return category + "." + key;
   }
 
+  @Override
   public String getProperty(String key) {
     return properties.getProperty(getActualKey(key));
   }
@@ -33,46 +35,57 @@ class TCSubProperties implements TCProperties {
     return "TCSubProperties(" + category + ")";
   }
 
+  @Override
   public Properties addAllPropertiesTo(Properties dest) {
     return properties.addAllPropertiesTo(dest, category + ".");
   }
 
+  @Override
   public boolean getBoolean(String key) {
     return properties.getBoolean(getActualKey(key));
   }
 
+  @Override
   public float getFloat(String key) {
     return properties.getFloat(getActualKey(key));
   }
 
+  @Override
   public int getInt(String key) {
     return properties.getInt(getActualKey(key));
   }
 
+  @Override
   public long getLong(String key) {
     return properties.getLong(getActualKey(key));
   }
 
+  @Override
   public long getLong(String key, long defaultValue) {
     return properties.getLong(getActualKey(key), defaultValue);
   }
 
+  @Override
   public String getProperty(String key, boolean missingOkay) {
     return properties.getProperty(getActualKey(key), missingOkay);
   }
 
+  @Override
   public int getInt(String key, int defaultValue) {
     return properties.getInt(getActualKey(key), defaultValue);
   }
 
+  @Override
   public boolean getBoolean(String key, boolean defaultValue) {
     return properties.getBoolean(getActualKey(key), defaultValue);
   }
 
+  @Override
   public void overwriteTcPropertiesFromConfig(Map<String, String> props) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setProperty(String key, String value) {
     properties.setProperty(getActualKey(key), value);
   }

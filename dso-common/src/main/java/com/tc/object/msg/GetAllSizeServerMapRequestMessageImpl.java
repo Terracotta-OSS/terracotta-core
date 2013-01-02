@@ -37,6 +37,7 @@ public class GetAllSizeServerMapRequestMessageImpl extends DSOMessageBase implem
     super(sessionID, monitor, out, channel, type);
   }
 
+  @Override
   public void initializeGetAllSizeRequest(final ServerMapRequestID serverMapRequestID, final ObjectID[] maps) {
     this.requestID = serverMapRequestID;
     this.mapIDs = maps;
@@ -73,22 +74,27 @@ public class GetAllSizeServerMapRequestMessageImpl extends DSOMessageBase implem
     }
   }
 
+  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
 
+  @Override
   public ObjectID[] getMaps() {
     return this.mapIDs;
   }
 
+  @Override
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_SIZE;
   }
 
+  @Override
   public int getRequestCount() {
     return 1;
   }

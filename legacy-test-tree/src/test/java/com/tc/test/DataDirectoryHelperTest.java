@@ -19,6 +19,7 @@ public class DataDirectoryHelperTest extends TestCase {
   private File                expectedDir;
   private DataDirectoryHelper helper;
 
+  @Override
   public void setUp() throws Exception {
     String root = TestConfigObject.getInstance().tempDirectoryRoot() + File.separator + "temp-DataDirectoryHelperTest";
 

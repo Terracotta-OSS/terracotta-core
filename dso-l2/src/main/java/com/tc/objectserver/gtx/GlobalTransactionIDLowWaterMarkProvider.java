@@ -22,6 +22,7 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
   private volatile GlobalTransactionManager lwmProvider;
 
   private final GlobalTransactionManager    NULL_GLOBAL_TXN_MGR = new GlobalTransactionManager() {
+                                                                  @Override
                                                                   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
                                                                     return GlobalTransactionID.NULL_ID;
                                                                   }
@@ -36,12 +37,14 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
 
   public void goToActiveMode() {
     transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
       public void onCompletion() {
         switchLWMProvider();
       }
     });
   }
 
+  @Override
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     return lwmProvider.getLowGlobalTransactionIDWatermark();
   }

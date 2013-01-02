@@ -18,6 +18,7 @@ public class CountStatisticImpl extends StatisticImpl implements CountStatistic 
     m_count = count;
   }
 
+  @Override
   public long getCount() {
     return m_count;
   }

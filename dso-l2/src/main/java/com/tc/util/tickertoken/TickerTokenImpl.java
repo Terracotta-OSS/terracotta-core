@@ -30,22 +30,28 @@ public abstract class TickerTokenImpl implements TickerToken, TCSerializable {
     this.totalTickers = totalTickers;
   }
 
+  @Override
   public int getStartTick() {
     return startTick;
   }
 
+  @Override
   public int getPrimaryID() {
     return primaryID;
   }
 
+  @Override
   public int getTotalTickers() {
     return totalTickers;
   }
 
+  @Override
   public abstract void collectToken(int aId, CollectContext context);
 
+  @Override
   public abstract boolean evaluateComplete();
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) {
     try {
       primaryID = serialInput.readInt();
@@ -57,6 +63,7 @@ public abstract class TickerTokenImpl implements TickerToken, TCSerializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(primaryID);
     serialOutput.writeInt(startTick);

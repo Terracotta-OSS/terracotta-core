@@ -11,6 +11,7 @@ public class DoubleStatisticImpl extends StatisticImpl implements DoubleStatisti
     super(lastSampleTime);
   }
 
+  @Override
   public double getDoubleValue() {
     return this.doubleValue;
   }

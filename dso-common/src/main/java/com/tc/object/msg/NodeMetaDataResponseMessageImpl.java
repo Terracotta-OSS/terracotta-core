@@ -37,6 +37,7 @@ public class NodeMetaDataResponseMessageImpl extends DSOMessageBase implements N
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public void initialize(final ThreadID tID, final String theIp, final String theHostname) {
     this.threadID = tID;
     this.ip = theIp;
@@ -69,14 +70,17 @@ public class NodeMetaDataResponseMessageImpl extends DSOMessageBase implements N
     }
   }
 
+  @Override
   public ThreadID getThreadID() {
     return threadID;
   }
 
+  @Override
   public String getIp() {
     return ip;
   }
 
+  @Override
   public String getHostname() {
     return hostname;
   }

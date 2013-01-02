@@ -36,74 +36,92 @@ import com.tc.object.session.SessionID;
 
 public class MockChannel implements DSOClientMessageChannel {
 
+  @Override
   public void addListener(final ChannelEventListener listener) {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientMessageChannel channel() {
     return new TestClientMessageChannel();
   }
 
+  @Override
   public void close() {
     throw new ImplementMe();
   }
 
+  @Override
   public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientIDProvider getClientIDProvider() {
     return new ClientIDProviderImpl(new TestChannelIDProvider());
   }
 
+  @Override
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public CommitTransactionMessageFactory getCommitTransactionMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public LockRequestMessageFactory getLockRequestMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public RequestManagedObjectMessageFactory getRequestManagedObjectMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public RequestRootMessageFactory getRequestRootMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isConnected() {
     throw new ImplementMe();
   }
 
+  @Override
   public void open(final char[] password) {
     throw new ImplementMe();
   }
 
+  @Override
   public JMXMessage getJMXMessage() {
     throw new ImplementMe();
   }
@@ -111,6 +129,7 @@ public class MockChannel implements DSOClientMessageChannel {
   CompletedTransactionLowWaterMarkMessageFactory nullFactory = new NullCompletedTransactionLowWaterMarkMessageFactory();
   public GroupID[]                               groups      = new GroupID[] { new GroupID(0) };
 
+  @Override
   public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
     return this.nullFactory;
   }
@@ -118,6 +137,7 @@ public class MockChannel implements DSOClientMessageChannel {
   private class NullCompletedTransactionLowWaterMarkMessageFactory implements
       CompletedTransactionLowWaterMarkMessageFactory {
 
+    @Override
     public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
       return new CompletedTransactionLowWaterMarkMessage(new SessionID(0), new NullMessageMonitor(),
                                                          new TCByteBufferOutputStream(4, 4096, false),
@@ -126,10 +146,12 @@ public class MockChannel implements DSOClientMessageChannel {
     }
   }
 
+  @Override
   public GroupID[] getGroupIDs() {
     return this.groups;
   }
 
+  @Override
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
     throw new ImplementMe();
   }
@@ -138,6 +160,7 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
+  @Override
   public ServerMapMessageFactory getServerMapMessageFactory() {
     throw new ImplementMe();
   }
@@ -146,6 +169,7 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
+  @Override
   public SearchRequestMessageFactory getSearchRequestMessageFactory() {
     throw new ImplementMe();
   }

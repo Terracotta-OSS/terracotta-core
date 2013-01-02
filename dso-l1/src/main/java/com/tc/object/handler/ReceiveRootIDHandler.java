@@ -13,12 +13,14 @@ import com.tc.object.msg.RequestRootResponseMessage;
 public class ReceiveRootIDHandler extends AbstractEventHandler {
   private RemoteObjectManager objectManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     RequestRootResponseMessage m = (RequestRootResponseMessage) context;
     this.objectManager.addRoot(m.getRootName(), m.getRootID(), m.getSourceNodeID());
 
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext ccc = (ClientConfigurationContext) context;

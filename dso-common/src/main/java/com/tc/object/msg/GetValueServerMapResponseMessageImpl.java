@@ -52,6 +52,7 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
     this.decoder = null; // shouldn't be used
   }
 
+  @Override
   public void initializeGetValueResponse(final ObjectID mapObjectID,
                                          final Collection<ServerMapGetValueResponse> getValueResponses) {
     this.responses = getValueResponses;
@@ -106,14 +107,17 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
     }
   }
 
+  @Override
   public ObjectID getMapID() {
     return this.mapID;
   }
 
+  @Override
   public Collection<ServerMapGetValueResponse> getGetValueResponses() {
     return this.responses;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_VALUE_FOR_KEY;
   }

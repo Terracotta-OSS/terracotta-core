@@ -14,10 +14,12 @@ public class TransactionLookupHandler extends AbstractEventHandler {
 
   private TransactionalObjectManager txnObjectMgr;
 
+  @Override
   public void handleEvent(EventContext context) {
     this.txnObjectMgr.lookupObjectsForTransactions();
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

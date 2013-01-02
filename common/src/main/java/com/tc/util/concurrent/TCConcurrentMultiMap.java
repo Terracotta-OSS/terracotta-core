@@ -152,6 +152,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private static class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
+    @Override
     public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
       boolean newEntry = false;
       Set<V> set = segment.get(key);
@@ -167,6 +168,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private static final class AddAllCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
+    @Override
     public Object callback(final K key, final Object values, final Map<K, Set<V>> segment) {
       boolean newEntry = false;
       Set<V> set = segment.get(key);
@@ -183,6 +185,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private static final class RemoveCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
+    @Override
     public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
       final Set<V> set = segment.get(key);
       if (set == null) { return false; }
@@ -194,6 +197,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.visit(this.store).flush();
     return out;

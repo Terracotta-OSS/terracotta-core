@@ -12,10 +12,12 @@ public class TestObjectFactory implements TCObjectFactory {
   public TCObject tcObject;
   public Object   peerObject;
 
+  @Override
   public void setObjectManager(ClientObjectManager objectManager) {
     return;
   }
 
+  @Override
   public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew) {
     return tcObject;
   }
@@ -24,22 +26,27 @@ public class TestObjectFactory implements TCObjectFactory {
     return tcObject;
   }
 
+  @Override
   public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException {
     return peerObject;
   }
 
+  @Override
   public Object getNewArrayInstance(TCClass type, int size) {
     throw new ImplementMe();
   }
 
+  @Override
   public Object getNewPeerObject(TCClass type) throws IllegalArgumentException, SecurityException {
     return peerObject;
   }
 
+  @Override
   public Object getNewPeerObject(TCClass type, DNA dna) {
     return peerObject;
   }
 
+  @Override
   public void initClazzIfRequired(Class clazz, TCObjectSelf tcObjectSelf) {
     throw new ImplementMe();
 

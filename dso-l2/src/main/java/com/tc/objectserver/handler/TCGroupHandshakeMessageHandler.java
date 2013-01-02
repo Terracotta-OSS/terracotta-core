@@ -17,11 +17,13 @@ public class TCGroupHandshakeMessageHandler extends AbstractEventHandler {
     this.manager = manager;
   }
   
+  @Override
   public void handleEvent(EventContext context) {
     TCGroupHandshakeMessage msg = (TCGroupHandshakeMessage) context;
     manager.receivedHandshake(msg);
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
   }

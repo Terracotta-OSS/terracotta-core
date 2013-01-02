@@ -40,6 +40,7 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return serializer;
   }
@@ -68,6 +69,7 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
     }
   }
 
+  @Override
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
     this.batch = batch;
     if (this.batchData != null) throw new AssertionError("Attempt to set TransactionBatch more than once.");
@@ -75,6 +77,7 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
     this.serializer = serializer;
   }
 
+  @Override
   public TCByteBuffer[] getBatchData() {
     return batchData;
   }

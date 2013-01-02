@@ -175,6 +175,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     registerForGroupEvents(new OperatorEventsNodeConnectionListener(nodesStore));
   }
 
+  @Override
   public boolean isNodeConnected(NodeID sid) {
     TCGroupMember m = members.get(sid);
     return (m != null) && m.getChannel().isOpen();
@@ -291,6 +292,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     stateMachine.execute(msg);
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     return getNodeID();
   }
@@ -347,6 +349,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return (isStopped.get());
   }
 
+  @Override
   public void registerForGroupEvents(GroupEventsListener listener) {
     groupListeners.add(listener);
   }
@@ -382,6 +385,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return true;
   }
 
+  @Override
   public NodeID join(Node thisNode, NodesStore nodesStore) throws GroupException {
     if (!alreadyJoined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
 
@@ -397,6 +401,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return (getNodeID());
   }
 
+  @Override
   public void topologyChanged(ReloadConfigChangeContext reloadContext) {
     for (Node nodeAdded : reloadContext.getNodesAdded()) {
       discover.addNode(nodeAdded);
@@ -409,6 +414,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /**
    * Force close down the problematic peer Server member. Just a wrapper over the closeMember(TCGroupMember).
    */
+  @Override
   public void closeMember(ServerID serverID) {
     TCGroupMember member = getMember(serverID);
     if (member != null) {
@@ -458,10 +464,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public void sendAll(GroupMessage msg) {
     sendAll(msg, members.keySet());
   }
 
+  @Override
   public void sendAll(GroupMessage msg, Set nodeIDs) {
     final boolean debug = msg instanceof L2StateMessage;
     for (TCGroupMember m : members.values()) {
@@ -482,6 +490,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     TCGroupMember member = getMember(node);
     if (member != null && member.isReady()) {
@@ -494,6 +503,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) throws GroupException {
     debugInfo("Sending to " + nodeID + " and Waiting for Response : " + msg.getMessageID());
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
@@ -514,10 +524,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
     return sendAllAndWaitForResponse(msg, members.keySet());
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
     debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
@@ -537,6 +549,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     if (isStopped.get()) return;
 
     SessionProvider sessionProvider = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
+      @Override
       public Sequence newSequence() {
         return new SimpleSequence();
       }
@@ -577,6 +590,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * Event notification when a new connection setup by channelManager channel opened from dst to src
    */
+  @Override
   public void channelCreated(MessageChannel aChannel) {
     if (isStopped.get()) {
       aChannel.close();
@@ -588,6 +602,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * Event notification when a connection removed by DSOChannelManager
    */
+  @Override
   public void channelRemoved(MessageChannel channel) {
     TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
     if (stateMachine != null) {
@@ -703,6 +718,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
     validateExternalizableClass(msgClass);
     GroupMessageListener prev = messageListeners.put(msgClass.getName(), listener);
@@ -711,6 +727,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public void routeMessages(Class msgClass, Sink sink) {
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
@@ -726,10 +743,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
+  @Override
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
     this.zapNodeRequestProcessor = processor;
   }
 
+  @Override
   public void zapNode(NodeID nodeID, int type, String reason) {
     zappedSet.add(nodeID);
     TCGroupMember m = getMember(nodeID);
@@ -755,6 +774,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return (zappedSet.contains(nodeID));
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     StringBuilder strBuffer = new StringBuilder();
     strBuffer.append(TCGroupManagerImpl.class.getSimpleName()).append(" [ ");
@@ -785,11 +805,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       this.manager = manager;
     }
 
+    @Override
     public synchronized List<GroupMessage> getResponses() {
       Assert.assertTrue(waitFor.isEmpty());
       return responses;
     }
 
+    @Override
     public synchronized GroupMessage getResponse(NodeID nodeID) {
       Assert.assertTrue(waitFor.isEmpty());
       for (GroupMessage msg : responses) {
@@ -874,6 +896,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private final class ZapNodeRequestRouter implements GroupMessageListener {
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
       zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
@@ -911,6 +934,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       this.stateMachine = stateMachine;
     }
 
+    @Override
     public void notifyChannelEvent(ChannelEvent event) {
       if (event.getChannel() == stateMachine.getChannel()) {
         if ((event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT)
@@ -1277,6 +1301,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     zappedSet.add(nodeID);
   }
 
+  @Override
   public boolean isServerConnected(String nodeName) {
     return this.discover.isServerConnected(nodeName);
   }

@@ -19,6 +19,7 @@ import java.util.Map;
 
 public final class ActiveServerTransactionFactory implements ServerTransactionFactory {
 
+  @Override
   public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
                                                    LockID[] locks, NodeID source, List dnas,
                                                    ObjectStringSerializer serializer, Map newRoots, TxnType txnType,

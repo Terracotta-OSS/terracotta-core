@@ -41,10 +41,12 @@ public class LogLevelImpl implements LogLevel {
     this.level = level;
   }
 
+  @Override
   public int getLevel() {
     return level;
   }
 
+  @Override
   public boolean isInfo() {
     return level == LEVEL_INFO;
   }
@@ -90,6 +92,7 @@ public class LogLevelImpl implements LogLevel {
     }
   }
 
+  @Override
   public String toString() {
     switch (getLevel()) {
       case LEVEL_DEBUG:

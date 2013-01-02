@@ -16,6 +16,7 @@ public class StartupHelperTest extends TestCase {
     final SynchronizedRef error = new SynchronizedRef(null);
 
     ThreadGroup group = new ThreadGroup("group") {
+      @Override
       public void uncaughtException(Thread t, Throwable e) {
         error.set(e);
       }
@@ -24,6 +25,7 @@ public class StartupHelperTest extends TestCase {
     final RuntimeException re = new RuntimeException("da bomb");
 
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
+      @Override
       public void execute() throws Throwable {
         throw re;
       }
@@ -43,6 +45,7 @@ public class StartupHelperTest extends TestCase {
     final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(new NullTCLogger()));
 
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
+      @Override
       public void execute() throws Throwable {
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
         if (tg != group) { throw new AssertionError("wrong thread group: " + tg); }

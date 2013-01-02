@@ -24,12 +24,14 @@ public class LiteralTypesApplicator extends BaseApplicator {
     super(encoding, TCLogging.getLogger(LiteralTypesApplicator.class));
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     // if (pojo instanceof TransparentAccess) { throw new AssertionError("Instance of Literal Type: " + clazz.getName()
     // + " should not implement TransparentAccess."); }
     return addTo;
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
@@ -42,11 +44,13 @@ public class LiteralTypesApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
     writer.addLiteralValue(pojo);
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     Assert.assertEquals(1, cursor.getActionCount());

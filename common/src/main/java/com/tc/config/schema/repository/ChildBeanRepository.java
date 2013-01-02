@@ -33,14 +33,17 @@ public class ChildBeanRepository implements BeanRepository, ConfigurationChangeL
     this.parent.addListener(this);
   }
 
+  @Override
   public SchemaType rootBeanSchemaType() {
     return StandardBeanRepository.getTypeFieldFrom(this.requiredBeanClass);
   }
 
+  @Override
   public void ensureBeanIsOfClass(Class theClass) {
     Assert.eval(theClass.isAssignableFrom(requiredBeanClass));
   }
 
+  @Override
   public XmlObject bean() {
     XmlObject parentBean = this.parent.bean();
     if (parentBean == null) return null;
@@ -52,11 +55,13 @@ public class ChildBeanRepository implements BeanRepository, ConfigurationChangeL
     return out;
   }
 
+  @Override
   public void addListener(ConfigurationChangeListener listener) {
     Assert.assertNotNull(listener);
     this.listeners.addListener(listener);
   }
 
+  @Override
   public void configurationChanged(XmlObject oldConfig, XmlObject newConfig) {
     XmlObject oldChild = oldConfig == null ? null : this.childFetcher.getChild(oldConfig);
     XmlObject newChild = newConfig == null ? null : this.childFetcher.getChild(newConfig);

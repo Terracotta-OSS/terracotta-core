@@ -44,31 +44,38 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     clientLockStatElements.remove(nodeID);
   }
 
+  @Override
   public LockID getLockID() {
     return lockID;
   }
 
+  @Override
   public LockStats getServerStats() {
     return serverStat;
   }
 
+  @Override
   public LockStats getClientStats() {
     return clientStat;
   }
 
   // TODO: return empty string for now
+  @Override
   public String getObjectType() {
     return lockType;
   }
 
+  @Override
   public boolean hasChildren() {
     return clientStatElement.hasChildren();
   }
 
+  @Override
   public Collection children() {
     return clientStatElement.children();
   }
 
+  @Override
   public void recordLockRequested(NodeID nodeID, ThreadID threadID, long requestedTimeInMillis,
                                   int numberOfPendingRequests, StackTraceElement[] stackTraces, String contextInfo) {
     this.lockType = contextInfo;
@@ -76,6 +83,7 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
                                           contextInfo, stackTraces, 0);
   }
 
+  @Override
   public void recordLockRejected(NodeID nodeID, ThreadID threadID) {
     serverStatElement.recordLockRejected(nodeID, threadID);
   }
@@ -84,11 +92,13 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     serverStatElement.recordLockHopped();
   }
 
+  @Override
   public boolean recordLockAwarded(NodeID nodeID, ThreadID threadID, boolean isGreedy, long awardedTimeInMillis,
                                    int nestedLockDepth) {
     return serverStatElement.recordLockAwarded(nodeID, threadID, isGreedy, awardedTimeInMillis, nestedLockDepth);
   }
 
+  @Override
   public boolean recordLockReleased(NodeID nodeID, ThreadID threadID) {
     return serverStatElement.recordLockReleased(nodeID, threadID);
   }
@@ -105,22 +115,27 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return statEnabledClients.contains(nodeID);
   }
 
+  @Override
   public long getNumberOfLockRequested() {
     return serverStat.getNumOfLockRequested();
   }
 
+  @Override
   public long getNumberOfLockReleased() {
     return serverStat.getNumOfLockReleased();
   }
 
+  @Override
   public long getNumberOfLockHopRequested() {
     return serverStat.getNumOfLockHopRequests();
   }
 
+  @Override
   public long getNumberOfPendingRequests() {
     return serverStat.getNumOfLockPendingRequested();
   }
 
+  @Override
   public LockStatElement getLockStatElement() {
     return serverStatElement;
   }
@@ -129,6 +144,7 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     clientLockStatElements.put(nodeID, lockStatElement);
   }
 
+  @Override
   public void aggregateLockHoldersData() {
     clientStatElement.clear();
     for (Iterator<LockStatElement> i = clientLockStatElements.values().iterator(); i.hasNext();) {
@@ -137,6 +153,7 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     serverStatElement.aggregateLockHoldersData(serverStat, 0);
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer("lockType: ");
     sb.append(lockType);

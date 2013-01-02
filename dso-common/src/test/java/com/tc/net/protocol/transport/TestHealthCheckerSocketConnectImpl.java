@@ -16,18 +16,22 @@ public class TestHealthCheckerSocketConnectImpl extends HealthCheckerSocketConne
     super(peerNode, conn, remoteNodeDesc, logger, timeoutInterval);
   }
 
+  @Override
   public synchronized void closeEvent(TCConnectionEvent event) {
     //
   }
 
+  @Override
   public synchronized void connectEvent(TCConnectionEvent event) {
     // ignore the connect events
   }
 
+  @Override
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
     //
   }
 
+  @Override
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
     //
   }

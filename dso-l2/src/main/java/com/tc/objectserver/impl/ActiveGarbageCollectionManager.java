@@ -60,12 +60,14 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     this.garbageCollectSink = garbageCollectSink;
     this.clientObjectReferenceSet = clientObjectReferenceSet;
     clientObjectReferenceSet.addReferenceSetChangeListener(new ClientObjectReferenceSetChangedListener() {
+      @Override
       public void notifyReferenceSetChanged() {
         retryDeletingReferencedObjects();
       }
     });
   }
 
+  @Override
   public void deleteObjects(SortedSet<ObjectID> objects) {
     if (!objects.isEmpty()) {
       synchronized (this) {
@@ -75,6 +77,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
+  @Override
   public synchronized ObjectIDSet nextObjectsToDelete() {
     if (objectsToDelete.isEmpty()) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     ObjectIDSet deleteNow = objectsToDelete;
@@ -102,6 +105,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     return deleteNow;
   }
 
+  @Override
   public synchronized void scheduleInlineGarbageCollectionIfNecessary() {
     if (!objectsToDelete.isEmpty() && System.nanoTime() - lastInlineGCTime > INLINE_GC_INTERVAL
         || objectsToDelete.size() > MAX_INLINE_GC_OBJECTS) {
@@ -112,22 +116,27 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
+  @Override
   public void scheduleGarbageCollection(final GCType type, final long delay) {
     transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
       public void onCompletion() {
         garbageCollectSink.add(new GarbageCollectContext(type, delay));
       }
     });
   }
 
+  @Override
   public void doGarbageCollection(GCType type) {
     GarbageCollectContext gcc = new GarbageCollectContext(type);
     scheduleGarbageCollection(type);
     gcc.waitForCompletion();
   }
 
+  @Override
   public void scheduleGarbageCollection(final GCType type) {
     transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
       public void onCompletion() {
         garbageCollectSink.add(new GarbageCollectContext(type));
       }
@@ -141,12 +150,14 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
+  @Override
   public void initializeContext(ConfigurationContext context) {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     transactionManager = scc.getTransactionManager();
     garbageCollector = scc.getObjectManager().getGarbageCollector();
   }
 
+  @Override
   public void scheduleInlineCleanupIfNecessary() {
     if (!garbageCollector.isPeriodicEnabled()
         && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, true)) {
@@ -158,6 +169,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     // Do nothing
   }

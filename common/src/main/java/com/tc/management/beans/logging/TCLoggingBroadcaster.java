@@ -26,6 +26,7 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
   private final AtomicLong                     sequenceNumber           = new AtomicLong(0L);
   private final TCLoggingHistoryProvider       tcLoggingHistoryProvider = new TCLoggingHistoryProvider();
 
+  @Override
   public void reset() {
     // nothing to reset
   }

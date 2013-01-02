@@ -12,10 +12,12 @@ import java.util.Iterator;
 
 public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet {
 
+  @Override
   public void startPopulating() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void stopPopulating(ObjectIDSet fullSet) {
     throw new UnsupportedOperationException();
   }
@@ -50,18 +52,22 @@ public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet 
     return 0;
   }
 
+  @Override
   public ObjectIDSet snapshot() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return out;
   }
 
+  @Override
   public int addAndGetSize(ObjectID obj) {
     return 0;
   }
 
+  @Override
   public void waitUntilFinishedPopulating() {
     //
   }

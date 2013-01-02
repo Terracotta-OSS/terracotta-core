@@ -17,12 +17,14 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   private ObjectIDSet  set        = new ObjectIDSet();
   private boolean      isBlocking = false;
 
+  @Override
   public void startPopulating() {
     synchronized (this.lock) {
       this.isBlocking = true;
     }
   }
 
+  @Override
   public void stopPopulating(final ObjectIDSet fullSet) {
     synchronized (this.lock) {
       final ObjectIDSet large = (fullSet.size() > this.set.size()) ? fullSet : this.set;
@@ -39,6 +41,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
    * 
    * @return size if object was successfully added, else return -1.
    */
+  @Override
   public int addAndGetSize(final ObjectID obj) {
     synchronized (this.lock) {
       final boolean added = this.set.add(obj);
@@ -116,6 +119,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     return rv;
   }
 
+  @Override
   public ObjectIDSet snapshot() {
     synchronized (this.lock) {
       waitWhileBlocked();
@@ -123,6 +127,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     }
   }
 
+  @Override
   public void waitUntilFinishedPopulating() {
     synchronized (this.lock) {
       waitWhileBlocked();
@@ -146,6 +151,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.println(getClass().getName());
     synchronized (this.lock) {

@@ -232,10 +232,12 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       }
     }
 
+    @Override
     public boolean hasNext() {
       return this.nodes.hasNext() || (this.current != null && (this.current.start + this.idx) <= this.current.end);
     }
 
+    @Override
     public Object next() {
       if (this.current == null) { throw new NoSuchElementException(); }
       if (this.expectedModCount != RangeObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
@@ -253,6 +255,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return (this.lastReturned = oid);
     }
 
+    @Override
     public void remove() {
       if (this.lastReturned == null) { throw new IllegalStateException(); }
       if (this.expectedModCount != RangeObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
@@ -338,6 +341,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return new Range(this.start, this.end);
     }
 
+    @Override
     public int compareTo(final Comparable o) {
       if (o instanceof Range) {
         final Range other = (Range) o;
@@ -367,6 +371,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return (this.start == r.start) && (this.end == r.end);
     }
 
+    @Override
     public void swapPayload(final Node<Comparable> other) {
       if (other instanceof Range) {
         final Range r = (Range) other;
@@ -381,6 +386,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       }
     }
 
+    @Override
     public Comparable getPayload() {
       return this;
     }
@@ -399,6 +405,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return this.number;
     }
 
+    @Override
     public int compareTo(final Object o) {
       if (o instanceof Range) {
         final Range r = (Range) o;

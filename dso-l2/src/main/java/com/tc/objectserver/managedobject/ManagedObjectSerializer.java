@@ -24,6 +24,7 @@ public class ManagedObjectSerializer implements Serializer {
     this.persistor = persistor;
   }
 
+  @Override
   public void serializeTo(final Object mo, final ObjectOutput out) {
     try {
       if (mo instanceof ManagedObject) {
@@ -36,6 +37,7 @@ public class ManagedObjectSerializer implements Serializer {
     }
   }
 
+  @Override
   public Object deserializeFrom(final ObjectInput in) {
     try {
       // read data
@@ -52,6 +54,7 @@ public class ManagedObjectSerializer implements Serializer {
     }
   }
 
+  @Override
   public byte getSerializerID() {
     return MANAGED_OBJECT;
   }

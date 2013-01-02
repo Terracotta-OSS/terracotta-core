@@ -11,11 +11,14 @@ abstract class AbstractNode implements Node {
         this.object = o;
   }
 
+    @Override
     public Object getObject() {
         return object;
     }
 
+    @Override
     public abstract boolean done();
 
+    @Override
     public abstract MemberValue next();
 }

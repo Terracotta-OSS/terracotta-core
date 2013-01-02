@@ -126,6 +126,7 @@ public class ResetableLatchTest extends TestCase {
       setDaemon(true);
     }
 
+    @Override
     public void run() {
 
       try {

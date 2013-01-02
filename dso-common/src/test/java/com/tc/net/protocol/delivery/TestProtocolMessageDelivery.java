@@ -26,6 +26,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.receivedQueue = receivedQueue;
   }
 
+  @Override
   public OOOProtocolMessage createHandshakeMessage(long ack) {
     sentAckRequest = true;
     return (new TestProtocolMessage());
@@ -35,6 +36,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     sentAckRequest = true;
   }
 
+  @Override
   public OOOProtocolMessage createAckMessage(long sequence) {
     if (sequence > ackCount) {
       this.ackCount = sequence;
@@ -51,11 +53,13 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.sentAck = true;
   }
 
+  @Override
   public boolean sendMessage(OOOProtocolMessage pmsg) {
     this.msg = pmsg;
     return (true);
   }
 
+  @Override
   public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage tcmsg) {
     Assert.eval(sent >= 0);
     this.tcMessage = tcmsg;
@@ -83,6 +87,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     created = false;
   }
 
+  @Override
   public void receiveMessage(OOOProtocolMessage pm) {
     receivedMessageCount++;
     try {
@@ -94,14 +99,17 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
 
   }
 
+  @Override
   public ConnectionID getConnectionId() {
     return null;
   }
 
+  @Override
   public OOOProtocolMessage createHandshakeReplyOkMessage(long sequence) {
     return null;
   }
 
+  @Override
   public OOOProtocolMessage createHandshakeReplyFailMessage(long sequence) {
     return null;
   }

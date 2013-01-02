@@ -14,6 +14,7 @@ public class WeightGeneratorFactory {
   private final List generators = new ArrayList();
   
   public static final WeightGenerator RANDOM_WEIGHT_GENERATOR = new WeightGenerator() {
+    @Override
     public long getWeight() {
       SecureRandom r = new SecureRandom();
       return r.nextLong();

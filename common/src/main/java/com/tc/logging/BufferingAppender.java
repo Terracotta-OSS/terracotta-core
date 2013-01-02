@@ -24,6 +24,7 @@ public class BufferingAppender extends AppenderSkeleton {
     this.on = true;
   }
 
+  @Override
   protected synchronized void append(LoggingEvent event) {
     if (on) {
       try {
@@ -34,10 +35,12 @@ public class BufferingAppender extends AppenderSkeleton {
     }
   }
 
+  @Override
   public boolean requiresLayout() {
     return false;
   }
 
+  @Override
   public void close() {
     // nothing needs to be here.
   }

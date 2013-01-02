@@ -36,6 +36,7 @@ public class TIMByteProvider implements TIMByteProviderMBean {
     jis.close();
   }
 
+  @Override
   public byte[] getResourceAsByteArray(String name) throws IOException {
     logger.info("getResourceByteArray name='" + name + "'");
     byte[] ba = entryMap.get(name);
@@ -43,11 +44,13 @@ public class TIMByteProvider implements TIMByteProviderMBean {
     throw new IOException("resource '" + name + "' not found");
   }
 
+  @Override
   public String getManifestEntry(String name) {
     if (manifest != null) { return manifest.getMainAttributes().getValue(name); }
     return null;
   }
 
+  @Override
   public byte[] getModuleBytes() throws Exception {
     InputStream is = null;
 

@@ -47,6 +47,7 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
+  @Override
   public void commitAllTransactionDescriptor(Transaction transaction, Collection stxIDs) {
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
@@ -63,16 +64,19 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   // used only in tests
+  @Override
   public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID) {
     ArrayList stxIDs = new ArrayList(1);
     stxIDs.add(stxID);
     commitAllTransactionDescriptor(transaction, stxIDs);
   }
 
+  @Override
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
     return this.sids.get(serverTransactionID);
   }
 
+  @Override
   public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID serverTransactionID) {
     GlobalTransactionDescriptor rv = this.sids.get(serverTransactionID);
     if (rv == null) {
@@ -114,6 +118,7 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
+  @Override
   public GlobalTransactionID getLeastGlobalTransactionID() {
     synchronized (this.ids) {
       return (GlobalTransactionID) ((this.ids.isEmpty()) ? GlobalTransactionID.NULL_ID : this.ids.firstKey());
@@ -123,11 +128,13 @@ public class TransactionStoreImpl implements TransactionStore {
   /**
    * This method clears the server transaction ids less than the low water mark, for that particular node.
    */
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, ServerTransactionID stxIDs) {
     Collection gidDescs = this.sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
     removeGlobalTransactionDescs(gidDescs, tx);
   }
 
+  @Override
   public void shutdownNode(Transaction tx, NodeID nid) {
     Collection gidDescs = this.sids.removeAll(nid);
     logger.info("shutdownClient() : Removing txns from DB : " + gidDescs.size());
@@ -149,6 +156,7 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
+  @Override
   public void shutdownAllClientsExcept(Transaction tx, Set cids) {
     Collection gidDescs = this.sids.removeAllExcept(cids);
     logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + gidDescs.size());
@@ -156,12 +164,14 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   // Used in Passive server
+  @Override
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicAdd(rv, true);
   }
 
   // Used in Passive server
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, GlobalTransactionID lowWaterMark) {
     SortedSet<GlobalTransactionID> toRemove = new TreeSet<GlobalTransactionID>();
     synchronized (this.ids) {

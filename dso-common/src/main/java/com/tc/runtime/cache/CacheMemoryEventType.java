@@ -16,6 +16,7 @@ public final class CacheMemoryEventType {
     this.name = name;
   }
 
+  @Override
   public String toString() {
     return "CacheMemoryEventType." + name;
   }

@@ -99,106 +99,132 @@ public class GarbageCollectorThreadTest extends TestCase {
     public long youngGCCount = 0;
     public long fullGCCount  = 0;
 
+    @Override
     public void addListener(GarbageCollectorEventListener listener) {
       //
     }
 
+    @Override
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       //
     }
 
+    @Override
     public void deleteGarbage(DGCResultContext resultContext) {
       //
     }
 
+    @Override
     public void waitToDisableGC() {
       // do nothing
     }
 
+    @Override
     public boolean requestDisableGC() {
       return false;
     }
 
+    @Override
     public void enableGC() {
       //
     }
 
+    @Override
     public boolean isDisabled() {
       return false;
     }
 
+    @Override
     public boolean isPaused() {
       return false;
     }
 
+    @Override
     public boolean isPausingOrPaused() {
       return false;
     }
 
+    @Override
     public boolean isStarted() {
       return true;
     }
 
+    @Override
     public void notifyGCComplete() {
       //
     }
 
+    @Override
     public void notifyNewObjectInitalized(ObjectID id) {
       //
     }
 
+    @Override
     public void notifyObjectCreated(ObjectID id) {
       //
     }
 
+    @Override
     public void notifyObjectsEvicted(Collection evicted) {
       //
     }
 
+    @Override
     public void notifyReadyToGC() {
       //
     }
 
+    @Override
     public void requestGCPause() {
       //
     }
 
+    @Override
     public void setPeriodicEnabled(final boolean periodEnable) {
       // do nothing
     }
 
+    @Override
     public boolean isPeriodicEnabled() {
       return false;
     }
 
+    @Override
     public void setState(LifeCycleState st) {
       //
     }
 
+    @Override
     public void start() {
       //
     }
 
+    @Override
     public void stop() {
       //
     }
 
+    @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       return null;
     }
 
+    @Override
     public boolean requestGCStart() {
       return true;
     }
 
+    @Override
     public void waitToStartGC() {
       // do nothing
     }
 
+    @Override
     public void waitToStartInlineGC() {
       // do nothing
     }
 
+    @Override
     public void doGC(GCType type) {
       if (GCType.FULL_GC.equals(type)) {
         this.fullGCCount++;
@@ -209,10 +235,12 @@ public class GarbageCollectorThreadTest extends TestCase {
       }
     }
 
+    @Override
     public boolean isDelete() {
       return false;
     }
 
+    @Override
     public boolean requestGCDeleteStart() {
       return false;
     }

@@ -14,14 +14,17 @@ import java.io.ObjectOutput;
  */
 public final class IntegerSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeInt(((Integer)o).intValue());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return Integer.valueOf(in.readInt());
   }
 
+  @Override
   public byte getSerializerID() {
     return INTEGER;
   }

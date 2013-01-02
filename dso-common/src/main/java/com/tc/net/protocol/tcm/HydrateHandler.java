@@ -11,6 +11,7 @@ import com.tc.logging.TCLogging;
 public class HydrateHandler extends AbstractEventHandler {
   private static TCLogger logger = TCLogging.getLogger(HydrateHandler.class);
 
+  @Override
   public void handleEvent(EventContext context) {
     HydrateContext hc = (HydrateContext) context;
     TCMessage message = hc.getMessage();

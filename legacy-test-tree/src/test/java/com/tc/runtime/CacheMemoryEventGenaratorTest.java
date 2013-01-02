@@ -52,6 +52,7 @@ public class CacheMemoryEventGenaratorTest extends TCTestCase {
   }
 
   private class CacheMemoryEventsListenerImpl implements CacheMemoryEventsListener {
+    @Override
     public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
       System.err.println("Memeory Threshold=20 Memory usage=" + usage.getUsedPercentage() + " Event: " + type);
       if (type != CacheMemoryEventType.BELOW_THRESHOLD) {

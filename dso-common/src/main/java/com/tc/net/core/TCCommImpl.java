@@ -52,14 +52,17 @@ class TCCommImpl implements TCComm {
     return 0;
   }
 
+  @Override
   public boolean isStarted() {
     return started;
   }
 
+  @Override
   public boolean isStopped() {
     return !started;
   }
 
+  @Override
   public final synchronized void start() {
     if (!started) {
       started = true;
@@ -77,6 +80,7 @@ class TCCommImpl implements TCComm {
     }
   }
 
+  @Override
   public final synchronized void stop() {
     if (started) {
       started = false;

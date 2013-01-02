@@ -26,6 +26,7 @@ public class SimpleServerTest extends TCTestCase {
   protected void setUp(int serverThreadCount) throws Exception {
     connMgr = new TCConnectionManagerImpl();
     server = new SimpleServer(new EchoSink(true, new EchoSink.ErrorListener() {
+      @Override
       public void error(Throwable t) {
         setError(t);
       }
@@ -41,6 +42,7 @@ public class SimpleServerTest extends TCTestCase {
     }
   }
 
+  @Override
   protected void setUp() throws Exception {
     //
   }
@@ -50,6 +52,7 @@ public class SimpleServerTest extends TCTestCase {
     error.set(t);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     if (error.get() != null) {
       fail(error.get().toString());
@@ -124,6 +127,7 @@ public class SimpleServerTest extends TCTestCase {
       this.client = client;
     }
 
+    @Override
     public void run() {
       try {
         client.run();

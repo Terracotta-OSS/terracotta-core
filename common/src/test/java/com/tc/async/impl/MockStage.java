@@ -22,14 +22,17 @@ public class MockStage implements Stage {
     this.sink = new MockSink();
   }
 
+  @Override
   public void destroy() {
     //
   }
 
+  @Override
   public synchronized Sink getSink() {
     return sink;
   }
 
+  @Override
   public void start(ConfigurationContext context) {
     //
   }
@@ -47,6 +50,7 @@ public class MockStage implements Stage {
     return "MockStage(" + name + ")";
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return null;
   }

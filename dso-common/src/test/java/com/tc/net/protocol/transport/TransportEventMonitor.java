@@ -16,6 +16,7 @@ public class TransportEventMonitor implements MessageTransportListener {
   private final LinkedQueue closedEvents         = new LinkedQueue();
   private final LinkedQueue rejectedEvents       = new LinkedQueue();
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     try {
       connectedEvents.put(new Object());
@@ -24,6 +25,7 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     try {
       disconnectedEvents.put(new Object());
@@ -32,6 +34,7 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     try {
       this.connectAttemptEvents.put(new Object());
@@ -40,6 +43,7 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     try {
       this.closedEvents.put(new Object());
@@ -48,6 +52,7 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     try {
       this.rejectedEvents.put(new Object());

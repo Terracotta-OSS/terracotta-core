@@ -58,6 +58,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // 2 nodes join concurrently
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesConcurrentJoining(4, 2);
@@ -74,6 +75,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // 3 nodes join concurrently
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesConcurrentJoining(6, 3);
@@ -91,6 +93,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // 6 nodes join concurrently
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesConcurrentJoining(8, 6);
@@ -108,6 +111,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // 3 nodes mix join and election
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesMixJoinAndElect(6, 3);
@@ -125,6 +129,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // 6 nodes mix join and election
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesMixJoinAndElect(8, 6);
@@ -142,6 +147,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // first node shall be active and remaining 2 nodes join later
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesJoinLater(6, 3);
@@ -159,6 +165,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     // first node shall be active and remaining 5 nodes join later
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesJoinLater(9, 6);
@@ -555,6 +562,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private static class MyStateManagerConfig implements StateManagerConfig {
     public int electionTime;
 
+    @Override
     public int getElectionTimeInSecs() {
       return electionTime;
     }
@@ -610,10 +618,12 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       this.gmNodeID = nodeID;
     }
 
+    @Override
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeJoined -> " + nodeID);
     }
 
+    @Override
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeLeft -> " + nodeID);
     }

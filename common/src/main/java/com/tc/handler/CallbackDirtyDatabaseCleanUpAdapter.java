@@ -19,6 +19,7 @@ public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandle
     this.clusterStateStore = clusterStateStore;
   }
 
+  @Override
   public void callbackOnExit(CallbackOnExitState state) {
     logger.error("Marking the object db as dirty ...");
     state.setRestartNeeded();

@@ -4,6 +4,7 @@
 package com.tc.objectserver.managedobject;
 
 public class NullManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
+  @Override
   public ManagedObjectChangeListener getListener() {
     return new NullManagedObjectChangeListener();
   }

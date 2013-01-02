@@ -21,6 +21,7 @@ public class OperatorEventsNodeConnectionListener implements GroupEventsListener
     this.nodesStore = nodesStore;
   }
 
+  @Override
   public void nodeJoined(NodeID nodeID) {
     Assert.assertTrue(nodeID instanceof ServerID);
     String serverName = nodesStore.getNodeNameFromServerName(((ServerID) nodeID).getName());
@@ -28,6 +29,7 @@ public class OperatorEventsNodeConnectionListener implements GroupEventsListener
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(serverName));
   }
 
+  @Override
   public void nodeLeft(NodeID nodeID) {
     Assert.assertTrue(nodeID instanceof ServerID);
     String serverName = nodesStore.getNodeNameFromServerName(((ServerID) nodeID).getName());

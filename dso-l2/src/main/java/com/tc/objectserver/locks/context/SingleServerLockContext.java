@@ -18,10 +18,12 @@ public class SingleServerLockContext extends ServerLockContext {
     super(clientID, threadID);
   }
 
+  @Override
   public ServerLockContext getNext() {
     return null;
   }
 
+  @Override
   public ServerLockContext setNext(ServerLockContext next) {
     Assert.assertNull(next);
     return null;

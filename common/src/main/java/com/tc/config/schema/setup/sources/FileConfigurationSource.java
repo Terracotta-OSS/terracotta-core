@@ -26,6 +26,7 @@ public class FileConfigurationSource implements ConfigurationSource {
     this.defaultDirectory = defaultDirectory;
   }
 
+  @Override
   public InputStream getInputStream(long maxTimeoutMillis) throws ConfigurationSetupException {
     File file = createFile();
 
@@ -44,6 +45,7 @@ public class FileConfigurationSource implements ConfigurationSource {
     }
   }
 
+  @Override
   public File directoryLoadedFrom() {
     return createFile().getParentFile();
   }
@@ -54,10 +56,12 @@ public class FileConfigurationSource implements ConfigurationSource {
     return file;
   }
 
+  @Override
   public boolean isTrusted() {
     return false;
   }
   
+  @Override
   public String toString() {
     return "file at '" + createFile().getAbsolutePath() + "'";
   }

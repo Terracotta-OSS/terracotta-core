@@ -31,16 +31,19 @@ public class ConcurrentClockEvictionPolicy implements EvictionPolicy {
     return this.map.entrySet().iterator();
   }
 
+  @Override
   public boolean add(final Cacheable obj) {
     this.map.put(obj.getObjectID(), obj);
     markReferenced(obj);
     return false;
   }
 
+  @Override
   public int getCacheCapacity() {
     return -1;
   }
 
+  @Override
   public Collection getRemovalCandidates(final int maxCount) {
     final ArrayList list = new ArrayList(maxCount);
     int count = this.map.size();
@@ -68,14 +71,17 @@ public class ConcurrentClockEvictionPolicy implements EvictionPolicy {
     return null;
   }
 
+  @Override
   public void markReferenced(final Cacheable obj) {
     obj.markAccessed();
   }
 
+  @Override
   public void remove(final Cacheable obj) {
     this.map.remove(obj.getObjectID());
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return null;
   }

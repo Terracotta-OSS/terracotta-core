@@ -80,6 +80,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
    * streams will have independent read positions. The read position of the result stream will initially be the same as
    * the source stream
    */
+  @Override
   public TCByteBufferInput duplicate() {
     checkClosed();
     return new TCByteBufferInputStream(this.data, available(), this.index);
@@ -89,6 +90,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
    * Effectively the same thing as calling duplicate().limit(int), but potentially creating far less garbage (depending
    * on the size difference between the original stream and the slice you want)
    */
+  @Override
   public TCByteBufferInput duplicateAndLimit(final int limit) {
     checkClosed();
 
@@ -121,6 +123,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return new TCByteBufferInputStream(limitedData, limit, 0, false);
   }
 
+  @Override
   public TCByteBuffer[] toArray() {
     checkClosed();
 
@@ -135,6 +138,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return rv;
   }
 
+  @Override
   public TCByteBuffer[] toArray(Mark s, Mark e) {
     checkClosed();
 
@@ -164,6 +168,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
    * Artificially limit the length of this input stream starting at the current read position. This operation is
    * destructive to the stream contents (ie. data trimmed off by setting limit can never be read with this stream).
    */
+  @Override
   public TCDataInput limit(int limit) {
     checkClosed();
 
@@ -193,6 +198,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return this;
   }
 
+  @Override
   public int getTotalLength() {
     return this.totalLength;
   }
@@ -218,6 +224,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   // XXX: This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually
   // implement the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics
   // that make it a little trickier to implement (in our case) than you might think (specifially the readLimit field)
+  @Override
   public Mark mark() {
     checkClosed();
     this.marked = true;
@@ -297,6 +304,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
    * 
    * @throws IllegalArgumentException if m is null or if it was not created against this stream.
    */
+  @Override
   public void tcReset(Mark m) {
     checkClosed();
 
@@ -392,6 +400,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     }
   }
 
+  @Override
   public final int readInt() throws IOException {
     int byte1 = read();
     int byte2 = read();
@@ -401,18 +410,21 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return ((byte1 << 24) + (byte2 << 16) + (byte3 << 8) + (byte4 << 0));
   }
 
+  @Override
   public final byte readByte() throws IOException {
     int b = read();
     if (b < 0) { throw new EOFException(); }
     return (byte) (b);
   }
 
+  @Override
   public final boolean readBoolean() throws IOException {
     int b = read();
     if (b < 0) { throw new EOFException(); }
     return (b != 0);
   }
 
+  @Override
   public final char readChar() throws IOException {
     int byte1 = read();
     int byte2 = read();
@@ -420,10 +432,12 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return (char) ((byte1 << 8) + (byte2 << 0));
   }
 
+  @Override
   public final double readDouble() throws IOException {
     return Double.longBitsToDouble(readLong());
   }
 
+  @Override
   public final long readLong() throws IOException {
     int byte1 = read();
     int byte2 = read();
@@ -441,10 +455,12 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
             + ((byte7 & 255) << 8) + ((byte8 & 255) << 0));
   }
 
+  @Override
   public final float readFloat() throws IOException {
     return Float.intBitsToFloat(readInt());
   }
 
+  @Override
   public final short readShort() throws IOException {
     int byte1 = read();
     int byte2 = read();
@@ -452,6 +468,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return (short) ((byte1 << 8) + (byte2 << 0));
   }
 
+  @Override
   public final String readString() throws IOException {
     boolean isNull = readBoolean();
     if (isNull) { return null; }
@@ -486,10 +503,12 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return new String(chars);
   }
 
+  @Override
   public final void readFully(byte[] b) throws IOException {
     readFully(b, 0, b.length);
   }
 
+  @Override
   public final void readFully(byte[] b, int off, int len) throws IOException {
     if (len < 0) { throw new IndexOutOfBoundsException(); }
     int n = 0;
@@ -500,16 +519,19 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     }
   }
 
+  @Override
   public final int skipBytes(int n) {
     return (int) skip(n);
   }
 
+  @Override
   public final int readUnsignedByte() throws IOException {
     int b = read();
     if (b < 0) { throw new EOFException(); }
     return b;
   }
 
+  @Override
   public final int readUnsignedShort() throws IOException {
     int byte1 = read();
     int byte2 = read();
@@ -517,11 +539,13 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return (byte1 << 8) + (byte2 << 0);
   }
 
+  @Override
   public final String readLine() {
     // Don't implement this method
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final String readUTF() throws IOException {
     return readString();
   }

@@ -161,6 +161,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     return txns.keySet();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println("TransactionGrouping@" + System.identityHashCode(this));
     out.indent().println("txnID: ").visit(txID).println();
@@ -194,10 +195,12 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     int                                         save      = pendingApplys;
     Iterator<Entry<ServerTransactionID, State>> pointer   = txns.entrySet().iterator();
 
+    @Override
     public boolean hasNext() {
       return (remaining > 0);
     }
 
+    @Override
     public ServerTransactionID next() {
       if (remaining <= 0) { throw new NoSuchElementException(); }
       if (save != pendingApplys) { throw new ConcurrentModificationException(); }
@@ -209,6 +212,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
       throw new AssertionError("Shouldnt reach here");
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }

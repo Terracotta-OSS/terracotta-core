@@ -21,6 +21,7 @@ public class TestCacheStats implements CacheStats {
   public int                 countAfter;
   private State              state      = INIT;
 
+  @Override
   public int getObjectCountToEvict(int currentCount) {
     this.countBefore = currentCount;
     int toEvict = currentCount - toKeep;
@@ -30,6 +31,7 @@ public class TestCacheStats implements CacheStats {
     return toEvict;
   }
 
+  @Override
   public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
     this.evicted = evictedCount;
     this.countAfter = currentCount;

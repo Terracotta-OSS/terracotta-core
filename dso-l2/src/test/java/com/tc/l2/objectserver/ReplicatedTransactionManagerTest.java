@@ -259,6 +259,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
   private static class NullRecyclableMessage implements Recyclable {
 
+    @Override
     public void recycle() {
       return;
     }
@@ -268,18 +269,22 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   private static class TestL2ObjectSyncAckManager implements L2ObjectSyncAckManager {
     Set<ServerTransactionID> stxnIDs = new HashSet<ServerTransactionID>();
 
+    @Override
     public void reset() {
       stxnIDs.clear();
     }
 
+    @Override
     public void addObjectSyncMessageToAck(ServerTransactionID stxnID, MessageID requestID) {
       stxnIDs.add(stxnID);
     }
 
+    @Override
     public void objectSyncComplete() {
       //
     }
 
+    @Override
     public void ackObjectSyncTxn(ServerTransactionID stxnID) {
       stxnIDs.remove(stxnID);
     }

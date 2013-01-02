@@ -14,10 +14,12 @@ public class InitialClassDumper extends AbstractClassDumper {
     // make the default constructor private to turn this class into a singleton
   }
 
+  @Override
   protected String getDumpDirectoryName() {
     return "initial";
   }
 
+  @Override
   protected String getPropertyName() {
     return "tc.classloader.writeToDisk.initial";
   }

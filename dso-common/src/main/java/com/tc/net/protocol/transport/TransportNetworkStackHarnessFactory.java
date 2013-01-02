@@ -11,12 +11,14 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 
 public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
+  @Override
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
     return new TransportNetworkStackHarness(channelFactory, transport);
   }
 
+  @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {

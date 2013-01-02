@@ -14,6 +14,7 @@ public class NullMetaDataManager implements MetaDataManager {
     return true;
   }
 
+  @Override
   public void setTransactionManager(ServerTransactionManager transactionManager) {
     //
   }

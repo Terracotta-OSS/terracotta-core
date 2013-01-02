@@ -17,6 +17,7 @@ public class ClassBasedDirectoryTreeTest extends TCTestCase {
   private File                    root;
   private ClassBasedDirectoryTree tree;
 
+  @Override
   public void setUp() throws Exception {
     this.root = new File("ClassBasedDirectoryTreeTest");
 
@@ -152,6 +153,7 @@ public class ClassBasedDirectoryTreeTest extends TCTestCase {
     return out.toString();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     if (this.root.exists()) FileUtils.deleteDirectory(this.root);
   }

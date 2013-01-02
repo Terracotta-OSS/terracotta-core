@@ -27,6 +27,7 @@ public class URLConfigurationSource implements ConfigurationSource {
     this.url = url;
   }
 
+  @Override
   public InputStream getInputStream(long maxTimeoutMillis) throws IOException, ConfigurationSetupException {
     URL theURL = new URL(this.url);
     
@@ -43,14 +44,17 @@ public class URLConfigurationSource implements ConfigurationSource {
     }
   }
 
+  @Override
   public File directoryLoadedFrom() {
     return null;
   }
 
+  @Override
   public boolean isTrusted() {
     return false;
   }
 
+  @Override
   public String toString() {
     return "URL '" + this.url + "'";
   }

@@ -142,22 +142,27 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
     return messages;
   }
 
+  @Override
   public Iterator<TCNetworkMessage> getMessageIterator() {
     return this.messagePayloads.iterator();
   }
 
+  @Override
   public int getTotalMessageCount() {
     return ((WireProtocolHeader) getHeader()).getMessageCount();
   }
 
+  @Override
   public TCConnection getSource() {
     return this.sourceConnection;
   }
 
+  @Override
   public WireProtocolHeader getWireProtocolHeader() {
     return ((WireProtocolHeader) getHeader());
   }
 
+  @Override
   public short getMessageProtocol() {
     return ((WireProtocolHeader) getHeader()).getProtocol();
   }

@@ -30,6 +30,7 @@ public class NonBlockingStartupLock extends AbstractStartupLock implements Start
     }
   }
 
+  @Override
   public boolean isBlocked() {
     return false;
   }

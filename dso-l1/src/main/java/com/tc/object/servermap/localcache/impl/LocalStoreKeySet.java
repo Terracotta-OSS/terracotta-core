@@ -53,6 +53,7 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
       this.filter = filter;
     }
 
+    @Override
     public synchronized boolean hasNext() {
       if (nextAvailable) { return true; }
       while (currentIterator.hasNext()) {
@@ -73,6 +74,7 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
       return true;
     }
 
+    @Override
     public synchronized Object next() {
       if (hasNext()) {
         Object rv = currentNext;
@@ -83,6 +85,7 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
       throw new NoSuchElementException();
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }

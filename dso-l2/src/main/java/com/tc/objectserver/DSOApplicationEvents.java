@@ -36,6 +36,7 @@ public class DSOApplicationEvents extends AbstractNotifyingMBean implements DSOA
     }
   }
 
+  @Override
   public void reset() {
     // nothing to reset
   }

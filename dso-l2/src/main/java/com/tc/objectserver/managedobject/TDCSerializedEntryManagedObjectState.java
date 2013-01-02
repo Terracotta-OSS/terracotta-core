@@ -45,6 +45,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     this.classID = classID;
   }
 
+  @Override
   public int expiresIn(int now, int ttiSeconds, int ttlSeconds) {
     return computeExpiresIn(now, ttiSeconds, ttlSeconds);
   }
@@ -72,10 +73,12 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return true;
   }
 
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
+  @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
@@ -163,6 +166,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return type;
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
     final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
     return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
@@ -175,24 +179,29 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return fields;
   }
 
+  @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     writer.addEntireArray(this.value);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(this.createTime));
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(this.lastAccessedTime));
   }
 
+  @Override
   public final String getClassName() {
     return getStateFactory().getClassName(this.classID);
   }
 
+  @Override
   public Set getObjectReferences() {
     return Collections.EMPTY_SET;
   }
 
+  @Override
   public byte getType() {
     return TDC_SERIALIZED_ENTRY;
   }
 
+  @Override
   public void writeTo(final ObjectOutput out) throws IOException {
     out.writeLong(this.classID);
     out.writeInt(this.createTime);

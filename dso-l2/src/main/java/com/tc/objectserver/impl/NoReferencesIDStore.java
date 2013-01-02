@@ -10,14 +10,17 @@ public interface NoReferencesIDStore {
 
   public static final NoReferencesIDStore NULL_NO_REFERENCES_ID_STORE = new NoReferencesIDStore() {
 
+                                                                        @Override
                                                                         public void addToNoReferences(ManagedObject mo) {
                                                                           // do nothing
                                                                         }
 
+                                                                        @Override
                                                                         public void clearFromNoReferencesStore(ObjectID id) {
                                                                           // do nothing
                                                                         }
 
+                                                                        @Override
                                                                         public boolean hasNoReferences(ObjectID id) {
                                                                           return false;
                                                                         }

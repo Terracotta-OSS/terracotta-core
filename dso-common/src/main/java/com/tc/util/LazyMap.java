@@ -40,6 +40,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     return (key != null);
   }
 
+  @Override
   public V put(K aKey, V aValue) {
     if (aKey == null) throw new NullPointerException("LazyHash not support null key");
 
@@ -64,6 +65,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     }
   }
 
+  @Override
   public V get(Object aKey) {
     if (map != null) { return map.get(aKey); }
 
@@ -74,6 +76,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     }
   }
 
+  @Override
   public void clear() {
     if (map != null) {
       map = null;
@@ -83,12 +86,14 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     value = null;
   }
 
+  @Override
   public boolean containsKey(Object aKey) {
     if (map != null) { return map.containsKey(aKey); }
 
     return isSameKey(aKey);
   }
 
+  @Override
   public boolean containsValue(Object aValue) {
     if (map != null) { return map.containsValue(aValue); }
 
@@ -102,24 +107,28 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     return false;
   }
 
+  @Override
   public Set<Map.Entry<K, V>> entrySet() {
     if (map != null) { return map.entrySet(); }
 
     return new LazyEntrySet<K, V>(this);
   }
 
+  @Override
   public boolean isEmpty() {
     if (map != null) { return map.isEmpty(); }
 
     return (!isEntryExist());
   }
 
+  @Override
   public Set<K> keySet() {
     if (map != null) { return map.keySet(); }
 
     return new LazyKeySet<K>(this);
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> m) {
     if (m.size() == 0) return;
     if (map == null) {
@@ -138,6 +147,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     }
   }
 
+  @Override
   public V remove(Object aKey) {
     if (map != null) { return map.remove(aKey); }
 
@@ -151,12 +161,14 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
     }
   }
 
+  @Override
   public int size() {
     if (map != null) { return map.size(); }
 
     return (isEntryExist()) ? 1 : 0;
   }
 
+  @Override
   public Collection<V> values() {
     if (map != null) { return map.values(); }
 
@@ -285,6 +297,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       expectedMapSize = map.size();
     }
 
+    @Override
     public boolean hasNext() {
       return (map.size() == 1 && index == 0);
     }
@@ -305,6 +318,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       return map.getEntry();
     }
 
+    @Override
     public void remove() {
       if (index == 0 || map.size() == 0) { throw new IllegalStateException(); }
       if (expectedMapSize != map.size()) { throw new ConcurrentModificationException(); }
@@ -314,6 +328,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       }
     }
 
+    @Override
     public T next() {
       if (expectedMapSize != map.size()) { throw new ConcurrentModificationException(); }
       ++index;
@@ -336,6 +351,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       super(map);
     }
 
+    @Override
     public Object getObject() {
       return getKey();
     }
@@ -351,6 +367,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       super(map);
     }
 
+    @Override
     public Object getObject() {
       return getValue();
     }
@@ -366,6 +383,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       super(map);
     }
 
+    @Override
     public Object getObject() {
       return getEntry();
     }
@@ -382,16 +400,19 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       this.map = map;
     }
 
+    @Override
     public K getKey() {
       K key = map.getEntryKey();
       if (key == null) { throw new ConcurrentModificationException(); }
       return key;
     }
 
+    @Override
     public V getValue() {
       return map.getEntryValue();
     }
 
+    @Override
     public V setValue(V value) {
       return map.setValue(value);
     }
@@ -400,6 +421,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       return o1 == null ? o2 == null : o1.equals(o2);
     }
 
+    @Override
     public boolean equals(Object o) {
       K key = getKey();
       V value = map.getEntryValue();
@@ -408,12 +430,14 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
       return eq(key, e.getKey()) && eq(value, e.getValue());
     }
 
+    @Override
     public int hashCode() {
       K key = getKey();
       V value = map.getEntryValue();
       return key.hashCode() ^ (value == null ? 0 : value.hashCode());
     }
 
+    @Override
     public String toString() {
       return getKey() + "=" + map.getEntryValue();
     }
@@ -424,6 +448,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
    * LazyHashMap -- Delay the creation of HashMap when 2 or more entries added to save memory for none or one entry Map.
    */
   public static class LazyHashMap<K, V> extends LazyMap<K, V> {
+    @Override
     Map<K, V> create() {
       return new HashMap<K, V>(MAP_SIZE, LOAD_FACTOR);
     }
@@ -433,6 +458,7 @@ public abstract class LazyMap<K, V> implements Map<K, V> {
    * LazyLinkedHashMap -- Delay the creation of LinkedHashMap to save memory for one ore one entry LinkedhashMap.
    */
   public static class LazyLinkedHashMap<K, V> extends LazyMap<K, V> {
+    @Override
     Map<K, V> create() {
       return new LinkedHashMap<K, V>(MAP_SIZE, LOAD_FACTOR);
     }

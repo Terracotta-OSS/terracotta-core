@@ -15,6 +15,7 @@ public class Lock {
   private String         methodJoinPointExpression;
   private LockDefinition lockDefinition;
 
+  @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
   }

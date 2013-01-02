@@ -14,14 +14,17 @@ public class TestMutableSequence implements MutableSequence {
   public long                         sequence       = 0;
   public final NoExceptionLinkedQueue nextBatchQueue = new NoExceptionLinkedQueue();
 
+  @Override
   public long next() {
     return ++sequence;
   }
 
+  @Override
   public long current() {
     return sequence;
   }
 
+  @Override
   public long nextBatch(long batchSize) {
     nextBatchQueue.put(new Object[] { Integer.valueOf((int) batchSize) });
     long ls = sequence;
@@ -29,10 +32,12 @@ public class TestMutableSequence implements MutableSequence {
     return ls;
   }
 
+  @Override
   public String getUID() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setNext(long next) {
     Assert.assertTrue(this.sequence <= next);
     sequence = next;

@@ -55,6 +55,7 @@ public class StateManagerImpl implements StateManager {
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
   }
 
+  @Override
   public State getCurrentState() {
     return this.state;
   }
@@ -63,6 +64,7 @@ public class StateManagerImpl implements StateManager {
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
+  @Override
   public void startElection() {
     debugInfo("Starting election");
     synchronized (electionLock) {
@@ -134,10 +136,12 @@ public class StateManagerImpl implements StateManager {
     return groupManager.getLocalNodeID();
   }
 
+  @Override
   public void registerForStateChangeEvents(StateChangeListener listener) {
     listeners.add(listener);
   }
 
+  @Override
   public void fireStateChangedEvent(StateChangedEvent sce) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       StateChangeListener listener = (StateChangeListener) i.next();
@@ -161,6 +165,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
+  @Override
   public synchronized void moveToPassiveStandbyState() {
     if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
@@ -191,10 +196,12 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
+  @Override
   public synchronized NodeID getActiveNodeID() {
     return activeNode;
   }
 
+  @Override
   public boolean isActiveCoordinator() {
     return (state == ACTIVE_COORDINATOR);
   }
@@ -203,6 +210,7 @@ public class StateManagerImpl implements StateManager {
     return (state == PASSIVE_UNINITIALIZED);
   }
 
+  @Override
   public void moveNodeToPassiveStandby(NodeID nodeID) {
     Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
@@ -215,6 +223,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
+  @Override
   public void handleClusterStateMessage(L2StateMessage clusterMsg) {
     debugInfo("Received cluster state message: " + clusterMsg);
     try {
@@ -337,6 +346,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   // notify new node
+  @Override
   public void publishActiveState(NodeID nodeID) throws GroupException {
     debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
@@ -355,6 +365,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
+  @Override
   public void startElectionIfNecessary(NodeID disconnectedNode) {
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
     boolean elect = false;

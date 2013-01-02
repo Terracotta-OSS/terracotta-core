@@ -9,6 +9,7 @@ import com.tc.objectserver.locks.LockFactory;
 import com.tc.objectserver.locks.ServerLockImpl;
 
 public class GreedyPolicyFactory implements LockFactory {
+  @Override
   public ServerLock createLock(LockID lid) {
     return new ServerLockImpl(lid);
   }

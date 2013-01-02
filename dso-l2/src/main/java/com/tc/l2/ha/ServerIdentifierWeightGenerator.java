@@ -61,6 +61,7 @@ public class ServerIdentifierWeightGenerator implements WeightGenerator {
     return null;
   }
 
+  @Override
   public long getWeight() {
     return id;
   }

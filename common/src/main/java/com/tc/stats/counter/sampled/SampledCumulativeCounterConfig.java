@@ -14,6 +14,7 @@ public class SampledCumulativeCounterConfig extends SampledCounterConfig {
     super(intervalSecs, historySize, isResetOnSample, initialValue);
   }
 
+  @Override
   public Counter createCounter() {
     return new SampledCumulativeCounterImpl(this);
   }

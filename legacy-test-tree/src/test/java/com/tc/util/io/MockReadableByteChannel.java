@@ -15,6 +15,7 @@ public class MockReadableByteChannel extends MockChannel implements ReadableByte
 
   private long maxReadCount = Long.MAX_VALUE;
 
+  @Override
   public final synchronized int read(ByteBuffer dst) throws IOException {
     checkOpen();
     dst.isReadOnly(); // NPE check

@@ -44,6 +44,7 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     this.callbackSink = callbackSink;
   }
 
+  @Override
   public void shutdownNode(NodeID nodeID) {
     this.sequenceValidator.remove(nodeID);
     Transaction tx = this.persistenceTransactionProvider.newTransaction();
@@ -52,6 +53,7 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     processCallbacks();
   }
 
+  @Override
   public void shutdownAllClientsExcept(Set cids) {
     Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownAllClientsExcept(tx, cids);
@@ -59,11 +61,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     processCallbacks();
   }
 
+  @Override
   public boolean initiateApply(ServerTransactionID stxID) {
     GlobalTransactionDescriptor gtx = this.transactionStore.getTransactionDescriptor(stxID);
     return gtx.initiateApply();
   }
 
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
     Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, sid);
@@ -71,43 +75,52 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     processCallbacks();
   }
 
+  @Override
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, lowGlobalTransactionIDWatermark);
     tx.commit();
   }
 
+  @Override
   public void commit(Transaction persistenceTransaction, ServerTransactionID stxID) {
     transactionStore.commitTransactionDescriptor(persistenceTransaction, stxID);
   }
 
+  @Override
   public void commitAll(Transaction persistenceTransaction, Collection stxIDs) {
     transactionStore.commitAllTransactionDescriptor(persistenceTransaction, stxIDs);
   }
 
+  @Override
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     return transactionStore.getLeastGlobalTransactionID();
   }
 
+  @Override
   public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
     GlobalTransactionDescriptor gdesc = transactionStore.getOrCreateTransactionDescriptor(serverTransactionID);
     return gdesc.getGlobalTransactionID();
   }
 
+  @Override
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID serverTransactionID) {
     GlobalTransactionDescriptor gdesc = transactionStore.getTransactionDescriptor(serverTransactionID);
     return (gdesc != null ? gdesc.getGlobalTransactionID() : GlobalTransactionID.NULL_ID);
 
   }
 
+  @Override
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     transactionStore.createGlobalTransactionDescIfNeeded(stxnID, globalTransactionID);
   }
 
+  @Override
   public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider() {
     return gidSequenceProvider;
   }
 
+  @Override
   public Sequence getGlobalTransactionIDSequence() {
     return globalTransactionIDSequence;
   }

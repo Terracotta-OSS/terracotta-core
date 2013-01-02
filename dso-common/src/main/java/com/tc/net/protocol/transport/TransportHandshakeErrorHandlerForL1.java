@@ -13,6 +13,7 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
   private static final TCLogger logger        = TCLogging.getLogger(TransportHandshakeErrorHandlerForL1.class);
 
+  @Override
   public void handleHandshakeError(final TransportHandshakeErrorContext e) {
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) {
       consoleLogger.error(e.getMessage());

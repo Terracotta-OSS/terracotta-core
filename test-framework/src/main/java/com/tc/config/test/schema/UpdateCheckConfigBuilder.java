@@ -18,6 +18,7 @@ public class UpdateCheckConfigBuilder extends BaseConfigBuilder {
     setProperty("period-days", periodDays);
   }
 
+  @Override
   public String toString() {
     String out = "";
 

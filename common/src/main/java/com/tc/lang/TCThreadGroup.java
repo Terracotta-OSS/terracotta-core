@@ -24,6 +24,7 @@ public class TCThreadGroup extends ThreadGroup {
     this.throwableHandler = throwableHandler;
   }
 
+  @Override
   public void uncaughtException(Thread thread, Throwable throwable) {
     throwableHandler.handleThrowable(thread, throwable);
   }

@@ -39,6 +39,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
     }
   }
 
+  @Override
   public final Set getObjectReferences() {
     final ObjectIDSet refs = new ObjectIDSet();
     addAllObjectReferencesTo(refs);
@@ -59,10 +60,12 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
 
   // XXX:: This default behavior needs to be overridden by class that needs specific behavior (like
   // MapManagedObjectState)
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addRequiredObjectIDs(getObjectReferences());
   }
 
+  @Override
   public final void writeTo(final ObjectOutput out) throws IOException {
     out.writeLong(this.classID);
     basicWriteTo(out);
@@ -70,6 +73,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
 
   protected abstract void basicWriteTo(ObjectOutput out) throws IOException;
 
+  @Override
   public final String getClassName() {
     return getStateFactory().getClassName(this.classID);
   }

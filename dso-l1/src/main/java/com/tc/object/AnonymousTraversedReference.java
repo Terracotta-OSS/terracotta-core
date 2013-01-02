@@ -11,14 +11,17 @@ public class AnonymousTraversedReference implements TraversedReference {
     this.value = value;
   }
   
+  @Override
   public Object getValue() {
     return value;
   }
 
+  @Override
   public boolean isAnonymous() {
     return true;
   }
 
+  @Override
   public String getFullyQualifiedReferenceName() {
     return null;
   }

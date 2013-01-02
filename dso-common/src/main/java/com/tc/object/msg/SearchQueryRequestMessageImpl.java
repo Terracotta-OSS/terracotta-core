@@ -74,6 +74,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public void initializeSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
                                              List stack, boolean keys, boolean values, Set<String> attributeSet,
                                              Set<String> groupByAttrs, List<NVPair> sortAttributesMap,
@@ -239,6 +240,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public String getCacheName() {
     return this.cacheName;
   }
@@ -246,6 +248,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public List getQueryStack() {
     return this.queryStack;
   }
@@ -253,6 +256,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public SearchRequestID getRequestID() {
     return requestID;
   }
@@ -260,6 +264,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public GroupID getGroupIDFrom() {
     return groupIDFrom;
   }
@@ -267,6 +272,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public Object getKey() {
     return getSourceNodeID();
   }
@@ -274,6 +280,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
@@ -281,6 +288,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public Set<String> getAttributes() {
     return this.attributes;
   }
@@ -288,6 +296,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public int getBatchSize() {
     return batchSize;
   }
@@ -295,6 +304,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean isPrefetchFirstBatch() {
     return prefetchFirstBatch;
   }
@@ -302,6 +312,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<NVPair> getSortAttributes() {
     return sortAttributes;
   }
@@ -314,6 +325,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<NVPair> getAggregators() {
     return aggregators;
   }
@@ -321,6 +333,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean includeKeys() {
     return this.includeKeys;
   }
@@ -328,6 +341,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean includeValues() {
     return this.includeValues;
   }
@@ -335,6 +349,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
+  @Override
   public int getMaxResults() {
     return this.maxResults;
   }

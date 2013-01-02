@@ -11,10 +11,12 @@ abstract class AbstractObjectFacade implements ManagedObjectFacade, Serializable
     //
   }
 
+  @Override
   public final String getFieldType(String fieldName) {
     return FacadeUtil.getFieldType(getFieldValue(fieldName));
   }
 
+  @Override
   public final Object getFieldValue(String fieldName) {
     Object value = basicGetFieldValue(fieldName);
     return FacadeUtil.processValue(value);

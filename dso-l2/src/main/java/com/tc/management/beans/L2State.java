@@ -44,6 +44,7 @@ public class L2State implements StateChangeListener {
     return StateManager.validStates.contains(state);
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     setState(sce.getCurrentState());
   }

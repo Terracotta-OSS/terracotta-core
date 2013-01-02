@@ -64,6 +64,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     this.createOutput = createOutput;
   }
 
+  @Override
   public String getTypeName() {
     return this.typeName;
   }
@@ -75,26 +76,32 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     }
   }
 
+  @Override
   public ObjectID getObjectID() throws DNAException {
     return this.id;
   }
 
+  @Override
   public ObjectID getParentObjectID() throws DNAException {
     return this.parentID;
   }
 
+  @Override
   public DNACursor getCursor() {
     return this;
   }
 
+  @Override
   public MetaDataReader getMetaDataReader() {
     return metaDataReader;
   }
 
+  @Override
   public boolean hasMetaData() {
     return metaDataOffset > 0;
   }
 
+  @Override
   public boolean next() throws IOException {
     try {
       return next(DNA_STORAGE_ENCODING);
@@ -104,6 +111,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     }
   }
 
+  @Override
   public boolean next(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
     // yucky cast
     DNAEncodingInternal encodingInternal = (DNAEncodingInternal) encoding;
@@ -199,14 +207,17 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     this.currentAction = new LogicalAction(method, params);
   }
 
+  @Override
   public LogicalAction getLogicalAction() {
     return (LogicalAction) this.currentAction;
   }
 
+  @Override
   public PhysicalAction getPhysicalAction() {
     return (PhysicalAction) this.currentAction;
   }
 
+  @Override
   public Object getAction() {
     return this.currentAction;
   }
@@ -231,14 +242,17 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     }
   }
 
+  @Override
   public int getArraySize() {
     return this.arrayLength;
   }
 
+  @Override
   public boolean hasLength() {
     return getArraySize() >= 0;
   }
 
+  @Override
   public long getVersion() {
     return this.version;
   }
@@ -246,10 +260,12 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   /*
    * This methods is synchronized coz both broadcast stage and L2 sync objects stage accesses it simultaneously
    */
+  @Override
   public synchronized void serializeTo(final TCByteBufferOutput serialOutput) {
     serialOutput.write(this.dataOut);
   }
 
+  @Override
   public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
@@ -315,14 +331,17 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     return this;
   }
 
+  @Override
   public int getActionCount() {
     return this.actionCount;
   }
 
+  @Override
   public boolean isDelta() {
     return this.isDelta;
   }
 
+  @Override
   public void reset() throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Reset is not supported by this class");
   }
@@ -336,6 +355,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
       this.serializer = serializer;
     }
 
+    @Override
     public Iterator<MetaDataDescriptorInternal> iterator() {
       return new MetaDataIterator(input, serializer);
     }
@@ -351,10 +371,12 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
       this.serializer = serializer;
     }
 
+    @Override
     public boolean hasNext() {
       return input.available() > 0;
     }
 
+    @Override
     public MetaDataDescriptorInternal next() {
       try {
         int length = input.readInt();
@@ -371,6 +393,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
       }
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
@@ -378,6 +401,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
 
   private static class NullMetaDataReader implements MetaDataReader {
 
+    @Override
     public Iterator<MetaDataDescriptorInternal> iterator() {
       return Collections.EMPTY_LIST.iterator();
     }

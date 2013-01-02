@@ -22,6 +22,7 @@ public class Verifier implements GenericNetworkMessageSink {
     return this.clientNum;
   }
 
+  @Override
   public void putMessage(GenericNetworkMessage msg) {
     final int cn = msg.getClientNum();
     if (cn != clientNum) {

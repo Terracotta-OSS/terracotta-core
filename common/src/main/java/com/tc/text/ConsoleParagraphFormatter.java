@@ -17,6 +17,7 @@ public class ConsoleParagraphFormatter implements ParagraphFormatter {
     this.sf = stringFormatter;
   }
 
+  @Override
   public String format(String in) {
     StringBuffer buf = new StringBuffer();
     if (in == null) throw new AssertionError();

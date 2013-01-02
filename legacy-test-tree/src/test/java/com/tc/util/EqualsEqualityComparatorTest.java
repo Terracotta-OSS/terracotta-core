@@ -19,6 +19,7 @@ public class EqualsEqualityComparatorTest extends TCTestCase {
       this.value = value;
     }
 
+    @Override
     public boolean equals(Object that) {
       if (this == that) return true;
       if (!(that instanceof MyObj)) return false;

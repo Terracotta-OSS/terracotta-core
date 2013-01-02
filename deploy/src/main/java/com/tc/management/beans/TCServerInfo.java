@@ -253,6 +253,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.infoForAllL2s();
   }
 
+  @Override
   public String getL2Identifier() {
     return server.getL2Identifier();
   }

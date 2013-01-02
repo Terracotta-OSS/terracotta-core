@@ -135,6 +135,7 @@ public class StartupLockTest extends TestCase {
       this.lockAvailability = lockAvailability;
     }
 
+    @Override
     public TCFileChannel getChannel(TCFile tcFile, String mode) {
       return new TestTCFileChannelImpl(tcFile, mode, lockAvailability);
     }
@@ -148,15 +149,18 @@ public class StartupLockTest extends TestCase {
       this.lockAvailability = lockAvailability;
     }
 
+    @Override
     public TCFileLock lock() throws OverlappingFileLockException {
       if (lockAvailability == lockedAlreadyOnThisVM) { throw new OverlappingFileLockException(); }
       return new TestTCFileLockImpl();
     }
 
+    @Override
     public void close() {
       // method is not used in test
     }
 
+    @Override
     public TCFileLock tryLock() throws OverlappingFileLockException {
       return lock();
     }
@@ -165,6 +169,7 @@ public class StartupLockTest extends TestCase {
 
   private static class TestTCFileLockImpl implements TCFileLock {
 
+    @Override
     public void release() {
       // method not used in test
     }
@@ -182,24 +187,29 @@ public class StartupLockTest extends TestCase {
       fileExists = false;
     }
 
+    @Override
     public boolean exists() {
       return fileExists;
     }
 
+    @Override
     public void forceMkdir() throws IOException {
       if (!fileIsMakable) { throw new IOException("Could not create indicated directory."); }
 
       fileExists = true;
     }
 
+    @Override
     public File getFile() {
       return null;
     }
 
+    @Override
     public TCFile createNewTCFile(TCFile location, String fileName) {
       return new TestTCFileImpl(newFileIsMakable);
     }
 
+    @Override
     public boolean createNewFile() throws IOException {
       if (!fileIsMakable) { throw new IOException("Could not create indicated directory."); }
 

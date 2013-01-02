@@ -125,6 +125,7 @@ public class JMXConnectorProxy implements JMXConnector {
   }
 
   class ConnectorInvocationHandler implements InvocationHandler {
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getName().equals("close") && m_connector == null) { return null; }
 
@@ -162,38 +163,47 @@ public class JMXConnectorProxy implements JMXConnector {
     return MessageFormat.format(JMXRMI_URI_PATTERN, new Object[] { host, port + "" });
   }
 
+  @Override
   public void addConnectionNotificationListener(NotificationListener listener, NotificationFilter filter, Object data) {
     m_connectorProxy.addConnectionNotificationListener(listener, filter, data);
   }
 
+  @Override
   public void close() throws IOException {
     m_connectorProxy.close();
   }
 
+  @Override
   public void connect() throws IOException {
     m_connectorProxy.connect();
   }
 
+  @Override
   public void connect(Map env) throws IOException {
     m_connectorProxy.connect(env);
   }
 
+  @Override
   public String getConnectionId() throws IOException {
     return m_connectorProxy.getConnectionId();
   }
 
+  @Override
   public MBeanServerConnection getMBeanServerConnection() throws IOException {
     return m_connectorProxy.getMBeanServerConnection();
   }
 
+  @Override
   public MBeanServerConnection getMBeanServerConnection(Subject subject) throws IOException {
     return m_connectorProxy.getMBeanServerConnection(subject);
   }
 
+  @Override
   public void removeConnectionNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
     m_connectorProxy.removeConnectionNotificationListener(listener);
   }
 
+  @Override
   public void removeConnectionNotificationListener(NotificationListener listener, NotificationFilter filter, Object data)
       throws ListenerNotFoundException {
     m_connectorProxy.removeConnectionNotificationListener(listener, filter, data);

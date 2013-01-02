@@ -32,6 +32,7 @@ public class NonPortableObjectEvent extends AbstractApplicationEvent {
     return nonPortableReason;
   }
 
+  @Override
   public String getMessage() {
     return getNonPortableEventReason().getMessage();
   }

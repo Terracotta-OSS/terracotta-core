@@ -82,10 +82,12 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
     }
   }
 
+  @Override
   public void doRecycleOnWrite() {
     recycle();
   }
 
+  @Override
   protected String describePayload() {
     return "type: " + typeToString() + ", connectionId: " + connectionId + ", errorContext " + errorContext + "\n";
   }
@@ -107,40 +109,49 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
     }
   }
 
+  @Override
   public ConnectionID getConnectionId() {
     return this.connectionId;
   }
 
+  @Override
   public boolean hasErrorContext() {
     return this.hasErrorContext;
   }
 
+  @Override
   public String getErrorContext() {
     Assert.eval(hasErrorContext());
     return this.errorContext;
   }
 
+  @Override
   public short getErrorType() {
     Assert.eval(hasErrorContext());
     return this.errorType;
   }
 
+  @Override
   public boolean isPing() {
     return type == PING;
   }
 
+  @Override
   public boolean isPingReply() {
     return type == PING_REPLY;
   }
 
+  @Override
   public boolean isSynAck() {
     return type == SYN_ACK;
   }
 
+  @Override
   public boolean isSyn() {
     return type == SYN;
   }
 
+  @Override
   public boolean isAck() {
     return type == ACK;
   }
@@ -150,18 +161,22 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
     return this.connectionId.isNull();
   }
 
+  @Override
   public boolean isMaxConnectionsExceeded() {
     return this.isMaxConnectionsExceeded;
   }
 
+  @Override
   public int getMaxConnections() {
     return this.maxConnections;
   }
 
+  @Override
   public short getStackLayerFlags() {
     return this.stackLayerFlags;
   }
 
+  @Override
   public int getCallbackPort() {
     return this.callbackPort;
   }

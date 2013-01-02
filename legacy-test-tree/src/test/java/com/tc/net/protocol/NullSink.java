@@ -8,6 +8,7 @@ package com.tc.net.protocol;
  */
 public class NullSink implements GenericNetworkMessageSink {
 
+  @Override
   public void putMessage(GenericNetworkMessage msg) {
     return;
   }

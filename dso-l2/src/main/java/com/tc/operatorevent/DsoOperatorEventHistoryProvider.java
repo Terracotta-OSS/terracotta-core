@@ -17,16 +17,19 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
                                                                                                                                                TCPropertiesConsts.L2_OPERATOR_EVENTS_STORE,
                                                                                                                                                1500));
 
+  @Override
   public void push(TerracottaOperatorEvent event) {
     operatorEventHistory.push(event);
   }
 
+  @Override
   public List<TerracottaOperatorEvent> getOperatorEvents() {
     TerracottaOperatorEvent[] operatorEvents = new TerracottaOperatorEventImpl[this.operatorEventHistory.depth()];
     this.operatorEventHistory.toArray(operatorEvents);
     return Arrays.asList(operatorEvents);
   }
 
+  @Override
   public List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp) {
     Date dateSince = new Date(sinceTimestamp);
     List<TerracottaOperatorEvent> eventList = new ArrayList<TerracottaOperatorEvent>();

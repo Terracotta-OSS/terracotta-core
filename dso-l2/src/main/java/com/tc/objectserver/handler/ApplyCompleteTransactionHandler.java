@@ -13,10 +13,12 @@ public class ApplyCompleteTransactionHandler extends AbstractEventHandler {
 
   private TransactionalObjectManager txnObjectMgr;
 
+  @Override
   public void handleEvent(EventContext context) {
     this.txnObjectMgr.processApplyComplete();
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

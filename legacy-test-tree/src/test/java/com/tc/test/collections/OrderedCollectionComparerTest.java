@@ -14,6 +14,7 @@ import com.tc.util.diff.Differenceable;
  */
 public class OrderedCollectionComparerTest extends CollectionComparerTestBase {
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     this.comparer = new OrderedCollectionComparer(this.equalityComparator, this.describer);
@@ -59,6 +60,7 @@ public class OrderedCollectionComparerTest extends CollectionComparerTestBase {
       this.c = c;
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!(that instanceof Diff)) return false;
 
@@ -68,10 +70,12 @@ public class OrderedCollectionComparerTest extends CollectionComparerTestBase {
           .isEquals();
     }
 
+    @Override
     public void addDifferences(DifferenceContext context, Object that) {
       new DifferenceBuilder(context).reflectionDifference(this, that);
     }
 
+    @Override
     public String toString() {
       return "<Diff>";
     }

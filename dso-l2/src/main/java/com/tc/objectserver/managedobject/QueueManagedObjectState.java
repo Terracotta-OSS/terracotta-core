@@ -46,6 +46,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     references = new LinkedList();
   }
 
+  @Override
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       Object action = cursor.getAction();
@@ -126,6 +127,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     dehydrateFields(objectID, writer);
     dehydrateMembers(objectID, writer);
@@ -149,6 +151,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     return "QueueManagedStateObject(" + references + ")";
   }
 
+  @Override
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     final int size = references.size();
 
@@ -168,6 +171,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     return LogicalManagedObjectFacade.createListInstance(objectID, className, data, size);
   }
 
+  @Override
   public byte getType() {
     return QUEUE_TYPE;
   }

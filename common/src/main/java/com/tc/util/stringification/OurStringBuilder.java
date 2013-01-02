@@ -34,6 +34,7 @@ public class OurStringBuilder extends ToStringBuilder {
     MULTI_LINE_STYLE.setArraySeparator(", ");
 
     COMPACT_STYLE = new StandardToStringStyle() {
+      @Override
       public void appendStart(StringBuffer buffer, Object object) {
         buffer.append("<");
         appendClassName(buffer, object);
@@ -62,6 +63,7 @@ public class OurStringBuilder extends ToStringBuilder {
     this(arg0, STANDARD_STYLE);
   }
   
+  @Override
   public ToStringBuilder append(String tag, Object[]arr, boolean b) {
     if (arr == null) return super.append(tag, (Object[])null, b);
     if (arr.length == 0) return super.append(tag, arr, b);

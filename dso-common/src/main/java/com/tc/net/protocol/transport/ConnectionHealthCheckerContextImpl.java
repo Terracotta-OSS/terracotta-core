@@ -164,6 +164,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     presentConnection = null;
   }
 
+  @Override
   public synchronized void refresh() {
     initProbeCycle();
     initIntervalTimeElapsedCount();
@@ -199,6 +200,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
   }
 
+  @Override
   public synchronized boolean probeIfAlive() {
 
     if (!isIntervalTimeElapsed()) { return true; }
@@ -264,6 +266,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
                 + ")");
   }
 
+  @Override
   public synchronized boolean receiveProbe(HealthCheckerProbeMessage message) {
     if (message.isPing()) {
       // Echo back but no change in this health checker state
@@ -328,6 +331,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     return this.logger;
   }
 
+  @Override
   public synchronized void notifySocketConnectFail(TCConnectionEvent failureEvent) {
     if (currentState.equals(INIT)) {
       callbackPortVerificationFailed();
@@ -339,6 +343,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
   }
 
+  @Override
   public synchronized void notifySocketConnectSuccess(TCConnectionEvent successEvent) {
     if (currentState.equals(INIT)) {
       callbackPortVerificationSuccess();

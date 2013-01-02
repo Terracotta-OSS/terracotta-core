@@ -61,34 +61,42 @@ public class CacheConfigImpl implements CacheConfig {
     return CRITICAL_THRESHOLD;
   }
 
+  @Override
   public int getLeastCount() {
     return leastCount;
   }
 
+  @Override
   public int getPercentageToEvict() {
     return percentageToEvict;
   }
 
+  @Override
   public long getSleepInterval() {
     return sleepInterval;
   }
 
+  @Override
   public int getUsedCriticalThreshold() {
     return criticalThreshold;
   }
 
+  @Override
   public int getUsedThreshold() {
     return threshold;
   }
 
+  @Override
   public boolean isOnlyOldGenMonitored() {
     return monitorOldGenOnly;
   }
 
+  @Override
   public boolean isLoggingEnabled() {
     return loggingEnabled;
   }
 
+  @Override
   public int getObjectCountCriticalThreshold() {
     return criticalObjectThreshold;
   }

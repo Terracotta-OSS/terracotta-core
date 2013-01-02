@@ -7,15 +7,18 @@ import com.tc.util.tickertoken.msg.TickerTokenMessage;
 
 public class TestTickerTokenFactory implements TickerTokenFactory {
 
+  @Override
   public TickerTokenMessage createMessage(TickerToken token) {
     TestTickerTokenMessage message = new TestTickerTokenMessage(token);
     return message;
   }
 
+  @Override
   public TickerToken createToken(TickerTokenMessage message) {
     return message.getTickerToken();
   }
 
+  @Override
   public TickerToken createTriggerToken(int id, int startTick, int tickerCount) {
     return new TestTickerToken(id, startTick, tickerCount);
   }

@@ -472,6 +472,7 @@ public class LockManagerTest extends TestCase {
     lockManager.lock(lockid, c1, t1, ServerLockLevel.WRITE);
 
     Runnable tryLockRunnable = new Runnable() {
+      @Override
       public void run() {
         System.err.println("tryLock to grab lock " + c2);
         lockManager.tryLock(lockid, c2, t1, ServerLockLevel.WRITE, 3600 * 1000);
@@ -481,6 +482,7 @@ public class LockManagerTest extends TestCase {
     };
 
     Runnable anotherPendingRequest = new Runnable() {
+      @Override
       public void run() {
         System.err.println("grab lock " + c3);
         lockManager.lock(lockid, c3, t1, ServerLockLevel.WRITE);

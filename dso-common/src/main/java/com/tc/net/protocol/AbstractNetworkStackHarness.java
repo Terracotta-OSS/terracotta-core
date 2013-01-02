@@ -37,6 +37,7 @@ public abstract class AbstractNetworkStackHarness implements NetworkStackHarness
   /**
    * Connects a new transport to an existing stack (server-side).
    */
+  @Override
   public final MessageTransport attachNewConnection(TCConnection connection) throws IllegalReconnectException {
     Assert.eval("Attempt to connect a transport to a stack that hasn't been finalized.", finalized.isSet());
     this.transport.attachNewConnection(connection);
@@ -46,6 +47,7 @@ public abstract class AbstractNetworkStackHarness implements NetworkStackHarness
   /**
    * Creates and connects a new stack.
    */
+  @Override
   public final void finalizeStack() {
     if (finalized.attemptSet()) {
       if (isClientStack) {

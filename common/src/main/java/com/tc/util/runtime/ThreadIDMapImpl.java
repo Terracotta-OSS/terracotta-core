@@ -11,10 +11,12 @@ import java.util.Map;
 public class ThreadIDMapImpl implements ThreadIDMap {
   private final Map<Long, ThreadID> id2ThreadIDMap = new MapMaker().weakValues().makeMap();
 
+  @Override
   public synchronized void addTCThreadID(final ThreadID tcThreadID) {
     id2ThreadIDMap.put(Long.valueOf(Thread.currentThread().getId()), tcThreadID);
   }
 
+  @Override
   public synchronized ThreadID getTCThreadID(final Long javaThreadId) {
     return id2ThreadIDMap.get(javaThreadId);
   }

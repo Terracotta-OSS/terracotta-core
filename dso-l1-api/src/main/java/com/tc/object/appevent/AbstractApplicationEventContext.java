@@ -36,6 +36,7 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
     this.projectName = System.getProperty("project.name");
   }
 
+  @Override
   public Object getPojo() {
     return pojo;
   }
@@ -64,6 +65,7 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
   /**
    * @param treeModel Set model representing object hierarchy
    */
+  @Override
   public void setTreeModel(DefaultTreeModel treeModel) {
     this.treeModel = treeModel;
   }
@@ -71,6 +73,7 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
   /**
    * @return Model representing object hierarchy
    */
+  @Override
   public DefaultTreeModel getTreeModel() {
     return treeModel;
   }
@@ -86,6 +89,7 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
   /**
    * @return Eclipse project name
    */
+  @Override
   public String getProjectName() {
     return projectName;
   }

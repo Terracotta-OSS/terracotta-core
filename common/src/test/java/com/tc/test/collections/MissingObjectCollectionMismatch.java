@@ -15,6 +15,7 @@ class MissingObjectCollectionMismatch extends CollectionMismatch {
     super(originating, null, originatingIsInCollectionOne, originatingIndex, -1, describer);
   }
 
+  @Override
   public String toString() {
     return "Missing object: there is no counterpart in " + comparedAgainstCollection() + " for " + originatingString();
   }

@@ -31,34 +31,42 @@ public class VersionizedDNAWrapper implements DNA {
     this.resetSupported = resetSupported;
   }
 
+  @Override
   public long getVersion() {
     return version;
   }
 
+  @Override
   public boolean hasLength() {
     return dna.hasLength();
   }
 
+  @Override
   public int getArraySize() {
     return dna.getArraySize();
   }
 
+  @Override
   public String getTypeName() {
     return dna.getTypeName();
   }
 
+  @Override
   public ObjectID getObjectID() throws DNAException {
     return dna.getObjectID();
   }
 
+  @Override
   public ObjectID getParentObjectID() throws DNAException {
     return dna.getParentObjectID();
   }
 
+  @Override
   public DNACursor getCursor() {
     return (resetSupported ? new ResetableDNACursor(dna.getCursor()) : dna.getCursor());
   }
 
+  @Override
   public boolean isDelta() {
     return dna.isDelta();
   }
@@ -78,10 +86,12 @@ public class VersionizedDNAWrapper implements DNA {
       this.cursor = cursor;
     }
 
+    @Override
     public int getActionCount() {
       return cursor.getActionCount();
     }
 
+    @Override
     public boolean next() throws IOException {
       if (++index < actions.size()) { return true; }
       boolean success = cursor.next();
@@ -91,6 +101,7 @@ public class VersionizedDNAWrapper implements DNA {
       return success;
     }
 
+    @Override
     public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
       if (++index < actions.size()) { return true; }
       boolean success = cursor.next(encoding);
@@ -100,18 +111,22 @@ public class VersionizedDNAWrapper implements DNA {
       return success;
     }
 
+    @Override
     public void reset() throws UnsupportedOperationException {
       index = -1;
     }
 
+    @Override
     public LogicalAction getLogicalAction() {
       return (index < actions.size() ? (LogicalAction) actions.get(index) : cursor.getLogicalAction());
     }
 
+    @Override
     public PhysicalAction getPhysicalAction() {
       return (index < actions.size() ? (PhysicalAction) actions.get(index) : cursor.getPhysicalAction());
     }
 
+    @Override
     public Object getAction() {
       return (index < actions.size() ? actions.get(index) : cursor.getAction());
     }

@@ -24,6 +24,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
   private volatile State                state                = GC_SLEEP;
   private volatile boolean              periodicEnabled      = false;
 
+  @Override
   public synchronized boolean requestGCStart() {
     if (isStarted() && this.state == GC_SLEEP) {
       this.state = GC_RUNNING;
@@ -33,6 +34,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     return false;
   }
 
+  @Override
   public synchronized void enableGC() {
     if (GC_DISABLED == this.state) {
       this.state = GC_SLEEP;
@@ -42,6 +44,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     }
   }
 
+  @Override
   public synchronized boolean requestDisableGC() {
     if (GC_SLEEP == this.state) {
       this.state = GC_DISABLED;
@@ -52,12 +55,14 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     return false;
   }
 
+  @Override
   public synchronized void notifyReadyToGC() {
     if (this.state == GC_PAUSING) {
       this.state = GC_PAUSED;
     }
   }
 
+  @Override
   public synchronized void notifyGCComplete() {
     this.state = GC_SLEEP;
     notify();
@@ -67,6 +72,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
    * In Active server, state transitions from GC_PAUSED to GC_DELETE and in the passive server, state transitions from
    * GC_SLEEP to GC_DELETE.
    */
+  @Override
   public synchronized boolean requestGCDeleteStart() {
     if (this.state == GC_SLEEP || this.state == GC_PAUSED) {
       this.state = GC_DELETE;
@@ -87,35 +93,43 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     return false;
   }
 
+  @Override
   public void requestGCPause() {
     this.state = GC_PAUSING;
   }
 
+  @Override
   public boolean isPausingOrPaused() {
     State localState = this.state;
     return GC_PAUSED == localState || GC_PAUSING == localState;
   }
 
+  @Override
   public boolean isPaused() {
     return this.state == GC_PAUSED;
   }
 
+  @Override
   public boolean isDisabled() {
     return GC_DISABLED == this.state;
   }
 
+  @Override
   public boolean isDelete() {
     return GC_DELETE == this.state;
   }
 
+  @Override
   public void setPeriodicEnabled(final boolean periodicEnabled) {
     this.periodicEnabled = periodicEnabled;
   }
 
+  @Override
   public boolean isPeriodicEnabled() {
     return periodicEnabled;
   }
 
+  @Override
   public synchronized void waitToStartGC() {
     boolean isInterrupted = false;
     long lastLogTime = System.nanoTime();
@@ -134,6 +148,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
+  @Override
   public synchronized void waitToDisableGC() {
     boolean isInterrupted = false;
     long lastLogTime = System.nanoTime();
@@ -152,6 +167,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
+  @Override
   public synchronized void waitToStartInlineGC() {
     boolean isInterrupted = false;
     long lastLogTime = System.nanoTime();
@@ -171,6 +187,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return out.print(getClass().getName()).print("[").print(this.state).print("]");
   }

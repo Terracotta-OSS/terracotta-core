@@ -18,6 +18,7 @@ public class CallbackStartupExceptionLoggingAdapter implements CallbackOnExitHan
     this.extraMessage = extraMessage;
   }
 
+  @Override
   public void callbackOnExit(CallbackOnExitState state) {
     System.err.println("");
     System.err.println("");

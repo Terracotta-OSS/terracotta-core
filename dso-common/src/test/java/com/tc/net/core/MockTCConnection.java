@@ -36,22 +36,27 @@ public class MockTCConnection implements TCConnection {
   public boolean                      fail            = false;
   public final NoExceptionLinkedQueue connectCalls    = new NoExceptionLinkedQueue();
 
+  @Override
   public long getConnectTime() {
     throw new ImplementMe();
   }
 
+  @Override
   public long getIdleTime() {
     throw new ImplementMe();
   }
 
+  @Override
   public void addListener(TCConnectionEventListener listener) {
     //
   }
 
+  @Override
   public void removeListener(TCConnectionEventListener listener) {
     //
   }
 
+  @Override
   public boolean close(long timeout) {
     isConnected = false;
     isClosed = true;
@@ -63,12 +68,14 @@ public class MockTCConnection implements TCConnection {
     return this.closeCallCount;
   }
 
+  @Override
   public void connect(TCSocketAddress addr, int timeout) throws TCTimeoutException {
     connectCalls.put(new Object[] { addr, new Integer(timeout) });
     if (fail) { throw new TCTimeoutException("Timed out !!!"); }
     this.isConnected = true;
   }
 
+  @Override
   public boolean asynchConnect(TCSocketAddress addr) {
     return this.isConnected = true;
   }
@@ -77,10 +84,12 @@ public class MockTCConnection implements TCConnection {
     this.isConnected = b;
   }
 
+  @Override
   public boolean isConnected() {
     return isConnected;
   }
 
+  @Override
   public boolean isClosed() {
     return isClosed;
   }
@@ -89,6 +98,7 @@ public class MockTCConnection implements TCConnection {
     this.messageSink = sink;
   }
 
+  @Override
   public void putMessage(TCNetworkMessage message) {
     this.sentMessages.add(message);
     if (this.messageSink != null) this.messageSink.putMessage(message);
@@ -98,10 +108,12 @@ public class MockTCConnection implements TCConnection {
     return this.sentMessages;
   }
 
+  @Override
   public TCSocketAddress getLocalAddress() {
     return this.localAddress;
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     return this.remoteAddress;
   }
@@ -110,30 +122,37 @@ public class MockTCConnection implements TCConnection {
     return this.protocolAdaptor;
   }
 
+  @Override
   public void asynchClose() {
     close(-1);
   }
 
+  @Override
   public Socket detach() {
     throw new ImplementMe();
   }
 
+  @Override
   public long getIdleReceiveTime() {
     throw new ImplementMe();
   }
 
+  @Override
   public void addWeight(int addWeightBy) {
     //
   }
 
+  @Override
   public void setTransportEstablished() {
     //
   }
 
+  @Override
   public boolean isTransportEstablished() {
     return false;
   }
 
+  @Override
   public boolean isClosePending() {
     return false;
   }

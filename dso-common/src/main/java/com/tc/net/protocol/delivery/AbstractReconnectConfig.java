@@ -44,22 +44,27 @@ public class AbstractReconnectConfig implements ReconnectConfig {
                                                                                            + " : reconnectMaxDelayedAcks should be lesser than reconnectSendWindow"); }
   }
 
+  @Override
   public boolean getReconnectEnabled() {
     return reconnectEnabled;
   }
 
+  @Override
   public int getReconnectTimeout() {
     return reconnectTimeout;
   }
 
+  @Override
   public int getSendQueueCapacity() {
     return reconnectSendQueueCap;
   }
 
+  @Override
   public int getMaxDelayAcks() {
     return reconnectMaxDelayedAcks;
   }
 
+  @Override
   public int getSendWindow() {
     return reconnectSendWindow;
   }

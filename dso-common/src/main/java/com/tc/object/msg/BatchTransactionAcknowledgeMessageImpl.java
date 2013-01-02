@@ -34,10 +34,12 @@ public class BatchTransactionAcknowledgeMessageImpl extends DSOMessageBase imple
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_ID, batchID.toLong());
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case BATCH_ID: {
@@ -50,10 +52,12 @@ public class BatchTransactionAcknowledgeMessageImpl extends DSOMessageBase imple
     }
   }
 
+  @Override
   public void initialize(TxnBatchID id) {
     this.batchID = id;
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return batchID;
   }

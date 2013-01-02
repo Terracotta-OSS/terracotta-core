@@ -36,7 +36,8 @@ public class EchoSink implements GenericNetworkMessageSink, TCConnectionEventLis
   private final boolean              verify;
 
   private static final ErrorListener defaultListener = new ErrorListener() {
-                                                       public void error(Throwable t) {
+                                                       @Override
+                                                      public void error(Throwable t) {
                                                          t.printStackTrace();
                                                        }
                                                      };
@@ -54,6 +55,7 @@ public class EchoSink implements GenericNetworkMessageSink, TCConnectionEventLis
     this.listener = listener;
   }
 
+  @Override
   public void putMessage(GenericNetworkMessage msg) {
     try {
       putMessage0(msg);
@@ -120,20 +122,24 @@ public class EchoSink implements GenericNetworkMessageSink, TCConnectionEventLis
     verifier.putMessage(msg);
   }
 
+  @Override
   public void connectEvent(TCConnectionEvent event) {
     //    
   }
 
+  @Override
   public void closeEvent(TCConnectionEvent event) {
     synchronized (states) {
       states.remove(event.getSource());
     }
   }
 
+  @Override
   public void errorEvent(TCConnectionErrorEvent errorEvent) {
     //    
   }
 
+  @Override
   public void endOfFileEvent(TCConnectionEvent event) {
     //    
   }

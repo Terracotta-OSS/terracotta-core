@@ -56,10 +56,12 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     stages.put(name, stage);
   }
 
+  @Override
   public ObjectManager getObjectManager() {
     return this.objectManager;
   }
 
+  @Override
   public ObjectRequestManager getObjectRequestManager() {
     return this.objectRequestManager;
   }
@@ -73,78 +75,97 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
         return this.objectStore;
     }
 
+  @Override
   public LockManager getLockManager() {
     return this.lockManager;
   }
 
+  @Override
   public DSOChannelManager getChannelManager() {
     return this.channelManager;
   }
 
+  @Override
   public ClientStateManager getClientStateManager() {
     return this.clientStateManager;
   }
 
+  @Override
   public ServerTransactionManager getTransactionManager() {
     return this.transactionManager;
   }
 
+  @Override
   public ServerClientHandshakeManager getClientHandshakeManager() {
     return this.clientHandshakeManager;
   }
 
+  @Override
   public Stage getStage(final String name) {
     return (Stage) this.stages.get(name);
   }
 
+  @Override
   public TCLogger getLogger(final Class clazz) {
     return TCLogging.getLogger(getClass());
   }
 
+  @Override
   public ChannelStats getChannelStats() {
     return this.channelStats;
   }
 
+  @Override
   public TransactionBatchReaderFactory getTransactionBatchReaderFactory() {
     throw new ImplementMe();
   }
 
+  @Override
   public TransactionalObjectManager getTransactionalObjectManager() {
     return txnObjectManager;
   }
 
+  @Override
   public L2Coordinator getL2Coordinator() {
     return l2Coordinator;
   }
 
+  @Override
   public TransactionBatchManager getTransactionBatchManager() {
     return transactionBatchManager;
   }
 
+  @Override
   public ServerGlobalTransactionManager getServerGlobalTransactionManager() {
     return serverGlobalTransactionManager;
   }
 
+  @Override
   public ServerClusterMetaDataManager getClusterMetaDataManager() {
     return clusterMetaDataManager;
   }
 
+  @Override
   public ServerMapRequestManager getServerMapRequestManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public IndexManager getIndexManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public MetaDataManager getMetaDataManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public SearchRequestManager getSearchRequestManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public GarbageCollectionManager getGarbageCollectionManager() {
     return garbageCollectionManager;
   }

@@ -60,10 +60,12 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     return count;
   }
 
+  @Override
   public boolean isStripeIDMatched(GroupID gid, StripeID stripeID) {
     return !stripeID.isNull() && stripeID.equals(getStripeID(gid));
   }
 
+  @Override
   public Map<GroupID, StripeID> getStripeIDMap(boolean askMapfromAACoordinator) {
     // return empty map if request map only from AACoordinator and it is not an AACoordinator
     return (!askMapfromAACoordinator || isAACoordinator) ? Collections.unmodifiableMap(groupIDToStripeIDMap)
@@ -84,6 +86,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     persistentStateStore.put(prefixKey(groupID.toString()), stripeID.getName());
   }
 
+  @Override
   public boolean verifyOrSaveStripeID(GroupID gid, StripeID stripeID, boolean overwrite) {
     if (stripeID.isNull()) {
       logger.warn("Ignore null StripeID from " + gid);
@@ -120,6 +123,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     return true;
   }
 
+  @Override
   public StripeID getStripeID(GroupID gid) {
     return groupIDToStripeIDMap.get(gid);
   }
@@ -138,6 +142,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     }
   }
 
+  @Override
   public void registerForStripeIDEvents(StripeIDEventListener listener) {
     listeners.add(listener);
 
@@ -152,6 +157,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     }
   }
   
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.print("groupIDToStripeIDMap:").flush();

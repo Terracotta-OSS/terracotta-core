@@ -16,6 +16,7 @@ public class TestChannelIDProvider implements ChannelIDProvider {
     this.channelID = channelID;
   }
 
+  @Override
   public ChannelID getChannelID() {
     return this.channelID;
   }

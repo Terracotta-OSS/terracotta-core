@@ -12,6 +12,7 @@ import org.apache.xmlbeans.XmlObject;
  */
 public class ObjectEqualsXmlObjectComparator implements XmlObjectComparator {
 
+  @Override
   public boolean equals(XmlObject one, XmlObject two) {
     try {
       checkEquals(one, two);
@@ -21,6 +22,7 @@ public class ObjectEqualsXmlObjectComparator implements XmlObjectComparator {
     }
   }
 
+  @Override
   public void checkEquals(XmlObject one, XmlObject two) throws NotEqualException {
     if ((one == null) != (two == null)) throw new NotEqualException("nullness not the same");
     if (one == null) return;

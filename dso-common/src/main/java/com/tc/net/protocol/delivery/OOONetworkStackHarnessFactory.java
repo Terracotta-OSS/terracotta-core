@@ -23,12 +23,14 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
     this.reconnectConfig = reconnectConfig;
   }
 
+  @Override
   public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
     return new OOONetworkStackHarness(transportFactory, channel, factory, reconnectConfig);
   }
 
+  @Override
   public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {

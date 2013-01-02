@@ -7,6 +7,7 @@ package com.tc.net.protocol.transport;
 public class TransportHandshakeErrorNullHandler implements TransportHandshakeErrorHandler {
 
 
+  @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
     // NOP
   }

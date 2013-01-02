@@ -15,6 +15,7 @@ public class TxnCountWeightGenerator implements WeightGenerator {
     this.serverTransactionManager = serverTransactionManager;
   }
 
+  @Override
   public long getWeight() {
     return serverTransactionManager.getTotalNumOfActiveTransactions();
   }

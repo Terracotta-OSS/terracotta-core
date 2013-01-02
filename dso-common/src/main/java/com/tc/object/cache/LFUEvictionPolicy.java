@@ -29,11 +29,13 @@ public class LFUEvictionPolicy implements EvictionPolicy {
 
   private static final LFUConfig DEFAULT_CONFIG = new LFUConfig() {
 
+                                                  @Override
                                                   public float getAgingFactor() {
                                                     // DISABLED
                                                     return 1;
                                                   }
 
+                                                  @Override
                                                   public int getRecentlyAccessedIgnorePercentage() {
                                                     return 20;
                                                   }
@@ -65,6 +67,7 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     this.config = config;
   }
 
+  @Override
   public synchronized boolean add(final Cacheable obj) {
     Assert.assertTrue(obj.getNext() == null && obj.getPrevious() == null);
     this.cache.addLast(obj);
@@ -75,10 +78,12 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     return (this.capacity > 0 && this.cache.size() > this.capacity);
   }
 
+  @Override
   public int getCacheCapacity() {
     return this.capacity;
   }
 
+  @Override
   public synchronized void markReferenced(final Cacheable obj) {
     obj.markAccessed();
     moveToTail(obj);
@@ -91,6 +96,7 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     }
   }
 
+  @Override
   public Collection getRemovalCandidates(int maxCount) {
 
     final long start = System.currentTimeMillis();
@@ -229,12 +235,14 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     return obj != null && (obj.getNext() != null || obj.getPrevious() != null);
   }
 
+  @Override
   public synchronized void remove(final Cacheable obj) {
     if (contains(obj)) {
       this.cache.remove(obj);
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     final PrettyPrinter rv = out;
     out.println(getClass().getName());

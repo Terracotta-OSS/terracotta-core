@@ -53,6 +53,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
     aggregator.addStatsPrinter(this);
   }
 
+  @Override
   public void finish() {
     this.finished = true;
   }
@@ -61,6 +62,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
     return finished;
   }
 
+  @Override
   public void updateStats(String key, long[] counters) {
     StatsRecord r = get(key);
     r.update(counters);
@@ -98,6 +100,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
     }
   }
 
+  @Override
   public void run() {
     while (!isFinished()) {
       ThreadUtil.reallySleep(timeInterval);
@@ -197,6 +200,7 @@ public final class StatsPrinter implements StatsRecorder, Runnable {
       }
     }
 
+    @Override
     public void run() {
       while (true) {
         if (printers.size() == 0) {

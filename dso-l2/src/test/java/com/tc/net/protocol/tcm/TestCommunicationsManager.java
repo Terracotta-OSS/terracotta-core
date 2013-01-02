@@ -18,18 +18,22 @@ public class TestCommunicationsManager implements CommunicationsManager {
 
   public boolean shutdown;
 
+  @Override
   public TCConnectionManager getConnectionManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public void shutdown() {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkListener[] getAllListeners() {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
@@ -37,12 +41,14 @@ public class TestCommunicationsManager implements CommunicationsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
                                                   ConnectionAddressProvider addressProvider,
@@ -50,27 +56,32 @@ public class TestCommunicationsManager implements CommunicationsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory) {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, boolean reuseAddress) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isInShutdown() {
     return this.shutdown;
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress address, boolean b,
                                         ConnectionIDFactory connectionIDFactory, Sink httpSink) {
     throw new ImplementMe();
   }
 
+  @Override
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory,
@@ -78,11 +89,13 @@ public class TestCommunicationsManager implements CommunicationsManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void addClassMapping(TCMessageType messageType, Class messageClass) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory) {
     throw new ImplementMe();
 

@@ -37,6 +37,7 @@ public class ServerMapEvictionTransactionBatchContext implements TransactionBatc
     this.txnIDs.add(txn.getServerTransactionID());
   }
 
+  @Override
   public TCByteBuffer[] getBackingBuffers() {
     if (this.buffers == null) {
       this.buffers = constructTransactionBatchBuffers();
@@ -53,30 +54,37 @@ public class ServerMapEvictionTransactionBatchContext implements TransactionBatc
     }
   }
 
+  @Override
   public Set<ObjectID> getNewObjectIDs() {
     return Collections.EMPTY_SET;
   }
 
+  @Override
   public int getNumTxns() {
     return 1;
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return this.nodeID;
   }
 
+  @Override
   public TransactionBatchReader getTransactionBatchReader() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Set<ServerTransactionID> getTransactionIDs() {
     return this.txnIDs;
   }
 
+  @Override
   public List<ServerTransaction> getTransactions() {
     return this.txns;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return this.serializer;
   }

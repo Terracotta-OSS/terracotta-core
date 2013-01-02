@@ -41,11 +41,13 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
     return this.message;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(GROUP_MESSAGE_ID, this.message.getClass().getName());
     this.message.serializeTo(getOutputStream());
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case GROUP_MESSAGE_ID:
@@ -66,6 +68,7 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
     }
   }
 
+  @Override
   public void doRecycleOnRead() {
     if (message.isRecycleOnRead(this)) {
       super.doRecycleOnRead();

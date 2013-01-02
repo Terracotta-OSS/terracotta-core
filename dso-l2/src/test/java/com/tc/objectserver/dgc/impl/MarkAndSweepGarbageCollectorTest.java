@@ -39,7 +39,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected TransactionProvider transactionProvider = new NullTransactionProvider();
 
   private final Filter                     filter              = new Filter() {
-                                                                 public boolean shouldVisit(ObjectID referencedObject) {
+                                                                 @Override
+                                                                public boolean shouldVisit(ObjectID referencedObject) {
                                                                    return true;
                                                                  }
                                                                };
@@ -155,6 +156,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.root1.setReference(0, tmo1.getID());
 
     Filter testFilter = new Filter() {
+      @Override
       public boolean shouldVisit(ObjectID referencedObject) {
         return (!tmo2.getID().equals(referencedObject));
       }

@@ -16,6 +16,7 @@ public class StateSyncManagerImpl implements StateSyncManager {
 
   private final ConcurrentMap<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
 
+  @Override
   public void objectSyncComplete(NodeID nodeID) {
     SyncValue value = getOrCreateSyncValue(nodeID);
     value.objectSyncCompleteMessageAcked();
@@ -27,22 +28,27 @@ public class StateSyncManagerImpl implements StateSyncManager {
     return old == null ? value : old;
   }
 
+  @Override
   public void indexSyncComplete(NodeID nodeID) {
     // overridden in EE
   }
 
+  @Override
   public void removeL2(NodeID nodeID) {
     syncMessagesProcessedMap.remove(nodeID);
   }
 
+  @Override
   public void objectSyncComplete() {
     // no-op
   }
 
+  @Override
   public void indexSyncComplete() {
     // overridden in EE
   }
 
+  @Override
   public boolean isSyncComplete(NodeID nodeID) {
     SyncValue value = syncMessagesProcessedMap.get(nodeID);
     if (value == null) { return false; }
@@ -63,14 +69,17 @@ public class StateSyncManagerImpl implements StateSyncManager {
     return new SyncValue() {
       private volatile boolean objectSyncCompleteMessageProcessed = false;
 
+      @Override
       public void indexSyncCompleteMessageAcked() {
         // no-op
       }
 
+      @Override
       public void objectSyncCompleteMessageAcked() {
         this.objectSyncCompleteMessageProcessed = true;
       }
 
+      @Override
       public boolean isSyncMesssagesAcked() {
         return this.objectSyncCompleteMessageProcessed;
       }

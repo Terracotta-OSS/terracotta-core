@@ -26,6 +26,7 @@ public class TCMessageRouterImpl implements TCMessageRouter {
   public TCMessageRouterImpl(TCMessageSink defRoute) {
     if (null == defRoute) {
       defaultRoute = new TCMessageSink() {
+        @Override
         public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
           throw new UnsupportedMessageTypeException(message.getMessageType());
         }
@@ -35,6 +36,7 @@ public class TCMessageRouterImpl implements TCMessageRouter {
     }
   }
 
+  @Override
   public void putMessage(TCMessage msg) {
     final boolean debug = logger.isDebugEnabled();
 
@@ -52,15 +54,18 @@ public class TCMessageRouterImpl implements TCMessageRouter {
     }
   }
 
+  @Override
   public void routeMessageType(TCMessageType type, TCMessageSink sink) {
     if (null == sink) { throw new IllegalArgumentException("Sink cannot be null"); }
     routesByType.put(type, sink);
   }
 
+  @Override
   public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
     routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
   }
 
+  @Override
   public void unrouteMessageType(TCMessageType type) {
     routesByType.remove(type);
   }

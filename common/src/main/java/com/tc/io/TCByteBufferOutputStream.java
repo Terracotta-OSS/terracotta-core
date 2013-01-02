@@ -104,6 +104,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
    * Add arbitrary buffers into the stream. All of the data (from position 0 to limit()) in each buffer passed will be
    * used in the stream. If that is not what you want, setup your buffers differently before calling this write()
    */
+  @Override
   public void write(TCByteBuffer[] data) {
     checkClosed();
     if (data == null) { throw new NullPointerException(); }
@@ -174,6 +175,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   /**
    * Obtain the contents of this stream as an array of TCByteBuffer
    */
+  @Override
   public TCByteBuffer[] toArray() {
     close();
     TCByteBuffer[] rv = new TCByteBuffer[buffers.size()];
@@ -260,6 +262,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     buffers = finalBufs;
   }
 
+  @Override
   public void writeBoolean(boolean value) {
     try {
       dos.writeBoolean(value);
@@ -268,6 +271,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeByte(int value) {
     try {
       dos.writeByte(value);
@@ -276,6 +280,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeChar(int value) {
     try {
       dos.writeChar(value);
@@ -284,6 +289,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeDouble(double value) {
     try {
       dos.writeDouble(value);
@@ -292,6 +298,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeFloat(float value) {
     try {
       dos.writeFloat(value);
@@ -300,6 +307,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeInt(int value) {
     try {
       dos.writeInt(value);
@@ -308,6 +316,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeLong(long value) {
     try {
       dos.writeLong(value);
@@ -316,6 +325,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeShort(int value) {
     try {
       dos.writeShort(value);
@@ -324,6 +334,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeString(String string) {
     writeString(string, false);
   }
@@ -500,6 +511,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void recycle() {
     if (localBuffers.size() > 0) {
       for (Iterator i = localBuffers.iterator(); i.hasNext();) {
@@ -509,14 +521,17 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void writeBytes(String s) {
     throw new UnsupportedOperationException("use writeString() instead");
   }
 
+  @Override
   public void writeChars(String s) {
     writeString(s, true);
   }
 
+  @Override
   public void writeUTF(String str) {
     writeString(str);
   }

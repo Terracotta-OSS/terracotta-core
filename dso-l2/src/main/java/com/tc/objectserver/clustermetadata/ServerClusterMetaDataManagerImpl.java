@@ -52,6 +52,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     this.channelManager = channelManager;
   }
 
+  @Override
   public void handleMessage(final NodesWithObjectsMessage message) {
     NodesWithObjectsResponseMessage responseMessage = (NodesWithObjectsResponseMessage) message.getChannel()
         .createMessage(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE);
@@ -72,6 +73,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     responseMessage.send();
   }
 
+  @Override
   public void handleMessage(final NodesWithKeysMessage message) {
     NodesWithKeysResponseMessage responseMessage = (NodesWithKeysResponseMessage) message.getChannel()
         .createMessage(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE);
@@ -117,6 +119,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     responseMessage.send();
   }
 
+  @Override
   public void handleMessage(final KeysForOrphanedValuesMessage message) {
     KeysForOrphanedValuesResponseMessage responseMessage = (KeysForOrphanedValuesResponseMessage) message.getChannel()
         .createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE);
@@ -201,6 +204,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     responseMessage.send();
   }
 
+  @Override
   public void handleMessage(final NodeMetaDataMessage message) {
     NodeMetaDataResponseMessage responseMessage = (NodeMetaDataResponseMessage) message.getChannel()
         .createMessage(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE);

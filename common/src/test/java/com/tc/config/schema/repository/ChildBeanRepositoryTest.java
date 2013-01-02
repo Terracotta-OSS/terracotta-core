@@ -31,6 +31,7 @@ public class ChildBeanRepositoryTest extends TCTestCase {
   private MockConfigurationChangeListener listener1;
   private MockConfigurationChangeListener listener2;
 
+  @Override
   public void setUp() throws Exception {
     this.parent = new MockBeanRepository();
     this.requiredClass = MyMockXmlObject.class;

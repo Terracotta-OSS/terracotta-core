@@ -51,6 +51,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     this.manager = manager;
   }
 
+  @Override
   public void setupNodes(Node local, Node[] nodes) {
     this.local = local;
     for (Node node : nodes) {
@@ -61,6 +62,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  @Override
   public void addNode(Node node) {
     DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
     stateMachine.start();
@@ -76,6 +78,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  @Override
   public void removeNode(Node node) {
     DiscoveryStateMachine old = nodeStateMap.remove(getNodeName(node));
     Assert.assertNotNull("Tried removing node which was not present", old);
@@ -85,6 +88,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     return node.getServerNodeName();
   }
 
+  @Override
   public boolean isValidClusterNode(NodeID nodeID) {
     String nodeName = ((ServerID) nodeID).getName();
     return (nodeStateMap.get(nodeName) != null);
@@ -94,6 +98,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     manager.getDiscoveryHandlerSink().add(stateMachine);
   }
 
+  @Override
   public void discoveryHandler(EventContext context) {
     DiscoveryStateMachine stateMachine = (DiscoveryStateMachine) context;
     Assert.assertNotNull(stateMachine);
@@ -146,6 +151,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     return (manager.getLocalNodeID());
   }
 
+  @Override
   public void start() throws GroupException {
     if (nodeStateMap.isEmpty()) { throw new GroupException("No nodes"); }
 
@@ -159,6 +165,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     openChannels();
 
     Thread discover = new Thread(new Runnable() {
+      @Override
       public void run() {
         while (!stopAttempt.get()) {
           openChannels();
@@ -224,6 +231,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  @Override
   public void stop(long timeout) {
     stopAttempt.set(true);
 
@@ -232,16 +240,19 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     waitTillNoConnecting(timeout);
   }
 
+  @Override
   public Node getLocalNode() {
     return local;
   }
 
+  @Override
   public synchronized void nodeJoined(NodeID nodeID) {
     String nodeName = ((ServerID) nodeID).getName();
     nodeStateMap.get(nodeName).nodeJoined();
     joinedNodes++;
   }
 
+  @Override
   public synchronized void nodeLeft(NodeID nodeID) {
     joinedNodes--;
     String nodeName = ((ServerID) nodeID).getName();
@@ -606,6 +617,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       }
     }
 
+    @Override
     public void notifyChannelEvent(ChannelEvent event) {
       if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
         synchronized (this) {
@@ -632,6 +644,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  @Override
   public boolean isServerConnected(String nodeName) {
     DiscoveryStateMachine dsm = nodeStateMap.get(nodeName);
     if (dsm == null) { return false; }

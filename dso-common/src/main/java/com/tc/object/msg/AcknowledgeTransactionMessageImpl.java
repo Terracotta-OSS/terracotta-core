@@ -55,15 +55,18 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
     }
   }
 
+  @Override
   public void initialize(final NodeID nid, final TransactionID txID) {
     this.requesterID = nid;
     this.requestID = txID;
   }
 
+  @Override
   public NodeID getRequesterID() {
     return requesterID;
   }
 
+  @Override
   public TransactionID getRequestID() {
     return requestID;
   }

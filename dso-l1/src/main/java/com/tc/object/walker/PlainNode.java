@@ -15,10 +15,12 @@ class PlainNode extends AbstractNode {
     this.fieldsIterator = AllFields.getAllFields(o, true, walkTest).getFields();
   }
 
+  @Override
   public boolean done() {
     return !fieldsIterator.hasNext();
   }
 
+  @Override
   public MemberValue next() {
     FieldData fd = (FieldData) fieldsIterator.next();
     return MemberValue.fieldValue(fd, getObject());

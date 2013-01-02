@@ -45,30 +45,37 @@ public class TestDNACursor implements DNACursor {
     this.actions.add(new LiteralAction(value));
   }
 
+  @Override
   public boolean next() {
     return this.actions.size() > ++this.current;
   }
 
+  @Override
   public LogicalAction getLogicalAction() {
     return (LogicalAction) this.actions.get(this.current);
   }
 
+  @Override
   public Object getAction() {
     return this.actions.get(this.current);
   }
 
+  @Override
   public PhysicalAction getPhysicalAction() {
     return (PhysicalAction) this.actions.get(this.current);
   }
 
+  @Override
   public boolean next(final DNAEncoding encoding) {
     throw new ImplementMe();
   }
 
+  @Override
   public int getActionCount() {
     return this.actions.size();
   }
 
+  @Override
   public void reset() throws UnsupportedOperationException {
     this.current = -1;
   }

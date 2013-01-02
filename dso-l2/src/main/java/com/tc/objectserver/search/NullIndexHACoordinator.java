@@ -15,15 +15,18 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
     //
   }
 
+  @Override
   @SuppressWarnings("unused")
   public void applyTempJournalsAndSwitch() throws IOException {
     //
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     //
   }
 
+  @Override
   public void applyIndexSync(String cacheName, String indexId, String fileName, byte[] data, boolean isTCFile,
                              boolean isLast) {
     //
@@ -37,6 +40,7 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
     //
   }
 
+  @Override
   public void doSyncPrepare() {
     //
   }

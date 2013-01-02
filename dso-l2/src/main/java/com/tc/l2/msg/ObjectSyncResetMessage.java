@@ -28,10 +28,12 @@ public class ObjectSyncResetMessage extends AbstractGroupMessage {
     super(type, reqID);
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) {
     Assert.assertTrue(getType() == REQUEST_RESET || getType() == OPERATION_SUCCESS);
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertTrue(getType() == REQUEST_RESET || getType() == OPERATION_SUCCESS);
   }

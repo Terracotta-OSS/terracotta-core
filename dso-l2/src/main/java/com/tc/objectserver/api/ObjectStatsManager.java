@@ -7,6 +7,7 @@ import com.tc.object.ObjectID;
 
 public interface ObjectStatsManager {
   public ObjectStatsManager NULL_OBJECT_STATS_MANAGER = new ObjectStatsManager() {
+                                                        @Override
                                                         public String getObjectTypeFromID(ObjectID id) {
                                                           return "";
                                                         }

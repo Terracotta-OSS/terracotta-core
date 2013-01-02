@@ -96,6 +96,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     return this.isLast;
   }
 
+  @Override
   public long getSequenceID() {
     return this.sequenceID;
   }

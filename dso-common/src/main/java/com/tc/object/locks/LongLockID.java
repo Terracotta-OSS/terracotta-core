@@ -27,6 +27,7 @@ public class LongLockID implements LockID {
     this.id = id;
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + "(" + id + ")";
   }
@@ -38,10 +39,12 @@ public class LongLockID implements LockID {
     return Long.toString(id);
   }
 
+  @Override
   public int hashCode() {
     return ((int) id) ^ ((int) (id >>> 32));
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof LongLockID) {
       LongLockID lid = (LongLockID) obj;
@@ -50,6 +53,7 @@ public class LongLockID implements LockID {
     return false;
   }
   
+  @Override
   public int compareTo(Object o) {
     if (o instanceof LongLockID) {
       LongLockID other = (LongLockID)o;
@@ -70,15 +74,18 @@ public class LongLockID implements LockID {
     throw new ClassCastException(o + " is not an instance of LockID");
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readLong();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(id);
   }
 
+  @Override
   public LockIDType getLockType() {
     return LockIDType.LONG;
   }

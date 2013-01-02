@@ -39,12 +39,14 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
 
   }
 
+  @Override
   public void fireBackOffEvent(NodeID winnerNode) {
     Assert.assertTrue(winnerNode instanceof ServerID);
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
         .createZapRequestAcceptedEvent(new Object[] { winnerNode }));
   }
 
+  @Override
   public void fireSplitBrainEvent(NodeID node1, NodeID node2) {
     Assert.assertTrue(node1 instanceof ServerID);
     Assert.assertTrue(node2 instanceof ServerID);

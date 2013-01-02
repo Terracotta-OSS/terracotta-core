@@ -45,6 +45,7 @@ public class NonPortableLogicalInvokeContext extends NonPortableEventContext {
     return paramIndex;
   }
   
+  @Override
   public void addDetailsTo(NonPortableReason reason) {
     super.addDetailsTo(reason);
     reason.addDetail("Logically-managed class name", getTargetClassName());

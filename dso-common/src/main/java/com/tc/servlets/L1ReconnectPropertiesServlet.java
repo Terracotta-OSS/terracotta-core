@@ -25,6 +25,7 @@ public class L1ReconnectPropertiesServlet extends HttpServlet {
                                                                                  + ".l1reconnectpropfroml2";
   private L1ReconnectPropertiesDocument l1ReconnectPropertiesDoc         = null;
 
+  @Override
   public void init() {
     if (l1ReconnectPropertiesDoc == null) {
       l1ReconnectPropertiesDoc = L1ReconnectPropertiesDocument.Factory.newInstance();
@@ -42,6 +43,7 @@ public class L1ReconnectPropertiesServlet extends HttpServlet {
     }
   }
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     OutputStream out = response.getOutputStream();
     IOUtils.copy(this.l1ReconnectPropertiesDoc.newInputStream(), out);

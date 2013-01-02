@@ -11,16 +11,19 @@ import java.io.InputStream;
 
 public class TestConfigurationSource implements ConfigurationSource {
 
+  @Override
   public File directoryLoadedFrom() {
     return new File(System.getProperty("user.dir"));
   }
 
+  @Override
   public InputStream getInputStream(long maxTimeoutMillis) {
     TcConfigDocument tcConfigDocument = TcConfigDocument.Factory.newInstance();
     tcConfigDocument.addNewTcConfig();
     return tcConfigDocument.newInputStream();
   }
 
+  @Override
   public boolean isTrusted() {
     return true;
   }

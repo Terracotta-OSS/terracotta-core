@@ -36,11 +36,13 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(BATCH_ID, batchID);
     putNVPair(TXN_SET, syncTxnSet);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case BATCH_ID:
@@ -78,6 +80,7 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
       this.syncTxnSet = syncTxnSet;
     }
 
+    @Override
     public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
       syncTxnSet = new HashSet<TransactionID>();
       int size = serialInput.readInt();
@@ -87,6 +90,7 @@ public class SyncWriteTransactionReceivedMessage extends DSOMessageBase {
       return this;
     }
 
+    @Override
     public void serializeTo(TCByteBufferOutput serialOutput) {
       serialOutput.writeInt(syncTxnSet.size());
       for (TransactionID txId : syncTxnSet) {

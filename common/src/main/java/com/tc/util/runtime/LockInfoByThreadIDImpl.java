@@ -15,14 +15,17 @@ public class LockInfoByThreadIDImpl implements LockInfoByThreadID {
   Map waitOnLocks  = new LinkedHashMap();
   Map pendingLocks = new LinkedHashMap();
 
+  @Override
   public ArrayList getHeldLocks(ThreadID threadID) {
     return lockList((ArrayList) heldLocks.get(threadID));
   }
 
+  @Override
   public ArrayList getWaitOnLocks(ThreadID threadID) {
     return lockList((ArrayList) waitOnLocks.get(threadID));
   }
 
+  @Override
   public ArrayList getPendingLocks(ThreadID threadID) {
     return lockList((ArrayList) pendingLocks.get(threadID));
   }
@@ -35,6 +38,7 @@ public class LockInfoByThreadIDImpl implements LockInfoByThreadID {
     }
   }
 
+  @Override
   public void addLock(LockState lockState, ThreadID threadID, String value) {
     if (lockState == LockState.HOLDING) {
       addLockTo(heldLocks, threadID, value);

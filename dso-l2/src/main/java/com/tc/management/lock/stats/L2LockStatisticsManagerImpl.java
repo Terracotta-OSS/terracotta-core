@@ -67,6 +67,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         .getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
   }
 
+  @Override
   public synchronized void start(DSOChannelManager dsoChannelManager, DSOGlobalServerStats serverStats,
                                  ObjectStatsManager objStatsHelper) {
     this.channelManager = dsoChannelManager;
@@ -118,6 +119,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     sendLockStatisticsEnableDisableMessageIfNeeded(lockStatConfig.getTraceDepth(), lockStatConfig.getGatherInterval());
   }
 
+  @Override
   public synchronized boolean isLockStatisticsEnabled() {
     return this.lockStatisticsEnabled;
   }
@@ -127,6 +129,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     super.clear();
   }
 
+  @Override
   public synchronized void recordLockHopRequested(LockID lockID) {
     globalLockRecallCounter.increment();
     if (!lockStatisticsEnabled) { return; }
@@ -137,6 +140,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     }
   }
 
+  @Override
   public synchronized void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID,
                                                int numberOfPendingRequests) {
     if (!lockStatisticsEnabled) { return; }
@@ -162,6 +166,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     super.recordLockRequested(lockID, nodeID, threadID, null, lockType, numberOfPendingRequests);
   }
 
+  @Override
   public synchronized void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
                                              long awardedTimeInMillis) {
     globalLockCounter.increment();
@@ -186,6 +191,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     super.recordLockRejected(lockID, nodeID, threadID);
   }
 
+  @Override
   public synchronized void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> stackTraceElements) {
     boolean nodeWaitingForStat = lockSpecRequestedNodeIDs.remove(nodeID);
 
@@ -206,6 +212,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     }
   }
 
+  @Override
   public synchronized long getNumberOfLockRequested(LockID lockID) {
     if (!lockStatisticsEnabled) { return 0; }
 
@@ -213,6 +220,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return lsc.getNumberOfLockRequested();
   }
 
+  @Override
   public synchronized long getNumberOfLockReleased(LockID lockID) {
     if (!lockStatisticsEnabled) { return 0; }
 
@@ -220,6 +228,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return lsc.getNumberOfLockReleased();
   }
 
+  @Override
   public synchronized long getNumberOfPendingRequests(LockID lockID) {
     if (!lockStatisticsEnabled) { return 0; }
 
@@ -227,6 +236,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return lsc.getNumberOfPendingRequests();
   }
 
+  @Override
   public synchronized long getNumberOfLockHopRequests(LockID lockID) {
     if (!lockStatisticsEnabled) { return 0; }
 
@@ -234,10 +244,12 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return lsc.getNumberOfLockHopRequested();
   }
 
+  @Override
   public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
     return globalLockRecallCounter.getMostRecentSample();
   }
 
+  @Override
   public synchronized Collection<LockSpec> getLockSpecs() throws InterruptedException {
     if (!lockStatisticsEnabled) { return Collections.EMPTY_LIST; }
 
@@ -261,6 +273,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return returnSet;
   }
 
+  @Override
   public synchronized void clearAllStatsFor(NodeID nodeID) {
     boolean statExistForNode = lockSpecRequestedNodeIDs.remove(nodeID);
     if (statExistForNode) {
@@ -274,6 +287,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     }
   }
 
+  @Override
   public void enableStatsForNodeIfNeeded(NodeID nodeID) {
     if (!lockStatisticsEnabled) { return; }
 

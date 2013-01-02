@@ -68,11 +68,13 @@ public class MockConfigContext implements ConfigContext {
     this.numBeans = 0;
   }
 
+  @Override
   public IllegalConfigurationChangeHandler illegalConfigurationChangeHandler() {
     ++this.numIllegalConfigurationChangeHandlers;
     return this.returnedIllegalConfigurationChangeHandler;
   }
 
+  @Override
   public void ensureRepositoryProvides(Class theClass) {
     ++this.numEnsureRepositoryProvides;
     this.lastEnsureClass = theClass;
@@ -91,33 +93,39 @@ public class MockConfigContext implements ConfigContext {
     return lastEnsureClass;
   }
 
+  @Override
   public boolean hasDefaultFor(String xpath) {
     ++this.numHasDefaultFors;
     this.lastHasDefaultForXPath = xpath;
     return this.returnedHasDefaultFor;
   }
 
+  @Override
   public XmlObject defaultFor(String xpath) {
     ++this.numDefaultFors;
     this.lastDefaultForXPath = xpath;
     return this.returnedDefaultFor;
   }
 
+  @Override
   public Object syncLockForBean() {
     return this;
   }
 
+  @Override
   public boolean isOptional(String xpath) {
     ++this.numIsOptionals;
     this.lastIsOptionalXPath = xpath;
     return this.returnedIsOptional;
   }
 
+  @Override
   public XmlObject bean() {
     ++this.numBeans;
     return this.returnedBean;
   }
 
+  @Override
   public void itemCreated(ConfigItem item) {
     ++this.numItemCreateds;
     this.lastItemCreated = item;

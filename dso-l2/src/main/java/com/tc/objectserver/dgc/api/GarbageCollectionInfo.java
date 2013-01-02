@@ -227,6 +227,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     return gcInfo.toString();
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
 
     long iterationCount = serialInput.readLong();
@@ -249,6 +250,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(this.gcID.toLong());
     serialOutput.writeString(this.gcID.getUUID());

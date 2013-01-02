@@ -15,14 +15,17 @@ public class NullNetworkHeader implements TCNetworkHeader {
     super();
   }
 
+  @Override
   public int getHeaderByteLength() {
     return 0;
   }
 
+  @Override
   public TCByteBuffer getDataBuffer() {
     return TCByteBufferFactory.getInstance(false, 0);
   }
 
+  @Override
   public void validate() {
     return;
   }
@@ -31,6 +34,7 @@ public class NullNetworkHeader implements TCNetworkHeader {
     return;
   }
 
+  @Override
   public void recycle() {
     return;
   }

@@ -57,6 +57,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   public void testNodejoinedTwoServers() throws Exception {
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesSetupAndJoined(2);
@@ -71,6 +72,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   public void testNoConnectionThreadLeak() throws Exception {
     Thread testDEV3101NoL2Reconnect = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesSetupAndJoined_DEV3101(2);
@@ -86,6 +88,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   public void testNoConnectionThreadLeakOnL2Reconnect() throws Exception {
     Thread testDEV3101WithL2Reconnect = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
@@ -105,6 +108,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   // Test for DEV-4870
   public void testNodeJoinAfterCloseMember() throws Exception {
     Thread testAfterCloseMemberWithL2Reconnect = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
@@ -123,6 +127,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   public void testNodejoinedThreeServers() throws Exception {
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesSetupAndJoined(3);
@@ -137,6 +142,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   public void testNodejoinedSixServers() throws Exception {
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
+      @Override
       public void run() {
         try {
           nodesSetupAndJoined(6);
@@ -429,6 +435,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       this.gmNodeID = groupManager.getLocalNodeID();
     }
 
+    @Override
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeJoined -> " + nodeID);
       try {
@@ -438,6 +445,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       }
     }
 
+    @Override
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeLeft -> " + nodeID);
     }
@@ -448,6 +456,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
     private int            count = 0;
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       queue.put(msg);
       ++count;

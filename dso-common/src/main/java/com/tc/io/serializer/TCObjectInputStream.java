@@ -46,38 +46,47 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
    * 
    * @see LiteralValues, DNAEncoding
    */
+  @Override
   public Object readObject() throws ClassNotFoundException, IOException {
     return SERIALIZER_ENCODING.decode(this);
   }
 
+  @Override
   public int read() throws IOException {
     return in.read();
   }
 
+  @Override
   public int read(byte[] b) throws IOException {
     return in.read(b);
   }
 
+  @Override
   public int read(byte[] b, int off, int len) throws IOException {
     return in.read(b, off, len);
   }
 
+  @Override
   public long skip(long n) throws IOException {
     return in.skip(n);
   }
 
+  @Override
   public int available() throws IOException {
     return in.available();
   }
 
+  @Override
   public void close() throws IOException {
     in.close();
   }
 
+  @Override
   public void readFully(byte[] b) throws IOException {
     readFully(b, 0, b.length);
   }
 
+  @Override
   public void readFully(byte[] b, int off, int len) throws IOException {
     if (len < 0) throw new IndexOutOfBoundsException();
     int n = 0;
@@ -88,6 +97,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     }
   }
 
+  @Override
   public int skipBytes(int n) throws IOException {
     int total = 0;
     int cur = 0;
@@ -99,24 +109,28 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     return total;
   }
 
+  @Override
   public boolean readBoolean() throws IOException {
     int ch = in.read();
     if (ch < 0) throw new EOFException();
     return (ch != 0);
   }
 
+  @Override
   public byte readByte() throws IOException {
     int ch = in.read();
     if (ch < 0) throw new EOFException();
     return (byte) (ch);
   }
 
+  @Override
   public int readUnsignedByte() throws IOException {
     int ch = in.read();
     if (ch < 0) throw new EOFException();
     return ch;
   }
 
+  @Override
   public short readShort() throws IOException {
     int ch1 = in.read();
     int ch2 = in.read();
@@ -124,6 +138,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     return (short) ((ch1 << 8) + (ch2 << 0));
   }
 
+  @Override
   public int readUnsignedShort() throws IOException {
     int ch1 = in.read();
     int ch2 = in.read();
@@ -131,6 +146,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     return (ch1 << 8) + (ch2 << 0);
   }
 
+  @Override
   public char readChar() throws IOException {
     int ch1 = in.read();
     int ch2 = in.read();
@@ -138,6 +154,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     return (char) ((ch1 << 8) + (ch2 << 0));
   }
 
+  @Override
   public int readInt() throws IOException {
     int ch1 = in.read();
     int ch2 = in.read();
@@ -147,6 +164,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
     return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
   }
 
+  @Override
   public long readLong() throws IOException {
     final byte readBuffer[] = new byte[8];
     readFully(readBuffer, 0, 8);
@@ -155,14 +173,17 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
             + ((readBuffer[5] & 255) << 16) + ((readBuffer[6] & 255) << 8) + ((readBuffer[7] & 255) << 0));
   }
 
+  @Override
   public float readFloat() throws IOException {
     return Float.intBitsToFloat(readInt());
   }
 
+  @Override
   public double readDouble() throws IOException {
     return Double.longBitsToDouble(readLong());
   }
 
+  @Override
   public String readLine() {
     throw new UnsupportedOperationException("Use BufferedReader instead.");
   }
@@ -172,6 +193,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
    * handles null strings. 2) It handles long strings (no 65K limit that UTF Encoding poses) 3) Data should have been
    * written by TCObjectOutputStream.
    */
+  @Override
   public String readUTF() throws IOException {
     return readString();
   }
@@ -182,6 +204,7 @@ public class TCObjectInputStream implements ObjectInput, TCDataInput {
    * @throws IOException
    * @see writeUTF();
    */
+  @Override
   public String readString() throws IOException {
     int len = readInt();
     if (len < 0) return null;

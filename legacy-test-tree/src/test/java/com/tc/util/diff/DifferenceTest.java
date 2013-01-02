@@ -17,14 +17,17 @@ public class DifferenceTest extends TCTestCase {
       super(where);
     }
 
+    @Override
     public Object a() {
       throw new ImplementMe();
     }
 
+    @Override
     public Object b() {
       throw new ImplementMe();
     }
 
+    @Override
     public String toString() {
       throw new ImplementMe();
     }

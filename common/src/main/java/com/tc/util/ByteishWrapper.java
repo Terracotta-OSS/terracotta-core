@@ -27,10 +27,12 @@ class ByteishWrapper implements ByteishBuffer {
     }
   }
 
+  @Override
   public byte get(int position) {
     return nioBuf != null ? nioBuf.get(position) : tcBuf.get(position);
   }
 
+  @Override
   public int limit() {
     return nioBuf != null ? nioBuf.limit() : tcBuf.limit();
   }

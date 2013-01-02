@@ -36,10 +36,12 @@ public class ThreadID extends AbstractIdentifier {
     this.name = "thread_NULL_ID";
   }
 
+  @Override
   public String getIdentifierType() {
     return "ThreadID";
   }
 
+  @Override
   public String toString() {
     if (name == null) {
       return super.toString();

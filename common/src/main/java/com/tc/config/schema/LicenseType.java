@@ -21,14 +21,17 @@ public class LicenseType {
     this.type = type;
   }
 
+  @Override
   public boolean equals(Object that) {
     return (that instanceof LicenseType) && ((LicenseType) that).type.equals(this.type);
   }
 
+  @Override
   public int hashCode() {
     return this.type.hashCode();
   }
 
+  @Override
   public String toString() {
     return this.type;
   }

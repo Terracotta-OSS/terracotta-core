@@ -11,6 +11,7 @@ public class SingleLoaderClassProvider implements ClassProvider {
     this.loader = loader;
   }
 
+  @Override
   public Class getClassFor(String className) throws ClassNotFoundException {
     // XXX: use LoadClassUtil from toolkit
     return Class.forName(className, false, loader);

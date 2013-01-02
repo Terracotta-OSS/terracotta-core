@@ -43,6 +43,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     this.references = objectFactory.getMap(oid, false);
   }
 
+  @Override
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LogicalAction action = cursor.getLogicalAction();
@@ -83,6 +84,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
+  @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     for (Object o : references.keySet()) {
       writer.addLogicalAction(SerializationUtil.ADD, new Object[] { o });
@@ -98,6 +100,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
+  @Override
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     final int size = (int) references.size();
 
@@ -117,6 +120,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return LogicalManagedObjectFacade.createSetInstance(objectID, className, data, size);
   }
 
+  @Override
   public byte getType() {
     return SET_TYPE;
   }
@@ -144,6 +148,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return result;
   }
 
+  @Override
   public void destroy() {
     if (this.references instanceof Destroyable) {
       ((Destroyable) this.references).destroy();

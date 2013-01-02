@@ -17,6 +17,7 @@ public final class TestPersistenceTransaction implements Transaction {
   public final LinkedQueue                       commitContexts     = new LinkedQueue();
   public final LinkedQueue                       commitSyncContexts = new LinkedQueue();
 
+  @Override
   public void commit() {
     try {
       commitContexts.put(new Object());
@@ -25,6 +26,7 @@ public final class TestPersistenceTransaction implements Transaction {
     }
   }
 
+  @Override
   public void abort() {
     throw new UnsupportedOperationException();
   }

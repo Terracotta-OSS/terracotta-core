@@ -49,6 +49,7 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
     this.decoder = null; // shouldn't be used
   }
 
+  @Override
   public void initializeEvictionBroadcastMessage(final ObjectID mapObjectID, final Set evictedObjectKeys,
                                                  final int clientindex) {
     this.mapID = mapObjectID;
@@ -96,14 +97,17 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
     }
   }
 
+  @Override
   public ObjectID getMapID() {
     return this.mapID;
   }
 
+  @Override
   public Set getEvictedKeys() {
     return evictedKeys;
   }
 
+  @Override
   public int getClientIndex() {
     return this.clientIndex;
   }

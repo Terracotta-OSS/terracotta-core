@@ -27,6 +27,7 @@ public class WindowUtil implements PrettyPrintable {
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
       out.println("WindowUtil");
       PrettyPrinter rv = out;

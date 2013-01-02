@@ -55,6 +55,7 @@ public class NotifyImpl implements Notify {
   /**
    * @return True if this is the null instance
    */
+  @Override
   public boolean isNull() {
     return this.isNull;
   }
@@ -73,6 +74,7 @@ public class NotifyImpl implements Notify {
    * 
    * @param out Output stream
    */
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     if (!initialized) throw new AssertionError("Attempt to serialize an uninitialized Notify.");
     new LockIDSerializer(lockID).serializeTo(out);
@@ -87,6 +89,7 @@ public class NotifyImpl implements Notify {
    * @return This object
    * @throws IOException If error reading in
    */
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     LockIDSerializer lidsr = new LockIDSerializer();
     LockID lid = ((LockIDSerializer) lidsr.deserializeFrom(in)).getLockID();
@@ -94,17 +97,20 @@ public class NotifyImpl implements Notify {
     return this;
   }
 
+  @Override
   public int hashCode() {
     if (!initialized) throw new AssertionError("Called hashCode before initializing.");
     return hashCode;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof NotifyImpl)) return false;
     NotifyImpl cmp = (NotifyImpl) o;
     return this.lockID.equals(cmp.lockID) && this.threadID.equals(cmp.threadID) && this.all == cmp.all;
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "[" + lockID + ", " + threadID + ", " + "all: " + all + "]";
   }
@@ -112,6 +118,7 @@ public class NotifyImpl implements Notify {
   /**
    * @return Thread identfier
    */
+  @Override
   public ThreadID getThreadID() {
     return this.threadID;
   }
@@ -119,6 +126,7 @@ public class NotifyImpl implements Notify {
   /**
    * @return Lock identifier
    */
+  @Override
   public LockID getLockID() {
     return this.lockID;
   }
@@ -126,6 +134,7 @@ public class NotifyImpl implements Notify {
   /**
    * @return flag frorm using notify() vs notifyall().
    */
+  @Override
   public boolean getIsAll() {
     return this.all;
   }

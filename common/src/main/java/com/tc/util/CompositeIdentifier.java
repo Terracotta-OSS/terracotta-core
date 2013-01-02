@@ -36,10 +36,12 @@ public class CompositeIdentifier {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return this.hashCode;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof CompositeIdentifier) {
       CompositeIdentifier other = (CompositeIdentifier) obj;
@@ -49,6 +51,7 @@ public class CompositeIdentifier {
     return false;
   }
 
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
     for (int i = 0; i < components.length; i++) {

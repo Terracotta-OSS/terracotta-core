@@ -22,10 +22,12 @@ public class Log4JAppenderToTCAppender extends AppenderSkeleton {
     appender.append(LogLevelImpl.fromLog4JLevel(event.getLevel()), event.getMessage(), t);
   }
 
+  @Override
   public void close() {
     //
   }
 
+  @Override
   public boolean requiresLayout() {
     return false;
   }

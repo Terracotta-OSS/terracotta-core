@@ -43,6 +43,7 @@ public class BitChangeNotReflected extends TCTestCase {
       this.barrier = barrier;
     }
 
+    @Override
     public void run() {
       try {
         run2();
@@ -75,6 +76,7 @@ public class BitChangeNotReflected extends TCTestCase {
       this.barrier = barrier;
     }
 
+    @Override
     public void run() {
       try {
         run2();

@@ -70,6 +70,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     this.channelStats = channelStats;
   }
 
+  @Override
   public void requestValues(final ClientID clientID, final ObjectID mapID,
                             final Collection<ServerMapGetValueRequest> requests) {
 
@@ -78,6 +79,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     processRequest(clientID, requestContext);
   }
 
+  @Override
   public void requestSize(final ServerMapRequestID requestID, final ClientID clientID, final ObjectID mapID,
                           ServerMapGetAllSizeHelper helper) {
     final ServerMapRequestSizeContext requestContext = new ServerMapRequestSizeContext(requestID, clientID, mapID,
@@ -86,6 +88,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     processRequest(clientID, requestContext);
   }
 
+  @Override
   public void requestAllKeys(ServerMapRequestID requestID, ClientID clientID, ObjectID mapID) {
     final ServerMapRequestAllKeysContext requestContext = new ServerMapRequestAllKeysContext(
                                                                                              requestID,
@@ -102,6 +105,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
+  @Override
   public void sendResponseFor(final ObjectID mapID, final ManagedObject managedObject) {
     final ManagedObjectState state = managedObject.getManagedObjectState();
 
@@ -164,6 +168,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
+  @Override
   public void sendMissingObjectResponseFor(ObjectID mapID) {
     final Collection<ServerMapRequestContext> requests = this.requestQueue.remove(mapID);
 
@@ -317,6 +322,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print("requestQueue: ").flush();
@@ -337,6 +343,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       return this.requests.removeAll(mapID);
     }
 
+    @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       out.visit(this.requests).flush();
       return out;

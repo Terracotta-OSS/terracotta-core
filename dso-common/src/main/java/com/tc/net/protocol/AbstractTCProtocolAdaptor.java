@@ -30,10 +30,12 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     init();
   }
 
+  @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
     processIncomingData(source, data, length);
   }
 
+  @Override
   public final TCByteBuffer[] getReadBuffers() {
     if (mode == MODE_HEADER) { return new TCByteBuffer[] { header.getDataBuffer() }; }
 

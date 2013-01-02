@@ -48,6 +48,7 @@ public class TCFutureTest extends TestCase {
     final Object val = new Object();
 
     Runnable run = new Runnable() {
+      @Override
       public void run() {
         try {
           Thread.sleep(1000);
@@ -131,6 +132,7 @@ public class TCFutureTest extends TestCase {
   
   public void testCancel(final TCFuture f1) {
     Runnable run = new Runnable() {
+      @Override
       public void run() {
         f1.cancel();
       }

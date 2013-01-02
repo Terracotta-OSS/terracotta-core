@@ -20,10 +20,12 @@ public class LocksRecallServiceImpl implements LocksRecallService {
     this.lockRecallSink = lockRecallStage.getSink();
   }
 
+  @Override
   public void recallLocks(Set<LockID> lockIds) {
     this.lockRecallSink.add(new LocksToRecallContext(lockIds));
   }
 
+  @Override
   public void recallLocksInline(Set<LockID> lockIds) {
     lockRecaller.recallLocksInline(lockIds);
   }

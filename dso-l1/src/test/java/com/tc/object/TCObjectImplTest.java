@@ -64,11 +64,13 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       this.test2 = test2;
     }
 
+    @Override
     public void __tc_getallfields(final Map map) {
       map.put(getClass().getName() + "." + "test1", this.test1);
       map.put(getClass().getName() + "." + "test2", this.test2);
     }
 
+    @Override
     public void __tc_setfield(final String fieldName, final Object value) {
       if (fieldName.equals(TestObject.class.getName() + ".test1")) {
         this.test1 = (String) value;
@@ -78,10 +80,12 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       }
     }
 
+    @Override
     public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
     }
@@ -93,10 +97,12 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     private final Map                     fields = new HashMap();
     private final TestClientObjectManager objectManager;
 
+    @Override
     public Field getParentField() {
       return null;
     }
 
+    @Override
     public String getParentFieldName() {
       return "className.this$0";
     }
@@ -110,16 +116,19 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       }
     }
 
+    @Override
     public TCField[] getPortableFields() {
       final Collection fs = this.fields.values();
       return (TCField[]) fs.toArray(new TCField[fs.size()]);
     }
 
+    @Override
     public Constructor getConstructor() throws SecurityException {
       // TODO Auto-generated method stub
       return null;
     }
 
+    @Override
     public TCClass getSuperclass() {
       // TODO Auto-generated method stub
       return null;
@@ -138,6 +147,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       }
     }
 
+    @Override
     public TCField getField(final String name) {
       return getDeclaredField(name);
     }
@@ -152,39 +162,48 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return null;
     }
 
+    @Override
     public boolean isIndexed() {
       // TODO Auto-generated method stub
       return false;
     }
 
+    @Override
     public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force) {
       //
     }
 
+    @Override
     public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
       //
     }
 
+    @Override
     public String getName() {
       return TestObject.class.getName();
     }
 
+    @Override
     public Class getComponentType() {
       return null;
     }
 
+    @Override
     public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
       return addTo;
     }
 
+    @Override
     public boolean isNonStaticInner() {
       return false;
     }
 
+    @Override
     public boolean isLogical() {
       return false;
     }
 
+    @Override
     public TCObject createTCObject(final ObjectID id, final Object peer, final boolean isNew) {
       throw new ImplementMe();
     }
@@ -206,14 +225,17 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return null;
     }
 
+    @Override
     public boolean isUseNonDefaultConstructor() {
       return false;
     }
 
+    @Override
     public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) {
       return null;
     }
 
+    @Override
     public Class getPeerClass() {
       throw new ImplementMe();
     }
@@ -222,26 +244,32 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
+    @Override
     public ClientObjectManager getObjectManager() {
       return this.objectManager;
     }
 
+    @Override
     public boolean isProxyClass() {
       return false;
     }
 
+    @Override
     public String getExtendingClassName() {
       return getName();
     }
 
+    @Override
     public boolean isEnum() {
       return false;
     }
 
+    @Override
     public boolean isPortableField(final long fieldOffset) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean useResolveLockWhileClearing() {
       return true;
     }
@@ -250,14 +278,17 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
+    @Override
     public boolean isNotClearable() {
       return false;
     }
 
+    @Override
     public List<Method> getPostCreateMethods() {
       throw new ImplementMe();
     }
 
+    @Override
     public List<Method> getPreCreateMethods() {
       throw new ImplementMe();
     }

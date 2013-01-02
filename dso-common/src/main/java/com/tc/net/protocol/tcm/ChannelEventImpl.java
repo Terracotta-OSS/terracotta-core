@@ -17,24 +17,29 @@ public class ChannelEventImpl implements ChannelEvent {
     this.timestamp = new Date();
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "@" + System.identityHashCode(this) + "[type = " + this.type + ", timestamp = "
            + timestamp + ", channel  = " + channel + " remote node  : " + channel.getRemoteNodeID();
 
   }
 
+  @Override
   public MessageChannel getChannel() {
     return channel;
   }
 
+  @Override
   public ChannelID getChannelID() {
     return getChannel().getChannelID();
   }
 
+  @Override
   public Date getTimestamp() {
     return timestamp;
   }
 
+  @Override
   public ChannelEventType getType() {
     return type;
   }

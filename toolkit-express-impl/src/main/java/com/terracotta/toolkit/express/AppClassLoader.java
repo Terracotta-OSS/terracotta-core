@@ -44,6 +44,7 @@ class AppClassLoader extends ClassLoader {
     final Iterator<WeakReference<ClassLoader>> iter = loaders.iterator();
 
     return new Iterable<ClassLoader>() {
+      @Override
       public Iterator<ClassLoader> iterator() {
         return new Iterator<ClassLoader>() {
           private ClassLoader loader;
@@ -52,6 +53,7 @@ class AppClassLoader extends ClassLoader {
             advance();
           }
 
+          @Override
           public boolean hasNext() {
             return loader != null;
           }
@@ -68,6 +70,7 @@ class AppClassLoader extends ClassLoader {
             }
           }
 
+          @Override
           public ClassLoader next() {
             final ClassLoader rv = loader;
             if (rv == null) { throw new NoSuchElementException(); }
@@ -75,6 +78,7 @@ class AppClassLoader extends ClassLoader {
             return rv;
           }
 
+          @Override
           public void remove() {
             throw new UnsupportedOperationException();
           }
@@ -130,10 +134,12 @@ class AppClassLoader extends ClassLoader {
 
   private static class EmptyEnumeration<T> implements Enumeration<T> {
 
+    @Override
     public boolean hasMoreElements() {
       return false;
     }
 
+    @Override
     public T nextElement() {
       throw new NoSuchElementException();
     }

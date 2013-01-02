@@ -9,6 +9,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 public class TestWireProtocolAdaptorFactory implements WireProtocolAdaptorFactory {
   public final NoExceptionLinkedQueue newWireProtocolAdaptorCalls = new NoExceptionLinkedQueue();
 
+  @Override
   public TCProtocolAdaptor newWireProtocolAdaptor(WireProtocolMessageSink sink) {
     WireProtocolAdaptor rv = new WireProtocolAdaptorImpl(sink);
     newWireProtocolAdaptorCalls.put(sink);

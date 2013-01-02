@@ -14,14 +14,17 @@ import java.io.ObjectOutput;
  */
 public final class LongSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeLong(((Long)o).longValue());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return Long.valueOf(in.readLong());
   }
 
+  @Override
   public byte getSerializerID() {
     return LONG;
   }

@@ -66,10 +66,12 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
 
     public final NoExceptionLinkedQueue nextBatchQueue = new NoExceptionLinkedQueue();
 
+    @Override
     public void setNextBatch(long start, long end) {
       nextBatchQueue.put(new Object[] { Long.valueOf(start), Long.valueOf(end) });
     }
 
+    @Override
     public boolean isBatchRequestPending() {
       return true;
     }
@@ -79,14 +81,17 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
   private static class TestPersistentMapStore implements PersistentMapStore {
     private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
 
+    @Override
     public String get(String key) {
       return store.get(key);
     }
 
+    @Override
     public void put(String key, String value) {
       store.put(key, value);
     }
 
+    @Override
     public boolean remove(String key) {
       return store.remove(key) != null;
     }

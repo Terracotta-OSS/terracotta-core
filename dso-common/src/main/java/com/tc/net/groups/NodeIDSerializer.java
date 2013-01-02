@@ -50,6 +50,7 @@ public class NodeIDSerializer implements TCSerializable {
     }
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte type = serialInput.readByte();
     this.nodeID = getImpl(type);
@@ -57,6 +58,7 @@ public class NodeIDSerializer implements TCSerializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeByte(this.nodeID.getNodeType());
     this.nodeID.serializeTo(serialOutput);

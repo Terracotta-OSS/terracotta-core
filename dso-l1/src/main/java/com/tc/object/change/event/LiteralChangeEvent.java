@@ -22,6 +22,7 @@ public class LiteralChangeEvent implements TCChangeBufferEvent {
     return newValue instanceof ObjectID;
   }
 
+  @Override
   public void write(DNAWriter writer) {
     writer.addLiteralValue(newValue);
   }

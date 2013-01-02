@@ -28,7 +28,8 @@ public class OrderedSink implements Sink {
 
   private long           current = 0;
   private SortedSet      pending = new TreeSet(new Comparator() {
-                                   public int compare(Object o1, Object o2) {
+                                   @Override
+                                  public int compare(Object o1, Object o2) {
                                      long s1 = ((OrderedEventContext) o1).getSequenceID();
                                      long s2 = ((OrderedEventContext) o2).getSequenceID();
                                      if (s1 < s2) return -1;
@@ -44,6 +45,7 @@ public class OrderedSink implements Sink {
     this.predicate = DefaultAddPredicate.getInstance();
   }
 
+  @Override
   public synchronized void add(EventContext context) {
     if (!predicate.accept(context)) {
       logger.warn("Predicate forced to ignore message " + context);
@@ -86,11 +88,13 @@ public class OrderedSink implements Sink {
   /**
    * this implementation isnt really lossy.
    */
+  @Override
   public boolean addLossy(EventContext context) {
     add(context);
     return true;
   }
 
+  @Override
   public void addMany(Collection contexts) {
     for (Iterator i = contexts.iterator(); i.hasNext();) {
       EventContext ec = (EventContext) i.next();
@@ -98,40 +102,49 @@ public class OrderedSink implements Sink {
     }
   }
 
+  @Override
   public synchronized void clear() {
     pending.clear();
     current = 0;
     sink.clear();
   }
 
+  @Override
   public synchronized AddPredicate getPredicate() {
     return predicate;
   }
 
+  @Override
   public synchronized void setAddPredicate(AddPredicate ap) {
     this.predicate = ap;
   }
 
+  @Override
   public int size() {
     return sink.size();
   }
 
+  @Override
   public void enableStatsCollection(boolean enable) {
     sink.enableStatsCollection(enable);
   }
 
+  @Override
   public Stats getStats(long frequency) {
     return sink.getStats(frequency);
   }
 
+  @Override
   public Stats getStatsAndReset(long frequency) {
     return sink.getStatsAndReset(frequency);
   }
 
+  @Override
   public boolean isStatsCollectionEnabled() {
     return sink.isStatsCollectionEnabled();
   }
 
+  @Override
   public void resetStats() {
     sink.resetStats();
   }

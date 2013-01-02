@@ -22,10 +22,12 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     super();
   }
 
+  @Override
   public ObjectRequestID getRequestID() {
     return null;
   }
 
+  @Override
   public ObjectIDSet getRequestedObjectIDs() {
     return this.objectIDs;
   }
@@ -34,6 +36,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     this.objectIDs = IDs;
   }
 
+  @Override
   public ObjectIDSet getRemoved() {
     return this.removed;
   }
@@ -42,43 +45,53 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     this.removed = rm;
   }
 
+  @Override
   public void initialize(ObjectRequestID rID, Set<ObjectID> requestedObjectIDs, int requestDepth,
                          ObjectIDSet removeObjects) {
     //
   }
 
+  @Override
   public void send() {
     //
   }
 
+  @Override
   public MessageChannel getChannel() {
     return null;
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return new ClientID(0);
   }
 
+  @Override
   public int getRequestDepth() {
     return 400;
   }
 
+  @Override
   public void recycle() {
     return;
   }
 
+  @Override
   public String getRequestingThreadName() {
     return "TestThreadDummy";
   }
 
+  @Override
   public LOOKUP_STATE getLookupState() {
     return LOOKUP_STATE.CLIENT;
   }
 
+  @Override
   public ClientID getClientID() {
     return new ClientID(0);
   }
 
+  @Override
   public Object getKey() {
     return null;
   }

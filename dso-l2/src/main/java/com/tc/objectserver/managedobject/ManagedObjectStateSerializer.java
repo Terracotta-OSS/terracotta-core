@@ -13,6 +13,7 @@ import java.io.ObjectOutput;
 
 public class ManagedObjectStateSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) {
     if (!(o instanceof ManagedObjectState)) throw new AssertionError("Attempt to serialize an unknown type: " + o);
     try {
@@ -24,6 +25,7 @@ public class ManagedObjectStateSerializer implements Serializer {
     }
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) {
     try {
       byte type = in.readByte();
@@ -33,6 +35,7 @@ public class ManagedObjectStateSerializer implements Serializer {
     }
   }
 
+  @Override
   public byte getSerializerID() {
     return MANAGED_OBJECT_STATE;
   }

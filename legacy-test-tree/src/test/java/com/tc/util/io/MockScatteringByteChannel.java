@@ -12,10 +12,12 @@ import java.nio.channels.ScatteringByteChannel;
  */
 public class MockScatteringByteChannel extends MockReadableByteChannel implements ScatteringByteChannel {
 
+  @Override
   public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
     throw new IOException("Not yet implemented");
   }
 
+  @Override
   public long read(ByteBuffer[] dsts) throws IOException {
     checkOpen();
     if (dsts == null) { throw new IOException("null ByteBuffer[] passed in to read(ByteBuffer[])"); }

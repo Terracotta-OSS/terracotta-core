@@ -15,10 +15,12 @@ import java.util.Set;
 
 public class NonReplicatedTransactionManager implements ReplicatedTransactionManager {
 
+  @Override
   public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
     throw new AssertionError("Shouldn't be called");
   }
 
+  @Override
   public void addObjectSyncTransaction(ServerTransaction txn) {
     throw new AssertionError("Shouldn't be called");
   }
@@ -27,18 +29,22 @@ public class NonReplicatedTransactionManager implements ReplicatedTransactionMan
     throw new AssertionError("Shouldn't be called");
   }
 
+  @Override
   public void publishResetRequest(NodeID nodeID) {
     throw new AssertionError("Shouldn't be called");
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     throw new AssertionError("Shouldn't be called");
   }
 
+  @Override
   public void init(Set knownObjectIDs) {
     throw new AssertionError("Shouldn't be called");
   }
 
+  @Override
   public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     throw new AssertionError("Shouldn't be called");
   }

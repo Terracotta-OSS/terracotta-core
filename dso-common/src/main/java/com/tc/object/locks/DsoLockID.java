@@ -29,15 +29,18 @@ public class DsoLockID implements LockID {
     return null;
   }
 
+  @Override
   public LockIDType getLockType() {
     return LockIDType.DSO;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     objectId = serialInput.readLong();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(objectId);
   }
@@ -58,6 +61,7 @@ public class DsoLockID implements LockID {
     }
   }
 
+  @Override
   public String toString() {
     return "DsoLockID(" + new ObjectID(objectId) + ")";
   }
@@ -66,6 +70,7 @@ public class DsoLockID implements LockID {
     return new ObjectID(objectId);
   }
   
+  @Override
   public int compareTo(Object o) {
     if (o instanceof DsoLockID) {
       DsoLockID other = (DsoLockID)o;

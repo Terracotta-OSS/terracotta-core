@@ -33,40 +33,49 @@ public class StandardConfigContext implements ConfigContext {
     this.illegalConfigurationChangeHandler = illegalConfigurationChangeHandler;
   }
 
+  @Override
   public IllegalConfigurationChangeHandler illegalConfigurationChangeHandler() {
     return this.illegalConfigurationChangeHandler;
   }
 
+  @Override
   public void ensureRepositoryProvides(Class theClass) {
     beanRepository.ensureBeanIsOfClass(theClass);
   }
 
+  @Override
   public boolean hasDefaultFor(String xpath) throws XmlException {
     return this.defaultValueProvider.possibleForXPathToHaveDefault(xpath)
            && this.defaultValueProvider.hasDefault(this.beanRepository.rootBeanSchemaType(), xpath);
   }
 
+  @Override
   public XmlObject defaultFor(String xpath) throws XmlException {
     return this.defaultValueProvider.defaultFor(this.beanRepository.rootBeanSchemaType(), xpath);
   }
 
+  @Override
   public boolean isOptional(String xpath) throws XmlException {
     return this.defaultValueProvider.isOptional(this.beanRepository.rootBeanSchemaType(), xpath);
   }
 
+  @Override
   public XmlObject bean() {
     return this.beanRepository.bean();
   }
 
+  @Override
   public Object syncLockForBean() {
     return this.beanRepository;
   }
 
+  @Override
   public void itemCreated(ConfigItem item) {
     if (item instanceof ConfigurationChangeListener) this.beanRepository
         .addListener((ConfigurationChangeListener) item);
   }
 
+  @Override
   public String toString() {
     return "<ConfigContext around repository: " + this.beanRepository + ">";
   }

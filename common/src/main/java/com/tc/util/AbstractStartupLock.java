@@ -28,6 +28,7 @@ public abstract class AbstractStartupLock implements StartupLock {
     this.retry = retries;
   }
 
+  @Override
   public synchronized void release() {
     try {
       if (lock != null) {
@@ -52,6 +53,7 @@ public abstract class AbstractStartupLock implements StartupLock {
     }
   }
 
+  @Override
   public synchronized boolean canProceed(TCRandomFileAccess randomFileAccess) throws LocationNotCreatedException,
       FileNotCreatedException {
     // Get a file channel for the file

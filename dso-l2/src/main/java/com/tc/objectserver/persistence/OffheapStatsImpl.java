@@ -33,6 +33,7 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
     this.monitoredResource = monitoredResource;
   }
 
+  @Override
   public long getOffheapMaxSize() {
     if (isOffheapResource()) {
       return monitoredResource.getTotal();
@@ -41,6 +42,7 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
     }
   }
 
+  @Override
   public long getOffheapReservedSize() {
     if (isOffheapResource()) {
       return monitoredResource.getReserved();
@@ -49,6 +51,7 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
     }
   }
 
+  @Override
   public long getOffheapUsedSize() {
     if (isOffheapResource()) {
       refreshUsedSizeIfNecessary();
@@ -80,6 +83,7 @@ public class OffheapStatsImpl implements OffheapStats, PrettyPrintable {
     return monitoredResource.getType() == MonitoredResource.Type.OFFHEAP;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.flush();
     out.println("OffHeap Stats:");

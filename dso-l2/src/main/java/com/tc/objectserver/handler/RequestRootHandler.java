@@ -25,6 +25,7 @@ public class RequestRootHandler extends AbstractEventHandler {
   private DSOChannelManager channelManager;
   private TCLogger          logger;
 
+  @Override
   public void handleEvent(EventContext context) {
     RequestRootMessage rrm = (RequestRootMessage) context;
     ObjectID rootID = objectManager.lookupRootID(rrm.getRootName());
@@ -41,6 +42,7 @@ public class RequestRootHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

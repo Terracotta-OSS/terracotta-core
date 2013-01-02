@@ -63,11 +63,13 @@ public class ToggleableReferenceManager {
       super(peer);
     }
 
+    @Override
     public void strongRef(Object obj) {
       if (obj == null) { throw new NullPointerException(); }
       this.strongReference = obj;
     }
 
+    @Override
     public void clearStrongRef() {
       this.strongReference = null;
     }

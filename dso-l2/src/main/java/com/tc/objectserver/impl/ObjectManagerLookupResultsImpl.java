@@ -24,14 +24,17 @@ public class ObjectManagerLookupResultsImpl implements ObjectManagerLookupResult
     this.missingObjectIDs = missingObjectIDs;
   }
 
+  @Override
   public Map<ObjectID, ManagedObject> getObjects() {
     return this.objects;
   }
 
+  @Override
   public ObjectIDSet getLookupPendingObjectIDs() {
     return lookupPendingObjectIDs;
   }
 
+  @Override
   public ObjectIDSet getMissingObjectIDs() {
     return missingObjectIDs;
   }

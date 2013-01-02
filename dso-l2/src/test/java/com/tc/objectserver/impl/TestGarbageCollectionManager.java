@@ -15,38 +15,47 @@ import java.util.SortedSet;
 
 public class TestGarbageCollectionManager implements GarbageCollectionManager {
 
+  @Override
   public void deleteObjects(SortedSet<ObjectID> objects) {
     // do nothing
   }
 
+  @Override
   public ObjectIDSet nextObjectsToDelete() {
     return TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
+  @Override
   public void scheduleInlineGarbageCollectionIfNecessary() {
     // do nothing
   }
 
+  @Override
   public void scheduleGarbageCollection(GCType type, long delay) {
     // do nothing
   }
 
+  @Override
   public void doGarbageCollection(GCType type) {
     // do nothing
   }
 
+  @Override
   public void scheduleGarbageCollection(GCType type) {
     // do nothing
   }
 
+  @Override
   public void initializeContext(ConfigurationContext context) {
     // do nothing
   }
 
+  @Override
   public void scheduleInlineCleanupIfNecessary() {
     // do nothing
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     // do nothing
   }

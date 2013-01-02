@@ -26,6 +26,7 @@ public class ArrayApplicator extends BaseApplicator {
     super(encoding, TCLogging.getLogger(ArrayApplicator.class));
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     if (ClassUtils.isPrimitiveArray(pojo)) { return addTo; }
 
@@ -39,6 +40,7 @@ public class ArrayApplicator extends BaseApplicator {
     return addTo;
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
@@ -81,6 +83,7 @@ public class ArrayApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     writer.setArrayLength(Array.getLength(pojo));
 
@@ -110,6 +113,7 @@ public class ArrayApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }

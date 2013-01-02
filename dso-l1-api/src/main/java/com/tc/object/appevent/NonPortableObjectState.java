@@ -128,6 +128,7 @@ public class NonPortableObjectState implements Serializable {
     return this.typeName;
   }
 
+  @Override
   public String toString() {
     return getLabel();
   }

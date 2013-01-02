@@ -52,6 +52,7 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
     this.decoder = null; // shouldn't be used
   }
 
+  @Override
   public void initializeGetAllKeysResponse(ObjectID mapObjectID, ServerMapRequestID serverMapRequestID, Set set) {
     this.keys = set;
     this.mapID = mapObjectID;
@@ -103,18 +104,22 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
     }
   }
 
+  @Override
   public ObjectID getMapID() {
     return this.mapID;
   }
 
+  @Override
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public Set getAllKeys() {
     return this.keys;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_ALL_KEYS;
   }

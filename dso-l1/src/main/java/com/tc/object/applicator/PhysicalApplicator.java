@@ -34,6 +34,7 @@ public class PhysicalApplicator extends BaseApplicator {
     this.clazz = clazz;
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     if (!(pojo instanceof TransparentAccess)) return addTo;
 
@@ -62,6 +63,7 @@ public class PhysicalApplicator extends BaseApplicator {
     return addTo;
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
@@ -77,6 +79,7 @@ public class PhysicalApplicator extends BaseApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
 
@@ -138,6 +141,7 @@ public class PhysicalApplicator extends BaseApplicator {
 
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }

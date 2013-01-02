@@ -39,6 +39,7 @@ public class ObjectSyncCompleteMessage extends AbstractGroupMessage implements O
     out.writeLong(this.sequence);
   }
 
+  @Override
   public long getSequenceID() {
     return this.sequence;
   }

@@ -64,6 +64,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     metaData = new ArrayList<MetaDataDescriptorInternal>();
   }
 
+  @Override
   public boolean isEmpty() {
     if ((physicalEvents != null) && (!physicalEvents.isEmpty())) { return false; }
     if ((literalValueChangedEvents != null) && (!literalValueChangedEvents.isEmpty())) { return false; }
@@ -74,6 +75,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     return true;
   }
 
+  @Override
   public void writeTo(DNAWriter writer) {
     if (dnaCreated.attemptSet()) {
       if (arrayEvents != null) {
@@ -108,10 +110,12 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     }
   }
 
+  @Override
   public void literalValueChanged(Object newValue) {
     literalValueChangedEvents.add(new LiteralChangeEvent(newValue));
   }
 
+  @Override
   public void fieldChanged(String classname, String fieldname, Object newValue, int index) {
     Assert.eval(newValue != null);
 
@@ -140,6 +144,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     }
   }
 
+  @Override
   public void arrayChanged(int startPos, Object array, int newLength) {
     // could use a better collection that maintain put order for repeated additions
     Integer key = Integer.valueOf(-startPos); // negative int is used for sub-arrays
@@ -155,6 +160,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     arrayEvents.put(key, new ArrayElementChangeEvent(startPos, array, newLength));
   }
 
+  @Override
   public void logicalInvoke(int method, Object[] parameters) {
     // TODO: It might be useful (if it doesn't take too much CPU) to collapse logical operations. For instance,
     // if a put() is followed by a remove() on the same key we don't need to send anything. Or if multiple put()s are
@@ -163,14 +169,17 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     logicalEvents.add(new LogicalChangeEvent(method, parameters));
   }
 
+  @Override
   public TCObject getTCObject() {
     return tcObject;
   }
 
+  @Override
   public void addMetaDataDescriptor(MetaDataDescriptorInternal md) {
     metaData.add(md);
   }
 
+  @Override
   public boolean hasMetaData() {
     return !metaData.isEmpty();
   }

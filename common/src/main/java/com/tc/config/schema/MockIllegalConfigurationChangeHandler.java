@@ -26,6 +26,7 @@ public class MockIllegalConfigurationChangeHandler implements IllegalConfigurati
     this.lastNewValue = null;
   }
 
+  @Override
   public void changeFailed(ConfigItem item, Object oldValue, Object newValue) {
     ++this.numChangeFaileds;
     this.lastItem = item;

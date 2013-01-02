@@ -34,16 +34,19 @@ public class DsoVolatileLockID implements LockID {
     return null;
   }
 
+  @Override
   public LockIDType getLockType() {
     return LockIDType.DSO_VOLATILE;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     objectId = serialInput.readLong();
     fieldName = serialInput.readString();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(objectId);
     serialOutput.writeString(fieldName);
@@ -53,10 +56,12 @@ public class DsoVolatileLockID implements LockID {
     return new ObjectID(objectId);
   }
 
+  @Override
   public int hashCode() {
     return (5 * (((int) objectId) ^ ((int) (objectId >>> 32)))) ^ (7 * fieldName.hashCode());
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -67,10 +72,12 @@ public class DsoVolatileLockID implements LockID {
     }
   }
 
+  @Override
   public String toString() {
     return "DsoVolatileLockID(" + new ObjectID(objectId) + "." + fieldName + ")";
   }
   
+  @Override
   public int compareTo(Object o) {
     if (o instanceof DsoVolatileLockID) {
       DsoVolatileLockID other = (DsoVolatileLockID)o;

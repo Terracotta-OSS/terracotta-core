@@ -46,6 +46,7 @@ public class ClientObjectReferenceSetTest extends TCTestCase {
     }
 
     new Thread(new Runnable() {
+      @Override
       public void run() {
         while (!stop.get()) {
           ThreadUtil.reallySleep(r.nextInt(100));
@@ -92,6 +93,7 @@ public class ClientObjectReferenceSetTest extends TCTestCase {
 
     private volatile int count;
 
+    @Override
     public void notifyReferenceSetChanged() {
       count++;
       System.err.println("XXX Client Object Ref Set refreshed - " + count);

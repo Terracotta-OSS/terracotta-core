@@ -33,6 +33,7 @@ public class BlockingStartupLock extends AbstractStartupLock implements StartupL
     }
   }
 
+  @Override
   public boolean isBlocked() {
     return this.isBlocked;
   }

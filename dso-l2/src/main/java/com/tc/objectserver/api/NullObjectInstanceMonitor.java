@@ -12,14 +12,17 @@ public class NullObjectInstanceMonitor implements ObjectInstanceMonitor {
     //
   }
 
+  @Override
   public void instanceCreated(String type) {
     //
   }
 
+  @Override
   public void instanceDestroyed(String type) {
     //
   }
 
+  @Override
   public Map getInstanceCounts() {
     return Collections.EMPTY_MAP;
   }

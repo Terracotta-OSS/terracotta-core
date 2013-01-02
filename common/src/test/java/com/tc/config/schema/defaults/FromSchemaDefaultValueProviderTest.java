@@ -18,6 +18,7 @@ public class FromSchemaDefaultValueProviderTest extends TCTestCase {
 
   private SchemaDefaultValueProvider provider;
 
+  @Override
   public void setUp() throws Exception {
     this.provider = new SchemaDefaultValueProvider();
   }

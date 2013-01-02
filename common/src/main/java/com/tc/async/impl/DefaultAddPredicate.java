@@ -22,6 +22,7 @@ public class DefaultAddPredicate implements AddPredicate {
    * 
    * @see com.tc.async.api.AddPredicate#accept(com.tc.async.api.EventContext)
    */
+  @Override
   public boolean accept(EventContext context) {
     return true;
   }

@@ -35,6 +35,7 @@ public class ServerConfigurationSource implements ConfigurationSource {
     this.pwProvider = pwProvider;
   }
 
+  @Override
   public InputStream getInputStream(long maxTimeoutMillis) throws IOException, ConfigurationSetupException {
     try {
       ServerURL theURL = new ServerURL(host, port, "/config" , (int)maxTimeoutMillis, securityInfo);
@@ -49,14 +50,17 @@ public class ServerConfigurationSource implements ConfigurationSource {
     }
   }
 
+  @Override
   public File directoryLoadedFrom() {
     return null;
   }
 
+  @Override
   public boolean isTrusted() {
     return true;
   }
 
+  @Override
   public String toString() {
     return "server at '" + this.host + ":" + this.port + "'";
   }

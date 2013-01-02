@@ -32,6 +32,7 @@ public class ClientID implements NodeID, Serializable {
     this.id = id;
   }
 
+  @Override
   public boolean isNull() {
     return NULL_ID.equals(this);
   }
@@ -63,19 +64,23 @@ public class ClientID implements NodeID, Serializable {
     return id;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readLong();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(this.id);
   }
 
+  @Override
   public byte getNodeType() {
     return CLIENT_NODE_TYPE;
   }
 
+  @Override
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }

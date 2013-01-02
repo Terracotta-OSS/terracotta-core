@@ -70,21 +70,25 @@ public class TCConnectionEventsTest extends TestCase {
 
     boolean close, connect, eof, error;
 
+    @Override
     public void closeEvent(TCConnectionEvent event) {
       close = true;
       throw new MyException();
     }
 
+    @Override
     public void connectEvent(TCConnectionEvent event) {
       connect = true;
       throw new MyException();
     }
 
+    @Override
     public void endOfFileEvent(TCConnectionEvent event) {
       eof = true;
       throw new MyException();
     }
 
+    @Override
     public void errorEvent(TCConnectionErrorEvent errorEvent) {
       error = true;
       throw new MyException();

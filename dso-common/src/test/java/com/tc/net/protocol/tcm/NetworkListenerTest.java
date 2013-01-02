@@ -28,12 +28,14 @@ public class NetworkListenerTest extends TestCase {
 
   CommunicationsManager commsMgr;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     commsMgr = new CommunicationsManagerImpl("TestCommMgr", new NullMessageMonitor(),
                                              new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
 

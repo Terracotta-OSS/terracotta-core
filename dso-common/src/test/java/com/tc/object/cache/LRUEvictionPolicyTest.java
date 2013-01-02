@@ -100,26 +100,32 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       this.accessed = accessed;
     }
 
+    @Override
     public ObjectID getObjectID() {
       return this.id;
     }
 
+    @Override
     public void markAccessed() {
       this.accessed++;
     }
 
+    @Override
     public TLinkable getNext() {
       return this.next;
     }
 
+    @Override
     public TLinkable getPrevious() {
       return this.previous;
     }
 
+    @Override
     public void setNext(final TLinkable next) {
       this.next = next;
     }
 
+    @Override
     public void setPrevious(final TLinkable previous) {
       this.previous = previous;
     }
@@ -129,19 +135,23 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       return "TestCacheable[" + this.id + "]";
     }
 
+    @Override
     public void clearAccessed() {
       this.accessed = 0;
 
     }
 
+    @Override
     public boolean recentlyAccessed() {
       return (this.accessed > 0);
     }
 
+    @Override
     public boolean canEvict() {
       return true;
     }
 
+    @Override
     public int accessCount(final int factor) {
       this.accessed = this.accessed / factor;
       return this.accessed;
@@ -165,6 +175,7 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       return getObjectID().hashCode();
     }
 
+    @Override
     public boolean isCacheManaged() {
       return true;
     }

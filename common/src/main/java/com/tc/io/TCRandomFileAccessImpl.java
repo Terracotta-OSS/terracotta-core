@@ -13,6 +13,7 @@ public class TCRandomFileAccessImpl implements TCRandomFileAccess {
     randomAccessFile = null;
   }
 
+  @Override
   public TCFileChannel getChannel(TCFile tcFile, String mode) throws FileNotFoundException {
     randomAccessFile = new RandomAccessFile(tcFile.getFile(), mode);
     return new TCFileChannelImpl(randomAccessFile.getChannel());

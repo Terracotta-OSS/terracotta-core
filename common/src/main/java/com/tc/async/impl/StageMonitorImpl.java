@@ -23,6 +23,7 @@ class StageMonitorImpl implements StageMonitor {
     this.formatter = formatter;
   }
 
+  @Override
   public synchronized void eventBegin(int queueDepth) {
     snapshots.add(new Snapshot(queueDepth));
   }
@@ -58,6 +59,7 @@ class StageMonitorImpl implements StageMonitor {
     }
   }
 
+  @Override
   public synchronized Analysis analyze() {
     long elapsed = System.currentTimeMillis() - begin;
     int min = -1, max = 0;
@@ -74,6 +76,7 @@ class StageMonitorImpl implements StageMonitor {
                             Integer.valueOf(min), Integer.valueOf(max), safeDiv(sum, snapshots.size()));
   }
 
+  @Override
   public synchronized void flush() {
     snapshots.clear();
     begin = System.currentTimeMillis();
@@ -97,26 +100,32 @@ class StageMonitorImpl implements StageMonitor {
       this.avgQueueDepth = avgQueueDepth;
     }
 
+    @Override
     public Number getElapsedTime() {
       return elapsedTime;
     }
 
+    @Override
     public Number getAvgQueueDepth() {
       return avgQueueDepth;
     }
 
+    @Override
     public Number getMaxQueueDepth() {
       return maxQueueDepth;
     }
 
+    @Override
     public Number getMinQueueDepth() {
       return minQueueDepth;
     }
 
+    @Override
     public Number getEventsPerSecond() {
       return eventsPerSecond;
     }
 
+    @Override
     public Number getEventCount() {
       return eventCount;
     }

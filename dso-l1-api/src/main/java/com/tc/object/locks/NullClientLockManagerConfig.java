@@ -16,6 +16,7 @@ public class NullClientLockManagerConfig implements ClientLockManagerConfig {
     this.timeoutInterval = timeoutInterval;
   }
   
+  @Override
   public long getTimeoutInterval() {
     return timeoutInterval;
   }
@@ -24,6 +25,7 @@ public class NullClientLockManagerConfig implements ClientLockManagerConfig {
     this.timeoutInterval = timeoutInterval;
   }
 
+  @Override
   public int getStripedCount() {
     return ClientLockManagerConfig.DEFAULT_STRIPED_COUNT;
   }

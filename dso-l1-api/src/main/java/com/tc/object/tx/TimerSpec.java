@@ -116,6 +116,7 @@ public final class TimerSpec {
     }
   }
 
+  @Override
   public String toString() {
     if (this.signature == NO_ARGS) { return this.signature.toString(); }
 
@@ -152,6 +153,7 @@ public final class TimerSpec {
       return this.argCount;
     }
 
+    @Override
     public String toString() {
       return desc;
     }

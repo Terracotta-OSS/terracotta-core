@@ -10,11 +10,13 @@ public class MockNetworkStackHarness implements NetworkStackHarness {
   public boolean wasAttachNewConnectionCalled = false;
   public boolean wasFinalizeStackCalled       = false;
 
+  @Override
   public MessageTransport attachNewConnection(TCConnection connection) {
     this.wasAttachNewConnectionCalled = true;
     return null;
   }
 
+  @Override
   public void finalizeStack() {
     this.wasFinalizeStackCalled = true;
   }

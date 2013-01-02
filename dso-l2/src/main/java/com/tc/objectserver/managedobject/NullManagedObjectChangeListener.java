@@ -11,6 +11,7 @@ public class NullManagedObjectChangeListener implements ManagedObjectChangeListe
     super();
   }
 
+  @Override
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
     // null
   }

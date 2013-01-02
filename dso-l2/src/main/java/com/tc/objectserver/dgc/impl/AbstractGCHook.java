@@ -20,18 +20,22 @@ public abstract class AbstractGCHook extends DGCRequestThrottler implements GCHo
     this.inlineCleanup = quiet;
   }
 
+  @Override
   public void startMonitoringReferenceChanges() {
     this.collector.startMonitoringReferenceChanges();
   }
 
+  @Override
   public void stopMonitoringReferenceChanges() {
     this.collector.stopMonitoringReferenceChanges();
   }
 
+  @Override
   public void waitUntilReadyToGC() {
     this.objectManager.waitUntilReadyToGC();
   }
 
+  @Override
   public int getLiveObjectCount() {
     return this.objectManager.getLiveObjectCount();
   }

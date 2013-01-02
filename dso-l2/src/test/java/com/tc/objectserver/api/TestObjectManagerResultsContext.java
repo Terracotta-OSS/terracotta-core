@@ -25,16 +25,19 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
     return results;
   }
 
+  @Override
   public void setResults(ObjectManagerLookupResults results) {
     this.results.putAll(results.getObjects());
     if (!results.getMissingObjectIDs().isEmpty()) { throw new AssertionError("Missing Objects : "
                                                                              + results.getMissingObjectIDs()); }
   }
 
+  @Override
   public ObjectIDSet getLookupIDs() {
     return objectIDs;
   }
 
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     return new ObjectIDSet();
   }

@@ -23,8 +23,10 @@ public abstract class Difference {
 
   public abstract Object a();
   public abstract Object b();
+  @Override
   public abstract String toString();
   
+  @Override
   public boolean equals(Object that) {
     if (! (that instanceof Difference)) return false;
     

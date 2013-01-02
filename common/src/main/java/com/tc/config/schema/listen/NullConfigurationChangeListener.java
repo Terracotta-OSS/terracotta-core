@@ -20,6 +20,7 @@ public class NullConfigurationChangeListener implements ConfigurationChangeListe
     // Nothing here.
   }
   
+  @Override
   public void configurationChanged(XmlObject oldConfig, XmlObject newConfig) {
     // Nothing here.
   }

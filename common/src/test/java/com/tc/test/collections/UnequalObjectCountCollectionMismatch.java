@@ -24,11 +24,13 @@ class UnequalObjectCountCollectionMismatch extends CollectionMismatch {
     this.numInCollectionTwo = numInCollectionTwo;
   }
 
+  @Override
   public String toString() {
     return "Unequal number of objects: " + originatingString() + " occurs " + this.numInCollectionOne + " times "
            + "in collection one, but " + this.numInCollectionTwo + " times in collection two.";
   }
 
+  @Override
   public boolean equals(Object that) {
     if (!(that instanceof UnequalObjectCountCollectionMismatch)) return false;
 

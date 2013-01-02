@@ -20,26 +20,32 @@ public class TestTCMessage implements TCMessage {
     return;
   }
 
+  @Override
   public TCMessageType getMessageType() {
     return type;
   }
 
+  @Override
   public void hydrate() {
     return;
   }
 
+  @Override
   public void dehydrate() {
     return;
   }
 
+  @Override
   public void send() {
     return;
   }
 
+  @Override
   public MessageChannel getChannel() {
     return null;
   }
 
+  @Override
   public int getTotalLength() {
     return 100;
   }
@@ -53,14 +59,17 @@ public class TestTCMessage implements TCMessage {
 
   }
 
+  @Override
   public SessionID getLocalSessionID() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     throw new ImplementMe();
   }
 
+  @Override
   public NodeID getDestinationNodeID() {
     throw new ImplementMe();
   }

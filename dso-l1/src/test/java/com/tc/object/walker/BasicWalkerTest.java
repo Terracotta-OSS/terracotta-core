@@ -103,6 +103,7 @@ public class BasicWalkerTest extends TestCase {
   private static class MyOutputSink implements PrintVisitor.OutputSink {
     final StringBuffer buffer = new StringBuffer();
 
+    @Override
     public void output(String line) {
       buffer.append(line + "\n");
     }
@@ -110,11 +111,13 @@ public class BasicWalkerTest extends TestCase {
 
   private static class MyValueFormatter implements PrintVisitor.ValueFormatter {
 
+    @Override
     public String format(Object o) {
       if (o instanceof String) { return "\"" + o + "\""; }
       return String.valueOf(o);
     }
 
+    @Override
     public String valueAdornment(MemberValue value) {
       return null;
     }
@@ -132,10 +135,12 @@ public class BasicWalkerTest extends TestCase {
       logicalTypes.add(LinkedList.class);
     }
 
+    @Override
     public boolean includeFieldsForType(Class type) {
       return !logicalTypes.contains(type);
     }
 
+    @Override
     public boolean shouldTraverse(MemberValue value) {
       Object val = value.getValueObject();
 

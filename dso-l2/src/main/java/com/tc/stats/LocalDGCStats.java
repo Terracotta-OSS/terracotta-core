@@ -19,20 +19,24 @@ public class LocalDGCStats extends AbstractNotifyingMBean implements DGCMBean, T
     this.gcStatsPublisher = gcStatsPublisher;
   }
 
+  @Override
   public GCStats[] getGarbageCollectorStats() {
     return this.gcStatsPublisher.getGarbageCollectorStats();
   }
 
+  @Override
   public long getLastCollectionGarbageCount() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
   }
 
+  @Override
   public long getLastCollectionElapsedTime() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getElapsedTime() : -1;
   }
 
+  @Override
   public void reset() {
     // TODO: implement this?
   }

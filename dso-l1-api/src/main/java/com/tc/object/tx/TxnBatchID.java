@@ -20,6 +20,7 @@ public class TxnBatchID extends AbstractIdentifier {
     super(batchID);
   }
 
+  @Override
   public String getIdentifierType() {
     return "TxnBatchID";
   }

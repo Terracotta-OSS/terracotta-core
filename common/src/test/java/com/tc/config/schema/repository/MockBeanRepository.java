@@ -68,25 +68,30 @@ public class MockBeanRepository implements MutableBeanRepository {
     this.exceptionOnEnsureBeanIsOfClass = exceptionOnEnsureBeanIsOfClass;
   }
 
+  @Override
   public void saveCopyOfBeanInAnticipationOfFutureMutation() {
     // nothing here yet
   }
 
+  @Override
   public void didMutateBean() {
     // nothing here yet
   }
 
+  @Override
   public void ensureBeanIsOfClass(Class theClass) {
     ++this.numEnsureBeanIsOfClasses;
     this.lastClass = theClass;
     if (this.exceptionOnEnsureBeanIsOfClass != null) throw this.exceptionOnEnsureBeanIsOfClass;
   }
 
+  @Override
   public XmlObject bean() {
     ++this.numBeans;
     return this.returnedBean;
   }
 
+  @Override
   public void setBean(XmlObject bean, String sourceDescription) throws XmlException {
     ++this.numSetBeans;
     this.lastSetBean = bean;
@@ -94,11 +99,13 @@ public class MockBeanRepository implements MutableBeanRepository {
     if (this.exceptionOnSetBean != null) throw this.exceptionOnSetBean;
   }
 
+  @Override
   public void addListener(ConfigurationChangeListener listener) {
     ++this.numAddListeners;
     this.lastListener = listener;
   }
 
+  @Override
   public void addValidator(ConfigurationValidator validator) {
     ++this.numAddValidators;
     this.lastValidator = validator;
@@ -140,6 +147,7 @@ public class MockBeanRepository implements MutableBeanRepository {
     this.returnedBean = returnedBean;
   }
 
+  @Override
   public SchemaType rootBeanSchemaType() {
     ++this.numRootBeanSchemaTypes;
     return this.returnedRootBeanSchemaType;

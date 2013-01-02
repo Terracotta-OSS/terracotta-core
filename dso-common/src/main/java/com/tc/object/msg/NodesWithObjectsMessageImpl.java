@@ -39,18 +39,22 @@ public class NodesWithObjectsMessageImpl extends DSOMessageBase implements Nodes
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public Set<ObjectID> getObjectIDs() {
     return objectIDs;
   }
 
+  @Override
   public ThreadID getThreadID() {
     return threadID;
   }
 
+  @Override
   public void setThreadID(final ThreadID threadID) {
     this.threadID = threadID;
   }
 
+  @Override
   public void addObjectID(final ObjectID objectID) {
     this.objectIDs.add(objectID);
   }

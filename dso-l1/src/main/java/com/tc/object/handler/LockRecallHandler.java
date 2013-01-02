@@ -25,6 +25,7 @@ public class LockRecallHandler extends AbstractEventHandler implements LockRecal
     recallLocksInline(recallContext.getLocksToRecall());
   }
 
+  @Override
   public void recallLocksInline(final Set<LockID> locks) {
     for (final LockID lock : locks) {
       this.lockManager.recall(null, null, lock, ServerLockLevel.WRITE, -1, true);

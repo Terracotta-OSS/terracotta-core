@@ -32,6 +32,7 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
     this.l1Info = l1InfoBean;
   }
 
+  @Override
   public void doClientDump() {
     logger.info("Client dump: ");
     tclient.dump();
@@ -42,14 +43,17 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
     }
   }
 
+  @Override
   public void setThreadDumpCount(int count) {
     threadDumpCount = count;
   }
 
+  @Override
   public void setThreadDumpInterval(long interval) {
     threadDumpInterval = interval;
   }
 
+  @Override
   public void doThreadDump() throws Exception {
     debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
     for (int i = 0; i < threadDumpCount; i++) {
@@ -58,6 +62,7 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
     }
   }
 
+  @Override
   public void reset() {
     //
   }

@@ -35,23 +35,28 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     this.serverNamesOfThisGroup = serverNamesOfThisGroup;
   }
 
+  @Override
   public void closeMember(ServerID serverID) {
     this.groupManager.closeMember(serverID);
   }
 
+  @Override
   public NodeID getLocalNodeID() {
     return groupManager.getLocalNodeID();
   }
 
+  @Override
   public NodeID join(Node thisNode, NodesStore nodesStore) {
     // NOP here, the underlying groupManager should have already joined to the entire clustered.
     return this.groupManager.getLocalNodeID();
   }
 
+  @Override
   public void registerForGroupEvents(GroupEventsListener listener) {
     groupListeners.add(listener);
   }
 
+  @Override
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
     GroupMessageListener prev = messageListeners.put(msgClass.getName(), listener);
     if (prev != null) {
@@ -60,6 +65,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     groupManager.registerForMessages(msgClass, this);
   }
 
+  @Override
   public void messageReceived(NodeID from, GroupMessage msg) {
     if (!isThisGroup(from)) return;
     GroupMessageListener listener = messageListeners.get(msg.getClass().getName());
@@ -72,31 +78,38 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     }
   }
 
+  @Override
   public void routeMessages(Class msgClass, Sink sink) {
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
 
+  @Override
   public void sendAll(GroupMessage msg) {
     groupManager.sendAll(msg, groupNodeIDs);
   }
 
+  @Override
   public void sendAll(GroupMessage msg, Set nodeIDs) {
     groupManager.sendAll(msg, nodeIDs);
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, groupNodeIDs);
   }
 
+  @Override
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, nodeIDs);
   }
 
+  @Override
   public void sendTo(NodeID nodeID, GroupMessage msg) throws GroupException {
     Assert.assertTrue(isThisGroup(nodeID));
     groupManager.sendTo(nodeID, msg);
   }
 
+  @Override
   public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) throws GroupException {
     Assert.assertTrue(isThisGroup(nodeID));
     return groupManager.sendToAndWaitForResponse(nodeID, msg);
@@ -108,21 +121,25 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
    * doesn't send zap requests as of now. But this might change in the future. Active-Active group comm can participate
    * in deciding a winner in a split brain scenario. Then this has to change.
    */
+  @Override
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
     groupManager.setZapNodeRequestProcessor(processor);
   }
 
+  @Override
   public void zapNode(NodeID nodeID, int type, String reason) {
     Assert.assertTrue(isThisGroup(nodeID));
     groupManager.zapNode(nodeID, type, reason);
   }
 
+  @Override
   public void nodeJoined(NodeID nodeID) {
     if (!isThisGroup(nodeID)) return;
     groupNodeIDs.add(nodeID);
     fireNodeEvent(nodeID, true);
   }
 
+  @Override
   public void nodeLeft(NodeID nodeID) {
     if (!isThisGroup(nodeID)) return;
     groupNodeIDs.remove(nodeID);
@@ -154,10 +171,12 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     }
   }
 
+  @Override
   public boolean isNodeConnected(NodeID sid) {
     return groupManager.isNodeConnected(sid);
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     StringBuilder strBuffer = new StringBuilder();
     strBuffer.append(VirtualTCGroupManagerImpl.class.getSimpleName()).append(" [ ");
@@ -170,6 +189,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     return out;
   }
 
+  @Override
   public boolean isServerConnected(String nodeName) {
     return this.groupManager.isServerConnected(nodeName);
   }

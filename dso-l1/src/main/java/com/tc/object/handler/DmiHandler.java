@@ -19,6 +19,7 @@ public class DmiHandler extends AbstractEventHandler {
     this.dmiMgr = dmiMgr;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     DmiEventContext dmiEvent = (DmiEventContext) context;
     dmiMgr.invoke(dmiEvent.getDmc());

@@ -46,6 +46,7 @@ public class CollectionComparerTestBase extends TCTestCase {
     private static String PREFIX = "A";
     private static String SUFFIX = "B";
 
+    @Override
     public String toString(Object o) {
       if (o == null) return "__NULL__";
       else return PREFIX + o.toString() + SUFFIX;
@@ -53,6 +54,7 @@ public class CollectionComparerTestBase extends TCTestCase {
   }
 
   private class MyComparator implements EqualityComparator {
+    @Override
     public boolean isEquals(Object one, Object two) {
       if ((one == null) != (two == null)) return false;
       if (one == null) return true;

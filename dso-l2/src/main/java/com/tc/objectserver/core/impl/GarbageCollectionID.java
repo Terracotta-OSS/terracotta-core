@@ -53,6 +53,7 @@ public class GarbageCollectionID extends AbstractIdentifier {
     return "GarbageCollectionID";
   }
 
+  @Override
   public String toString() {
     return getIdentifierType() + "=" + "[" + getIdentifier() + "]";
   }

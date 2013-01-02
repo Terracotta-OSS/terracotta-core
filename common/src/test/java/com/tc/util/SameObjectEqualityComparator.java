@@ -14,6 +14,7 @@ public class SameObjectEqualityComparator implements EqualityComparator {
     // Use INSTANCE instead.
   }
 
+  @Override
   public boolean isEquals(Object one, Object two) {
     return one == two;
   }

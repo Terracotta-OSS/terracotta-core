@@ -20,6 +20,7 @@ public abstract class XPathBasedConfigItemTestBase extends TCTestCase {
   protected MockXmlObject     bean;
   protected MockXmlObject     subBean;
 
+  @Override
   protected void setUp() throws Exception {
     this.context = new MockConfigContext();
     this.xpath = "foobar/baz";

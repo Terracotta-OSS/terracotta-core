@@ -18,6 +18,7 @@ public class LogicalChangeEvent implements TCChangeBufferEvent {
     this.method = method;
   }
 
+  @Override
   public void write(DNAWriter writer) {
     writer.addLogicalAction(method, parameters);
   }

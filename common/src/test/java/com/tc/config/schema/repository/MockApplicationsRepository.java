@@ -34,16 +34,19 @@ public class MockApplicationsRepository implements ApplicationsRepository {
     this.numApplicationNames = 0;
   }
   
+  @Override
   public void addRepositoryValidator(ConfigurationValidator validator) {
     // nothing here yet
   }
 
+  @Override
   public MutableBeanRepository repositoryFor(String applicationName) {
     ++this.numRepositoryFors;
     this.lastApplicationName = applicationName;
     return (MutableBeanRepository) this.returnedRepositories.get(applicationName);
   }
 
+  @Override
   public Iterator applicationNames() {
     ++this.numApplicationNames;
     return this.returnedRepositories.keySet().iterator();

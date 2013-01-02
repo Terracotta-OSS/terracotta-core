@@ -82,22 +82,27 @@ public class RestartTestHelper {
       this.serverControl = serverControl;
     }
 
+    @Override
     public ServerControl getServerControl() {
       return serverControl;
     }
 
+    @Override
     public void setIsCrashy(boolean b) {
       this.isCrashy = b;
     }
 
+    @Override
     public boolean isCrashy() {
       return this.isCrashy;
     }
 
+    @Override
     public void setRestartInterval(long l) {
       this.restartInterval = l;
     }
 
+    @Override
     public long getRestartInterval() {
       return this.restartInterval;
     }

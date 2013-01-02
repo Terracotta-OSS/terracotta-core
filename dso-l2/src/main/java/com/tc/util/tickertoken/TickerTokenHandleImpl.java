@@ -19,16 +19,19 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
     this.key = key;
   }
 
+  @Override
   public String getIdentifier() {
     return this.identifier;
   }
 
+  @Override
   public void enableTriggerToken() {
     synchronized (triggerToken) {
       triggerToken.set(true);
     }
   }
 
+  @Override
   public synchronized void waitTillComplete() {
     enableTriggerToken();
     while (!this.complete) {
@@ -40,19 +43,23 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
     }
   }
 
+  @Override
   public synchronized boolean isComplete() {
     return this.complete;
   }
 
+  @Override
   public synchronized void complete() {
     this.complete = true;
     notifyAll();
   }
 
+  @Override
   public void cancel() {
     complete();
   }
 
+  @Override
   public TickerTokenKey getKey() {
     return this.key;
   }

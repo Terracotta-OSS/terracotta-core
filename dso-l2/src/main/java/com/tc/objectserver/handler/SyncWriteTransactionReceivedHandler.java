@@ -26,6 +26,7 @@ public class SyncWriteTransactionReceivedHandler extends AbstractEventHandler {
     this.channelManager = channelManager;
   }
 
+  @Override
   public void handleEvent(final EventContext context) {
     // send the message to the client
     SyncWriteTransactionReceivedContext syncCxt = (SyncWriteTransactionReceivedContext) context;

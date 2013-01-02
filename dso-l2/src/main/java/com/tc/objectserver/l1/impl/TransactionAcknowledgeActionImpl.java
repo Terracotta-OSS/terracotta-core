@@ -32,6 +32,7 @@ public class TransactionAcknowledgeActionImpl implements TransactionAcknowledgeA
     this.transactionBatchManager = transactionBatchManager;
   }
 
+  @Override
   public void acknowledgeTransaction(ServerTransactionID stxID) {
     try {
       NodeID nodeID = stxID.getSourceID();

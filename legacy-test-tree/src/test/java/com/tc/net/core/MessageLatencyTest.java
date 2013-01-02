@@ -28,12 +28,14 @@ public class MessageLatencyTest extends TestCase {
   private final RecordTimeSink serversink = new RecordTimeSink(true);
   private final RecordTimeSink clientsink = new RecordTimeSink(false);
 
+  @Override
   protected void setUp() throws Exception {
     connMgr = new TCConnectionManagerImpl();
     server = new SimpleServer(serversink);
     server.start();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     connMgr.shutdown();
     server.stop();
@@ -103,6 +105,7 @@ public class MessageLatencyTest extends TestCase {
       this.respond = respond;
     }
 
+    @Override
     public void putMessage(GenericNetworkMessage msg) {
       long recvTime = System.currentTimeMillis();
       long sentTime = msg.getPayload()[0].getLong();

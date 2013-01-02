@@ -19,10 +19,12 @@ public class LFUConfigImpl implements LFUConfig {
                                                                                      && ignorePercentage <= 100);
   }
 
+  @Override
   public float getAgingFactor() {
     return agingFactor;
   }
 
+  @Override
   public int getRecentlyAccessedIgnorePercentage() {
     return ignorePercentage;
   }

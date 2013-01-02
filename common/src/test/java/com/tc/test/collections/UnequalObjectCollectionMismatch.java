@@ -18,6 +18,7 @@ class UnequalObjectCollectionMismatch extends CollectionMismatch {
     super(originating, comparedAgainst, originatingIsInCollectionOne, originatingIndex, comparedAgainstIndex, describer);
   }
 
+  @Override
   public String toString() {
     if (originating() != null && comparedAgainst() != null && (originating() instanceof Differenceable)
         && (comparedAgainst() instanceof Differenceable)) {

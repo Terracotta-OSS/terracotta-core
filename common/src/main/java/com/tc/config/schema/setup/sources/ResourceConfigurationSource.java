@@ -25,6 +25,7 @@ public class ResourceConfigurationSource implements ConfigurationSource {
     this.relativeTo = relativeTo;
   }
 
+  @Override
   public InputStream getInputStream(long maxTimeoutMillis) throws ConfigurationSetupException {
     InputStream out = this.relativeTo.getResourceAsStream(this.path);
     if (out == null) throw new ConfigurationSetupException("Resource '" + this.path + "', relative to class "
@@ -32,14 +33,17 @@ public class ResourceConfigurationSource implements ConfigurationSource {
     return out;
   }
   
+  @Override
   public File directoryLoadedFrom() {
     return null;
   }
 
+  @Override
   public boolean isTrusted() {
     return false;
   }
 
+  @Override
   public String toString() {
     return "Java resource at '" + this.path + "', relative to class " + this.relativeTo.getName();
   }

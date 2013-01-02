@@ -46,6 +46,7 @@ public class GlobalTransactionDescriptor {
     return this.state == COMMIT_COMPLETE;
   }
 
+  @Override
   public String toString() {
     return "GlobalTransactionDescriptor[" + stxn + "," + gid + "," + state + "]";
   }
@@ -54,10 +55,12 @@ public class GlobalTransactionDescriptor {
     return stxn.getClientTransactionID();
   }
 
+  @Override
   public int hashCode() {
     return (37 * stxn.hashCode()) + gid.hashCode();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == null) return false;
     if (!(o instanceof GlobalTransactionDescriptor)) return false;

@@ -51,6 +51,7 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
     this.sourceConnection = source;
   }
   
+  @Override
   public void doRecycleOnWrite() {
     getWireProtocolHeader().recycle();
     AbstractTCNetworkMessage messagePayLoad = (AbstractTCNetworkMessage) getMessagePayload();
@@ -59,14 +60,17 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
     }
   }
 
+  @Override
   public short getMessageProtocol() {
     return ((WireProtocolHeader) getHeader()).getProtocol();
   }
 
+  @Override
   public WireProtocolHeader getWireProtocolHeader() {
     return ((WireProtocolHeader) getHeader());
   }
 
+  @Override
   public TCConnection getSource() {
     return sourceConnection;
   }

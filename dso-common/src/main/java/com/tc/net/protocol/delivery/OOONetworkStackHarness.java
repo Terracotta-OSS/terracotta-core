@@ -35,6 +35,7 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
     this.reconnectConfig = reconnectConfig;
   }
 
+  @Override
   protected void connectStack() {
     channel.setSendLayer(oooLayer);
     oooLayer.setReceiveLayer(channel);
@@ -59,6 +60,7 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
     }
   }
 
+  @Override
   protected void createIntermediateLayers() {
     oooLayer = (isClient) ? factory.createNewClientInstance(reconnectConfig) : factory
         .createNewServerInstance(reconnectConfig);

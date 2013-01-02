@@ -20,6 +20,7 @@ public class ObjectStatsManagerImpl implements ObjectStatsManager {
     this.objectStore = store;
   }
 
+  @Override
   public String getObjectTypeFromID(ObjectID id) {
     if (!objectStore.containsObject(id)) { return null; }
 

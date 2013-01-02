@@ -21,6 +21,7 @@ public class DataDirectoryHelper extends BaseDirectoryHelper {
     super(theClass, directoryPath);
   }
 
+  @Override
   protected File fetchDirectory() throws IOException {
     ClassBasedDirectoryTree tree = new ClassBasedDirectoryTree(getRoot());
     File theDirectory = tree.getDirectory(getTargetClass());
@@ -29,6 +30,7 @@ public class DataDirectoryHelper extends BaseDirectoryHelper {
     return theDirectory;
   }
 
+  @Override
   public File getFile(String path) throws IOException {
     File theFile = super.getFile(path);
     if (!theFile.exists()) throw new FileNotFoundException("No file '" + theFile.getAbsolutePath() + "' exists.");

@@ -46,6 +46,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
    * 
    * @see LiteralValues, DNAEncoding
    */
+  @Override
   public void writeObject(Object obj) {
     if (obj != null && obj.getClass().getName().charAt(0) == '[') {
       SERIALIZER_ENCODING.encodeArray(obj, this);
@@ -60,6 +61,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
    * @throws IOException
    * @see writeUTF();
    */
+  @Override
   public void writeString(String string) {
     if (string == null) {
       writeInt(-1);
@@ -74,6 +76,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void flush() {
     try {
       out.flush();
@@ -82,6 +85,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeBytes(String s) {
     int len = s.length();
     try {
@@ -93,6 +97,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeChars(String s) {
     int len = s.length();
     try {
@@ -111,10 +116,12 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
    * handles null strings. 2) It handles long strings (no 65K limit that UTF Encoding poses) 3) Cant be read by
    * DataInputStream. Use TCObjectInputStream.
    */
+  @Override
   public void writeUTF(String str) {
     writeString(str);
   }
 
+  @Override
   public void close() {
     flush();
     try {
@@ -124,6 +131,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void write(int b) {
     try {
       out.write(b);
@@ -132,10 +140,12 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void write(byte[] value) {
     write(value, 0, value.length);
   }
 
+  @Override
   public void write(byte[] value, int offset, int length) {
     try {
       out.write(value, offset, length);
@@ -144,6 +154,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeBoolean(boolean value) {
     try {
       out.write(value ? 1 : 0);
@@ -152,6 +163,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeByte(int value) {
     try {
       out.write(value);
@@ -160,6 +172,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeChar(int v) {
     try {
       out.write((v >>> 8) & 0xFF);
@@ -169,14 +182,17 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeDouble(double value) {
     writeLong(Double.doubleToLongBits(value));
   }
 
+  @Override
   public void writeFloat(float value) {
     writeInt(Float.floatToIntBits(value));
   }
 
+  @Override
   public void writeInt(int v) {
     try {
       out.write((v >>> 24) & 0xFF);
@@ -189,6 +205,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
 
   }
 
+  @Override
   public void writeLong(long v) {
     final byte writeBuffer[] = new byte[8];
     writeBuffer[0] = (byte) (v >>> 56);
@@ -206,6 +223,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
     }
   }
 
+  @Override
   public void writeShort(int v) {
     try {
       out.write((v >>> 8) & 0xFF);

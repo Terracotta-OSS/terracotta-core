@@ -14,6 +14,7 @@ public class SampledCumulativeCounterImpl extends SampledCounterImpl implements 
     cumulativeCount = new AtomicLong(config.getInitialValue());
   }
 
+  @Override
   public long getCumulativeValue() {
     if (resetOnSample) {
       return cumulativeCount.get();

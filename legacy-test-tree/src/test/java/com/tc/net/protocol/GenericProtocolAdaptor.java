@@ -23,19 +23,23 @@ public class GenericProtocolAdaptor extends AbstractTCProtocolAdaptor {
     this.sink = sink;
   }
 
+  @Override
   protected TCNetworkMessage createMessage(TCConnection conn, TCNetworkHeader hdr, TCByteBuffer[] data) {
     GenericNetworkMessage rv = new GenericNetworkMessage(conn, hdr, data);
     return rv;
   }
 
+  @Override
   protected AbstractTCNetworkHeader getNewProtocolHeader() {
     return new GenericNetworkHeader();
   }
 
+  @Override
   protected int computeDataLength(TCNetworkHeader hdr) {
     return ((GenericNetworkHeader) hdr).getMessageDataLength();
   }
 
+  @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
     GenericNetworkMessage msg = (GenericNetworkMessage) processIncomingData(source, data, length);
 

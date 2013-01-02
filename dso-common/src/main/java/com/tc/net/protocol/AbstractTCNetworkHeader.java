@@ -59,12 +59,15 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     this(null, min, max);
   }
 
+  @Override
   public TCByteBuffer getDataBuffer() {
     return data;
   }
 
+  @Override
   abstract public void validate() throws TCProtocolException;
 
+  @Override
   public void recycle() {
     Assert.assertTrue(localAllocation);
     if (data != null) {

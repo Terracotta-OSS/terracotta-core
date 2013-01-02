@@ -14,11 +14,13 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 public class TransactionAcknowledgementHandler extends AbstractEventHandler {
   private ServerTransactionManager transactionManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     AcknowledgeTransactionMessage atm = (AcknowledgeTransactionMessage) context;
     transactionManager.acknowledgement(atm.getRequesterID(), atm.getRequestID(), atm.getSourceNodeID());
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext scc = (ServerConfigurationContext) context;

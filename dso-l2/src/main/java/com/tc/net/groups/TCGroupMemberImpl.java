@@ -38,6 +38,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     this.channel.addListener(this);
   }
 
+  @Override
   public MessageChannel getChannel() {
     return channel;
   }
@@ -45,11 +46,13 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   /*
    * Use a wrapper to send old tribes GroupMessage out through channel's TCMessage
    */
+  @Override
   public void send(GroupMessage msg) throws GroupException {
     if (!channel.isOpen()) { throw new GroupException("Channel is not ready: " + toString()); }
     sendMessage(msg);
   }
 
+  @Override
   public void sendIgnoreNotReady(GroupMessage msg) {
     if (!channel.isOpen()) {
       logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg);
@@ -70,6 +73,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
             + joined + "; memberAdding:" + memberAdding + "; HighPri: " + isHighPriorityNode());
   }
 
+  @Override
   public void notifyChannelEvent(ChannelEvent event) {
     if (event.getChannel() == channel) {
       if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
@@ -85,53 +89,65 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     }
   }
 
+  @Override
   public ServerID getLocalNodeID() {
     return localNodeID;
   }
 
+  @Override
   public ServerID getPeerNodeID() {
     return peerNodeID;
   }
 
+  @Override
   public void setTCGroupManager(TCGroupManagerImpl manager) {
     this.manager = manager;
   }
 
+  @Override
   public TCGroupManagerImpl getTCGroupManager() {
     return manager;
   }
 
+  @Override
   public boolean isReady() {
     waitForMemberAdded();
     return (ready.get());
   }
 
+  @Override
   public void setReady(boolean isReady) {
     ready.set(isReady);
   }
 
+  @Override
   public boolean isJoinedEventFired() {
     return (joined.get());
   }
 
+  @Override
   public void setJoinedEventFired(boolean isReady) {
     joined.set(isReady);
   }
 
+  @Override
   public void close() {
     ready.set(false);
     debugInfo("Closing channel: " + channel);
     getChannel().close();
   }
 
+  @Override
   public boolean isHighPriorityNode() {
     return (localNodeID.compareTo(peerNodeID) > 0);
   }
 
+  @Override
   public synchronized void memberAddingInProcess() {
     memberAdding = true;
   }
 
+  @Override
   public synchronized void abortMemberAdding() {
     if (memberAdding) {
       memberAdding = false;
@@ -139,6 +155,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     }
   }
 
+  @Override
   public synchronized void notifyMemberAdded() {
     memberAdding = false;
     notifyAll();

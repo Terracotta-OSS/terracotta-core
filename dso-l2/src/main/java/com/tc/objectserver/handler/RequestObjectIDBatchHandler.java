@@ -29,6 +29,7 @@ public class RequestObjectIDBatchHandler extends AbstractEventHandler {
     this.sequenceProvider = sequenceProvider;
   }
 
+  @Override
   public synchronized void handleEvent(EventContext context) {
     final ObjectIDBatchRequest m = (ObjectIDBatchRequest) context;
     final NodeID nodeID = m.getRequestingNodeID();
@@ -50,6 +51,7 @@ public class RequestObjectIDBatchHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext scc = (ServerConfigurationContext) context;

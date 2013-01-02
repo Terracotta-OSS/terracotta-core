@@ -24,10 +24,12 @@ public class ConfigurationContextImpl implements ConfigurationContext {
     this.stageManager = stageManager;
   }
 
+  @Override
   public Stage getStage(String name) {
     return stageManager.getStage(name);
   }
 
+  @Override
   public TCLogger getLogger(Class clazz) {
     return TCLogging.getLogger(clazz);
   }

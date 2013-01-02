@@ -36,10 +36,12 @@ public class EnsureWritableDirTest extends TCTestCase {
     boolean caughtNPE = false;
     try {
       TCFileUtils.ensureWritableDir(null, new EnsureWritableDirReporter() {
+        @Override
         public void reportFailedCreate(File dir, Exception e) {
           fail("null directory should NPE");
         }
 
+        @Override
         public void reportReadOnly(File dir, Exception e) {
           fail("null directory should NPE");
         }
@@ -57,10 +59,12 @@ public class EnsureWritableDirTest extends TCTestCase {
   public void testNormalDir() throws Exception {
     File tmpDir = createTmpDir();
     boolean result = TCFileUtils.ensureWritableDir(tmpDir, new EnsureWritableDirReporter() {
+      @Override
       public void reportFailedCreate(File dir, Exception e) {
         fail();
       }
 
+      @Override
       public void reportReadOnly(File dir, Exception e) {
         fail();
       }
@@ -75,10 +79,12 @@ public class EnsureWritableDirTest extends TCTestCase {
     File tmpDir = createTmpDir();
     File childDir = new File(tmpDir, "child");
     boolean result = TCFileUtils.ensureWritableDir(childDir, new EnsureWritableDirReporter() {
+      @Override
       public void reportFailedCreate(File dir, Exception e) {
         fail();
       }
 
+      @Override
       public void reportReadOnly(File dir, Exception e) {
         fail();
       }
@@ -111,10 +117,12 @@ public class EnsureWritableDirTest extends TCTestCase {
 
     final int calls[] = new int[] { 0 };
     boolean result = TCFileUtils.ensureWritableDir(tmpDir, new EnsureWritableDirReporter() {
+      @Override
       public void reportFailedCreate(File dir, Exception e) {
         fail();
       }
 
+      @Override
       public void reportReadOnly(File dir, Exception e) {
         ++calls[0];
       }
@@ -137,10 +145,12 @@ public class EnsureWritableDirTest extends TCTestCase {
     File child = new File(tmpDir, "child");
     final int calls[] = new int[] { 0 };
     boolean result = TCFileUtils.ensureWritableDir(child, new EnsureWritableDirReporter() {
+      @Override
       public void reportFailedCreate(File dir, Exception e) {
         ++calls[0];
       }
 
+      @Override
       public void reportReadOnly(File dir, Exception e) {
         fail();
       }
@@ -158,10 +168,12 @@ public class EnsureWritableDirTest extends TCTestCase {
     assertTrue(child.createNewFile());
     final int calls[] = new int[] { 0 };
     boolean result = TCFileUtils.ensureWritableDir(child, new EnsureWritableDirReporter() {
+      @Override
       public void reportFailedCreate(File dir, Exception e) {
         ++calls[0];
       }
 
+      @Override
       public void reportReadOnly(File dir, Exception e) {
         fail();
       }

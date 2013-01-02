@@ -19,50 +19,62 @@ public class NullSink implements Sink {
     //
   }
 
+  @Override
   public boolean addLossy(EventContext context) {
     return false;
   }
 
+  @Override
   public void addMany(Collection contexts) {
     //
   }
 
+  @Override
   public void add(EventContext context) {
     //
   }
 
+  @Override
   public void setAddPredicate(AddPredicate predicate) {
     //
   }
 
+  @Override
   public AddPredicate getPredicate() {
     return null;
   }
 
+  @Override
   public int size() {
     return 0;
   }
 
+  @Override
   public void clear() {
     throw new ImplementMe();
   }
 
+  @Override
   public void enableStatsCollection(boolean enable) {
     throw new ImplementMe();
   }
 
+  @Override
   public Stats getStats(long frequency) {
     throw new ImplementMe();
   }
 
+  @Override
   public Stats getStatsAndReset(long frequency) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isStatsCollectionEnabled() {
     throw new ImplementMe();
   }
 
+  @Override
   public void resetStats() {
     throw new ImplementMe();
     

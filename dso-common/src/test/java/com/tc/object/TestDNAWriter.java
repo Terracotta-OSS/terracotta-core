@@ -22,10 +22,12 @@ public class TestDNAWriter implements DNAWriter {
     //
   }
 
+  @Override
   public void addLogicalAction(final int method, final Object[] parameters) {
     this.actions.add(new LogicalAction(method, parameters));
   }
 
+  @Override
   public void addPhysicalAction(final String field, final Object value) {
     addPhysicalAction(field, value, value instanceof ObjectID);
   }
@@ -38,30 +40,37 @@ public class TestDNAWriter implements DNAWriter {
     //
   }
 
+  @Override
   public void addArrayElementAction(final int index, final Object value) {
     this.actions.add(new PhysicalAction(value, index));
   }
 
+  @Override
   public void addEntireArray(final Object value) {
     this.actions.add(new PhysicalAction(value));
   }
 
+  @Override
   public void addLiteralValue(final Object value) {
     this.actions.add(new LiteralAction(value));
   }
 
+  @Override
   public void setParentObjectID(final ObjectID id) {
     //
   }
 
+  @Override
   public void setArrayLength(final int length) {
     //
   }
 
+  @Override
   public void addPhysicalAction(final String fieldName, final Object value, final boolean canBeReference) {
     this.actions.add(new PhysicalAction(fieldName, value, canBeReference));
   }
 
+  @Override
   public int getActionCount() {
     return this.actions.size();
   }
@@ -174,27 +183,33 @@ public class TestDNAWriter implements DNAWriter {
     actions.add(new PhysicalAction(classLoaderFieldName, value, false));
   }
 
+  @Override
   public void addSubArrayAction(final int start, final Object array, final int length) {
     actions.add(new PhysicalAction(array, start));
   }
 
+  @Override
   public void copyTo(final TCByteBufferOutput dest) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public DNAWriter createAppender() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void finalizeHeader() {
     //
   }
 
+  @Override
   public boolean isContiguous() {
     return true;
   }
 
+  @Override
   public void markSectionEnd() {
     //
   }

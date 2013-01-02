@@ -12,6 +12,7 @@ public class StandardStringifierTest extends TCTestCase {
 
   private StandardStringifier stringifier;
 
+  @Override
   public void setUp() {
     this.stringifier = StandardStringifier.INSTANCE;
   }
@@ -27,6 +28,7 @@ public class StandardStringifierTest extends TCTestCase {
       this.value = value;
     }
 
+    @Override
     public String toString() {
       return this.value;
     }

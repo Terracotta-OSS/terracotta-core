@@ -17,10 +17,12 @@ public class CollectionNode extends PlainNode {
     entryIterator = c.iterator();
   }
 
+  @Override
   public boolean done() {
     return super.done() && !entryIterator.hasNext();
   }
 
+  @Override
   public MemberValue next() {
     if (!super.done()) {
       return super.next();

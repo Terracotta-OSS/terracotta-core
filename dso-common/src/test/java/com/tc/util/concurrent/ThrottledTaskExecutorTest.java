@@ -44,6 +44,7 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
     final ThrottledTaskExecutor taskExecutor = new ThrottledTaskExecutor(maxTasksToRunParallel);
 
     final Runnable appFeedbackRunnable = new Runnable() {
+      @Override
       public void run() {
         taskExecutor.receiveFeedback();
         finishedCounter.incrementAndGet();
@@ -54,6 +55,7 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
     };
 
     Runnable app = new Runnable() {
+      @Override
       public void run() {
         long id = appCounter.incrementAndGet();
         AppTask appTask = new AppTask(id, appFeedbackRunnable);
@@ -98,6 +100,7 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
       this.feedbackRunnable = feedbackRunnable;
     }
 
+    @Override
     public void run() {
       System.err.println("XXX App Task - " + id + " - START");
       ThreadUtil.reallySleep(1000 + r.nextInt(10000));
@@ -120,6 +123,7 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
           : 0;
     }
 
+    @Override
     public void run() {
       while (!shutdown.get()) {
         int scheduledCount = throttledTaskExecutor.getScheduledTasksCount();

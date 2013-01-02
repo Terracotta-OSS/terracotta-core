@@ -51,6 +51,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(TYPE, (byte) responseType.ordinal());
     switch (responseType) {
@@ -81,6 +82,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     }
   }
 
+  @Override
   protected String describePayload() {
     StringBuffer rv = new StringBuffer();
     rv.append("Type : ").append(responseType).append('\n');
@@ -88,6 +90,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     return rv.toString();
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case TYPE:
@@ -184,6 +187,7 @@ public class LockResponseMessage extends DSOMessageBase implements MultiThreaded
     this.leaseTimeInMs = leaseTimeInMills;
   }
 
+  @Override
   public Object getKey() {
     return this.getSourceNodeID();
   }

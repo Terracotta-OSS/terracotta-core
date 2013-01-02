@@ -29,6 +29,7 @@ public class L1RemovedGroupMessage extends AbstractGroupMessage implements Event
     this.groupID = groupID;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
@@ -38,11 +39,13 @@ public class L1RemovedGroupMessage extends AbstractGroupMessage implements Event
     groupID = (GroupID) nodeIDSerializer.getNodeID();
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     new NodeIDSerializer(clientID).serializeTo(out);
     new NodeIDSerializer(groupID).serializeTo(out);
   }
 
+  @Override
   public String toString() {
     return "L1RemovedGroupErrorMessage [ " + this.clientID + " " + this.groupID + " ]";
   }

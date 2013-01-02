@@ -18,6 +18,7 @@ public class InvalidateObjectsForClientContext implements MultiThreadedEventCont
     return clientID;
   }
 
+  @Override
   public Object getKey() {
     return clientID;
   }

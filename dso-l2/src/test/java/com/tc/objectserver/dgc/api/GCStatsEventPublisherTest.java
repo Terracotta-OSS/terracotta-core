@@ -217,46 +217,57 @@ public class GCStatsEventPublisherTest extends TestCase {
 
     protected List<GarbageCollectionInfo> cancelList          = new ArrayList<GarbageCollectionInfo>();
 
+    @Override
     public void garbageCollectorStart(GarbageCollectionInfo info) {
       this.startList.add(info);
     }
 
+    @Override
     public void garbageCollectorMark(GarbageCollectionInfo info) {
       this.markList.add(info);
     }
 
+    @Override
     public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
       this.markResultsList.add(info);
     }
 
+    @Override
     public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
       this.rescue1CompleteList.add(info);
     }
 
+    @Override
     public void garbageCollectorPausing(GarbageCollectionInfo info) {
       this.pausingList.add(info);
     }
 
+    @Override
     public void garbageCollectorPaused(GarbageCollectionInfo info) {
       this.pausedList.add(info);
     }
 
+    @Override
     public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
       this.rescue2StartList.add(info);
     }
 
+    @Override
     public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
       this.markCompleteList.add(info);
     }
 
+    @Override
     public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {
       this.cycleCompletedList.add(info);
     }
 
+    @Override
     public void garbageCollectorCompleted(GarbageCollectionInfo info) {
       this.completedList.add(info);
     }
 
+    @Override
     public void garbageCollectorCanceled(GarbageCollectionInfo info) {
       this.cancelList.add(info);
     }

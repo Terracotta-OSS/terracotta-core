@@ -43,6 +43,7 @@ public class StandardBeanRepository implements MutableBeanRepository {
     this.bean = null;
   }
 
+  @Override
   public void ensureBeanIsOfClass(Class theClass) {
     if (!theClass.isAssignableFrom(this.requiredClass)) {
       // formatting
@@ -51,17 +52,20 @@ public class StandardBeanRepository implements MutableBeanRepository {
     }
   }
 
+  @Override
   public void saveCopyOfBeanInAnticipationOfFutureMutation() {
     Assert.eval(this.preMutateCopy == null);
     this.preMutateCopy = this.bean.copy();
   }
 
+  @Override
   public void didMutateBean() {
     Assert.eval(this.preMutateCopy != null);
     this.listenerSet.configurationChanged(this.preMutateCopy, this.bean);
     this.preMutateCopy = null;
   }
 
+  @Override
   public synchronized XmlObject bean() {
     return this.bean;
   }
@@ -88,10 +92,12 @@ public class StandardBeanRepository implements MutableBeanRepository {
     }
   }
 
+  @Override
   public SchemaType rootBeanSchemaType() {
     return getTypeFieldFrom(this.requiredClass);
   }
 
+  @Override
   public synchronized void setBean(XmlObject bean, String sourceDescription) throws XmlException {
     Assert.assertNotBlank(sourceDescription);
     Assert.eval(bean == null || this.requiredClass.isInstance(bean));
@@ -138,16 +144,19 @@ public class StandardBeanRepository implements MutableBeanRepository {
     }
   }
 
+  @Override
   public void addListener(ConfigurationChangeListener listener) {
     Assert.assertNotNull(listener);
     this.listenerSet.addListener(listener);
   }
 
+  @Override
   public void addValidator(ConfigurationValidator validator) {
     Assert.assertNotNull(validator);
     this.validators.add(validator);
   }
 
+  @Override
   public String toString() {
     return "<Repository for bean of class " + ClassUtils.getShortClassName(this.requiredClass) + "; have bean? "
            + (this.bean != null) + ">";

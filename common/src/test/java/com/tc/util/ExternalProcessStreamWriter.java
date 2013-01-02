@@ -32,6 +32,7 @@ public class ExternalProcessStreamWriter {
   private void print(final PrintStream stream, final InputStream in) {
     Thread writer = new Thread() {
       BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+      @Override
       public void run() {
         try {
           String line;

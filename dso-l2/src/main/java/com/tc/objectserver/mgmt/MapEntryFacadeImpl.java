@@ -15,10 +15,12 @@ public class MapEntryFacadeImpl implements MapEntryFacade, Serializable {
     this.value = value;
   }
 
+  @Override
   public Object getKey() {
     return this.key;
   }
 
+  @Override
   public Object getValue() {
     return this.value;
   }

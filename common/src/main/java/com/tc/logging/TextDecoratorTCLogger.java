@@ -12,6 +12,7 @@ public class TextDecoratorTCLogger extends BaseMessageDecoratorTCLogger {
     this.prepend = prepend;
   }
 
+  @Override
   protected Object decorate(Object message) {
     return prepend + ": " + message;
   }

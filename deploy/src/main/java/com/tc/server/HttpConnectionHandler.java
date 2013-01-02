@@ -24,6 +24,7 @@ public class HttpConnectionHandler extends AbstractEventHandler {
     //
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     HttpConnectionContext connContext = (HttpConnectionContext) context;
 

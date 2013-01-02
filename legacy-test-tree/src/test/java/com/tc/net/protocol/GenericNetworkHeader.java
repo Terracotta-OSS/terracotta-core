@@ -27,10 +27,12 @@ public class GenericNetworkHeader extends AbstractTCNetworkHeader {
     return data.getInt(8);
   }
 
+  @Override
   public int getHeaderByteLength() {
     return LENGTH;
   }
 
+  @Override
   protected void setHeaderLength(short length) {
     if (length != LENGTH) { throw new IllegalArgumentException("Header length must be " + LENGTH); }
 
@@ -45,6 +47,7 @@ public class GenericNetworkHeader extends AbstractTCNetworkHeader {
     data.putInt(0, length);
   }
 
+  @Override
   public void validate() {
     return;
   }

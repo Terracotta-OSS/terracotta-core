@@ -25,6 +25,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactory implements ConfigB
     // Nothing here yet.
   }
 
+  @Override
   public BeanWithErrors createBean(InputStream in, String sourceDescription) throws IOException, XmlException {
     Assert.assertNotBlank(sourceDescription);
 

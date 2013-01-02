@@ -317,10 +317,12 @@ public class ServerClientHandshakeManager {
       this.batchSize = batchSize;
     }
 
+    @Override
     public int getBatchSize() {
       return this.batchSize;
     }
 
+    @Override
     public NodeID getRequestingNodeID() {
       return this.clientID;
     }

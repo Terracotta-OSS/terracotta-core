@@ -140,6 +140,7 @@ public class TCSocketAddress {
     return addr.getAddress();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof TCSocketAddress) {
       TCSocketAddress other = (TCSocketAddress) obj;
@@ -148,12 +149,14 @@ public class TCSocketAddress {
     return false;
   }
 
+  @Override
   public int hashCode() {
     if (addr == null) { return super.hashCode(); }
 
     return addr.hashCode() + port;
   }
 
+  @Override
   public String toString() {
     return getStringForm();
   }

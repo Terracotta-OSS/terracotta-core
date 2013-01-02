@@ -100,6 +100,7 @@ public class Ping implements TCMessageSink {
     server.shutdown();
   }
 
+  @Override
   public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
     try {
       queue.put(message);

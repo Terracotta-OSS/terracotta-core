@@ -9,22 +9,27 @@ public class TestSynMessage extends TestTransportHandshakeMessage implements Syn
 
   protected short flag = NetworkLayer.TYPE_TEST_MESSAGE;
 
+  @Override
   public boolean isSyn() {
     return true;
   }
 
+  @Override
   public boolean isSynAck() {
     return false;
   }
 
+  @Override
   public boolean isAck() {
     return false;
   }
 
+  @Override
   public short getStackLayerFlags() {
     return flag;
   }
 
+  @Override
   public int getCallbackPort() {
     return TransportHandshakeMessage.NO_CALLBACK_PORT;
   }

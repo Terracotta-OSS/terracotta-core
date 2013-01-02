@@ -26,16 +26,19 @@ public class LockStatisticsMonitor extends AbstractNotifyingMBean implements Loc
     this.lockStatsManager = lockStatsManager;
   }
 
+  @Override
   public Collection<LockSpec> getLockSpecs() throws InterruptedException {
     return this.lockStatsManager.getLockSpecs();
   }
 
+  @Override
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
     this.lockStatsManager.setLockStatisticsConfig(traceDepth, gatherInterval);
     sendNotification(TRACE_DEPTH, this);
     sendNotification(GATHER_INTERVAL, this);
   }
 
+  @Override
   public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
     for (L2LockStatisticsChangeListener listener : listeners) {
       listener.setLockStatisticsEnabled(lockStatsEnabled, lockStatsManager);
@@ -49,14 +52,17 @@ public class LockStatisticsMonitor extends AbstractNotifyingMBean implements Loc
     listener.setLockStatisticsEnabled(isLockStatisticsEnabled(), lockStatsManager);
   }
 
+  @Override
   public boolean isLockStatisticsEnabled() {
     return this.lockStatsManager.isLockStatisticsEnabled();
   }
 
+  @Override
   public int getTraceDepth() {
     return this.lockStatsManager.getTraceDepth();
   }
 
+  @Override
   public int getGatherInterval() {
     return this.lockStatsManager.getGatherInterval();
   }
@@ -67,6 +73,7 @@ public class LockStatisticsMonitor extends AbstractNotifyingMBean implements Loc
         .getName(), DESCRIPTION) };
   }
 
+  @Override
   public void reset() {
     // nothing to do
   }

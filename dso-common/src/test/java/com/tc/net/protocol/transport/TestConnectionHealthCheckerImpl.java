@@ -12,6 +12,7 @@ public class TestConnectionHealthCheckerImpl extends ConnectionHealthCheckerImpl
     super(healthCheckerConfig, connManager);
   }
 
+  @Override
   protected HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
                                                                           TCConnectionManager connectionManager,
                                                                           TCLogger loger) {
@@ -25,6 +26,7 @@ public class TestConnectionHealthCheckerImpl extends ConnectionHealthCheckerImpl
       super(healthCheckerConfig, connectionManager, logger);
     }
 
+    @Override
     protected ConnectionHealthCheckerContext getHealthCheckerContext(MessageTransportBase transport,
                                                                      HealthCheckerConfig conf,
                                                                      TCConnectionManager connManager) {

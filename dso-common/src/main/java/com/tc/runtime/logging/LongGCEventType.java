@@ -12,6 +12,7 @@ public final class LongGCEventType {
     this.name = name;
   }
 
+  @Override
   public String toString() {
     return "LongGCEventType." + name;
   }

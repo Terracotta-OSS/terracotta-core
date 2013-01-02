@@ -55,6 +55,7 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
     this.transactionManager = transactionManager;
   }
 
+  @Override
   public void invalidateObjectFor(ClientID clientID, Invalidations invalidations) {
     Boolean bool = (Boolean) invalidateMap.executeUnderWriteLock(clientID, invalidations, addCallbackForInvalidations);
     if (bool.booleanValue()) {
@@ -62,15 +63,18 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
     }
   }
 
+  @Override
   public Invalidations getObjectsIDsToInvalidate(ClientID clientID) {
     return invalidateMap.remove(clientID);
   }
 
+  @Override
   public void initializeContext(ConfigurationContext context) {
     this.invalidateSink = context.getStage(ServerConfigurationContext.INVALIDATE_OBJECTS_STAGE).getSink();
     this.validateSink = context.getStage(ServerConfigurationContext.VALIDATE_OBJECTS_STAGE).getSink();
   }
 
+  @Override
   public void validateObjects(ObjectIDSet validEntries) {
     for (Iterator i = validateMap.entrySet().iterator(); i.hasNext();) {
       Entry<ClientID, Invalidations> e = (Entry<ClientID, Invalidations>) i.next();
@@ -85,6 +89,7 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
     }
   }
 
+  @Override
   public void addObjectsToValidateFor(ClientID clientID, Invalidations invalidations) {
     if (state != State.INITIAL) { throw new AssertionError(
                                                            "Objects can be added for validation only in INITIAL state : state = "
@@ -97,10 +102,12 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
     }
   }
 
+  @Override
   public void start() {
     state = State.STARTED;
     transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
 
+      @Override
       public void onCompletion() {
         int size = validateMap.size();
         logger.info("Restart txn processing complete : Adding validation of Objects for " + size + " Clients");
@@ -112,6 +119,7 @@ public class InvalidateObjectManagerImpl implements InvalidateObjectManager, Pos
   }
 
   private static class AddCallbackForInvalidations implements TCConcurrentStoreCallback<ClientID, Invalidations> {
+    @Override
     public Object callback(ClientID key, Object param, Map<ClientID, Invalidations> segment) {
       boolean newEntry = false;
       Invalidations newInvalidations = (Invalidations) param;

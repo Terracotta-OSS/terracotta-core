@@ -13,11 +13,13 @@ import java.util.Set;
 public class MockTCObjectSelfCallback implements TCObjectSelfCallback {
   private final Set<ObjectID> oids = new ObjectIDSet();
 
+  @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcoObjectSelf) {
     // NO OP
     // We do not have tc class factory here
   }
 
+  @Override
   public synchronized void removedTCObjectSelfFromStore(TCObjectSelf tcoObjectSelf) {
     oids.add(tcoObjectSelf.getObjectID());
   }

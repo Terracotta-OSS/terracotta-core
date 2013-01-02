@@ -22,10 +22,12 @@ public class TestClientStateManager implements ClientStateManager {
   public NodeID                    shutdownClient    = null;
   public List<AddReferenceContext> addReferenceCalls = new ArrayList<AddReferenceContext>();
 
+  @Override
   public void shutdownNode(final NodeID deadNode) {
     this.shutdownClient = deadNode;
   }
 
+  @Override
   public void addReference(final NodeID nodeID, final ObjectID objectID) {
     this.addReferenceCalls.add(new AddReferenceContext(nodeID, objectID));
   }
@@ -40,25 +42,30 @@ public class TestClientStateManager implements ClientStateManager {
     }
   }
 
+  @Override
   public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
     //
   }
 
+  @Override
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                        final ApplyTransactionInfo includeIDs, final NodeID clientID,
                                                        final Set<ObjectID> objectIDs, Invalidations invalidIDs) {
     return Collections.emptyList();
   }
 
+  @Override
   public boolean hasReference(final NodeID nodeID, final ObjectID objectID) {
     // to be consistent with createPrunedChangesAndAddObjectIDTo, return false
     return false;
   }
 
+  @Override
   public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
     return rescueIds;
   }
 
+  @Override
   public int getReferenceCount(final NodeID node) {
     return 0;
   }
@@ -68,11 +75,13 @@ public class TestClientStateManager implements ClientStateManager {
 
   }
 
+  @Override
   public void removeReferencedFrom(final NodeID nodeID, final Set<ObjectID> secondPass) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public Set<ObjectID> addReferences(final NodeID nodeID, final Set<ObjectID> oids) {
     for (final ObjectID oid : oids) {
       this.addReferenceCalls.add(new AddReferenceContext(nodeID, oid));
@@ -80,19 +89,23 @@ public class TestClientStateManager implements ClientStateManager {
     return oids;
   }
 
+  @Override
   public boolean startupNode(final NodeID nodeID) {
     return true;
   }
 
+  @Override
   public Set<NodeID> getConnectedClientIDs() {
     throw new ImplementMe();
   }
 
+  @Override
   public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
     throw new ImplementMe();
 

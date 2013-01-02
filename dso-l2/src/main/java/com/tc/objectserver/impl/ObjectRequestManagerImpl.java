@@ -88,6 +88,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     this.objectStatsRecorder = objectStatsRecorder;
   }
 
+  @Override
   public void requestObjects(final ObjectRequestServerContext requestContext) {
     splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(),
                            requestContext.getRequestedObjectIDs(), requestContext.getRequestDepth(),
@@ -129,6 +130,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
   }
 
+  @Override
   public void sendObjects(final ClientID requestedNodeID, final Collection objs, final ObjectIDSet requestedObjectIDs,
                           final ObjectIDSet missingObjectIDs, final LOOKUP_STATE lookupState, final int maxRequestDepth) {
 
@@ -243,6 +245,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     this.objectStatsRecorder.updateRequestStats(className);
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     synchronized (this) {
@@ -375,6 +378,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       return this.objectRequestMap.remove(reqObj);
     }
 
+    @Override
     public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       out.duplicateAndIndent().indent().print(getClass().getName()).flush();
       out.duplicateAndIndent().indent().print("objectRequestMap").flush();
@@ -488,14 +492,17 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     }
 
+    @Override
     public ObjectIDSet getLookupIDs() {
       return this.lookupIDs;
     }
 
+    @Override
     public ObjectIDSet getNewObjectIDs() {
       return new ObjectIDSet();
     }
 
+    @Override
     public void setResults(final ObjectManagerLookupResults results) {
       this.objects = results.getObjects();
       this.missingObjects = results.getMissingObjectIDs();
@@ -572,26 +579,32 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       this.maxRequestDepth = maxDepth;
     }
 
+    @Override
     public ClientID getRequestedNodeID() {
       return this.requestedNodeID;
     }
 
+    @Override
     public Collection getObjs() {
       return this.objs;
     }
 
+    @Override
     public ObjectIDSet getRequestedObjectIDs() {
       return this.requestedObjectIDs;
     }
 
+    @Override
     public ObjectIDSet getMissingObjectIDs() {
       return this.missingObjectIDs;
     }
 
+    @Override
     public LOOKUP_STATE getLookupState() {
       return this.lookupState;
     }
 
+    @Override
     public int getRequestDepth() {
       return this.maxRequestDepth;
     }
@@ -604,22 +617,27 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
   }
 
+  @Override
   public int getLiveObjectCount() {
     return this.objectManager.getLiveObjectCount();
   }
 
+  @Override
   public Iterator getRootNames() {
     return this.objectManager.getRootNames();
   }
 
+  @Override
   public Iterator getRoots() {
     return this.objectManager.getRoots();
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
     return this.objectManager.lookupFacade(id, limit);
   }
 
+  @Override
   public ObjectID lookupRootID(final String name) {
     return this.objectManager.lookupRootID(name);
   }

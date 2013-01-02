@@ -15,6 +15,7 @@ public class ChannelWeightGenerator implements WeightGenerator {
     this.channelManager = channelManager;
   }
 
+  @Override
   public long getWeight() {
     // return number of connected clients and are active
     return channelManager.getAllActiveClientConnections().length;

@@ -34,6 +34,7 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
     this.groupID = groupID;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     errorType = in.readInt();
     reason = in.readString();
@@ -42,6 +43,7 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
     groupID = (GroupID) nodeIDSerializer.getNodeID();
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     out.writeInt(errorType);
     out.writeString(reason);
@@ -49,6 +51,7 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
     nodeIDSerializer.serializeTo(out);
   }
 
+  @Override
   public String toString() {
     return "StripeIDMismatchGroupMessage [ " + errorType + " , " + reason + " , " + groupID + " ]";
   }

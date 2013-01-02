@@ -23,6 +23,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
     final Object lock = new Object();
     final String[] dump = new String[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         // This lock should show up in the thread dump
         synchronized (lock) {

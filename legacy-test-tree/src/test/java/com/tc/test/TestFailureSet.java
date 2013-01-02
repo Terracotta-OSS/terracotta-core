@@ -16,6 +16,7 @@ public class TestFailureSet {
     }
   }
 
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer("Test failures...\n");
     synchronized (list) {

@@ -16,10 +16,12 @@ public class MapEntryNode extends AbstractNode {
     value = entry.getValue();
   }
 
+  @Override
   public boolean done() {
     return nextCount > 1;
   }
 
+  @Override
   public MemberValue next() {
     final MemberValue rv;
 

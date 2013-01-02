@@ -23,6 +23,7 @@ public class MockConfigurationValidator implements ConfigurationValidator {
     this.lastBean = null;
   }
 
+  @Override
   public void validate(XmlObject bean) throws XmlException {
     ++this.numValidates;
     this.lastBean = bean;

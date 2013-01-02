@@ -14,10 +14,12 @@ public class LinkedServerLockContext extends ServerLockContext {
     super(clientID, threadID);
   }
 
+  @Override
   public ServerLockContext getNext() {
     return next;
   }
 
+  @Override
   public ServerLockContext setNext(ServerLockContext next) {
     ServerLockContext old = this.next;
     this.next = next;

@@ -15,10 +15,12 @@ public class ClientLockManagerConfigImpl implements ClientLockManagerConfig {
     this.stripedCount = lockManagerProperties.getInt("striped.count");
   }
 
+  @Override
   public long getTimeoutInterval() {
     return timeoutInterval;
   }
 
+  @Override
   public int getStripedCount() {
     return stripedCount;
   }

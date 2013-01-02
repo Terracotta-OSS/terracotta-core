@@ -6,6 +6,7 @@ package com.tc.util;
 import java.util.ListResourceBundle;
 
 public class ProductInfoBundle extends ListResourceBundle {
+  @Override
   public Object[][] getContents() {
     return contents;
   }

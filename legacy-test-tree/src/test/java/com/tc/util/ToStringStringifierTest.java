@@ -17,6 +17,7 @@ public class ToStringStringifierTest extends TCTestCase {
       this.value = value;
     }
 
+    @Override
     public String toString() {
       return "XXX" + this.value + "YYY";
     }

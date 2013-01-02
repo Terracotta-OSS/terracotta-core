@@ -131,6 +131,7 @@ public class TCPProxy {
 
     final TCPProxy ME = this;
     acceptThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         ME.run();
       }
@@ -520,12 +521,14 @@ public class TCPProxy {
       parent.register(this);
 
       clientThread = new Thread(new Runnable() {
+        @Override
         public void run() {
           runHalf(clientIs, proxyOs, true, clientLog, Connection.this.client);
         }
       }, "Client thread for connection " + client + " proxy to " + proxy);
 
       proxyThread = new Thread(new Runnable() {
+        @Override
         public void run() {
           runHalf(proxyIs, clientOs, false, proxyLog, proxy);
         }
@@ -559,6 +562,7 @@ public class TCPProxy {
       return this.clientBytesIn;
     }
 
+    @Override
     public String toString() {
       return "Client: " + client + ", proxy to: " + proxy + ", connect: " + new Date(connectTime) + ", idle: "
              + (System.currentTimeMillis() - getLastActivity()) + ", bytes from client: " + getClientBytesIn()

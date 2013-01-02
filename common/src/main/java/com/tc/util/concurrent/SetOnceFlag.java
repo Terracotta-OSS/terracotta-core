@@ -111,6 +111,7 @@ public final class SetOnceFlag implements Serializable {
     return set;
   }
 
+  @Override
   public String toString() {
     return "set: " + set;
   }

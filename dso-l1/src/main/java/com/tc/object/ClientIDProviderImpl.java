@@ -15,6 +15,7 @@ public class ClientIDProviderImpl implements ClientIDProvider {
     this.channelIDProvider = channelIDProvider;
   }
 
+  @Override
   public ClientID getClientID() {
     return new ClientID(channelIDProvider.getChannelID().toLong());
   }

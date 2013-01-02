@@ -19,6 +19,7 @@ public class NullObjectManagerStatsListener implements ObjectManagerStatsListene
     //
   }
 
+  @Override
   public void newObjectCreated() {
     //
   }

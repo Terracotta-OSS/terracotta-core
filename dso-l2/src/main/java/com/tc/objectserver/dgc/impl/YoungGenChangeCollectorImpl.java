@@ -33,6 +33,7 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
 
   private State              state                = DONT_MONITOR_CHANGES;
 
+  @Override
   public synchronized Set addYoungGenCandidateObjectIDsTo(Set set) {
     for (Iterator i = this.youngGenObjectIDs.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
@@ -43,20 +44,24 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
     return set;
   }
 
+  @Override
   public synchronized Set getRememberedSet() {
     return new ObjectIDSet(this.rememberedSet);
   }
 
+  @Override
   public synchronized void notifyObjectCreated(ObjectID id) {
     Object oldState = this.youngGenObjectIDs.put(id, UNINITALIZED);
     if (oldState != null) { throw new AssertionError(id + " is already present in " + oldState); }
   }
 
+  @Override
   public synchronized void notifyObjectInitalized(ObjectID id) {
     Object oldState = this.youngGenObjectIDs.put(id, INITALIZED);
     if (oldState != UNINITALIZED) { throw new AssertionError(id + " is not in " + UNINITALIZED + " but in " + oldState); }
   }
 
+  @Override
   public synchronized void notifyObjectsEvicted(Collection evicted) {
     for (Iterator i = evicted.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
@@ -86,6 +91,7 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
     }
   }
 
+  @Override
   public synchronized void removeGarbage(SortedSet ids) {
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();
@@ -93,11 +99,13 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
     }
   }
 
+  @Override
   public synchronized void startMonitoringChanges() {
     Assert.assertTrue(this.state == DONT_MONITOR_CHANGES);
     this.state = MONITOR_CHANGES;
   }
 
+  @Override
   public synchronized void stopMonitoringChanges() {
     Assert.assertTrue(this.state == MONITOR_CHANGES);
     this.state = DONT_MONITOR_CHANGES;

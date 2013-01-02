@@ -27,6 +27,7 @@ class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventCo
     this.metaDataContext = metaDataContext;
   }
 
+  @Override
   public final Object getKey() {
     // Pick the start thread index using cache name
     int threadStart = Math.abs(cacheName.hashCode()) % SEDA_SEARCH_THREADS;

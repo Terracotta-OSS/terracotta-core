@@ -9,6 +9,7 @@ import java.util.Collection;
 
 
 public class ClockCacheTest extends LRUEvictionPolicyTest {
+  @Override
   public EvictionPolicy createNewCache(int size) {
     return new ClockEvictionPolicy(size);
   }

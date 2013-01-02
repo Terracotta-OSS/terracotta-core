@@ -18,6 +18,7 @@ public class CallbackGroupExceptionHandler implements CallbackOnExitHandler {
     this.consoleLogger = consoleLogger;
   }
 
+  @Override
   public void callbackOnExit(CallbackOnExitState state) {
     logger.error(state.getThrowable().getMessage(), state.getThrowable());
     consoleLogger.error(state.getThrowable().getMessage());

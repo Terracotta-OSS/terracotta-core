@@ -14,6 +14,7 @@ public class ClientNameProvider implements NodeNameProvider {
     this.dsoCluster = dsoCluster;
   }
 
+  @Override
   public String getNodeName() {
     this.dsoCluster.waitUntilNodeJoinsCluster();
     return this.dsoCluster.getCurrentNode().getId();

@@ -49,6 +49,7 @@ public class MockDefaultValueProvider implements DefaultValueProvider {
     this.lastPossibleForXPathToHaveDefaultsXPath = null;
   }
 
+  @Override
   public XmlObject defaultFor(SchemaType baseType, String xpath) throws XmlException {
     ++this.numDefaultFors;
     this.lastBaseType = baseType;
@@ -59,6 +60,7 @@ public class MockDefaultValueProvider implements DefaultValueProvider {
     return this.returnedDefaultFor;
   }
 
+  @Override
   public boolean hasDefault(SchemaType baseType, String xpath) {
     ++this.numHasDefaults;
     this.lastHasDefaultsSchemaType = baseType;
@@ -66,6 +68,7 @@ public class MockDefaultValueProvider implements DefaultValueProvider {
     return this.returnedHasDefault;
   }
 
+  @Override
   public boolean isOptional(SchemaType baseType, String xpath) {
     ++this.numIsOptionals;
     this.lastBaseType = baseType;
@@ -73,6 +76,7 @@ public class MockDefaultValueProvider implements DefaultValueProvider {
     return this.returnedIsOptional;
   }
 
+  @Override
   public boolean possibleForXPathToHaveDefault(String xpath) {
     ++this.numPossibleForXPathToHaveDefaults;
     this.lastPossibleForXPathToHaveDefaultsXPath = xpath;

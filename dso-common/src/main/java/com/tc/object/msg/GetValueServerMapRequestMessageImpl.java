@@ -52,6 +52,7 @@ public class GetValueServerMapRequestMessageImpl extends DSOMessageBase implemen
     super(sessionID, monitor, out, channel, type);
   }
 
+  @Override
   public void addGetValueRequestTo(final ServerMapRequestID serverMapRequestID, final ObjectID id,
                                    final Set<Object> keys) {
     Collection<ServerMapGetValueRequest> requestsForMap = this.requests.get(id);
@@ -120,18 +121,22 @@ public class GetValueServerMapRequestMessageImpl extends DSOMessageBase implemen
     }
   }
 
+  @Override
   public Map<ObjectID, Collection<ServerMapGetValueRequest>> getRequests() {
     return this.requests;
   }
 
+  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_VALUE_FOR_KEY;
   }
 
+  @Override
   public int getRequestCount() {
     return this.requestsCount;
   }

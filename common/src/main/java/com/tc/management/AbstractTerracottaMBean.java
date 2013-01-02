@@ -62,6 +62,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     this.isActive = isActive;
   }
 
+  @Override
   public final String getInterfaceClassName() {
     return getMBeanInterface().getName();
   }
@@ -70,6 +71,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return !notificationListeners.isEmpty();
   }
 
+  @Override
   public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
                                       final Object obj) {
     // don't register listeners from foreign classloaders
@@ -78,6 +80,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     notificationListeners.add(new Listener(listener, filter, obj));
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     if (isNotificationBroadcaster()) {
       final RuntimeException re = new TCRuntimeException("MBean error: this MBean[" + getClass().getName()
@@ -88,6 +91,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return new MBeanNotificationInfo[0];
   }
 
+  @Override
   public void removeNotificationListener(final NotificationListener listener, final NotificationFilter filter,
                                          final Object obj) throws ListenerNotFoundException {
     // ignore removal of listeners from foreign classloaders
@@ -106,6 +110,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     if (!removed) { throw new ListenerNotFoundException(); }
   }
 
+  @Override
   public void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
     // ignore removal of listeners from foreign classloaders
     if (!isListenerInSameClassLoader(listener)) return;
@@ -204,14 +209,17 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     }
   }
 
+  @Override
   public final boolean isNotificationBroadcaster() {
     return isNotificationBroadcaster;
   }
 
+  @Override
   public final void enable() {
     setState(true);
   }
 
+  @Override
   public final void disable() {
     setState(false);
   }
@@ -231,6 +239,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     //
   }
 
+  @Override
   public final synchronized boolean isEnabled() {
     return isActive;
   }

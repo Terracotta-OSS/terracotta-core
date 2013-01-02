@@ -35,6 +35,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     this.uid = connectionIDSequence.getUID();
   }
 
+  @Override
   public ConnectionID nextConnectionId(String clientJvmID) {
     return buildConnectionId(clientJvmID, connectionIDSequence.next());
   }
@@ -48,6 +49,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     return rv;
   }
 
+  @Override
   public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
     // provided channelID shall not be using
@@ -60,6 +62,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     return buildConnectionId(clientJvmID, channelID);
   }
 
+  @Override
   public void restoreConnectionId(ConnectionID rv) {
     fireCreationEvent(rv);
   }
@@ -78,6 +81,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     }
   }
 
+  @Override
   public void init(String clusterID, long nextAvailChannelID, Set connections) {
     this.uid = clusterID;
     if (nextAvailChannelID >= 0) {
@@ -90,6 +94,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     }
   }
 
+  @Override
   public Set loadConnectionIDs() {
     Assert.assertNotNull(uid);
     Set connections = new HashSet();
@@ -99,14 +104,17 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     return connections;
   }
 
+  @Override
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener) {
     listeners.add(listener);
   }
 
+  @Override
   public void channelCreated(MessageChannel channel) {
     // NOP
   }
 
+  @Override
   public void channelRemoved(MessageChannel channel) {
     ChannelID clientID = channel.getChannelID();
     try {
@@ -117,6 +125,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, clientID.toLong(), uid));
   }
 
+  @Override
   public long getCurrentConnectionID() {
     return connectionIDSequence.current();
   }

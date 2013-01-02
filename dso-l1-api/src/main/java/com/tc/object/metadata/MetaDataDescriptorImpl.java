@@ -50,22 +50,27 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     this.oid = oid;
   }
 
+  @Override
   public Iterator<NVPair> getMetaDatas() {
     return metaDatas.iterator();
   }
 
+  @Override
   public int numberOfNvPairs() {
     return metaDatas.size();
   }
 
+  @Override
   public String getCategory() {
     return this.category;
   }
 
+  @Override
   public ObjectID getObjectId() {
     return oid;
   }
 
+  @Override
   public void setObjectID(ObjectID id) {
     this.oid = id;
   }
@@ -83,6 +88,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     return new MetaDataDescriptorImpl(cat, Collections.unmodifiableList(data), id);
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
     serializer.writeString(out, category);
 
@@ -105,66 +111,82 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     return (MetaDataDescriptorInternal) TEMPLATE.deserializeFrom(in, serializer);
   }
 
+  @Override
   public void add(String name, boolean value) {
     metaDatas.add(new AbstractNVPair.BooleanNVPair(name, value));
   }
 
+  @Override
   public void add(String name, byte value) {
     metaDatas.add(new AbstractNVPair.ByteNVPair(name, value));
   }
 
+  @Override
   public void add(String name, char value) {
     metaDatas.add(new AbstractNVPair.CharNVPair(name, value));
   }
 
+  @Override
   public void add(String name, double value) {
     metaDatas.add(new AbstractNVPair.DoubleNVPair(name, value));
   }
 
+  @Override
   public void add(String name, float value) {
     metaDatas.add(new AbstractNVPair.FloatNVPair(name, value));
   }
 
+  @Override
   public void add(String name, int value) {
     metaDatas.add(new AbstractNVPair.IntNVPair(name, value));
   }
 
+  @Override
   public void add(String name, long value) {
     metaDatas.add(new AbstractNVPair.LongNVPair(name, value));
   }
 
+  @Override
   public void add(String name, short value) {
     metaDatas.add(new AbstractNVPair.ShortNVPair(name, value));
   }
 
+  @Override
   public void add(String name, String value) {
     metaDatas.add(new AbstractNVPair.StringNVPair(name, value));
   }
 
+  @Override
   public void add(String name, byte[] value) {
     metaDatas.add(new AbstractNVPair.ByteArrayNVPair(name, value));
   }
 
+  @Override
   public void add(String name, Enum value) {
     metaDatas.add(new EnumNVPair(name, value));
   }
 
+  @Override
   public void add(String name, Date value) {
     metaDatas.add(new AbstractNVPair.DateNVPair(name, value));
   }
 
+  @Override
   public void add(String name, java.sql.Date value) {
     metaDatas.add(new AbstractNVPair.SqlDateNVPair(name, value));
   }
 
+  @Override
   public void add(String name, ObjectID value) {
     metaDatas.add(new AbstractNVPair.ValueIdNVPair(name, new ValueID(value.toLong())));
   }
 
+  @Override
   public void addNull(String name) {
     metaDatas.add(new AbstractNVPair.NullNVPair(name));
   }
 
+  @Override
   public void set(String name, Object value) {
     for (ListIterator<NVPair> iter = metaDatas.listIterator(); iter.hasNext();) {
       NVPair nvPair = iter.next();
@@ -175,6 +197,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     }
   }
 
+  @Override
   public void add(String name, Object value) {
     if (value == null) {
       addNull(name);

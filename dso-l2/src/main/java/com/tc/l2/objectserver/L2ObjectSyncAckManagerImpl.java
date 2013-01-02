@@ -27,18 +27,22 @@ public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListene
     transactionManager.addTransactionListener(this);
   }
 
+  @Override
   public void reset() {
     txnsToAckMsgID.clear();
   }
 
+  @Override
   public void addObjectSyncMessageToAck(final ServerTransactionID stxnID, final MessageID requestID) {
     if (txnsToAckMsgID.putIfAbsent(stxnID, requestID) != null) { throw new AssertionError("The same transaction "
                                                                                           + stxnID + " was sent twice"); }
   }
 
+  @Override
   public void objectSyncComplete() {
     // TODO: run this as part of stateSyncManager.objectSyncComplete() after refactoring that a bit to take listeners
     transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
       public void onCompletion() {
         if (txnsToAckMsgID.size() != 0) { throw new AssertionError("Sync was not yet complete!"); }
         transactionManager.removeTransactionListener(L2ObjectSyncAckManagerImpl.this);
@@ -46,6 +50,7 @@ public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListene
     });
   }
 
+  @Override
   public void ackObjectSyncTxn(final ServerTransactionID stxID) {
     MessageID msgID = txnsToAckMsgID.remove(stxID);
     if (msgID != null) {

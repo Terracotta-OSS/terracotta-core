@@ -15,14 +15,17 @@ import java.io.ObjectOutput;
  */
 public final class ObjectIDSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeLong(((ObjectID) o).toLong());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return new ObjectID(in.readLong());
   }
 
+  @Override
   public byte getSerializerID() {
     return OBJECT_ID;
   }

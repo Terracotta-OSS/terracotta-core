@@ -37,10 +37,12 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(JMX_OBJECT, this);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case JMX_OBJECT:
@@ -59,6 +61,7 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
     this.jmxObject = jmxObject;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     try {
       ByteArrayOutputStream bao = new ByteArrayOutputStream(1024);
@@ -75,6 +78,7 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
     }
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     try {
       int length = serialInput.readInt();

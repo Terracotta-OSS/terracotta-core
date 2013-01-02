@@ -32,6 +32,7 @@ class FieldData implements Comparable {
     }
   }
 
+  @Override
   public int compareTo(Object o) {
     FieldData other = (FieldData) o;
 

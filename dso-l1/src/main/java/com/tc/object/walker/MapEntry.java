@@ -25,6 +25,7 @@ class MapEntry extends MemberValue {
     return entry.getValue();
   }
 
+  @Override
   public int getIndex() {
     return index;
   }

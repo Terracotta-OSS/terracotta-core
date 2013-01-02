@@ -15,6 +15,7 @@ public class MockWritableByteChannel extends MockChannel implements WritableByte
 
   private long    maxWriteCount = Long.MAX_VALUE;
 
+  @Override
   public final synchronized int write(ByteBuffer src) throws IOException {
     checkOpen();
     if (src == null) { throw new IOException("null ByteBuffer passed in to write(ByteBuffer)"); }

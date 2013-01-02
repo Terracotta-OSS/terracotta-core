@@ -25,6 +25,7 @@ public class LockIDSerializer implements TCSerializable {
     return lockID;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     byte type = serialInput.readByte();
     this.lockID = getImpl(type);
@@ -52,6 +53,7 @@ public class LockIDSerializer implements TCSerializable {
     throw new AssertionError("Unknown type : " + type);
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeByte((byte) lockID.getLockType().ordinal());
     lockID.serializeTo(serialOutput);

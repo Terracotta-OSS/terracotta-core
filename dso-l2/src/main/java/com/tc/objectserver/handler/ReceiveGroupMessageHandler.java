@@ -17,11 +17,13 @@ public class ReceiveGroupMessageHandler extends AbstractEventHandler {
     this.manager = manager;
   }
   
+  @Override
   public void handleEvent(EventContext context) {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) context;
     manager.messageReceived(wrapper.getGroupMessage(), wrapper.getChannel());
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
   }

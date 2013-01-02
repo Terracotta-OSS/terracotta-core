@@ -33,11 +33,13 @@ public class RequestRootResponseMessage extends DSOMessageBase implements EventC
     super(sessionID,  monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(ROOT_ID, rootID.toLong());
     putNVPair(ROOT_NAME, rootName);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case ROOT_ID:

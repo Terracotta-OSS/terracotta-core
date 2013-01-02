@@ -19,6 +19,7 @@ public class ConfigurationChangeListenerSetTest extends TCTestCase {
   private MockXmlObject                   config1;
   private MockXmlObject                   config2;
 
+  @Override
   public void setUp() throws Exception {
     this.listener1 = new MockConfigurationChangeListener();
     this.listener2 = new MockConfigurationChangeListener();

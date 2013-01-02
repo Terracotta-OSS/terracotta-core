@@ -17,11 +17,13 @@ import com.tc.object.tx.ClientTransactionManager;
 public class ReceiveTransactionCompleteHandler extends AbstractEventHandler {
   private ClientTransactionManager transactionManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     AcknowledgeTransactionMessage atm = (AcknowledgeTransactionMessage) context;
     transactionManager.receivedAcknowledgement(atm.getLocalSessionID(), atm.getRequestID(), atm.getSourceNodeID());
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext cc = (ClientConfigurationContext) context;

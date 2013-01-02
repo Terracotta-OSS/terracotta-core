@@ -132,6 +132,7 @@ public class TCNotRunningTest extends TestCase {
   private static class TestCallbackOnExitHandler implements CallbackOnExitHandler {
     private volatile boolean exitCalled = false;
 
+    @Override
     public void callbackOnExit(CallbackOnExitState state) {
       debug("Callback on exit called");
       exitCalled = true;

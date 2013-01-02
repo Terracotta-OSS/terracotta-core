@@ -742,6 +742,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.timeout = timeout;
     }
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       queue.add(new MessagePackage(fromNode, msg));
     }
@@ -784,19 +785,23 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
 
+    @Override
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);
       return true;
     }
 
+    @Override
     public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
       incoming.put(reason);
     }
 
+    @Override
     public long[] getCurrentNodeWeights() {
       return new long[0];
     }
 
+    @Override
     public void addZapEventListener(ZapEventListener listener) {
       //
     }
@@ -808,20 +813,24 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
     private static final int      weight   = 0;
 
+    @Override
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);
       return true;
     }
 
+    @Override
     public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
       incoming.put(reason);
     }
 
+    @Override
     public long[] getCurrentNodeWeights() {
       long[] rv = new long[] { weight };
       return rv;
     }
 
+    @Override
     public void addZapEventListener(ZapEventListener listener) {
       //
     }
@@ -829,10 +838,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private static final class MyGroupEventListener implements GroupEventsListener {
 
+    @Override
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### nodeJoined -> " + nodeID);
     }
 
+    @Override
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### nodeLeft -> " + nodeID);
     }
@@ -889,10 +900,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.manager = manager;
     }
 
+    @Override
     public void nodeJoined(NodeID nodeID) {
       System.out.println("XXX " + manager.getLocalNodeID() + " Node joined: " + nodeID);
     }
 
+    @Override
     public void nodeLeft(NodeID nodeID) {
       System.out.println("XXX " + manager.getLocalNodeID() + " Node left: " + nodeID);
     }
@@ -900,6 +913,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private static class NullChannelEventListener implements ChannelEventListener {
 
+    @Override
     public void notifyChannelEvent(ChannelEvent event) {
       return;
     }

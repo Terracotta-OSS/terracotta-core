@@ -31,6 +31,7 @@ public class MockChildBeanFetcher implements ChildBeanFetcher {
     this.lastParents.clear();
   }
 
+  @Override
   public XmlObject getChild(XmlObject parent) {
     ++this.numGetChilds;
     this.lastParents.add(parent);

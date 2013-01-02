@@ -53,6 +53,7 @@ public class TCConnectionImplTest extends TestCase {
     connMgr = new TCConnectionManagerImpl();
 
     ProtocolAdaptorFactory factory = new ProtocolAdaptorFactory() {
+      @Override
       public TCProtocolAdaptor getInstance() {
         return new WireProtocolAdaptorImpl(new ServerWPMGSink());
       }
@@ -77,6 +78,7 @@ public class TCConnectionImplTest extends TestCase {
     final CyclicBarrier endBarrier = new CyclicBarrier(2);
 
     Thread checker = new Thread(new Runnable() {
+      @Override
       public void run() {
         while (true) {
 
@@ -251,6 +253,7 @@ public class TCConnectionImplTest extends TestCase {
   }
 
   class ClientWPMGSink implements WireProtocolMessageSink {
+    @Override
     public void putMessage(WireProtocolMessage message) {
 
       rcvdMessagesTotalLength.addAndGet(message.getDataLength());
@@ -265,6 +268,7 @@ public class TCConnectionImplTest extends TestCase {
     // private volatile boolean senderStarted = false;
     // private volatile TCConnection serverconn;
 
+    @Override
     public void putMessage(WireProtocolMessage message) {
 
       message.recycle();

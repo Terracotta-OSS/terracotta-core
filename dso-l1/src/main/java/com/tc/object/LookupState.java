@@ -98,36 +98,44 @@ enum LookupState implements LookupStateTransition {
     }
   };
 
+  @Override
   public LookupState makeLookupRequest() {
     throw new IllegalStateException("Current State : " + toString() + ". Can't go to " + LOOKUP_REQUEST);
   }
 
+  @Override
   public LookupState makeMissingObject() {
     throw new IllegalStateException("Current State : " + toString() + ". Can't go to " + MISSING_OBJECT_ID);
   }
 
+  @Override
   public LookupState makePrefetchRequest() {
     throw new IllegalStateException("Current State : " + toString() + ". Can't go to " + PREFETCH_REQUEST);
   }
 
+  @Override
   public LookupState makePending() {
     throw new IllegalStateException("Current State : " + toString() + ". Can't go to " + PENDING_LOOKUP + " or "
                                     + PENDING_PREFETCH);
   }
 
+  @Override
   public LookupState makeUnPending() {
     throw new IllegalStateException("Current State : " + toString() + ". Can't go to " + LOOKUP_REQUEST + " or "
                                     + PREFETCH_REQUEST);
   }
 
+  @Override
   public boolean isPrefetch() {
     return false;
   }
 
+  @Override
   public boolean isMissing() {
     return false;
   }
 
+  @Override
   public boolean isPending() {
     return false;
   }

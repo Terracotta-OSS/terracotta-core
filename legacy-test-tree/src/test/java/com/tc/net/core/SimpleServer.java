@@ -48,6 +48,7 @@ public class SimpleServer {
     TCSocketAddress addr = new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, port);
 
     ProtocolAdaptorFactory factory = new ProtocolAdaptorFactory() {
+      @Override
       public TCProtocolAdaptor getInstance() {
         GenericProtocolAdaptor rv = new GenericProtocolAdaptor(sink);
         return rv;

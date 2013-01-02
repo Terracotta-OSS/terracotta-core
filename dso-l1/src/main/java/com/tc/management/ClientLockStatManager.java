@@ -12,42 +12,52 @@ import com.tc.object.net.DSOClientMessageChannel;
 public interface ClientLockStatManager {
   public final static ClientLockStatManager NULL_CLIENT_LOCK_STAT_MANAGER = new ClientLockStatManager() {
 
+    @Override
     public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
       // do nothing
     }
 
+    @Override
     public void setLockStatisticsEnabled(boolean statEnable) {
       // do nothing
     }
 
+    @Override
     public void start(DSOClientMessageChannel channel, Sink sink) {
       // do nothing
     }
 
+    @Override
     public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo, int numberOfPendingLockRequests) {
       // do nothing
     }
 
+    @Override
     public void recordLockAwarded(LockID lockID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public void recordLockReleased(LockID lockID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public void recordLockHopped(LockID lockID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public void recordLockRejected(LockID lockID, ThreadID threadID) {
       // do nothing
     }
     
+    @Override
     public void requestLockSpecs(NodeID nodeID) {
       // do nothing
     }
     
+    @Override
     public boolean isEnabled() {
       return false;
     }

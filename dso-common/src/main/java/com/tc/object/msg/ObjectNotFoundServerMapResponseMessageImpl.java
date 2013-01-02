@@ -40,6 +40,7 @@ public class ObjectNotFoundServerMapResponseMessageImpl extends DSOMessageBase i
     super(sessionID, monitor, out, channel, type);
   }
 
+  @Override
   public void initialize(ObjectID aMapID, ServerMapRequestID aRequestID, final ServerMapRequestType type) {
     this.mapID = aMapID;
     this.requestID = aRequestID;
@@ -78,14 +79,17 @@ public class ObjectNotFoundServerMapResponseMessageImpl extends DSOMessageBase i
     return (ClientID) getSourceNodeID();
   }
 
+  @Override
   public ObjectID getMapID() {
     return this.mapID;
   }
 
+  @Override
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return this.requestType;
   }

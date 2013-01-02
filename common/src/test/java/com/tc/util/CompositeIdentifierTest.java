@@ -63,6 +63,7 @@ public class CompositeIdentifierTest extends TestCase {
       super(id);
     }
 
+    @Override
     public String getIdentifierType() {
       return ClassUtils.getShortClassName(getClass());
     }
@@ -73,6 +74,7 @@ public class CompositeIdentifierTest extends TestCase {
       super(id);
     }
 
+    @Override
     public String getIdentifierType() {
       return ClassUtils.getShortClassName(getClass());
     }

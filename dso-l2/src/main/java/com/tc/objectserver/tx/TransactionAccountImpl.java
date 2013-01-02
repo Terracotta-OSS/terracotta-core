@@ -33,10 +33,12 @@ public class TransactionAccountImpl implements TransactionAccount {
     this.sourceID = source;
   }
 
+  @Override
   public NodeID getNodeID() {
     return this.sourceID;
   }
 
+  @Override
   public void incomingTransactions(Set txnIDs) {
     Assert.assertFalse(this.dead);
     for (final Iterator i = txnIDs.iterator(); i.hasNext();) {
@@ -50,6 +52,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     Assert.assertNull(old);
   }
 
+  @Override
   public void addObjectsSyncedTo(final NodeID to, final TransactionID txnID) {
     synchronized (this.waitees) {
       TransactionRecord tr = this.waitees.get(txnID);
@@ -64,6 +67,7 @@ public class TransactionAccountImpl implements TransactionAccount {
   /*
    * returns true if completed, false if not completed or if the client has sent a duplicate ACK.
    */
+  @Override
   public boolean removeWaitee(final NodeID waitee, final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
 
@@ -74,6 +78,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public void addWaitee(final NodeID waitee, final TransactionID txnID) {
     final TransactionRecord record = getRecord(txnID);
     synchronized (record) {
@@ -86,6 +91,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     return this.waitees.get(txnID);
   }
 
+  @Override
   public boolean skipApplyAndCommit(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
     synchronized (transactionRecord) {
@@ -94,6 +100,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public boolean applyCommitted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
     synchronized (transactionRecord) {
@@ -102,6 +109,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public boolean broadcastCompleted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
     synchronized (transactionRecord) {
@@ -110,6 +118,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public boolean processMetaDataCompleted(TransactionID requestID) {
     TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
@@ -118,6 +127,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public boolean relayTransactionComplete(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
     synchronized (transactionRecord) {
@@ -126,6 +136,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public boolean hasWaitees(final TransactionID txnID) {
     final TransactionRecord record = getRecord(txnID);
     if (record == null) { return false; }
@@ -134,6 +145,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public Set requestersWaitingFor(final NodeID waitee) {
     final Set requesters = new HashSet();
     synchronized (this.waitees) {
@@ -160,6 +172,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public void addAllPendingServerTransactionIDsTo(final Set txnIDs) {
     synchronized (this.waitees) {
       for (final Object element : this.waitees.keySet()) {
@@ -169,6 +182,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
+  @Override
   public void nodeDead(final CallBackOnComplete cb) {
     synchronized (this.waitees) {
       this.callBack = cb;

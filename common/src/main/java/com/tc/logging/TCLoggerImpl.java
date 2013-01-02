@@ -27,6 +27,7 @@ class TCLoggerImpl implements TCLogger {
     return logger;
   }
 
+  @Override
   public void debug(Object message) {
     if (message instanceof Throwable) {
       debug("Exception thrown", (Throwable) message);
@@ -35,10 +36,12 @@ class TCLoggerImpl implements TCLogger {
     }
   }
 
+  @Override
   public void debug(Object message, Throwable t) {
     logger.debug(message, t);
   }
 
+  @Override
   public void error(Object message) {
     if (message instanceof Throwable) {
       error("Exception thrown", (Throwable) message);
@@ -47,10 +50,12 @@ class TCLoggerImpl implements TCLogger {
     }
   }
 
+  @Override
   public void error(Object message, Throwable t) {
     logger.error(message, t);
   }
 
+  @Override
   public void fatal(Object message) {
     if (message instanceof Throwable) {
       fatal("Exception thrown", (Throwable) message);
@@ -59,10 +64,12 @@ class TCLoggerImpl implements TCLogger {
     }
   }
 
+  @Override
   public void fatal(Object message, Throwable t) {
     logger.fatal(message, t);
   }
 
+  @Override
   public void info(Object message) {
     if (message instanceof Throwable) {
       info("Exception thrown", (Throwable) message);
@@ -71,10 +78,12 @@ class TCLoggerImpl implements TCLogger {
     }
   }
 
+  @Override
   public void info(Object message, Throwable t) {
     logger.info(message, t);
   }
 
+  @Override
   public void warn(Object message) {
     if (message instanceof Throwable) {
       warn("Exception thrown", (Throwable) message);
@@ -83,26 +92,32 @@ class TCLoggerImpl implements TCLogger {
     }
   }
 
+  @Override
   public void warn(Object message, Throwable t) {
     logger.warn(message, t);
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return logger.isDebugEnabled();
   }
 
+  @Override
   public boolean isInfoEnabled() {
     return logger.isInfoEnabled();
   }
 
+  @Override
   public void setLevel(LogLevel level) {
     logger.setLevel(LogLevelImpl.toLog4JLevel(level));
   }
 
+  @Override
   public LogLevel getLevel() {
     return LogLevelImpl.fromLog4JLevel(logger.getLevel());
   }
 
+  @Override
   public String getName() {
     return logger.getName();
   }

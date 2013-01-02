@@ -21,12 +21,14 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
   }
 
   // Used by active server
+  @Override
   public TransactionBatchReader newTransactionBatchReader(final CommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getSourceNodeID(), ctm.getSerializer(),
                                           this.activeTxnFactory, this.globalSeverStats);
   }
 
   // Used by passive server
+  @Override
   public TransactionBatchReader newTransactionBatchReader(final RelayedCommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getClientID(), ctm.getSerializer(),
                                           this.passiveTxnFactory, this.globalSeverStats);

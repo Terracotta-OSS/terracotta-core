@@ -46,10 +46,12 @@ public class LogicalManagedObjectFacade extends AbstractObjectFacade implements 
     this.trueSize = trueObjectSize;
   }
 
+  @Override
   public String getClassName() {
     return this.className;
   }
 
+  @Override
   public String[] getFields() {
     String[] names = new String[this.facadeSize];
     for (int i = 0; i < facadeSize; i++) {
@@ -58,52 +60,64 @@ public class LogicalManagedObjectFacade extends AbstractObjectFacade implements 
     return names;
   }
 
+  @Override
   protected Object basicGetFieldValue(String fieldName) {
     int index = Integer.valueOf(fieldName).intValue();
     return this.data[index];
   }
 
+  @Override
   public boolean isPrimitive(String fieldName) {
     // Logical classes cannot have "primitive" fields
     return false;
   }
 
+  @Override
   public ObjectID getObjectId() {
     return this.objectID;
   }
 
+  @Override
   public boolean isInnerClass() {
     return false;
   }
 
+  @Override
   public ObjectID getParentObjectId() {
     throw new IllegalStateException("Not an inner class");
   }
 
+  @Override
   public boolean isArray() {
     return false;
   }
 
+  @Override
   public int getArrayLength() {
     throw new IllegalStateException("Not an array");
   }
 
+  @Override
   public boolean isList() {
     return this.isList;
   }
 
+  @Override
   public boolean isSet() {
     return this.isSet;
   }
 
+  @Override
   public boolean isMap() {
     return this.isMap;
   }
 
+  @Override
   public int getFacadeSize() {
     return this.facadeSize;
   }
 
+  @Override
   public int getTrueObjectSize() {
     return this.trueSize;
   }

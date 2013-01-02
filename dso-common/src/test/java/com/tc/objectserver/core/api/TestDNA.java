@@ -42,26 +42,32 @@ public class TestDNA implements DNA {
    * public void setObject(TCObject object) throws DNAException { return; }
    */
 
+  @Override
   public String getTypeName() {
     return typeName;
   }
 
+  @Override
   public ObjectID getObjectID() throws DNAException {
     return objectID;
   }
 
+  @Override
   public DNACursor getCursor() {
     return cursor;
   }
 
+  @Override
   public boolean hasLength() {
     return false;
   }
 
+  @Override
   public int getArraySize() {
     return 0;
   }
 
+  @Override
   public ObjectID getParentObjectID() throws DNAException {
     return parentObjectID;
   }
@@ -79,10 +85,12 @@ public class TestDNA implements DNA {
     return;
   }
 
+  @Override
   public long getVersion() {
     return this.version;
   }
 
+  @Override
   public boolean isDelta() {
     return isDelta;
   }

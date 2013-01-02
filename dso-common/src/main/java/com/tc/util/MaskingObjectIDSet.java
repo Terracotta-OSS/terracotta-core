@@ -6,6 +6,7 @@ package com.tc.util;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
+
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -30,7 +31,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
         this.start = m.start;
         this.end = m.end;
         this.left = new BitSetObjectIDSet(m.left);
-    }    
+    }
     
     private void split() {
         long half = ((end - start)/3l) + start;
@@ -73,7 +74,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
                         current = new ObjectID(position++);
                         if ( MaskingObjectIDSet.super.contains(current) ) {
                             return true;
-                        } 
+                        }
                     }
                 }
                 current = null;
@@ -121,7 +122,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public boolean remove(ObjectID o) {
-        ObjectID id = (ObjectID)o;
+    ObjectID id = o;
         if ( o.getMaskedObjectID() < start ) {
             return left.remove(o);
         }
@@ -171,7 +172,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
             }
             end = id.getMaskedObjectID() + 1;
             return false;
-        } else { 
+        } else {
             return !super.remove(id);
         }
     }

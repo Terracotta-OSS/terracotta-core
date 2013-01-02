@@ -33,6 +33,7 @@ public class GroupToStripeMapSerializer implements TCSerializable {
     return groupToStripeMap;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     int size = serialInput.readInt();
     for (int i = 0; i < size; ++i) {
@@ -48,6 +49,7 @@ public class GroupToStripeMapSerializer implements TCSerializable {
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(groupToStripeMap.size());
     for (Map.Entry<GroupID, StripeID> entry : groupToStripeMap.entrySet()) {

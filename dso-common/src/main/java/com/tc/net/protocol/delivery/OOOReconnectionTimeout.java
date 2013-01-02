@@ -24,15 +24,18 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     this.timeoutMillis = timeoutMillis;
   }
 
+  @Override
   public synchronized void notifyTransportClosed(MessageTransport transport) {
     log(transport, "Transport Closed");
     oooLayer.notifyTransportClosed(transport);
   }
 
+  @Override
   public synchronized void notifyTransportConnectAttempt(MessageTransport transport) {
     oooLayer.notifyTransportConnectAttempt(transport);
   }
 
+  @Override
   public synchronized void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     Assert.assertNull(this.timeoutTimerTask);
     if (oooLayer.isClosed()) { return; }
@@ -49,6 +52,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     }
   }
 
+  @Override
   public synchronized void notifyTransportConnected(MessageTransport transport) {
     if (this.timeoutTimerTask != null) {
       log(transport, "Transport Connected, killing Timer for " + timeoutMillis);
@@ -57,6 +61,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     oooLayer.notifyTransportConnected(transport);
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     oooLayer.notifyTransportReconnectionRejected(transport);
   }
@@ -66,6 +71,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     this.timeoutTimerTask = null;
   }
 
+  @Override
   public synchronized void restoreConnectionFailed(MessageTransport transport) {
     if (this.timeoutTimerTask != null) {
       log(transport, "Restore Connection Failed, killing Timer for " + timeoutMillis);

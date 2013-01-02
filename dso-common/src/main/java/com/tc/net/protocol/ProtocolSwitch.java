@@ -44,6 +44,7 @@ public class ProtocolSwitch implements TCProtocolAdaptor {
     this.httpSink = httpSink;
   }
 
+  @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
     switch (protocol) {
       case PROTOCOL_NOT_HTTP: {
@@ -127,6 +128,7 @@ public class ProtocolSwitch implements TCProtocolAdaptor {
     return METHODS.contains(token);
   }
 
+  @Override
   public TCByteBuffer[] getReadBuffers() {
     switch (protocol) {
       case PROTOCOL_NOT_HTTP: {

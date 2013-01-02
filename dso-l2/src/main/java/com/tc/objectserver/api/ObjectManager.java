@@ -74,6 +74,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    * 
    * @return
    */
+  @Override
   public Iterator getRoots();
 
   public Map getRootNamesToIDsMap();
@@ -82,6 +83,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   public void createNewObjects(Set<ObjectID> ids);
 
+  @Override
   public ObjectID lookupRootID(String name);
 
   public GarbageCollector getGarbageCollector();
@@ -101,6 +103,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    */
   public void waitUntilReadyToGC();
 
+  @Override
   public int getLiveObjectCount();
 
   /**

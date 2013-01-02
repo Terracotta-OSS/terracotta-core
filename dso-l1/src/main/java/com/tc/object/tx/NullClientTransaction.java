@@ -21,14 +21,17 @@ public class NullClientTransaction extends AbstractClientTransaction {
     super();
   }
 
+  @Override
   public boolean hasChangesOrNotifies() {
     return false;
   }
 
+  @Override
   public boolean hasChanges() {
     return false;
   }
 
+  @Override
   public Map getNewRoots() {
     return Collections.EMPTY_MAP;
   }
@@ -58,14 +61,17 @@ public class NullClientTransaction extends AbstractClientTransaction {
     return true;
   }
 
+  @Override
   public Map getChangeBuffers() {
     return Collections.EMPTY_MAP;
   }
 
+  @Override
   public void addNotify(Notify notify) {
     return;
   }
 
+  @Override
   public boolean isConcurrent() {
     return false;
   }
@@ -75,6 +81,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
     // null do nothing
   }
 
+  @Override
   public int getNotifiesCount() {
     return 0;
   }
@@ -84,18 +91,22 @@ public class NullClientTransaction extends AbstractClientTransaction {
     // do nothing
   }
 
+  @Override
   public Collection getReferencesOfObjectsInTxn() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public void addDmiDescriptor(DmiDescriptor dd) {
     return;
   }
 
+  @Override
   public List getDmiDescriptors() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public List getNotifies() {
     return Collections.EMPTY_LIST;
   }

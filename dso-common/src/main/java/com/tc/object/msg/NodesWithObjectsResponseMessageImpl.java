@@ -44,6 +44,7 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public void initialize(final ThreadID tID, final Map<ObjectID, Set<NodeID>> response) {
     this.threadID = tID;
     this.nodesWithObjects = response;
@@ -90,10 +91,12 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
     }
   }
 
+  @Override
   public ThreadID getThreadID() {
     return threadID;
   }
 
+  @Override
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects() {
     return nodesWithObjects;
   }

@@ -28,6 +28,7 @@ public class SetOnceFlagTest extends TestCase {
       final AtomicReference<Exception> exception = new AtomicReference<Exception>();
 
       Runnable r1 = new Runnable() {
+        @Override
         public void run() {
           try {
             Thread.sleep(random.nextInt(50));
@@ -45,6 +46,7 @@ public class SetOnceFlagTest extends TestCase {
       };
 
       Runnable r2 = new Runnable() {
+        @Override
         public void run() {
           try {
             try {

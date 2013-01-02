@@ -16,6 +16,7 @@ public class CounterManagerImpl implements CounterManager {
     super();
   }
 
+  @Override
   public synchronized void shutdown() {
     if (shutdown) { return; }
     try {
@@ -25,6 +26,7 @@ public class CounterManagerImpl implements CounterManager {
     }
   }
 
+  @Override
   public synchronized Counter createCounter(CounterConfig config) {
     if (shutdown) { throw new IllegalStateException("counter manager is shutdown"); }
     if (config == null) { throw new NullPointerException("config cannot be null"); }
@@ -39,6 +41,7 @@ public class CounterManagerImpl implements CounterManager {
 
   }
 
+  @Override
   public void shutdownCounter(Counter counter) {
     if (counter instanceof SampledCounter) {
       SampledCounter sc = (SampledCounter) counter;

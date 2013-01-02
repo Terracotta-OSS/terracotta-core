@@ -57,6 +57,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     this.lockHelper = new LockHelper(L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER, lockSink, lockStore, this);
   }
 
+  @Override
   public void lock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level) {
     if (!queueIfNecessary(lid, cid, tid, level, RequestType.LOCK)) { return; }
 
@@ -69,6 +70,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void tryLock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level, long timeout) {
     if (!queueIfNecessary(lid, cid, tid, level, RequestType.TRY_LOCK, timeout)) { return; }
 
@@ -81,6 +83,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void unlock(LockID lid, ClientID cid, ThreadID tid) {
     // This needs to be queueable since it maybe possible for an unpause race on the client side
     // to cause an unlock message to reach the server prior to the lock manager starting up. (see steps in wait()).
@@ -96,6 +99,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void queryLock(LockID lid, ClientID cid, ThreadID tid) {
     if (!isValidStateFor(lid, cid, tid, "QueryLock")) { return; }
 
@@ -108,6 +112,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void interrupt(LockID lid, ClientID cid, ThreadID tid) {
     if (!isValidStateFor(lid, cid, tid, "Interrupt")) { return; }
 
@@ -124,6 +129,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
    * Ignoring messages from client while in starting state. Such a case might come up when a recall timer goes out and
    * the lock is recalled by the client without it noticing that it might still be in paused state.
    */
+  @Override
   public void recallCommit(LockID lid, ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts) {
     if (!isStarted()) {
       logger.info("Ignoring recall commit messages from Client " + cid + " for Lock " + lid);
@@ -139,6 +145,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public NotifiedWaiters notify(LockID lid, ClientID cid, ThreadID tid, NotifyAction action,
                                 NotifiedWaiters addNotifiedWaitersTo) {
     if (!isValidStateFor(lid, cid, tid, "Notify")) { return addNotifiedWaitersTo; }
@@ -152,6 +159,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void wait(LockID lid, ClientID cid, ThreadID tid, long timeout) {
     // Why queue wait request?
     // consider steps:
@@ -172,6 +180,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void reestablishState(ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts) {
     assertStateIsStarting("Reestablish was called after the LockManager was started.");
 
@@ -200,6 +209,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void clearAllLocksFor(ClientID cid) {
     LockIterator iter = lockStore.iterator();
     ServerLock lock = iter.getNextLock(null);
@@ -212,10 +222,12 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     this.lockHelper.getLockStatsManager().clearAllStatsFor(cid);
   }
 
+  @Override
   public void enableLockStatsForNodeIfNeeded(ClientID cid) {
     this.lockHelper.getLockStatsManager().enableStatsForNodeIfNeeded(cid);
   }
 
+  @Override
   public LockMBean[] getAllLocks() {
     List<LockMBean> beansList = new ArrayList<LockMBean>();
 
@@ -229,6 +241,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     return beansList.toArray(new LockMBean[beansList.size()]);
   }
 
+  @Override
   public void start() {
     statusLock.writeLock().lock();
     try {
@@ -265,6 +278,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void timerTimeout(LockTimerContext lockTimerContext) {
     LockID lid = lockTimerContext.getLockID();
     ServerLock lock = lockStore.checkOut(lid);
@@ -276,6 +290,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public void setLockStatisticsEnabled(boolean lockStatsEnabled, L2LockStatsManager manager) {
     if (lockStatsEnabled) {
       lockHelper.setLockStatsManager(manager);
@@ -341,6 +356,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     int size = 0;

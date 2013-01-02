@@ -28,6 +28,7 @@ public class SequenceID extends AbstractIdentifier {
   }
 
   public static class SequenceIDComparator implements Comparator {
+    @Override
     public int compare(Object o1, Object o2) {
       long l1 = ((SequenceID) o1).toLong();
       long l2 = ((SequenceID) o2).toLong();

@@ -48,6 +48,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     return new HealthCheckerMonitorThreadEngine(config, connectionManager, loger);
   }
 
+  @Override
   public void start() {
     if (started.attemptSet()) {
       monitorThread.start();
@@ -57,6 +58,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
   }
 
+  @Override
   public void stop() {
     if (shutdown.attemptSet()) {
       monitorThreadEngine.stop();
@@ -70,6 +72,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     return started.isSet();
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
@@ -84,14 +87,17 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     //
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     monitorThreadEngine.addConnection(transport);
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     // HealthChecker Ping Thread can anyway determine thru ping probe cycle and remove it
     // from its radar. still lets do it earlier
@@ -107,6 +113,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     // NOP
   }
@@ -162,6 +169,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       stop.attemptSet();
     }
 
+    @Override
     public void run() {
       while (true) {
 

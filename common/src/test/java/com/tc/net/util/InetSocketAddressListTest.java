@@ -13,6 +13,7 @@ public final class InetSocketAddressListTest extends TCTestCase {
   private InetSocketAddress[]   addresses;
   private InetSocketAddressList list;
 
+  @Override
   protected void setUp() throws Exception {
     addresses = new InetSocketAddress[] { new InetSocketAddress("localhost", 0),
         new InetSocketAddress("www.terracottatech.com", 80), new InetSocketAddress("15.0.0.1", 5) };

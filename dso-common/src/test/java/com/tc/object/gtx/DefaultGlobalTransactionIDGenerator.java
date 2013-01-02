@@ -16,6 +16,7 @@ public class DefaultGlobalTransactionIDGenerator implements GlobalTransactionIDG
   Map       sid2Gid = new HashMap();
   long      id      = 0;
 
+  @Override
   public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
 
     GlobalTransactionID gid = (GlobalTransactionID) sid2Gid.get(serverTransactionID);
@@ -27,6 +28,7 @@ public class DefaultGlobalTransactionIDGenerator implements GlobalTransactionIDG
     return gid;
   }
 
+  @Override
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     if (gidSet.isEmpty()) {
       return GlobalTransactionID.NULL_ID;

@@ -24,6 +24,7 @@ public class HydrateContext implements MultiThreadedEventContext {
     return message;
   }
 
+  @Override
   public Object getKey() {
     return message.getSourceNodeID();
   }

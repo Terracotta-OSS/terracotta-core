@@ -29,6 +29,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     for (int i = 0; i < 10; i++) {
       exec.execute(new Runnable() {
+        @Override
         public void run() {
           ThreadUtil.reallySleep(5000);
           run.incrementAndGet();
@@ -40,6 +41,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     try {
       exec.execute(new Runnable() {
+        @Override
         public void run() {
           throw new AssertionError();
         }
@@ -69,6 +71,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
     final AtomicInteger run = new AtomicInteger();
 
     Runnable longClient = new Runnable() {
+      @Override
       public void run() {
         ThreadUtil.reallySleep(10000);
         run.incrementAndGet();
@@ -76,6 +79,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
     };
 
     Runnable shortClient = new Runnable() {
+      @Override
       public void run() {
         run.incrementAndGet();
       }
@@ -112,6 +116,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
   private static class LogAppender implements TCAppender {
     private int threadCountLogging = 0;
 
+    @Override
     public synchronized void append(LogLevel level, Object message, Throwable throwable) {
       System.out.println("XXX " + message);
       if (message.toString().contains("thread count")) {
@@ -134,6 +139,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     for (int i = 0; i < 10; i++) {
       exec.execute(new Runnable() {
+        @Override
         public void run() {
           threads.add(Thread.currentThread());
         }

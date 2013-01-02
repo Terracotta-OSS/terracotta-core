@@ -17,6 +17,7 @@ public final class DSOChangeApplicatorSpec implements ChangeApplicatorSpec {
     this.classLoader = classLoader;
   }
 
+  @Override
   public final Class getChangeApplicator(Class clazz) {
     try {
       if (classLoader == null) {

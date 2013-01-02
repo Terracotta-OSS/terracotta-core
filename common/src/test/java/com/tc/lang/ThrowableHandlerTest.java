@@ -17,6 +17,7 @@ public class ThrowableHandlerTest extends TestCase {
   public void testThrowableHandlerTest() {
     ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(ThrowableHandlerTest.class)) {
 
+      @Override
       protected void exit(int status) {
         // do not exit in test.
       }
@@ -33,6 +34,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {
 
+    @Override
     public void callbackOnExit(CallbackOnExitState state) {
       invokedCallback = true;
     }

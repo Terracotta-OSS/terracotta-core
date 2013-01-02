@@ -43,18 +43,22 @@ public class MockTCObject implements TCObject {
     return this.history;
   }
 
+  @Override
   public ObjectID getObjectID() {
     return this.id;
   }
 
+  @Override
   public Object getPeerObject() {
     return this.peer;
   }
 
+  @Override
   public TCClass getTCClass() {
     return this.tcClazz;
   }
 
+  @Override
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
                                   final int index) {
     if ("java.lang.reflect.AccessibleObject.override".equals(fieldname)) {
@@ -67,30 +71,37 @@ public class MockTCObject implements TCObject {
     }
   }
 
+  @Override
   public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
     throw new ImplementMe();
   }
@@ -99,6 +110,7 @@ public class MockTCObject implements TCObject {
     this.hydrateException = hydrateException;
   }
 
+  @Override
   public void hydrate(final DNA from, final boolean force, WeakReference peer1) throws ClassNotFoundException {
     if (this.hydrateException != null) {
       if (this.hydrateException instanceof RuntimeException) { throw (RuntimeException) this.hydrateException; }
@@ -107,14 +119,17 @@ public class MockTCObject implements TCObject {
     // nothing
   }
 
+  @Override
   public void resolveReference(final String fieldName) {
     throw new ImplementMe();
   }
 
+  @Override
   public void resolveArrayReference(final int index) {
     return;
   }
 
+  @Override
   public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     return;
   }
@@ -144,74 +159,92 @@ public class MockTCObject implements TCObject {
     }
   }
 
+  @Override
   public ObjectID setReference(final String fieldName, final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setArrayReference(final int index, final ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setValue(final String fieldName, final Object obj) {
     throw new ImplementMe();
   }
 
+  @Override
   public long getVersion() {
     return this.version;
   }
 
+  @Override
   public void setVersion(final long version) {
     this.version = version;
   }
 
+  @Override
   public int clearReferences(final int toClear) {
     return 0;
   }
 
+  @Override
   public Object getResolveLock() {
     return this.resolveLock;
   }
 
+  @Override
   public void setNext(final TLinkable link) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setPrevious(final TLinkable link) {
     throw new ImplementMe();
   }
 
+  @Override
   public TLinkable getNext() {
     return null;
   }
 
+  @Override
   public TLinkable getPrevious() {
     return null;
   }
 
+  @Override
   public void markAccessed() {
     this.accessed = true;
   }
 
+  @Override
   public void clearAccessed() {
     this.accessed = false;
   }
 
+  @Override
   public boolean recentlyAccessed() {
     return this.accessed;
   }
 
+  @Override
   public int accessCount(final int factor) {
     throw new ImplementMe();
   }
 
+  @Override
   public void clearReference(final String fieldName) {
     throw new ImplementMe();
   }
 
+  @Override
   public void resolveAllReferences() {
     //
   }
 
+  @Override
   public boolean isNew() {
     return this.isNew;
   }
@@ -220,47 +253,58 @@ public class MockTCObject implements TCObject {
     this.isNew = isNew;
   }
 
+  @Override
   public boolean isShared() {
     return true;
   }
 
+  @Override
   public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                          final int index) {
     return;
   }
 
+  @Override
   public void logicalInvoke(final int method, final String methodSignature, final Object[] params) {
     this.history.add(new MethodCall(method, params));
   }
 
+  @Override
   public String getFieldNameByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
+  @Override
   public void disableAutoLocking() {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean autoLockingDisabled() {
     return false;
   }
 
+  @Override
   public boolean canEvict() {
     throw new ImplementMe();
   }
 
+  @Override
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     throw new ImplementMe();
   }
 
+  @Override
   public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     throw new ImplementMe();
   }
 
+  @Override
   public void literalValueChanged(final Object newValue, final Object oldValue) {
     throw new ImplementMe();
   }
 
+  @Override
   public void setLiteralValue(final Object newValue) {
     throw new ImplementMe();
   }
@@ -269,22 +313,27 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
+  @Override
   public ToggleableStrongReference getOrCreateToggleRef() {
     throw new ImplementMe();
   }
 
+  @Override
   public void setNotNew() {
     this.isNew = false;
   }
 
+  @Override
   public void dehydrate(final DNAWriter writer) {
     //
   }
 
+  @Override
   public void unresolveReference(final String fieldName) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isCacheManaged() {
     return true;
   }

@@ -38,6 +38,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     references = new ArrayList(1);
   }
 
+  @Override
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LogicalAction action = cursor.getLogicalAction();
@@ -152,6 +153,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     addAllObjectReferencesFromIteratorTo(references.iterator(), refs);
   }
 
+  @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     for (Iterator i = references.iterator(); i.hasNext();) {
       Object value = i.next();
@@ -164,6 +166,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     return "ListManagedStateObject(" + references + ")";
   }
 
+  @Override
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     final int size = references.size();
 
@@ -183,6 +186,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     return LogicalManagedObjectFacade.createListInstance(objectID, className, data, size);
   }
 
+  @Override
   public byte getType() {
     return LIST_TYPE;
   }

@@ -14,6 +14,7 @@ public final class TestPersistenceTransactionProvider implements TransactionProv
   public final LinkedQueue nullTransactionContexts = new LinkedQueue();
   public final LinkedQueue newTransactions         = new LinkedQueue();
 
+  @Override
   public Transaction newTransaction() {
     try {
       Transaction rv = new TestPersistenceTransaction();

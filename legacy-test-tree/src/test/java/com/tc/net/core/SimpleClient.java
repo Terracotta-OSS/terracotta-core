@@ -30,6 +30,7 @@ public class SimpleClient {
 
   public void run() throws Exception {
     final GenericNetworkMessageSink recvSink = new GenericNetworkMessageSink() {
+      @Override
       public void putMessage(GenericNetworkMessage msg) {
         final long recv = msgs.increment();
         if ((recv % 1000) == 0) {
@@ -45,6 +46,7 @@ public class SimpleClient {
       TCByteBuffer data[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, dataSize);
       final GenericNetworkMessage msg = new GenericNetworkMessage(conn, data);
       msg.setSentCallback(new Runnable() {
+        @Override
         public void run() {
           msg.setSent();
         }

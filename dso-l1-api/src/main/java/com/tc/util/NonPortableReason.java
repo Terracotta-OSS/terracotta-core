@@ -372,6 +372,7 @@ public class NonPortableReason implements Serializable {
     return bootJarClasses;
   }
 
+  @Override
   public String toString() {
     return getDetailedReason();
   }

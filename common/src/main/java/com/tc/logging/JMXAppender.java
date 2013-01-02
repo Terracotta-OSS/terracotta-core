@@ -36,14 +36,17 @@ public class JMXAppender extends AppenderSkeleton {
     return broadcastingBean;
   }
 
+  @Override
   protected void append(final LoggingEvent event) {
     broadcastingBean.broadcastLogEvent(getLayout().format(event));
   }
 
+  @Override
   public boolean requiresLayout() {
     return false;
   }
 
+  @Override
   public void close() {
     // Do nothing
   }

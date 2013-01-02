@@ -12,31 +12,38 @@ import java.util.Collection;
 
 public class NullTransactionalObjectManager implements TransactionalObjectManager {
 
+  @Override
   public void addTransactions(Collection<ServerTransaction> txns) {
     // Nop
   }
 
+  @Override
   public boolean applyTransactionComplete(ApplyTransactionInfo applyTxnInfo) {
     // Nop
     return false;
   }
 
+  @Override
   public void lookupObjectsForTransactions() {
     // Nop
   }
 
+  @Override
   public void commitTransactionsComplete(CommitTransactionContext ctc) {
     // Nop
   }
 
+  @Override
   public void processApplyComplete() {
     // Nop
   }
 
+  @Override
   public void recallAllCheckedoutObject() {
     // Nop
   }
 
+  @Override
   public void recallCheckedoutObject(RecallObjectsContext roc) {
     // Nop
   }

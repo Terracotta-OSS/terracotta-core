@@ -29,6 +29,7 @@ public class CachingPolicyConfigBuilder extends BaseConfigBuilder {
     this.query = query;
   }
 
+  @Override
   public String toString() {
     String out = indent() + "<caching-policy";
     if (this.matchType != null) out += " match-type=\"" + this.matchType + "\"";

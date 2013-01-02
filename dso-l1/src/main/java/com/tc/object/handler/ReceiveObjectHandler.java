@@ -15,6 +15,7 @@ import com.tc.object.msg.RequestManagedObjectResponseMessage;
 public class ReceiveObjectHandler extends AbstractEventHandler {
   private RemoteObjectManager objectManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectResponseMessage) {
       RequestManagedObjectResponseMessage m = (RequestManagedObjectResponseMessage) context;
@@ -26,6 +27,7 @@ public class ReceiveObjectHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext ccc = (ClientConfigurationContext) context;

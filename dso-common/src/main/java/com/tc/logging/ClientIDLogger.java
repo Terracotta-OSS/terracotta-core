@@ -14,6 +14,7 @@ public class ClientIDLogger extends BaseMessageDecoratorTCLogger {
     this.cidp = clientIDProvider;
   }
 
+  @Override
   protected Object decorate(Object msg) {
     return cidp.getClientID() + ": " + msg;
   }

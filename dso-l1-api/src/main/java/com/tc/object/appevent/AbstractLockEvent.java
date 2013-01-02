@@ -26,6 +26,7 @@ public class AbstractLockEvent extends AbstractApplicationEvent {
     return (AbstractLockEventContext) getApplicationEventContext();
   }
 
+  @Override
   public String getMessage() {
     return "Current transaction with read-only access attempted to modify a shared object.  "
            + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.";

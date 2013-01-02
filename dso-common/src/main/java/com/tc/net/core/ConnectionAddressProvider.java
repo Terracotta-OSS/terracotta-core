@@ -13,6 +13,7 @@ public class ConnectionAddressProvider implements ClusterTopologyChangedListener
     this.addresses = (addresses == null) ? ConnectionInfo.EMPTY_ARRAY : addresses;
   }
 
+  @Override
   public synchronized String toString() {
     return "ConnectionAddressProvider(" + StringUtil.toString(addresses) + ")";
   }
@@ -21,6 +22,7 @@ public class ConnectionAddressProvider implements ClusterTopologyChangedListener
     return new ConnectionAddressIterator(addresses);
   }
   
+  @Override
   public synchronized void serversUpdated(ConnectionAddressProvider... addressProviders) {
     for(ConnectionAddressProvider cap: addressProviders) {
       if(cap.getGroupId() == this.getGroupId()) {

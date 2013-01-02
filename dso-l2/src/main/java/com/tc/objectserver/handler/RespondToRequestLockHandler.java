@@ -31,6 +31,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
   private DSOChannelManager channelManager;
   private TCLogger          logger;
 
+  @Override
   public void handleEvent(EventContext context) {
     LockResponseContext lrc = (LockResponseContext) context;
     NodeID cid = lrc.getNodeID();
@@ -85,6 +86,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
     return (LockResponseMessage) channel.createMessage(messageType);
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

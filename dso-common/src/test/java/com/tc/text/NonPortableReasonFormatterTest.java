@@ -69,6 +69,7 @@ public class NonPortableReasonFormatterTest extends TestCase {
 
     public final List formatCalls = new LinkedList();
 
+    @Override
     public String format(String in) {
       formatCalls.add(in);
       return in;

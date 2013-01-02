@@ -23,6 +23,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
     this.resetOnSample = config.isResetOnSample();
 
     this.samplerTask = new TimerTask() {
+      @Override
       public void run() {
         recordSample();
       }
@@ -31,10 +32,12 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
     recordSample();
   }
 
+  @Override
   public TimeStampedCounterValue getMostRecentSample() {
     return mostRecentSample;
   }
 
+  @Override
   public void shutdown() {
     if (samplerTask != null) {
       samplerTask.cancel();
@@ -61,6 +64,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
     mostRecentSample = new TimeStampedCounterValue(now, sample);
   }
 
+  @Override
   public long getAndReset() {
     return getAndSet(0L);
   }

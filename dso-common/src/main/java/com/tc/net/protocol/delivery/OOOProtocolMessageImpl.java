@@ -35,39 +35,48 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
     return (OOOProtocolMessageHeader) getHeader();
   }
 
+  @Override
   public long getAckSequence() {
     return getOOOPHeader().getAckSequence();
   }
 
+  @Override
   public long getSent() {
     return getOOOPHeader().getSequence();
   }
 
+  @Override
   public UUID getSessionId() {
     OOOProtocolMessageHeader header = (OOOProtocolMessageHeader) getHeader();
     return (header.getSession());
   }
 
+  @Override
   public boolean isHandshake() {
     return getOOOPHeader().isHandshake();
   }
 
+  @Override
   public boolean isHandshakeReplyOk() {
     return getOOOPHeader().isHandshakeReplyOk();
   }
 
+  @Override
   public boolean isHandshakeReplyFail() {
     return getOOOPHeader().isHandshakeReplyFail();
   }
 
+  @Override
   public boolean isSend() {
     return getOOOPHeader().isSend();
   }
 
+  @Override
   public boolean isAck() {
     return getOOOPHeader().isAck();
   }
 
+  @Override
   public boolean isGoodbye() {
     return getOOOPHeader().isGoodbye();
   }
@@ -77,6 +86,7 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
     // we are disabling this because on ooo layer knows when it's safe to recycle the message
   }
 
+  @Override
   public void reallyDoRecycleOnWrite() {
     getOOOPHeader().recycle();
     AbstractTCNetworkMessage messagePayLoad = (AbstractTCNetworkMessage) getMessagePayload();

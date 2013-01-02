@@ -44,6 +44,7 @@ public class TestTickerToken extends TickerTokenImpl implements TickerToken {
   }
 
 
+  @Override
   public boolean evaluateEqual(TickerToken token) {
     TestTickerToken compareTo = (TestTickerToken)token;
     

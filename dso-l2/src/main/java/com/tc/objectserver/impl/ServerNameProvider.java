@@ -12,6 +12,7 @@ public class ServerNameProvider implements NodeNameProvider {
     this.nodeName = serverNodeId;
   }
 
+  @Override
   public String getNodeName() {
     return this.nodeName;
   }

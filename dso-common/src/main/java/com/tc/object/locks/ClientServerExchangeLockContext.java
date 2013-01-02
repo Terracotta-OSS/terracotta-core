@@ -70,6 +70,7 @@ public class ClientServerExchangeLockContext implements TCSerializable {
     return (11 * lockID.hashCode()) ^ (7 * threadID.hashCode()) ^ (3 * state.hashCode()) ^ (13 * nodeID.hashCode());
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput output) {
     LockIDSerializer ls = new LockIDSerializer(lockID);
     ls.serializeTo(output);
@@ -82,6 +83,7 @@ public class ClientServerExchangeLockContext implements TCSerializable {
     }
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput input) throws IOException {
     LockIDSerializer ls = new LockIDSerializer();
     ls.deserializeFrom(input);

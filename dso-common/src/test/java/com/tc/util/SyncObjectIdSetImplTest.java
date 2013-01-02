@@ -18,6 +18,7 @@ public class SyncObjectIdSetImplTest extends TestCase {
   private ObjectID            id1;
   private ObjectID            id2;
 
+  @Override
   protected void setUp() throws Exception {
     id1 = new ObjectID(1);
     id2 = new ObjectID(2);
@@ -110,6 +111,7 @@ class RemoveCaller extends MethodCaller {
     super(id);
   }
 
+  @Override
   public void invoke(SyncObjectIdSetImpl set) {
     set.remove(id);
   }
@@ -120,6 +122,7 @@ class ContainsCaller extends MethodCaller {
     super(id);
   }
 
+  @Override
   public void invoke(SyncObjectIdSetImpl set) {
     set.contains(id);
   }
@@ -138,6 +141,7 @@ class ClientThread extends Thread {
     this.post = post;
   }
 
+  @Override
   public void run() {
     try {
       pre.release();

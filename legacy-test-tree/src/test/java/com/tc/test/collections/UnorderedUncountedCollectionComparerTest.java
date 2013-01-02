@@ -8,11 +8,13 @@ package com.tc.test.collections;
  */
 public class UnorderedUncountedCollectionComparerTest extends UnorderedCollectionComparerTest {
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     this.comparer = new UnorderedUncountedCollectionComparer(this.equalityComparator, this.describer);
   }
 
+  @Override
   public void testChecksCounts() throws Exception {
     MyObj one = new MyObj("a");
     MyObj two = new MyObj("b");

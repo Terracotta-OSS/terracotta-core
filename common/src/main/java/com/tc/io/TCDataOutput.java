@@ -22,6 +22,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void write(int value);
 
   /**
@@ -29,6 +30,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void write(byte[] value);
 
   /**
@@ -38,6 +40,7 @@ public interface TCDataOutput extends DataOutput {
    * @param offset Start at offset in value
    * @param length Length to write
    */
+  @Override
   public void write(byte[] value, int offset, int length);
 
   /**
@@ -45,6 +48,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeBoolean(boolean value);
 
   /**
@@ -52,6 +56,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeByte(int value);
 
   /**
@@ -59,6 +64,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeChar(int value);
 
   /**
@@ -66,6 +72,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeDouble(double value);
 
   /**
@@ -73,6 +80,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeFloat(float value);
 
   /**
@@ -80,6 +88,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeInt(int value);
 
   /**
@@ -87,6 +96,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeLong(long value);
 
   /**
@@ -94,6 +104,7 @@ public interface TCDataOutput extends DataOutput {
    * 
    * @param value Value
    */
+  @Override
   public void writeShort(int value);
 
   /**

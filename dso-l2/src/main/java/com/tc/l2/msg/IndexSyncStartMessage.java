@@ -41,6 +41,7 @@ public class IndexSyncStartMessage extends AbstractGroupMessage implements Order
     out.writeLong(this.sequenceID);
   }
 
+  @Override
   public long getSequenceID() {
     return this.sequenceID;
   }

@@ -77,6 +77,7 @@ final class TCListenerImpl implements TCListener {
     return rv;
   }
 
+  @Override
   public final void stop() {
     try {
       stop(0);
@@ -85,10 +86,12 @@ final class TCListenerImpl implements TCListener {
     }
   }
 
+  @Override
   public final TCSocketAddress getBindSocketAddress() {
     return sockAddr;
   }
 
+  @Override
   public final void stop(long timeout) throws TCTimeoutException {
     if (stopped.isSet()) {
       logger.warn("listener already stopped");
@@ -99,6 +102,7 @@ final class TCListenerImpl implements TCListener {
       final TCFuture future = new TCFuture();
 
       stopImpl(new Runnable() {
+        @Override
         public void run() {
           future.set("stop done");
         }
@@ -123,14 +127,17 @@ final class TCListenerImpl implements TCListener {
     }
   }
 
+  @Override
   public final int getBindPort() {
     return port;
   }
 
+  @Override
   public final InetAddress getBindAddress() {
     return addr;
   }
 
+  @Override
   public final void addEventListener(TCListenerEventListener lsnr) {
     if (lsnr == null) {
       logger.warn("trying to add a null event listener");
@@ -140,6 +147,7 @@ final class TCListenerImpl implements TCListener {
     listeners.add(lsnr);
   }
 
+  @Override
   public final void removeEventListener(TCListenerEventListener lsnr) {
     if (lsnr == null) {
       logger.warn("trying to remove a null event listener");
@@ -149,6 +157,7 @@ final class TCListenerImpl implements TCListener {
     listeners.remove(lsnr);
   }
 
+  @Override
   public final boolean isStopped() {
     return stopped.isSet();
   }

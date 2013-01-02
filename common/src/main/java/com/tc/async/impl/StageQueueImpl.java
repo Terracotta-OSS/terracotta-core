@@ -95,6 +95,7 @@ public class StageQueueImpl implements Sink {
    * empty (at somepoint during the call) the context might not be added. This method should only be used where the
    * stage threads are to be signaled on data availablity and the threads take care of getting data from elsewhere
    */
+  @Override
   public boolean addLossy(EventContext context) {
     SourceQueueImpl sourceQueue;
     if (context instanceof MultiThreadedEventContext) {
@@ -111,6 +112,7 @@ public class StageQueueImpl implements Sink {
     }
   }
 
+  @Override
   public void addMany(Collection contexts) {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added many:" + contexts + " to:" + this.stageName);
@@ -120,6 +122,7 @@ public class StageQueueImpl implements Sink {
     }
   }
 
+  @Override
   public void add(EventContext context) {
     Assert.assertNotNull(context);
     if (this.logger.isDebugEnabled()) {
@@ -166,6 +169,7 @@ public class StageQueueImpl implements Sink {
   }
 
   // Used for testing
+  @Override
   public int size() {
     int totalQueueSize = 0;
     for (SourceQueueImpl sourceQueue : this.sourceQueues) {
@@ -174,11 +178,13 @@ public class StageQueueImpl implements Sink {
     return totalQueueSize;
   }
 
+  @Override
   public void setAddPredicate(AddPredicate predicate) {
     Assert.eval(predicate != null);
     this.predicate = predicate;
   }
 
+  @Override
   public AddPredicate getPredicate() {
     return this.predicate;
   }
@@ -188,6 +194,7 @@ public class StageQueueImpl implements Sink {
     return "StageQueue(" + this.stageName + ")";
   }
 
+  @Override
   public void clear() {
     int clearCount = 0;
     for (SourceQueueImpl sourceQueue : this.sourceQueues) {
@@ -200,6 +207,7 @@ public class StageQueueImpl implements Sink {
    * Monitorable Interface
    */
 
+  @Override
   public void enableStatsCollection(boolean enable) {
     StageQueueStatsCollector statsCollector;
     if (enable) {
@@ -212,20 +220,24 @@ public class StageQueueImpl implements Sink {
     }
   }
 
+  @Override
   public Stats getStats(long frequency) {
     // Since all source queues have the same collector, the first reference is passed.
     return this.sourceQueues[0].getStatsCollector();
   }
 
+  @Override
   public Stats getStatsAndReset(long frequency) {
     return getStats(frequency);
   }
 
+  @Override
   public boolean isStatsCollectionEnabled() {
     // Since all source queues have the same collector, the first reference is used.
     return this.sourceQueues[0].getStatsCollector() instanceof StageQueueStatsCollectorImpl;
   }
 
+  @Override
   public void resetStats() {
     // Since all source queues have the same collector, the first reference is used.
     this.sourceQueues[0].getStatsCollector().reset();
@@ -268,6 +280,7 @@ public class StageQueueImpl implements Sink {
       return this.queue.isEmpty();
     }
 
+    @Override
     public EventContext poll(long timeout) throws InterruptedException {
       EventContext rv = (EventContext) this.queue.poll(timeout);
       if (rv != null) {
@@ -285,6 +298,7 @@ public class StageQueueImpl implements Sink {
       return this.queue.size();
     }
 
+    @Override
     public String getSourceName() {
       return this.sourceName;
     }
@@ -292,6 +306,7 @@ public class StageQueueImpl implements Sink {
 
   private static abstract class StageQueueStatsCollector implements StageQueueStats {
 
+    @Override
     public void logDetails(TCLogger statsLogger) {
       statsLogger.info(getDetails());
     }
@@ -325,6 +340,7 @@ public class StageQueueImpl implements Sink {
       this.name = makeWidth(stage, 40);
     }
 
+    @Override
     public String getDetails() {
       return this.name + " : Not Monitored";
     }
@@ -344,10 +360,12 @@ public class StageQueueImpl implements Sink {
       // NO-OP
     }
 
+    @Override
     public String getName() {
       return this.trimmedName;
     }
 
+    @Override
     public int getDepth() {
       return -1;
     }
@@ -364,6 +382,7 @@ public class StageQueueImpl implements Sink {
       this.name = makeWidth(stage, 40);
     }
 
+    @Override
     public String getDetails() {
       return this.name + " : " + this.count;
     }
@@ -383,10 +402,12 @@ public class StageQueueImpl implements Sink {
       this.count.set(0);
     }
 
+    @Override
     public String getName() {
       return this.trimmedName;
     }
 
+    @Override
     public int getDepth() {
       return this.count.get();
     }

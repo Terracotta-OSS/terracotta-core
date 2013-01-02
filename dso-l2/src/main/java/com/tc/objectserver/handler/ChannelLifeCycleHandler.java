@@ -106,11 +106,13 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     processTransactionSink = scc.getStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE).getSink();
   }
 
+  @Override
   public void channelCreated(final MessageChannel channel) {
     channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID()
         .toLong())));
   }
 
+  @Override
   public void channelRemoved(final MessageChannel channel) {
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.

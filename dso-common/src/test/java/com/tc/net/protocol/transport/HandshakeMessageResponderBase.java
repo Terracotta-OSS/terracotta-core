@@ -32,6 +32,7 @@ abstract class HandshakeMessageResponderBase implements NetworkMessageSink, Hand
     this.errorRef = errorRef;
   }
 
+  @Override
   public void putMessage(TCNetworkMessage msg) {
     Assert.assertTrue(msg instanceof TransportHandshakeMessage);
     TransportHandshakeMessage message = (TransportHandshakeMessage) msg;
@@ -51,6 +52,7 @@ abstract class HandshakeMessageResponderBase implements NetworkMessageSink, Hand
 
   protected void sendResponseMessage(final TransportHandshakeMessage responseMessage) {
     new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           sentQueue.put(responseMessage);

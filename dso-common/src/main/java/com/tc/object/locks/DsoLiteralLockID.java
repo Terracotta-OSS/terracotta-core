@@ -36,10 +36,12 @@ public class DsoLiteralLockID implements LockID {
     return null;
   }
 
+  @Override
   public LockIDType getLockType() {
     return LockIDType.DSO_LITERAL;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     LiteralValues type = LiteralValues.values()[serialInput.readByte()];
     switch (type) {
@@ -89,6 +91,7 @@ public class DsoLiteralLockID implements LockID {
     throw new AssertionError("Null type found in serialized DsoLiteralLockID stream " + type);
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     LiteralValues type = LiteralValues.valueFor(literal);
     serialOutput.writeByte(type.ordinal());
@@ -153,6 +156,7 @@ public class DsoLiteralLockID implements LockID {
     }
   }
 
+  @Override
   public int compareTo(Object o) {
     throw new ClassCastException("DsoLiteralLockID instances can't be compared");
   }

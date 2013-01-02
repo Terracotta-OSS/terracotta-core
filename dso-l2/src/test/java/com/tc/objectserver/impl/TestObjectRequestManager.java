@@ -21,6 +21,7 @@ public class TestObjectRequestManager implements ObjectRequestManager {
 
   public LinkedBlockingQueue<ObjectRequestServerContext> requestedObjects = new LinkedBlockingQueue<ObjectRequestServerContext>();
 
+  @Override
   public void requestObjects(ObjectRequestServerContext requestContext) {
     try {
       this.requestedObjects.put(requestContext);
@@ -30,11 +31,13 @@ public class TestObjectRequestManager implements ObjectRequestManager {
 
   }
 
+  @Override
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
                           ObjectIDSet missingObjectIDs, LOOKUP_STATE lookupState, int maxRequestDepth) {
     // not implemented
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return out;
   }
@@ -43,22 +46,27 @@ public class TestObjectRequestManager implements ObjectRequestManager {
     return 0;
   }
 
+  @Override
   public int getLiveObjectCount() {
     return 0;
   }
 
+  @Override
   public Iterator getRootNames() {
     return null;
   }
 
+  @Override
   public Iterator getRoots() {
     return null;
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
   }
 
+  @Override
   public ObjectID lookupRootID(String name) {
     return null;
   }

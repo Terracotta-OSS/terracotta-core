@@ -8,10 +8,12 @@ import com.tc.object.msg.SearchQueryRequestMessage;
 
 public class NullSearchRequestManager implements SearchRequestManager {
 
+  @Override
   public void queryRequest(SearchQueryRequestMessage request) {
     //
   }
 
+  @Override
   public void initializeContext(ConfigurationContext context) {
     //
   }

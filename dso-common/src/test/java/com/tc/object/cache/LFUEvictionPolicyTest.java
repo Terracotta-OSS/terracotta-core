@@ -12,6 +12,7 @@ import java.util.Random;
 
 public class LFUEvictionPolicyTest extends LRUEvictionPolicyTest {
 
+  @Override
   public void tests() throws Exception {
     int capacity = 50;
     int maxObjects = capacity * 2;
@@ -112,6 +113,7 @@ public class LFUEvictionPolicyTest extends LRUEvictionPolicyTest {
     }
   }
 
+  @Override
   public EvictionPolicy createNewCache(int cacheSize) {
     return new LFUEvictionPolicy(cacheSize);
   }

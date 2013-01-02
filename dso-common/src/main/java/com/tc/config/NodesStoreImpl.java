@@ -41,6 +41,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     initNodeNamesToServerNames();
   }
 
+  @Override
   public void topologyChanged(ReloadConfigChangeContext context) {
     this.nodes.addAll(context.getNodesAdded());
     this.nodes.removeAll(context.getNodesRemoved());
@@ -51,10 +52,12 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     }
   }
 
+  @Override
   public void registerForTopologyChange(TopologyChangeListener listener) {
     listeners.add(listener);
   }
 
+  @Override
   public Node[] getAllNodes() {
     Assert.assertTrue(this.nodes.size() > 0);
     return this.nodes.toArray(new Node[this.nodes.size()]);
@@ -78,6 +81,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     this.nodeNamesToServerNames = tempNodeNamesToServerNames;
   }
 
+  @Override
   public String getNodeNameFromServerName(String serverName) {
 
     return nodeNamesToServerNames.get(serverName);
@@ -87,6 +91,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
    * ServerNamesOfThisGroup methods ...
    */
 
+  @Override
   public boolean hasServerInGroup(String serverName) {
     return serverNamesForThisGroup.contains(serverName);
   }
@@ -109,10 +114,12 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
    * ServerNameGroupIDInfo methods ....
    */
 
+  @Override
   public boolean hasServerInCluster(String name) {
     return serverNameToGidMap.containsKey(name);
   }
 
+  @Override
   public GroupID getGroupIDFromServerName(String name) {
     return serverNameToGidMap.get(name);
   }

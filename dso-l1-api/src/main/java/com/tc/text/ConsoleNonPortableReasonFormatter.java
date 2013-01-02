@@ -40,6 +40,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     details = new LinkedList();
   }
 
+  @Override
   public void formatReasonTypeName(byte type) {
     String name;
     switch(type) {
@@ -67,6 +68,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     out.print(name);
   }
   
+  @Override
   public void formatDetail(NonPortableDetail detail) {
     details.add(detail);
     if (detail.getLabel().length() > maxLabelLength) {
@@ -74,6 +76,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     }
   }
 
+  @Override
   public void flush() {
     for (Iterator i = details.iterator(); i.hasNext();) {
       NonPortableDetail detail = (NonPortableDetail) i.next();
@@ -92,6 +95,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     out.flush();
   }
 
+  @Override
   public void formatReasonText(String reasonText) {
     if (null == reasonText || 0 == reasonText.length()) return;
       
@@ -102,6 +106,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     out.println();
   }
 
+  @Override
   public void formatInstructionsText(String instructionsText) {
     if (null == instructionsText || 0 == instructionsText.length()) {
       instructions = null;

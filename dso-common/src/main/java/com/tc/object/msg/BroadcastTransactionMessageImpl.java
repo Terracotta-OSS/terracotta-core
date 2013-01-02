@@ -166,6 +166,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
+  @Override
   public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
                          final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
                          final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
@@ -189,14 +190,17 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
+  @Override
   public List getLockIDs() {
     return this.lockIDs;
   }
 
+  @Override
   public TxnType getTransactionType() {
     return this.transactionType;
   }
 
+  @Override
   public Collection getObjectChanges() {
     Collection versionizedChanges = new ArrayList(this.changes.size());
     for (Iterator iter = this.changes.iterator(); iter.hasNext();) {
@@ -206,27 +210,33 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     return versionizedChanges;
   }
 
+  @Override
   public long getChangeID() {
     return this.changeID;
   }
 
+  @Override
   public TransactionID getTransactionID() {
     return this.transactionID;
   }
 
+  @Override
   public NodeID getCommitterID() {
     return this.committerID;
   }
 
+  @Override
   public GlobalTransactionID getGlobalTransactionID() {
     return this.globalTransactionID;
   }
 
+  @Override
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     Assert.assertNotNull(this.lowWatermark);
     return this.lowWatermark;
   }
 
+  @Override
   public Collection addNotifiesTo(final List c) {
     c.addAll(this.notifies);
     return c;
@@ -248,6 +258,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     recycleOutputStream();
   }
 
+  @Override
   public Map getNewRoots() {
     return this.newRoots;
   }
@@ -265,12 +276,14 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       this.rootID = rootID;
     }
 
+    @Override
     public void serializeTo(final TCByteBufferOutput serialOutput) {
       serialOutput.writeString(this.rootName);
       serialOutput.writeLong(this.rootID.toLong());
 
     }
 
+    @Override
     public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
       this.rootName = serialInput.readString();
       this.rootID = new ObjectID(serialInput.readLong());
@@ -286,6 +299,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
+  @Override
   public List getDmiDescriptors() {
     return this.dmis;
   }

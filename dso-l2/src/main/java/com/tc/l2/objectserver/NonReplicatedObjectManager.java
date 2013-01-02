@@ -9,22 +9,27 @@ import com.tc.net.NodeID;
 
 public class NonReplicatedObjectManager implements ReplicatedObjectManager {
 
+  @Override
   public void query(NodeID nodeID) {
     // Nop
   }
 
+  @Override
   public boolean relayTransactions() {
     return false;
   }
 
+  @Override
   public void sync() {
     // Nop
   }
 
+  @Override
   public void clear(NodeID nodeID) {
     // Nop
   }
 
+  @Override
   public void handleGCResult(GCResultMessage message) {
     throw new UnsupportedOperationException();
   }

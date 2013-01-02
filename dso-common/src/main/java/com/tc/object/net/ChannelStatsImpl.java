@@ -35,6 +35,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     this.channelManager = channelManager;
   }
 
+  @Override
   public Counter getCounter(MessageChannel channel, String name) {
     Counter rv = (Counter) channel.getAttachment(name);
     if (rv == null) {
@@ -57,10 +58,12 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void channelCreated(MessageChannel channel) {
     // NOP
   }
 
+  @Override
   public void channelRemoved(MessageChannel channel) {
     for (StatsConfig config : STATS_CONFIG) {
       Counter counter = (Counter) channel.removeAttachment(config.getStatsName());
@@ -70,14 +73,17 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
     getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
   }
 
+  @Override
   public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
     getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
   }
 
+  @Override
   public void notifyTransaction(NodeID nodeID, int numTxns) {
     try {
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
@@ -87,6 +93,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void notifyTransactionBroadcastedTo(NodeID nodeID) {
     try {
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
@@ -96,6 +103,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void notifyTransactionAckedFrom(NodeID nodeID) {
     try {
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
@@ -105,6 +113,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void notifyServerMapRequest(final ServerMapRequestType type, final MessageChannel channel,
                                      final int numRequests) {
     Counter counter = null;

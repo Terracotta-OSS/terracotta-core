@@ -23,6 +23,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
     super();
   }
 
+  @Override
   public synchronized void addMessage(Recyclable message, Set keys) {
     if (!keys.isEmpty()) {
       final Set lkeys = new HashSet(keys.size());
@@ -49,6 +50,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
     }
   }
 
+  @Override
   public synchronized boolean recycle(Object key) {
     RecycleItem ri = (RecycleItem) this.keys2RecycleItem.remove(key);
     if (ri != null) {

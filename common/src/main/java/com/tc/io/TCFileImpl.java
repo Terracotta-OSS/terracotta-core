@@ -19,26 +19,32 @@ public class TCFileImpl implements TCFile {
     pathToFile = new File(location.getFile(), fileName);
   }
 
+  @Override
   public boolean exists() {
     return pathToFile.exists();
   }
 
+  @Override
   public void forceMkdir() throws IOException {
     FileUtils.forceMkdir(pathToFile);
   }
 
+  @Override
   public boolean createNewFile() throws IOException {
     return pathToFile.createNewFile();
   }
 
+  @Override
   public File getFile() {
     return pathToFile;
   }
 
+  @Override
   public TCFile createNewTCFile(TCFile location, String fileName) {
     return new TCFileImpl(location, fileName);
   }
 
+  @Override
   public String toString() {
     return pathToFile.toString();
   }

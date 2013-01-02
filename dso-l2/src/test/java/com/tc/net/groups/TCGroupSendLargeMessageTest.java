@@ -137,6 +137,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
 
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       queue.put(msg);
     }

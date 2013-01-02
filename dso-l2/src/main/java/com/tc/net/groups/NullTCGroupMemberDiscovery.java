@@ -10,11 +10,13 @@ import com.tc.util.Assert;
 
 public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
 
+  @Override
   public Node getLocalNode() {
     Assert.fail();
     return null;
   }
 
+  @Override
   public void setupNodes(Node local, Node[] nodes) {
     return;
   }
@@ -23,22 +25,27 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
     return;
   }
 
+  @Override
   public void start() {
     return;
   }
 
+  @Override
   public void stop(long timeout) {
     return;
   }
 
+  @Override
   public void discoveryHandler(EventContext context) {
     Assert.fail();
   }
 
+  @Override
   public void nodeJoined(NodeID nodeID) {
     return;
   }
 
+  @Override
   public void nodeLeft(NodeID nodeID) {
     return;
   }
@@ -47,18 +54,22 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
     return;
   }
 
+  @Override
   public boolean isValidClusterNode(NodeID nodeID) {
     return true;
   }
 
+  @Override
   public void addNode(Node node) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void removeNode(Node node) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isServerConnected(String nodeName) {
     throw new UnsupportedOperationException();
   }

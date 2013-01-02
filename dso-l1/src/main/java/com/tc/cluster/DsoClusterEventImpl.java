@@ -14,6 +14,7 @@ public class DsoClusterEventImpl implements DsoClusterEvent {
     this.node = node;
   }
 
+  @Override
   public DsoNode getNode() {
     return node;
   }

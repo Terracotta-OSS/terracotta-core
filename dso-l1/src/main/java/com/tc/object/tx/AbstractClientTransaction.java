@@ -26,6 +26,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   private boolean            alreadyCommittedFlag;
   private List               txnCompleteListener;
 
+  @Override
   public void setSequenceID(SequenceID sequenceID) {
     if (!this.seqID.isNull()) {
       // Formatter
@@ -37,6 +38,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     this.seqID = sequenceID;
   }
 
+  @Override
   public void setTransactionID(TransactionID txnID) {
     if (!this.txID.isNull()) {
       // Formatter
@@ -46,23 +48,28 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     this.txID = txnID;
   }
 
+  @Override
   public SequenceID getSequenceID() {
     Assert.assertFalse(this.seqID.isNull());
     return this.seqID;
   }
 
+  @Override
   public void setTransactionContext(TransactionContext transactionContext) {
     this.transactionContext = transactionContext;
   }
 
+  @Override
   public TxnType getLockType() {
     return this.transactionContext.getLockType();
   }
 
+  @Override
   public TxnType getEffectiveType() {
     return this.transactionContext.getEffectiveType();
   }
 
+  @Override
   public List getAllLockIDs() {
     return this.transactionContext.getAllLockIDs();
   }
@@ -70,24 +77,29 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   /**
    * @return the transaction id for this transaction, null id if the transaction is not yet committed.
    */
+  @Override
   public TransactionID getTransactionID() {
     return this.txID;
   }
 
+  @Override
   public LockID getLockID() {
     return this.transactionContext.getLockID();
   }
 
+  @Override
   public final void createObject(TCObject source) {
     alreadyCommittedCheck();
     basicCreate(source);
   }
 
+  @Override
   public final void createRoot(String name, ObjectID rootID) {
     alreadyCommittedCheck();
     basicCreateRoot(name, rootID);
   }
 
+  @Override
   public final void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
                                                                  + source.getTCClass().getPeerClass().getName()); }
@@ -96,26 +108,31 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     basicFieldChanged(source, classname, fieldname, newValue, index);
   }
 
+  @Override
   public final void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     alreadyCommittedCheck();
     basicLiteralValueChanged(source, newValue, oldValue);
   }
 
+  @Override
   public final void arrayChanged(TCObject source, int startPos, Object array, int length) {
     alreadyCommittedCheck();
     basicArrayChanged(source, startPos, array, length);
   }
 
+  @Override
   public final void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
     alreadyCommittedCheck();
     basicLogicalInvoke(source, method, parameters);
   }
 
+  @Override
   public final void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
     alreadyCommittedCheck();
     basicAddMetaDataDescriptor(tco, md);
   }
 
+  @Override
   public boolean isNull() {
     return false;
   }
@@ -124,6 +141,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     if (this.alreadyCommittedFlag) { throw new AssertionError("Transaction " + this.txID + " already commited."); }
   }
 
+  @Override
   public void setAlreadyCommitted() {
     alreadyCommittedCheck();
     this.alreadyCommittedFlag = true;
@@ -132,6 +150,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   /**
    * Adds a Transaction Complete Listener which will be called when the Transaction is complete.
    */
+  @Override
   public void addTransactionCompleteListener(TransactionCompleteListener l) {
     if (txnCompleteListener == null) {
       txnCompleteListener = new ArrayList(5);
@@ -144,6 +163,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
    * 
    * @return List of TransactionCompleteListeners
    */
+  @Override
   public List getTransactionCompleteListeners() {
     return (txnCompleteListener == null ? Collections.EMPTY_LIST : txnCompleteListener);
   }

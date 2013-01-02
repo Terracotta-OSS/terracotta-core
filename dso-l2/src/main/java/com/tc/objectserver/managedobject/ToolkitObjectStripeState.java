@@ -49,10 +49,12 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
     return true;
   }
 
+  @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
+  @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
@@ -102,6 +104,7 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
     return false;
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
     final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>(), limit);
     return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
@@ -126,6 +129,7 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
     return fields;
   }
 
+  @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       writer.addPhysicalAction(entry.getKey(), entry.getValue());
@@ -133,10 +137,12 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
     writer.addEntireArray(componentObjects);
   }
 
+  @Override
   public final String getClassName() {
     return getStateFactory().getClassName(this.classID);
   }
 
+  @Override
   public Set getObjectReferences() {
     ObjectIDSet set = new ObjectIDSet();
     if (componentObjects != null) {
@@ -152,10 +158,12 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
     return set;
   }
 
+  @Override
   public byte getType() {
     return ManagedObjectStateStaticConfig.TOOLKIT_OBJECT_STRIPE.getStateObjectType();
   }
 
+  @Override
   public void writeTo(final ObjectOutput out) throws IOException {
     out.writeLong(this.classID);
     writeMap(configMap, out);

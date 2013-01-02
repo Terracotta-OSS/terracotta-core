@@ -94,11 +94,13 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
 
   public abstract ObjectID getValueObjectId();
 
+  @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeObject(id);
     out.writeObject(value);
   }
 
+  @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     id = in.readObject();
     value = in.readObject();

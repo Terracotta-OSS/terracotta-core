@@ -12,10 +12,12 @@ public class NewReferenceCollector implements ChangeCollector {
 
   private final Set newReferences = new ObjectIDSet();
 
+  @Override
   public synchronized void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
     this.newReferences.add(newReference);
   }
 
+  @Override
   public synchronized Set addNewReferencesTo(Set set) {
     set.addAll(this.newReferences);
     return set;

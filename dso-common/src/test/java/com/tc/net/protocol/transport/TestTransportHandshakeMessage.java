@@ -11,14 +11,17 @@ public abstract class TestTransportHandshakeMessage extends TestWireProtocolMess
 
   public ConnectionID connectionID = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
 
+  @Override
   public ConnectionID getConnectionId() {
     return connectionID;
   }
 
+  @Override
   public boolean isMaxConnectionsExceeded() {
     throw new ImplementMe();
   }
 
+  @Override
   public int getMaxConnections() {
     throw new ImplementMe();
   }

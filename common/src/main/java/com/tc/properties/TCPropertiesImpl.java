@@ -110,10 +110,12 @@ public class TCPropertiesImpl implements TCProperties {
     }
   }
 
+  @Override
   public Properties addAllPropertiesTo(Properties properties) {
     return addAllPropertiesTo(properties, null);
   }
 
+  @Override
   public synchronized void overwriteTcPropertiesFromConfig(Map<String, String> overwriteProps) {
     applyConfigOverrides(overwriteProps);
 
@@ -225,15 +227,18 @@ public class TCPropertiesImpl implements TCProperties {
     return INSTANCE;
   }
 
+  @Override
   public TCProperties getPropertiesFor(String category) {
     if (category == null) { throw new AssertionError("Category cant be null"); }
     return new TCSubProperties(INSTANCE, category);
   }
 
+  @Override
   public String getProperty(String key) {
     return getProperty(key, false);
   }
 
+  @Override
   public String getProperty(String key, boolean missingOkay) {
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
@@ -246,6 +251,7 @@ public class TCPropertiesImpl implements TCProperties {
   /*
    * Used only in test
    */
+  @Override
   public void setProperty(String key, String value) {
     INSTANCE.props.setProperty(key, value);
   }
@@ -268,39 +274,46 @@ public class TCPropertiesImpl implements TCProperties {
     return sb.toString();
   }
 
+  @Override
   public boolean getBoolean(String key) {
     String val = getProperty(key);
     return Boolean.valueOf(val).booleanValue();
   }
 
+  @Override
   public boolean getBoolean(String key, boolean defaultValue) {
     String val = getProperty(key, true);
     if (val == null) return defaultValue;
     return Boolean.valueOf(val).booleanValue();
   }
 
+  @Override
   public int getInt(String key) {
     String val = getProperty(key);
     return Integer.valueOf(val).intValue();
   }
 
+  @Override
   public int getInt(String key, int defValue) {
     String val = getProperty(key, true);
     if (val == null) return defValue;
     else return Integer.parseInt(val);
   }
 
+  @Override
   public long getLong(String key) {
     String val = getProperty(key);
     return Long.valueOf(val).longValue();
   }
 
+  @Override
   public long getLong(String key, long defValue) {
     String val = getProperty(key, true);
     if (val == null) return defValue;
     else return Long.parseLong(val);
   }
 
+  @Override
   public float getFloat(String key) {
     String val = getProperty(key);
     return Float.valueOf(val).floatValue();
@@ -322,6 +335,7 @@ public class TCPropertiesImpl implements TCProperties {
     private boolean    switched = false;
     private TCLogger   realLogger;
 
+    @Override
     public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (switched) { return method.invoke(realLogger, args); }
 

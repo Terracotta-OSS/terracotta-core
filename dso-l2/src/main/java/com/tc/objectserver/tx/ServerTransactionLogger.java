@@ -29,18 +29,22 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     this.printStatsEnabled = config.isPrintStatsEnabled();
   }
 
+  @Override
   public void addResentServerTransactionIDs(Collection stxIDs) {
     logger.info("addResentTransactions: " + stxIDs);
   }
 
+  @Override
   public void clearAllTransactionsFor(NodeID deadNode) {
     logger.info("clearAllTransactionsFor: " + deadNode);
   }
 
+  @Override
   public void transactionManagerStarted(Set cids) {
     logger.info("trasactionManagerStarted: " + cids);
   }
 
+  @Override
   public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     if (verboseLogging) logger.info("incomingTransactions: " + source + ", " + serverTxnIDs);
     incrementOutStandingTxns(serverTxnIDs.size());
@@ -74,10 +78,12 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     logger.info("Number of pending transactions in the System : " + current);
   }
 
+  @Override
   public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
     if (verboseLogging) logger.info("transactionApplied: " + stxID + " new Objects created : " + newObjectsCreated);
   }
 
+  @Override
   public void transactionCompleted(ServerTransactionID stxID) {
     if (verboseLogging) logger.info("transactionCompleted: " + stxID);
     decrementOutStandingTxns(1);

@@ -143,6 +143,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return this.lowWaterMark;
   }
 
+  @Override
   public long getSequenceID() {
     return sequenceID;
   }
@@ -151,6 +152,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
    * Delayed message recycle here only at the read end (passive). this.batchData due to this.batchData reuses
    * TCByteBuffer from comm.
    */
+  @Override
   public void recycle() {
     Assert.assertTrue(recyclable);
     messageWrapper.recycle();

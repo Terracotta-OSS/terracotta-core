@@ -15,11 +15,13 @@ public class L2StateChangeHandler extends AbstractEventHandler {
 
   private StateManager stateManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     StateChangedEvent sce = (StateChangedEvent) context;
     stateManager.fireStateChangedEvent(sce);
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

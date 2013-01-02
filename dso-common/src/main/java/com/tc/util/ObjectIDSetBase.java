@@ -26,8 +26,10 @@ abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSe
     this.ranges = new AATreeSet();
   }
 
+  @Override
   public abstract Object deserializeFrom(TCByteBufferInput in) throws IOException;
 
+  @Override
   public abstract void serializeTo(TCByteBufferOutput out);
 
   @Override
@@ -117,26 +119,33 @@ abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSe
 
   // =======================SortedSet Interface Methods==================================
 
+  @Override
   public Comparator comparator() {
     return null;
   }
 
+  @Override
   public abstract ObjectID first();
 
+  @Override
   public abstract ObjectID last();
 
+  @Override
   public SortedSet headSet(ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SortedSet subSet(ObjectID arg0, ObjectID arg1) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SortedSet tailSet(ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(toShortString());
     return out;

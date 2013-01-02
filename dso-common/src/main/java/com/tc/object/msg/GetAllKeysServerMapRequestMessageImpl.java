@@ -37,6 +37,7 @@ public class GetAllKeysServerMapRequestMessageImpl extends DSOMessageBase implem
     super(sessionID, monitor, out, channel, type);
   }
 
+  @Override
   public void initializeSnapshotRequest(final ServerMapRequestID serverMapRequestID, final ObjectID id) {
     this.requestID = serverMapRequestID;
     this.mapID = id;
@@ -64,22 +65,27 @@ public class GetAllKeysServerMapRequestMessageImpl extends DSOMessageBase implem
     }
   }
 
+  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
 
+  @Override
   public ObjectID getMapID() {
     return this.mapID;
   }
 
+  @Override
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
+  @Override
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_ALL_KEYS;
   }
 
+  @Override
   public int getRequestCount() {
     return 1;
   }

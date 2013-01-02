@@ -23,6 +23,7 @@ public class TraverserTest extends BaseDSOTestCase {
     TestA ta2 = new TestA(ta1, tb1);
     final ArrayList results = new ArrayList();
     new Traverser(new TestPortableObjectProvider()).traverse(ta2, new TraversalAction() {
+      @Override
       public void visit(List objects, GroupID gid) {
         System.out.println("Adding:" + objects);
         results.addAll(objects);
@@ -35,6 +36,7 @@ public class TraverserTest extends BaseDSOTestCase {
 
     String[] strings = new String[] { "one", "two", "three" };
     new Traverser(new TestPortableObjectProvider()).traverse(strings, new TraversalAction() {
+      @Override
       public void visit(List objects, GroupID gid) {
         results.add(objects);
       }
@@ -48,6 +50,7 @@ public class TraverserTest extends BaseDSOTestCase {
     }
     try {
       new Traverser(new TestPortableObjectProvider()).traverse(list, new TraversalAction() {
+        @Override
         public void visit(List objects, GroupID gid) {
           //
         }
@@ -69,6 +72,7 @@ public class TraverserTest extends BaseDSOTestCase {
       //
     }
 
+    @Override
     public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {
       Object[] values = new Object[0];
       if (start instanceof TestB) {

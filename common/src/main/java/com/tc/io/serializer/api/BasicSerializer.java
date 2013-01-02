@@ -15,14 +15,17 @@ public class BasicSerializer implements Serializer {
     this.serializers = serializers;
   }
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     serializers.getSerializerFor(o, out).serializeTo(o, out);
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException, ClassNotFoundException {
     return serializers.getSerializerFor(in).deserializeFrom(in);
   }
 
+  @Override
   public byte getSerializerID() {
     return UNKNOWN;
   }

@@ -26,39 +26,47 @@ public class L2PassiveSyncStateManagerImpl implements L2PassiveSyncStateManager 
    * @return the number of L2s present in the cluster for which the index state is tracked. Note that the index state is
    *         not tracked for the local node.
    */
+  @Override
   public int getL2Count() {
     return this.objectStateManager.getL2Count();
   }
 
+  @Override
   public synchronized boolean addL2(NodeID nodeID, Set oids, State l2State) {
     boolean objectAddL2 = this.objectStateManager.addL2(nodeID, oids);
     boolean indexAddL2 = this.indexStateManager.addL2(nodeID, l2State);
     return objectAddL2 && indexAddL2;
   }
 
+  @Override
   public synchronized void removeL2(NodeID nodeID) {
     this.stateSyncManager.removeL2(nodeID);
     this.objectStateManager.removeL2(nodeID);
     this.indexStateManager.removeL2(nodeID);
   }
 
+  @Override
   public void objectSyncComplete() {
     this.stateSyncManager.objectSyncComplete();
   }
 
+  @Override
   public void indexSyncComplete() {
     this.stateSyncManager.indexSyncComplete();
   }
 
+  @Override
   public void objectSyncComplete(NodeID nodeID) {
     this.stateSyncManager.objectSyncComplete(nodeID);
 
   }
 
+  @Override
   public void indexSyncComplete(NodeID nodeID) {
     this.stateSyncManager.indexSyncComplete(nodeID);
   }
 
+  @Override
   public boolean isSyncComplete(NodeID nodeID) {
     return this.stateSyncManager.isSyncComplete(nodeID);
   }

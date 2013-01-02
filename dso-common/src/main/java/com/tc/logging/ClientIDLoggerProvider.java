@@ -13,10 +13,12 @@ public class ClientIDLoggerProvider implements TCLoggerProvider {
     this.cidProvider = clientIDProvider;
   }
   
+  @Override
   public TCLogger getLogger(Class clazz) {
     return new ClientIDLogger(cidProvider, TCLogging.getLogger(clazz));
   }
 
+  @Override
   public TCLogger getLogger(String name) {
     return new ClientIDLogger(cidProvider, TCLogging.getLogger(name));
   }

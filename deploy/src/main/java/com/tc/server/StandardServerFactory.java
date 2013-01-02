@@ -8,6 +8,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 
 public class StandardServerFactory extends AbstractServerFactory {
+  @Override
   public TCServer createServer(L2ConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {
     return new TCServerImpl(configurationSetupManager, threadGroup);
   }

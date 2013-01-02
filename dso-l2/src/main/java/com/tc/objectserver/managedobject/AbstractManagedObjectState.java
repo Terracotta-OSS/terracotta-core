@@ -24,6 +24,7 @@ public abstract class AbstractManagedObjectState implements ManagedObjectState {
    * represented by this state object will never have any reference to other objects. false : The Managed object
    * represented by this state object can have references to other objects.
    */
+  @Override
   public boolean hasNoReferences() {
     return false;
   }

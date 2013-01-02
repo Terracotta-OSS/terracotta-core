@@ -18,12 +18,14 @@ public class L2StateMessageTest extends TestCase {
   private Enrollment     enrollment;
   private L2StateMessage l2StateMessage;
 
+  @Override
   public void setUp() {
     enrollment = EnrollmentFactory.createEnrollment(new ServerID("30001", new byte[] { 54, -125, 34, -4 }), true,
                                                     WeightGeneratorFactory.createDefaultFactory());
     l2StateMessage = new L2StateMessage();
   }
 
+  @Override
   public void tearDown() {
     enrollment = null;
     l2StateMessage = null;

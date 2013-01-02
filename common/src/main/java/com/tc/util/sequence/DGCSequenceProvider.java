@@ -36,6 +36,7 @@ public class DGCSequenceProvider implements SequencePublisher {
     }
   }
 
+  @Override
   public void registerSequecePublisher(DGCIdPublisher dgcIdPublisher) {
     this.dgcIdListeners.add(dgcIdPublisher);
   }

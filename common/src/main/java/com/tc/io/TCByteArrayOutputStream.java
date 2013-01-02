@@ -31,6 +31,7 @@ public final class TCByteArrayOutputStream extends OutputStream {
         buffer = newBuffer;
     }
 
+    @Override
     public final void write(int b) {
         int newSize = size + 1;
         if (newSize > buffer.length)
@@ -39,6 +40,7 @@ public final class TCByteArrayOutputStream extends OutputStream {
         size = newSize;
     }
 
+    @Override
     public final void write(byte b[], int offset, int len) {
         int newSize = size + len;
         if (newSize > buffer.length)

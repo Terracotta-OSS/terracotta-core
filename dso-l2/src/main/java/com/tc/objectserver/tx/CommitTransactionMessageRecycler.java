@@ -18,32 +18,39 @@ import java.util.Set;
 public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implements ServerTransactionListener,
     PostInit {
 
+  @Override
   public void initializeContext(ConfigurationContext context) {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     ServerTransactionManager transactionManager = scc.getTransactionManager();
     transactionManager.addTransactionListener(this);
   }
 
+  @Override
   public void transactionCompleted(ServerTransactionID stxID) {
     recycle(stxID);
   }
 
+  @Override
   public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
     return;
   }
 
+  @Override
   public void incomingTransactions(NodeID source, Set serverTxnIDs) {
     return;
   }
 
+  @Override
   public void addResentServerTransactionIDs(Collection stxIDs) {
     return;
   }
 
+  @Override
   public void clearAllTransactionsFor(NodeID deadNode) {
     return;
   }
 
+  @Override
   public void transactionManagerStarted(Set cids) {
     return;
   }

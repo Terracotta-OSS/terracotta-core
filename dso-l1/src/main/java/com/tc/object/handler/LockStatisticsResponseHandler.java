@@ -9,6 +9,7 @@ import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 
 public class LockStatisticsResponseHandler extends AbstractEventHandler {
 
+  @Override
   public void handleEvent(EventContext context) {
     LockStatisticsResponseMessageImpl msg = (LockStatisticsResponseMessageImpl) context;
     msg.send();

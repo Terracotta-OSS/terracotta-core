@@ -29,6 +29,7 @@ public class GlobalTransactionIDBatchRequestHandler extends AbstractEventHandler
   }
 
   // EventHandler interface
+  @Override
   public void handleEvent(EventContext context) {
     GlobalTransactionIDBatchRequestContext ctxt = (GlobalTransactionIDBatchRequestContext) context;
     BatchSequenceReceiver receiver = ctxt.getReceiver();
@@ -38,6 +39,7 @@ public class GlobalTransactionIDBatchRequestHandler extends AbstractEventHandler
     receiver.setNextBatch(start, start + batchSize);
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
@@ -45,10 +47,12 @@ public class GlobalTransactionIDBatchRequestHandler extends AbstractEventHandler
   }
 
   // BatchSequenceProvider interface
+  @Override
   public void requestBatch(BatchSequenceReceiver receiver, int size) {
     this.requestBatchSink.add(new GlobalTransactionIDBatchRequestContext(receiver, size));
   }
 
+  @Override
   public void setNextAvailableGID(long nextGID) {
     sequence.setNext(nextGID);
   }
@@ -71,6 +75,7 @@ public class GlobalTransactionIDBatchRequestHandler extends AbstractEventHandler
     }
   }
 
+  @Override
   public long currentGID() {
     return sequence.current();
   }

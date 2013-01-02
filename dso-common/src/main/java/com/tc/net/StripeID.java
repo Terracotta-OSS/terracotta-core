@@ -31,10 +31,12 @@ public class StripeID implements NodeID, Serializable {
     this.name = name;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof StripeID) {
       StripeID that = (StripeID) o;
@@ -48,28 +50,34 @@ public class StripeID implements NodeID, Serializable {
     return name;
   }
 
+  @Override
   public String toString() {
     return "StripeID[" + getName() + "]";
   }
 
+  @Override
   public boolean isNull() {
     return NULL_ID.equals(this);
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     Assert.assertTrue(this.name != UNINITIALIZED);
     out.writeString(this.name);
   }
 
+  @Override
   public byte getNodeType() {
     return STRIPE_NODE_TYPE;
   }
 
+  @Override
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }

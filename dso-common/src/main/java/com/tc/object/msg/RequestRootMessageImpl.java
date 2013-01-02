@@ -32,10 +32,12 @@ public class RequestRootMessageImpl extends DSOMessageBase implements EventConte
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(ROOT_NAME, rootName);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case ROOT_NAME:
@@ -46,10 +48,12 @@ public class RequestRootMessageImpl extends DSOMessageBase implements EventConte
     }
   }
   
+  @Override
   public String getRootName() {
     return rootName;
   }
 
+  @Override
   public void initialize(String name) {
     this.rootName = name;
   }

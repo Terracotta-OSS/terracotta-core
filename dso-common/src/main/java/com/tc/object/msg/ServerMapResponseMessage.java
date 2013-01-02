@@ -13,6 +13,7 @@ public interface ServerMapResponseMessage extends TCMessage {
 
   public ServerMapRequestType getRequestType();
 
+  @Override
   public void send();
 
 }

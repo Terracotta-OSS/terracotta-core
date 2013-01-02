@@ -12,26 +12,32 @@ public class TestSessionManager implements SessionManager, SessionProvider {
   public boolean isCurrentSession = true;
   public SessionID sessionID = SessionID.NULL_ID;
   
+  @Override
   public SessionID getSessionID(NodeID nid) {
     return sessionID;
   }
   
+  @Override
   public SessionID nextSessionID(NodeID nid) {
     throw new ImplementMe();
   }
 
+  @Override
   public void newSession(NodeID nid) {
     return;
   }
 
+  @Override
   public boolean isCurrentSession(NodeID nid, SessionID theSessionID) {
     return isCurrentSession;
   }
 
+  @Override
   public void initProvider(NodeID nid) {
     return;
   }
 
+  @Override
   public void resetSessionProvider() {
     throw new ImplementMe();
   }

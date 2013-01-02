@@ -121,6 +121,7 @@ public final class EventMulticaster implements Serializable {
 
     private final List listeners = Collections.synchronizedList(new ArrayList());
 
+    @Override
     public void handleUpdate(UpdateEvent data) {
       for (Iterator iter = listeners.iterator(); iter.hasNext();) {
         UpdateEventListener listener = (UpdateEventListener) iter.next();

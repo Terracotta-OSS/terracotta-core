@@ -23,6 +23,7 @@ public class ServerLockFactoryImpl implements LockFactory {
     }
   }
 
+  @Override
   public ServerLock createLock(LockID lid) {
     return factory.createLock(lid);
   }

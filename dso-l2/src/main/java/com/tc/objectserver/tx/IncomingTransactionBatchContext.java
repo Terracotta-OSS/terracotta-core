@@ -39,34 +39,42 @@ public class IncomingTransactionBatchContext implements TransactionBatchContext 
     this.newObjectIDs = newObjectIDs;
   }
 
+  @Override
   public Set<ObjectID> getNewObjectIDs() {
     return this.newObjectIDs;
   }
 
+  @Override
   public TransactionBatchReader getTransactionBatchReader() {
     return this.reader;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return this.reader.getSerializer();
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return this.nodeID;
   }
 
+  @Override
   public int getNumTxns() {
     return this.txns.size();
   }
 
+  @Override
   public List<ServerTransaction> getTransactions() {
     return this.txns;
   }
 
+  @Override
   public TCByteBuffer[] getBackingBuffers() {
     return this.buffers;
   }
 
+  @Override
   public Set<ServerTransactionID> getTransactionIDs() {
     return this.txnIDs;
   }

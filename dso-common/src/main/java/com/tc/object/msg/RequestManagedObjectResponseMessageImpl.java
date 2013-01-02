@@ -49,10 +49,12 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   public Collection getObjects() {
     return Collections.unmodifiableCollection(objects);
   }
 
+  @Override
   public void initialize(TCByteBuffer[] dnas, int count, ObjectStringSerializer aSerializer, long bid, int tot) {
     // System.err.println("SARO : dna count = " + count + " dnas[] = " + dnas.length + " tot = " + tot);
     // for (int i = 0; i < dnas.length; i++) {
@@ -65,14 +67,17 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
     this.total = tot;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return serializer;
   }
 
+  @Override
   public long getBatchID() {
     return batchID;
   }
 
+  @Override
   public int getTotal() {
     return total;
   }

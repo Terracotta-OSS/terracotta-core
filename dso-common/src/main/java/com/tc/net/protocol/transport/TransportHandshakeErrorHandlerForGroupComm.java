@@ -10,6 +10,7 @@ public class TransportHandshakeErrorHandlerForGroupComm implements TransportHand
 
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
+  @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
     // print error message on console
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) consoleLogger.error(e.getMessage());

@@ -25,17 +25,20 @@ public class TCConnectionManagerTest extends TestCase {
   private TCConnectionManager serverConnMgr;
   private TCListener          lsnr;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.clientConnMgr = new TCConnectionManagerImpl();
     this.serverConnMgr = new TCConnectionManagerImpl();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
+      @Override
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();
       }
     });
   }
 
+  @Override
   protected void tearDown() throws Exception {
     clientConnMgr.shutdown();
     serverConnMgr.shutdown();
@@ -176,6 +179,7 @@ public class TCConnectionManagerTest extends TestCase {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
     this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, null);
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
+      @Override
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();
       }

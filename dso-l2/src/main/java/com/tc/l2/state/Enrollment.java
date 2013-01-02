@@ -34,6 +34,7 @@ public class Enrollment implements TCSerializable {
     this.weights = weights;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(this.nodeID);
     nodeIDSerializer.serializeTo(out);
@@ -44,6 +45,7 @@ public class Enrollment implements TCSerializable {
     }
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);

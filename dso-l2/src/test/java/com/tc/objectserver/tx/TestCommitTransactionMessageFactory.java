@@ -15,6 +15,7 @@ public class TestCommitTransactionMessageFactory implements CommitTransactionMes
 
   public final List messages = new LinkedList();
 
+  @Override
   public CommitTransactionMessage newCommitTransactionMessage(NodeID remoteNode) {
     CommitTransactionMessage rv = new TestCommitTransactionMessage();
     messages.add(rv);

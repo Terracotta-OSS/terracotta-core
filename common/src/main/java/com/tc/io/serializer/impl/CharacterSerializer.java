@@ -14,14 +14,17 @@ import java.io.ObjectOutput;
  */
 public final class CharacterSerializer implements Serializer {
 
+  @Override
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeChar(((Character)o).charValue());
   }
 
+  @Override
   public Object deserializeFrom(ObjectInput in) throws IOException {
     return Character.valueOf(in.readChar());
   }
 
+  @Override
   public byte getSerializerID() {
     return CHARACTER;
   }

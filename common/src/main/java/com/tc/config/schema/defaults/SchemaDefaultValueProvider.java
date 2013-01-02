@@ -25,20 +25,24 @@ public class SchemaDefaultValueProvider implements DefaultValueProvider {
   // This makes sure we don't try to interpret XPaths that have anything other than normal element delimiters in them.
   private static final Pattern ALLOWED_COMPONENT_PATTERN = Pattern.compile("@?[A-Za-z0-9][A-Za-z0-9-]*");
 
+  @Override
   public boolean isOptional(SchemaType baseType, String xpath) throws XmlException {
     return fetchParticle(baseType, xpath).isOptional();
   }
 
+  @Override
   public boolean possibleForXPathToHaveDefault(String xpath) {
     return isInterpretableXPath(xpath);
   }
 
+  @Override
   public XmlObject defaultFor(SchemaType baseType, String xpath) throws XmlException {
     XmlObject out = fetchDefault(baseType, xpath);
     if (out == null) throw new XmlException("The element at XPath '" + xpath + "' has no default specified.");
     else return out;
   }
 
+  @Override
   public boolean hasDefault(SchemaType baseType, String xpath) throws XmlException {
     return fetchDefault(baseType, xpath) != null;
   }
