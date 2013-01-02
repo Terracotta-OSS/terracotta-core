@@ -2,7 +2,6 @@ package org.terracotta.express.tests.util;
 
 import java.io.Serializable;
 
-
 public class TCInt implements Serializable, Comparable<TCInt> {
   private final int number;
 
@@ -34,7 +33,7 @@ public class TCInt implements Serializable, Comparable<TCInt> {
 
   @Override
   public String toString() {
-    return "MyInt [i=" + number + "]";
+    return "TCInt [i=" + number + "]";
   }
 
   @Override
