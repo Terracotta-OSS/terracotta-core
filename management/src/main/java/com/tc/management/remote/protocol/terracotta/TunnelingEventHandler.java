@@ -177,7 +177,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     if (send) {
       logger.info("Client JMX server ready; sending notification to L2 server");
       L1JmxReady readyMessage = (L1JmxReady) channel.createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
-      readyMessage.initialize(config.getUUID(), config.getTunneledDomains());
+      readyMessage.initialize(uuid, config.getTunneledDomains());
       readyMessage.send();
     }
 

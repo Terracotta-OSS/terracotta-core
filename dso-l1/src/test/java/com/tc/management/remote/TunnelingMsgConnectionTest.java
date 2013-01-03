@@ -37,16 +37,9 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
     mc.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
 
     MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, new DSOMBeanConfig() {
-      private final UUID uuid = UUID.getUUID();
-
       @Override
       public String[] getTunneledDomains() {
         return null;
-      }
-
-      @Override
-      public UUID getUUID() {
-        return uuid;
       }
     });
 

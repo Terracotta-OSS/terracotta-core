@@ -23,7 +23,6 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
-import com.tc.util.UUID;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.net.InetAddress;
@@ -40,7 +39,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private static final TCLogger                              logger                             = CustomerLogging
                                                                                                     .getDSOGenericLogger();
   private final L1ConfigurationSetupManager                  configSetupManager;
-  private final UUID                                         id;
 
   // ====================================================================================================================
   /**
@@ -73,7 +71,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
-    this.id = UUID.getUUID();
 
     try {
       doPreInstrumentedAutoconfig();
@@ -396,11 +393,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
-  }
-
-  @Override
-  public UUID getUUID() {
-    return id;
   }
 
   @Override
