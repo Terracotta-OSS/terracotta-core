@@ -183,6 +183,7 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : L2 Seda stage properties
    * Description : This section contains configuration for SEDA stages for L2
+   * apply.stage.threads                : Number of threads for the transaction apply stage
    * commitstage.threads                : Number of seda commit stage thread
    * faultstage.threads                 : Number of seda fault stage thread
    * managedobjectrequeststage.threads  : Number of threads for object request seda stage
@@ -196,6 +197,7 @@ public interface TCPropertiesConsts {
    *                                      (experimental, do not change)
    * </code>
    ********************************************************************************************************************/
+  public static final String L2_SEDA_APPLY_STAGE_THREADS                                    = "l2.seda.apply.stage.threads";
   public static final String L2_SEDA_COMMITSTAGE                                            = "l2.seda.commitstage.threads";
   public static final String L2_SEDA_FAULTSTAGE_THREADS                                     = "l2.seda.faultstage.threads";
   public static final String L2_SEDA_FLUSHSTAGE_THREADS                                     = "l2.seda.flushstage.threads";

@@ -127,8 +127,6 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   public ObjectIDSet getObjectIDsInCache();
 
-  public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
-
   /**
    * Check out an object read only
    *

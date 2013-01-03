@@ -55,16 +55,16 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test 1
   // Nothing is pending - disjoint anyway
   public void testNoPendingDisjointTxn() throws Exception {
-    List txns = createDisjointTxns(5);
+    List<ServerTransaction> txns = createDisjointTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     assertEquals(txns, getAllTxnsPossible());
     assertFalse(this.sequencer.isPending(txns));
   }
 
-  private Collection<TransactionLookupContext> createTxnLookupContexts(List txns) {
-    List contexts = new ArrayList();
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      ServerTransaction txn = (ServerTransaction) i.next();
+  private Collection<TransactionLookupContext> createTxnLookupContexts(List<ServerTransaction> txns) {
+    List<TransactionLookupContext> contexts = new ArrayList<TransactionLookupContext>();
+    for (final Object txn1 : txns) {
+      ServerTransaction txn = (ServerTransaction)txn1;
       contexts.add(new TransactionLookupContext(txn, true));
     }
     return contexts;
@@ -73,7 +73,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test 2
   // Nothing is pending - not disjoint though
   public void testNoPendingJointTxn() throws Exception {
-    List txns = createIntersectingLocksTxns(5);
+    List<ServerTransaction> txns = createIntersectingLocksTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     assertEquals(txns, getAllTxnsPossible());
     assertFalse(this.sequencer.isPending(txns));
@@ -82,7 +82,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test 3
   // txn goes pending - disjoint anyway
   public void testPendingDisJointTxn() throws Exception {
-    List txns = createDisjointTxns(5);
+    List<ServerTransaction> txns = createDisjointTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = this.sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
@@ -91,11 +91,11 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     assertTrue(this.sequencer.isPending(txns));
     txns.remove(t1);
     assertEquals(txns, getAllTxnsPossible());
-    assertTrue(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertTrue(this.sequencer.isPending(Arrays.asList(t1)));
     // No more txns
     assertNull(this.sequencer.getNextTxnLookupContextToProcess());
     this.sequencer.makeUnpending(t1);
-    assertFalse(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertFalse(this.sequencer.isPending(Arrays.asList(t1)));
     // No more txns
     assertNull(this.sequencer.getNextTxnLookupContextToProcess());
   }
@@ -105,7 +105,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test 5
   // txn goes pending - intersecting set
   public void testPendingJointAtObjectsTxn() throws Exception {
-    List txns = createIntersectingObjectsTxns(5);
+    List<ServerTransaction> txns = createIntersectingObjectsTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = this.sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
@@ -116,9 +116,9 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
     // Since locks are common no txn should be available
     assertNull(this.sequencer.getNextTxnLookupContextToProcess());
-    assertTrue(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertTrue(this.sequencer.isPending(Arrays.asList(t1)));
     this.sequencer.makeUnpending(t1);
-    assertFalse(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertFalse(this.sequencer.isPending(Arrays.asList(t1)));
     // Rest of the txns
     assertEquals(txns, getAllTxnsPossible());
   }
@@ -126,7 +126,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test 6
   // txn goes pending - intersecting set - Note : Locks are not considered anymore.
   public void testPendingJointAtBothLocksAndObjectsTxn() throws Exception {
-    List txns = createIntersectingLocksObjectsTxns(5);
+    List<ServerTransaction> txns = createIntersectingLocksObjectsTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = this.sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
@@ -137,9 +137,9 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
     // Since locks are common no txn should be available
     assertNull(this.sequencer.getNextTxnLookupContextToProcess());
-    assertTrue(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertTrue(this.sequencer.isPending(Arrays.asList(t1)));
     this.sequencer.makeUnpending(t1);
-    assertFalse(this.sequencer.isPending(Arrays.asList(new Object[] { t1 })));
+    assertFalse(this.sequencer.isPending(Arrays.asList(t1)));
     // Rest of the txns
     assertEquals(txns, getAllTxnsPossible());
   }
@@ -148,7 +148,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   // Test error conditions
   public void testErrorConditions() throws Exception {
     // Call makepending twice
-    List txns = createDisjointTxns(5);
+    List<ServerTransaction> txns = createDisjointTxns(5);
     this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
     ServerTransaction t1 = this.sequencer.getNextTxnLookupContextToProcess().getTransaction();
     assertNotNull(t1);
@@ -174,7 +174,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   }
 
   public void testOrderingByOID() {
-    List txns = new ArrayList();
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
 
     int lock = 0;
 
@@ -266,10 +266,10 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     long versionsIn[] = new long[numObjects];
     long versionsRecv[] = new long[numObjects];
 
-    Set pending = new HashSet();
+    Set<ServerTransaction> pending = new HashSet<ServerTransaction>();
 
     for (int loop = 0; loop < 5000; loop++) {
-      List txns = new ArrayList();
+      List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
       for (int i = 0, n = rnd.nextInt(3) + 1; i < n; i++) {
         txns.add(createRandomTxn(rnd.nextInt(3) + 1, versionsIn, rnd, lock++));
       }
@@ -302,9 +302,9 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   }
 
   private void processTransaction(ServerTransaction next, long[] versionsRecv) {
-    for (Iterator iter = next.getChanges().iterator(); iter.hasNext();) {
-      TestDNA dna = (TestDNA) iter.next();
-      int oid = (int) dna.getObjectID().toLong();
+    for (final Object o : next.getChanges()) {
+      TestDNA dna = (TestDNA)o;
+      int oid = (int)dna.getObjectID().toLong();
       long ver = dna.version;
       long expect = versionsRecv[oid] + 1;
       if (expect != ver) {
@@ -317,26 +317,26 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   }
 
   private ServerTransaction createRandomTxn(int numObjects, long[] versions, Random rnd, int lockID) {
-    Map dnas = new HashMap();
+    Map<Integer, TestDNA> dnas = new HashMap<Integer, TestDNA>();
     while (numObjects > 0) {
       int i = rnd.nextInt(versions.length);
-      if (!dnas.containsKey(new Integer(i))) {
+      if (!dnas.containsKey(i)) {
         TestDNA dna = new TestDNA(new ObjectID(i));
         dna.version = ++versions[i];
-        dnas.put(Integer.valueOf(i), dna);
+        dnas.put(i, dna);
         numObjects--;
       }
     }
 
     return new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                      new SequenceID(this.sqID++), createLocks(lockID, lockID), this.clientID,
-                                     new ArrayList(dnas.values()), new ObjectStringSerializerImpl(),
+                                     new ArrayList<TestDNA>(dnas.values()), new ObjectStringSerializerImpl(),
                                      Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                      DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
   }
 
   private List getAllTxnsPossible() {
-    List txns = new ArrayList();
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     TransactionLookupContext txnLC;
     while ((txnLC = this.sequencer.getNextTxnLookupContextToProcess()) != null) {
       txns.add(txnLC.getTransaction());
@@ -344,8 +344,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return txns;
   }
 
-  private List createDisjointTxns(int count) {
-    List txns = new ArrayList();
+  private List<ServerTransaction> createDisjointTxns(int count) {
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     this.batchID++;
     int j = 3;
     while (count-- > 0) {
@@ -360,8 +360,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return txns;
   }
 
-  private List createIntersectingLocksTxns(int count) {
-    List txns = new ArrayList();
+  private List<ServerTransaction> createIntersectingLocksTxns(int count) {
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     this.batchID++;
     int j = 3;
     while (count-- > 0) {
@@ -376,8 +376,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return txns;
   }
 
-  private List createIntersectingObjectsTxns(int count) {
-    List txns = new ArrayList();
+  private List<ServerTransaction> createIntersectingObjectsTxns(int count) {
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     this.batchID++;
     int j = 3;
     while (count-- > 0) {
@@ -392,8 +392,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return txns;
   }
 
-  private List createIntersectingLocksObjectsTxns(int count) {
-    List txns = new ArrayList();
+  private List<ServerTransaction> createIntersectingLocksObjectsTxns(int count) {
+    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     this.batchID++;
     int j = 3;
     while (count-- > 0) {
@@ -408,8 +408,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return txns;
   }
 
-  private List createDNAs(int s, int e) {
-    List dnas = new ArrayList();
+  private List<TestDNA> createDNAs(int s, int e) {
+    List<TestDNA> dnas = new ArrayList<TestDNA>();
     for (int i = s; i <= e; i++) {
       dnas.add(new TestDNA(new ObjectID(i)));
     }

@@ -147,7 +147,7 @@ public class ApplyTransactionInfo {
     this.initiateEviction.add(objectID);
   }
 
-  public Set getObjectIDsToInitateEviction() {
+  public Set<ObjectID> getObjectIDsToInitateEviction() {
     return this.initiateEviction;
   }
 

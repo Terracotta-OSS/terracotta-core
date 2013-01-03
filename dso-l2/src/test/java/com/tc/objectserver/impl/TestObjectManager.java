@@ -4,10 +4,8 @@
  */
 package com.tc.objectserver.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.exception.ImplementMe;
-import com.tc.exception.TCRuntimeException;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStatsEventListener;
@@ -19,24 +17,27 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrinterImpl;
+import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
-  public boolean makePending = false;
+  private final Map<ObjectID, ManagedObject> checkedOutObjects = new HashMap<ObjectID, ManagedObject>();
+  private List<ObjectManagerResultsContext> pendingLookups = new ArrayList<ObjectManagerResultsContext>();
 
   public TestObjectManager() {
     super();
@@ -53,33 +54,29 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   @Override
   public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext context, int maxCount) {
-    return basicLookup(nodeID, context, maxCount);
+    return lookupObjectsFor(nodeID, context);
   }
-
-  public LinkedQueue lookupObjectForCreateIfNecessaryContexts = new LinkedQueue();
 
   @Override
   public boolean lookupObjectsFor(NodeID nodeID, ObjectManagerResultsContext context) {
-    Object[] args = new Object[] { nodeID, context };
-    try {
-      lookupObjectForCreateIfNecessaryContexts.put(args);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+    for (ObjectID oid : context.getLookupIDs()) {
+      if (checkedOutObjects.containsKey(oid)) {
+        pendingLookups.add(context);
+        return false;
+      }
     }
-    return basicLookup(nodeID, context, -1);
+    context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs()),
+                       TCCollections.EMPTY_OBJECT_ID_SET,
+                       TCCollections.EMPTY_OBJECT_ID_SET));
+    return true;
   }
 
-  private boolean basicLookup(NodeID nodeID, ObjectManagerResultsContext context, int i) {
-    if (!makePending) {
-      context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs()),
-                                                            TCCollections.EMPTY_OBJECT_ID_SET,
-                                                            TCCollections.EMPTY_OBJECT_ID_SET));
+  private void processPending() {
+    List<ObjectManagerResultsContext> lookupsToProcess = pendingLookups;
+    pendingLookups = new ArrayList<ObjectManagerResultsContext>();
+    for (ObjectManagerResultsContext lookupToProcess : lookupsToProcess) {
+      lookupObjectsFor(new ClientID(0), lookupToProcess);
     }
-    return !makePending;
-  }
-
-  public void processPending(Object[] args) {
-    basicLookup((NodeID) args[0], (ObjectManagerResultsContext) args[1], -1);
   }
 
   private Map<ObjectID, ManagedObject> createLookResults(Collection<ObjectID> ids) {
@@ -87,16 +84,13 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     for (final ObjectID id : ids) {
       TestManagedObject tmo = new TestManagedObject(id);
       results.put(id, tmo);
+      checkedOutObjects.put(id, tmo);
     }
     return results;
   }
 
   @Override
   public Iterator getRoots() {
-    throw new ImplementMe();
-  }
-
-  public void createObject(ManagedObject object) {
     throw new ImplementMe();
   }
 
@@ -124,35 +118,24 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
-  public final LinkedQueue releaseContextQueue = new LinkedQueue();
-
   @Override
   public void release(ManagedObject object) {
-    try {
-      releaseContextQueue.put(object);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
-    }
+    Assert.assertNotNull(checkedOutObjects.remove(object.getID()));
+    processPending();
   }
 
   @Override
   public void releaseReadOnly(ManagedObject object) {
-    try {
-      releaseContextQueue.put(object);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
-    }
+    Assert.assertNotNull(checkedOutObjects.remove(object.getID()));
+    processPending();
   }
 
-  public final LinkedQueue releaseAllQueue = new LinkedQueue();
-
   @Override
-  public void releaseAll(Collection collection) {
-    try {
-      releaseAllQueue.put(collection);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+  public void releaseAll(Collection<ManagedObject> collection) {
+    for (ManagedObject managedObject : collection) {
+      Assert.assertNotNull(checkedOutObjects.remove(managedObject.getID()));
     }
+    processPending();
   }
 
   public PrettyPrinterImpl prettyPrint(PrettyPrinterImpl out) {
@@ -172,7 +155,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public void releaseAllReadOnly(Collection objects) {
+  public void releaseAllReadOnly(Collection<ManagedObject> objects) {
     releaseAll(objects);
   }
 
@@ -230,13 +213,8 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public void preFetchObjectsAndCreate(Set oids, Set newOids) {
-    // Nop
-  }
-
-  @Override
   public void createNewObjects(Set ids) {
-    throw new ImplementMe();
+    // Nope
   }
 
   @Override
@@ -246,10 +224,6 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   @Override
   public ObjectIDSet getObjectIDsInCache() {
-    throw new ImplementMe();
-  }
-
-  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
     throw new ImplementMe();
   }
 
@@ -268,10 +242,6 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     return 0;
   }
 
-  public int getCachedObjectCount() {
-    return 0;
-  }
-
   @Override
   public Iterator getRootNames() {
     return null;
@@ -285,9 +255,5 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   @Override
   public ManagedObject getQuietObjectByID(ObjectID id) {
     return getObjectByID(id);
-  }
-
-  public void scheduleGarbageCollection(GCType type, long delay) {
-    throw new ImplementMe();
   }
 }

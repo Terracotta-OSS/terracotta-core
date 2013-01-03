@@ -420,11 +420,6 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public ManagedObject getObjectByIDReadOnly(ObjectID id) {
       throw new ImplementMe();
     }

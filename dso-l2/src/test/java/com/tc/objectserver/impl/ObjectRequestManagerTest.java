@@ -977,11 +977,6 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     @Override
-    public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    @Override
     public void releaseAll(final Collection<ManagedObject> collection) {
       throw new NotImplementedException(TestObjectManager.class);
     }

@@ -166,11 +166,6 @@ public class GCTestObjectManager implements ObjectManager {
   }
 
   @Override
-  public void preFetchObjectsAndCreate(Set oids, Set newOids) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void createNewObjects(Set ids) {
     throw new ImplementMe();
   }

@@ -22,7 +22,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.GlobalTransactionIDLowWaterMarkProvider;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -398,13 +397,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    *
    */
   @Override
-  public void commit(final TransactionProvider ptxp, final Collection<ManagedObject> objects,
+  public void commit(final Collection<ManagedObject> objects,
                      final Map<String, ObjectID> newRoots,
                      final Collection<ServerTransactionID> appliedServerTransactionIDs,
                      final SortedSet<ObjectID> deletedObjects) {
-//    final PersistenceTransaction ptx = ptxp.newTransaction();
-//    this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
-    // This call commits the transaction too.
     this.objectManager.releaseAll(objects);
     this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);

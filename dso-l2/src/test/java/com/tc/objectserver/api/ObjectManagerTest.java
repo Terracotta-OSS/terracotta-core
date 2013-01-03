@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.api;
 
-import org.mockito.Mockito;
-
 import com.tc.exception.ImplementMe;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
@@ -14,32 +12,21 @@ import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
-import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnBatchID;
-import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.DGCResultContext;
-import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
-import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.impl.ObjectManagerImpl;
@@ -57,10 +44,6 @@ import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.ServerTransactionImpl;
-import com.tc.objectserver.tx.ServerTransactionSequencer;
-import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
-import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -69,8 +52,6 @@ import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.SequenceID;
-import com.tc.util.TCCollections;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -78,7 +59,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,16 +120,6 @@ public class ObjectManagerTest extends TCTestCase {
   private void initObjectManager(final PersistentManagedObjectStore store) {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
                                                this.persistenceTransactionProvider);
-  }
-
-  private void initTransactionObjectManager() {
-    final ServerTransactionSequencer sequencer = new ServerTransactionSequencerImpl();
-    this.coordinator = new TestTransactionalStageCoordinator();
-    this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, new TestGlobalTransactionManager(),
-                                                              this.coordinator);
-    ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
-    Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
-    this.objectManager.setTransactionalObjectManager(this.txObjectManager);
   }
 
   public void testShutdownAndSetGarbageCollector() throws Exception {
@@ -704,225 +674,6 @@ public class ObjectManagerTest extends TCTestCase {
     // make sure the object manager calls notifyGCComplete
     assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(5000));
     gcCaller.join();
-  }
-
-  /**
-   * This test is written to expose an case which used to trigger an assertion error in ObjectManager when GC initiates
-   * recall in TransactionalObjectManager in persistence mode
-   */
-  public void testRecallNewObjects() throws Exception {
-    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor());
-    this.objectStore = persistentMOStore;
-    this.config.paranoid = true;
-    initObjectManager(this.objectStore);
-    initTransactionObjectManager();
-
-    // this should disable the gc thread.
-    this.config.myGCThreadSleepTime = -1;
-    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
-    this.objectManager.setGarbageCollector(gc);
-    this.objectManager.start();
-
-    /**
-     * STEP 1: Create an New object and check it out
-     */
-    final Map<ObjectID, DNA> changes = new HashMap<ObjectID, DNA>();
-
-    final String fieldName = "whatsup";
-    final AtomicReference<ObjectID> atomicReference = new AtomicReference<ObjectID>(new ObjectID(500));
-
-    changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), fieldName, atomicReference));
-
-    final ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
-                                                              new SequenceID(1), new LockID[0], new ClientID(2),
-                                                              new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                              TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
-                                                              new long[0]);
-
-    final List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
-    txns.add(stxn1);
-
-    this.txObjectManager.addTransactions(txns);
-
-    // Lookup context should have been fired
-    LookupEventContext loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
-    assertNotNull(loc);
-    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
-
-    this.txObjectManager.lookupObjectsForTransactions();
-
-    // Apply should have been called as we have Object 1
-    ApplyTransactionContext aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
-    assertTrue(stxn1 == aoc.getTxn());
-    assertNotNull(aoc);
-    assertTrue(this.coordinator.applySink.queue.isEmpty());
-
-    // Apply and initate commit the txn
-    ApplyTransactionInfo applyTxnInfo1 = applyTxn(aoc);
-    this.txObjectManager.applyTransactionComplete(applyTxnInfo1);
-
-    /**
-     * STEP 2: Don't check back Object 1 yet, make another transaction with yet another object
-     */
-    changes.clear();
-
-    final String fieldName2 = "whatsup2";
-    final AtomicReference<ObjectID> atomicReference2 = new AtomicReference<ObjectID>(new ObjectID(501));
-    changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), fieldName2, atomicReference2));
-
-    final ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
-                                                              new SequenceID(1), new LockID[0], new ClientID(2),
-                                                              new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                              TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
-                                                              new long[0]);
-
-    txns.clear();
-    txns.add(stxn2);
-
-    this.txObjectManager.addTransactions(txns);
-
-    // Lookup context should have been fired
-    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
-    assertNotNull(loc);
-    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
-
-    this.txObjectManager.lookupObjectsForTransactions();
-
-    // Apply should have been called as we have Object 2
-    aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
-    assertTrue(stxn2 == aoc.getTxn());
-    assertNotNull(aoc);
-    assertTrue(this.coordinator.applySink.queue.isEmpty());
-
-    /**
-     * STEP 3: Create a txn with Objects 1,2 and a new object 3
-     */
-    changes.clear();
-
-    final String fieldName3 = "whatsup3";
-    final AtomicReference<ObjectID> atomicReference3 = new AtomicReference<ObjectID>(new ObjectID(505));
-
-    changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), true, fieldName3, atomicReference3));
-    changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), true, fieldName3, atomicReference3));
-    changes.put(new ObjectID(3), new TestServerMapDNA(new ObjectID(3), fieldName3, atomicReference3));
-
-    final ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
-                                                              new SequenceID(1), new LockID[0], new ClientID(2),
-                                                              new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                              TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
-                                                              new long[0]);
-
-    txns.clear();
-    txns.add(stxn3);
-
-    // createNewObjectFromTransaction(txns);
-
-    this.txObjectManager.addTransactions(txns);
-
-    // Lookup context should have been fired
-    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
-    assertNotNull(loc);
-    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
-
-    // This lookup should go pending since we don't have Object 1, since 2 is already checkedout only 1,3 should be
-    // requested.
-    this.txObjectManager.lookupObjectsForTransactions();
-
-    // Apply should not have been called as we don't have Object 1
-    assertTrue(this.coordinator.applySink.queue.isEmpty());
-
-    /**
-     * STEP 4: Commit but not release Object 2 so even when we check object 1 back stxn3 is still pending
-     */
-    // Apply and initiate commit the txn for object 2
-    ApplyTransactionInfo applyTxnInfo2 = applyTxn(aoc);
-    this.txObjectManager.applyTransactionComplete(applyTxnInfo2);
-
-    /**
-     * STEP 4: Check in Object 1 thus releasing the blocked lookup for Object 1, 3
-     */
-
-    // Now check back Object 1
-    this.objectManager.releaseAll(applyTxnInfo1.getObjectsToRelease());
-
-    // Lookup context should have been fired
-    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
-    assertNotNull(loc);
-    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
-
-    /**
-     * STEP 5 : Before lookup is initiated, initiate a GC pause
-     */
-    gc.requestGCPause();
-    // Doing in a separate thread since this will block
-    final CyclicBarrier cb = new CyclicBarrier(2);
-    final Thread t = new Thread("GC Thread - testRecallNewObjects") {
-      @Override
-      public void run() {
-        ObjectManagerTest.this.objectManager.waitUntilReadyToGC();
-        try {
-          cb.await();
-        } catch (final Exception e) {
-          e.printStackTrace();
-          throw new AssertionError(e);
-        }
-      }
-    };
-    t.start();
-    ThreadUtil.reallySleep(5000);
-
-    // Recall request should have be added.
-    final RecallObjectsContext roc = (RecallObjectsContext) this.coordinator.recallSink.queue.take();
-    assertNotNull(roc);
-    assertTrue(this.coordinator.recallSink.queue.isEmpty());
-
-    assertTrue(roc.recallAll());
-
-    // do recall - This used to cause an assertion error in persistent mode
-    this.txObjectManager.recallCheckedoutObject(roc);
-
-    // Check in Object 2 to make the GC go to paused state
-    this.objectManager.releaseAll(applyTxnInfo2.getObjectsToRelease());
-
-    cb.await();
-
-    assertTrue(gc.isPaused());
-
-    // Complete gc
-    gc.deleteGarbage(new DGCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
-
-    // Lookup context should have been fired
-    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
-    assertNotNull(loc);
-    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
-
-    this.txObjectManager.lookupObjectsForTransactions();
-
-    // Apply should have been called for txn 3
-    aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
-    assertTrue(stxn3 == aoc.getTxn());
-    assertNotNull(aoc);
-    assertTrue(this.coordinator.applySink.queue.isEmpty());
-
-    // Apply and initiate commit the txn
-    ApplyTransactionInfo applyTxnInfo3 = applyTxn(aoc);
-    this.txObjectManager.applyTransactionComplete(applyTxnInfo3);
-
-    // Now check back the objects
-    this.objectManager.releaseAll(applyTxnInfo3.getObjectsToRelease());
-
-    assertEquals(0, this.objectManager.getCheckedOutCount());
-    assertFalse(this.objectManager.isReferenced(new ObjectID(1)));
-    assertFalse(this.objectManager.isReferenced(new ObjectID(2)));
-    assertFalse(this.objectManager.isReferenced(new ObjectID(3)));
-
-    close(persistor, persistentMOStore);
   }
 
   public void testGetObjectReferencesFrom() {

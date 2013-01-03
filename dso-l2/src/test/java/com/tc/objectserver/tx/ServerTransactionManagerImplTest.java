@@ -106,7 +106,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     roots.put("root", new ObjectID(1));
 
     // first test w/o any listeners attached
-    this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
+    this.transactionManager.commit(Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
                                    TCCollections.EMPTY_OBJECT_ID_SET);
 
     // add a listener
@@ -115,7 +115,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     roots.clear();
     roots.put("root2", new ObjectID(2));
 
-    this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
+    this.transactionManager.commit(Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
                                    TCCollections.EMPTY_OBJECT_ID_SET);
     assertEquals(1, listener.rootsCreated.size());
     Root root = (Root) listener.rootsCreated.remove(0);
@@ -128,7 +128,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     roots.clear();
     roots.put("root3", new ObjectID(3));
 
-    this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
+    this.transactionManager.commit(Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
                                    TCCollections.EMPTY_OBJECT_ID_SET);
     assertEquals(1, listener.rootsCreated.size());
     root = (Root) listener.rootsCreated.remove(0);
@@ -145,7 +145,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
         throw new RuntimeException("This exception is supposed to be here");
       }
     });
-    this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
+    this.transactionManager.commit(Collections.EMPTY_SET, roots, Collections.EMPTY_LIST,
                                    TCCollections.EMPTY_OBJECT_ID_SET);
   }
 
@@ -496,7 +496,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertNull(this.clientStateManager.shutdownClient);
     List serverTids = new ArrayList();
     serverTids.add(new ServerTransactionID(cid1, tid4));
-    this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, Collections.EMPTY_MAP, serverTids,
+    this.transactionManager.commit(Collections.EMPTY_SET, Collections.EMPTY_MAP, serverTids,
                                    TCCollections.EMPTY_OBJECT_ID_SET);
     assertNull(this.clientStateManager.shutdownClient);
     this.transactionManager.broadcasted(cid1, tid4);
@@ -569,7 +569,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
       // commit stage
       Set committedIDs = new HashSet();
       committedIDs.add(tx.getServerTransactionID());
-      this.transactionManager.commit(this.ptxp, Collections.EMPTY_SET, Collections.EMPTY_MAP, committedIDs,
+      this.transactionManager.commit(Collections.EMPTY_SET, Collections.EMPTY_MAP, committedIDs,
                                      TCCollections.EMPTY_OBJECT_ID_SET);
 
       // broadcast stage

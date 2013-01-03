@@ -5,13 +5,15 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.ObjectID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.util.Assert;
 import com.tc.util.MergableLinkedList;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +21,7 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
 
   private static final TCLogger    logger      = TCLogging.getLogger(ServerTransactionSequencerImpl.class);
 
-  private final Set                pendingTxns = new HashSet();
+  private final Set<ServerTransactionID>                pendingTxns = new HashSet<ServerTransactionID>();
 
   private final MergableLinkedList txnQ        = new MergableLinkedList();
   private final MergableLinkedList blockedQ    = new MergableLinkedList();
@@ -68,9 +70,8 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     txnsCount += txnLookupContexts.size();
   }
 
-  private void log_incoming(Collection lookupContexts) {
-    for (Iterator i = lookupContexts.iterator(); i.hasNext();) {
-      TransactionLookupContext lookupContext = (TransactionLookupContext) i.next();
+  private void log_incoming(Collection<TransactionLookupContext> lookupContexts) {
+    for (TransactionLookupContext lookupContext : lookupContexts) {
       logger.info("Incoming : " + lookupContext);
     }
   }
@@ -147,9 +148,8 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
   /*
    * Used for testing
    */
-  synchronized boolean isPending(List txns) {
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      ServerTransaction st = (ServerTransaction) i.next();
+  synchronized boolean isPending(List<ServerTransaction> txns) {
+    for (ServerTransaction st : txns) {
       if (pendingTxns.contains(st.getServerTransactionID())) return true;
     }
     return false;
@@ -157,12 +157,11 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
 
   private static final class BlockedSet {
 
-    Set cause  = new HashSet();
-    Set effect = new HashSet();
+    Set<ObjectID> cause  = new ObjectIDSet();
+    Set<ObjectID> effect = new ObjectIDSet();
 
-    public boolean isBlocked(Collection keys) {
-      for (Iterator i = keys.iterator(); i.hasNext();) {
-        Object o = i.next();
+    public boolean isBlocked(Collection<ObjectID> keys) {
+      for (ObjectID o : keys) {
         if (cause.contains(o) || effect.contains(o)) { return true; }
       }
       return false;
@@ -172,15 +171,15 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
       return cause.size() + effect.size();
     }
 
-    public void makePending(Collection keys) {
+    public void makePending(Collection<ObjectID> keys) {
       cause.addAll(keys);
     }
 
-    public void makeUnpending(Collection keys) {
+    public void makeUnpending(Collection<ObjectID> keys) {
       cause.removeAll(keys);
     }
 
-    public void addBlocked(Collection keys) {
+    public void addBlocked(Collection<ObjectID> keys) {
       effect.addAll(keys);
     }
 

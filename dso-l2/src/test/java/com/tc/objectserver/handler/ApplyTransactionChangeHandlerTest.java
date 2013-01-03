@@ -4,15 +4,6 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
@@ -20,7 +11,9 @@ import org.mockito.ArgumentCaptor;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.async.impl.NullSink;
 import com.tc.net.ClientID;
+import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.locks.LockID;
@@ -36,6 +29,7 @@ import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -49,6 +43,7 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceID;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -56,11 +51,21 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 public class ApplyTransactionChangeHandlerTest extends TestCase {
 
   private ApplyTransactionChangeHandler  handler;
   private LockManager                    lockManager;
   private Sink                           broadcastSink;
+  private ApplySink                      applySink;
   private ArgumentCaptor<NotifiedWaiters> notifiedWaitersArgumentCaptor;
 
   @Override
@@ -99,7 +104,8 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     Stage broadcastStage = mock(Stage.class);
     Stage recycle = mock(Stage.class);
     when(broadcastStage.getSink()).thenReturn(broadcastSink);
-    when(recycle.getSink()).thenReturn(mock(Sink.class));
+    applySink = new ApplySink();
+    when(recycle.getSink()).thenReturn(applySink);
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = mock(ServerTransactionManager.class);
     context.txnObjectManager = mock(TransactionalObjectManager.class);
@@ -114,14 +120,15 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
   public void testLockManagerNotifyOnNoApply() throws Exception {
     ServerTransaction tx = createServerTransaction();
-    this.handler.handleEvent(new ApplyTransactionContext(tx));
+    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), false));
+    applySink.replayContexts();
     verifyNotifies(tx);
   }
 
   public void testLockManagerNotifyOnApply() throws Exception {
     ServerTransaction tx = createServerTransaction();
-    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.emptyMap()));
-    this.handler.handleEvent(new ApplyTransactionContext(null));
+    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), true));
+    applySink.replayContexts();
     verifyNotifies(tx);
   }
 
@@ -177,5 +184,19 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
         lockIDs, cid, Collections.emptyList(), null,
         Collections.emptyMap(), TxnType.NORMAL, notifies, DmiDescriptor.EMPTY_ARRAY,
         new MetaDataReader[0], 1, new long[0]);
+  }
+
+  private class ApplySink extends NullSink {
+    private final List<EventContext> contexts = new ArrayList<EventContext>();
+    @Override
+    public void add(final EventContext context) {
+      contexts.add(context);
+    }
+
+    void replayContexts() {
+      for (EventContext context : contexts) {
+        handler.handleEvent(context);
+      }
+    }
   }
 }

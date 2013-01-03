@@ -7,19 +7,21 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
+import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
@@ -28,9 +30,16 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.util.ObjectIDSet;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Applies all the changes in a transaction then releases the objects and passes the changes off to be broadcast to the
@@ -40,8 +49,7 @@ import java.util.Set;
  */
 public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
-  // Every 100 transactions, it updates the LWM
-  private static final int               LOW_WATER_MARK_UPDATE_FREQUENCY = 100;
+  private static final int               LWM_UPDATE_INTERVAL = 10000;
   private static final int               TXN_LIMIT_COUNT = 500;
 
   private ServerTransactionManager       transactionManager;
@@ -50,96 +58,82 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private Sink                           broadcastChangesSink;
   private Sink                           evictionInitiateSink;
   private final ObjectInstanceMonitor    instanceMonitor;
-  private final GlobalTransactionManager gtxm;
   private TransactionalObjectManager     txnObjectMgr;
+  private final Timer                    timer = new Timer("Apply Transaction Change Timer", true);
 
-  private int                            count                           = 0;
-  private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
-  private final TransactionProvider persistenceTransactionProvider;
-  private Transaction               currentTransaction;      
-  private int                       txnCount = 1;
+  private volatile GlobalTransactionID   lowWaterMark                    = GlobalTransactionID.NULL_ID;
+  private final TransactionProvider      persistenceTransactionProvider;
+  private ThreadLocal<CommitContext>     currentCommitContext = new ThreadLocal<CommitContext>();
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
                                        TransactionProvider persistenceTransactionProvider) {
     this.instanceMonitor = instanceMonitor;
-    this.gtxm = gtxm;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
+    timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark();
+      }
+    }, 0, LWM_UPDATE_INTERVAL);
   }
 
   @Override
   public void handleEvent(final EventContext context) {
-    final ApplyTransactionContext atc = (ApplyTransactionContext) context;
-    final ServerTransaction txn = atc.getTxn();
-    
-    if ( txn == null ) {
-        currentTransaction.commit();
-        currentTransaction = null;
-        return;
+    if (context instanceof CommitContext) {
+      ((CommitContext)context).commit();
+      return;
     }
-      
-    final ServerTransactionID stxnID = txn.getServerTransactionID();  
-    final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
-      
+
+    ApplyTransactionContext atc = (ApplyTransactionContext) context;
+    ServerTransaction txn = atc.getTxn();
+    ServerTransactionID stxnID = txn.getServerTransactionID();
+    ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
+    CommitContext commitContext = getCurrentCommitContext(atc);
+
     if (atc.needsApply()) {
-    
-       if ( currentTransaction == null || txnCount++ % TXN_LIMIT_COUNT == 0) {
-            txnCount = 1;
-            if ( currentTransaction == null ) {
-                recycleCommitSink.add(new ApplyTransactionContext(null));
-            } else {
-                currentTransaction.commit();
-            }
-            currentTransaction = persistenceTransactionProvider.newTransaction();
-       }
-       Transaction tx = currentTransaction;
-       txnCount += 1;
-       this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
-       tx.addTransactionListener(new TransactionListener() {
-
-            @Override
-            public void committed(Transaction t) {
-                txnObjectMgr.applyTransactionComplete(applyInfo);
-                transactionManager.commit(null, applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(stxnID), applyInfo.getObjectIDsToDelete());
-                finishHandleEvent(atc, applyInfo, txn);
-            }
-
-            @Override
-            public void aborted(Transaction t) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+      transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
+      txnObjectMgr.applyTransactionComplete(applyInfo);
+      commitContext.addToCommit(applyInfo.getObjectsToRelease(), txn.getNewRoots(),
+          applyInfo.getServerTransactionID(), applyInfo.getObjectIDsToDelete());
     } else {
-      this.transactionManager.skipApplyAndCommit(txn);
-      finishHandleEvent(atc, applyInfo, txn);
+      transactionManager.skipApplyAndCommit(txn);
+      txnObjectMgr.applyTransactionComplete(applyInfo);
+      commitContext.releaseOnCommit(applyInfo.getObjectsToRelease());
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
-  }
-  
-  private void finishHandleEvent(ApplyTransactionContext atc, ApplyTransactionInfo applyInfo, ServerTransaction txn) {
-    NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
 
-    this.transactionManager.processMetaData(txn, atc.needsApply() ? applyInfo : null);
+    transactionManager.processMetaData(txn, atc.needsApply() ? applyInfo : null);
+
+    NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
 
     for (final Object o : txn.getNotifies()) {
       final Notify notify = (Notify)o;
       final ServerLock.NotifyAction allOrOne = notify.getIsAll() ? ServerLock.NotifyAction.ALL
           : ServerLock.NotifyAction.ONE;
-      notifiedWaiters = this.lockManager.notify(notify.getLockID(), (ClientID)txn.getSourceID(), notify.getThreadID(),
+      notifiedWaiters = lockManager.notify(notify.getLockID(), (ClientID)txn.getSourceID(), notify.getThreadID(),
           allOrOne, notifiedWaiters);
     }
 
     if (txn.isActiveTxn()) {
-      final Set initiateEviction = applyInfo.getObjectIDsToInitateEviction();
+      final Set<ObjectID> initiateEviction = applyInfo.getObjectIDsToInitateEviction();
       if (!initiateEviction.isEmpty()) {
-        this.evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
+        evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
       }
 
-      if (this.count == 0) {
-        this.lowWaterMark = this.gtxm.getLowGlobalTransactionIDWatermark();
-      }
-      this.count = this.count++ % LOW_WATER_MARK_UPDATE_FREQUENCY;
-      this.broadcastChangesSink.add(new BroadcastChangeContext(txn, this.lowWaterMark, notifiedWaiters, applyInfo));
-    } 
+      broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo));
+    }
+  }
+
+  private CommitContext getCurrentCommitContext(ApplyTransactionContext atc) {
+    if (currentCommitContext.get() != null && currentCommitContext.get().shouldCommitNow()) {
+      currentCommitContext.get().commit();
+    }
+
+    if (currentCommitContext.get() == null || currentCommitContext.get().isCommitted()) {
+      currentCommitContext.set(new CommitContext(persistenceTransactionProvider.newTransaction(), atc.getKey()));
+      recycleCommitSink.add(currentCommitContext.get());
+    }
+    return currentCommitContext.get();
   }
 
   @Override
@@ -152,5 +146,57 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.recycleCommitSink = scc.getStage(ServerConfigurationContext.APPLY_CHANGES_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
+  }
+
+  private class CommitContext implements MultiThreadedEventContext {
+    private final Transaction transaction;
+    private final Collection<ManagedObject> objectsToRelease = new ArrayList<ManagedObject>(TXN_LIMIT_COUNT);
+    private final Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
+    private final Collection<ServerTransactionID> serverTransactionIDs = new ArrayList<ServerTransactionID>(TXN_LIMIT_COUNT);
+    private final SortedSet<ObjectID> objectsToDelete = new ObjectIDSet();
+    private final Object multiThreadKey;
+
+    private int numberOfCommits = 0;
+    private boolean committed = false;
+
+    private CommitContext(final Transaction transaction, Object multiThreadKey) {
+      this.transaction = transaction;
+      this.multiThreadKey = multiThreadKey;
+    }
+
+    void releaseOnCommit(Collection<ManagedObject> release) {
+      objectsToRelease.addAll(release);
+    }
+
+    void addToCommit(Collection<ManagedObject> release, Map<String, ObjectID> roots, ServerTransactionID serverTransactionID,
+                          SortedSet<ObjectID> delete) {
+      objectsToRelease.addAll(release);
+      newRoots.putAll(roots);
+      serverTransactionIDs.add(serverTransactionID);
+      objectsToDelete.addAll(delete);
+      numberOfCommits++;
+    }
+
+    boolean shouldCommitNow() {
+      return numberOfCommits >= TXN_LIMIT_COUNT;
+    }
+
+    boolean isCommitted() {
+      return committed;
+    }
+
+    void commit() {
+      if (committed) {
+        return;
+      }
+      committed = true;
+      transaction.commit();
+      transactionManager.commit(objectsToRelease, newRoots, serverTransactionIDs, objectsToDelete);
+    }
+
+    @Override
+    public Object getKey() {
+      return multiThreadKey;
+    }
   }
 }

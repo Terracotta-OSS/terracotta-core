@@ -8,14 +8,10 @@ package com.tc.objectserver.tx;
 import com.tc.async.impl.MockSink;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
-import com.tc.objectserver.context.RecallObjectsContext;
-
-import java.util.Collections;
 
 public class TestTransactionalStageCoordinator implements TransactionalStageCoordinator {
 
   public MockSink lookupSink        = new MockSink();
-  public MockSink recallSink        = new MockSink();
   public MockSink applySink         = new MockSink();
 
   @Override
@@ -28,8 +24,4 @@ public class TestTransactionalStageCoordinator implements TransactionalStageCoor
     lookupSink.addLossy(new LookupEventContext());
   }
 
-  @Override
-  public void initiateRecallAll() {
-    recallSink.add(new RecallObjectsContext(Collections.EMPTY_LIST, true));
-  }
 }

@@ -11,6 +11,4 @@ public interface TransactionalStageCoordinator {
 
   public void initiateLookup();
 
-  public void initiateRecallAll();
-
 }

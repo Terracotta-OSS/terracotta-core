@@ -49,7 +49,6 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
-import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -886,7 +885,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void commit(final TransactionProvider ptxp, final Collection<ManagedObject> objects,
+    public void commit(final Collection<ManagedObject> objects,
                        final Map<String, ObjectID> newRoots,
                        final Collection<ServerTransactionID> appliedServerTransactionIDs,
                        final SortedSet<ObjectID> deletedObjects) {

@@ -13,9 +13,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.context.ApplyTransactionContext;
-import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -29,15 +27,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class keeps track of locally checked out objects for applies and maintain the objects to txnid mapping in the
@@ -49,27 +47,22 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
                                                                                                   .getLogger(TransactionalObjectManagerImpl.class);
 
   private final ObjectManager                                         objectManager;
-  private final ServerTransactionSequencer                            sequencer;
+  private final ServerTransactionSequencer                            sequencer               = new ServerTransactionSequencerImpl();
   private final ServerGlobalTransactionManager                        gtxm;
 
-  /*
-   * This map contains ObjectIDs to TxnObjectGrouping that contains these objects
-   */
-  private final Map<ObjectID, TxnObjectGrouping>                      checkedOutObjects       = new HashMap<ObjectID, TxnObjectGrouping>();
-  private final Map<ServerTransactionID, TxnObjectGrouping>           applyPendingTxns        = new HashMap<ServerTransactionID, TxnObjectGrouping>();
-  private final LinkedHashMap<ServerTransactionID, TxnObjectGrouping> commitPendingTxns       = new LinkedHashMap<ServerTransactionID, TxnObjectGrouping>();
+  private final Map<ObjectID, ManagedObject>                          checkedOutObjects       = new HashMap<ObjectID, ManagedObject>();
+  private final ConcurrentMap<ServerTransactionID, TxnObjectGrouping> applyPendingTxns        = new ConcurrentHashMap<ServerTransactionID, TxnObjectGrouping>();
 
-  private final Set                                                   pendingObjectRequest    = new HashSet();
+  private final Set<ObjectID>                                         pendingObjectRequest    = new HashSet<ObjectID>();
   private final PendingList                                           pendingTxnList          = new PendingList();
   private final Queue<LookupContext>                                  processedPendingLookups = new ConcurrentLinkedQueue<LookupContext>();
 
   private final TransactionalStageCoordinator                         txnStageCoordinator;
 
-  public TransactionalObjectManagerImpl(ObjectManager objectManager, ServerTransactionSequencer sequencer,
+  public TransactionalObjectManagerImpl(ObjectManager objectManager,
                                         ServerGlobalTransactionManager gtxm,
                                         TransactionalStageCoordinator txnStageCoordinator) {
     this.objectManager = objectManager;
-    this.sequencer = sequencer;
     this.gtxm = gtxm;
     this.txnStageCoordinator = txnStageCoordinator;
   }
@@ -78,7 +71,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   @Override
   public void addTransactions(Collection<ServerTransaction> txns) {
     try {
-      Collection<TransactionLookupContext> txnLookupContexts = createAndPreFetchObjectsFor(txns);
+      Collection<TransactionLookupContext> txnLookupContexts = createObjectsFor(txns);
       this.sequencer.addTransactionLookupContexts(txnLookupContexts);
       this.txnStageCoordinator.initiateLookup();
     } catch (Throwable t) {
@@ -88,10 +81,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  private void dumpOnError(Collection txns) {
+  private void dumpOnError(Collection<ServerTransaction> txns) {
     try {
-      for (Iterator i = txns.iterator(); i.hasNext();) {
-        ServerTransaction stx = (ServerTransaction) i.next();
+      for (final ServerTransaction stx : txns) {
         ServerTransactionID stxn = stx.getServerTransactionID();
         logger.error("DumpOnError : Txn = " + stx);
         // NOTE:: Calling initiateApply() changes state, but we are crashing anyways
@@ -105,25 +97,17 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  private Collection createAndPreFetchObjectsFor(Collection txns) {
-    List lookupContexts = new ArrayList(txns.size());
-    Set oids = new HashSet(txns.size() * 10);
-    Set newOids = new HashSet(txns.size() * 10);
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      ServerTransaction txn = (ServerTransaction) i.next();
+  private Collection<TransactionLookupContext> createObjectsFor(Collection<ServerTransaction> txns) {
+    List<TransactionLookupContext> lookupContexts = new ArrayList<TransactionLookupContext>(txns.size());
+    Set<ObjectID> newOids = new HashSet<ObjectID>(txns.size() * 10);
+    for (ServerTransaction txn : txns) {
       boolean initiateApply = this.gtxm.initiateApply(txn.getServerTransactionID());
       if (initiateApply) {
         newOids.addAll(txn.getNewObjectIDs());
-        for (Object element : txn.getObjectIDs()) {
-          ObjectID oid = (ObjectID) element;
-          if (!newOids.contains(oid)) {
-            oids.add(oid);
-          }
-        }
       }
       lookupContexts.add(new TransactionLookupContext(txn, initiateApply));
     }
-    this.objectManager.preFetchObjectsAndCreate(oids, newOids);
+    objectManager.createNewObjects(newOids);
     return lookupContexts;
   }
 
@@ -136,13 +120,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       if (lookupContext == null) {
         break;
       }
-      ServerTransaction txn = lookupContext.getTransaction();
-      if (lookupContext.initiateApply()) {
-        lookupObjectsForApplyAndAddToSink(txn);
-      } else {
-        // These txns are already applied, hence just sending it to the next stage.
-        this.txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn));
-      }
+      lookupObjectsForApplyAndAddToSink(lookupContext);
     }
   }
 
@@ -152,26 +130,20 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn) {
-    Collection<ObjectID> oids = txn.getObjectIDs();
-    // log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
+  public synchronized void lookupObjectsForApplyAndAddToSink(TransactionLookupContext transactionLookupContext) {
+    ServerTransaction txn = transactionLookupContext.getTransaction();
+    boolean needsApply = transactionLookupContext.initiateApply();
+    ObjectIDSet oids = txn.getObjectIDs();
+//    log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
     ObjectIDSet newRequests = new ObjectIDSet();
     boolean makePending = false;
     for (ObjectID oid : oids) {
-      TxnObjectGrouping tog;
-      if (this.pendingObjectRequest.contains(oid)) {
+      if (pendingObjectRequest.contains(oid)) {
         makePending = true;
-      } else if ((tog = this.checkedOutObjects.get(oid)) == null) {
-        // 1) Object is not already checked out or
+      } else if (!checkedOutObjects.containsKey(oid)) {
         newRequests.add(oid);
-      } else if (tog.limitReached()) {
-        // 2) the object is available, but we dont use it to prevent huge commits, large txn acks etc
-        newRequests.add(oid);
-        // log(shortDescription());
-        // log("Limit Reached. " + oid + " - " + tog.shortDescription());
       }
     }
-    // TODO:: make cache and stats right
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
       lookupContext = new LookupContext(newRequests, txn);
@@ -179,40 +151,37 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         addLookedupObjects(lookupContext);
       } else {
         // New request went pending in object manager
-        // log("lookupObjectsForApplyAndAddToSink(): New Request went pending : " + newRequests);
+//        log("lookupObjectsForApplyAndAddToSink(): New Request went pending : " + newRequests);
         makePending = true;
         this.pendingObjectRequest.addAll(newRequests);
       }
-
     }
     if (makePending) {
-      // log("lookupObjectsForApplyAndAddToSink(): Make Pending : " + txn.getServerTransactionID());
-      makePending(txn);
+//      log("lookupObjectsForApplyAndAddToSink(): Make Pending : " + txn.getServerTransactionID());
+      makePending(transactionLookupContext);
       if (lookupContext != null) {
         lookupContext.makePending();
       }
     } else {
       ServerTransactionID txnID = txn.getServerTransactionID();
-      TxnObjectGrouping newGrouping = new TxnObjectGrouping(txnID, txn.getNewRoots());
-      mergeTransactionGroupings(oids, newGrouping);
-      this.applyPendingTxns.put(txnID, newGrouping);
-      this.txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, getRequiredObjectsMap(oids, newGrouping
-          .getObjects())));
+      TxnObjectGrouping newGrouping = new TxnObjectGrouping(txnID, txn.getNewRoots(), getRequiredObjectsMap(oids, checkedOutObjects));
+      applyPendingTxns.put(txnID, newGrouping);
+      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, newGrouping.getObjects(), needsApply));
       makeUnpending(txn);
-      // log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
+//      log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
     }
   }
 
   public String shortDescription() {
     return "TxnObjectManager : checked Out count = " + this.checkedOutObjects.size() + " apply pending txn = "
-           + this.applyPendingTxns.size() + " commit pending = " + this.commitPendingTxns.size() + " pending txns = "
+           + this.applyPendingTxns.size() + " pending txns = "
            + this.pendingTxnList.size() + " pending object requests = " + this.pendingObjectRequest.size();
   }
 
   private Map<ObjectID, ManagedObject> getRequiredObjectsMap(Collection<ObjectID> oids, Map<ObjectID, ManagedObject> objects) {
     Map<ObjectID, ManagedObject> map = new HashMap<ObjectID, ManagedObject>(oids.size());
     for (ObjectID oid : oids) {
-      ManagedObject mo = objects.get(oid);
+      ManagedObject mo = objects.remove(oid);
       if (mo == null) {
         dumpToLogger();
         log("NULL !! " + oid + " not found ! " + oids);
@@ -234,51 +203,20 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     logger.info(message);
   }
 
-  // This method written to be optimized to perform large merges fast. Hence the code flow might not
-  // look natural.
-  private void mergeTransactionGroupings(Collection<ObjectID> oids, TxnObjectGrouping newGrouping) {
-    long start = System.currentTimeMillis();
-    for (ObjectID oid : oids) {
-      TxnObjectGrouping oldGrouping = this.checkedOutObjects.get(oid);
-      if (oldGrouping == null) {
-        throw new AssertionError("Transaction Grouping for lookedup objects is Null !! " + oid);
-      } else if (oldGrouping != newGrouping && oldGrouping.isActive()) {
-        ServerTransactionID oldTxnId = oldGrouping.getServerTransactionID();
-        // This merge has a sideeffect of setting all reference contained in oldGrouping to null.
-        newGrouping.merge(oldGrouping);
-        this.commitPendingTxns.remove(oldTxnId);
-      }
-    }
-    for (ObjectID oid : newGrouping.getObjects().keySet()) {
-      this.checkedOutObjects.put(oid, newGrouping);
-    }
-    for (Iterator<ServerTransactionID> j = newGrouping.getApplyPendingTxnsIterator(); j.hasNext();) {
-      ServerTransactionID oldTxnId = j.next();
-      if (this.applyPendingTxns.containsKey(oldTxnId)) {
-        this.applyPendingTxns.put(oldTxnId, newGrouping);
-      }
-    }
-    long timeTaken = System.currentTimeMillis() - start;
-    if (timeTaken > 500) {
-      log("Merged " + oids.size() + " object into " + newGrouping.shortDescription() + " in " + timeTaken + " ms");
-    }
-  }
-
   private synchronized void addLookedupObjects(LookupContext context) {
     Map<ObjectID, ManagedObject> lookedUpObjects = context.getLookedUpObjects();
     if (lookedUpObjects == null || lookedUpObjects.isEmpty()) { throw new AssertionError("Lookedup object is null : "
                                                                                          + lookedUpObjects
                                                                                          + " context = " + context); }
-    TxnObjectGrouping tg = new TxnObjectGrouping(lookedUpObjects);
-    for (ObjectID oid : lookedUpObjects.keySet()) {
-      this.pendingObjectRequest.remove(oid);
-      this.checkedOutObjects.put(oid, tg);
+    for (Entry<ObjectID, ManagedObject> e : lookedUpObjects.entrySet()) {
+      this.pendingObjectRequest.remove(e.getKey());
+      this.checkedOutObjects.put(e.getKey(), e.getValue());
     }
   }
 
-  private void makePending(ServerTransaction txn) {
-    if (this.pendingTxnList.add(txn)) {
-      this.sequencer.makePending(txn);
+  private void makePending(TransactionLookupContext lookupContext) {
+    if (this.pendingTxnList.add(lookupContext)) {
+      this.sequencer.makePending(lookupContext.getTransaction());
     }
   }
 
@@ -304,75 +242,18 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   private void processPendingTransactions() {
-    List copy = this.pendingTxnList.copy();
-    for (Iterator i = copy.iterator(); i.hasNext();) {
-      ServerTransaction txn = (ServerTransaction) i.next();
-      lookupObjectsForApplyAndAddToSink(txn);
+    List<TransactionLookupContext> copy = this.pendingTxnList.copy();
+    for (final TransactionLookupContext lookupContext : copy) {
+      lookupObjectsForApplyAndAddToSink(lookupContext);
     }
   }
 
   // ApplyTransaction stage method
   @Override
-  public synchronized boolean applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
-    TxnObjectGrouping grouping = this.applyPendingTxns.remove(applyInfo.getServerTransactionID());
+  public void applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
+    TxnObjectGrouping grouping = applyPendingTxns.remove(applyInfo.getServerTransactionID());
     Assert.assertNotNull(grouping);
-    if (grouping.applyComplete(applyInfo)) {
-      // Since verifying against all txns is costly, only the prime one (the one that created this grouping) is verfied
-      // against
-      ServerTransactionID pTxnID = grouping.getServerTransactionID();
-      Assert.assertNull(this.applyPendingTxns.get(pTxnID));
-
-      for (ObjectID oid : grouping.getObjects().keySet()) {
-        TxnObjectGrouping old = this.checkedOutObjects.remove(oid);
-        Assert.assertNotNull(old);
-      }
-
-      applyInfo.addObjectsToBeReleased(grouping.getObjects().values());
-    }
-    return true;
-  }
-
-  // Apply Complete stage method
-  @Override
-  public void processApplyComplete() {
-    throw new AssertionError();
-  }
-
-  // Commit Transaction stage method
-  @Override
-  public synchronized void commitTransactionsComplete(CommitTransactionContext ctc) {
-    throw new AssertionError();
-  }
-
-  // recall from ObjectManager on DGC start
-  @Override
-  public void recallAllCheckedoutObject() {
-    this.txnStageCoordinator.initiateRecallAll();
-  }
-
-  // Recall Stage method
-  @Override
-  public synchronized void recallCheckedoutObject(RecallObjectsContext roc) {
-    processPendingIfNecessary();
-    if (roc.recallAll()) {
-      IdentityHashMap recalled = new IdentityHashMap();
-      HashMap recalledObjects = new HashMap();
-      for (Iterator i = this.checkedOutObjects.entrySet().iterator(); i.hasNext();) {
-        Entry e = (Entry) i.next();
-        TxnObjectGrouping tog = (TxnObjectGrouping) e.getValue();
-        if (tog.getServerTransactionID().isNull()) {
-          i.remove();
-          if (!recalled.containsKey(tog)) {
-            recalled.put(tog, null);
-            recalledObjects.putAll(tog.getObjects());
-          }
-        }
-      }
-      if (!recalledObjects.isEmpty()) {
-        logger.info("Recalling " + recalledObjects.size() + " Objects to ObjectManager");
-        this.objectManager.releaseAllReadOnly(recalledObjects.values());
-      }
-    }
+    applyInfo.addObjectsToBeReleased(grouping.getObjects().values());
   }
 
   @Override
@@ -442,21 +323,21 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   private static final class PendingList implements PrettyPrintable {
-    private final LinkedHashMap<ServerTransactionID, ServerTransaction> pending = new LinkedHashMap<ServerTransactionID, ServerTransaction>();
+    private final LinkedHashMap<ServerTransactionID, TransactionLookupContext> pending = new LinkedHashMap<ServerTransactionID, TransactionLookupContext>();
 
-    public boolean add(ServerTransaction txn) {
-      ServerTransactionID sTxID = txn.getServerTransactionID();
+    public boolean add(TransactionLookupContext lookupContext) {
+      ServerTransactionID sTxID = lookupContext.getTransaction().getServerTransactionID();
       // Doing two lookups to avoid reordering
       if (this.pending.containsKey(sTxID)) {
         return false;
       } else {
-        this.pending.put(sTxID, txn);
+        this.pending.put(sTxID, lookupContext);
         return true;
       }
     }
 
-    public List<ServerTransaction> copy() {
-      return new ArrayList(this.pending.values());
+    public List<TransactionLookupContext> copy() {
+      return new ArrayList<TransactionLookupContext>(this.pending.values());
     }
 
     public boolean remove(ServerTransaction txn) {

@@ -318,11 +318,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return rv;
   }
 
-  @Override
-  public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
-    createNewObjects(newOids);
-  }
-
   private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease) {
     return addNewReference(obj.getReference(), isRemoveOnRelease);
   }
@@ -721,7 +716,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.lock.writeLock().lock();
     try {
       checkAndNotifyGC();
-      this.txnObjectMgr.recallAllCheckedoutObject();
       int count = 0;
       while (!this.collector.isPaused()) {
         if (count++ % 4 == 3) {

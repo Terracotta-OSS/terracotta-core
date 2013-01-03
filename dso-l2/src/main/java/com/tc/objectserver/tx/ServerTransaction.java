@@ -5,6 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -40,7 +41,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public List getChanges();
 
-  public Map getNewRoots();
+  public Map<String, ObjectID> getNewRoots();
 
   public TxnType getTransactionType();
 
