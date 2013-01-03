@@ -150,6 +150,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         refs.add(o);
       }
     }
+    for (Object o : references.keySet()) {
+      if (o instanceof ObjectID) {
+        refs.add(o);
+      }
+    }
   }
 
   @Override
