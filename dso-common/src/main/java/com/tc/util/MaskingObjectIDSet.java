@@ -16,8 +16,8 @@ import java.util.Iterator;
  */
 class MaskingObjectIDSet extends BitSetObjectIDSet {
     
-    private volatile long start;
-    private volatile long end;
+    private long start;
+    private long end;
     private BitSetObjectIDSet left = new BitSetObjectIDSet();
     
     public MaskingObjectIDSet() {
@@ -26,8 +26,11 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
     }
     
     MaskingObjectIDSet(ObjectIDSetBase copy) {
-        super(copy);
         MaskingObjectIDSet m = (MaskingObjectIDSet)copy;
+        for (final Iterator<BitSet> i = m.ranges.iterator(); i.hasNext();) {
+             this.ranges.add(new BitSet(i.next()));
+        }
+        this.size = m.size;
         this.start = m.start;
         this.end = m.end;
         this.left = new BitSetObjectIDSet(m.left);
@@ -42,19 +45,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
             }
             start = x;
         }
-    }
-    
-    public static void main(String[] arg) {
-        MaskingObjectIDSet set = new MaskingObjectIDSet();
-        
-        for ( long x=0;x<300 * 1024 * 1024;x++) {
-            set.add(new ObjectID(x));
-        }
-        for ( long x=0;x<100 * 1024 * 1024;x++) {
-            set.remove(new ObjectID(x));
-        }
-        
-        System.out.println(set.start + " " + set.end + " " + set.size + " " + set.left.size);
+        start = half;
     }
 
     @Override
@@ -114,7 +105,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
         if ( id.getMaskedObjectID() < start ) {
             return left.contains(id);
         }
-        if ( id.getMaskedObjectID() >= start + end ) {
+        if ( id.getMaskedObjectID() >= end ) {
             return false;
         }
         return !super.contains(id);
@@ -122,16 +113,15 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public boolean remove(ObjectID o) {
-    ObjectID id = o;
         if ( o.getMaskedObjectID() < start ) {
             return left.remove(o);
         }
-        if ( id.getMaskedObjectID() >= start + end ) {
+        if ( o.getMaskedObjectID() >= end ) {
             return false;
         }
         
         try {
-            return !super.add(id);
+            return !super.add(o);
         } finally {
             if ( factor() > .33 ) {
                 split();
@@ -204,7 +194,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public int size() {
-        return (int)((end-start) - super.size());
+        return (int)((((int)(end-start)) - super.size()) + left.size());
     }
     
     private float factor() {
@@ -213,7 +203,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public boolean isEmpty() {
-        return super.size() == (end-start);
+        return super.size() == (end-start) && left.isEmpty();
     }
 
     @Override
@@ -226,6 +216,6 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public String toString() {
-        return "MaskingObjectIDSet{" + "mask=" + super.size() + ", start=" + start + ", end=" + end + '}';
+        return "MaskingObjectIDSet{" + "mask=" + super.size() + ", start=" + start + ", end=" + end + ", left=" + left.size() + '}';
     }
 }
