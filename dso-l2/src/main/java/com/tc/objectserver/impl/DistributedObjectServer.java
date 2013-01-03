@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -294,9 +297,6 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1142,6 +1142,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.counter = counter;
     }
 
+    @SuppressWarnings("unused")
     @Subscribe
     private void recordOperationCountChangeEvent(OperationCountChangeEvent event) {
       this.counter.increment(event.getDelta());

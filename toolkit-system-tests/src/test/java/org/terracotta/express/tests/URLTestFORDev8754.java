@@ -37,8 +37,8 @@ public class URLTestFORDev8754 extends AbstractToolkitTestBase {
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       debug("Trying to create Toolkit");
-      ToolkitInternal tk = createToolkitWithCommaInEnd();
-      tk = createToolkitWithTwoCommasInMiddle();
+      createToolkitWithCommaInEnd();
+      createToolkitWithTwoCommasInMiddle();
     }
 
     private ToolkitInternal createToolkitWithTwoCommasInMiddle() {

@@ -22,7 +22,6 @@ import java.util.Set;
 
 public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
-  private static final char         COMMA                            = ',';
   private static final String       TOOLKIT_IMPL_CLASS_NAME          = "com.terracotta.toolkit.TerracottaToolkit";
   private static final String       TOOLKIT_IMPL_EE_CLASS_NAME       = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
   private final static String       TERRACOTTA_TOOLKIT_TYPE          = "terracotta";
