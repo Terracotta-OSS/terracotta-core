@@ -332,8 +332,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public V get(K key, ObjectID valueOid) {
-    // TODO: discuss change in behavior for search here.
-    return getDelegate().unsafeLocalGet(key);
+    return null;
   }
 
   @Override
