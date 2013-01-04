@@ -257,8 +257,7 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
-import com.tc.util.EventBusFactory;
-import com.tc.util.OperationCountChangeEvent;
+import com.tc.util.Events;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
@@ -361,8 +360,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
-  private EventBus eventBus = EventBusFactory.getEventBus();
-
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
@@ -408,10 +405,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected DSOServerBuilder getServerBuilder() {
     return this.serverBuilder;
-  }
-
-  public void setEventBus(final EventBus eventBus) {
-    this.eventBus = eventBus;
   }
 
   @Override
@@ -736,7 +729,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // DEV-8737. Count map mutation operations
     final SampledCounter globalOperationCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    this.eventBus.register(new OperationCountChangeEventListener(globalOperationCounter));
+    final EventBus operationEventBus = ManagedObjectStateFactory.getInstance().getOperationEventBus();
+    operationEventBus.register(new OperationCountIncrementEventListener(globalOperationCounter));
 
     final SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
@@ -1130,17 +1124,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
    *
    * @see EventBus
    */
-  private static final class OperationCountChangeEventListener {
+  private static final class OperationCountIncrementEventListener {
     private final SampledCounter counter;
 
-    private OperationCountChangeEventListener(final SampledCounter counter) {
+    private OperationCountIncrementEventListener(final SampledCounter counter) {
       this.counter = counter;
     }
 
     @SuppressWarnings("unused")
     @Subscribe
-    private void recordOperationCountChangeEvent(OperationCountChangeEvent event) {
-      this.counter.increment(event.getDelta());
+    public void recordOperationCountIncrementEvent(final Events.OperationCountIncrementEvent event) {
+      this.counter.increment();
     }
   }
 

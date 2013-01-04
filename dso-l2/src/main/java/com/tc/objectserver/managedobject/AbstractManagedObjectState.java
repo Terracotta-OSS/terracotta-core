@@ -4,12 +4,17 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.eventbus.EventBus;
 import com.tc.objectserver.core.api.ManagedObjectState;
 
 /**
  * Base class for implementations of ManagedObjectState implementations.
  */
 public abstract class AbstractManagedObjectState implements ManagedObjectState {
+
+  public final EventBus getOperationEventBus() {
+    return getStateFactory().getOperationEventBus();
+  }
 
   public final ManagedObjectChangeListener getListener() {
     return getStateFactory().getListener();

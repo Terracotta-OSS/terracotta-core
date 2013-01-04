@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -13,7 +12,7 @@ import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
-import com.tc.util.OperationCountChangeEvent;
+import com.tc.util.Events;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
@@ -51,10 +50,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     final TestDNACursor cursor = createDNACursor();
     final ConcurrentDistributedServerMapManagedObjectState state = (ConcurrentDistributedServerMapManagedObjectState)
         createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE, cursor, new ObjectID(3));
-    final EventBus eventBus = new EventBus("test-bus");
-    state.setEventBus(eventBus);
     final OperationCountChangeEventListener listener = new OperationCountChangeEventListener();
-    eventBus.register(listener);
+    state.getOperationEventBus().register(listener);
     state.apply(new ObjectID(3), cursor, new ApplyTransactionInfo());
     assertEquals(500, listener.count);
   }
@@ -64,8 +61,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     @SuppressWarnings("unused")
     @Subscribe
-    public void recordOperationCountChangeEvent(OperationCountChangeEvent event) {
-      this.count += event.getDelta();
+    public void recordOperationCountIncrementEvent(Events.OperationCountIncrementEvent event) {
+      this.count ++;
     }
   }
 

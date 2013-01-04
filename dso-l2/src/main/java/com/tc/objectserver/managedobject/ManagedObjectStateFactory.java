@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.eventbus.EventBus;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
@@ -34,9 +35,14 @@ public class ManagedObjectStateFactory {
 
   private final PersistentObjectFactory objectFactory;
 
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, PersistentObjectFactory objectFactory) {
+  private final EventBus operationEventBus;
+
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
+                                    final PersistentObjectFactory objectFactory,
+                                    final EventBus operationEventBus) {
     this.listenerProvider = listenerProvider;
     this.objectFactory = objectFactory;
+    this.operationEventBus = operationEventBus;
   }
 
   /*
@@ -56,7 +62,7 @@ public class ManagedObjectStateFactory {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instantiated more than once. " + singleton);
     }
-    singleton = new ManagedObjectStateFactory(listenerProvider, persistentObjectFactory);
+    singleton = new ManagedObjectStateFactory(listenerProvider, persistentObjectFactory, new EventBus("main-event-bus"));
     return singleton;
   }
 
@@ -87,6 +93,10 @@ public class ManagedObjectStateFactory {
 
   public ManagedObjectChangeListener getListener() {
     return this.listenerProvider.getListener();
+  }
+
+  public EventBus getOperationEventBus() {
+    return operationEventBus;
   }
 
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
