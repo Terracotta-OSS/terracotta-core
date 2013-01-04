@@ -232,6 +232,18 @@
         <module>devwork/terracotta-license</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>offheap-store</id>
+      <activation>
+        <file>
+          <exists>devwork/offheap-store</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/offheap-store</module>
+      </modules>
+    </profile>     
   </profiles>
   
   <repositories>
