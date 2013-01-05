@@ -374,6 +374,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         }
                     } catch ( ExecutionException exp ) {
                         logger.warn("eviction run", exp);
+                        throw new AssertionError(exp);
                     } catch ( InterruptedException it ) {
                         logger.warn("eviction run", it);
                     }
@@ -441,21 +442,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         
     private void throttleIfNeeded(EvictionThreshold thresholdParam, DetailedMemoryUsage usage) {
  //  if we are this low, stop no matter what
-            if ( usage.getReservedMemory() >= usage.getMaxMemory() - (32l * 1024 * 1024) ) {
+            if ( usage.getReservedMemory() >= usage.getMaxMemory() - (16l * 1024 * 1024) ) {
                 stop(usage);
-            } else if ( usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024) ) {
+            } else if ( usage.getReservedMemory() >= usage.getMaxMemory() - (32l * 1024 * 1024) ) {
                 throttle(usage);
             }
 
-            if ( isThrottling ) {
-        if (thresholdParam.shouldNormalize(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
-                    clear(usage);
-                }
-            } else if ( isEmergency ) {
-        if (thresholdParam.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
-                    throttle(usage);
-                }
-            }
+//            if ( isThrottling ) {
+//        if (thresholdParam.shouldNormalize(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
+//                    clear(usage);
+//                }
+//            } else if ( isEmergency ) {
+//        if (thresholdParam.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
+//                    throttle(usage);
+//                }
+//            }
         }
         
         private void stopEmergency(DetailedMemoryUsage usage) {
@@ -472,11 +473,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             log("Emergency Triggered - " + usage.getUsedPercentage() + "/" + (usage.getReservedMemory()*100/usage.getMaxMemory()) + " turns:" + turnCount);
             currentRun.cancel(false);
 
-            if ( turnCount > 5 && isEmergency && !isThrottling && !isStopped ) {
+            if ( turnCount > 8 && isEmergency && !isThrottling && !isStopped ) {
                 throttle(usage);
             }
 
-            currentRun = emergencyEviction(false, turnCount++);// if already in emergency situation, really try hard to remove items.
+            currentRun = emergencyEviction(false, turnCount++);
+
+            // if already in emergency situation, really try hard to remove items.
             print("Emergency",currentRun);
             isEmergency = true;
         }
@@ -496,6 +499,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
         private void throttle(MemoryUsage reserved) {
+            if ( isThrottling ) {
+                return;
+            }
             isThrottling = true;
             resourceManager.setThrottle(1);
             TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNearResourceCapacityEvent("pool",reserved.getUsedPercentage());
@@ -514,7 +520,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
         public void clear(MemoryUsage reserved) {
-            if ( !isThrottling ) {
+            if ( !isThrottling && !isStopped ) {
                 return;
             }
             isStopped = false;

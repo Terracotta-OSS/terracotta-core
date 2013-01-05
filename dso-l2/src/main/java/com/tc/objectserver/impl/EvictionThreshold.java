@@ -13,14 +13,15 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  */
 public enum EvictionThreshold {
     
-    HEAP("HEAP",1l * 1024 * 1024 * 1024, 128l * 1024 * 1024,64l * 1024 * 1024),
-    MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 128l * 1024 * 1024,96l * 1024 * 1024),
-    SMALL("2G",2l * 1024 * 1024 * 1024, 384l * 1024 * 1024,256l * 1024 * 1024),
-    EIGHT("8G",8l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024,512l * 1024 * 1024),
-    SIXTEEN("16G",16l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024,1l * 1024 * 1024 * 1024),
-    THIRTYTWO("32G",32l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024,2l * 1024 * 1024 * 1024),
-    SIXTYFOUR("64G",64l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024,4l * 1024 * 1024 * 1024),
-    BIG("BIG MEMORY",Long.MAX_VALUE, 16l * 1024 * 1024 * 1024,8l * 1024 * 1024 * 1024);
+    HEAP("HEAP",1l * 1024 * 1024 * 1024, 64l * 1024 * 1024,32l * 1024 * 1024),
+    MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 96l * 1024 * 1024,32l * 1024 * 1024),
+    SMALL("2G",2l * 1024 * 1024 * 1024, 256l * 1024 * 1024, 64l * 1024 * 1024),
+    EIGHT("8G",8l * 1024 * 1024 * 1024, 512l * 1024 * 1024, 128l * 1024 * 1024),
+    SIXTEEN("16G",16l * 1024 * 1024 * 1024, 1l * 1024 * 1024 * 1024, 256l * 1024 * 1024),
+    THIRTYTWO("32G",32l * 1024 * 1024 * 1024, 2l * 1024 * 1024 * 1024, 512l * 1024 * 1024),
+    SIXTYFOUR("64G",64l * 1024 * 1024 * 1024, 4l * 1024 * 1024 * 1024, 1l * 1024 * 1024 * 1024),
+    ONETWENTYEIGHT("128G",128l * 1024 * 1024 * 1024, 8l * 1024 * 1024 * 1024, 2l * 1024 * 1024 * 1024),
+    BIG("BIG MEMORY",Long.MAX_VALUE, 16l * 1024 * 1024 * 1024, 4l * 1024 * 1024 * 1024);
     
     private final String name;
     private final long maxSize;
@@ -105,11 +106,14 @@ public enum EvictionThreshold {
         if ( tweak < 0 ) {
             return reserved;
         }
+        if ( tweak < 0 || tweak > 300 ) {
+            return reserved;
+        }
         return Math.round((tweak/100d) * reserved);
     }
     
     private long getUsed(int tweak) {
-        if ( tweak < 0 ) {
+        if ( tweak < 0 || tweak > 300 ) {
             return used;
         }
         return reserved + Math.round((tweak/100d) * reserved);
