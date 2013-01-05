@@ -152,8 +152,8 @@ public class TestBaseUtil {
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE, "1");
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY, "16");
 
-    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MAX_PAGE_SIZE, "10k");
-    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MIN_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_CACHE_MAX_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_CACHE_MIN_PAGE_SIZE, "10k");
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_TABLESIZE, "1");
   }
 
