@@ -16,12 +16,12 @@ public enum EvictionThreshold {
     HEAP("HEAP",1l * 1024 * 1024 * 1024, 64l * 1024 * 1024,32l * 1024 * 1024),
     MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 96l * 1024 * 1024,32l * 1024 * 1024),
     SMALL("2G",2l * 1024 * 1024 * 1024, 256l * 1024 * 1024, 64l * 1024 * 1024),
-    EIGHT("8G",8l * 1024 * 1024 * 1024, 512l * 1024 * 1024, 128l * 1024 * 1024),
-    SIXTEEN("16G",16l * 1024 * 1024 * 1024, 1l * 1024 * 1024 * 1024, 256l * 1024 * 1024),
-    THIRTYTWO("32G",32l * 1024 * 1024 * 1024, 2l * 1024 * 1024 * 1024, 512l * 1024 * 1024),
-    SIXTYFOUR("64G",64l * 1024 * 1024 * 1024, 4l * 1024 * 1024 * 1024, 1l * 1024 * 1024 * 1024),
-    ONETWENTYEIGHT("128G",128l * 1024 * 1024 * 1024, 8l * 1024 * 1024 * 1024, 2l * 1024 * 1024 * 1024),
-    BIG("BIG MEMORY",Long.MAX_VALUE, 16l * 1024 * 1024 * 1024, 4l * 1024 * 1024 * 1024);
+    EIGHT("8G",8l * 1024 * 1024 * 1024, 738l * 1024 * 1024, 128l * 1024 * 1024),
+    SIXTEEN("16G",16l * 1024 * 1024 * 1024, 1536l * 1024 * 1024, 256l * 1024 * 1024),
+    THIRTYTWO("32G",32l * 1024 * 1024 * 1024, 3l * 1024 * 1024 * 1024, 512l * 1024 * 1024),
+    SIXTYFOUR("64G",64l * 1024 * 1024 * 1024, 6l * 1024 * 1024 * 1024, 1l * 1024 * 1024 * 1024),
+    ONETWENTYEIGHT("128G",128l * 1024 * 1024 * 1024, 12l * 1024 * 1024 * 1024, 2l * 1024 * 1024 * 1024),
+    BIG("BIG MEMORY",Long.MAX_VALUE, 24l * 1024 * 1024 * 1024, 4l * 1024 * 1024 * 1024);
     
     private final String name;
     private final long maxSize;
@@ -61,7 +61,9 @@ public enum EvictionThreshold {
     }
     
     public String log(int usedTweak, int reservedTweak) {
-        return "used:" + getUsed(usedTweak) + ",reserved:" + getReserved(usedTweak);
+        long lres = getReserved(reservedTweak);
+        long lused = getUsed(lres,usedTweak);
+        return "used:" + lused + ",reserved:" + lres;
     }
     
     public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak,int reservedTweak) {
@@ -72,8 +74,8 @@ public enum EvictionThreshold {
     }
     
     public boolean shouldNormalize(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
-        long lused = getUsed(usedTweak);
         long lres = getReserved(reservedTweak);
+        long lused = getUsed(lres,usedTweak);
         if ( usage.getReservedMemory() < usage.getMaxMemory() - lres - ((lused - lres)/2) ) {
             return true;
         }
@@ -83,7 +85,9 @@ public enum EvictionThreshold {
     public boolean isInThresholdRegion(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();
-        if ( reserve > max - getUsed(usedTweak) && reserve < max - getReserved(reservedTweak) ) {
+        long lres = getReserved(reservedTweak);
+        long lused = getUsed(lres,usedTweak);
+        if ( reserve > max - lused && reserve < max - lres ) {
             return true;
         }
         return false;
@@ -92,8 +96,9 @@ public enum EvictionThreshold {
     public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();
-        long lused = getUsed(usedTweak);
-        if ( usage.getReservedMemory() > max - getReserved(reservedTweak) ) {
+        long lres = getReserved(reservedTweak);
+        long lused = getUsed(lres,usedTweak);
+        if ( usage.getReservedMemory() > max - lres ) {
             return true;
         }
         if ( reserve > max - lused && usage.getUsedMemory() > max - lused ) {
@@ -112,11 +117,11 @@ public enum EvictionThreshold {
         return Math.round((tweak/100d) * reserved);
     }
     
-    private long getUsed(int tweak) {
+    private long getUsed(long localReserve, int tweak) {
         if ( tweak < 0 || tweak > 300 ) {
             return used;
         }
-        return reserved + Math.round((tweak/100d) * reserved);
+        return localReserve + Math.round((tweak/100d) * localReserve);
     }
 
     @Override
