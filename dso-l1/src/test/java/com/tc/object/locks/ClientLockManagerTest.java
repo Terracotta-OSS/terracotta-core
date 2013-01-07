@@ -758,12 +758,13 @@ public class ClientLockManagerTest extends TCTestCase {
     pause();
     flowControl.put("test: lock manager paused, it's ok for locker to call unlock(..)");
     ThreadUtil.reallySleep(500);
-    assertTrue(unlockComplete.peek() == null);
+    // unlock should go through and not block. it is a requirement for unlock to never throw non stop exception.
+    assertTrue(unlockComplete.peek() != null);
+    unlockComplete.take();
 
-    // now UN-pause and make sure the locker returns from unlock(..)
+    // now UN-pause.
     unpause();
 
-    unlockComplete.take();
     System.out.println("Done testing unlock(..)");
 
     // TODO: test awardLock() and the other public methods I didn't have
