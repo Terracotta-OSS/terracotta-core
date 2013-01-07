@@ -154,7 +154,8 @@ public class RejoinAwarePlatformService implements PlatformService {
       delegate.commitLock(lockID, level);
       removeContext(lockID);
     } catch (PlatformRejoinException e) {
-      throw new RejoinException(e);
+      if (isLockedBeforeRejoin(lockID)) { throw new InvalidLockStateAfterRejoinException(e); }
+      throw new IllegalMonitorStateException();
     } catch (IllegalMonitorStateException e) {
       if (isLockedBeforeRejoin(lockID)) { throw new InvalidLockStateAfterRejoinException(e); }
       throw e;
