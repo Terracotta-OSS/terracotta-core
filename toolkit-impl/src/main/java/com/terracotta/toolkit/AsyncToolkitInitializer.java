@@ -23,6 +23,9 @@ public class AsyncToolkitInitializer {
     this.abortableOperationManager = abortableOperationManager;
   }
 
+  /**
+   * waits until the toolkit is initialized and returns the toolkit.
+   */
   public ToolkitInternal getToolkit() {
     boolean interrupted = false;
     try {
@@ -39,6 +42,21 @@ public class AsyncToolkitInitializer {
     } finally {
       Util.selfInterruptIfNeeded(interrupted);
     }
+  }
+
+  /**
+   * returns toolkit If initialized or Null
+   * 
+   * @throws Exception
+   * @throws InterruptedException
+   */
+  public ToolkitInternal getToolkitOrNull() {
+    if (toolkitDelegateFutureTask.isDone()) {
+      return getToolkit();
+    } else {
+      return null;
+    }
+
   }
 
   private void handleInterruptedException(InterruptedException e) {

@@ -39,6 +39,7 @@ import com.terracotta.toolkit.nonstop.NonStopContext;
 import com.terracotta.toolkit.nonstop.NonStopContextImpl;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
+import com.terracotta.toolkit.nonstop.ToolkitLockLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.concurrent.FutureTask;
@@ -274,14 +275,8 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public ToolkitLock getLock(final String name, final ToolkitLockTypeInternal lockType) {
-    return ToolkitInstanceProxy
-        .newNonStopProxy(name, ToolkitObjectType.LOCK, context, ToolkitLock.class,
-                         new AbstractToolkitObjectLookup<ToolkitLock>(abortableOperationManager) {
-                           @Override
-                           public ToolkitLock lookupObject() {
-                             return getInitializedToolkit().getLock(name, lockType);
-                           }
-                         });
+    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.LOCK, context, ToolkitLock.class,
+                                                new ToolkitLockLookup(asyncToolkitInitializer, name, lockType));
   }
 
   @Override
