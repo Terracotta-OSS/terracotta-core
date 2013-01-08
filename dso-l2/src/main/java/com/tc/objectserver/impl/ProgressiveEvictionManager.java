@@ -499,7 +499,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         
         private void throttle(MemoryUsage reserved) {
-            if ( isThrottling ) {
+            if ( isStopped || isThrottling ) {
                 return;
             }
             isThrottling = true;
