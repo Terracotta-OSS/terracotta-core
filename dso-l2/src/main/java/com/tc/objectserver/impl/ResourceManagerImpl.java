@@ -6,6 +6,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ResourceManagerThrottleMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ResourceManager;
+import com.tc.text.PrettyPrinter;
 
 /**
  * @author tim
@@ -81,5 +82,14 @@ public class ResourceManagerImpl implements ResourceManager {
   @Override
   public void channelRemoved(final MessageChannel channel) {
     // Nothing to do.
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    out.println(getClass().getName());
+    out.println("State: " + state);
+    out.println("Throttle amount: " + throttleAmount);
+    out.flush();
+    return out;
   }
 }

@@ -868,6 +868,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
 
     resourceManager = new ResourceManagerImpl(channelManager, haConfig.getThisGroupID());
+    dumpHandler.registerForDump(new CallbackDumpAdapter(resourceManager));
     channelManager.addEventListener(resourceManager);
 
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
