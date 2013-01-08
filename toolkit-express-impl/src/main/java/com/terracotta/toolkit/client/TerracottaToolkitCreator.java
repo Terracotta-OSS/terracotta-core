@@ -10,9 +10,18 @@ import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 public class TerracottaToolkitCreator {
+
+  private static final long              TIME_TO_WAIT_FOR_ASYNC_INIT                = Long
+                                                                                        .parseLong(System
+                                                                                            .getProperty("com.tc.non.stop.init.wait.time.millis",
+                                                                                                         String
+                                                                                                             .valueOf(TimeUnit.SECONDS
+                                                                                                                 .toMillis(20))));
 
   private static final String            TOOLKIT_IMPL_CLASSNAME                     = "com.terracotta.toolkit.TerracottaToolkit";
   private static final String            ENTERPRISE_TOOLKIT_IMPL_CLASSNAME          = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
@@ -50,10 +59,14 @@ public class TerracottaToolkitCreator {
   }
 
   private FutureTask<ToolkitInternal> createInternalToolkitAsynchronously(final Object defaultToolkitCacheManagerProvider) {
+    final CountDownLatch latch = new CountDownLatch(1);
+
     Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
       @Override
       public ToolkitInternal call() throws Exception {
-        return createInternalToolkit(defaultToolkitCacheManagerProvider, true);
+        ToolkitInternal toolkitInternal = createInternalToolkit(defaultToolkitCacheManagerProvider, true);
+        latch.countDown();
+        return toolkitInternal;
       }
     };
     final FutureTask<ToolkitInternal> futureTask = new FutureTask<ToolkitInternal>(callable);
@@ -64,6 +77,13 @@ public class TerracottaToolkitCreator {
       }
     };
     t.start();
+
+    try {
+      latch.await(TIME_TO_WAIT_FOR_ASYNC_INIT, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
     return futureTask;
   }
 
