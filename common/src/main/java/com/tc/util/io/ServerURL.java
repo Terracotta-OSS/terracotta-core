@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
 import com.tc.security.TCAuthenticationException;
+import com.tc.security.TCAuthorizationException;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -128,13 +129,23 @@ public class ServerURL {
     try {
       return urlConnection.getInputStream();
     } catch (IOException e) {
-      if (urlConnection instanceof HttpURLConnection
-          && (((HttpURLConnection)urlConnection).getResponseCode() == 401 ||
-              ((HttpURLConnection)urlConnection).getResponseCode() == 403)) {
-        throw new TCAuthenticationException("Invalid credentials connecting to " + (uri != null ? uri : urlConnection.getURL()), e);
-      } else {
-        throw e;
+      if (urlConnection instanceof HttpURLConnection) {
+        int responseCode = ((HttpURLConnection)urlConnection).getResponseCode();
+        switch (responseCode) {
+          case 401:
+            throw new TCAuthenticationException("Authentication error connecting to " +
+                                                (uri != null ? uri : urlConnection.getURL()) +
+                                                " - invalid credentials (tried user " +
+                                                securityInfo.getUsername() + ")", e);
+          case 403:
+            throw new TCAuthorizationException("Authorization error connecting to " +
+                                                (uri != null ? uri : urlConnection.getURL()) +
+                                                " - does the user '" + securityInfo.getUsername() +
+                                                "' have the required roles?", e);
+          default:
+        }
       }
+      throw e;
     }
   }
 
