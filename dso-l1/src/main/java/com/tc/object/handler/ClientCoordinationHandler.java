@@ -20,7 +20,7 @@ import com.tc.platform.rejoin.RejoinManagerInternal;
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private static final TCLogger  consoleLogger = CustomerLogging.getConsoleLogger();
-  private ClientHandshakeManager handshakeManager;
+  private ClientHandshakeManager clientHandshakeManager;
   private RejoinManagerInternal  rejoinManager;
 
   @Override
@@ -42,9 +42,9 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private void handlePauseContext(final PauseContext ctxt) {
     if (ctxt.getIsPause()) {
-      handshakeManager.disconnected(ctxt.getRemoteNode());
+      clientHandshakeManager.disconnected(ctxt.getRemoteNode());
     } else {
-      handshakeManager.connected(ctxt.getRemoteNode());
+      clientHandshakeManager.connected(ctxt.getRemoteNode());
     }
   }
   
@@ -53,14 +53,14 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
   }
 
   private void handleClientHandshakeAckMessage(final ClientHandshakeAckMessage handshakeAck) {
-    handshakeManager.acknowledgeHandshake(handshakeAck);
+    clientHandshakeManager.acknowledgeHandshake(handshakeAck);
   }
 
   @Override
   public synchronized void initialize(final ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext ccContext = (ClientConfigurationContext) context;
-    this.handshakeManager = ccContext.getClientHandshakeManager();
+    this.clientHandshakeManager = ccContext.getClientHandshakeManager();
     this.rejoinManager = ccContext.getRejoinManager();
   }
 
