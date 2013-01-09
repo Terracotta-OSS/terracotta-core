@@ -61,7 +61,6 @@ public class ClientChannelEventController {
   }
 
   private void channelClosed(ChannelEvent event) {
-    clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
     // MNK-2410: initiate rejoin on transport close too
     requestRejoin(event);
   }
@@ -76,6 +75,7 @@ public class ClientChannelEventController {
   }
 
   private void requestRejoin(ChannelEvent event) {
+    clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
     if (rejoinManager.isRejoinEnabled()) {
       logRejoinStatusMessages(event);
       pauseSink.add(new RejoinContext(event.getChannel()));
