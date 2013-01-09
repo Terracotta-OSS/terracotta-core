@@ -882,15 +882,7 @@ public class ObjectManagerTest extends TCTestCase {
 
         @Override
         public LogicalAction getLogicalAction() {
-          switch (this.count) {
-            case 1:
-            case 2:
-            case 3:
-              final Object item = new UTF8ByteDataHolder("item" + this.count);
-              return new LogicalAction(SerializationUtil.ADD, new Object[] { item });
-            default:
-              throw new RuntimeException("bad count: " + this.count);
-          }
+          return (LogicalAction)getAction();
         }
 
         @Override
@@ -905,7 +897,15 @@ public class ObjectManagerTest extends TCTestCase {
 
         @Override
         public Object getAction() {
-          throw new ImplementMe();
+          switch (this.count) {
+            case 1:
+            case 2:
+            case 3:
+              final Object item = new UTF8ByteDataHolder("item" + this.count);
+              return new LogicalAction(SerializationUtil.ADD, new Object[] { item });
+            default:
+              throw new RuntimeException("bad count: " + this.count);
+          }
         }
 
         @Override
@@ -988,16 +988,7 @@ public class ObjectManagerTest extends TCTestCase {
 
         @Override
         public LogicalAction getLogicalAction() {
-          switch (this.count) {
-            case 1:
-            case 2:
-            case 3:
-              final Object key = new UTF8ByteDataHolder("key" + this.count);
-              final Object val = new UTF8ByteDataHolder("val" + this.count);
-              return new LogicalAction(SerializationUtil.PUT, new Object[] { key, val });
-            default:
-              throw new RuntimeException("bad count: " + this.count);
-          }
+          return (LogicalAction)getAction();
         }
 
         @Override
@@ -1012,7 +1003,16 @@ public class ObjectManagerTest extends TCTestCase {
 
         @Override
         public Object getAction() {
-          throw new ImplementMe();
+          switch (this.count) {
+            case 1:
+            case 2:
+            case 3:
+              final Object key = new UTF8ByteDataHolder("key" + this.count);
+              final Object val = new UTF8ByteDataHolder("val" + this.count);
+              return new LogicalAction(SerializationUtil.PUT, new Object[] { key, val });
+            default:
+              throw new RuntimeException("bad count: " + this.count);
+          }
         }
 
         @Override
