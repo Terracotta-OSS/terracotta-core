@@ -66,7 +66,7 @@ public class MessageChannelTest extends TCTestCase {
   // Disabled until MNK-3330
   public MessageChannelTest() {
     if (Os.isWindows() && Vm.isJDK17()) {
-      timebombTest("2012-12-30");
+      timebombTest("2013-01-30");
     }
   }
 
