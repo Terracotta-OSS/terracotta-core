@@ -115,6 +115,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   public void testNoUnconnectedClients() throws Exception {
     initHandshakeManager(DEFAULT_RECONNECT_TIMEOUT);
     assertStarted();
+    assertEquals(0, hm.getUnconnectedClientsSize());
   }
 
   public void testTimeout1() throws Exception {
