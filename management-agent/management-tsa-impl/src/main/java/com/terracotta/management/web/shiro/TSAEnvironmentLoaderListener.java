@@ -69,8 +69,6 @@ import javax.servlet.ServletContextEvent;
  */
 public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
-  private static final String TSA_JMX_CLIENT_NAME = System.getProperty("com.terracotta.management.debug.jmxClientName", "terracotta");
-
   private volatile JmxConnectorPool jmxConnectorPool;
 
   @Override
@@ -92,9 +90,10 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
               Map<String, Object> env = new HashMap<String, Object>();
               env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
               env.put("com.sun.jndi.rmi.factory.socket", socketFactory);
+              String intraL2Username = TSAConfig.getIntraL2Username();
               byte[] secret = TSAConfig.getKeyChain()
-                  .retrieveSecret(new URIKeyName("jmx://" + TSA_JMX_CLIENT_NAME + "@" + host + ":" + port));
-              env.put("jmx.remote.credentials", new Object[] { TSA_JMX_CLIENT_NAME, new String(secret).toCharArray()});
+                  .retrieveSecret(new URIKeyName("jmx://" + intraL2Username + "@" + host + ":" + port));
+              env.put("jmx.remote.credentials", new Object[] { intraL2Username, new String(secret).toCharArray()});
               return env;
             } catch (Exception e) {
               throw new RuntimeException("Error retrieving secret for JMX host [" + host + ":" + port + "]", e);

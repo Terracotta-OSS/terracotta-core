@@ -307,6 +307,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public String getIntraL2Username() {
+    return null;
+  }
+
+  @Override
   public void backup(final String name) {
     //
   }

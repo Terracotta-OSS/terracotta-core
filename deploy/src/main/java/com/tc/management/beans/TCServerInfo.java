@@ -501,6 +501,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public String getIntraL2Username() {
+    return server.getIntraL2Username();
+  }
+
+  @Override
   public Integer getSecurityServiceTimeout() {
     return server.getSecurityServiceTimeout();
   }

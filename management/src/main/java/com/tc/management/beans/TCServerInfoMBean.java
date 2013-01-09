@@ -128,6 +128,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getSecurityHostname();
 
+  String getIntraL2Username();
+
   String getRunningBackup();
 
   String getBackupStatus(String name) throws IOException;

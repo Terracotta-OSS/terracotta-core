@@ -99,4 +99,16 @@ public class TSAConfig {
     }
   }
 
+  public static String getIntraL2Username() {
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "IntraL2Username");
+      return (String)response;
+    } catch (RuntimeException re) {
+      throw re;
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting IntraL2Username", e);
+    }
+  }
+
 }

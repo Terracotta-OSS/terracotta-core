@@ -71,6 +71,8 @@ public interface TCServer {
 
   String getSecurityHostname();
 
+  String getIntraL2Username();
+
   String getRunningBackup();
 
   String getBackupStatus(String name) throws IOException;

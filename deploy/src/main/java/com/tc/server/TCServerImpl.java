@@ -874,6 +874,14 @@ public class TCServerImpl extends SEDA implements TCServer {
     return securityHostname;
   }
 
+  @Override
+  public String getIntraL2Username() {
+    if (!isSecure()) {
+      return null;
+    }
+    return securityManager.getIntraL2Username();
+  }
+
   private static final class TCUserRealm extends MappedLoginService {
     private final TCSecurityManager securityManager;
 
