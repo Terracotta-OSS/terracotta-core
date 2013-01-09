@@ -772,7 +772,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
     this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);
-    this.objectManager.setTransactionalObjectManager(this.txnObjectManager);
 
     this.metaDataManager = this.serverBuilder.createMetaDataManager(searchEventSink);
 

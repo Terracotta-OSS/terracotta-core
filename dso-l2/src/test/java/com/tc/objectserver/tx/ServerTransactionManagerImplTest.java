@@ -27,7 +27,6 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
-import com.tc.objectserver.impl.NullTransactionProvider;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.impl.TestObjectManager;
@@ -67,7 +66,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private TestChannelStats                   channelStats;
   private TestGlobalTransactionManager       gtxm;
   private ObjectInstanceMonitor              imo;
-  private NullTransactionProvider ptxp;
 
   @Override
   protected void setUp() throws Exception {
@@ -81,7 +79,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.gtxm = new TestGlobalTransactionManager();
     this.imo = new ObjectInstanceMonitorImpl();
     newTransactionManager();
-    this.ptxp = new NullTransactionProvider();
   }
 
   @Override
@@ -102,7 +99,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   }
 
   public void testRootCreatedEvent() {
-    Map roots = new HashMap();
+    Map<String, ObjectID> roots = new HashMap<String, ObjectID>();
     roots.put("root", new ObjectID(1));
 
     // first test w/o any listeners attached

@@ -24,15 +24,11 @@ import java.util.Set;
 
 public interface ManagedObject {
 
-  enum ManagedObjectCacheStrategy {
-    PINNED, UNPINNED
-  }
-
   public ObjectID getID();
 
   public ManagedObjectReference getReference();
 
-  public Set getObjectReferences();
+  public Set<ObjectID> getObjectReferences();
 
   public void apply(DNA dna, TransactionID txnID, ApplyTransactionInfo includeIDs,
                     ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA) throws DNAException;

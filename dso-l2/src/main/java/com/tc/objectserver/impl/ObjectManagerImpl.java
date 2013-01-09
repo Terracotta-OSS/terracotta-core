@@ -27,8 +27,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.tx.NullTransactionalObjectManager;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -88,7 +86,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private GarbageCollector                                      collector       = new NullGarbageCollector();
   private ObjectManagerStatsListener                            stats           = new NullObjectManagerStatsListener();
-  private TransactionalObjectManager                            txnObjectMgr    = new NullTransactionalObjectManager();
 
   // A Lock that prevents checkouts when some critical operation is going on
   private final ReentrantReadWriteLock                          lock            = new ReentrantReadWriteLock();
@@ -111,10 +108,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
     this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
-  }
-
-  public void setTransactionalObjectManager(final TransactionalObjectManager txnObjectManager) {
-    this.txnObjectMgr = txnObjectManager;
   }
 
   @Override
@@ -167,7 +160,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     try {
 
-      final StringBuffer rootBuff = new StringBuffer();
+      final StringBuilder rootBuff = new StringBuilder();
       for (final Iterator rootIter = getRootNames(); rootIter.hasNext();) {
         rootBuff.append(rootIter.next());
         if (rootIter.hasNext()) {
@@ -193,14 +186,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public boolean lookupObjectsAndSubObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext,
                                                final int maxReachableObjects) {
     return basicLookupObjectsFor(nodeID,
-                                 new ObjectManagerLookupContext(responseContext, false, AccessLevel.READ_WRITE),
+                                 new ObjectManagerLookupContext(responseContext, AccessLevel.READ_WRITE),
                                  maxReachableObjects);
   }
 
   @Override
   public boolean lookupObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext) {
     return basicLookupObjectsFor(nodeID,
-                                 new ObjectManagerLookupContext(responseContext, false, AccessLevel.READ_WRITE), -1);
+                                 new ObjectManagerLookupContext(responseContext, AccessLevel.READ_WRITE), -1);
   }
 
   @Override
@@ -240,7 +233,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     assertNotInShutdown();
 
     final WaitForLookupContext waitContext = new WaitForLookupContext(id, missingObjects, newObjects);
-    final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true, accessLevel);
+    final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, accessLevel);
     basicLookupObjectsFor(ClientID.NULL_ID, context, -1);
 
     final ManagedObject mo = waitContext.getLookedUpObject();
@@ -380,29 +373,19 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         continue;
       }
 
-      final boolean isNew = isANewObjectIn(reference, newObjectIDs);
-      boolean isMarked = false;
-
-      if (isNew) {
-        isMarked = markReferenced(reference);
-      }
-
-      if (isNew && isMarked) {
-        objects.put(id, reference.getObject());
-      } else {
+      if (reference.isNew() && !newObjectIDs.contains(id)) {
         available = false;
-        if (isMarked) {
-          unmarkReferenced(reference);
-        }
-        // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
-        // will ensure that we don't run processPending multiple times unnecessarily.
         blockedObjectID = id;
+      } else if (!markReferenced(reference)) {
+        available = false;
+        blockedObjectID = id;
+      } else {
+        objects.put(id, reference.getObject());
       }
     }
 
     if (available) {
-      final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
-                                                                      newObjectIDs);
+      final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
       final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
                                                                                     context.getMissingObjectIDs());
       context.setResults(results);
@@ -412,14 +395,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       unmarkReferenced(objects.values());
       // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be
       // processed after this request is (unblocked) and processed
-      LookupState state = addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
-      return state;
+      return addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
     }
   }
 
   private ObjectIDSet addReachableObjectsIfNecessary(final NodeID nodeID, final int maxReachableObjects,
-                                                     final Map<ObjectID, ManagedObject> objects,
-                                                     final Set<ObjectID> newObjectIDs) {
+                                                     final Map<ObjectID, ManagedObject> objects) {
     if (maxReachableObjects <= 0) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     final ManagedObjectTraverser traverser = new ManagedObjectTraverser(maxReachableObjects);
     Collection<ManagedObject> lookedUpObjects = objects.values();
@@ -445,13 +426,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
     } while (objects.size() < maxReachableObjects);
     return traverser.getPendingObjectsToLookup(lookedUpObjects);
-  }
-
-  private boolean isANewObjectIn(final ManagedObjectReference reference, final Set<ObjectID> newObjectIDs) {
-    // If reference isNew() and not in newObjects, someone (L1) is trying to do a lookup before the object is fully
-    // created, make it pending.
-    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { return false; }
-    return true;
   }
 
   private void unmarkReferenced(final Collection<ManagedObject> mos) {
@@ -629,7 +603,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       return TCCollections.EMPTY_OBJECT_ID_SET;
     }
     final ManagedObject mo = lookup(id, MissingObjects.NOT_OK, NewObjects.LOOKUP, AccessLevel.READ);
-    final Set references2Return = mo.getObjectReferences();
+    final Set<ObjectID> references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
   }
@@ -849,7 +823,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     private final AccessLevel                 accessLevel;
     private int                               processedCount = 0;
 
-    public ObjectManagerLookupContext(final ObjectManagerResultsContext responseContext, final boolean removeOnRelease,
+    public ObjectManagerLookupContext(final ObjectManagerResultsContext responseContext,
                                       AccessLevel accessLevel) {
       this.responseContext = responseContext;
       this.accessLevel = accessLevel;

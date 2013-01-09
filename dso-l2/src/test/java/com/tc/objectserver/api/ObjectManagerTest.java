@@ -19,9 +19,7 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
-import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -43,9 +41,6 @@ import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
-import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
-import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
@@ -72,7 +67,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Mockito.mock;
 
@@ -92,9 +86,6 @@ public class ObjectManagerTest extends TCTestCase {
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
-  private TestTransactionalStageCoordinator  coordinator;
-  private TransactionalObjectManagerImpl     txObjectManager;
-  private long                               version = 0;
   private Persistor persistor;
 
   @Override
@@ -236,7 +227,7 @@ public class ObjectManagerTest extends TCTestCase {
     // evict cache is not done. So, all objects reside in cache
 
     ObjectIDSet ids = makeObjectIDSet(0, 10);
-    TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
+    TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet());
 
     final ClientID c1 = new ClientID(1);
     // fetch 10 objects and with fault-count -1
@@ -263,7 +254,7 @@ public class ObjectManagerTest extends TCTestCase {
     createObjects(10, 11, createObjects(11000, 18000, new HashSet<ObjectID>()));
 
     ids = makeObjectIDSet(10, 11);
-    results = new TestResultsContext(ids, new ObjectIDSet(), true);
+    results = new TestResultsContext(ids, new ObjectIDSet());
 
     // fetch 1 object and with fault-count 5K. but, object can reach 7K
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 5000);
@@ -280,14 +271,14 @@ public class ObjectManagerTest extends TCTestCase {
 
     // Look up two existing objects
     final ObjectIDSet ids = makeObjectIDSet(1, 2);
-    final TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet(), true);
+    final TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet());
 
     this.objectManager.lookupObjectsAndSubObjectsFor(null, result1, -1);
     result1.waitTillComplete();
 
     // Now look two missing objects
     final ObjectIDSet missingids = makeObjectIDSet(20, 22);
-    final TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
+    final TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet());
 
     this.objectManager.lookupObjectsAndSubObjectsFor(null, result2, -1);
     result2.waitTillComplete();
@@ -456,27 +447,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     for (final String key : actual.keySet()) {
       assertEquals(expect.get(key), actual.get(key));
-    }
-  }
-
-  private static void close(final Persistor persistor, final PersistentManagedObjectStore store) {
-    // to work around timing problem with this test, calling snapshot
-    // this should block this thread until transaction reading all object IDs from BDB completes,
-    // at which point, it's OK to close the DB
-    persistor.getManagedObjectPersistor().snapshotObjectIDs();
-    persistor.getManagedObjectPersistor().snapshotEvictableObjectIDs();
-//    persistor.getManagedObjectPersistor().snapshotMapTypeObjectIDs();
-    try {
-      store.shutdown();
-      persistor.close();
-    } catch (Throwable e) {
-      System.err.println("\n### Error closing resources: " + e);
-      e = e.getCause();
-      while (e != null) {
-        System.err.println("\n### Caused by: " + e);
-        e = e.getCause();
-      }
-
     }
   }
 
@@ -807,21 +777,6 @@ public class ObjectManagerTest extends TCTestCase {
     }
 
     executorService.shutdown();
-  }
-
-  private ApplyTransactionInfo applyTxn(final ApplyTransactionContext aoc) {
-    final ServerTransaction txn = aoc.getTxn();
-    final Map managedObjects = aoc.getObjects();
-    final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
-    final ApplyTransactionInfo applyTxnInfo = new ApplyTransactionInfo(txn.isActiveTxn(), txn.getServerTransactionID(),
-                                                                       false);
-    for (final Object o : txn.getChanges()) {
-      final DNA dna = (DNA)o;
-      final ManagedObject mo = (ManagedObject)managedObjects.get(dna.getObjectID());
-      mo.apply(new VersionizedDNAWrapper(dna, ++this.version), txn.getTransactionID(), applyTxnInfo, instanceMonitor,
-          false);
-    }
-    return applyTxnInfo;
   }
 
   private static class TestSerialziedEntryDNA implements DNA {
@@ -1181,13 +1136,9 @@ public class ObjectManagerTest extends TCTestCase {
     private final ObjectIDSet           ids;
     private final ObjectIDSet           newIDS;
 
-    public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS, final boolean updateStats) {
+    public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS) {
       this.ids = ids;
       this.newIDS = newIDS;
-    }
-
-    public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS) {
-      this(ids, newIDS, true);
     }
 
     public synchronized void waitTillComplete() {
@@ -1254,122 +1205,6 @@ public class ObjectManagerTest extends TCTestCase {
     @Override
     public boolean paranoid() {
       return this.paranoid;
-    }
-  }
-
-  private static final class TestServerMapDNA implements DNA {
-    private final ObjectID                  id;
-    private final boolean                   isDelta;
-    private final String                    fieldName;
-    private final AtomicReference<ObjectID> oidHolder;
-
-    public TestServerMapDNA(final ObjectID id, String fieldName, AtomicReference<ObjectID> oidHolder) {
-      this(id, false, fieldName, oidHolder);
-    }
-
-    public TestServerMapDNA(final ObjectID id, final boolean isDelta, String fieldName,
-                            AtomicReference<ObjectID> oidHolder) {
-      this.isDelta = isDelta;
-      this.id = id;
-      this.fieldName = fieldName;
-      this.oidHolder = oidHolder;
-    }
-
-    @Override
-    public long getVersion() {
-      return 0;
-    }
-
-    @Override
-    public boolean hasLength() {
-      return false;
-    }
-
-    @Override
-    public int getArraySize() {
-      return -1;
-    }
-
-    @Override
-    public boolean isDelta() {
-      return isDelta;
-    }
-
-    @Override
-    public String getTypeName() {
-      return "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl";
-    }
-
-    @Override
-    public ObjectID getObjectID() throws DNAException {
-      return this.id;
-    }
-
-    @Override
-    public ObjectID getParentObjectID() throws DNAException {
-      return ObjectID.NULL_ID;
-    }
-
-    @Override
-    public DNACursor getCursor() {
-      if (fieldName == null) { return new TestMapCursor(); }
-      return new TestMapCursor(fieldName, oidHolder);
-    }
-
-  }
-
-  private static final class TestMapCursor implements DNACursor {
-    private final String                    fieldName;
-    private final AtomicReference<ObjectID> oidHolder;
-    private volatile boolean                hasNext = true;
-
-    public TestMapCursor() {
-      this(null, null);
-      hasNext = false;
-    }
-
-    public TestMapCursor(String fieldName, AtomicReference<ObjectID> oidHolder) {
-      this.fieldName = fieldName;
-      this.oidHolder = oidHolder;
-    }
-
-    @Override
-    public LogicalAction getLogicalAction() {
-      return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHolder.get() });
-    }
-
-    @Override
-    public PhysicalAction getPhysicalAction() {
-      return null;
-    }
-
-    @Override
-    public boolean next() {
-      if (hasNext) {
-        hasNext = false;
-        return true;
-      }
-      return false;
-    }
-
-    @Override
-    public boolean next(final DNAEncoding encoding) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public Object getAction() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public int getActionCount() {
-      return 1;
-    }
-
-    @Override
-    public void reset() throws UnsupportedOperationException {
-      hasNext = true;
     }
   }
 }

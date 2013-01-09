@@ -200,7 +200,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                                        new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(4),
-                                                       new SequenceID(this.sqID++), createLocks(lock, lock++),
+                                                       new SequenceID(this.sqID++), createLocks(lock, lock),
                                                        this.clientID, createDNAs(1, 2),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
@@ -276,7 +276,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
       this.sequencer.addTransactionLookupContexts(createTxnLookupContexts(txns));
 
-      TransactionLookupContext next = null;
+      TransactionLookupContext next;
       while ((next = this.sequencer.getNextTxnLookupContextToProcess()) != null) {
         if (rnd.nextInt(3) == 0) {
           ServerTransaction txn = next.getTransaction();

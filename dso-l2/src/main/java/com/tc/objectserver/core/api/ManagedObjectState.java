@@ -49,7 +49,7 @@ public interface ManagedObjectState {
 
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo applyInfo) throws IOException;
 
-  public Set getObjectReferences();
+  public Set<ObjectID> getObjectReferences();
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
 
