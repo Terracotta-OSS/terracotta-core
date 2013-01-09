@@ -18,7 +18,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
   public void testDehydration() throws Exception {
 
-    final TestDNACursor cursor = createDNACursor();
+    final TestDNACursor cursor = createDehydrationDNACursor();
 
     final ManagedObjectState state = createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
                                                               cursor, new ObjectID(1));
@@ -47,13 +47,13 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
   }
 
   public void testShouldSendOperationCountChangeEventOnEachPut() throws Exception {
-    final TestDNACursor cursor = createDNACursor();
+    final TestDNACursor cursor = createOperationRateDNACursor();
     final ConcurrentDistributedServerMapManagedObjectState state = (ConcurrentDistributedServerMapManagedObjectState)
         createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE, cursor, new ObjectID(3));
     final OperationCountChangeEventListener listener = new OperationCountChangeEventListener();
     state.getOperationEventBus().register(listener);
     state.apply(new ObjectID(3), cursor, new ApplyTransactionInfo());
-    assertEquals(500, listener.count);
+    assertEquals(200, listener.count);
   }
 
   private static final class OperationCountChangeEventListener {
@@ -66,7 +66,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     }
   }
 
-  private TestDNACursor createDNACursor() {
+  private TestDNACursor createDehydrationDNACursor() {
 
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "bob", false);
@@ -89,6 +89,33 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     for (int i = 0; i < 500; i++) {
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "key-" + i, new ObjectID(1000 + i) });
+    }
+
+    return cursor;
+  }
+
+  private TestDNACursor createOperationRateDNACursor() {
+
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "bob", false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE_FIELDNAME,
+                             Boolean.valueOf(false), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCK_TYPE_FIELDNAME, new Integer(1),
+                             false);
+
+
+
+    for (int i = 0; i < 50; i++) {
+      cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "key-" + (1000 + i), new ObjectID(1000 + i) });
+    }
+    for (int i = 0; i < 50; i++) {
+      cursor.addLogicalAction(SerializationUtil.PUT_IF_ABSENT, new Object[] { "key-" + (2000 + i), new ObjectID(2000 + i) });
+    }
+    for (int i = 0; i < 50; i++) {
+      cursor.addLogicalAction(SerializationUtil.REMOVE, new Object[] { "key-" + (1000 + i) });
+    }
+    for (int i = 0; i < 50; i++) {
+      cursor.addLogicalAction(SerializationUtil.REPLACE, new Object[] { "key-" + (2000 + i), new ObjectID(5000 + i) });
     }
 
     return cursor;

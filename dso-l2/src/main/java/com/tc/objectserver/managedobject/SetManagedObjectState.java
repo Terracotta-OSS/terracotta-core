@@ -9,9 +9,7 @@ import org.terracotta.corestorage.KeyValueStorage;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -43,21 +41,12 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     this.references = objectFactory.getMap(oid, false);
   }
 
-  @Override
-  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
-    while (cursor.next()) {
-      LogicalAction action = cursor.getLogicalAction();
-      int method = action.getMethod();
-      Object[] params = action.getParameters();
-      apply(objectID, method, params, includeIDs);
-    }
-  }
-
-  protected void apply(ObjectID objectID, int method, Object[] params, ApplyTransactionInfo includeIDs) {
+  protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+                                    final Object[] params) {
     switch (method) {
       case SerializationUtil.ADD:
         Object v = params[0];
-        addChangeToCollector(objectID, v, includeIDs);
+        addChangeToCollector(objectID, v, applyInfo);
         references.put(v, true);
         break;
       case SerializationUtil.REMOVE:

@@ -5,6 +5,10 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.PhysicalAction;
+import com.tc.util.Events;
 import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
@@ -28,10 +32,37 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
     this.classID = in.readLong();
   }
 
+  @Override
+  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
+      throws IOException {
+    while (cursor.next()) {
+      final Object action = cursor.getAction();
+      if (action instanceof PhysicalAction) {
+        final PhysicalAction physicalAction = (PhysicalAction)action;
+        applyPhysicalAction(physicalAction, objectID, applyInfo);
+      } else { // LogicalAction
+        // DEV-8737. Notify subscribers about the map mutation.
+        getOperationEventBus().post(Events.operationCountIncrementEvent());
+
+        final LogicalAction logicalAction = (LogicalAction)action;
+        final int method = logicalAction.getMethod();
+        final Object[] params = logicalAction.getParameters();
+        applyLogicalAction(objectID, applyInfo, method, params);
+      }
+    }
+  }
+
+  protected void applyPhysicalAction(final PhysicalAction action, final ObjectID objectID, final ApplyTransactionInfo info) {
+    // to be optionally implemented by subclasses
+  }
+
+  protected abstract void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+                                             final Object[] params);
+
   protected abstract void addAllObjectReferencesTo(Set refs);
 
   protected final void addAllObjectReferencesFromIteratorTo(final Iterator i, final Set refs) {
-    for (; i.hasNext();) {
+    for (; i.hasNext(); ) {
       final Object o = i.next();
       if (o instanceof ObjectID) {
         refs.add(o);
@@ -49,7 +80,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
   protected Set getObjectReferencesFrom(final Collection refs) {
     if (refs == null || refs.size() == 0) { return Collections.EMPTY_SET; }
     final Set results = new HashSet(refs.size());
-    for (final Iterator i = refs.iterator(); i.hasNext();) {
+    for (final Iterator i = refs.iterator(); i.hasNext(); ) {
       final Object o = i.next();
       if (o instanceof ObjectID) {
         results.add(o);
@@ -80,7 +111,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
 
   @Override
   protected final boolean basicEquals(final AbstractManagedObjectState o) {
-    final LogicalManagedObjectState lmo = ((LogicalManagedObjectState) o);
+    final LogicalManagedObjectState lmo = ((LogicalManagedObjectState)o);
     return lmo.classID == this.classID && basicEquals(lmo);
   }
 

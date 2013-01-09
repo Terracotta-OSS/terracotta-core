@@ -7,9 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
@@ -38,31 +36,22 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     references = new ArrayList(1);
   }
 
-  @Override
-  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
-    while (cursor.next()) {
-      LogicalAction action = cursor.getLogicalAction();
-      int method = action.getMethod();
-      Object[] params = action.getParameters();
-      applyOperation(method, objectID, includeIDs, params);
-    }
-  }
-
-  protected void applyOperation(int method, ObjectID objectID, ApplyTransactionInfo includeIDs, Object[] params)
+  protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+                                    final Object[] params)
       throws AssertionError {
     switch (method) {
       case SerializationUtil.ADD:
       case SerializationUtil.ADD_LAST:
-        addChangeToCollector(objectID, params[0], includeIDs);
+        addChangeToCollector(objectID, params[0], applyInfo);
         references.add(params[0]);
         break;
       case SerializationUtil.ADD_FIRST:
-        addChangeToCollector(objectID, params[0], includeIDs);
+        addChangeToCollector(objectID, params[0], applyInfo);
         references.add(0, params[0]);
         break;
       case SerializationUtil.INSERT_AT:
       case SerializationUtil.ADD_AT:
-        addChangeToCollector(objectID, params[1], includeIDs);
+        addChangeToCollector(objectID, params[1], applyInfo);
         int ai = Math.min(((Integer) params[0]).intValue(), references.size());
         if (references.size() < ai) {
           references.add(params[1]);
@@ -77,15 +66,15 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         references.removeAll(Arrays.asList(params));
         break;
       case SerializationUtil.REMOVE_AT:
-        int index = ((Integer) params[0]).intValue();
+        int index = (Integer)params[0];
         if (references.size() > index) {
           references.remove(index);
         }
         break;
       case SerializationUtil.REMOVE_RANGE: {
         int size = references.size();
-        int fromIndex = ((Integer) params[0]).intValue();
-        int toIndex = ((Integer) params[1]).intValue();
+        int fromIndex = (Integer)params[0];
+        int toIndex = (Integer)params[1];
         int removeIndex = fromIndex;
         if (size > fromIndex && size >= toIndex) {
           while (fromIndex++ < toIndex) {
@@ -100,7 +89,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         break;
       case SerializationUtil.SET_ELEMENT:
       case SerializationUtil.SET:
-        addChangeToCollector(objectID, params[1], includeIDs);
+        addChangeToCollector(objectID, params[1], applyInfo);
         int si = Math.min(((Integer) params[0]).intValue(), references.size());
         if (references.size() <= si) {
           references.add(params[1]);
@@ -120,7 +109,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         }
         break;
       case SerializationUtil.SET_SIZE:
-        int setSize = ((Integer) params[0]).intValue();
+        int setSize = (Integer)params[0];
         int listSize = references.size();
 
         if (listSize < setSize) {

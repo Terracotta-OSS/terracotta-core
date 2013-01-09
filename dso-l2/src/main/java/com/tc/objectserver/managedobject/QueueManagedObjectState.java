@@ -7,9 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -47,36 +45,25 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
   }
 
   @Override
-  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
-    while (cursor.next()) {
-      Object action = cursor.getAction();
-      if (action instanceof LogicalAction) {
-        LogicalAction logicalAction = (LogicalAction) action;
-        int method = logicalAction.getMethod();
-        Object[] params = logicalAction.getParameters();
-        applyMethod(objectID, includeIDs, method, params);
-      } else if (action instanceof PhysicalAction) {
-        PhysicalAction physicalAction = (PhysicalAction) action;
-        updateReference(objectID, physicalAction.getFieldName(), physicalAction.getObject(), includeIDs);
-      }
-    }
-  }
+  protected void applyPhysicalAction(final PhysicalAction action, final ObjectID objectID, final ApplyTransactionInfo info) {
+    final String fieldName = action.getFieldName();
+    final Object value = action.getObject();
 
-  private void updateReference(ObjectID objectID, String fieldName, Object value, ApplyTransactionInfo includeIDs) {
     if (TAKE_LOCK_FIELD_NAME.equals(fieldName)) {
       takeLockField = (ObjectID) value;
       getListener().changed(objectID, null, takeLockField);
-      includeIDs.addBackReference(takeLockField, objectID);
+      info.addBackReference(takeLockField, objectID);
     } else if (PUT_LOCK_FIELD_NAME.equals(fieldName)) {
       putLockField = (ObjectID) value;
       getListener().changed(objectID, null, putLockField);
-      includeIDs.addBackReference(putLockField, objectID);
+      info.addBackReference(putLockField, objectID);
     } else if (CAPACITY_FIELD_NAME.equals(fieldName)) {
       capacityField = value;
     }
   }
 
-  public void applyMethod(ObjectID objectID, ApplyTransactionInfo includeIDs, int method, Object[] params) {
+  public void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo includeIDs, final int method,
+                                 final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
         addChangeToCollector(objectID, params[0], includeIDs);
@@ -89,13 +76,13 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
         references.clear();
         break;
       case SerializationUtil.REMOVE_FIRST_N:
-        int n = ((Integer) params[0]).intValue();
+        int n = (Integer)params[0];
         for (int i = 0; i < n; i++) {
           references.remove(0);
         }
         break;
       case SerializationUtil.REMOVE_AT:
-        int i = ((Integer) params[0]).intValue();
+        int i = (Integer)params[0];
         Assert.assertTrue(references.size() > i);
         references.remove(i);
         break;
@@ -140,9 +127,8 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
   }
 
   private void dehydrateMembers(ObjectID objectID, DNAWriter writer) {
-    for (Iterator i = references.iterator(); i.hasNext();) {
-      Object o = i.next();
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { o });
+    for (Object reference : references) {
+      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { reference });
     }
   }
 
@@ -197,8 +183,8 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     writeField(out, CAPACITY_FIELD_NAME, capacityField);
 
     out.writeInt(references.size());
-    for (Iterator i = references.iterator(); i.hasNext();) {
-      out.writeObject(i.next());
+    for (final Object reference : references) {
+      out.writeObject(reference);
     }
   }
 

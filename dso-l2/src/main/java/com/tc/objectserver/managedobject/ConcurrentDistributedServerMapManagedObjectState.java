@@ -134,49 +134,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     while (cursor.next()) {
       final Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
-        final PhysicalAction physicalAction = (PhysicalAction) action;
+        applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
+      } else { // LogicalAction
+        // DEV-8737. Notify subscribers about the map mutation.
+        getOperationEventBus().post(Events.operationCountIncrementEvent());
 
-        final String fieldName = physicalAction.getFieldName();
-        if (fieldName.equals(LOCK_TYPE_FIELDNAME)) {
-          this.dsoLockType = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(MAX_TTI_SECONDS_FIELDNAME)) {
-          this.maxTTISeconds = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(MAX_TTL_SECONDS_FIELDNAME)) {
-          this.maxTTLSeconds = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(MAX_COUNT_IN_CLUSTER_FIELDNAME)) {
-          this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(INVALIDATE_ON_CHANGE_FIELDNAME)) {
-          this.invalidateOnChange = ((Boolean) physicalAction.getObject());
-        } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
-          Object value = physicalAction.getObject();
-          String name;
-          if (value instanceof UTF8ByteDataHolder) {
-            name = ((UTF8ByteDataHolder) value).asString();
-          } else {
-            name = (String) value;
-          }
-          this.cacheName = name;
-        } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
-          this.localCacheEnabled = (Boolean) physicalAction.getObject();
-        } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
-          this.compressionEnabled = (Boolean) physicalAction.getObject();
-        } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
-          this.copyOnReadEnabled = (Boolean) physicalAction.getObject();
-        } else {
-          throw new AssertionError("unexpected field name: " + fieldName);
-        }
-      } else {
-        final LogicalAction logicalAction = (LogicalAction) action;
+        final LogicalAction logicalAction = (LogicalAction)action;
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
+        applyLogicalAction(objectID, applyInfo, method, params);
 
-        // DEV-8737. Notify subscribers about the map mutation.
-        if (method == SerializationUtil.PUT || method == SerializationUtil.PUT_IF_ABSENT
-            || method == SerializationUtil.REMOVE || method == SerializationUtil.CLEAR) {
-          getOperationEventBus().post(Events.operationCountIncrementEvent());
-        }
-
-        applyMethod(objectID, applyInfo, method, params);
         if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
             || method == SerializationUtil.DESTROY) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere
@@ -190,8 +157,41 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
-                             final Object[] params) {
+  protected void applyPhysicalAction(final PhysicalAction action, final ObjectID objectID, final ApplyTransactionInfo info) {
+    final String fieldName = action.getFieldName();
+    if (fieldName.equals(LOCK_TYPE_FIELDNAME)) {
+      this.dsoLockType = ((Integer)action.getObject());
+    } else if (fieldName.equals(MAX_TTI_SECONDS_FIELDNAME)) {
+      this.maxTTISeconds = ((Integer)action.getObject());
+    } else if (fieldName.equals(MAX_TTL_SECONDS_FIELDNAME)) {
+      this.maxTTLSeconds = ((Integer)action.getObject());
+    } else if (fieldName.equals(MAX_COUNT_IN_CLUSTER_FIELDNAME)) {
+      this.targetMaxTotalCount = ((Integer)action.getObject());
+    } else if (fieldName.equals(INVALIDATE_ON_CHANGE_FIELDNAME)) {
+      this.invalidateOnChange = ((Boolean)action.getObject());
+    } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
+      Object value = action.getObject();
+      String name;
+      if (value instanceof UTF8ByteDataHolder) {
+        name = ((UTF8ByteDataHolder)value).asString();
+      } else {
+        name = (String)value;
+      }
+      this.cacheName = name;
+    } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
+      this.localCacheEnabled = (Boolean)action.getObject();
+    } else if (COMPRESSION_ENABLED_FIELDNAME.equals(action.getFieldName())) {
+      this.compressionEnabled = (Boolean)action.getObject();
+    } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(action.getFieldName())) {
+      this.copyOnReadEnabled = (Boolean)action.getObject();
+    } else {
+      throw new AssertionError("unexpected field name: " + fieldName);
+    }
+  }
+
+  @Override
+  protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+                                    final Object[] params) {
     switch (method) {
       case SerializationUtil.INT_FIELD_CHANGED:
         final String name;
@@ -234,7 +234,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         this.references.clear();
         break;
       default:
-        super.applyMethod(objectID, applyInfo, method, params);
+        super.applyLogicalAction(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
         && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {

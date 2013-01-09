@@ -53,19 +53,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     this.references = factory.getMap(id, false);
   }
 
-  @Override
-  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
-      throws IOException {
-    while (cursor.next()) {
-      final LogicalAction action = cursor.getLogicalAction();
-      final int method = action.getMethod();
-      final Object[] params = action.getParameters();
-      applyMethod(objectID, applyInfo, method, params);
-    }
-  }
-
-  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
-                             final Object[] params) {
+  protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+                                    final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
         final Object key = getKey(params);
