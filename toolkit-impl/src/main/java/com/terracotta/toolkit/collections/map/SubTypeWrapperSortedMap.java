@@ -19,7 +19,7 @@ public class SubTypeWrapperSortedMap<K, V> extends SubTypeWrapperMap<K, V> imple
   @Override
   public Comparator<? super K> comparator() {
     assertStatus();
-    return null;
+    return sortedMap.comparator();
   }
 
   @Override

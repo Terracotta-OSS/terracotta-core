@@ -1,22 +1,24 @@
 package com.terracotta.toolkit.collections.map;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.terracotta.toolkit.collections.StatusAwareIterator;
 import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
 
 import java.util.Collection;
 import java.util.Iterator;
 
 public class SubTypeWrapperCollection<E> implements Collection<E> {
-  private final Collection<E>        collection;
+  private final Collection<E>          collection;
 
   protected final ToolkitSubtypeStatus status;
   private final int                    rejoinCount;
   protected final String               superTypeName;
   protected final ToolkitObjectType    toolkitObjectType;
 
-  public SubTypeWrapperCollection(Collection<E> collection, ToolkitSubtypeStatus status,
-                              String superTypeName, ToolkitObjectType toolkitObjectType) {
+  public SubTypeWrapperCollection(Collection<E> collection, ToolkitSubtypeStatus status, String superTypeName,
+                                  ToolkitObjectType toolkitObjectType) {
     super();
     this.collection = collection;
     this.status = status;
@@ -45,7 +47,6 @@ public class SubTypeWrapperCollection<E> implements Collection<E> {
     assertStatus();
     return collection.add(e);
   }
-
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
@@ -80,7 +81,7 @@ public class SubTypeWrapperCollection<E> implements Collection<E> {
   @Override
   public Iterator iterator() {
     assertStatus();
-    return collection.iterator();
+    return new StatusAwareIterator(collection.iterator(), status);
   }
 
   @Override
@@ -100,7 +101,6 @@ public class SubTypeWrapperCollection<E> implements Collection<E> {
     assertStatus();
     return collection.retainAll(c);
   }
-
 
   @Override
   public int size() {
