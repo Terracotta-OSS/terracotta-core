@@ -20,9 +20,10 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
 public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObject {
-  static final Integer                     DUMMY_VALUE = 0;
+  static final Integer                            DUMMY_VALUE = 0;
   private final RejoinAwareToolkitMap<E, Integer> toolkitMap;
   protected final ToolkitSubtypeStatusImpl        status;
+
   public ToolkitSetImpl(RejoinAwareToolkitMap<E, Integer> toolkitMap) {
     this.toolkitMap = toolkitMap;
     this.status = new ToolkitSubtypeStatusImpl();
@@ -84,7 +85,7 @@ public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObjec
 
   @Override
   public Iterator<E> iterator() {
-    return toolkitMap.keySet().iterator();
+    return new StatusAwareIterator(toolkitMap.keySet().iterator(), status);
   }
 
   @Override
