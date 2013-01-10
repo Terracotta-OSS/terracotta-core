@@ -14,6 +14,8 @@ import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
+import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -26,7 +28,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitList<E>                              list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
-  private volatile int                                         rejoinCount;
+  private final ToolkitSubtypeStatusImpl                       status;
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
@@ -35,12 +37,13 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     this.list = list;
     this.name = name;
     list.setApplyDestroyCallback(getDestroyApplicator());
+    status = new ToolkitSubtypeStatusImpl();
   }
 
   @Override
   public void rejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
-    rejoinCount++;
+    status.incrementRejoinCount();
   }
 
   @Override
@@ -55,6 +58,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void applyDestroy() {
     this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitList.class);
+    status.setDestroyed();
   }
 
   @Override
@@ -79,7 +83,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public Iterator<E> iterator() {
-    return new DestroyableIterator(list.iterator(), this);
+    return new StatusAwareIterator(list.iterator(), status);
   }
 
   @Override
@@ -174,7 +178,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public List<E> subList(int fromIndex, int toIndex) {
-    return new SubListWrapper(list.subList(fromIndex, toIndex));
+    return new SubListWrapper(list.subList(fromIndex, toIndex), status);
   }
 
   @Override
@@ -188,12 +192,14 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   }
 
   private class SubListWrapper implements List<E> {
-    private final List<E> subList;
-    private final int     currentRejoinCount;
+    private final List<E>              subList;
+    private final int                  currentRejoinCount;
+    private final ToolkitSubtypeStatus subTypeStatus;
 
-    public SubListWrapper(List<E> subList) {
+    public SubListWrapper(List<E> subList, ToolkitSubtypeStatus status) {
       this.subList = subList;
-      this.currentRejoinCount = DestroyableToolkitList.this.rejoinCount;
+      this.currentRejoinCount = status.getCurrentRejoinCount();
+      this.subTypeStatus = status;
     }
 
     @Override
@@ -217,7 +223,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     @Override
     public Iterator<E> iterator() {
       checkDestroyedOrRejoined();
-      return new DestroyableIterator(subList.iterator(), DestroyableToolkitList.this);
+      return new StatusAwareIterator(subList.iterator(), this.subTypeStatus);
     }
 
     @Override
@@ -343,15 +349,15 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     @Override
     public List<E> subList(int fromIndex, int toIndex) {
       checkDestroyedOrRejoined();
-      return new SubListWrapper(subList.subList(fromIndex, toIndex));
+      return new SubListWrapper(subList.subList(fromIndex, toIndex), status);
     }
 
     private void checkDestroyedOrRejoined() {
-      if (isDestroyed()) { throw new IllegalStateException("The List backing this subList is already destroyed."); }
-      if (this.currentRejoinCount != DestroyableToolkitList.this.rejoinCount) { throw new RejoinException(
-                                                                                                          "Rejoin has Occured, This sublist is not usable after rejoin anymore"); }
+      if (subTypeStatus.isDestroyed()) { throw new IllegalStateException(
+                                                                         "The List backing this subList is already destroyed."); }
+      if (this.currentRejoinCount != subTypeStatus.getCurrentRejoinCount()) { throw new RejoinException(
+                                                                                                        "Rejoin has Occured, This sublist is not usable after rejoin anymore"); }
     }
-
   }
 
 }
