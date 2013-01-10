@@ -143,7 +143,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public Comparator<? super K> comparator() {
-    return null;
+    return map.comparator();
   }
 
   @Override
