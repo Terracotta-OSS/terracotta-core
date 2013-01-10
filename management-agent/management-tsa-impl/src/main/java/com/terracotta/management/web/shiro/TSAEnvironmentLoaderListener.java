@@ -126,7 +126,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
         ContextService contextService = new DfltContextService();
         UserService userService = new DfltUserService();
-        SecurityServiceDirectory securityServiceDirectory = new ConstantSecurityServiceDirectory(new URI(securityServiceLocation), securityTimeout);
+        URI securityServiceLocationUri = securityServiceLocation == null ? null : new URI(securityServiceLocation);
+        SecurityServiceDirectory securityServiceDirectory = new ConstantSecurityServiceDirectory(securityServiceLocationUri, securityTimeout);
         IdentityAssertionServiceClient identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceDirectory, contextService);
         RequestTicketMonitor requestTicketMonitor = new DfltRequestTicketMonitor();
         TSAIdentityAsserter identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
