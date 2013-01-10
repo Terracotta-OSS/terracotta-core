@@ -35,7 +35,6 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
@@ -70,11 +69,8 @@ import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
 import com.terracotta.toolkit.object.serialization.SerializationFeatureImpl;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
-import com.terracotta.toolkit.object.serialization.SerializerMap;
-import com.terracotta.toolkit.object.serialization.SerializerMapImpl;
 import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
-import com.terracotta.toolkit.roots.impl.RootsUtil;
-import com.terracotta.toolkit.roots.impl.RootsUtil.RootObjectCreator;
+import com.terracotta.toolkit.rejoin.RejoinAwareSerializerMap;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootsStaticFactory;
 import com.terracotta.toolkit.search.SearchFactory;
@@ -153,18 +149,13 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   private SerializationStrategy createSerializationStrategy() {
-    return new SerializationStrategyImpl(platformService, getOrCreateSerializerRootMap(platformService));
+    RejoinAwareSerializerMap map = getOrCreateSerializerRootMap();
+    platformService.addRejoinLifecycleListener(map);
+    return new SerializationStrategyImpl(this.platformService, map);
   }
 
-  private static SerializerMap getOrCreateSerializerRootMap(PlatformService platformService) {
-    return RootsUtil.lookupOrCreateRootInGroup(platformService, new GroupID(0),
-                                               ToolkitTypeConstants.SERIALIZER_MAP_ROOT_NAME,
-                                               new RootObjectCreator<SerializerMapImpl>() {
-                                                 @Override
-                                                 public SerializerMapImpl create() {
-                                                   return new SerializerMapImpl();
-                                                 }
-                                               });
+  private RejoinAwareSerializerMap getOrCreateSerializerRootMap() {
+    return new RejoinAwareSerializerMap(this.platformService);
   }
 
   @Override
