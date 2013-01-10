@@ -136,7 +136,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       if (action instanceof PhysicalAction) {
         applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
       } else { // LogicalAction
-        // DEV-8737. Notify subscribers about the map mutation.
+        // notify subscribers about the mutation operation
         getOperationEventBus().post(Events.operationCountIncrementEvent());
 
         final LogicalAction logicalAction = (LogicalAction)action;
@@ -144,6 +144,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         final Object[] params = logicalAction.getParameters();
         applyLogicalAction(objectID, applyInfo, method, params);
 
+        //TODO: requires refactoring, we should call super.apply() instead
         if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
             || method == SerializationUtil.DESTROY) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere

@@ -41,7 +41,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
         final PhysicalAction physicalAction = (PhysicalAction)action;
         applyPhysicalAction(physicalAction, objectID, applyInfo);
       } else { // LogicalAction
-        // DEV-8737. Notify subscribers about the map mutation.
+        // notify subscribers about the mutation operation
         getOperationEventBus().post(Events.operationCountIncrementEvent());
 
         final LogicalAction logicalAction = (LogicalAction)action;
