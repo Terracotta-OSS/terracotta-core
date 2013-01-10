@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -79,7 +80,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       "ObjectFlushRate", "TransactionRate"                         };
 
   private static final String[]  SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
-      "ObjectFaultRate", "ObjectFlushRate", "TransactionRate", "OffheapMaxSize", "OffheapReservedSize",
+      "ObjectFaultRate", "ObjectFlushRate", "OperationRate", "OffheapMaxSize", "OffheapReservedSize",
       "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
 
   private final JmxConnectorPool jmxConnectorPool;
