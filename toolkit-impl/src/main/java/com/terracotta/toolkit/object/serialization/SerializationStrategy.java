@@ -43,10 +43,12 @@ public interface SerializationStrategy {
    * serializeToString() on this class
    * 
    * @param key key to deserialize
-   * @return the deserialized key object
+   * @param localOnly if the deserialization should be attempted only 'locally' without consulting any clustered
+   *        operations
+   * @return the deserialized key object or null
    * @throws IOException
    * @throws ClassNotFoundException
    */
-  public Object deserializeFromString(final String key) throws IOException, ClassNotFoundException;
+  public Object deserializeFromString(final String key, boolean localOnly) throws IOException, ClassNotFoundException;
 
 }

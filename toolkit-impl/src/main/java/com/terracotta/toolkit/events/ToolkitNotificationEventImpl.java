@@ -28,7 +28,7 @@ public class ToolkitNotificationEventImpl<T> implements ToolkitNotificationEvent
   public T getMessage() {
     if (msg == null) {
       try {
-        msg = (T) strategy.deserializeFromString(msgSerializedForm);
+        msg = (T) strategy.deserializeFromString(msgSerializedForm, false);
       } catch (Exception e) {
         LOGGER.warn("Ignoring toolkit notifier notification. Failed to deserialize notification msg - "
                     + msgSerializedForm, e);
@@ -41,7 +41,7 @@ public class ToolkitNotificationEventImpl<T> implements ToolkitNotificationEvent
   public ClusterNode getRemoteNode() {
     if (remoteNode == null) {
       try {
-        remoteNode = (ClusterNode) strategy.deserializeFromString(remoteNodeSerializedForm);
+        remoteNode = (ClusterNode) strategy.deserializeFromString(remoteNodeSerializedForm, false);
       } catch (Exception e) {
         LOGGER.warn("Ignoring toolkit notifier notification. Failed to deserialize notification remote node - "
                     + remoteNodeSerializedForm, e);

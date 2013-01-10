@@ -104,10 +104,11 @@ public class SerializationStrategyImpl implements SerializationStrategy {
   }
 
   @Override
-  public Object deserializeFromString(final String key) throws IOException, ClassNotFoundException {
+  public Object deserializeFromString(final String key, boolean localOnly) throws IOException,
+      ClassNotFoundException {
     if (key.length() >= 1 && key.charAt(0) == MARKER) {
       StringSerializedObjectInputStream ssois = new StringSerializedObjectInputStream(key);
-      SerializerObjectInputStream sois = new SerializerObjectInputStream(ssois, serializer, tccl, false);
+      SerializerObjectInputStream sois = new SerializerObjectInputStream(ssois, serializer, tccl, localOnly);
       return sois.readObject();
     }
     return key;

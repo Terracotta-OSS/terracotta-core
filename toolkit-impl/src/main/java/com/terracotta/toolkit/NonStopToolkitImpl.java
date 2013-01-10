@@ -307,7 +307,6 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   @Override
   public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
     if (clazz.isInstance(nonStopFeature)) { return (T) nonStopFeature; }
-    throw new UnsupportedOperationException("Class " + clazz
-                                            + " doesn't have a feature asscociated with the current Toolkit");
+    return getInitializedToolkit().getFeature(clazz);
   }
 }

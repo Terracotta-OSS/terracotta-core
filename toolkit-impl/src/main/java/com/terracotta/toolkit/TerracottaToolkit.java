@@ -27,10 +27,12 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
+import org.terracotta.toolkit.serialization.Serialization;
 import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
@@ -65,6 +67,7 @@ import com.terracotta.toolkit.factory.impl.ToolkitReadWriteLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
+import com.terracotta.toolkit.object.serialization.SerializationFeatureImpl;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
 import com.terracotta.toolkit.object.serialization.SerializerMap;
@@ -100,6 +103,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   private ToolkitProperties                                       toolkitProperties;
   protected final PlatformService                                 platformService;
   private final ClusterInfo                                       clusterInfoInstance;
+  private final Serialization                                     serializationFeature;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider) {
     this.tcClient = tcClient;
@@ -114,6 +118,7 @@ public class TerracottaToolkit implements ToolkitInternal {
         throw new AssertionError("Another object registered instead of serialization strategy - " + old);
       }
     }
+    this.serializationFeature = new SerializationFeatureImpl(strategy);
     this.defaultToolkitCacheManager = toolkitCacheManagerProvider.getDefaultCacheManager();
 
     ToolkitFactoryInitializationContextBuilder builder = new ToolkitFactoryInitializationContextBuilder();
@@ -332,6 +337,9 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
-    throw new UnsupportedOperationException();
+    Preconditions.checkNotNull(clazz);
+    if (clazz.equals(Serialization.class)) { return (T) serializationFeature; }
+    throw new UnsupportedOperationException("The feature specified by class '" + clazz.getName()
+                                            + "' is not not supported!");
   }
 }
