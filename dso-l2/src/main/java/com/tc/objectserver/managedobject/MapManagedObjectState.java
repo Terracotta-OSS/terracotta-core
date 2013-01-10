@@ -9,9 +9,7 @@ import org.terracotta.corestorage.KeyValueStorage;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
@@ -53,6 +51,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     this.references = factory.getMap(id, false);
   }
 
+  @Override
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {

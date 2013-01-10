@@ -390,7 +390,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         private boolean isEmergency = false;
         private boolean isThrottling = false;
         private boolean isStopped = false;
-        private long brake = 0;
+    // private long brake = 0;
         private int turnCount = 1;
 
         Future<SampledRateCounter> currentRun = completedFuture;
@@ -421,7 +421,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                         } else if ( currentRun.isDone() ) {
                             triggerEmergency(usage);
                         }
-//   wait for generational eviction to do this.                         
+//   wait for generational eviction to do this.
 //                    } else if ( currentRun.isDone() && brake < usage.getReservedMemory() && threshold.isInThresholdRegion(usage,L2_EVICTION_CRITICALTHRESHOLD,L2_EVICTION_HALTTHRESHOLD)) {
 //                        currentRun = emergencyEviction(true, 1);
 //                        brake = usage.getReservedMemory();
@@ -525,7 +525,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             isStopped = false;
             isThrottling = false;
-            brake = 0;
+      // brake = 0;
             resourceManager.clear();
             TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool",reserved.getUsedPercentage());
             TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);

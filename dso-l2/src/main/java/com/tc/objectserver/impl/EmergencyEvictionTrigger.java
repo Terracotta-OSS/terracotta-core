@@ -4,25 +4,23 @@
 package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
-import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
-import java.util.Iterator;
+
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
  * This trigger is fired by the resource monitor if the monitored resource goes
  * over the critical threshold of resource (can be set by TC Property
- * l2.eviction.criticalThreshold).  
+ * l2.eviction.criticalThreshold).
  * 
  * The sample count is defined by the percentage of the mapSize required to achieve
- * the target critical capacity assuming all elements are the same size.  The sample taken 
- * is random throughout the map regardless of elements liveliness.  This trigger will continually 
+ * the target critical capacity assuming all elements are the same size.  The sample taken
+ * is random throughout the map regardless of elements liveliness.  This trigger will continually
  * fire until the monitored resource falls below the critical threshold.
  * 
  * @author mscott
@@ -32,13 +30,14 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     private final int blowout;
     private int sampleCount;
     private int sizeCount;
-    private final ObjectManager mgr;
+
+  // private final ObjectManager mgr;
 
     public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
         super(oid);
         this.blowout = blowout;
-        this.mgr = mgr;
-    } 
+    // this.mgr = mgr;
+    }
 
     @Override
     public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
@@ -65,8 +64,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
         int nz = sample.size()/2;
         int count = 0;
         sample.clear();
-        for ( Iterator<Map.Entry<ObjectID,Object>> it = rev.entrySet().iterator();it.hasNext();/*nothing*/ ) {
-            Map.Entry<ObjectID,Object> ag = it.next();
+        for (Entry<ObjectID, Object> ag : rev.entrySet()) {
             if (count++>nz) {
                 sample.put(ag.getValue(),ag.getKey());
             }

@@ -194,7 +194,7 @@ class MaskingObjectIDSet extends BitSetObjectIDSet {
 
     @Override
     public int size() {
-        return (int)((((int)(end-start)) - super.size()) + left.size());
+    return ((((int) (end - start)) - super.size()) + left.size());
     }
     
     private float factor() {
