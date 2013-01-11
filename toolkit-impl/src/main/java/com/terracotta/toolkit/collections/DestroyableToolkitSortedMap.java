@@ -131,14 +131,12 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public Collection<V> values() {
-    return new SubTypeWrapperCollection<V>(map.values(), status, this.name,
-                                                             ToolkitObjectType.SORTED_MAP);
+    return new SubTypeWrapperCollection<V>(map.values(), status, this.name, ToolkitObjectType.SORTED_MAP);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return new SubTypeWrapperSet<Entry<K, V>>(map.entrySet(), status, this.name,
-                                                            ToolkitObjectType.SORTED_MAP);
+    return new SubTypeWrapperSet<Entry<K, V>>(map.entrySet(), status, this.name, ToolkitObjectType.SORTED_MAP);
   }
 
   @Override
@@ -158,20 +156,38 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public SortedMap<K, V> headMap(K toKey) {
-    return new SubTypeWrapperSortedMap<K, V>(map.headMap(toKey), status, this.name,
-                                                               ToolkitObjectType.SORTED_MAP);
+    return new SubTypeWrapperSortedMap<K, V>(map.headMap(toKey), status, this.name, ToolkitObjectType.SORTED_MAP);
   }
 
   @Override
   public SortedMap<K, V> subMap(K fromKey, K toKey) {
     return new SubTypeWrapperSortedMap<K, V>(map.subMap(fromKey, toKey), status, this.name,
-                                                               ToolkitObjectType.SORTED_MAP);
+                                             ToolkitObjectType.SORTED_MAP);
   }
 
   @Override
   public SortedMap<K, V> tailMap(K fromKey) {
-    return new SubTypeWrapperSortedMap<K, V>(map.tailMap(fromKey), status, this.name,
-                                                               ToolkitObjectType.SORTED_MAP);
+    return new SubTypeWrapperSortedMap<K, V>(map.tailMap(fromKey), status, this.name, ToolkitObjectType.SORTED_MAP);
+  }
+
+  @Override
+  public V putIfAbsent(K paramK, V paramV) {
+    return map.putIfAbsent(paramK, paramV);
+  }
+
+  @Override
+  public boolean replace(K paramK, V paramV1, V paramV2) {
+    return map.replace(paramK, paramV1, paramV2);
+  }
+
+  @Override
+  public V replace(K paramK, V paramV) {
+    return map.replace(paramK, paramV);
+  }
+
+  @Override
+  public boolean remove(Object paramObject1, Object paramObject2) {
+    return map.remove(paramObject1, paramObject2);
   }
 
 }
