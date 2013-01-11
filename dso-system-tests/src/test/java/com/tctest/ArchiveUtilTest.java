@@ -106,7 +106,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   }
 
   private Set listArchiveContents(File archive) throws IOException {
-    Set contents = new HashSet();
+    Set<String> contents = new HashSet<String>();
     ZipInputStream in = new ZipInputStream(new BufferedInputStream(new FileInputStream(archive)));
     ZipEntry entry;
     while ((entry = in.getNextEntry()) != null) {
@@ -151,12 +151,12 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testValidServerArchiveContents() throws Exception {
     clear();
-    log("<server> -n valid archive contents");
+    log("<server> valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { "-n", configFile.toString() };
+    String[] args = new String[] { configFile.toString() };
     executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
@@ -183,6 +183,9 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
 
   public void testInvalidDirectoryArg() throws Exception {
@@ -203,7 +206,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { "-n", configFile.toString(), archiveFile.toString() };
+    String[] args = new String[] { configFile.toString(), archiveFile.toString() };
     executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
@@ -217,12 +220,12 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testValidServerFullArchiveContents() throws Exception {
     clear();
-    log("<server> valid archive contents");
+    log("<server> -d valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { configFile.toString(), archiveFile.toString() };
+    String[] args = new String[] { "-d", configFile.toString(), archiveFile.toString() };
     executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
@@ -256,15 +259,19 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
 
-  public void testIgnoresNOptionForClient() throws Exception {
+  public void testIgnoresDOptionForClient() throws Exception {
     clear();
-    log("<client> ignores -n option");
+    log("<client> ignores -d option");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    executeArchiveUtil(new String[] { "-c", "-n", configFile.toString(), archiveFile.toString() });
+    executeArchiveUtil(new String[] { "-c", "-d", configFile.toString(), archiveFile.toString() });
     assertTrue(archiveFile.exists());
+    Set contents = listArchiveContents(archiveFile);
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
 
   public void testInvalidArgsOrder1() throws Exception {
