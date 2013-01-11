@@ -10,6 +10,7 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.DiagnosticsService;
 
@@ -113,4 +114,22 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
                   .getMessage()).build());
     }
   }
+
+  @Override
+  public Collection<TopologyReloadStatusEntity> reloadConfiguration(UriInfo info) {
+    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      return diagnosticsService.reloadConfiguration();
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to perform TSA diagnostics.", see.getCause());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST)
+              .entity("Failed to perform TSA diagnostics: " + see.getCause().getClass().getName() + ": " + see.getCause()
+                  .getMessage()).build());
+    }
+  }
+
 }

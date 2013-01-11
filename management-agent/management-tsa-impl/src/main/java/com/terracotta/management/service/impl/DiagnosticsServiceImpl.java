@@ -6,6 +6,7 @@ package com.terracotta.management.service.impl;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.TsaManagementClientService;
 
@@ -47,6 +48,11 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
   @Override
   public boolean runDgc() throws ServiceExecutionException {
     return tsaManagementClientService.runDgc();
+  }
+
+  @Override
+  public Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException {
+    return tsaManagementClientService.reloadConfiguration();
   }
 
 }

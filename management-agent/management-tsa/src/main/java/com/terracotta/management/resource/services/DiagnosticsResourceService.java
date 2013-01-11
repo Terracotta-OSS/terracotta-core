@@ -4,6 +4,7 @@
 package com.terracotta.management.resource.services;
 
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
 import java.util.Collection;
 
@@ -41,5 +42,10 @@ public interface DiagnosticsResourceService {
   @Path("/dgc")
   @Produces(MediaType.APPLICATION_JSON)
   boolean runDgc(@Context UriInfo info);
+
+  @POST
+  @Path("/reloadConfiguration")
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<TopologyReloadStatusEntity> reloadConfiguration(@Context UriInfo info);
 
 }

@@ -11,9 +11,11 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
+import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
+import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -30,6 +32,7 @@ import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.ThreadDumpEntity.NodeType;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 
@@ -1196,6 +1199,57 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
     } catch (Exception e) {
       throw new ServiceExecutionException("error shutting down server", e);
+    }
+  }
+
+  @Override
+  public Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException {
+    Collection<TopologyReloadStatusEntity> topologyReloadStatusEntities = new ArrayList<TopologyReloadStatusEntity>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            EnterpriseTCServerMbean enterpriseTCServerMbean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Enterprise Terracotta Server"), EnterpriseTCServerMbean.class);
+
+            TopologyReloadStatus topologyReloadStatus = enterpriseTCServerMbean.reloadConfiguration();
+
+            TopologyReloadStatusEntity topologyReloadStatusEntity = new TopologyReloadStatusEntity();
+            topologyReloadStatusEntity.setSourceId(member.name());
+            topologyReloadStatusEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            topologyReloadStatusEntity.setStatus(topologyReloadStatus.name());
+
+            topologyReloadStatusEntities.add(topologyReloadStatusEntity);
+          } catch (Exception e) {
+            TopologyReloadStatusEntity topologyReloadStatusEntity = new TopologyReloadStatusEntity();
+            topologyReloadStatusEntity.setSourceId(member.name());
+            topologyReloadStatusEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            topologyReloadStatusEntity.setStatus(e.getMessage());
+
+            topologyReloadStatusEntities.add(topologyReloadStatusEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+      return topologyReloadStatusEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error reloading configuration", e);
     }
   }
 

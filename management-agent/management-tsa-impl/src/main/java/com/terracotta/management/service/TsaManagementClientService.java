@@ -14,6 +14,7 @@ import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
 import java.util.Collection;
 import java.util.Set;
@@ -70,4 +71,5 @@ public interface TsaManagementClientService {
 
   void shutdownServers(Set<String> serverNames) throws ServiceExecutionException;
 
+  Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException;
 }

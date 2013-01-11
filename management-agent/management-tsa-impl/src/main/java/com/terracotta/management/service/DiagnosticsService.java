@@ -6,6 +6,7 @@ package com.terracotta.management.service;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
 import java.util.Collection;
 import java.util.Set;
@@ -53,5 +54,13 @@ public interface DiagnosticsService {
    * @throws ServiceExecutionException
    */
   boolean runDgc() throws ServiceExecutionException;
+
+  /**
+   * Reload TSA configuration.
+   *
+   * @return a collection {@link TopologyReloadStatusEntity} objects.
+   * @throws ServiceExecutionException
+   */
+  Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException;
 
 }
