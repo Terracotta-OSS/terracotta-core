@@ -39,14 +39,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
 
-  static {
-    ManagerUtil.enable();
-  }
-
-  public DsoNodeGetIpAndHostNameTest() {
-    disableTest();
-  }
-
   /**
    * Test for DsoNodeImpl. To make sure getIp() and getHostanme() working fine when connected to L2 or disconnected.
    */
@@ -67,6 +59,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
       dsoCluster1 = (DsoClusterImpl) mgr1.getDsoCluster();
       final ManagerImpl mgr2 = startupClient(tsaPort, jmxPort);
       client2 = mgr2.getDso();
+      ManagerUtil.enableSingleton(mgr2);
       dsoCluster2 = (DsoClusterImpl) mgr2.getDsoCluster();
 
       try {
@@ -181,7 +174,6 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     ManagerImpl tcmanager = new ManagerImpl(true, new TestClientObjectManager(), new MockTransactionManager(),
                                             new MockClientLockManager(), new MockRemoteSearchRequestManager(),
                                             configHelper, l2Connection, null);
-    ManagerUtil.enableSingleton(tcmanager);
     tcmanager.initForTests(null);
     return tcmanager;
   }
