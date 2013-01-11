@@ -11,14 +11,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends ToolkitMapImpl<K, V> implements
     ToolkitSortedMap<K, V> {
   private final SortedKeyValueHolder<K, V> sortedKeyValueHolder;
 
   public ToolkitSortedMapImpl() {
-    super(new SortedKeyValueHolder(new TreeMap<K, V>()));
+    super(new SortedKeyValueHolder(new ConcurrentSkipListMap<K, V>()));
     this.sortedKeyValueHolder = (SortedKeyValueHolder<K, V>) keyValueHolder;
   }
 
@@ -361,11 +361,11 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
   }
 
   private static class SortedKeyValueHolder<K, V> extends KeyValueHolder<K, V> {
-    private final TreeMap<K, V> sortedMap;
+    private final SortedMap<K, V> sortedMap;
 
-    public SortedKeyValueHolder(TreeMap<K, V> map) {
-      super(map);
-      this.sortedMap = map;
+    public SortedKeyValueHolder(SortedMap<K, V> sortedMap) {
+      super(sortedMap);
+      this.sortedMap = sortedMap;
     }
 
     public K lastKey() {
@@ -419,7 +419,7 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
 
       return super.remove(o);
     }
-    
+
     @Override
     public boolean removeAll(Collection<?> c) {
       for (Object e : c) {
