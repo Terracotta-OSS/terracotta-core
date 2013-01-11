@@ -5,6 +5,10 @@ package com.tc.object.cache;
 
 import com.tc.properties.TCProperties;
 
+
+/**
+ * TODO FINAL ?!
+ */
 public class CacheConfigImpl implements CacheConfig {
 
   private final int         leastCount;

@@ -198,21 +198,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void unpinAll() {
-    activeDelegate.unpinAll();
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return activeDelegate.isPinned(key);
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    activeDelegate.setPinned(key, pinned);
-  }
-
-  @Override
   public boolean containsLocalKey(Object key) {
     return localDelegate.containsLocalKey(key);
   }

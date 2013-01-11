@@ -104,17 +104,17 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
 
   @Override
   public void unpinAll() {
-    localStoreCache.unpinAll();
+    throw new UnsupportedOperationException("See EHC-980 ... this is about to be gone!");
   }
 
   @Override
   public boolean isPinned(Object key) {
-    return localStoreCache.isPinned(key);
+    throw new UnsupportedOperationException("See EHC-980 ... this is about to be gone!");
   }
 
   @Override
   public void setPinned(Object key, boolean pinned) {
-    localStoreCache.setPinned(key, pinned);
+    throw new UnsupportedOperationException("See EHC-980 ... this is about to be gone!");
   }
 
   @Override

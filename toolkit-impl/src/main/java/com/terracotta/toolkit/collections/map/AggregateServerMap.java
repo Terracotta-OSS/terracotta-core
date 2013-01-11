@@ -359,23 +359,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void unpinAll() {
-    for (InternalToolkitMap<K, V> map : serverMaps) {
-      map.unpinAll();
-    }
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return getServerMapForKey(key).isPinned(key);
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    getServerMapForKey(key).setPinned(key, pinned);
-  }
-
-  @Override
   public boolean containsLocalKey(Object key) {
     return getServerMapForKey(key).containsLocalKey(key);
   }

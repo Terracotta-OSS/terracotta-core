@@ -76,21 +76,6 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheIntern
   }
 
   @Override
-  public void unpinAll() {
-    mutationBehaviourResolver.unpinAll();
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return immutationBehaviourResolver.isPinned(key);
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    mutationBehaviourResolver.setPinned(key, pinned);
-  }
-
-  @Override
   public void removeNoReturn(Object key) {
     mutationBehaviourResolver.removeNoReturn(key);
   }

@@ -88,21 +88,6 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
-  public void unpinAll() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return getDelegate().isPinned(key);
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void removeNoReturn(Object key) {
     throw new UnsupportedOperationException();
   }
