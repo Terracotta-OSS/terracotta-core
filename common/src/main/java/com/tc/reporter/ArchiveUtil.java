@@ -32,7 +32,6 @@ import javax.xml.namespace.QName;
  */
 public final class ArchiveUtil {
 
-  private final boolean isFull;
   private final boolean isClient;
   private final File tcConfig;
   private final File archiveFile;
@@ -40,17 +39,14 @@ public final class ArchiveUtil {
   private static final String STDERR = "stderr:";
   private static final String ARCHIVE_FILE_NAME = "tc-archive";
   private static final String INVALID = "Invalid Arguments:\n\n";
-  private static final String DASH_D = "-d";
   private static final String DASH_C = "-c";
   private static final String USAGE = "** Terracotta Archive Tool **\n\n"
                                       + "A utility for archiving Terracotta environment information.\n\n"
                                       + "\tValid Arguments are:\n\n\t["
-                                      + DASH_D
-                                      + "] (Data - inlude data files)\n\t["
                                       + DASH_C
                                       + "] (Client - include files from the dso client)"
                                       + "\n\t<path to terracotta config xml file (tc-config.xml)>"
-                                      + " | <path to data and/or logs directory>"
+                                      + " | <path to logs directory>"
                                       + "\n\t[<output filename in .zip format>]\n\nExamples:\n\n\t"
                                       + "# java "
                                       + ArchiveUtil.class.getName()
@@ -61,11 +57,11 @@ public final class ArchiveUtil {
                                       + "\n\nUsage Summary:\n\n\tTypically you will use this tool to create an "
                                       + "archive of the Terracotta server logs.\n\t"
                                       + "You may also want to create archives on the DSO client machines using"
-                                      + " the -c option, or add data files to the archive using -d option.\n\t"
+                                      + " the -c option.\n\t"
                                       + "There are two scenarios where you may need to use the directory location "
                                       + "instead of the config file path."
                                       + "\n\n\t\t1. The DSO client may not have a local copy of the tc-config.xml"
-                                      + "\n\t\t2. The tc-config.xml logs and data elements may contain wildcards"
+                                      + "\n\t\t2. The tc-config.xml logs elements may contain wildcards"
                                       + " which use timestamps or \n\t\t   environment variables which cannot be"
                                       + " resolved.\n\nNotes:\n\n\tThe execution command may vary:"
                                       + "\n\t\t# ./archive-util ...\n\n\tSpecifying a directory location as the"
@@ -74,12 +70,10 @@ public final class ArchiveUtil {
   private static final Set<String> validDashArgs = new HashSet<String>();
 
   static {
-    validDashArgs.add(DASH_D);
     validDashArgs.add(DASH_C);
   }
 
-  private ArchiveUtil(boolean isFull, boolean isClient, File archivePath, File fileName) {
-    this.isFull = isFull;
+  private ArchiveUtil(boolean isClient, File archivePath, File fileName) {
     this.isClient = isClient;
     this.tcConfig = archivePath;
     if (fileName == null) {
@@ -137,10 +131,9 @@ public final class ArchiveUtil {
 
     if (dashSet.size() > 2) escape(USAGE, null);
     boolean dashC = dashSet.contains(DASH_C);
-    boolean dashN = dashSet.contains(DASH_D);
 
     if (locationCmd < 0)
-      escape("Please specify the Terracotta config file location or logs/data directory location\n\n" + USAGE, null);
+      escape("Please specify the Terracotta config file location or logs directory location\n\n" + USAGE, null);
     File tcConfigFile = new File(args[locationCmd]);
     if (!tcConfigFile.exists())
       escape("\tTerracotta Configuration file: " + tcConfigFile + "\n\tdoes not exist\n\n" + USAGE, null);
@@ -153,7 +146,7 @@ public final class ArchiveUtil {
     }
 
     try {
-      new ArchiveUtil(dashN, dashC, tcConfigFile, outputFile).createArchive();
+      new ArchiveUtil(dashC, tcConfigFile, outputFile).createArchive();
     } catch (IOException e) {
       escape("\tUnable to read Terracotta configuration file\n", e);
     } catch (XmlException e) {
@@ -217,28 +210,6 @@ public final class ArchiveUtil {
     return logFiles;
   }
 
-  private File[] getServerDataLocation(TcConfig configBeans) {
-    if (!isFull) return null;
-
-    Server[] servers = getServersElement(configBeans);
-    String[] serverData = new String[servers.length];
-    File[] dataFiles = new File[servers.length];
-    for (int i = 0; i < servers.length; i++) {
-      serverData[i] = servers[i].getData();
-      if (serverData[i] == null) serverData[i] = Server.type.getElementProperty(QName.valueOf("data")).getDefaultText();
-      serverData[i] = ParameterSubstituter.substitute(serverData[i]);
-      File serverDataDir = makeAbsolute(new File(serverData[i]));
-
-      if (!serverDataDir.exists()) {
-        quit("\nError occured while parsing: " + tcConfig
-             + "\n\tUnable to resolve the server data location element to an actual file: "
-             + serverData[i]);
-      }
-      dataFiles[i] = serverDataDir;
-    }
-    return dataFiles;
-  }
-
   private void createPathArchive() {
     try {
       System.out.println("Archiving:\n----------------------------------------");
@@ -262,13 +233,11 @@ public final class ArchiveUtil {
     TcConfig configBeans = new Loader().parse(tcConfig).getTcConfig();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
-    File[] serverDataDir = null;
 
     if (isClient) {
       clientLogsDir = getClientLogsLocation(configBeans);
     } else {
       serverLogsDir = getServerLogsLocation(configBeans);
-      serverDataDir = getServerDataLocation(configBeans);
     }
 
     try {
@@ -280,12 +249,6 @@ public final class ArchiveUtil {
       } else {
         for (File element : serverLogsDir) {
           if (element != null) zip.putTraverseDirectory(element, element.getName());
-        }
-        // is -d specified ?
-        if (serverDataDir != null) {
-          for (File element : serverDataDir) {
-            zip.putTraverseDirectory(element, element.getName());
-          }
         }
       }
       zip.finish();

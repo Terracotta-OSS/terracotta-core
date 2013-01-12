@@ -29,22 +29,22 @@ import java.util.zip.ZipInputStream;
 
 public final class ArchiveUtilTest extends TCTestCase {
 
-  private static final String NONE               = "none";
-  private static final String TC_CONFIG          = "tc-config.xml";
-  private static final String ARCHIVE            = "mock-archive.zip";
-  private static final String MK_DATA_DIR        = "mockdata";
-  private static final String MK_CLIENT_DIR      = "client-logs";
-  private static final String MK_CLIENT_LOG0     = "terracotta-client.log";
-  private static final String MK_CLIENT_LOG1     = "terracotta-client.log.1";
-  private static final String MK_SERVER_LOG_DIR  = "server-logs";
-  private static final String MK_SERVER_LOG0     = "terracotta-server.log";
-  private static final String MK_SERVER_LOG1     = "terracotta-server.log.1";
+  private static final String NONE = "none";
+  private static final String TC_CONFIG = "tc-config.xml";
+  private static final String ARCHIVE = "mock-archive.zip";
+  private static final String MK_DATA_DIR = "mockdata";
+  private static final String MK_CLIENT_DIR = "client-logs";
+  private static final String MK_CLIENT_LOG0 = "terracotta-client.log";
+  private static final String MK_CLIENT_LOG1 = "terracotta-client.log.1";
+  private static final String MK_SERVER_LOG_DIR = "server-logs";
+  private static final String MK_SERVER_LOG0 = "terracotta-server.log";
+  private static final String MK_SERVER_LOG1 = "terracotta-server.log.1";
   private static final String MK_SERVER_DATA_DIR = "server-data";
-  private static final String MK_SERVER_DATA0    = L2DSOConfig.OBJECTDB_DIRNAME;
-  private static final String MK_SERVER_DATA1    = "startup.lck";
+  private static final String MK_SERVER_DATA0 = L2DSOConfig.OBJECTDB_DIRNAME;
+  private static final String MK_SERVER_DATA1 = "startup.lck";
 
-  private File                mockDataDir;
-  private File                archiveFile;
+  private File mockDataDir;
+  private File archiveFile;
 
   public ArchiveUtilTest() {
     // disableAllUntil("2007-02-28");
@@ -220,21 +220,21 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testValidServerFullArchiveContents() throws Exception {
     clear();
-    log("<server> -d valid archive contents");
+    log("<server> valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { "-d", configFile.toString(), archiveFile.toString() };
+    String[] args = new String[] { configFile.toString(), archiveFile.toString() };
     executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
-    assertTrue(contents.contains(MK_SERVER_DATA_DIR + "/"));
-    assertTrue(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
-    assertTrue(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
+    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
 
   public void testValidClientArchiveContents() throws Exception {
@@ -254,21 +254,6 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertFalse(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertFalse(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
-    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
-    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
-    assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
-  }
-
-  public void testIgnoresDOptionForClient() throws Exception {
-    clear();
-    log("<client> ignores -d option");
-    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
-    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
-    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
-    File configFile = writeConfig(config.getBytes());
-    executeArchiveUtil(new String[] { "-c", "-d", configFile.toString(), archiveFile.toString() });
-    assertTrue(archiveFile.exists());
-    Set contents = listArchiveContents(archiveFile);
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
