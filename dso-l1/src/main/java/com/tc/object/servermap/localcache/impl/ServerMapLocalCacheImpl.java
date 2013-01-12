@@ -277,44 +277,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     this.localStore.cleanLocalState();
   }
 
-  /**
-   * unpin all pinned keys
-   */
-  @Override
-  public void unpinAll() {
-    this.localStore.unpinAll();
-  }
-
-  /**
-   * check the key is pinned or not
-   */
-  @Override
-  public boolean isPinned(Object key) {
-    return this.localStore.isPinned(key);
-  }
-
-  /**
-   * pin or unpin the key
-   */
-  @Override
-  public void setPinned(Object key, boolean pinned) {
-    ReentrantReadWriteLock lock = getLock(key);
-    lock.writeLock().lock();
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX setpinned entry  " + key + " " + pinned);
-    }
-    try {
-      // doing get first, because for unpin case, I will not get value if key got evicted just after unpin
-      AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) localStore.get(key);
-      this.localStore.setPinned(key, pinned);
-      if (value != null && !value.isLiteral()) {
-        this.localStore.setPinned(value.getValueObjectId(), pinned);
-      }
-    } finally {
-      lock.writeLock().unlock();
-    }
-  }
-
   @Override
   public void clearInline() {
     Set<LockID> lockIDs = null;

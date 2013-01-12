@@ -152,36 +152,6 @@ public class EhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> 
   }
 
   @Override
-  public void unpinAll() {
-    readLock.lock();
-    try {
-      getActiveStore().unpinAll();
-    } finally {
-      readLock.unlock();
-    }
-  }
-
-  @Override
-  public boolean isPinned(Object key) {
-    readLock.lock();
-    try {
-      return getActiveStore().isPinned(key);
-    } finally {
-      readLock.unlock();
-    }
-  }
-
-  @Override
-  public void setPinned(Object key, boolean pinned) {
-    readLock.lock();
-    try {
-      getActiveStore().setPinned(key, pinned);
-    } finally {
-      readLock.unlock();
-    }
-  }
-
-  @Override
   public void clear() {
     readLock.lock();
     try {

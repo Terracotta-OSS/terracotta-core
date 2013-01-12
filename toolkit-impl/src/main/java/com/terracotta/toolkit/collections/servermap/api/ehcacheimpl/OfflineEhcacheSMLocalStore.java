@@ -102,28 +102,6 @@ public class OfflineEhcacheSMLocalStore implements ServerMapLocalStore<Object, O
   }
 
   @Override
-  public void unpinAll() {
-    if (shouldLog()) {
-      LOGGER.info("Ignoring unpinAll as inner cache is not alive.");
-    }
-  }
-
-  @Override
-  public boolean isPinned(Object key) {
-    if (shouldLog()) {
-      LOGGER.info("Ignoring isPinned as inner cache is not alive.");
-    }
-    return false;
-  }
-
-  @Override
-  public void setPinned(Object key, boolean pinned) {
-    if (shouldLog()) {
-      LOGGER.info("Ignoring setPinned as inner cache is not alive.");
-    }
-  }
-
-  @Override
   public void clear() {
     if (shouldLog()) {
       LOGGER.info("Ignoring clear as inner cache is not alive.");

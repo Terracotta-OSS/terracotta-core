@@ -588,25 +588,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void unpinAll() {
-    if (!localCacheEnabled) { throw new UnsupportedOperationException(
-                                                                      "unpinAll is not supported when local cache is disabled"); }
-    this.tcObjectServerMap.unpinAll();
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return this.tcObjectServerMap.isPinned(assertKeyLiteral(key));
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    if (!localCacheEnabled) { throw new UnsupportedOperationException(
-                                                                      "Pinning is not supported when local cache is disabled"); }
-    this.tcObjectServerMap.setPinned(assertKeyLiteral(key), pinned);
-  }
-
-  @Override
   public Set<K> keySet() {
     Set keySet = null;
     try {

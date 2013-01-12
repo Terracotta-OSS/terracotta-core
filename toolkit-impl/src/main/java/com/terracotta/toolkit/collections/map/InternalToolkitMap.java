@@ -62,12 +62,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   Set<K> localKeySet();
 
-  void unpinAll();
-
-  boolean isPinned(K key);
-
-  void setPinned(K key, boolean pinned);
-
   boolean containsLocalKey(Object key);
 
   V checkAndGetNonExpiredValue(K key, Object value, GetType getType, boolean quiet);

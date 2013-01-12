@@ -19,12 +19,6 @@ public interface ServerMapLocalStore<K, V> {
 
   public void cleanLocalState();
 
-  public void unpinAll();
-
-  public boolean isPinned(K key);
-
-  public void setPinned(K key, boolean pinned);
-
   public boolean addListener(ServerMapLocalStoreListener<K, V> listener);
 
   public boolean removeListener(ServerMapLocalStoreListener<K, V> listener);

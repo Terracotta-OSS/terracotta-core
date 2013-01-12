@@ -590,33 +590,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return this.cache.size();
   }
 
-  /**
-   * unpin all pinned keys
-   */
-  @Override
-  public void unpinAll() {
-    if (!isCacheInitialized()) { return; }
-    cache.unpinAll();
-  }
-
-  /**
-   * check the key is pinned or not
-   */
-  @Override
-  public boolean isPinned(Object key) {
-    if (!isCacheInitialized()) { return false; }
-    return cache.isPinned(key);
-  }
-
-  /**
-   * pin or unpin the key
-   */
-  @Override
-  public void setPinned(Object key, boolean pinned) {
-    if (!isCacheInitialized()) { return; }
-    cache.setPinned(key, pinned);
-  }
-
   private boolean isCacheInitialized() {
     if (this.cache == null) {
       logger.warn("Local cache yet not initialized");

@@ -43,21 +43,6 @@ public class L1ServerMapLocalCacheStoreImpl<K, V> implements L1ServerMapLocalCac
   }
 
   @Override
-  public void unpinAll() {
-    toolkitStore.unpinAll();
-  }
-
-  @Override
-  public boolean isPinned(K key) {
-    return toolkitStore.isPinned(key);
-  }
-
-  @Override
-  public void setPinned(K key, boolean pinned) {
-    toolkitStore.setPinned(key, pinned);
-  }
-
-  @Override
   public List getKeys() {
     return toolkitStore.getKeys();
   }

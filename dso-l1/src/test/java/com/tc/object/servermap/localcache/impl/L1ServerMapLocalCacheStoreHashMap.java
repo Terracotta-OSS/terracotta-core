@@ -18,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocalCacheStore<K, V> {
   private final List<L1ServerMapLocalCacheStoreListener<K, V>> listeners    = new CopyOnWriteArrayList<L1ServerMapLocalCacheStoreListener<K, V>>();
   private final HashMap<K, V>                                  backingCache = new HashMap<K, V>();
-  private final HashSet<K>                                     pinnedKeys   = new HashSet<K>();
   private final int                                            maxElementsInMemory;
 
   public L1ServerMapLocalCacheStoreHashMap() {
@@ -100,25 +99,6 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   @Override
   public synchronized int size() {
     return backingCache.size() / 2;
-  }
-
-  @Override
-  public synchronized void unpinAll() {
-    pinnedKeys.clear();
-  }
-
-  @Override
-  public synchronized boolean isPinned(K key) {
-    return pinnedKeys.contains(key);
-  }
-
-  @Override
-  public synchronized void setPinned(K key, boolean pinned) {
-    if (pinned) {
-      pinnedKeys.add(key);
-    } else {
-      pinnedKeys.remove(key);
-    }
   }
 
   // TODO: Remove it using an iterator

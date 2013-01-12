@@ -110,21 +110,6 @@ public interface ServerMapLocalCache {
   void cleanLocalState();
 
   /**
-   * unpin all pinned keys
-   */
-  void unpinAll();
-
-  /**
-   * check the key is pinned or not
-   */
-  boolean isPinned(Object key);
-
-  /**
-   * pin or unpin the key
-   */
-  void setPinned(Object key, boolean pinned);
-
-  /**
    * Returns the keys present in the local cache (does not include meta items stored)
    */
   Set getKeys();
