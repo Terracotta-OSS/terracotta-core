@@ -197,9 +197,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         // put a pinned entry for mutate ops, unpinned on txn complete
         this.pendingTransactionEntries.put(valueObjectID, key);
       } else {
-        if (isPinned(key)) {
-          localStore.setPinned(valueObjectID, true);
-        }
         localStore.put(valueObjectID, key);
       }
     }
@@ -472,7 +469,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("XXX put pinned entry in notifyPinnedEntryInvalidated " + key + " " + oid);
           }
-          localStore.setPinned(oid, false);
           notifyPinnedEntryInvalidated(key, value.isEventualConsistentValue());
         }
       }
@@ -824,9 +820,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private Object remove(Object key) {
     Object rv = null;
     if ((rv = this.pendingTransactionEntries.remove(key)) == null) {
-      if (key instanceof ObjectID) {
-        localStore.setPinned(key, false);
-      }
       rv = this.localStore.remove(key);
     }
     return rv;
@@ -834,9 +827,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private Object remove(Object key, boolean fromInternalStore) {
     if (fromInternalStore) {
-      if (key instanceof ObjectID) {
-        localStore.setPinned(key, false);
-      }
       return this.localStore.remove(key);
     } else {
       return this.pendingTransactionEntries.remove(key);
