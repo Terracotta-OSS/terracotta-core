@@ -39,7 +39,7 @@ public class CapacityEvictionTriggerTest extends AbstractEvictionTriggerTest {
 
     @Override @Before
     public void setUp() {
-        getEvictableMap().startEviction("test");
+        getEvictableMap().startEviction();
         Mockito.when(getEvictableMap().isEvicting()).thenReturn(Boolean.TRUE);
         Mockito.when(getEvictableMap().getSize()).thenReturn(250);
         super.setUp();
