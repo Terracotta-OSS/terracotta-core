@@ -465,7 +465,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           initiateLockRecall(removeLockIDMetaMapping(key, removed));
         }
         remoteRemoveObjectIfPossible(removed);
-        if (isPinned(key)) {
+        if (isKeyPinnedOrTierPinned(key)) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("XXX put pinned entry in notifyPinnedEntryInvalidated " + key + " " + oid);
           }
@@ -590,7 +590,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private boolean isKeyPinnedOrTierPinned(Object key) {
-    return localStore.isLocalHeapOrMemoryTierPinned() || isPinned(key);
+    return localStore.isLocalHeapOrMemoryTierPinned();
   }
 
   private void notifyPinnedEntryInvalidated(Object key, boolean eventual) {
