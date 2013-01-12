@@ -101,10 +101,10 @@ public class AbstractEvictionTriggerTest {
       et.completeEviction(map);
     }
     if (isEvicting || (max != 0 && map.getSize() > 0)) {
-      Mockito.verify(map).startEviction("test");
+      Mockito.verify(map).startEviction();
     } else {
       // if the map was already evicting, startEviction was called outside the trigger
-      Mockito.verify(map, Mockito.never()).startEviction("test");
+      Mockito.verify(map, Mockito.never()).startEviction();
     }
     if (found != null) {
       Mockito.verify(map).getRandomSamples(Matchers.intThat(new BaseMatcher<Integer>() {
@@ -165,7 +165,7 @@ public class AbstractEvictionTriggerTest {
   public void setUp() {
     evm = getEvictableMap();
     trigger = getTrigger();
-    Mockito.when(evm.startEviction("test")).thenReturn(Boolean.TRUE);
+    Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
     Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet)))
         .thenReturn(Collections.<Object, ObjectID> emptyMap());
   }
