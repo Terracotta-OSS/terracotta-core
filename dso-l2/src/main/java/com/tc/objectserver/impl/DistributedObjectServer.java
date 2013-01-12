@@ -710,8 +710,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     int queryThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_QUERY_THREADS);
     final Stage searchQueryRequestStage = stageManager
         .createStage(ServerConfigurationContext.SEARCH_QUERY_REQUEST_STAGE, new SearchQueryRequestMessageHandler(),
-                     queryThreads, 1, maxStageSize);
-
+                     queryThreads, maxStageSize);
+    
     final Sink searchEventSink = searchEventStage.getSink();
 
     final TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator,

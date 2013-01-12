@@ -3,7 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -18,7 +17,7 @@ import java.util.Set;
  * 
  * @author Nabib El-Rahman
  */
-public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEventContext {
+public interface SearchQueryRequestMessage extends TCMessage {
 
   /**
    * ClientID
