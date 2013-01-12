@@ -35,6 +35,9 @@ public class ServerMapEvictionContext implements EventContext {
     this.samples = samples;
     this.className = className;
     this.cacheName = cacheName;
+    if ( samples.isEmpty() ) {
+        throw new AssertionError("no samples " + cacheName);
+    }
   } 
 
   public ObjectID getOid() {

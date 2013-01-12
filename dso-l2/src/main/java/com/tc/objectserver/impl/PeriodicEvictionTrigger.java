@@ -95,8 +95,8 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         ttl = map.getTTLSeconds();
         if ( tti > 0 || 
             ttl > 0 || 
-                runAlways ||
-                map.getSize() > map.getMaxTotalCount() ) {
+            runAlways ||
+            map.getSize() > map.getMaxTotalCount() ) {
             
             return super.startEviction(map);
         }
@@ -114,7 +114,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
         
         Map<Object, ObjectID> grabbed = ( !stop ) ?
@@ -290,9 +290,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         public PeriodicServerMapEvictionContext(ServerMapEvictionContext root) {
             super(PeriodicEvictionTrigger.this,  root.getTTISeconds(), root.getTTLSeconds(), root.getRandomSamples(), root.getClassName(), root.getCacheName());
         }
-
+//  do this to move the filtering outside the scope of the ServerMap lock
         @Override
         public Map<Object, ObjectID> getRandomSamples() {
+            if ( dumpLive ) {
+                return super.getRandomSamples();
+            }
             if ( cached == null ) {
                 cached = filter(super.getRandomSamples(),tti,ttl);
                 filtered = cached.size();

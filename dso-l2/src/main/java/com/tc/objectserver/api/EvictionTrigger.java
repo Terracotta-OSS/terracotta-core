@@ -42,11 +42,13 @@ public interface EvictionTrigger {
      * @param clients   the client object id reference set
      * @return          a map of evictable items
      */
-    ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients);
+    ServerMapEvictionContext collectEvictionCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients);
         
     long getRuntimeInMillis();
     
     int getCount();
 
     String getName();
+    
+    boolean isValid();
 }

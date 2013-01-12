@@ -40,7 +40,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public ServerMapEvictionContext collectEvictonCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
         int get = boundsCheckSampleSize(( blowout > 6 ) ? sizeCount : (int)Math.round(sizeCount * Math.pow(10,blowout-6)) * 2);
         if ( get < 10 * (blowout)) {

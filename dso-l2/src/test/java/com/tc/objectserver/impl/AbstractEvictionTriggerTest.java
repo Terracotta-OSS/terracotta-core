@@ -57,7 +57,7 @@ public class AbstractEvictionTriggerTest {
     return new AbstractEvictionTrigger(ObjectID.NULL_ID) {
 
       @Override
-      public ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map,
+      public ServerMapEvictionContext collectEvictionCandidates(int targetMax, String className, EvictableMap map,
                                                             ClientObjectReferenceSet clients) {
         return createEvictionContext(className, map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
       }
@@ -97,14 +97,14 @@ public class AbstractEvictionTriggerTest {
     boolean isEvicting = map.isEvicting();
 
     if (et.startEviction(map)) {
-      found = et.collectEvictonCandidates(max, "MOCK", map, cs);
+      found = et.collectEvictionCandidates(max, "MOCK", map, cs);
       et.completeEviction(map);
     }
     if (isEvicting || (max != 0 && map.getSize() > 0)) {
-      Mockito.verify(map).startEviction();
+      Mockito.verify(map).startEviction("test");
     } else {
       // if the map was already evicting, startEviction was called outside the trigger
-      Mockito.verify(map, Mockito.never()).startEviction();
+      Mockito.verify(map, Mockito.never()).startEviction("test");
     }
     if (found != null) {
       Mockito.verify(map).getRandomSamples(Matchers.intThat(new BaseMatcher<Integer>() {
@@ -165,7 +165,7 @@ public class AbstractEvictionTriggerTest {
   public void setUp() {
     evm = getEvictableMap();
     trigger = getTrigger();
-    Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
+    Mockito.when(evm.startEviction("test")).thenReturn(Boolean.TRUE);
     Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet)))
         .thenReturn(Collections.<Object, ObjectID> emptyMap());
   }

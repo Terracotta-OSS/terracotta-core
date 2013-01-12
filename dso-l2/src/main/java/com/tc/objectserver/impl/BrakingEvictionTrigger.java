@@ -23,7 +23,7 @@ public class BrakingEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public ServerMapEvictionContext collectEvictonCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         int size = map.getSize();
         
         Map sampled = map.getRandomSamples(Math.round(size*turns/10000f),clients);

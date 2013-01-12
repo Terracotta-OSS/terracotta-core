@@ -388,24 +388,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
  //  locked by ManagedObject checkout 
   @Override
-  public boolean startEviction() {
+  public synchronized boolean startEviction() {
     if ( this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
         return false;
     }
     this.evictionStatus = EvictionStatus.INITIATED;
     return true;
   }    
-  
+     
   @Override
-  public boolean isEvicting() {
+  public synchronized boolean isEvicting() {
       return this.evictionStatus != EvictionStatus.NOT_INITIATED;
   }
  //  locked by ManagedObject checkout 
   @Override
-  public void evictionCompleted() {
+  public synchronized void evictionCompleted() {
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
-
+ 
   @Override
   public Map<Object, ObjectID> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
       if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {

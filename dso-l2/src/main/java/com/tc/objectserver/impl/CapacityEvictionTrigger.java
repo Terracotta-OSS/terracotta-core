@@ -5,7 +5,6 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
-import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
@@ -27,21 +26,26 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private int clientSetCount = 0;
     private int max = 0;
     private int size = 0;
-    private final ServerMapEvictionManager mgr;
     private ClientObjectReferenceSet clientSet;
+    private boolean repeat = false;
+    private boolean restart = false;
+    private boolean waitForClient = false;
 
-    public CapacityEvictionTrigger(ServerMapEvictionManager mgr, ObjectID oid) {
+    public CapacityEvictionTrigger( ObjectID oid) {
         super(oid);
-        this.mgr = mgr;
     }
 
     @Override
     public boolean startEviction(EvictableMap map) {
   //  capacity eviction ignores underlying strategy b/c map.startEviction has already been called
-        if ( !map.isEvicting() ) {
-            throw new AssertionError("map is not in evicting state");
-        }
+        if ( restart ) {
+            if ( !map.startEviction() ) {
+                return false;
+            }
+        } 
         
+        repeat = false;
+        restart = true;
         max = map.getMaxTotalCount();
         size = map.getSize();
         if ( max > 0 && size > max ) {
@@ -59,86 +63,71 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     }
             
     @Override
-    public ServerMapEvictionContext collectEvictonCandidates(final int maxParam, String className, final EvictableMap map, final ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(final int maxParam, String className, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int sample = boundsCheckSampleSize(size - maxParam);
 
         if ( maxParam == 0 ) {
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
-
+        
         Map samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,ObjectID>emptyMap();
 
         count = samples.size();
  // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
         if ( count < size - maxParam ) {
-            clients.addReferenceSetChangeListener(this);
-            clientSetCount = clients.size();
-            clientSet = clients;
+            repeat = true;
+            if ( count == 0 ) {
+                restart = false;
+                if ( clientSet == null ) {
+                    clients.addReferenceSetChangeListener(this);
+                    clientSetCount = clients.size();
+                    clientSet = clients;
+                }
+                samples = Collections.<Object,ObjectID>emptyMap();
+            }
         }
         
         return createEvictionContext(className, samples);
     } 
     
+    private synchronized void waitForClient() {
+        waitForClient = true;
+        while ( clientSet != null && waitForClient ) {
+            try {
+                this.wait();
+            } catch ( InterruptedException ie ) {
+                throw new AssertionError(ie);
+            }
+        }
+    }
+    
+    private synchronized void clientUpdated() {
+        waitForClient = false;
+        this.notify();
+    }
+
+    @Override
+    public boolean isValid() {
+        if ( repeat ) {
+            if ( clientSet != null ) {
+                waitForClient();
+            }
+            return true;
+        }
+        return super.isValid();
+    }
+
+    @Override
+    public void completeEviction(EvictableMap map) {
+        if ( restart ) {
+            super.completeEviction(map);
+        }
+    }
+
      @Override
     public void notifyReferenceSetChanged() {
-       mgr.scheduleEvictionTrigger(new AbstractEvictionTrigger(getId()) {
-            private int sampleCount = 0;
-            private int sizeInternal = 0;
-            private int maxInternal = 0;
-            private boolean wasOver = true;
-            private int clientSetCountInternal = 0;
-
-            @Override
-            public boolean startEviction(EvictableMap map) {
-                sizeInternal = map.getSize();
-                maxInternal = map.getMaxTotalCount();
-                boolean run = true;
-                if ( sizeInternal <= maxInternal ) {
-                    wasOver = false;
-                    run = false;
-                } else {
-                    run = super.startEviction(map);
-                }
-                if ( !run ) {
-                    // someone else will take care of running the eviction
-                    clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
-                }
-                return run;
-            }
-            
-            @Override
-            public ServerMapEvictionContext collectEvictonCandidates(int maxParam, String className, EvictableMap map, ClientObjectReferenceSet clients) {
-                final int grab = boundsCheckSampleSize(sizeInternal - maxParam);
-                Map<Object,ObjectID> sample = ( grab > 0 ) ?
-                    map.getRandomSamples(grab, clients) : Collections.<Object,ObjectID>emptyMap();
-
-                clientSetCountInternal = clients.size();
-                
-                sampleCount = sample.size();
-                if ( sampleCount >= sizeInternal - maxParam ) {
-                    clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
-                }
-                
-                return createEvictionContext(className, sample);
-            }
-
-            @Override
-            public String getName() {
-                return "CapacityOnClientUpdate";
-            }
-        
-            @Override
-            public String toString() {
-                return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
-                        + ", count=" + sampleCount
-                        + ", size=" + sizeInternal 
-                        + ", max=" + maxInternal 
-                        + ", clientset=" + clientSetCountInternal
-                        + ", parent=" + super.toString() 
-                        + "}";
-            }
-        });
+         clientUpdated();
     }
 
     @Override
@@ -152,6 +141,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                 + "count=" + count 
                 + ", size=" + size 
                 + ", max=" + max 
+                + ", repeat=" + repeat 
                 + ", was above capacity=" 
                 + aboveCapacity + ", client set=" 
                 + clientSetCount 

@@ -172,12 +172,7 @@ public class ServerMapEvictionEngine {
   boolean isElementBasedTTIorTTL() {
     return (ELEMENT_BASED_TTI_TTL_ENABLED);
   }
-
-  public void evict(final ObjectID oid, Map samples, final String className, final String cacheName) {
-    evictFrom(oid, Collections.unmodifiableMap(samples), className, cacheName);
-    evictionStats.entriesEvicted(oid, samples.size(), samples.size());
-  }
-
+  
   private void notifyEvictionCompletedFor(ObjectID oid) {
     final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
     if (mo == null) { return; }
@@ -189,7 +184,7 @@ public class ServerMapEvictionEngine {
       this.objectManager.releaseReadOnly(mo);
     }
   }
-
+  
   private void broadcastEvictedEntries(final ObjectID oid, final Map candidates) {
     // maybe we can batch up the broadcasts
     this.evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(oid, Collections.unmodifiableSet(candidates

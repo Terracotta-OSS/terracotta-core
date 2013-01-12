@@ -19,6 +19,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     private final ObjectID oid;
     private boolean started = false;
     private boolean  evicting = false;
+    private boolean  mapEvicting = false;
     boolean processed = false;
     private String name;
     private boolean pinned;
@@ -56,11 +57,16 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         name = map.getCacheName();
         pinned = (map.getMaxTotalCount() == 0);
         startTime = System.currentTimeMillis();
+        mapEvicting = map.isEvicting();
         if ( !pinned && !map.isEvicting() && map.getSize() > 0 ) {
             return map.startEviction();
         } else {
             return false;
         }
+    }
+    
+    protected boolean isPinned() {
+        return pinned;
     }
     
     @Override
@@ -106,6 +112,11 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public int getCount() {
         return count;
     }
+    
+    @Override
+    public boolean isValid() {
+        return !started;
+    }
 
     @Override
     public String toString() {
@@ -114,7 +125,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
                 + ", count=" + count
                 + ", started=" + started
                 + ", startTime=" + startTime
+                + ", endTime=" + endTime
                 + ", processed=" + processed
+                + ", map evicting=" + mapEvicting
                 + ", evicting=" + evicting + '}';
     }
 }

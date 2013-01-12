@@ -225,8 +225,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         final Future<SampledRateCounter> run = agent.submit(new Runnable() {
             @Override
             public void run()  {
-                doEvictionOn(triggerParam);
-                count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
+                while ( triggerParam.isValid() ) {
+                    doEvictionOn(triggerParam);
+                    count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
+                } 
             }
         },count);
         print(triggerParam.getName(), run);
@@ -273,9 +275,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             // to the sink because the sink reached max capacity and blocking
             // with a checked-out object will result in a deadlock. @see DEV-5207
             triggerParam.completeEviction(ev);
-            if ( context == null && ev.isEvicting() ) {
-                throw new AssertionError(triggerParam.toString());
-            }
             this.objectManager.releaseReadOnly(mo);
             
             if (context != null) {
@@ -306,7 +305,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             max = Integer.MAX_VALUE;
         }
         
-        return triggerParam.collectEvictonCandidates(max, className, ev, clientObjectReferenceSet);
+        return triggerParam.collectEvictionCandidates(max, className, ev, clientObjectReferenceSet);
     }
 
     Future<SampledRateCounter> emergencyEviction(final boolean pre, final int blowout) {
