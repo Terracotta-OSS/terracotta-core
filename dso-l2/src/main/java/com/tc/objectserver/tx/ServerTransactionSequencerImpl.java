@@ -10,7 +10,6 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.util.Assert;
 import com.tc.util.MergableLinkedList;
-import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -157,8 +156,8 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
 
   private static final class BlockedSet {
 
-    Set<ObjectID> cause  = new ObjectIDSet();
-    Set<ObjectID> effect = new ObjectIDSet();
+    Set<ObjectID> cause  = new HashSet<ObjectID>();
+    Set<ObjectID> effect = new HashSet<ObjectID>();
 
     public boolean isBlocked(Collection<ObjectID> keys) {
       for (ObjectID o : keys) {
