@@ -23,7 +23,6 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
 
   private volatile State                state                = GC_SLEEP;
   private volatile boolean              periodicEnabled      = false;
-  private volatile boolean              inline               = false;
 
   @Override
   public synchronized boolean requestGCStart() {
@@ -65,11 +64,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
 
   @Override
   public synchronized void notifyGCComplete() {
-    if ( this.inline ) {
-        inline = false;
-    } else {
-        this.state = GC_SLEEP;
-    }
+    this.state = GC_SLEEP;
     notify();
   }
 
@@ -91,10 +86,6 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
    * since the GC state transitions happen in another thread.
    */
   private synchronized boolean requestInlineGCStart() {
-    if ( this.state == GC_DISABLED ) {
-        inline = true;
-        return true;
-    }
     if (this.state == GC_SLEEP) {
       this.state = GC_DELETE;
       return true;
@@ -125,7 +116,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
 
   @Override
   public boolean isDelete() {
-    return GC_DELETE == this.state || inline;
+    return GC_DELETE == this.state;
   }
 
   @Override

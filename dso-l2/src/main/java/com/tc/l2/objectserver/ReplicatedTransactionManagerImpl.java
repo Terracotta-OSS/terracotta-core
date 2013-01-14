@@ -239,6 +239,10 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         for (Iterator j = changes.iterator(); j.hasNext();) {
           DNA dna = (DNA) j.next();
           ObjectID id = dna.getObjectID();
+          String type = dna.getTypeName();
+          if ( type != null && !dna.getTypeName().endsWith("SerializedMapValue") ) {
+              System.out.println(dna);
+          }
           if (!dna.isDelta()) {
             // New Object
             if (existingOIDs.add(id)) {

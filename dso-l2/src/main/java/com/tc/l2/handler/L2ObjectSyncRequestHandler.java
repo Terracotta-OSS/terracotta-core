@@ -20,11 +20,16 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.impl.ObjectDNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
+import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.managedobject.ManagedObjectImpl;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
@@ -121,7 +126,15 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
         ObjectID oid = i.next();
         i.remove();
         m = objectManager.getQuietObjectByID(oid);
-        m.toDNA(out, serializer, DNAType.L2_SYNC);
+        if ( m != null ) {
+            m.toDNA(out, serializer, DNAType.L2_SYNC);
+        } else {
+            DNAWriter writer = new ObjectDNAWriterImpl(out, oid, 
+                    ManagedObjectStateStaticConfig.DELETED_CLUSTER_OBJECT.getClientClassName(), 
+                    serializer, new StorageDNAEncodingImpl(), 0l, false);
+            writer.markSectionEnd();
+            writer.finalizeHeader();
+        }
         synced.add(oid);
       } finally {
         if (m != null) {
