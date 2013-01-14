@@ -3,48 +3,47 @@
  */
 package com.terracotta.toolkit.collections.servermap.api;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.store.ToolkitStoreConfigFieldsInternal;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
+import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 public class ServerMapLocalStoreConfigParameters {
 
-  private volatile String  localStoreManagerName = ToolkitStoreConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME;
+  private volatile String  localStoreManagerName = ConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME;
   private volatile String  localStoreName        = "";
-  private volatile String  pinningStore          = ToolkitCacheConfigFields.DEFAULT_PINNING_STORE;
+  private volatile String  pinningStore          = ToolkitConfigFields.DEFAULT_PINNING_STORE;
 
-  private volatile long    maxBytesLocalHeap     = ToolkitStoreConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
-  private volatile long    maxBytesLocalOffheap  = ToolkitStoreConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
-  private volatile int     maxCountLocalHeap     = ToolkitStoreConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP;
-  private volatile boolean overflowToOffheap     = ToolkitStoreConfigFields.DEFAULT_OFFHEAP_ENABLED;
+  private volatile long    maxBytesLocalHeap     = ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
+  private volatile long    maxBytesLocalOffheap  = ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
+  private volatile int     maxCountLocalHeap     = ToolkitConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP;
+  private volatile boolean overflowToOffheap     = ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED;
 
   public ServerMapLocalStoreConfigParameters populateFrom(Configuration config, String name) {
 
     this.localStoreName = name;
 
-    if (config.hasField(ToolkitStoreConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME)) {
-      this.localStoreManagerName(config.getString(ToolkitStoreConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME));
+    if (config.hasField(ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME)) {
+      this.localStoreManagerName(config.getString(ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME));
     }
 
-    if (config.hasField(ToolkitCacheConfigFields.PINNING_STORE_FIELD_NAME)) {
-      this.pinningStore(config.getString(ToolkitCacheConfigFields.PINNING_STORE_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.PINNING_STORE_FIELD_NAME)) {
+      this.pinningStore(config.getString(ToolkitConfigFields.PINNING_STORE_FIELD_NAME));
     }
 
-    if (config.hasField(ToolkitStoreConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
-      this.maxBytesLocalHeap(config.getLong(ToolkitStoreConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
+      this.maxBytesLocalHeap(config.getLong(ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME));
     }
 
-    if (config.hasField(ToolkitStoreConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME)) {
-      this.maxBytesLocalOffheap(config.getLong(ToolkitStoreConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME)) {
+      this.maxBytesLocalOffheap(config.getLong(ToolkitConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME));
     }
 
-    if (config.hasField(ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME)) {
-      this.maxCountLocalHeap(config.getInt(ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME)) {
+      this.maxCountLocalHeap(config.getInt(ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME));
     }
 
-    if (config.hasField(ToolkitStoreConfigFields.OFFHEAP_ENABLED_FIELD_NAME)) {
-      this.overflowToOffheap(config.getBoolean(ToolkitStoreConfigFields.OFFHEAP_ENABLED_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.OFFHEAP_ENABLED_FIELD_NAME)) {
+      this.overflowToOffheap(config.getBoolean(ToolkitConfigFields.OFFHEAP_ENABLED_FIELD_NAME));
     }
     return this;
   }

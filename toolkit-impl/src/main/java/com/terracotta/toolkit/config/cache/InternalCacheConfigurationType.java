@@ -3,10 +3,44 @@
  */
 package com.terracotta.toolkit.config.cache;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields.PinningStore;
+import static org.terracotta.toolkit.config.SupportedConfigurationType.BOOLEAN;
+import static org.terracotta.toolkit.config.SupportedConfigurationType.INTEGER;
+import static org.terracotta.toolkit.config.SupportedConfigurationType.LONG;
+import static org.terracotta.toolkit.config.SupportedConfigurationType.STRING;
+import static org.terracotta.toolkit.config.SupportedConfigurationType.getTypeForObject;
+import static org.terracotta.toolkit.internal.store.ConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME;
+import static org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.COMPRESSION_ENABLED_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.CONCURRENCY_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.CONSISTENCY_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.COPY_ON_READ_ENABLED_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_COMPRESSION_ENABLED;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_CONCURRENCY;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_CONSISTENCY;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_COPY_ON_READ_ENABLED;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_LOCAL_CACHE_ENABLED;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TOTAL_COUNT;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTI_SECONDS;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_PINNING_STORE;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.OFFHEAP_ENABLED_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.PINNING_STORE_FIELD_NAME;
+
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.config.SupportedConfigurationType;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
 
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 
@@ -16,40 +50,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TOTAL_COUNT;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TTI_SECONDS;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TTL_SECONDS;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_PINNING_STORE;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.MAX_TTI_SECONDS_FIELD_NAME;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.MAX_TTL_SECONDS_FIELD_NAME;
-import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.PINNING_STORE_FIELD_NAME;
-import static org.terracotta.toolkit.config.SupportedConfigurationType.BOOLEAN;
-import static org.terracotta.toolkit.config.SupportedConfigurationType.INTEGER;
-import static org.terracotta.toolkit.config.SupportedConfigurationType.LONG;
-import static org.terracotta.toolkit.config.SupportedConfigurationType.STRING;
-import static org.terracotta.toolkit.config.SupportedConfigurationType.getTypeForObject;
-import static org.terracotta.toolkit.internal.store.ToolkitStoreConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME;
-import static org.terracotta.toolkit.internal.store.ToolkitStoreConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.COMPRESSION_ENABLED_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.CONSISTENCY_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.COPY_ON_READ_ENABLED_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_COMPRESSION_ENABLED;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_CONCURRENCY;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_CONSISTENCY;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_COPY_ON_READ_ENABLED;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_LOCAL_CACHE_ENABLED;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.DEFAULT_OFFHEAP_ENABLED;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.OFFHEAP_ENABLED_FIELD_NAME;
 
 public enum InternalCacheConfigurationType {
   MAX_BYTES_LOCAL_HEAP(LONG, MAX_BYTES_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_BYTES_LOCAL_HEAP) {

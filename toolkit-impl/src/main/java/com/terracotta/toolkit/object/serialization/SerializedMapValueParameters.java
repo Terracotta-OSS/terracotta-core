@@ -3,7 +3,8 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
+
 
 public class SerializedMapValueParameters<T> {
 
@@ -19,8 +20,7 @@ public class SerializedMapValueParameters<T> {
   }
 
   public boolean isCustomLifespan() {
-    return customTTI != ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS
-           || customTTL != ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS;
+    return customTTI != ToolkitConfigFields.NO_MAX_TTI_SECONDS || customTTL != ToolkitConfigFields.NO_MAX_TTL_SECONDS;
   }
 
   public int getCustomTTI() {

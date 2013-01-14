@@ -12,6 +12,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -27,7 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
-    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
+    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+    ToolkitStore<K, V> {
 
   private volatile AggregateServerMap<K, V>   aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;

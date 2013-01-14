@@ -5,12 +5,11 @@ package com.terracotta.toolkit.factory.impl;
 
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
@@ -239,14 +238,14 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
       configurations[i] = new UnclusteredConfiguration(config);
     }
 
-    final int overallConcurrency = config.getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME);
-    final int overallMaxTotalCount = config.getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
+    final int overallConcurrency = config.getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME);
+    final int overallMaxTotalCount = config.getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
 
     // distribute concurrency across stripes
     int[] concurrencies = distributeInStripes(overallConcurrency, numberStripes);
     if (concurrencies.length != numberStripes) { throw new AssertionError(); }
     for (int i = 0; i < concurrencies.length; i++) {
-      configurations[i].setInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME, concurrencies[i]);
+      configurations[i].setInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME, concurrencies[i]);
     }
 
     // divide maxTotalCount using overallConcurrency in case its smaller than numberStripes
@@ -255,12 +254,12 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     if (maxTotalCounts.length != divisor) { throw new AssertionError(); }
     for (int i = 0; i < configurations.length; i++) {
       if (overallMaxTotalCount < 0) {
-        configurations[i].setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, -1);
+        configurations[i].setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, -1);
       } else if (i < maxTotalCounts.length) {
-        configurations[i].setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, maxTotalCounts[i]);
+        configurations[i].setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, maxTotalCounts[i]);
       } else {
         // use 0 in case numberStripes more than overallConcurrency for non-participating stripes
-        configurations[i].setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, 0);
+        configurations[i].setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, 0);
       }
     }
 

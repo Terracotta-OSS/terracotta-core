@@ -3,10 +3,9 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
+import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,10 +24,10 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
     builder.maxTotalCount(100).concurrency(1);
     Configuration[] configs = ToolkitCacheDistributedTypeFactory.distributeConfigAmongStripes(builder.build(), 2);
     Assert.assertEquals(2, configs.length);
-    Assert.assertEquals(1, configs[0].getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME));
-    Assert.assertEquals(100, configs[0].getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
-    Assert.assertEquals(0, configs[1].getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME));
-    Assert.assertEquals(0, configs[1].getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
+    Assert.assertEquals(1, configs[0].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
+    Assert.assertEquals(100, configs[0].getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
+    Assert.assertEquals(0, configs[1].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
+    Assert.assertEquals(0, configs[1].getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
   }
 
   public void testMultiConcurrencyMultiStripe() {
@@ -37,11 +36,11 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
     Configuration[] configs = ToolkitCacheDistributedTypeFactory.distributeConfigAmongStripes(builder.build(), 5);
     Assert.assertEquals(5, configs.length);
     for (int i = 0; i < 4; i++) {
-      Assert.assertEquals(1, configs[i].getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME));
-      Assert.assertEquals(25, configs[i].getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
+      Assert.assertEquals(1, configs[i].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
+      Assert.assertEquals(25, configs[i].getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
     }
-    Assert.assertEquals(0, configs[4].getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME));
-    Assert.assertEquals(0, configs[4].getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
+    Assert.assertEquals(0, configs[4].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
+    Assert.assertEquals(0, configs[4].getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
   }
 
   public void testRandomly() {
@@ -90,8 +89,8 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
     List<Integer> concurrencies = new ArrayList<Integer>();
     List<Integer> totalCounts = new ArrayList<Integer>();
     for (Configuration config : configs) {
-      int concurrency = config.getInt(ToolkitStoreConfigFields.CONCURRENCY_FIELD_NAME);
-      int maxTotalCount = config.getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
+      int concurrency = config.getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME);
+      int maxTotalCount = config.getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
       distinctConcurrencyValuesSet.add(concurrency);
       distinctMaxTotalCountValuesSet.add(maxTotalCount);
 

@@ -4,10 +4,10 @@
 package org.terracotta.express.tests.util;
 
 import org.terracotta.toolkit.Toolkit;
+import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.store.ToolkitStore;
-import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 public class ClusteredStringBuilderFactoryImpl implements ClusteredStringBuilderFactory {
   private static final String                PREFIX                         = "__toolkit@";

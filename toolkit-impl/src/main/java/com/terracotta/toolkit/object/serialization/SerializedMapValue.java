@@ -3,9 +3,9 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.cache.TimestampedValue;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.tc.object.LocalCacheAddCallBack;
 import com.tc.object.SerializationUtil;
@@ -243,10 +243,10 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   }
 
   protected int calculateExpiresAt(final int maxTTI, final int maxTTL) {
-    if (maxTTI == ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS && maxTTL == ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS) { return NEVER_EXPIRE; }
+    if (maxTTI == ToolkitConfigFields.NO_MAX_TTI_SECONDS && maxTTL == ToolkitConfigFields.NO_MAX_TTL_SECONDS) { return NEVER_EXPIRE; }
 
     int expiresAtTTL;
-    if (maxTTL == ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS || maxTTL < 0) {
+    if (maxTTL == ToolkitConfigFields.NO_MAX_TTL_SECONDS || maxTTL < 0) {
       expiresAtTTL = NEVER_EXPIRE;
     } else {
       expiresAtTTL = getCreateTime() + maxTTL;
@@ -256,7 +256,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     }
 
     int expiresAtTTI;
-    if (maxTTI == ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS || maxTTI < 0) {
+    if (maxTTI == ToolkitConfigFields.NO_MAX_TTI_SECONDS || maxTTI < 0) {
       expiresAtTTI = NEVER_EXPIRE;
     } else {
       expiresAtTTI = lastAccessedTime + maxTTI;

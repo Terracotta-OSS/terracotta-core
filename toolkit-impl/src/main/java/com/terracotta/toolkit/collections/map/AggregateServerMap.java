@@ -8,7 +8,6 @@ import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.collections.ToolkitMap;
@@ -23,7 +22,8 @@ import org.terracotta.toolkit.search.SearchQueryResultSet;
 import org.terracotta.toolkit.search.ToolkitSearchQuery;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
@@ -344,8 +344,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void putNoReturn(K key, V value) {
-    putNoReturn(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    putNoReturn(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -495,8 +495,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     try {
       for (Map.Entry<? extends K, ? extends V> entry : batchedEntries.entrySet()) {
         int now = timeSource.nowInSeconds();
-        unlockedPutNoReturn(entry.getKey(), entry.getValue(), now, ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+        unlockedPutNoReturn(entry.getKey(), entry.getValue(), now, ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                            ToolkitConfigFields.NO_MAX_TTL_SECONDS);
       }
     } finally {
       eventualBulkOpsConcurrentLock.unlock();
@@ -643,10 +643,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void configChanged(String fieldChanged, Serializable changedValue) {
-    if (fieldChanged.equals(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+    if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
       int maxTotalCount = 0;
       for (ToolkitObjectStripe stripe : stripeObjects) {
-        maxTotalCount += stripe.getConfiguration().getInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
+        maxTotalCount += stripe.getConfiguration().getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
       }
       changedValue = maxTotalCount;
     }
@@ -665,7 +665,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       // set config changes ServerMap
       int[] values = null;
       for (int i = 0; i < this.serverMaps.length; i++) {
-        if (fieldChanged.equals(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+        if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
           if (values == null) {
             values = distributeInStripes(((Integer) changedValue).intValue(), this.serverMaps.length);
           }
@@ -676,7 +676,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
       // set the config field in ClusteredObjectStripeImpl
       for (ToolkitObjectStripe stripe : this.stripeObjects) {
-        if (fieldChanged.equals(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+        if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
           int maxTotalCount = 0;
           for (InternalToolkitMap sm : serverMaps) {
             maxTotalCount += sm.getMaxCountInCluster();
@@ -752,8 +752,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V put(K key, V value) {
-    return put(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    return put(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override

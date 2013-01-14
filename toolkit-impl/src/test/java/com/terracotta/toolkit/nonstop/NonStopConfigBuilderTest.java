@@ -3,8 +3,8 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import org.terracotta.toolkit.builder.NonStopConfigurationBuilder;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
-import org.terracotta.toolkit.nonstop.NonStopConfigurationBuilder;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;

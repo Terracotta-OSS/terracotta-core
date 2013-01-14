@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
@@ -16,8 +15,8 @@ import org.terracotta.toolkit.search.attribute.NullAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
@@ -361,7 +360,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
    * @return True if should update, false to skip it
    */
   private boolean shouldUpdateIdleTimer(final int usedAtTime, final int configTTI, int lastAccessedTime) {
-    if (configTTI == ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS) { return false; }
+    if (configTTI == ToolkitConfigFields.NO_MAX_TTI_SECONDS) { return false; }
     final int timeSinceUsed = usedAtTime - lastAccessedTime;
 
     // only bother to update TTI if we're at least half way through the TTI period
@@ -415,8 +414,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private boolean isExpirationEnabled() {
-    return maxTTISeconds != ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS
-           || maxTTLSeconds != ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS;
+    return maxTTISeconds != ToolkitConfigFields.NO_MAX_TTI_SECONDS
+           || maxTTLSeconds != ToolkitConfigFields.NO_MAX_TTL_SECONDS;
   }
 
   /**
@@ -633,8 +632,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public V put(final K key, final V value) {
-    return put(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    return put(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -734,8 +733,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public V putIfAbsent(final K key, final V value) {
     assertNotNull(value);
     throttleIfNecessary();
-    return internalPutIfAbsent(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+    return internalPutIfAbsent(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -918,8 +917,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         eventualConcurrentLock.lock();
         SerializedMapValue newSerializedMapValue = createSerializedMapValue(value,
                                                                             timeSource.nowInSeconds(),
-                                                                            ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                                                                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+                                                                            ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                                                                            ToolkitConfigFields.NO_MAX_TTL_SECONDS);
         try {
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, newSerializedMapValue);
         } finally {
@@ -939,8 +938,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null) {
-          doLogicalPut(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                       ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, MutateType.LOCKED, lockID, metaData);
+          doLogicalPut(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                       ToolkitConfigFields.NO_MAX_TTL_SECONDS, MutateType.LOCKED, lockID, metaData);
         }
         return old;
       } finally {
@@ -967,8 +966,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         try {
           SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue,
                                                                               timeSource.nowInSeconds(),
-                                                                              ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                                                                              ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
+                                                                              ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                                                                              ToolkitConfigFields.NO_MAX_TTL_SECONDS);
 
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue);
           return true;
@@ -990,8 +989,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null && old.equals(oldValue)) {
 
-          doLogicalPut(key, newValue, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                       ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, MutateType.LOCKED, lockID, metaData);
+          doLogicalPut(key, newValue, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                       ToolkitConfigFields.NO_MAX_TTL_SECONDS, MutateType.LOCKED, lockID, metaData);
           return true;
         } else {
           return false;
@@ -1275,17 +1274,17 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public void setConfigField(String name, Object value) {
-    if (name.equals(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+    if (name.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
       setMaxTotalCount(((Integer) value).intValue());
-    } else if (name.equals(ToolkitCacheConfigFields.MAX_TTI_SECONDS_FIELD_NAME)) {
+    } else if (name.equals(ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME)) {
       setMaxTTI(((Integer) value).intValue());
-    } else if (name.equals(ToolkitCacheConfigFields.MAX_TTL_SECONDS_FIELD_NAME)) {
+    } else if (name.equals(ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME)) {
       setMaxTTL(((Integer) value).intValue());
-    } else if (name.equals(ToolkitStoreConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME)) {
+    } else if (name.equals(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME)) {
       setLocalCacheEnabled(((Boolean) value).booleanValue());
-    } else if (name.equals(ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME)) {
+    } else if (name.equals(ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME)) {
       setMaxEntriesLocalHeap(((Integer) value).intValue());
-    } else if (name.equals(ToolkitStoreConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
+    } else if (name.equals(ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
       setMaxBytesLocalHeap(((Long) value).longValue());
     } else {
       throw new IllegalArgumentException("ServerMap cannot set " + " name=" + name);

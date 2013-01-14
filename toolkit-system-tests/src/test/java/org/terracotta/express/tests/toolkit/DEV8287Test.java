@@ -6,8 +6,8 @@ package org.terracotta.express.tests.toolkit;
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.toolkit.Toolkit;
+import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCache;
-import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 
 import com.tc.test.config.model.TestConfig;

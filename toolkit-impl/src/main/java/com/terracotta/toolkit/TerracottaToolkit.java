@@ -6,8 +6,9 @@ package com.terracotta.toolkit;
 import net.sf.ehcache.CacheManager;
 
 import org.terracotta.toolkit.ToolkitFeature;
+import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
+import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCache;
-import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.collections.ToolkitList;
@@ -29,8 +30,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.serialization.Serialization;
 import org.terracotta.toolkit.store.ToolkitStore;
-import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortableOperationManager;

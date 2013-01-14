@@ -14,7 +14,7 @@ import net.sf.ehcache.constructs.classloader.InternalClassLoaderAwareCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields.PinningStore;
+import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
 
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreConfig;

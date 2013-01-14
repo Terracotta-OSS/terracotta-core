@@ -3,10 +3,9 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.tc.logging.TCLogger;
 import com.tc.object.ClientObjectManager;
@@ -77,19 +76,19 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
         } else if (LOCK_TYPE_FIELDNAME.equals(physicalAction.getFieldName())) {
           lockType = LockingUtils.translate(LockLevel.fromInt((Integer) physicalAction.getObject()));
         } else if (LOCAL_CACHE_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setBoolean(ToolkitStoreConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME,
+          config.setBoolean(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME,
                             (Boolean) physicalAction.getObject());
         } else if (MAX_TTI_SECONDS_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitCacheConfigFields.MAX_TTI_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
         } else if (MAX_TTL_SECONDS_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitCacheConfigFields.MAX_TTL_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
         } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, ((Integer) physicalAction.getObject()));
         } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setBoolean(ToolkitStoreConfigFields.COMPRESSION_ENABLED_FIELD_NAME,
+          config.setBoolean(ToolkitConfigFields.COMPRESSION_ENABLED_FIELD_NAME,
                             ((Boolean) physicalAction.getObject()));
         } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setBoolean(ToolkitStoreConfigFields.COPY_ON_READ_ENABLED_FIELD_NAME,
+          config.setBoolean(ToolkitConfigFields.COPY_ON_READ_ENABLED_FIELD_NAME,
                             ((Boolean) physicalAction.getObject()));
         } else {
           throw new AssertionError("Got unexpected physical action: " + physicalAction);
@@ -109,7 +108,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
         default:
           consistency = null;
       }
-      config.setString(ToolkitStoreConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
+      config.setString(ToolkitConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
       return new ServerMap(config, name);
     } catch (final Exception e) {
       throw new RuntimeException(e);
