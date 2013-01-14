@@ -41,6 +41,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     this.references = objectFactory.getMap(oid, false);
   }
 
+  @Override
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {

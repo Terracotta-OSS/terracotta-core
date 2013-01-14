@@ -75,13 +75,13 @@ public class ServerMapEvictionEngine {
   private Sink                                evictionBroadcastSink;
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
-  private final ServerMapEvictionStatsManager evictionStats;
+//  private final ServerMapEvictionStatsManager evictionStats;
 
   public ServerMapEvictionEngine(final ObjectManager objectManager,
                                       final ServerTransactionFactory serverTransactionFactory) {
     this.objectManager = objectManager;
     this.serverTransactionFactory = serverTransactionFactory;
-    this.evictionStats = new ServerMapEvictionStatsManager();
+//    this.evictionStats = new ServerMapEvictionStatsManager();
   }
 
   public void initializeContext(final ConfigurationContext context) {

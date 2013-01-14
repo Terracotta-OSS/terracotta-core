@@ -72,7 +72,6 @@ import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
 import com.tc.util.sequence.DGCSequenceProvider;
@@ -86,7 +85,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener, PrettyPrintable {
+public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
 
   private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
 

@@ -5,9 +5,7 @@ package com.tc.objectserver.mgmt;
 
 import com.tc.object.ObjectID;
 
-import java.io.Serializable;
-
-public class LogicalManagedObjectFacade extends AbstractObjectFacade implements Serializable {
+public class LogicalManagedObjectFacade extends AbstractObjectFacade {
   private static final int MAP  = 1;
   private static final int LIST = 2;
   private static final int SET  = 3;

@@ -161,14 +161,21 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       public boolean isDetailed() {
           return detailed;
       }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((delegate == null) ? 0 : delegate.hashCode());
+      return result;
+    }
       
-      @Override
-      public boolean equals(Object o) {
-          if ( o instanceof MemoryConsumer ) {
-              return ((MemoryConsumer)o).delegate == delegate;
-          }
-          return false;
-      }
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof MemoryConsumer) { return ((MemoryConsumer) o).delegate == delegate; }
+      return false;
+    }
+      
   }
 
 }

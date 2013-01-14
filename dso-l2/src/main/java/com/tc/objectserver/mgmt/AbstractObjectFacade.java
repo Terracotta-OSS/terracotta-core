@@ -3,9 +3,8 @@
  */
 package com.tc.objectserver.mgmt;
 
-import java.io.Serializable;
 
-abstract class AbstractObjectFacade implements ManagedObjectFacade, Serializable {
+abstract class AbstractObjectFacade implements ManagedObjectFacade {
 
   AbstractObjectFacade() {
     //

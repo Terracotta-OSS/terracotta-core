@@ -11,7 +11,7 @@ public class NullMetaDataProcessingContext extends MetaDataProcessingContext {
   }
 
   @Override
-  public void processed() {
+  public synchronized void processed() {
     // no-op
   }
 

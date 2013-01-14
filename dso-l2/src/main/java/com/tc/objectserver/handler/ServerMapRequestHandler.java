@@ -6,7 +6,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapRequestType;
@@ -23,7 +22,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class ServerMapRequestHandler extends AbstractEventHandler implements EventHandler {
+public class ServerMapRequestHandler extends AbstractEventHandler {
 
   private ServerMapRequestManager serverMapRequestManager;
   private final Counter           globalGetValueRequestCounter;

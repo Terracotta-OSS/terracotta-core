@@ -5,7 +5,6 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ValidateObjectsRequestContext;
@@ -15,7 +14,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
 
-public class ValidateObjectsHandler extends AbstractEventHandler implements EventHandler {
+public class ValidateObjectsHandler extends AbstractEventHandler {
 
   private final InvalidateObjectManager invalidateObjMgr;
   private final PersistentManagedObjectStore      objectStore;

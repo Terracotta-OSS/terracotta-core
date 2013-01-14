@@ -6,14 +6,13 @@ package com.tc.objectserver.mgmt;
 
 import com.tc.object.ObjectID;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements Serializable {
+public class PhysicalManagedObjectFacade extends AbstractObjectFacade {
   private static final String[] EMPTY_STRING_ARRAY = new String[] {};
 
   private final String          className;

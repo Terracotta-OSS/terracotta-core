@@ -650,7 +650,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private static class TestBroadcastMessage implements TCMessage, BroadcastTransactionMessage {
+  private static class TestBroadcastMessage implements BroadcastTransactionMessage {
 
     @Override
     public void dehydrate() {

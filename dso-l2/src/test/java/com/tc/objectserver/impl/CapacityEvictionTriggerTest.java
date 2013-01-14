@@ -9,7 +9,6 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
 
 /**

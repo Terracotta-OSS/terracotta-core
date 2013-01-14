@@ -56,10 +56,9 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     assertEquals(200, listener.count);
   }
 
-  private static final class OperationCountChangeEventListener {
+  public static final class OperationCountChangeEventListener {
     private int count;
 
-    @SuppressWarnings("unused")
     @Subscribe
     public void recordOperationCountIncrementEvent(Events.OperationCountIncrementEvent event) {
       this.count++;

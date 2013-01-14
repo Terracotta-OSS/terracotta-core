@@ -38,7 +38,7 @@ public class GarbageCollectorThreadTest extends TestCase {
     try {
       Thread.sleep(TEST_DURATION_MILLIS);
     } catch (InterruptedException e) {
-      new AssertionError(e);
+      throw new AssertionError(e);
     }
 
     garbageCollectorThread.requestStop();
@@ -61,7 +61,7 @@ public class GarbageCollectorThreadTest extends TestCase {
     try {
       Thread.sleep(TEST_DURATION_MILLIS);
     } catch (InterruptedException e) {
-      new AssertionError(e);
+      throw new AssertionError(e);
     }
 
     garbageCollectorThread.requestStop();
@@ -84,7 +84,7 @@ public class GarbageCollectorThreadTest extends TestCase {
     try {
       Thread.sleep(TEST_DURATION_MILLIS);
     } catch (InterruptedException e) {
-      new AssertionError(e);
+      throw new AssertionError(e);
     }
 
     garbageCollectorThread.requestStop();

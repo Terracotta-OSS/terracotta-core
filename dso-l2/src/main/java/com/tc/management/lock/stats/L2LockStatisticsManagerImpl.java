@@ -113,7 +113,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   @Override
-  public void setLockStatisticsEnabled(boolean statEnable) {
+  public synchronized void setLockStatisticsEnabled(boolean statEnable) {
     super.setLockStatisticsEnabled(statEnable);
 
     sendLockStatisticsEnableDisableMessageIfNeeded(lockStatConfig.getTraceDepth(), lockStatConfig.getGatherInterval());

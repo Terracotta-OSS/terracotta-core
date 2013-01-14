@@ -145,7 +145,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
   }
 
-  private static class MBeanRegistrationFilter extends MBeanServerNotificationFilter implements java.io.Serializable {
+  private static class MBeanRegistrationFilter extends MBeanServerNotificationFilter {
     static final long        serialVersionUID = 42L;
 
     private final ObjectName pattern;
@@ -155,7 +155,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
 
     @Override
-    public boolean isNotificationEnabled(Notification notif) {
+    public synchronized boolean isNotificationEnabled(Notification notif) {
       if (notif instanceof MBeanServerNotification) {
         MBeanServerNotification mbsn = (MBeanServerNotification) notif;
         return pattern.apply(mbsn.getMBeanName());

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class TestTickerToken extends TickerTokenImpl implements TickerToken {
+public class TestTickerToken extends TickerTokenImpl {
 
   public static final String   DIRTY_STATE   = "dirty_state";
 

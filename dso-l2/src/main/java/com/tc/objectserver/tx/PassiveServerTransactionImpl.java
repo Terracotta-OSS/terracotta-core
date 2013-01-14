@@ -19,11 +19,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PassiveServerTransactionImpl extends ServerTransactionImpl implements ServerTransaction {
+public class PassiveServerTransactionImpl extends ServerTransactionImpl {
 
   public PassiveServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                       NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
-                                      TxnType transactionType, Collection notifies, DmiDescriptor[] dmis, 
+                                      TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
                                       MetaDataReader [] metaDataReaders, int numApplicationTxn, long[] highWaterMarks) {
     super(batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis,
           metaDataReaders, numApplicationTxn, highWaterMarks);

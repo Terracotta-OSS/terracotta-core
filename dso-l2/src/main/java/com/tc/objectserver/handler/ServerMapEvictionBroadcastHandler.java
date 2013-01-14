@@ -6,7 +6,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessage;
@@ -24,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler implements EventHandler {
+public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
 
   private static final int     EVICTION_BROADCAST_MAX_KEYS = TCPropertiesImpl
                                                                .getProperties()

@@ -3,13 +3,12 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
-class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventContext {
+class BaseSearchEventContext implements SearchEventContext {
 
   private static final int                INDEX_PER_CACHE     = TCPropertiesImpl
                                                                   .getProperties()

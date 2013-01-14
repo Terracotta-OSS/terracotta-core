@@ -21,13 +21,12 @@ import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable {
+public class L2HADisabledCooridinator implements L2Coordinator {
 
   private final GroupManager                  groupManager;
   private final StateManager                  stateMgr;

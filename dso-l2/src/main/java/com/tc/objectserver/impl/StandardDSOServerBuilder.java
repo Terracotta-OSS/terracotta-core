@@ -155,7 +155,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  @SuppressWarnings("unused")
   public IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
       throws IOException {
     return new NullIndexHACoordinator();

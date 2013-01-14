@@ -6,13 +6,12 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandler;
 import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.context.EntryForKeyResponseContext;
 import com.tc.objectserver.context.ServerMapMissingObjectResponseContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
-public class RespondToServerMapRequestHandler extends AbstractEventHandler implements EventHandler {
+public class RespondToServerMapRequestHandler extends AbstractEventHandler {
 
   private ServerMapRequestManager serverMapRequestManager;
 

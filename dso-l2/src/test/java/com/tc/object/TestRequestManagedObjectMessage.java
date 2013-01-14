@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -13,7 +12,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
 
-public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage, EventContext {
+public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage {
 
   private ObjectIDSet removed;
   private ObjectIDSet objectIDs;

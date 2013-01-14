@@ -47,4 +47,9 @@ public abstract class AbstractManagedObjectState implements ManagedObjectState {
 
   protected abstract boolean basicEquals(AbstractManagedObjectState o);
 
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
 }

@@ -62,6 +62,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   public void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo includeIDs, final int method,
                                  final Object[] params) {
     switch (method) {

@@ -40,7 +40,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
 
   public void testServerIdentifierWeightGenerator() {
     try {
-      new ServerIdentifierWeightGenerator("XXX", 0);
+      allocate();
       Assert.fail("Illegal hostname shall throw exception");
     } catch (TCRuntimeException e) {
       // expected
@@ -50,6 +50,10 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
     WeightGenerator wg2 = new ServerIdentifierWeightGenerator("localhost", 11);
     Assert.assertTrue(wg2.getWeight() > wg1.getWeight());
 
+  }
+
+  protected ServerIdentifierWeightGenerator allocate() {
+    return new ServerIdentifierWeightGenerator("XXX", 0);
   }
 
   public void testZapNodeProcessorWeightGeneratorFactory() {
@@ -229,7 +233,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
 
   private static class TestWGServerTransactionManager extends TestServerTransactionManager {
     private boolean    isActive          = false;
-    private AtomicLong numOfTransactions = new AtomicLong(0);
+    private final AtomicLong numOfTransactions = new AtomicLong(0);
 
     @Override
     public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {

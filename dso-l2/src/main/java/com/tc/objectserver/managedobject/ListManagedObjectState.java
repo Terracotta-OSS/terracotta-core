@@ -36,6 +36,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     references = new ArrayList(1);
   }
 
+  @Override
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params)
       throws AssertionError {

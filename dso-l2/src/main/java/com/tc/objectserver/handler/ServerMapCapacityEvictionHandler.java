@@ -5,13 +5,12 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.impl.CapacityEvictionTrigger;
 
-public class ServerMapCapacityEvictionHandler extends AbstractEventHandler implements EventHandler {
+public class ServerMapCapacityEvictionHandler extends AbstractEventHandler {
 
   private final ServerMapEvictionManager serverMapEvictor;
 

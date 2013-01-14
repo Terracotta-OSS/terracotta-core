@@ -6,7 +6,6 @@ package com.tc.util.tickertoken;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.io.TCSerializable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +13,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public abstract class TickerTokenImpl implements TickerToken, TCSerializable {
+public abstract class TickerTokenImpl implements TickerToken {
 
   protected int primaryID;
   protected int startTick;
