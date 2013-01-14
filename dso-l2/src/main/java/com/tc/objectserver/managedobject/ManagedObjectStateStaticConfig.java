@@ -30,11 +30,6 @@ public enum ManagedObjectStateStaticConfig {
    */
   SERIALIZED_CLUSTER_OBJECT(ToolkitTypeNames.SERIALIZED_CLUSTERED_OBJECT_IMPL,
       Factory.SERIALIZED_CLUSTERED_OBJECT_FACTORY),
-    /**
-   * Toolkit SerializedClusteredObject type - explicit type
-   */
-  DELETED_CLUSTER_OBJECT(ToolkitTypeNames.DELETED_CLUSTERED_OBJECT_IMPL,
-      Factory.DELETED_CLUSTERED_OBJECT_FACTORY),
   /**
    * Toolkit Serializer map - reuses map managed object state
    */
@@ -172,20 +167,6 @@ public enum ManagedObjectStateStaticConfig {
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             PersistentObjectFactory objectFactory) {
         return new SerializedClusterObjectState(classId);
-      }
-
-    },
-    DELETED_CLUSTERED_OBJECT_FACTORY() {
-
-      @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory) throws IOException {
-        return DeletedClusterObjectState.readFrom(objectInput);
-      }
-
-      @Override
-      public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentObjectFactory objectFactory) {
-        return new DeletedClusterObjectState(classId);
       }
 
     },
@@ -344,7 +325,6 @@ public enum ManagedObjectStateStaticConfig {
     public final static String TOOLKIT_TYPE_ROOT_IMPL                    = defineConstant("com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
     public final static String TOOLKIT_LIST_IMPL                         = defineConstant("com.terracotta.toolkit.collections.ToolkitListImpl");
     public final static String SERIALIZED_CLUSTERED_OBJECT_IMPL          = defineConstant("com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl");
-    public final static String DELETED_CLUSTERED_OBJECT_IMPL             = defineConstant("com.terracotta.toolkit.object.serialization.DeletedClusterObjectImpl");
     public final static String SERIALIZER_MAP_IMPL                       = defineConstant("com.terracotta.toolkit.object.serialization.SerializerMapImpl");
     public final static String TOOLKIT_OBJECT_STRIPE_IMPL                = defineConstant("com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     public final static String SERVER_MAP_TYPE                           = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");

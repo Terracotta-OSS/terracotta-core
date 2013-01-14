@@ -8,7 +8,6 @@ import org.terracotta.corestorage.StorageManager;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.managedobject.DeletedClusterObjectState;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.ObjectIDSequence;
 
@@ -74,11 +73,7 @@ public class ManagedObjectPersistor  {
   }
 
   public void saveObject(Transaction tx, ManagedObject managedObject) {
-      if ( managedObject.getManagedObjectState() instanceof DeletedClusterObjectState ) {
-          System.out.println(objectMap.size());
-      } else {
-        objectMap.put(managedObject.getID(), managedObject, managedObject.getManagedObjectState().getType());
-      }
+    objectMap.put(managedObject.getID(), managedObject, managedObject.getManagedObjectState().getType());
     managedObject.setIsDirty(false);
   }
 

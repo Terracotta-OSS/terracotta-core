@@ -253,7 +253,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    */
   @Override
   public ManagedObject getQuietObjectByID(ObjectID id) {
-    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
+    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
   }
 
   @Override
@@ -508,48 +508,44 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
-  private Set<ObjectID> removeAllObjectsByID(final Set<ObjectID> toDelete) {
+  private void removeAllObjectsByID(final Set<ObjectID> toDelete) {
     Set<ObjectID> referenced = null;
     this.lock.readLock().lock();
     try {
       for (final ObjectID id : toDelete) {
-//        ManagedObjectReference ref = this.references.get(id);
-             removeReferenceAndDestroyIfNecessary(id);
-//       if (ref != null) {
-//          if (markReferenced(ref)) {
-//            removeReferenceAndDestroyIfNecessary(id);
-//            unmarkReferenced(ref);
-//            makeUnBlocked(id);
-//
-//          } else {
-//              System.out.println(ref.getObjectID());
-//              System.out.println(ref);
-//            if (logger.isDebugEnabled()) {
-//              // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
-//              // looking up this object or with eventual consistency another node is looking up/faulting this object.
-//              logger.debug("Reference : " + ref + " is referenced by someone. So waiting to remove !");
-//            }
-//            if (referenced == null) {
-//              referenced = new ObjectIDSet();
-//            }
-//            referenced.add(id);
-//            continue;
-//          }
-//        }
+        ManagedObjectReference ref = this.references.get(id);
+        if (ref != null) {
+          if (markReferenced(ref)) {
+            removeReferenceAndDestroyIfNecessary(id);
+            unmarkReferenced(ref);
+            makeUnBlocked(id);
+
+          } else {
+            if (logger.isDebugEnabled()) {
+              // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
+              // looking up this object or with eventual consistency another node is looking up/faulting this object.
+              logger.debug("Reference : " + ref + " is referenced by someone. So waiting to remove !");
+            }
+            if (referenced == null) {
+              referenced = new ObjectIDSet();
+            }
+            referenced.add(id);
+            continue;
+          }
+        }
         this.noReferencesIDStore.clearFromNoReferencesStore(id);
-//        if (ref != null) {
-//          if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
-//        }
+        if (ref != null) {
+          if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
+        }
       }
     } finally {
       this.lock.readLock().unlock();
     }
-//    if (referenced != null) {
-//      logger.warn("References : " + referenced + " are referenced by someone. So waiting to remove !");
-//      lockAndwait(1000, TimeUnit.MILLISECONDS);
-//      removeAllObjectsByID(referenced);
-//    }
-    return referenced;
+    if (referenced != null) {
+      logger.warn("References : " + referenced + " are referenced by someone. So waiting to remove !");
+      lockAndwait(1000, TimeUnit.MILLISECONDS);
+      removeAllObjectsByID(referenced);
+    }
   }
 
   private void lockAndwait(int time, TimeUnit unit) {
@@ -656,7 +652,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         mor.setRemoveOnRelease(false);
       } else {
         final Object removed = this.removeReferenceAndDestroyIfNecessary(mor.getObjectID());
-//        if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
+        if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
       }
     }
   }
@@ -729,17 +725,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public void deleteObjects(final Set<ObjectID> toDelete) {
-//    Assert.assertTrue(this.collector.isDelete());
+    Assert.assertTrue(this.collector.isDelete());
     Transaction t = persistenceTransactionProvider.newTransaction();
-    Set<ObjectID> notDeleted = removeAllObjectsByID(toDelete);
-    int count = 0;
-    while ( notDeleted != null && count++ < 5 ) {
-        notDeleted = removeAllObjectsByID(notDeleted);
-    }
-    if ( notDeleted != null ) {
-        System.out.println(notDeleted);
-        toDelete.removeAll(notDeleted);
-    }
+    removeAllObjectsByID(toDelete);
     this.objectStore.removeAllObjectsByID(toDelete);
     t.commit();
     // Process pending, since we disabled process pending while GC pause was initiate.

@@ -35,7 +35,6 @@ import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.BitTreeObjectIDSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
@@ -347,9 +346,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
       final DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       final ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
-      if ( mo == null ) {
-          continue;
-      }
       mo.apply(change, txnID, applyInfo, instanceMonitor, !active);
       if ((this.broadcastStatsLoggingEnabled || this.objectStatsRecorder.getBroadcastDebug())
           && (orgDNA instanceof DNAImpl)) {
@@ -406,7 +402,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
                      final Collection<ServerTransactionID> appliedServerTransactionIDs,
                      final SortedSet<ObjectID> deletedObjects) {
     this.objectManager.releaseAll(objects);
-    this.objectManager.deleteObjects(deletedObjects);
+    this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
     if (this.commitLoggingEnabled) {

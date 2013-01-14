@@ -183,11 +183,10 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     for (ObjectID oid : oids) {
       ManagedObject mo = objects.remove(oid);
       if (mo == null) {
-          continue;
-//        dumpToLogger();
-//        log("NULL !! " + oid + " not found ! " + oids);
-//        log("Map contains " + objects);
-//        throw new AssertionError("Object is NULL !! : " + oid);
+        dumpToLogger();
+        log("NULL !! " + oid + " not found ! " + oids);
+        log("Map contains " + objects);
+        throw new AssertionError("Object is NULL !! : " + oid);
       }
       map.put(oid, mo);
     }
@@ -287,7 +286,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     @Override
     public synchronized void setResults(ObjectManagerLookupResults results) {
       this.lookedUpObjects = results.getObjects();
-//      assertNoMissingObjects(results.getMissingObjectIDs());
+      assertNoMissingObjects(results.getMissingObjectIDs());
       this.resultsSet = true;
       if (this.pending) {
         TransactionalObjectManagerImpl.this.addProcessedPending(this);
