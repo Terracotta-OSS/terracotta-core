@@ -118,11 +118,13 @@ public class ConfigHelper {
     l2sConfig.setRestartable(testConfig.getRestartable());
 
     // set DGC props
-    GarbageCollectionConfigBuilder gc = new GarbageCollectionConfigBuilder();
-    gc.setGCEnabled(testConfig.isDgcEnabled());
-    gc.setGCInterval(testConfig.getDgcIntervalInSec());
-    gc.setGCVerbose(testConfig.getDgcVerbose());
-    l2sConfig.setGarbageCollection(gc);
+    if (testConfig.isDgcEnabled() != null) {
+      GarbageCollectionConfigBuilder gc = new GarbageCollectionConfigBuilder();
+      gc.setGCEnabled(testConfig.isDgcEnabled());
+      gc.setGCInterval(testConfig.getDgcIntervalInSec());
+      gc.setGCVerbose(testConfig.getDgcVerbose());
+      l2sConfig.setGarbageCollection(gc);
+    }
 
     return l2sConfig;
   }

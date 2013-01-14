@@ -21,7 +21,7 @@ public class TestConfig {
   private final Map<String, String>                  tcPropertiesMap;
   private boolean                                    isStandAloneTest        = false;
   private Boolean                                    restartZappedL2;
-  private boolean                                    dgcEnabled              = false;
+  private Boolean                                    dgcEnabled              = null; // 'null' means gc configuration is omitted
   private int                                        dgcIntervalInSec        = 3600;
   private boolean                                    dgcVerbose              = false;
   private boolean                                    restartable             = false;
@@ -252,11 +252,11 @@ public class TestConfig {
     this.clientReconnectWindow = clientReconnectWindow;
   }
 
-  public void setDgcEnabled(boolean b) {
+  public void setDgcEnabled(Boolean b) {
     this.dgcEnabled = b;
   }
 
-  public boolean isDgcEnabled() {
+  public Boolean isDgcEnabled() {
     return this.dgcEnabled;
   }
 
