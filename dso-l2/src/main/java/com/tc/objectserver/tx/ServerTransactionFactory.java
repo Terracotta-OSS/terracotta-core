@@ -20,6 +20,7 @@ import java.util.Map;
 public interface ServerTransactionFactory {
 
   public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
+                                                   boolean isEviction,
                                                    LockID[] locks, NodeID source, List dnas,
                                                    ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
                                                    List notifies, DmiDescriptor[] dmis, MetaDataReader [] metaDataReaders,

@@ -118,6 +118,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     final int numApplictionTxn = this.in.readInt();
 
     final SequenceID sequenceID = new SequenceID(this.in.readLong());
+    boolean isEviction = this.in.readBoolean();
 
     final int numLocks = this.in.readInt();
     final LockID[] locks = new LockID[numLocks];
@@ -180,7 +181,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
     this.txnToRead--;
     MetaDataReader [] metaDataReadersArr = metaDataReaders.toArray(new MetaDataReader[metaDataReaders.size()]);
-    return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, locks, this.source, dnas,
+    return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, isEviction, locks, this.source,
+                                                   dnas,
                                                    this.serializer, newRoots, txnType, notifies, dmis,
                                                    metaDataReadersArr, numApplictionTxn, highwaterMarks);
   }

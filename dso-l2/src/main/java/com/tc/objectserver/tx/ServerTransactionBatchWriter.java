@@ -68,6 +68,7 @@ public class ServerTransactionBatchWriter {
     out.writeByte(txn.getTransactionType().getType());
     out.writeInt(txn.getNumApplicationTxn());
     out.writeLong(txn.getClientSequenceID().toLong());
+    out.writeBoolean(txn.isEviction());
 
     writeLockIDs(out, txn.getLockIDs());
     writeRootsMap(out, txn.getNewRoots());
