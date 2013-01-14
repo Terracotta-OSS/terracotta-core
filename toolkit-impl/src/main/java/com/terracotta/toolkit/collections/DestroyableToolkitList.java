@@ -8,7 +8,6 @@ import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
-import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
@@ -49,9 +48,12 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void rejoinCompleted() {
     if (!isDestroyed()) {
-      ToolkitListImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.LIST, null);
-      Preconditions.checkNotNull(afterRejoin);
-      this.list = afterRejoin;
+      ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.LIST, null);
+      if (afterRejoin == null) {
+        applyDestroy();
+      } else {
+        this.list = afterRejoin;
+      }
     }
   }
 

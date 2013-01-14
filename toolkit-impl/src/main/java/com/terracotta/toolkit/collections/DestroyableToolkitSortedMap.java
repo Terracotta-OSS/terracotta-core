@@ -7,7 +7,6 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
-import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSortedMap;
@@ -46,16 +45,19 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void rejoinStarted() {
-    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
+    this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitSortedMap.class);
     status.incrementRejoinCount();
   }
 
   @Override
   public void rejoinCompleted() {
     if (!isDestroyed()) {
-      ToolkitSortedMapImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.SORTED_MAP, null);
-      Preconditions.checkNotNull(afterRejoin);
-      this.map = afterRejoin;
+      ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.SORTED_MAP, null);
+      if (afterRejoin == null) {
+        applyDestroy();
+      } else {
+        this.map = afterRejoin;
+      }
     }
   }
 

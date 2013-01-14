@@ -108,19 +108,16 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   }
 
   @Override
-  public ToolkitObjectStripe<S>[] lookupOrCreateStripeObjects(final String name, final ToolkitObjectType type,
+  public ToolkitObjectStripe<S>[] lookupStripeObjects(final String name, final ToolkitObjectType type,
                                                               Configuration config) {
     lock(type, name);
     try {
-      final ToolkitObjectStripe<S>[] stripeObjects;
+      ToolkitObjectStripe<S>[] stripeObjects = null;
       // check with first group
       if (roots[0].getClusteredObject(name) != null) {
         // this may be a problem, if the ACTIVE L2 of the rest of groups were fresh/clean L2's but not the
         // first group's active L2
         stripeObjects = lookupStripeObjects(name);
-      } else {
-        // need to create stripe objects
-        stripeObjects = createStripeObjects(name, config);
       }
       return stripeObjects;
     } finally {

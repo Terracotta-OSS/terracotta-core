@@ -8,7 +8,6 @@ import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 
-import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
@@ -46,11 +45,14 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
   @Override
   public void rejoinCompleted() {
     if (!isDestroyed()) {
-      ToolkitNotifierImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.NOTIFIER, null);
-      Preconditions.checkNotNull(afterRejoin);
-      this.notifier = afterRejoin;
-      if (listeners.size() > 0) {
-        notifier.addNotificationListener(this);
+      ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.NOTIFIER, null);
+      if (afterRejoin == null) {
+        this.notifier = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitNotifier.class);
+      } else {
+        this.notifier = afterRejoin;
+        if (listeners.size() > 0) {
+          notifier.addNotificationListener(this);
+        }
       }
     }
   }

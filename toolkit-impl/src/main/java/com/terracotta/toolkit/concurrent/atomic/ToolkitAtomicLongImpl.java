@@ -60,18 +60,7 @@ public class ToolkitAtomicLongImpl implements ToolkitAtomicLong, RejoinCallback 
 
   private ToolkitAtomicLongState getInternalStateOrNullIfDestroyed() {
     ToolkitAtomicLongState state = atomicLongs.get(name);
-    if (state == null) {
-      if (currentRejoinCount.get() != status.getCurrentRejoinCount()) {
-        // rejoin happened
-        currentRejoinCount.set(status.getCurrentRejoinCount());
-        state = new ToolkitAtomicLongState(longIdGenerator.getId(), new Long(0));
-        atomicLongs.put(name, state);
-        return state;
-      } else {
-        // no state found, rejoin also didn't happen
-        return null;
-      }
-    } else if (state.getUid() != uid) {
+    if (state != null && state.getUid() != uid) {
       // state found, but created with different uid -> destroyed
       return null;
     } else {

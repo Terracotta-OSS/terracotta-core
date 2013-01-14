@@ -10,5 +10,5 @@ import com.terracotta.toolkit.object.TCToolkitObject;
 
 public interface IsolatedClusteredObjectLookup<S extends TCToolkitObject> {
 
-  S lookupOrCreateClusteredObject(String name, ToolkitObjectType type, Configuration config);
+  S lookupClusteredObject(String name, ToolkitObjectType type, Configuration config);
 }

@@ -27,14 +27,12 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
   private final ToolkitIDGenerator                        longIdGenerator;
   private final ToolkitSubtypeStatusImpl                  status;
   private final AtomicInteger                             currentRejoinCount = new AtomicInteger();
-  private final ToolkitIDGenerator                        barrierIdGenerator;
 
   public ToolkitBarrierImpl(String name, int parties, ToolkitStore<String, ToolkitBarrierState> clusteredMap,
                             ToolkitIDGenerator barrierIdGenerator) {
     this.barriers = clusteredMap;
     this.name = name;
     this.parties = parties;
-    this.barrierIdGenerator = barrierIdGenerator;
     lock = barriers.createLockForKey(name).writeLock();
     ToolkitBarrierState state = clusteredMap.get(name);
     if (state == null) {
@@ -64,18 +62,7 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
 
   private ToolkitBarrierState getInternalStateOrNullIfDestroyed() {
     ToolkitBarrierState state = barriers.get(name);
-    if (state == null) {
-      if (currentRejoinCount.get() != status.getCurrentRejoinCount()) {
-        // rejoin happened
-        currentRejoinCount.set(status.getCurrentRejoinCount());
-        state = new ToolkitBarrierState(name, parties, 0, false, barrierIdGenerator.getId());
-        barriers.put(name, state);
-        return state;
-      } else {
-        // no state found, rejoin also didn't happen
-        return null;
-      }
-    } else if (state.getUid() != uid) {
+    if (state != null && state.getUid() != uid) {
       // state found, but created with different uid -> destroyed
       return null;
     } else {

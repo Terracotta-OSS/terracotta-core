@@ -147,17 +147,8 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   }
 
   @Override
-  public S lookupOrCreateClusteredObject(String name, ToolkitObjectType type, Configuration config) {
-    S rv = getToolkitTypeRoot(name).getClusteredObject(name);
-    if (rv != null) return rv;
-    lock(type, name);
-    try {
-      rv = isolatedTypeFactory.createTCClusteredObject(config);
-      getToolkitTypeRoot(name).addClusteredObject(name, rv);
-      return rv;
-    } finally {
-      unlock(type, name);
-    }
+  public S lookupClusteredObject(String name, ToolkitObjectType type, Configuration config) {
+    return getToolkitTypeRoot(name).getClusteredObject(name);
   }
 
   @Override

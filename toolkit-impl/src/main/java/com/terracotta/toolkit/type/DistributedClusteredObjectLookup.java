@@ -11,6 +11,6 @@ import com.terracotta.toolkit.object.ToolkitObjectStripe;
 
 public interface DistributedClusteredObjectLookup<S extends TCToolkitObject> {
 
-  ToolkitObjectStripe<S>[] lookupOrCreateStripeObjects(String name, ToolkitObjectType type, Configuration config);
+  ToolkitObjectStripe<S>[] lookupStripeObjects(String name, ToolkitObjectType type, Configuration config);
 
 }

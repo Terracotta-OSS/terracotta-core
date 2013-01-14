@@ -7,7 +7,6 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
-import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperCollection;
 import com.terracotta.toolkit.collections.map.SubTypeWrapperSet;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
@@ -50,9 +49,12 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinCompleted() {
     if (!isDestroyed()) {
-      ToolkitMapImpl afterRejoin = lookup.lookupOrCreateClusteredObject(name, ToolkitObjectType.MAP, null);
-      Preconditions.checkNotNull(afterRejoin);
-      this.map = afterRejoin;
+      ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.MAP, null);
+      if (afterRejoin == null) {
+        applyDestroy();
+      } else {
+        this.map = afterRejoin;
+      }
     }
   }
 

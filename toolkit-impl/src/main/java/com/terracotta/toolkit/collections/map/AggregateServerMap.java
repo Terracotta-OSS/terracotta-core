@@ -79,42 +79,43 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity {
-  private static final TCLogger                                    LOGGER                               = TCLogging
-                                                                                                            .getLogger(AggregateServerMap.class);
-  private static final int                                         KB                                   = 1024;
-  private static final String                                      EHCACHE_BULKOPS_MAX_KB_SIZE_PROPERTY = "ehcache.bulkOps.maxKBSize";
-  private static final int                                         DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE  = KB;
+  private static final TCLogger                                            LOGGER                               = TCLogging
+                                                                                                                    .getLogger(AggregateServerMap.class);
+  private static final int                                                 KB                                   = 1024;
+  private static final String                                              EHCACHE_BULKOPS_MAX_KB_SIZE_PROPERTY = "ehcache.bulkOps.maxKBSize";
+  private static final int                                                 DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE  = KB;
 
-  public static final int                                          DEFAULT_MAX_SIZEOF_DEPTH             = 1000;
+  public static final int                                                  DEFAULT_MAX_SIZEOF_DEPTH             = 1000;
 
-  private static final String                                      EHCACHE_GETALL_BATCH_SIZE_PROPERTY   = "ehcache.getAll.batchSize";
-  private static final int                                         DEFAULT_GETALL_BATCH_SIZE            = 1000;
-  private final static String                                      CONFIG_CHANGE_LOCK_ID                = "__tc_config_change_lock";
-  private final static List<ToolkitObjectType>                     VALID_TYPES                          = Arrays
-                                                                                                            .asList(ToolkitObjectType.STORE,
-                                                                                                                    ToolkitObjectType.CACHE);
+  private static final String                                              EHCACHE_GETALL_BATCH_SIZE_PROPERTY   = "ehcache.getAll.batchSize";
+  private static final int                                                 DEFAULT_GETALL_BATCH_SIZE            = 1000;
+  private final static String                                              CONFIG_CHANGE_LOCK_ID                = "__tc_config_change_lock";
+  private final static List<ToolkitObjectType>                             VALID_TYPES                          = Arrays
+                                                                                                                    .asList(ToolkitObjectType.STORE,
+                                                                                                                            ToolkitObjectType.CACHE);
 
-  private final int                                                bulkOpsKbSize;
-  private final int                                                getAllBatchSize;
-  private final ToolkitLock                                        eventualBulkOpsConcurrentLock;
+  private final int                                                        bulkOpsKbSize;
+  private final int                                                        getAllBatchSize;
+  private final ToolkitLock                                                eventualBulkOpsConcurrentLock;
 
-  protected volatile InternalToolkitMap<K, V>[]                    serverMaps;
-  protected final String                                           name;
-  protected final UnclusteredConfiguration                         config;
-  protected final CopyOnWriteArrayList<ToolkitCacheListener<K>>    listeners;
-  private volatile ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects;
-  private final Consistency                                        consistency;
-  private final SizeOfEngine                                       sizeOfEngine;
-  private final TimeSource                                         timeSource;
-  private final SearchFactory                                      searchBuilderFactory;
-  private final ServerMapLocalStoreFactory                         serverMapLocalStoreFactory;
-  private final TerracottaClusterInfo                              clusterInfo;
-  private final PlatformService                                    platformService;
-  private final ToolkitMap<String, ToolkitAttributeType>           attrSchema;
+  protected volatile InternalToolkitMap<K, V>[]                            serverMaps;
+  protected final String                                                   name;
+  protected final UnclusteredConfiguration                                 config;
+  protected final CopyOnWriteArrayList<ToolkitCacheListener<K>>            listeners;
+  private volatile ToolkitObjectStripe<InternalToolkitMap<K, V>>[]         stripeObjects;
+  private final Consistency                                                consistency;
+  private final SizeOfEngine                                               sizeOfEngine;
+  private final TimeSource                                                 timeSource;
+  private final SearchFactory                                              searchBuilderFactory;
+  private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
+  private final TerracottaClusterInfo                                      clusterInfo;
+  private final PlatformService                                            platformService;
+  private final ToolkitMap<String, ToolkitAttributeType>                   attrSchema;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
   private final ToolkitObjectType                                          toolkitObjectType;
-  private final L1ServerMapLocalCacheStore<K, V> localCacheStore;
+  private final L1ServerMapLocalCacheStore<K, V>                           localCacheStore;
   private final PinnedEntryFaultCallback                                   pinnedEntryFaultCallback;
+  private volatile boolean                                                 lookupSuccessfulAfterRejoin;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -202,8 +203,19 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void rejoinCompleted() {
-    setupStripeObjects(lookup.lookupOrCreateStripeObjects(name, this.toolkitObjectType, config));
-    initializeLocalCache();
+    ToolkitObjectStripe<InternalToolkitMap<K, V>>[] objects = lookup.lookupStripeObjects(name, this.toolkitObjectType,
+                                                                                         config);
+    if (objects != null) {
+      setupStripeObjects(objects);
+      initializeLocalCache();
+      lookupSuccessfulAfterRejoin = true;
+    } else {
+      lookupSuccessfulAfterRejoin = false;
+    }
+  }
+
+  protected boolean isLookupSuccessfulAfterRejoin() {
+    return lookupSuccessfulAfterRejoin;
   }
 
   private L1ServerMapLocalCacheStore<K, V> createLocalCacheStore() {
@@ -421,7 +433,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public SearchQueryResultSet executeQuery(ToolkitSearchQuery query) {
-    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService).executeQuery(query);
+    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService)
+        .executeQuery(query);
   }
 
   public void setApplyDestroyCallback(DestroyApplicator destroyCallback) {
@@ -580,7 +593,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         }
         return rv;
       case EVENTUAL:
-        return unlockedGetAll((Collection<K>)keys, quiet);
+        return unlockedGetAll((Collection<K>) keys, quiet);
     }
     throw new UnsupportedOperationException("Unknown consistency - " + consistency);
   }
@@ -658,7 +671,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
     try {
       InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
-      Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s", fieldChanged);
+      Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
+                                  fieldChanged);
 
       config.setObject(fieldChanged, changedValue);
 

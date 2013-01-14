@@ -18,6 +18,7 @@ import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 public class ToolkitBlockingQueueFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitBlockingQueueImpl, ToolkitObjectStripe<ToolkitListImpl>> {
@@ -51,13 +52,16 @@ public class ToolkitBlockingQueueFactoryImpl extends
                                                                       new IsolatedClusteredObjectLookup<ToolkitListImpl>() {
 
                                                                         @Override
-                                                                        public ToolkitListImpl lookupOrCreateClusteredObject(String blockingQName,
-                                                                                                                             ToolkitObjectType type,
-                                                                                                                             Configuration unused) {
+                                                                        public ToolkitListImpl lookupClusteredObject(String blockingQName,
+                                                                                                                     ToolkitObjectType type,
+                                                                                                                     Configuration unused) {
                                                                           ToolkitObjectStripe<ToolkitListImpl> toolkitObjectStripe = lookup
-                                                                              .lookupOrCreateClusteredObject(blockingQName,
-                                                                                                             ToolkitObjectType.BLOCKING_QUEUE,
-                                                                                                             blockingQueueConfig);
+                                                                              .lookupClusteredObject(blockingQName,
+                                                                                                     ToolkitObjectType.BLOCKING_QUEUE,
+                                                                                                     blockingQueueConfig);
+                                                                          if (toolkitObjectStripe == null) { return ToolkitInstanceProxy
+                                                                              .newDestroyedInstanceProxy(blockingQName,
+                                                                                                         ToolkitListImpl.class); }
                                                                           return toolkitObjectStripe.iterator().next();
                                                                         }
 
