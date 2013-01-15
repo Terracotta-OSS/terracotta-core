@@ -66,6 +66,8 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
   private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs               = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
+  private final ConcurrentMap<String, Long>                           searchTimeoutsCache      = new ConcurrentHashMap<String, Long>();
+  private final ConcurrentMap<String, Long>                           searchTimeoutsStore      = new ConcurrentHashMap<String, Long>();
 
   private void verify(NonStopConfiguration nonStopConfiguration, ToolkitObjectType... types) {
     if (types != null) {
@@ -136,6 +138,19 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                                                         + config
                                                                                                                                             .getReadOpNonStopTimeoutBehavior()); }
     threadLocalConfiguration.set(config);
+  }
+
+  @Override
+  public void registerTimeoutForCacheSearch(long timeout, String instanceName, ToolkitObjectType objectType) {
+    if (timeout <= 0) { throw new IllegalArgumentException("Timeout cannot be less than 0: " + timeout); }
+
+    if (objectType == ToolkitObjectType.CACHE) {
+      searchTimeoutsCache.put(instanceName, timeout);
+    } else if (objectType == ToolkitObjectType.STORE) {
+      searchTimeoutsStore.put(instanceName, timeout);
+    } else {
+      throw new UnsupportedOperationException("Not supported for type: " + objectType);
+    }
   }
 
   @Override
@@ -211,6 +226,15 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
+  public long getTimeoutForCacheSearch(String instanceName, ToolkitObjectType objectType) {
+    if (objectType == ToolkitObjectType.CACHE) {
+      return searchTimeoutsCache.get(instanceName);
+    } else {
+      return searchTimeoutsStore.get(instanceName);
+    }
+  }
+
+  @Override
   public NonStopConfiguration deregisterForType(ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, null);
     return allConfigs.remove(nonStopConfigKey);
@@ -240,6 +264,15 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     threadLocalConfiguration.remove();
 
     return old;
+  }
+
+  @Override
+  public long deregisterTimeoutForCacheSearch(String instanceName, ToolkitObjectType objectType) {
+    if (objectType == ToolkitObjectType.CACHE) {
+      return searchTimeoutsCache.remove(instanceName);
+    } else {
+      return searchTimeoutsStore.remove(instanceName);
+    }
   }
 
   private static class NonStopConfigKey {

@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.search;
 
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.search.QueryBuilder;
 
 import com.tc.platform.PlatformService;
@@ -18,12 +19,13 @@ public class UnsupportedSearchFactory implements SearchFactory {
   }
 
   @Override
-  public SearchExecutor createSearchExecutor(ValuesResolver valuesResolver, boolean eventual, PlatformService platformService) {
+  public SearchExecutor createSearchExecutor(String name,  ToolkitObjectType objectType,ValuesResolver valuesResolver, boolean eventual,
+                                             PlatformService platformService) {
     throw new UnsupportedOperationException("Search is supported in enterprise version only");
   }
 
   @Override
-  public QueryBuilder createQueryBuilder(SearchableEntity entity) {
+  public QueryBuilder createQueryBuilder(SearchableEntity entity, ToolkitObjectType objectType) {
     throw new UnsupportedOperationException("Search is supported in enterprise version only");
   }
 

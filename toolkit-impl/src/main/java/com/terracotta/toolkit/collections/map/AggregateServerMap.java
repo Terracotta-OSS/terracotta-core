@@ -433,7 +433,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public SearchQueryResultSet executeQuery(ToolkitSearchQuery query) {
-    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService)
+    return searchBuilderFactory.createSearchExecutor(getName(), getToolkitObjectType(), this,
+                                                     getAnyServerMap().isEventual(), platformService)
         .executeQuery(query);
   }
 
@@ -860,7 +861,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public QueryBuilder createQueryBuilder() {
-    return searchBuilderFactory.createQueryBuilder(this);
+    return searchBuilderFactory.createQueryBuilder(this, getToolkitObjectType());
   }
 
   protected ToolkitObjectType getToolkitObjectType() {
