@@ -619,6 +619,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       if (sid.isNull()) { throw new AssertionError("SequenceID is null: " + txn); }
       this.output.writeLong(sid.toLong());
 
+      // isEviction
+      this.output.writeBoolean(false);
+
       final Collection locks = txn.getAllLockIDs();
       this.output.writeInt(locks.size());
       for (final Iterator i = locks.iterator(); i.hasNext();) {
