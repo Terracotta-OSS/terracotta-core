@@ -113,6 +113,10 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public static final String                HTTP_SECURITY_ROLE                           = "terracotta";
 
+  public static final File                  TC_MANAGEMENT_API_LOCKFILE                   = new File(
+                                                                                             System.getProperty("java.io.tmpdir"),
+                                                                                             ".tc-management-api.lock");
+
   private static final TCLogger             logger                                       = TCLogging
                                                                                              .getLogger(TCServer.class);
   private static final TCLogger             consoleLogger                                = CustomerLogging
@@ -667,22 +671,52 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     if (warFile != null) {
-      logger.info("deploying management REST services from archive " + warFile);
-      WebAppContext restContext = new WebAppContext();
+      // DEV-8583: use a lock file in java.io.tmpdir to serialize deployments of the management webapp on a single server
+      fileLock();
+      try {
+        logger.info("deploying management REST services from archive " + warFile);
+        WebAppContext restContext = new WebAppContext();
 
-      // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
-      List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
-      systemClasses.add("org.slf4j.");
-      restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
+        // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
+        List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
+        systemClasses.add("org.slf4j.");
+        restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
 
-      restContext.setContextPath("/tc-management-api");
-      restContext.setWar(warFile);
-      contextHandlerCollection.addHandler(restContext);
+        restContext.setContextPath("/tc-management-api");
+        restContext.setWar(warFile);
+        contextHandlerCollection.addHandler(restContext);
 
-      if (contextHandlerCollection.isStarted()) {
-        restContext.start();
+        if (contextHandlerCollection.isStarted()) {
+          restContext.start();
+        }
+      } finally {
+        fileUnlock();
       }
     }
+  }
+
+  private void fileLock() throws InterruptedException, IOException {
+    while (true) {
+      // check if the lock file is older than 60s, in that case assume another VM crashed and delete it
+      if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L &&
+          System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 60000) {
+        TC_MANAGEMENT_API_LOCKFILE.delete();
+      }
+
+      // check if the file exists and if not, create it. That's atomic across the entire FS.
+      boolean created = TC_MANAGEMENT_API_LOCKFILE.createNewFile();
+      if (created) {
+        break;
+      }
+
+      // if the file exists and is not older than 1 minute, sleep a bit and retry
+      Thread.sleep(1000);
+    }
+  }
+
+  private void fileUnlock() {
+    // deleting the file unblocks all processes waiting to create it
+    TC_MANAGEMENT_API_LOCKFILE.delete();
   }
 
   private void setupBasicAuth(final ServletContextHandler context, final String pathSpec,
