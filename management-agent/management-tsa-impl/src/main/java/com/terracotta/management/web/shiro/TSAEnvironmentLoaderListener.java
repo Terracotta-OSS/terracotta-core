@@ -21,6 +21,7 @@ import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.RequestIdentityAsserter;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SSLContextFactory;
+import com.terracotta.management.security.SecretUtils;
 import com.terracotta.management.security.SecurityServiceDirectory;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.security.impl.ConstantSecurityServiceDirectory;
@@ -93,7 +94,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
               String intraL2Username = TSAConfig.getIntraL2Username();
               byte[] secret = TSAConfig.getKeyChain()
                   .retrieveSecret(new URIKeyName("jmx://" + intraL2Username + "@" + host + ":" + port));
-              env.put("jmx.remote.credentials", new Object[] { intraL2Username, new String(secret).toCharArray()});
+              env.put("jmx.remote.credentials", new Object[] { intraL2Username, SecretUtils.toCharsAndWipe(secret)});
               return env;
             } catch (Exception e) {
               throw new RuntimeException("Error retrieving secret for JMX host [" + host + ":" + port + "]", e);
