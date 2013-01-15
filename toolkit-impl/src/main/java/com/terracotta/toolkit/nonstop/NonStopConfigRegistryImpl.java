@@ -141,7 +141,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
-  public void registerTimeoutForCacheSearch(long timeout, String instanceName, ToolkitObjectType objectType) {
+  public void registerTimeoutForSearch(long timeout, String instanceName, ToolkitObjectType objectType) {
     if (timeout <= 0) { throw new IllegalArgumentException("Timeout cannot be less than 0: " + timeout); }
 
     if (objectType == ToolkitObjectType.CACHE) {
@@ -226,7 +226,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
-  public long getTimeoutForCacheSearch(String instanceName, ToolkitObjectType objectType) {
+  public long getTimeoutForSearch(String instanceName, ToolkitObjectType objectType) {
     if (objectType == ToolkitObjectType.CACHE) {
       return searchTimeoutsCache.get(instanceName);
     } else {
@@ -267,7 +267,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
-  public long deregisterTimeoutForCacheSearch(String instanceName, ToolkitObjectType objectType) {
+  public long deregisterTimeoutForSearch(String instanceName, ToolkitObjectType objectType) {
     if (objectType == ToolkitObjectType.CACHE) {
       return searchTimeoutsCache.remove(instanceName);
     } else {
