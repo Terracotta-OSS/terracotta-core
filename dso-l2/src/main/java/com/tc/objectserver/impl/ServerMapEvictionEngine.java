@@ -55,9 +55,6 @@ public class ServerMapEvictionEngine {
   private static final boolean                EVICTOR_LOGGING                 = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
-  private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED   = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
 
   private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
@@ -95,8 +92,6 @@ public class ServerMapEvictionEngine {
     logger.info(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED + " : " + EVICTOR_LOGGING);
     logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED + " : "
                 + PERIODIC_EVICTOR_ENABLED);
-    logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED + " : "
-                + ELEMENT_BASED_TTI_TTL_ENABLED);
 
   }
   
@@ -118,59 +113,6 @@ public class ServerMapEvictionEngine {
                                                                                                        + id + " : "
                                                                                                        + state); }
     return (EvictableMap) state;
-  }
-
-//  /**
-//   * Collects random samples and initiates eviction
-//   *
-//   * @return true, if eviction is initiated, false otherwise
-//   */
-//  private ServerMapEvictionContext doEviction(final ObjectID oid, final EvictableMap ev,
-//                                              final ClientObjectReferenceSet serverMapEvictionClientObjectReferenceSet,
-//                                              final String className, final boolean periodicEvictor,
-//                                              final String cacheName) {
-//    final int targetMaxTotalCount = ev.getMaxTotalCount();
-//    final int currentSize = ev.getSize();
-//    if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) {
-//      if (EVICTOR_LOGGING) {
-//        logger.info("Server Map Eviction  : Eviction not required for " + oid + " [" + cacheName + "]; currentSize: "
-//                    + currentSize + " Vs targetMaxTotalCount: " + targetMaxTotalCount);
-//      }
-//      if (periodicEvictor) {
-//        evictionStats.evictionNotRequired(oid, ev, targetMaxTotalCount, currentSize);
-//      }
-//      return null;
-//    }
-//    final int overshoot = currentSize - targetMaxTotalCount;
-//    if (EVICTOR_LOGGING) {
-//      logger.info("Server Map Eviction  : Trying to evict : " + oid + " [" + cacheName + "] overshoot : " + overshoot
-//                  + " : current Size : " + currentSize + " : target max : " + targetMaxTotalCount);
-//    }
-//
-//    final int ttl = ev.getTTLSeconds();
-//    final int tti = ev.getTTISeconds();
-//    final int requested = isInterestedInTTIOrTTL(tti, ttl) ? (int) (overshoot * 1.5) : overshoot;
-//    Map samples = ev.getRandomSamples(requested, serverMapEvictionClientObjectReferenceSet);
-//
-//    if (EVICTOR_LOGGING) {
-//      logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " [" + cacheName
-//                  + "] : Random Samples : " + samples.size() + " overshoot : " + overshoot);
-//    }
-//    if (periodicEvictor) {
-//      evictionStats.evictionRequested(oid, ev, targetMaxTotalCount, overshoot, samples.size());
-//    }
-//
-//    samples = filter(oid,samples,tti,ttl,overshoot,cacheName,EVICT_UNEXPIRED_ENTRIES_ENABLED);
-//
-//    if (samples.isEmpty()) {
-//      return null;
-//    } else {
-//      return new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl, samples, overshoot, className, cacheName);
-//    }
-//  }
-  
-  boolean isElementBasedTTIorTTL() {
-    return (ELEMENT_BASED_TTI_TTL_ENABLED);
   }
   
   private void notifyEvictionCompletedFor(ObjectID oid) {

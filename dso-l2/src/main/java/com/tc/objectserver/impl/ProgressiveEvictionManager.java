@@ -210,7 +210,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         try{
             clientObjectReferenceSet.size();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-            return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
+            return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this,objectManager,evictableObjects));
         } catch ( ShutdownError err ) {
             //  is probably in shutdown, unregister
             trigger.unregisterForResourceEvents(responder);

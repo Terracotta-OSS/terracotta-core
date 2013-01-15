@@ -49,12 +49,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private final ObjectIDSet exclusionList;
     private final ObjectIDSet passList = new ObjectIDSet();
     
-    public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean runAlways) {
-        this(mgr,oid,new ObjectIDSet(),runAlways);
+    public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid) {
+        this(mgr,oid,new ObjectIDSet(), true);
     }
     
     public PeriodicEvictionTrigger duplicate() {
-        PeriodicEvictionTrigger nt = new PeriodicEvictionTrigger(mgr,getId(),runAlways);
+        PeriodicEvictionTrigger nt = new PeriodicEvictionTrigger(mgr,getId());
         nt.sampleAmount = sampleAmount - 5;
         if ( nt.sampleAmount <= 0 ) {
             nt.sampleAmount = 1;

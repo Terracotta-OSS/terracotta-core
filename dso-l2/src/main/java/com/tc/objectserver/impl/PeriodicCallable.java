@@ -19,16 +19,14 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
     private final ObjectIDSet workingSet;
     private final ServerMapEvictionManager evictor;
     private final ObjectManager objectManager;
-    private final boolean  elementBasedTTIorTTL;
 
     private volatile boolean stopped = false;
     private volatile PeriodicEvictionTrigger current;
     
-    public PeriodicCallable(ServerMapEvictionManager evictor, ObjectManager objectManager, ObjectIDSet workingSet,  boolean elementBasedTTIorTTL) {
+    public PeriodicCallable(ServerMapEvictionManager evictor, ObjectManager objectManager, ObjectIDSet workingSet) {
         this.evictor = evictor;
         this.workingSet = workingSet;
         this.objectManager = objectManager;
-        this.elementBasedTTIorTTL = elementBasedTTIorTTL;
     }
 
     @Override
@@ -49,7 +47,7 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
                 if ( stopped ) {
                     return counter;
                 }
-                current = new PeriodicEvictionTrigger(objectManager, mapID,elementBasedTTIorTTL);
+                current = new PeriodicEvictionTrigger(objectManager, mapID);
                 evictor.doEvictionOn(current);
                 counter.increment(current.getCount(),current.getRuntimeInMillis());
                 if ( current.filterRatio() > .66f ) {
