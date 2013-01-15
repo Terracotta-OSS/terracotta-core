@@ -861,14 +861,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section :  Instrumentation Settings
-   * instrumentation.finalField.fastRead         - Enable/disable `dirty' reading of final fields
-   * </code>
-   ********************************************************************************************************************/
-  public static final String INSTRUMENTATION_FINAL_FIELD_FAST_READ                          = "instrumentation.finalField.fastRead";
-
-  /*********************************************************************************************************************
-   * <code>
    * l2.dump.on.exception.timeout - After get an uncaught exception, the server takes a dump. If the dump doesn't
    * happen within this timeout the server will exit (in seconds).
    * </code>
