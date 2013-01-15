@@ -335,4 +335,9 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public Map<String, String> getBackupStatuses() {
     return null;
   }
+
+  @Override
+  public boolean isLegacyProductionModeEnabled() {
+    return false;
+  }
 }

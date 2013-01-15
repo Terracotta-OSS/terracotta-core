@@ -139,4 +139,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void backup(String name) throws IOException;
 
   String getResourceState();
+
+  boolean isLegacyProductionModeEnabled();
 }

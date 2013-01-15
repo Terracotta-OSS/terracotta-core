@@ -13,6 +13,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
@@ -85,6 +86,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public void reset() {
     // nothing to reset
+  }
+
+  @Override
+  public boolean isLegacyProductionModeEnabled() {
+    return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_ENABLE_LEGACY_PRODUCTION_MODE);
   }
 
   @Override

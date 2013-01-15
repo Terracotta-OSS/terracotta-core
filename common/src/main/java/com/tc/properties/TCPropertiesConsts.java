@@ -333,11 +333,14 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : Misc L2 Properties
    * Description : Other Miscellaneous L2 Properties
-   * startuplock.retries.enabled  : If true then L2s will try to lock indefinitely on the data
-   *                                directory while starting up
+   * enable.legacy.production.mode : If true then L2 will require -force to shutdown an active
+   *                                 instance in a cluster with no passives present
+   * startuplock.retries.enabled   : If true then L2s will try to lock indefinitely on the data
+   *                                 directory while starting up
    * </code>
    ********************************************************************************************************************/
   public static final String L2_STARTUPLOCK_RETRIES_ENABLED                                 = "l2.startuplock.retries.enabled";
+  public static final String L2_ENABLE_LEGACY_PRODUCTION_MODE                               = "l2.enable.legacy.production.mode";
 
   /*********************************************************************************************************************
    * <code>
