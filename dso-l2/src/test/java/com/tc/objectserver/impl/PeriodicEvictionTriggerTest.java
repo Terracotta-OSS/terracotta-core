@@ -20,7 +20,7 @@ public class PeriodicEvictionTriggerTest extends AbstractEvictionTriggerTest {
 
     @Override
     public AbstractEvictionTrigger createTrigger() {
-        return new PeriodicEvictionTrigger(Mockito.mock(ObjectManager.class), ObjectID.NULL_ID,true);
+        return new PeriodicEvictionTrigger(Mockito.mock(ObjectManager.class), ObjectID.NULL_ID);
     }
 
     @Override @Before
