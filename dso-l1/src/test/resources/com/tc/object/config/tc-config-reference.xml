@@ -34,17 +34,18 @@ marked with a (REQUIRED) notation.
        more than one 'server' element present here), then you will need to pass the
        command-line option "-n <name>" to the start-tc-server script, passing it
        the name of a server configuration from this file.
+
+       Servers can also be arranged within mirror-groups for defining a server array
   -->
   <servers>
-    
+
     <!-- The host and symbolic name of the server; host defaults to the server name
          if it is provided in the config else it defaults to "%i" (the machine's
          IP address) and name defaults to "host:tsa-port".  Expansion parameters may be
          used in both attributes. -->
     <server host="my.host.name" name="My Server Name">
       
-      <!-- Where should the server store its persistent data? (This includes
-           stored object data for DSO.) This value undergoes parameter substitution
+      <!-- Where should the server store its persistent data? This value undergoes parameter substitution
            before being used; this allows you to use placeholders like '%h' (for the hostname)
            or '%(com.mycompany.propname)' (to substitute in the value of
            Java system property 'com.mycompany.propname'). Thus, a value
@@ -84,7 +85,7 @@ marked with a (REQUIRED) notation.
       -->
       <data-backup>/opt/terracotta/server-data-backup</data-backup>
       
-      <!-- On what port should the DSO server listen for connections from DSO
+      <!-- On what port should the server listen for connections from
            clients? This can be any port you like, but note that
            ports below 1024 typically require 'root' privileges to use
            on Un*x-style systems (Linux, Solaris).
@@ -112,87 +113,25 @@ marked with a (REQUIRED) notation.
       -->
       <tsa-group-port>9530</tsa-group-port>
       
-      <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
-           connected clients to reconnect?  After this period, clients will
-           not be allowed to reconnect.
-           
-           Default: 120 seconds
-      --> 
-      <client-reconnect-window>120</client-reconnect-window>
-      
-      <!-- Information about how DSO should persist data to disk. -->
-      <persistence>
-        <!-- Configure whether or not the L2 should be restartable.
-             
-             enabled=true, the L2 will persist its state to disk.
-             
-             enabled=false, the L2 will not persist state to disk.
-             
-             Note: the L2 will keep everything in memory regardless of the restartable setting.
-             
-             Default: enabled=false
-        -->
-        <restartable enabled="false"/>
+      <!-- Information about how servers use off-heap memory. -->
+      <offheap>
         
-        <!-- Information about how servers use off-heap memory. -->
-        <offheap>
-          
-          <!-- If 'true', active servers spill cached data to off-heap memory
-               before persisting it to disk. Data that is cached  off-heap 
-               provides faster access than data stored on disk.
-               
-               Default: false
-          -->
-          <enabled>false</enabled>
-          
-          <!-- Sets the maximum amount of off-heap memory that a server
-               can use. Values are given in k (Kilobytes), m (Megabytes)
-               or g (Gigabytes). 
-               
-               Default: none
-          -->
-          <maxDataSize>5g</maxDataSize>
-        </offheap>
-        
-      </persistence>
-      
-      <!-- Information about how DSO should perform distributed
-           garbage collection on the data underneath your
-           application's roots. -->
-      <garbage-collection>
-        
-        <!-- If 'true', distributed garbage collection is enabled.
-             You should only set this to 'false' if you are
-             absolutely certain that none of the data underneath
-             your roots will ever become garbage; certain 
-             applications, such as those that read a large amount
-             of data into a Map and never remove it (merely look up
-             values in it) can safely do this.
-
-A setting of 'false' can also be used if distributed
-garbage collection will be triggered externally
-with the 'run-dgc' script
-
-Default: true
-        -->
-        <enabled>true</enabled>
-        
-        <!-- If 'true', the DSO server will emit extra information 
-             to the log file when it performs distributed garbage
-             collection; this can be useful when trying to
-             performance-tune your application.
+        <!-- If 'true', active servers spill cached data to off-heap memory
+             before persisting it to disk. Data that is cached  off-heap 
+             provides faster access than data stored on disk.
              
              Default: false
         -->
-        <verbose>false</verbose>
+        <enabled>false</enabled>
         
-        <!-- How often should the DSO server perform distributed 
-             garbage collection, in seconds?
+        <!-- Sets the maximum amount of off-heap memory that a server
+             can use. Values are given in k (Kilobytes), m (Megabytes)
+             or g (Gigabytes). 
              
-             Default: 3600 (60 minutes)
+             Default: none
         -->
-        <interval>3600</interval>
-      </garbage-collection>
+        <maxDataSize>5g</maxDataSize>
+      </offheap>
     </server>
 
     <!-- This additional <server> element is just to illustrate 
@@ -201,44 +140,30 @@ Default: true
     <server host="broccoli">
       <data>/usr/local/tc/data</data>
       <logs>/usr/local/tc/logs</logs>
-
-      <tsa-port>8510</tsa-port>
-
-      <persistence>
-        <restartable enabled="false"/>
-      </persistence>
       
-      <garbage-collection>
-        <enabled>true</enabled>
-        <verbose>true</verbose>
-        <interval>3600</interval>
-      </garbage-collection>
+      <tsa-port>8510</tsa-port>
     </server>
-    
+
     <!-- This section lets you divide your servers in groups. Each 
          group can be made of one or more servers out of which 1 server 
          will act as an Active server i.e. each group will have 1 Active 
          server. You can omit this section if you want to have only
          1 Active server in the cluster. 
     --> 
-    <mirror-groups>
-      <!-- Each group can also be assigned a group name. Each group has members 
-           which are actually the "name" of the server specified above. More than
-           one member can be present in a member group.
+
+    <!-- Each group can also be assigned a group name. Each group has members 
+         which are actually the "name" of the server specified above. More than
+         one member can be present in a member group.
       -->
-      <mirror-group group-name="group1" election-time="5">
-        <members>
-          <member>server1</member>
-        </members>
-      </mirror-group>
-      <mirror-group>
-        <members>
-          <member>server2</member>
-        </members>
-      </mirror-group>
-    </mirror-groups>
-    
-    
+    <mirror-group group-name="group1" election-time="5">
+      <server/>
+    </mirror-group>
+
+    <mirror-group group-name="group2" election-time="5">
+      <server/>
+    </mirror-group>
+
+
     <!-- This element lets you control if and how often the Terracotta server
          will check for update versions of the Terracotta platform.         
     -->
@@ -263,6 +188,67 @@ Default: true
       -->
       <period-days>10</period-days>
     </update-check>
+
+
+    <!-- Information about how terracotta should perform distributed
+         garbage collection on your clustered data. -->
+    <garbage-collection>      
+
+      <!-- If 'true', distributed garbage collection is enabled.
+           You should only set this to 'false' if you are
+           absolutely certain that none of the data underneath
+           your roots will ever become garbage; certain 
+           applications, such as those that read a large amount
+           of data into a Map and never remove it (merely look up
+           values in it) can safely do this.
+           
+           A setting of 'false' can also be used if distributed
+           garbage collection will be triggered externally
+           with the 'run-dgc' script
+
+           Default: true
+      -->
+      <enabled>true</enabled>
+      
+      <!-- If 'true', the terracotta server will emit extra information 
+           to the log file when it performs distributed garbage
+           collection; this can be useful when trying to
+           performance-tune your application.
+           
+           Default: false
+      -->
+      <verbose>false</verbose>
+      
+      <!-- How often should the terracotta server perform distributed 
+           garbage collection, in seconds?
+           
+           Default: 3600 (60 minutes)
+      -->
+      <interval>3600</interval>
+    </garbage-collection>
+
+
+    <!-- Configure whether or not all servers should be restartable.
+         
+         enabled=true, the L2 will persist its state to disk.
+         
+         enabled=false, the L2 will not persist state to disk.
+         
+         Note: the L2 will keep everything in memory regardless of the restartable setting.
+         
+         Default: enabled=false
+    -->
+    <restartable enabled="false"/>
+        
+      
+    <!-- How much time (in seconds) should the server, upon restart, allow for previously
+         connected clients to reconnect?  After this period, clients will
+         not be allowed to reconnect.
+         
+         Default: 120 seconds
+    --> 
+    <client-reconnect-window>120</client-reconnect-window>
+          
   </servers>
 
   <!-- This section contains settings that affect all clients that connect to the
