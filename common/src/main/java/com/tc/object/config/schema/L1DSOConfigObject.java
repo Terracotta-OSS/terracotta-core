@@ -10,6 +10,8 @@ import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -18,7 +20,8 @@ import java.io.File;
 
 public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
-  private final int faultCount = 500;
+  private static final int FAULT_COUNT = TCPropertiesImpl.getProperties()
+                                           .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_FAULT_COUNT);
 
 
   public L1DSOConfigObject(ConfigContext context) {
@@ -27,7 +30,7 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
   @Override
   public int faultCount() {
-    return faultCount;
+    return FAULT_COUNT;
   }
 
   public static void initializeClients(TcConfig config, DefaultValueProvider defaultValueProvider) throws XmlException {
