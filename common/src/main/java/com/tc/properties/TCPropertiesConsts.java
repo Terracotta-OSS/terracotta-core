@@ -916,6 +916,7 @@ public interface TCPropertiesConsts {
 
   public static final String L2_OFFHEAP_CACHE_MIN_PAGE_SIZE                                 = "l2.offHeapCache.min.page.size";
   public static final String L2_OFFHEAP_CACHE_MAX_PAGE_SIZE                                 = "l2.offHeapCache.max.page.size";
+  public static final String L2_OFFHEAP_CACHE_MAX_PAGE_COUNT                                 = "l2.offHeapCache.max.page.count";
   public static final String L2_OFFHEAP_MAP_CACHE_TABLESIZE                                 = "l2.offHeapCache.map.tableSize";
   public static final String L2_OFFHEAP_MAP_CACHE_CONCURRENCY                               = "l2.offHeapCache.map.concurrency";
   public static final String L2_OFFHEAP_EVENT_GENERATOR_THRESHOLD                           = "l2.offHeapCache.operator.event.generator.threshold";
