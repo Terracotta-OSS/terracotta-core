@@ -354,7 +354,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     Assert.assertFalse(servers.getRestartable().getEnabled());
     Assert.assertEquals(120, servers.getClientReconnectWindow());
-    Assert.assertEquals(true, servers.getGarbageCollection().getEnabled());
+    // DGC is disabled by default
+    Assert.assertFalse(servers.getGarbageCollection().getEnabled());
     Assert.assertEquals(false, servers.getGarbageCollection().getVerbose());
     Assert.assertEquals(3600, servers.getGarbageCollection().getInterval());
   }
