@@ -452,12 +452,18 @@ public class GroupServerManager {
     return groupData;
   }
 
+  /**
+   * crash active server and wait for passive server to take over. If Passive is present.
+   */
   public synchronized void crashActiveAndWaitForPassiveToTakeOver() throws Exception {
     crashActive();
-    int activeServer = getActiveServerIndex();
-    while (activeServer < 0) {
-      ThreadUtil.reallySleep(1000);
-      activeServer = getActiveServerIndex();
+    if (expectedRunningServerCount() > 0) {
+      // wait for passive to take over only If passive was running.
+      int activeServer = getActiveServerIndex();
+      while (activeServer < 0) {
+        ThreadUtil.reallySleep(1000);
+        activeServer = getActiveServerIndex();
+      }
     }
     System.out.println("******* Done Crashing active server");
 
