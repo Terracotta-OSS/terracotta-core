@@ -17,7 +17,7 @@ import com.tcclient.cluster.DsoClusterEventsNotifier;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -45,11 +45,10 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   private static class ClusterEventExecutor implements PrettyPrintable {
 
     private final DaemonThreadFactory daemonThreadFactory = new DaemonThreadFactory();
-    private final ThreadPoolExecutor  eventExecutor       = new ThreadPoolExecutor(1, EXECUTOR_MAX_THREADS,
-                                                                                    60L,
-                                                                                    TimeUnit.SECONDS,
-                                                                                    new LinkedBlockingQueue<Runnable>(),
-                                                                                    daemonThreadFactory);
+    private final ThreadPoolExecutor  eventExecutor       = new ThreadPoolExecutor(1, EXECUTOR_MAX_THREADS, 60L,
+                                                                                   TimeUnit.SECONDS,
+                                                                                   new SynchronousQueue<Runnable>(),
+                                                                                   daemonThreadFactory);
 
     public ThreadPoolExecutor getExecutorService() {
       return eventExecutor;
