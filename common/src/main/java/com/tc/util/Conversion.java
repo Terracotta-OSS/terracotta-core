@@ -3,6 +3,8 @@
  */
 package com.tc.util;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCException;
 import com.tc.exception.TCRuntimeException;
@@ -10,7 +12,12 @@ import com.tc.exception.TCRuntimeException;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.tc.util.Conversion.MemorySizeUnits.GIGA;
+import static com.tc.util.Conversion.MemorySizeUnits.KILO;
+import static com.tc.util.Conversion.MemorySizeUnits.MEGA;
 
 /**
  * Data conversion algorithms and whatnot can be found in java.io.DataInput and java.io.DataOutput. Contains methods for
@@ -22,6 +29,13 @@ public class Conversion {
 
   public static final long MIN_UINT = 0;
   public static final long MAX_UINT = 4294967295L; // 2^32 - 1
+
+  private static final Pattern MEMORY_SIZE_PATTERN  = Pattern.compile("[0-9]*([.][0-9]+)? *([kmg])?");
+  private static final Pattern SIZE_MODIFIER_PATTERN = Pattern.compile("[kmg]");
+  private final static DecimalFormat twoDForm = new DecimalFormat();
+  static {
+    twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");
+  }
 
   private static int makeInt(byte b3, byte b2, byte b1, byte b0) {
     return ((((b3 & 0xff) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff) << 0)));
@@ -110,14 +124,12 @@ public class Conversion {
     dest[pos++] = (byte) ((l >>> 16) & 0x000000FF);
     dest[pos++] = (byte) ((l >>> 8) & 0x000000FF);
     dest[pos++] = (byte) (l & 0x000000FF);
-
-    return;
   }
 
   /**
    * Helper method to write a 4 byte java (signed) integer value into a given byte array at a given offset
    * 
-   * @param l the signed int value to write
+   * @param i the signed int value to write
    * @param dest the byte array to write the uint into
    * @param index starting offset into the destination byte array
    */
@@ -126,8 +138,6 @@ public class Conversion {
     dest[index + 1] = (byte) ((i >>> 16) & 0x000000FF);
     dest[index + 2] = (byte) ((i >>> 8) & 0x000000FF);
     dest[index + 3] = (byte) ((i >>> 0) & 0x000000FF);
-
-    return;
   }
 
   /**
@@ -176,14 +186,14 @@ public class Conversion {
    */
   public static byte[] string2Bytes(String string) {
     try {
-      return (string == null) ? new byte[0] : string.getBytes("UTF-8");
+      return (string == null) ? ArrayUtils.EMPTY_BYTE_ARRAY : string.getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new TCRuntimeException(e);
     }
   }
 
   public static boolean bytes2Boolean(byte[] bytes) {
-    return (bytes[0] != 0 ? true : false);
+    return (bytes[0] != 0);
   }
 
   public static byte[] boolean2Bytes(boolean v) {
@@ -272,8 +282,7 @@ public class Conversion {
   }
 
   public static short bytes2Short(byte[] bytes) {
-    short rv = (short) (((bytes[0] & 0xFF) << 8) + ((bytes[1] & 0xFF) << 0));
-    return rv;
+    return (short) (((bytes[0] & 0xFF) << 8) + ((bytes[1] & 0xFF) << 0));
   }
 
   public static byte[] short2Bytes(short v) {
@@ -310,7 +319,7 @@ public class Conversion {
    * @return a
    */
   public static String bytesToHex(byte[] b, int index, int length) {
-    StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     byte leading, trailing;
     for (int pos = index; pos >= 0 && pos < index + length && pos < b.length; ++pos) {
       leading = (byte) ((b[pos] >>> 4) & 0x0f);
@@ -344,29 +353,25 @@ public class Conversion {
   }
 
   public static enum MemorySizeUnits {
-    KILO("k"), MEGA("m"), GIGA("g");
+    KILO("k", 1024),
+    MEGA("m", 1024 * KILO.longValue),
+    GIGA("g", 1024 * MEGA.longValue);
 
     private final String unit;
+    private final long longValue;
 
-    private MemorySizeUnits(final String unit) {
+    private MemorySizeUnits(final String unit, final long value) {
       this.unit = unit;
+      this.longValue = value;
     }
 
-    public long getInBytes() throws MetricsFormatException {
-      if (this.unit.equals(KILO.getUnit())) {
-        return 1024;
-      } else if (this.unit.equals(MEGA.getUnit())) {
-        return 1024 * KILO.getInBytes();
-      } else if (this.unit.equals(GIGA.getUnit())) {
-        return 1024 * MEGA.getInBytes();
-      } else {
-        throw new MetricsFormatException("Unexpected size: " + toString());
-      }
+    public long asBytes() {
+      return this.longValue;
     }
 
     @Override
     public String toString() {
-      return "'" + this.unit + "'";
+      return '\'' + this.unit + '\'';
     }
 
     public String getUnit() {
@@ -388,46 +393,75 @@ public class Conversion {
   public static long memorySizeAsLongBytes(final String memorySizeInUnits) throws MetricsFormatException {
     final String input = memorySizeInUnits.toLowerCase().trim();
     // XXX: review pattern matcher regex
-    if (!Pattern.matches("[0-9]*([.][0-9]+)? *([kmg])?", input)) { throw new MetricsFormatException("Unexpected Size: "
-                                                                                                    + input); }
-    String[] str = input.split("[kmg]");
-    if (str.length > 1) { throw new MetricsFormatException("Unexpected size: " + input); }
+    final Matcher matcher = MEMORY_SIZE_PATTERN.matcher(input);
+    if (!matcher.matches()) throw new MetricsFormatException("Unexpected Size: " + input);
+    String[] str = SIZE_MODIFIER_PATTERN.split(input);
+    if (str.length > 1) throw new MetricsFormatException("Unexpected size: " + input);
 
-    double base = 0;
+    double base;
     try {
       base = Double.parseDouble(str[0].trim());
     } catch (NumberFormatException nfe) {
       throw new MetricsFormatException("Unexpectes metrics: " + input);
     }
 
-    if (input.endsWith(MemorySizeUnits.KILO.getUnit())) {
-      return (long) (base * MemorySizeUnits.KILO.getInBytes());
-    } else if (input.endsWith(MemorySizeUnits.MEGA.getUnit())) {
-      return (long) (base * MemorySizeUnits.MEGA.getInBytes());
-    } else if (input.endsWith(MemorySizeUnits.GIGA.getUnit())) {
-      return (long) (base * MemorySizeUnits.GIGA.getInBytes());
+    if (input.endsWith(KILO.getUnit())) {
+      return (long) (base * KILO.asBytes());
+    } else if (input.endsWith(MEGA.getUnit())) {
+      return (long) (base * MEGA.asBytes());
+    } else if (input.endsWith(GIGA.getUnit())) {
+      return (long) (base * GIGA.asBytes());
     } else {
       return (long) base;
     }
   }
 
-  static DecimalFormat twoDForm = new DecimalFormat();
-  static {
-    twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");
+  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException, MetricsFormatException {
+    if (bytes < KILO.asBytes()) {
+      return bytes + "b";
+    } else if (bytes < MEGA.asBytes()) {
+      double rv = (bytes / (KILO.asBytes() * 1.0));
+      return twoDForm.format(rv) + 'k';
+    } else if (bytes < GIGA.asBytes()) {
+      double rv = (bytes / (MEGA.asBytes() * 1.0));
+      return twoDForm.format(rv) + 'm';
+    } else {
+      double rv = (bytes / (GIGA.asBytes() * 1.0));
+      return twoDForm.format(rv) + 'g';
+    }
   }
 
-  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException, MetricsFormatException {
-    if (bytes < MemorySizeUnits.KILO.getInBytes()) {
+  public static String toJvmArgument(final long bytes) {
+    if (bytes < 0) throw new IllegalArgumentException("Size in bytes cannot be negative");
+
+    if (bytes < KILO.asBytes()) {
       return bytes + "b";
-    } else if (bytes < MemorySizeUnits.MEGA.getInBytes()) {
-      double rv = (bytes / (MemorySizeUnits.KILO.getInBytes() * 1.0));
-      return twoDForm.format(rv) + "k";
-    } else if (bytes < MemorySizeUnits.GIGA.getInBytes()) {
-      double rv = (bytes / (MemorySizeUnits.MEGA.getInBytes() * 1.0));
-      return twoDForm.format(rv) + "m";
+    } else if (bytes < MEGA.asBytes()) {
+      return toKilo(bytes);
+    } else if (bytes < GIGA.asBytes()) {
+      return toMega(bytes);
     } else {
-      double rv = (bytes / (MemorySizeUnits.GIGA.getInBytes() * 1.0));
-      return twoDForm.format(rv) + "g";
+      if (bytes % GIGA.asBytes() == 0) {
+        return bytes / GIGA.asBytes() + "g";
+      } else {
+        return toMega(bytes); // we cannot waste a gigabyte
+      }
+    }
+  }
+
+  private static String toKilo(final long bytes) {
+    if (bytes % KILO.asBytes() == 0) {
+      return bytes / KILO.asBytes() + "k";
+    } else {
+      return bytes / KILO.asBytes() + 1 + "k";
+    }
+  }
+
+  private static String toMega(final long bytes) {
+    if (bytes % MEGA.asBytes() == 0) {
+      return bytes / MEGA.asBytes() + "m";
+    } else {
+      return bytes / MEGA.asBytes() + 1 + "m";
     }
   }
 
