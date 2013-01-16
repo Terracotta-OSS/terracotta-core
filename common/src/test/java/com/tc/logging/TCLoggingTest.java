@@ -4,6 +4,7 @@
 package com.tc.logging;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Ignore;
 
 import com.google.common.io.Files;
 import com.tc.lcp.LinkedJavaProcess;
@@ -29,7 +30,7 @@ public class TCLoggingTest extends TestCase {
     }
   }
 
-
+  @Ignore
   public void testRollover() {
     String logDir = "/tmp/terracotta/test/com/tc/logging";
     File logDirFolder = new File(logDir);
