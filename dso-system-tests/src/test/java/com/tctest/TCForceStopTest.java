@@ -46,7 +46,8 @@ public class TCForceStopTest extends BaseDSOTestCase {
 
     server_1 = createServer(SERVER_NAME_1);
     server_2 = createServer(SERVER_NAME_2);
-
+    server_1.addJvmArg("-Dcom.tc.l2.enable.legacy.production.mode=true");
+    server_2.addJvmArg("-Dcom.tc.l2.enable.legacy.production.mode=true");
     server_1.start();
     System.out.println("server1 started");
     waitTillBecomeActive(jmxPort_1);
