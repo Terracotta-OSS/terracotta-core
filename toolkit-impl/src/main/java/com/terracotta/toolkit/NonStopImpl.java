@@ -3,11 +3,13 @@
  */
 package com.terracotta.toolkit;
 
-import org.terracotta.toolkit.nonstop.NonStop;
+import org.terracotta.toolkit.feature.NonStopFeature;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
-public class NonStopImpl implements NonStop {
+import com.terracotta.toolkit.feature.EnabledToolkitFeature;
+
+public class NonStopImpl extends EnabledToolkitFeature implements NonStopFeature {
   private final NonStopToolkitImpl nonStopToolkitImpl;
 
   public NonStopImpl(NonStopToolkitImpl nonStopToolkitImpl) {

@@ -6,6 +6,8 @@ package com.terracotta.toolkit;
 import net.sf.ehcache.CacheManager;
 
 import org.terracotta.toolkit.ToolkitFeature;
+import org.terracotta.toolkit.ToolkitFeatureType;
+import org.terracotta.toolkit.ToolkitFeatureTypeInternal;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCache;
@@ -22,15 +24,15 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.events.ToolkitNotifier;
+import org.terracotta.toolkit.feature.SerializationFeature;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.serialization.Serialization;
-import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortableOperationManager;
@@ -66,6 +68,7 @@ import com.terracotta.toolkit.factory.impl.ToolkitReadWriteLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
+import com.terracotta.toolkit.feature.NoopLicenseFeature;
 import com.terracotta.toolkit.object.serialization.SerializationFeatureImpl;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
@@ -75,6 +78,7 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootsStaticFactory;
 import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.search.UnsupportedSearchFactory;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 
 public class TerracottaToolkit implements ToolkitInternal {
@@ -99,7 +103,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   private ToolkitProperties                                       toolkitProperties;
   protected final PlatformService                                 platformService;
   private final ClusterInfo                                       clusterInfoInstance;
-  private final Serialization                                     serializationFeature;
+  private final SerializationFeature                              serializationFeature;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider) {
     this.tcClient = tcClient;
@@ -272,11 +276,6 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   @Override
-  public boolean isCapabilityEnabled(String capability) {
-    return false;
-  }
-
-  @Override
   public void registerBeforeShutdownHook(Runnable hook) {
     platformService.registerBeforeShutdownHook(hook);
   }
@@ -327,10 +326,16 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   @Override
-  public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
-    Preconditions.checkNotNull(clazz);
-    if (clazz.equals(Serialization.class)) { return (T) serializationFeature; }
-    throw new UnsupportedOperationException("The feature specified by class '" + clazz.getName()
-                                            + "' is not not supported!");
+  public <T extends ToolkitFeature> T getFeature(ToolkitFeatureType<T> type) {
+    Preconditions.checkNotNull(type);
+    if (type == ToolkitFeatureType.SERIALIZATION) { return (T) serializationFeature; }
+    return ToolkitInstanceProxy.newFeatureNotSupportedProxy(type.getFeatureClass());
+  }
+
+  @Override
+  public <T extends ToolkitFeature> T getFeature(ToolkitFeatureTypeInternal<T> type) {
+    Preconditions.checkNotNull(type);
+    if (type == ToolkitFeatureTypeInternal.LICENSE) { return (T) NoopLicenseFeature.SINGLETON; }
+    return ToolkitInstanceProxy.newFeatureNotSupportedProxy(type.getFeatureClass());
   }
 }

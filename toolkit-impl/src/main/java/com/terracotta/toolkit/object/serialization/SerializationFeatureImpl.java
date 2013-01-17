@@ -3,16 +3,17 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
-import org.terracotta.toolkit.serialization.Serialization;
+import org.terracotta.toolkit.feature.SerializationFeature;
 import org.terracotta.toolkit.serialization.ToolkitSerializer;
 
-public class SerializationFeatureImpl implements Serialization {
+import com.terracotta.toolkit.feature.EnabledToolkitFeature;
 
-  private final ToolkitSerializer     serializer;
+public class SerializationFeatureImpl extends EnabledToolkitFeature implements SerializationFeature {
+
+  private final ToolkitSerializer serializer;
 
   public SerializationFeatureImpl(SerializationStrategy strategy) {
     this.serializer = new ToolkitSerializerImpl(strategy);
-
   }
 
   @Override

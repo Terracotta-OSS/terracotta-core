@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.toolkit.Toolkit;
-import org.terracotta.toolkit.ToolkitCapability;
+import org.terracotta.toolkit.ToolkitFeatureType;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 
@@ -28,7 +28,8 @@ public class SearchCapabilityDisabledTest extends AbstractToolkitTestBase {
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       System.out.println("Got toolkit: " + toolkit.getClass().getName());
-      Assert.assertFalse(toolkit.isCapabilityEnabled(ToolkitCapability.SEARCH.name()));
+      Assert.assertNotNull(toolkit.getFeature(ToolkitFeatureType.SEARCH));
+      Assert.assertFalse(toolkit.getFeature(ToolkitFeatureType.SEARCH).isEnabled());
       ToolkitCache cache = toolkit.getCache("some-cache", null);
       Assert.assertTrue(cache instanceof ToolkitCacheInternal);
       try {

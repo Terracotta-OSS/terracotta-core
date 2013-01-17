@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.util;
 
+import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
+import org.terracotta.toolkit.feature.FeatureNotSupportedException;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
@@ -20,6 +22,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 public abstract class ToolkitInstanceProxy {
+
+  private static final Method TOOLKIT_FEATURE_IS_ENABLED_METHOD;
+  static {
+    Method m = null;
+    try {
+      m = ToolkitFeature.class.getMethod("isEnabled", new Class[0]);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+    if (m == null) { throw new AssertionError("isEnabled() method not found in ToolkitFeature"); }
+    TOOLKIT_FEATURE_IS_ENABLED_METHOD = m;
+  }
 
   public static <T> T newDestroyedInstanceProxy(final String name, final Class<T> clazz) {
     InvocationHandler handler = new InvocationHandler() {
@@ -84,6 +98,18 @@ public abstract class ToolkitInstanceProxy {
     InvocationHandler handler = new NonStopSubTypeInvocationHandler<T>(context, nonStopConfigurationLookup, delegate,
                                                                        clazz);
 
+    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    return proxy;
+  }
+
+  public static <T extends ToolkitFeature> T newFeatureNotSupportedProxy(final Class<T> clazz) {
+    InvocationHandler handler = new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.equals(TOOLKIT_FEATURE_IS_ENABLED_METHOD)) { return false; }
+        throw new FeatureNotSupportedException("Feature specified by '" + clazz.getName() + "' is not supported!");
+      }
+    };
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
   }

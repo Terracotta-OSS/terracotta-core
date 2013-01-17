@@ -4,6 +4,8 @@
 package com.terracotta.toolkit;
 
 import org.terracotta.toolkit.ToolkitFeature;
+import org.terracotta.toolkit.ToolkitFeatureType;
+import org.terracotta.toolkit.ToolkitFeatureTypeInternal;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -19,13 +21,13 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.events.ToolkitNotifier;
+import org.terracotta.toolkit.feature.NonStopFeature;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.nonstop.NonStop;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -51,7 +53,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   private final AbortableOperationManager      abortableOperationManager;
   protected final NonStopClusterListener       nonStopClusterListener;
-  private final NonStop                        nonStopFeature;
+  private final NonStopFeature                        nonStopFeature;
   private final AsyncToolkitInitializer        asyncToolkitInitializer;
   private final NonStopContext                 context;
   private final NonStopClusterInfo             nonStopClusterInfo;
@@ -243,11 +245,6 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   @Override
-  public boolean isCapabilityEnabled(String capability) {
-    return getInitializedToolkit().isCapabilityEnabled(capability);
-  }
-
-  @Override
   public void shutdown() {
     nonStopManager.shutdown();
     getInitializedToolkit().shutdown();
@@ -305,8 +302,13 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   }
 
   @Override
-  public <T extends ToolkitFeature> T getFeature(Class<T> clazz) {
-    if (clazz.isInstance(nonStopFeature)) { return (T) nonStopFeature; }
-    return getInitializedToolkit().getFeature(clazz);
+  public <T extends ToolkitFeature> T getFeature(ToolkitFeatureType<T> type) {
+    if (type == ToolkitFeatureType.NONSTOP) { return (T) nonStopFeature; }
+    return getInitializedToolkit().getFeature(type);
+  }
+
+  @Override
+  public <T extends ToolkitFeature> T getFeature(ToolkitFeatureTypeInternal<T> type) {
+    return getInitializedToolkit().getFeature(type);
   }
 }
