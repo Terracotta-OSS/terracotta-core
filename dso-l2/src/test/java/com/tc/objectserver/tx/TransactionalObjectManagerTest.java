@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.mockito.InOrder;
 
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
@@ -30,6 +31,7 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -86,12 +88,17 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   public void testProcessPendingInOrder() throws Exception {
     txObjectManager.addTransactions(asList(createTransaction(0, 1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
-    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0 , 1)));
+    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 1)));
+
+    // Finish the transaction but don't release Object1 yet, this will force later transactions to go pending on object1
+    ApplyTransactionInfo applyTransactionInfo1 = applyInfoWithTransactionID(0, 1);
+    txObjectManager.applyTransactionComplete(applyTransactionInfo1);
 
     txObjectManager.addTransactions(asList(createTransaction(0, 2, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
     verify(coordinator, never()).addToApplyStage(argThat(hasTransactionID(0, 2)));
 
+    // This transaction goes through because it does not use object1
     txObjectManager.addTransactions(asList(createTransaction(0, 3, Collections.EMPTY_SET, asList(2L))));
     txObjectManager.lookupObjectsForTransactions();
     verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 3)));
@@ -99,30 +106,28 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.addTransactions(asList(createTransaction(0, 4, Collections.EMPTY_SET, asList(1L)),
         createTransaction(0, 5, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
-
-    ApplyTransactionInfo applyTransactionInfo1 = applyInfoWithTransactionID(0, 1);
-    txObjectManager.applyTransactionComplete(applyTransactionInfo1);
-    objectManager.releaseAll(applyTransactionInfo1.getObjectsToRelease());
-
-    txObjectManager.lookupObjectsForTransactions();
-    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 2)));
     verify(coordinator, never()).addToApplyStage(argThat(hasTransactionID(0, 4)));
     verify(coordinator, never()).addToApplyStage(argThat(hasTransactionID(0, 5)));
 
-    ApplyTransactionInfo applyTransactionInfo2 = applyInfoWithTransactionID(0, 2);
+    // Release the object and verify that all unblocked transactions are run in order.
+    objectManager.releaseAll(applyTransactionInfo1.getObjectsToRelease());
+
+    InOrder inOrder = inOrder(coordinator);
+    txObjectManager.lookupObjectsForTransactions();
+    inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 2)));
+    inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 4)));
+    inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 5)));
+
+    ApplyTransactionInfo applyTransactionInfo2 = applyInfoWithTransactionID(0, 3);
     txObjectManager.applyTransactionComplete(applyTransactionInfo2);
     objectManager.releaseAll(applyTransactionInfo2.getObjectsToRelease());
 
-    txObjectManager.lookupObjectsForTransactions();
-    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 4)));
-    verify(coordinator, never()).addToApplyStage(argThat(hasTransactionID(0, 5)));
+    txObjectManager.applyTransactionComplete(applyInfoWithTransactionID(0, 2));
+    txObjectManager.applyTransactionComplete(applyInfoWithTransactionID(0, 4));
 
-    ApplyTransactionInfo applyTransactionInfo4 = applyInfoWithTransactionID(0, 4);
-    txObjectManager.applyTransactionComplete(applyTransactionInfo4);
-    objectManager.releaseAll(applyTransactionInfo4.getObjectsToRelease());
-
-    txObjectManager.lookupObjectsForTransactions();
-    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 5)));
+    ApplyTransactionInfo applyTransactionInfo5 = applyInfoWithTransactionID(0, 5);
+    txObjectManager.applyTransactionComplete(applyTransactionInfo5);
+    assertThat(applyTransactionInfo5.getObjectsToRelease(), containsObjectWithID(new ObjectID(1)));
   }
 
   public void testAlreadyCommittedTransaction() throws Exception {
@@ -135,6 +140,31 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.applyTransactionComplete(applyTransactionInfo);
     assertThat(applyTransactionInfo.getObjectsToRelease(), containsObjectWithID(new ObjectID(1L)));
     objectManager.releaseAll(applyTransactionInfo.getObjectsToRelease());
+  }
+
+  public void testCheckoutBatching() throws Exception {
+    txObjectManager.addTransactions(asList(createTransaction(0, 1, Collections.EMPTY_SET, asList(1L))));
+    txObjectManager.addTransactions(asList(createTransaction(0, 2, asList(2L), asList(1L))));
+    txObjectManager.addTransactions(asList(createTransaction(0, 3, Collections.EMPTY_SET, asList(1L, 3L))));
+    txObjectManager.lookupObjectsForTransactions();
+
+    InOrder inOrder = inOrder(coordinator);
+    inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 1)));
+    inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 2)));
+    inOrder.verify(coordinator, never()).addToApplyStage(argThat(hasTransactionID(0, 3)));
+
+    ApplyTransactionInfo applyTransactionInfo1 = applyInfoWithTransactionID(0, 1);
+    txObjectManager.applyTransactionComplete(applyTransactionInfo1);
+    verify(applyTransactionInfo1, never()).addObjectsToBeReleased(anyCollection());
+
+    ApplyTransactionInfo applyTransactionInfo2 = applyInfoWithTransactionID(0, 2);
+    txObjectManager.applyTransactionComplete(applyTransactionInfo2);
+    verify(applyTransactionInfo2).addObjectsToBeReleased(argThat(containsObjectWithID(new ObjectID(1))));
+    objectManager.releaseAll(applyTransactionInfo2.getObjectsToRelease());
+
+    txObjectManager.lookupObjectsForTransactions();
+
+    verify(coordinator).addToApplyStage(argThat(hasTransactionID(0, 3)));
   }
 
   private ApplyTransactionInfo applyInfoWithTransactionID(long clientId, long transactionID) {

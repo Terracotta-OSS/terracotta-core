@@ -51,6 +51,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final ServerGlobalTransactionManager                        gtxm;
 
   private final Map<ObjectID, ManagedObject>                          checkedOutObjects       = new HashMap<ObjectID, ManagedObject>();
+  private final ConcurrentMap<ObjectID, TxnObjectGrouping>            liveObjectGroupings     = new ConcurrentHashMap<ObjectID, TxnObjectGrouping>();
   private final ConcurrentMap<ServerTransactionID, TxnObjectGrouping> applyPendingTxns        = new ConcurrentHashMap<ServerTransactionID, TxnObjectGrouping>();
 
   private final Set<ObjectID>                                         pendingObjectRequest    = new HashSet<ObjectID>();
@@ -133,16 +134,34 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public synchronized void lookupObjectsForApplyAndAddToSink(TransactionLookupContext transactionLookupContext) {
     ServerTransaction txn = transactionLookupContext.getTransaction();
     boolean needsApply = transactionLookupContext.initiateApply();
-    ObjectIDSet oids = txn.getObjectIDs();
-//    log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
+    ObjectIDSet objectsToLookup = txn.getObjectIDs();
+//    log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + objectsToLookup);
+
+    TxnObjectGrouping grouping = null;
+
+    // Check to see if a live object grouping has all this txn's objects, if not we'll need to need to do a fresh checkout
+    ObjectIDSet oldObjectIDs = new ObjectIDSet(objectsToLookup);
+    oldObjectIDs.removeAll(txn.getNewObjectIDs());
+    if (!oldObjectIDs.isEmpty()) {
+      TxnObjectGrouping existingGrouping = liveObjectGroupings.get(oldObjectIDs.first());
+      if (existingGrouping != null && existingGrouping.containsAll(oldObjectIDs) && existingGrouping.addServerTransactionID(txn.getServerTransactionID())) {
+//        log("XXX allowing txn object grouping merge. Existing " + grouping + " oids " + oldObjectIDs);
+        // All the existing objects are already part of the grouping, so we only need to look up new objects now.
+        objectsToLookup = txn.getNewObjectIDs();
+        grouping = existingGrouping;
+      }
+    }
+
     ObjectIDSet newRequests = new ObjectIDSet();
     boolean makePending = false;
-    for (ObjectID oid : oids) {
+    for (ObjectID oid : objectsToLookup) {
       if (pendingObjectRequest.contains(oid)) {
         makePending = true;
       } else if (!checkedOutObjects.containsKey(oid)) {
         newRequests.add(oid);
       }
+      // Anything we need to consider for lookup doesn't belong in liveObjectGroupings, to preserve transaction ordering.
+      liveObjectGroupings.remove(oid);
     }
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
@@ -164,33 +183,35 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     } else {
       ServerTransactionID txnID = txn.getServerTransactionID();
-      TxnObjectGrouping newGrouping = new TxnObjectGrouping(txnID, txn.getNewRoots(), getRequiredObjectsMap(oids, checkedOutObjects));
-      applyPendingTxns.put(txnID, newGrouping);
-      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, newGrouping.getObjects(), needsApply));
+      if (grouping == null) {
+        grouping = new TxnObjectGrouping(txnID);
+        addObjectsToGrouping(txn.getObjectIDs(), grouping);
+      } else {
+        addObjectsToGrouping(txn.getNewObjectIDs(), grouping);
+      }
+      applyPendingTxns.put(txnID, grouping);
+      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, grouping.getObjects(txn.getObjectIDs()), needsApply, grouping));
       makeUnpending(txn);
 //      log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
     }
   }
 
   public String shortDescription() {
-    return "TxnObjectManager : checked Out count = " + this.checkedOutObjects.size() + " apply pending txn = "
-           + this.applyPendingTxns.size() + " pending txns = "
+    return "TxnObjectManager : checked Out count = " + this.checkedOutObjects.size() + " pending txns = "
            + this.pendingTxnList.size() + " pending object requests = " + this.pendingObjectRequest.size();
   }
 
-  private Map<ObjectID, ManagedObject> getRequiredObjectsMap(Collection<ObjectID> oids, Map<ObjectID, ManagedObject> objects) {
-    Map<ObjectID, ManagedObject> map = new HashMap<ObjectID, ManagedObject>(oids.size());
+  private void addObjectsToGrouping(Collection<ObjectID> oids, TxnObjectGrouping txnObjectGrouping) {
     for (ObjectID oid : oids) {
-      ManagedObject mo = objects.remove(oid);
+      ManagedObject mo = checkedOutObjects.remove(oid);
       if (mo == null) {
         dumpToLogger();
         log("NULL !! " + oid + " not found ! " + oids);
-        log("Map contains " + objects);
         throw new AssertionError("Object is NULL !! : " + oid);
       }
-      map.put(oid, mo);
+      txnObjectGrouping.addObject(oid, mo);
+      liveObjectGroupings.put(oid, txnObjectGrouping);
     }
-    return map;
   }
 
   private void dumpToLogger() {
@@ -253,7 +274,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public void applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
     TxnObjectGrouping grouping = applyPendingTxns.remove(applyInfo.getServerTransactionID());
     Assert.assertNotNull(grouping);
-    applyInfo.addObjectsToBeReleased(grouping.getObjects().values());
+    if (grouping.transactionComplete(applyInfo.getServerTransactionID())) {
+      applyInfo.addObjectsToBeReleased(grouping.getObjects());
+      for (ManagedObject mo : grouping.getObjects()) {
+        liveObjectGroupings.remove(mo.getID());
+      }
+    }
   }
 
   @Override

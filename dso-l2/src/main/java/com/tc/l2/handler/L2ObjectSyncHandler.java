@@ -34,6 +34,8 @@ import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
@@ -44,6 +46,9 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private ReplicatedTransactionManager   rTxnManager;
   private StateSyncManager               stateSyncManager;
   private GroupManager                   groupManager;
+  private Timer                          lwmUpdater;
+
+  private volatile GlobalTransactionID   currentLWM = GlobalTransactionID.NULL_ID;
 
   private final ServerTransactionFactory serverTransactionFactory;
   private final L2ObjectSyncAckManager   objectSyncAckManager;
@@ -94,9 +99,25 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
 
   }
 
+  private void startLWMUpdaterIfNecessary() {
+    if (lwmUpdater == null) {
+      lwmUpdater = new Timer("LWM updater", true);
+      lwmUpdater.schedule(new TimerTask() {
+        private GlobalTransactionID lastUpdate = GlobalTransactionID.NULL_ID;
+        @Override
+        public void run() {
+          if (!lastUpdate.equals(currentLWM)) {
+            lastUpdate = currentLWM;
+            rTxnManager.clearTransactionsBelowLowWaterMark(currentLWM);
+          }
+        }
+      }, 10000, 10000);
+    }
+  }
+
   private void processTransactionLowWaterMark(final GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    // TODO:: This processing could be handled by another stage thread.
-    this.rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
+    currentLWM = lowGlobalTransactionIDWatermark;
+    startLWMUpdaterIfNecessary();
   }
 
   private void ackRelayedTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {

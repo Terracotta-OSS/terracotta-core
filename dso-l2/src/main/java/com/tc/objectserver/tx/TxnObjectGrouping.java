@@ -10,68 +10,103 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
+  private static final int MAX_TXN_COUNT = 10;
 
-  private ServerTransactionID             txID;
-  private Map<ObjectID, ManagedObject>    objects;
-  private Map<String, ObjectID>           newRootsMap;
+  private int addedTxns = 0;
+  private ServerTransactionID txnID;
+  private boolean closed;
+  private final Set<ServerTransactionID>  txns = new HashSet<ServerTransactionID>();
+  private final Map<ObjectID, ManagedObject> objects = new HashMap<ObjectID, ManagedObject>();
 
-  public TxnObjectGrouping(ServerTransactionID sTxID, Map<String, ObjectID> newRootsMap, Map<ObjectID, ManagedObject> objects) {
-    this.txID = sTxID;
-    if (newRootsMap.isEmpty()) {
-      this.newRootsMap = Collections.EMPTY_MAP;
+  public TxnObjectGrouping(ServerTransactionID stxID) {
+    addServerTransactionID(stxID);
+  }
+
+  private void checkClosed() {
+    if (closed) {
+      throw new IllegalStateException("Grouping is closed.");
+    }
+  }
+
+  public synchronized boolean addServerTransactionID(ServerTransactionID stxID) {
+    if (closed || ++addedTxns > MAX_TXN_COUNT) {
+      return false;
+    }
+    if (txnID == null) {
+      txnID = stxID;
+    }
+    txns.add(stxID);
+    return true;
+  }
+
+  public synchronized ServerTransactionID getServerTransactionID() {
+    return txnID;
+  }
+
+  public synchronized boolean containsAll(Collection<ObjectID> oids) {
+    for (ObjectID oid : oids) {
+      if (!objects.containsKey(oid)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public synchronized Map<ObjectID, ManagedObject> getObjects(Collection<ObjectID> oids) {
+    checkClosed();
+    Map<ObjectID, ManagedObject> managedObjectMap = new HashMap<ObjectID, ManagedObject>(oids.size());
+    for (ObjectID oid : oids) {
+      ManagedObject mo = objects.get(oid);
+      if (mo == null) {
+        throw new IllegalArgumentException("Missing object " + oid);
+      }
+      managedObjectMap.put(oid, mo);
+    }
+    return managedObjectMap;
+  }
+
+  public synchronized void addObject(ObjectID oid, ManagedObject mo) {
+    objects.put(oid, mo);
+  }
+
+  public synchronized boolean transactionComplete(ServerTransactionID stxID) {
+    checkClosed();
+    if (!txns.remove(stxID)) {
+      throw new IllegalArgumentException("Transaction " + stxID + " is not part of this transaction grouping.");
+    }
+    if (txns.isEmpty()) {
+      closed = true;
+      return true;
     } else {
-      this.newRootsMap = new HashMap<String, ObjectID>(newRootsMap);
+      return false;
     }
-    this.objects = objects;
   }
 
-  public ServerTransactionID getServerTransactionID() {
-    return txID;
-  }
-
-  public Map<ObjectID, ManagedObject> getObjects() {
-    return objects;
-  }
-
-  public Map<String, ObjectID> getNewRoots() {
-    return newRootsMap;
+  public synchronized Collection<ManagedObject> getObjects() {
+    return objects.values();
   }
 
   @Override
-  public int hashCode() {
-    return txID.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o instanceof TxnObjectGrouping) {
-      TxnObjectGrouping other = (TxnObjectGrouping) o;
-      return (txID.equals(other.txID));
-    }
-    return false;
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println("TransactionGrouping@" + System.identityHashCode(this));
-    out.indent().println("txnID: ").visit(txID).println();
+    out.indent().println("txnID: ").visit(txnID).println();
     out.indent().println("objects: ").visit(objects.keySet()).println();
-    out.indent().println("newRootsMap: ").visit(newRootsMap).println();
     return out;
   }
 
   @Override
-  public String toString() {
-    StringBuffer out = new StringBuffer();
-    out.append("TransactionGrouping@" + System.identityHashCode(this)).append("\n");
-    out.append("\t").append("txnID: ").append(txID).append("\n");
+  public synchronized String toString() {
+    StringBuilder out = new StringBuilder();
+    out.append("TransactionGrouping@").append(System.identityHashCode(this)).append("\n");
+    out.append("\t").append("txnID: ").append(txnID).append("\n");
     out.append("\t").append("objects: ").append(objects).append("\n");
-    out.append("\t").append("newRootsMap: ").append(newRootsMap).append("\n");
     return out.toString();
   }
 }

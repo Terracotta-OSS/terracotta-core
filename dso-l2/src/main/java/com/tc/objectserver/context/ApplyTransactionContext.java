@@ -12,14 +12,16 @@ import java.util.Map;
 
 public class ApplyTransactionContext implements MultiThreadedEventContext {
 
+  private final Object key;
   private final ServerTransaction txn;
   private final Map<ObjectID, ManagedObject> objects;
   private final boolean needsApply;
 
-  public ApplyTransactionContext(ServerTransaction txn, Map<ObjectID, ManagedObject> objects, boolean needsApply) {
+  public ApplyTransactionContext(ServerTransaction txn, Map<ObjectID, ManagedObject> objects, boolean needsApply, Object key) {
     this.txn = txn;
     this.objects = objects;
     this.needsApply = needsApply;
+    this.key = key;
   }
 
   public Map<ObjectID, ManagedObject> getObjects() {
@@ -36,6 +38,6 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
 
   @Override
   public Object getKey() {
-    return txn.getTransactionID();
+    return key;
   }
 }

@@ -11,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.async.impl.NullSink;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
@@ -25,7 +24,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
@@ -43,7 +41,6 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceID;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -65,7 +62,6 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   private ApplyTransactionChangeHandler  handler;
   private LockManager                    lockManager;
   private Sink                           broadcastSink;
-  private ApplySink                      applySink;
   private ArgumentCaptor<NotifiedWaiters> notifiedWaitersArgumentCaptor;
 
   @Override
@@ -73,28 +69,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     this.lockManager = mock(LockManager.class);
     this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
     TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
-    Transaction persistenceTransaction = new Transaction() {
-        LinkedList<TransactionListener> listeners = new LinkedList<TransactionListener>();
-          @Override
-          public void commit() {
-              for ( TransactionListener l : listeners ) {
-                  l.committed(this);
-              }
-          }
-
-          @Override
-          public void abort() {
-              for ( TransactionListener l : listeners ) {
-                  l.committed(this);
-              }
-          }
-
-          @Override
-          public void addTransactionListener(TransactionListener l) {
-             listeners.add(l);
-          }
-        
-    };
+    Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(), mock(ServerGlobalTransactionManager.class),
@@ -102,17 +77,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);
-    Stage recycle = mock(Stage.class);
     when(broadcastStage.getSink()).thenReturn(broadcastSink);
-    applySink = new ApplySink();
-    when(recycle.getSink()).thenReturn(applySink);
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = mock(ServerTransactionManager.class);
     context.txnObjectManager = mock(TransactionalObjectManager.class);
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastStage);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, mock(Stage.class));
     context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, mock(Stage.class));
-    context.addStage(ServerConfigurationContext.APPLY_CHANGES_STAGE, recycle);
     context.lockManager = this.lockManager;
 
     this.handler.initializeContext(context);
@@ -120,15 +91,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
   public void testLockManagerNotifyOnNoApply() throws Exception {
     ServerTransaction tx = createServerTransaction();
-    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), false));
-    applySink.replayContexts();
+    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), false, 1));
     verifyNotifies(tx);
   }
 
   public void testLockManagerNotifyOnApply() throws Exception {
     ServerTransaction tx = createServerTransaction();
-    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), true));
-    applySink.replayContexts();
+    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.<ObjectID, ManagedObject>emptyMap(), true, 1));
     verifyNotifies(tx);
   }
 
@@ -184,19 +153,5 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
         lockIDs, cid, Collections.emptyList(), null,
         Collections.emptyMap(), TxnType.NORMAL, notifies, DmiDescriptor.EMPTY_ARRAY,
         new MetaDataReader[0], 1, new long[0]);
-  }
-
-  private class ApplySink extends NullSink {
-    private final List<EventContext> contexts = new ArrayList<EventContext>();
-    @Override
-    public void add(final EventContext context) {
-      contexts.add(context);
-    }
-
-    void replayContexts() {
-      for (EventContext context : contexts) {
-        handler.handleEvent(context);
-      }
-    }
   }
 }
