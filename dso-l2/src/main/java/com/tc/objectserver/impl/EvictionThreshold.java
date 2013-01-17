@@ -14,7 +14,7 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
 public enum EvictionThreshold {
     
     HEAP("HEAP",1l * 1024 * 1024 * 1024, 64l * 1024 * 1024,32l * 1024 * 1024),
-    MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 96l * 1024 * 1024,32l * 1024 * 1024),
+    MICRO("INCREASE OFFHEAP TO OVER 1G IF POSSIBLE",512l * 1024 * 1024, 128l * 1024 * 1024,32l * 1024 * 1024),
     SMALL("2G",2l * 1024 * 1024 * 1024, 256l * 1024 * 1024, 64l * 1024 * 1024),
     EIGHT("8G",8l * 1024 * 1024 * 1024, 738l * 1024 * 1024, 128l * 1024 * 1024),
     SIXTEEN("16G",16l * 1024 * 1024 * 1024, 1536l * 1024 * 1024, 256l * 1024 * 1024),
@@ -67,7 +67,9 @@ public enum EvictionThreshold {
     }
     
     public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak,int reservedTweak) {
-        if ( usage.getReservedMemory() > usage.getMaxMemory() - getReserved(reservedTweak)/2 ) {
+        long reserve = getReserved(reservedTweak);
+        long used = getUsed(reserve, usedTweak);
+        if ( usage.getReservedMemory() > usage.getMaxMemory() - (reserve) ) {
             return true;
         }
         return false;

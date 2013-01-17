@@ -42,7 +42,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
-        int get = boundsCheckSampleSize(( blowout > 6 ) ? sizeCount : (int)Math.round(sizeCount * Math.pow(10,blowout-6)) * 2);
+        int get = boundsCheckSampleSize(( blowout > 6 ) ? sizeCount : (int)Math.round(sizeCount * Math.pow(10,blowout-6)));
         if ( get < 10 * (blowout)) {
             get = 10 * (blowout);
         }
@@ -53,7 +53,8 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
      * only take the early half, make this pluggable?
     */
     private Map<Object, ObjectID> filter(Map<Object, ObjectID> sample) {
-        return filterByOid(sample);
+        return sample;
+//        return filterByOid(sample);
     }
 
     private Map<Object, ObjectID> filterByOid(Map<Object, ObjectID> sample) {
