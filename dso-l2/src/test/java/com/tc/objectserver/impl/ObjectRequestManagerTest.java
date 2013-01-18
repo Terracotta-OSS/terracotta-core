@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import org.apache.commons.lang.NotImplementedException;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
@@ -85,9 +88,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class ObjectRequestManagerTest extends TestCase {
 
@@ -1131,12 +1131,6 @@ public class ObjectRequestManagerTest extends TestCase {
     public void setLocalNodeID(final NodeID source) {
       //
     }
-
-    @Override
-    public void reopen() {
-      throw new ImplementMe();
-    }
-
   }
 
   private static class TestRequestManagedObjectResponseMessage implements RequestManagedObjectResponseMessage,
