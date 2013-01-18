@@ -43,7 +43,7 @@ public interface IndexManager {
 
   public SyncSnapshot snapshot(String id) throws IndexException;
 
-  void backup(File destDir) throws IndexException;
+  void backup(File destDir, SyncSnapshot syncSnapshot) throws IndexException;
 
   void shutdown();
 

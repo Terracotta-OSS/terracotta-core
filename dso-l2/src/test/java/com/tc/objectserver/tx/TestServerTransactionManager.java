@@ -157,4 +157,14 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void callbackOnLowWaterMarkInSystemCompletion(Runnable r) {
     //
   }
+
+  @Override
+  public void pauseTransactions() {
+    //
+  }
+
+  @Override
+  public void unPauseTransactions() {
+    //
+  }
 }

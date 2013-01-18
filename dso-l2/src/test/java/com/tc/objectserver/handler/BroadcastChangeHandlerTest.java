@@ -971,5 +971,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public void callbackOnLowWaterMarkInSystemCompletion(final Runnable r) {
       //
     }
+
+    @Override
+    public void pauseTransactions() {
+      //
+    }
+
+    @Override
+    public void unPauseTransactions() {
+      //
+    }
   }
 }

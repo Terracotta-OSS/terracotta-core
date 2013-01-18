@@ -117,4 +117,10 @@ public interface ServerTransactionManager {
    * @param r Callback to be executed
    */
   public void callbackOnLowWaterMarkInSystemCompletion(Runnable r);
+
+  public void pauseTransactions();
+
+  public void unPauseTransactions();
+
+
 }

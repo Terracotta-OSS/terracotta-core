@@ -45,6 +45,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.api.BackupManager;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -340,5 +341,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
     if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
     return new Persistor(HeapStorageManagerFactory.INSTANCE);
+  }
+
+  @Override
+  public BackupManager createBackupManager(Persistor persistor, IndexManager indexManager, File backupPath, StageManager stageManager, boolean restartable, ServerTransactionManager serverTransactionManager) {
+    return NullBackupManager.INSTANCE;
   }
 }

@@ -37,6 +37,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
+import com.tc.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,6 +99,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final ObjectStatsRecorder                     objectStatsRecorder;
 
   private final MetaDataManager                         metaDataManager;
+  private boolean isPaused = false;
 
   public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm,
                                       final LockManager lockManager,
@@ -126,6 +128,19 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.objectStatsRecorder = objectStatsRecorder;
     this.metaDataManager = metaDataManager;
     this.garbageCollectionManager = garbageCollectionManager;
+  }
+
+  @Override
+  public synchronized void pauseTransactions() {
+    logger.info("Pausing transactions");
+    this.isPaused = true;
+  }
+
+  @Override
+  public synchronized void unPauseTransactions() {
+    logger.info("Unpausing transactions");
+    this.isPaused = false;
+    notifyAll();
   }
 
   @Override
@@ -438,10 +453,23 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   @Override
-  public void incomingTransactions(final NodeID source, final Set txnIDs, final Collection<ServerTransaction> txns,
+  public synchronized void incomingTransactions(final NodeID source, final Set txnIDs, final Collection<ServerTransaction> txns,
                                    final boolean relayed) {
     final boolean active = isActive();
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
+
+    boolean interrupted = false;
+    while (isPaused) {
+      logger.info("Waiting to pause transaction processing");
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+
+    Util.selfInterruptIfNeeded(interrupted);
+
     ci.incomingTransactions(txnIDs);
     this.totalPendingTransactions.addAndGet(txnIDs.size());
     if (isActive()) {

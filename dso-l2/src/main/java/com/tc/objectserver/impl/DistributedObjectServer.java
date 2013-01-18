@@ -176,7 +176,6 @@ import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
-import com.tc.objectserver.handler.BackupHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
@@ -1040,14 +1039,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
-    if (restartable) {
-      Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1,
-                                                 maxStageSize).getSink();
-      backupManager = new BackupManagerImpl(persistor, indexHACoordinator, configSetupManager.commonl2Config()
-          .serverDbBackupPath(), backupSink);
-    } else {
-      backupManager = NullBackupManager.INSTANCE;
-    }
+    backupManager = serverBuilder.createBackupManager(persistor, indexHACoordinator, configSetupManager.commonl2Config()
+          .serverDbBackupPath(), stageManager, restartable, transactionManager);
 
     final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
                                                                               globalObjectFaultCounter,
