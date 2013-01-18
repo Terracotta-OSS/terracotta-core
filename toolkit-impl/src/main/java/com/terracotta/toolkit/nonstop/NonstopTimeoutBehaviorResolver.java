@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.collections.ToolkitSet;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
@@ -14,6 +13,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
+import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;
@@ -147,7 +147,7 @@ public class NonstopTimeoutBehaviorResolver {
       case CACHE:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitCacheInternal.class);
       case LIST:
-        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitList.class);
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitListInternal.class);
       case LOCK:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitLock.class);
       case MAP:

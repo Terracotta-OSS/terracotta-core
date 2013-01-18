@@ -4,8 +4,8 @@
 package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -21,10 +21,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E>,
+public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitListInternal> implements
+    ToolkitListInternal<E>,
     RejoinAwareToolkitObject {
 
-  private volatile ToolkitList<E>                              list;
+  private volatile ToolkitListInternal<E>                      list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
   private final ToolkitSubtypeStatusImpl                       status;
@@ -41,7 +42,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void rejoinStarted() {
-    this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
+    this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitListInternal.class);
     status.incrementRejoinCount();
   }
 
@@ -59,7 +60,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void applyDestroy() {
-    this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitList.class);
+    this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitListInternal.class);
     status.setDestroyed();
   }
 
@@ -360,6 +361,11 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
       if (this.currentRejoinCount != subTypeStatus.getCurrentRejoinCount()) { throw new RejoinException(
                                                                                                         "Rejoin has Occured, This sublist is not usable after rejoin anymore"); }
     }
+  }
+
+  @Override
+  public boolean unlockedAdd(E e) {
+    return list.unlockedAdd(e);
   }
 
 }

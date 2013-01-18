@@ -26,6 +26,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
+import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
@@ -82,7 +83,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public <E> ToolkitList<E> getList(final String name, final Class<E> klazz) {
-    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.LIST, context, ToolkitList.class,
+    return ToolkitInstanceProxy.newNonStopProxy(name, ToolkitObjectType.LIST, context, ToolkitListInternal.class,
                                                 new AbstractToolkitObjectLookup<ToolkitList<E>>(
                                                     abortableOperationManager) {
 

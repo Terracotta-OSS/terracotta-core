@@ -4,8 +4,8 @@
 package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements ToolkitList<E> {
+public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements ToolkitListInternal<E> {
   private final transient List                    localList = new ArrayList();
 
   private volatile transient Object               localResolveLock;
@@ -69,17 +69,24 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
     writeLock();
     try {
-      synchronized (localResolveLock) {
-        Object o = createTCCompatibleObject(e);
-        boolean added = localList.add(o);
-        if (added) {
-          logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { o });
-          modCount++;
-        }
-        return added;
-      }
+      return unlockedAdd(e);
     } finally {
       writeUnlock();
+    }
+  }
+
+  @Override
+  public boolean unlockedAdd(E e) {
+    if (e == null) { throw new NullPointerException("Object passed in to add was null"); }
+
+    synchronized (localResolveLock) {
+      Object o = createTCCompatibleObject(e);
+      boolean added = localList.add(o);
+      if (added) {
+        logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { o });
+        modCount++;
+      }
+      return added;
     }
   }
 
