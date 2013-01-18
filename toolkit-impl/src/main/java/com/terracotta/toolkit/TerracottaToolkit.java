@@ -24,7 +24,6 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.events.ToolkitNotifier;
-import org.terracotta.toolkit.feature.SerializationFeature;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
@@ -69,7 +68,6 @@ import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
 import com.terracotta.toolkit.feature.NoopLicenseFeature;
-import com.terracotta.toolkit.object.serialization.SerializationFeatureImpl;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
 import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
@@ -103,7 +101,6 @@ public class TerracottaToolkit implements ToolkitInternal {
   private ToolkitProperties                                       toolkitProperties;
   protected final PlatformService                                 platformService;
   private final ClusterInfo                                       clusterInfoInstance;
-  private final SerializationFeature                              serializationFeature;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider) {
     this.tcClient = tcClient;
@@ -118,7 +115,6 @@ public class TerracottaToolkit implements ToolkitInternal {
         throw new AssertionError("Another object registered instead of serialization strategy - " + old);
       }
     }
-    this.serializationFeature = new SerializationFeatureImpl(strategy);
     this.defaultToolkitCacheManager = toolkitCacheManagerProvider.getDefaultCacheManager();
 
     ToolkitFactoryInitializationContextBuilder builder = new ToolkitFactoryInitializationContextBuilder();
@@ -328,7 +324,6 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public <T extends ToolkitFeature> T getFeature(ToolkitFeatureType<T> type) {
     Preconditions.checkNotNull(type);
-    if (type == ToolkitFeatureType.SERIALIZATION) { return (T) serializationFeature; }
     return ToolkitInstanceProxy.newFeatureNotSupportedProxy(type.getFeatureClass());
   }
 
