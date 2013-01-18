@@ -78,15 +78,6 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public void clearCacheStats(String cacheManagerName, String cacheName) throws ServiceExecutionException {
-    String ticket = ticketMonitor.issueRequestTicket();
-    String token = userService.putUserInfo(contextService.getUserInfo());
-
-    tsaManagementClientService.invokeMethod(requestValidator.getValidatedNode(), DfltSamplerRepositoryServiceMBean.class, ticket, token,
-        TSAConfig.getSecurityCallbackUrl(), "clearCacheStats", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
-  }
-
-  @Override
   public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());

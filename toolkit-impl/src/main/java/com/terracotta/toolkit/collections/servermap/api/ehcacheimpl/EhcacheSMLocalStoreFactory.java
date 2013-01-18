@@ -45,7 +45,6 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
       ehcache = createCache(localCacheName, config);
       new EhcacheInitializationHelper(cacheManager).initializeEhcache(ehcache);
     }
-    ehcache.setStatisticsEnabled(false);
     return ehcache;
   }
 

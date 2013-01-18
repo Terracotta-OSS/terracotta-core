@@ -39,7 +39,6 @@ public class EhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> 
       }
     });
     // Statistics not required for local caches.
-    this.localStoreCache.setStatisticsEnabled(false);
     offlineStore = new OfflineEhcacheSMLocalStore(localStoreCache);
     onlineStore = new OnlineEhcacheSMLocalStore(localStoreCache);
   }
