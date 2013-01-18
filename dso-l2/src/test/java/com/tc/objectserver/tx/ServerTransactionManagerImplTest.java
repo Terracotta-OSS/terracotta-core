@@ -52,13 +52,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
+
 
 import junit.framework.TestCase;
 
 public class ServerTransactionManagerImplTest extends TestCase {
 
   private ServerTransactionManagerImpl       transactionManager;
-  private TestTransactionAcknowledgeAction   action;
+  private TestTransactionAcknowledgeAction   transactionAcknowledgeAction;
   private TestClientStateManager             clientStateManager;
   private TestLockManager                    lockManager;
   private TestObjectManager                  objectManager;
@@ -70,7 +77,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    this.action = new TestTransactionAcknowledgeAction();
+    this.transactionAcknowledgeAction = new TestTransactionAcknowledgeAction();
     this.clientStateManager = new TestClientStateManager();
     this.lockManager = new TestLockManager();
     this.objectManager = new TestObjectManager();
@@ -89,7 +96,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private void newTransactionManager() {
     this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
-                                                               new TestTransactionalObjectManager(), this.action,
+                                                               new TestTransactionalObjectManager(), this.transactionAcknowledgeAction,
                                                                this.transactionRateCounter, this.channelStats,
                                                                new ServerTransactionManagerConfig(),
                                                                new ObjectStatsRecorder(), new NullMetaDataManager(),
@@ -330,6 +337,9 @@ public class ServerTransactionManagerImplTest extends TestCase {
     // Concurrent Modification exception used to be thrown here.
     this.transactionManager.shutdownNode(cid2);
 
+
+
+
   }
 
   public void test1ClientDisconnectWithWaiteeAsSameClient() throws Exception {
@@ -363,6 +373,50 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertFalse(this.transactionManager.isWaiting(cid1, tid1));
   }
 
+  public void testPauseUnpauseTransactions() throws Exception {
+    final ClientID clientID1 = new ClientID(1);
+    final TransactionID tid1 = new TransactionID(1);
+    LockID[] lockIDs = new LockID[0];
+    List dnas = Collections.unmodifiableList(new LinkedList());
+    ObjectStringSerializer serializer = null;
+    Map newRoots = Collections.unmodifiableMap(new HashMap());
+    TxnType txnType = TxnType.NORMAL;
+    SequenceID sequenceID = new SequenceID(1);
+    ServerTransaction tx1 = newServerTransactionImpl(new TxnBatchID(1), tid1, sequenceID, lockIDs, clientID1, dnas,
+        serializer, newRoots, txnType, new LinkedList(),
+        DmiDescriptor.EMPTY_ARRAY, 1);
+
+    final Set txns = new HashSet();
+    txns.add(tx1);
+    final Set txnIDs = new HashSet();
+    txnIDs.add(new ServerTransactionID(clientID1, tid1));
+
+    ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+    Callable addIncomingTxnRunnable = new Callable() {
+      @Override
+      public Object call() throws Exception {
+        transactionManager.incomingTransactions(clientID1, txnIDs, txns, false);
+        return true;
+      }
+    };
+
+    transactionManager.pauseTransactions();
+    Future addIncomingTxnFuture =  executorService.submit(addIncomingTxnRunnable);
+
+    assertFalse(this.transactionManager.isWaiting(clientID1, tid1));
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
+
+    transactionManager.unPauseTransactions();
+
+    addIncomingTxnFuture.get();
+    doStages(clientID1, txns);
+    assertTrue(this.transactionAcknowledgeAction.clientID == clientID1 && this.transactionAcknowledgeAction.txID == tid1);
+
+    executorService.shutdown();
+    executorService.awaitTermination(2, TimeUnit.MINUTES);
+  }
+
   public void tests() throws Exception {
     ClientID cid1 = new ClientID(1);
     TransactionID tid1 = new TransactionID(1);
@@ -393,15 +447,15 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
     assertTrue(this.transactionManager.isWaiting(cid1, tid1));
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     this.transactionManager.acknowledgement(cid1, tid1, cid2);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     doStages(cid1, txns);
-    assertTrue(this.action.clientID == cid1 && this.action.txID == tid1);
+    assertTrue(this.transactionAcknowledgeAction.clientID == cid1 && this.transactionAcknowledgeAction.txID == tid1);
     assertFalse(this.transactionManager.isWaiting(cid1, tid1));
 
     // Test with 2 waiters
-    this.action.clear();
+    this.transactionAcknowledgeAction.clear();
     this.gtxm.clear();
     txns.clear();
     txnIDs.clear();
@@ -415,19 +469,19 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid3);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     assertTrue(this.transactionManager.isWaiting(cid1, tid2));
     this.transactionManager.acknowledgement(cid1, tid2, cid2);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     assertTrue(this.transactionManager.isWaiting(cid1, tid2));
     this.transactionManager.acknowledgement(cid1, tid2, cid3);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     doStages(cid1, txns);
-    assertTrue(this.action.clientID == cid1 && this.action.txID == tid2);
+    assertTrue(this.transactionAcknowledgeAction.clientID == cid1 && this.transactionAcknowledgeAction.txID == tid2);
     assertFalse(this.transactionManager.isWaiting(cid1, tid2));
 
     // Test shutdown client with 2 waiters
-    this.action.clear();
+    this.transactionAcknowledgeAction.clear();
     this.gtxm.clear();
     txns.clear();
     txnIDs.clear();
@@ -440,18 +494,18 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid3);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     assertTrue(this.transactionManager.isWaiting(cid1, tid3));
     this.transactionManager.shutdownNode(cid3);
     assertEquals(cid3, this.clientStateManager.shutdownClient);
     assertTrue(this.transactionManager.isWaiting(cid1, tid3));
     this.transactionManager.acknowledgement(cid1, tid3, cid2);
     doStages(cid1, txns);
-    assertTrue(this.action.clientID == cid1 && this.action.txID == tid3);
+    assertTrue(this.transactionAcknowledgeAction.clientID == cid1 && this.transactionAcknowledgeAction.txID == tid3);
     assertFalse(this.transactionManager.isWaiting(cid1, tid3));
 
     // Test shutdown client that no one is waiting for
-    this.action.clear();
+    this.transactionAcknowledgeAction.clear();
     this.gtxm.clear();
     txns.clear();
     txnIDs.clear();
@@ -467,7 +521,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     this.transactionManager.shutdownNode(cid1);
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     // It should still be waiting, since we only do cleans ups on completion of all transactions.
     assertNull(this.clientStateManager.shutdownClient);
     assertTrue(this.transactionManager.isWaiting(cid1, tid4));
@@ -500,7 +554,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertEquals(cid1, this.clientStateManager.shutdownClient);
 
     // Test with 2 waiters on different tx's
-    this.action.clear();
+    this.transactionAcknowledgeAction.clear();
     this.gtxm.clear();
     txns.clear();
     txnIDs.clear();
@@ -521,7 +575,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid5, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid6, cid2);
 
-    assertTrue(this.action.clientID == null && this.action.txID == null);
+    assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
     assertTrue(this.transactionManager.isWaiting(cid1, tid5));
     assertTrue(this.transactionManager.isWaiting(cid1, tid6));
 
@@ -529,7 +583,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertFalse(this.transactionManager.isWaiting(cid1, tid5));
     assertTrue(this.transactionManager.isWaiting(cid1, tid6));
     doStages(cid1, txns);
-    assertTrue(this.action.clientID == cid1 && this.action.txID == tid5);
+    assertTrue(this.transactionAcknowledgeAction.clientID == cid1 && this.transactionAcknowledgeAction.txID == tid5);
 
   }
 
