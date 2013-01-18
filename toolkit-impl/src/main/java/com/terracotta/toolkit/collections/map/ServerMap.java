@@ -1104,20 +1104,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
-  /**
-   * Note this allows locking on keys that are not present in the map. Hibernate uses this to lock a key prior to
-   * creating a mapping for it.
-   */
-  public void lockEntry(final K key) {
-    final Long lockId = generateLockIdForKey(key);
-    beginLock(lockId, this.lockType);
-  }
-
-  public void unlockEntry(final K key) {
-    final Long lockId = generateLockIdForKey(key);
-    commitLock(lockId, this.lockType);
-  }
-
   @Override
   public long localOnHeapSizeInBytes() {
     return tcObjectServerMap.getLocalOnHeapSizeInBytes();
