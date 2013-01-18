@@ -36,7 +36,6 @@ import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.HASettingsChecker;
-import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
@@ -44,7 +43,6 @@ import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
-import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.l2.state.StateSyncManagerImpl;
 import com.tc.lang.TCThreadGroup;
@@ -621,14 +619,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                new GarbageCollectHandler(objectManagerConfig,
                                                                                          gcPublisher), 1, -1);
 
-    final boolean networkedHA = isNetworkHA();
-    if (networkedHA) {
-      this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
-                                                                       clientObjectReferenceSet);
-    } else {
-      this.garbageCollectionManager = new ActiveGarbageCollectionManager(garbageCollectStage.getSink(),
-                                                                         clientObjectReferenceSet);
-    }
+    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
+                                                                     clientObjectReferenceSet);
     toInit.add(this.garbageCollectionManager);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
@@ -710,7 +702,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage searchQueryRequestStage = stageManager
         .createStage(ServerConfigurationContext.SEARCH_QUERY_REQUEST_STAGE, new SearchQueryRequestMessageHandler(),
                      queryThreads, maxStageSize);
-    
+
     final Sink searchEventSink = searchEventStage.getSink();
 
     final TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator,
@@ -766,8 +758,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                        lwmCallbackStage.getSink());
 
     final TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
-    this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager,
-                                                               gtxm, txnStageCoordinator);
+    this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxm, txnStageCoordinator);
 
     final CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
     this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);
@@ -870,7 +861,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(resourceManager);
 
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
-            objectStore, clientObjectReferenceSet, serverTransactionFactory, threadGroup, resourceManager, sampledCounterManager);
+                                                           objectStore, clientObjectReferenceSet,
+                                                           serverTransactionFactory, threadGroup, resourceManager,
+                                                           sampledCounterManager);
 
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
@@ -962,9 +955,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  restartable,
                                                                                                  consoleLogger);
 
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(networkedHA, this.configSetupManager,
-                                                                      stageManager, this.thisServerNodeID,
-                                                                      this.httpSink, this.stripeIDStateManager, gtxm);
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+                                                                      this.thisServerNodeID, this.httpSink,
+                                                                      this.stripeIDStateManager, gtxm);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
@@ -989,54 +982,46 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
 
     // TODO: currently making all with L2hacoordinator which should probably the case after this feature
-    if (networkedHA) {
-      final WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
-                                                                                                       channelManager,
-                                                                                                       transactionBatchManager,
-                                                                                                       this.transactionManager,
-                                                                                                       host, serverPort);
-      logger.info("L2 Networked HA Enabled ");
-      this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink);
+    final WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
+                                                                                                     channelManager,
+                                                                                                     transactionBatchManager,
+                                                                                                     this.transactionManager,
+                                                                                                     host, serverPort);
+    logger.info("L2 Networked HA Enabled ");
+    this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink);
 
-      SequenceGenerator indexSequenceGenerator = new SequenceGenerator();
+    SequenceGenerator indexSequenceGenerator = new SequenceGenerator();
 
-      L2IndexStateManager l2IndexStateManager = this.serverBuilder.createL2IndexStateManager(this.indexHACoordinator,
-                                                                                             this.transactionManager,
-                                                                                             indexSequenceGenerator,
-                                                                                             groupCommManager);
+    L2IndexStateManager l2IndexStateManager = this.serverBuilder.createL2IndexStateManager(this.indexHACoordinator,
+                                                                                           this.transactionManager,
+                                                                                           indexSequenceGenerator,
+                                                                                           groupCommManager);
 
-      L2ObjectStateManager l2ObjectStateManager = this.serverBuilder.createL2ObjectStateManager(objectManager,
-                                                                                                transactionManager);
+    L2ObjectStateManager l2ObjectStateManager = this.serverBuilder.createL2ObjectStateManager(objectManager,
+                                                                                              transactionManager);
 
-      L2PassiveSyncStateManager l2PassiveSyncStateManager = this.serverBuilder
-          .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager,
-                                           createStateSyncManager(this.indexHACoordinator));
+    L2PassiveSyncStateManager l2PassiveSyncStateManager = this.serverBuilder
+        .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager,
+                                         createStateSyncManager(this.indexHACoordinator));
 
-      this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
-                                                                    this.groupCommManager, this.persistor
-                                                                        .getPersistentStateStore(),
-                                                                    l2PassiveSyncStateManager, l2ObjectStateManager,
-                                                                    l2IndexStateManager, this.objectManager,
-                                                                    this.indexHACoordinator, this.transactionManager,
-                                                                    gtxm, weightGeneratorFactory,
-                                                                    this.configSetupManager, recycler,
-                                                                    this.stripeIDStateManager,
-                                                                    serverTransactionFactory, dgcSequenceProvider,
-                                                                    indexSequenceGenerator, objectIDSequence, persistor
-                                                                        .getMonitoredResource(), configSetupManager
-                                                                        .getActiveServerGroupForThisL2()
-                                                                        .getElectionTimeInSecs());
-      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
-      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
-      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
-      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.garbageCollectionManager);
-
-      dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
-    } else {
-      this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
-      this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager, this.persistor.getPersistentStateStore());
-    }
-
+    this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
+                                                                  this.groupCommManager, this.persistor
+                                                                      .getPersistentStateStore(),
+                                                                  l2PassiveSyncStateManager, l2ObjectStateManager,
+                                                                  l2IndexStateManager, this.objectManager,
+                                                                  this.indexHACoordinator, this.transactionManager,
+                                                                  gtxm, weightGeneratorFactory,
+                                                                  this.configSetupManager, recycler,
+                                                                  this.stripeIDStateManager, serverTransactionFactory,
+                                                                  dgcSequenceProvider, indexSequenceGenerator,
+                                                                  objectIDSequence, persistor.getMonitoredResource(),
+                                                                  configSetupManager.getActiveServerGroupForThisL2()
+                                                                      .getElectionTimeInSecs());
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
+    this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.garbageCollectionManager);
+    dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
     backupManager = serverBuilder.createBackupManager(persistor, indexHACoordinator, configSetupManager.commonl2Config()
@@ -1050,7 +1035,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               changesPerBroadcast,
                                                                               transactionSizeCounter, globalLockCount,
                                                                               serverMapEvictor.getEvictionStatistics(),
-                                                                              serverMapEvictor.getExpirationStatistics(),
+                                                                              serverMapEvictor
+                                                                                  .getExpirationStatistics(),
                                                                               globalOperationCounter);
 
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
@@ -1104,17 +1090,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
           .createActiveServerWithOldDataBaseEvent(l2DSOConfig.serverName()));
     }
-    if (!networkedHA) {
-      // In non-network enabled HA, Only active server reached here.
-      startActiveMode();
-      startL1Listener();
-    }
     setLoggerOnExit();
   }
 
   /**
    * Counts map operations using events from {@link ConcurrentDistributedServerMapManagedObjectState}.
-   *
+   * 
    * @see EventBus
    */
   public static final class OperationCountIncrementEventListener {
@@ -1128,10 +1109,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     public void recordOperationCountIncrementEvent(final Events.OperationCountIncrementEvent event) {
       this.counter.increment();
     }
-  }
-
-  private boolean isNetworkHA() {
-    return true;
   }
 
   protected StateSyncManager createStateSyncManager(IndexHACoordinator coordinator) {

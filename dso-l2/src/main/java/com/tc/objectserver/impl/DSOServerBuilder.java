@@ -108,7 +108,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink);
 
-  GroupManager createGroupCommManager(boolean networkedHA, L2ConfigurationSetupManager configManager,
+  GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID, Sink httpSink,
                                       StripeIDStateManager stripeStateManager, ServerGlobalTransactionManager gtxm);
 
