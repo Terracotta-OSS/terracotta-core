@@ -244,6 +244,18 @@
         <module>devwork/offheap-store</module>
       </modules>
     </profile>     
+
+    <profile>
+      <id>statistics</id>
+      <activation>
+        <file>
+          <exists>devwork/statistics</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/statistics</module>
+      </modules>
+    </profile>     
   </profiles>
   
   <repositories>

@@ -5,6 +5,7 @@ svn co https://svn.terracotta.org/repo/forge/enterprise/management-apps/trunk ma
 svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/trunk fast-restartable-store
 svn co https://svn.terracotta.org/repo/internal/offheap-store/trunk offheap-store
 svn co https://svn.terracotta.org/repo/ehcache/trunk/ehcache ehcache
+svn co https://svn.terracotta.org/repo/forge/projects/statistics/trunk statistics
 svn co https://svn.terracotta.org/repo/internal/ehcache-enterprise/ehcache-core-ee/trunk ehcache-ee
 svn co https://svn.terracotta.org/repo/forge/projects/management-core/trunk management-core
 svn co https://svn.terracotta.org/repo/quartz/trunk quartz
