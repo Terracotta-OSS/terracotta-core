@@ -29,7 +29,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private ClientObjectReferenceSet clientSet;
     private boolean repeat = false;
     private boolean restart = false;
-    private boolean waitForClient = false;
 
     public CapacityEvictionTrigger( ObjectID oid) {
         super(oid);
@@ -79,11 +78,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             repeat = true;
             if ( count == 0 ) {
                 restart = false;
-                if ( clientSet == null ) {
-                    clients.addReferenceSetChangeListener(this);
-                    clientSetCount = clients.size();
-                    clientSet = clients;
-                }
+                registerForUpdates(clients);
                 samples = Collections.<Object,ObjectID>emptyMap();
             }
         }
@@ -91,11 +86,21 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         return createEvictionContext(className, samples);
     } 
     
+    private synchronized void registerForUpdates(ClientObjectReferenceSet clients) {
+        if ( clientSet == null ) {
+            clients.addReferenceSetChangeListener(this);
+            clientSetCount = clients.size();
+            clientSet = clients;
+        }
+    }
+    
     private synchronized void waitForClient() {
-        waitForClient = true;
-        while ( clientSet != null && waitForClient ) {
+        while ( clientSet != null ) {
             try {
-                this.wait();
+                this.wait(2000);
+                if ( clientSet != null ) {
+                    clientSet.refreshClientObjectReferencesNow();
+                }
             } catch ( InterruptedException ie ) {
                 throw new AssertionError(ie);
             }
@@ -103,16 +108,15 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     }
     
     private synchronized void clientUpdated() {
-        waitForClient = false;
+        clientSet.removeReferenceSetChangeListener(this);
+        clientSet = null;
         this.notify();
     }
 
     @Override
     public boolean isValid() {
         if ( repeat ) {
-            if ( clientSet != null ) {
-                waitForClient();
-            }
+            waitForClient();
             return true;
         }
         return super.isValid();
