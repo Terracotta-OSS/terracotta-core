@@ -10,8 +10,6 @@ import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 /**
  * This trigger is fired by the resource monitor if the monitored resource goes
@@ -57,22 +55,22 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
 //        return filterByOid(sample);
     }
 
-    private Map<Object, ObjectID> filterByOid(Map<Object, ObjectID> sample) {
-        TreeMap<ObjectID,Object> rev = new TreeMap<ObjectID, Object>();
-        for ( Map.Entry<Object,ObjectID> entry : sample.entrySet() ) {
-            rev.put(entry.getValue(),entry.getKey());
-        }
-        int nz = sample.size()/2;
-        int count = 0;
-        sample.clear();
-        for (Entry<ObjectID, Object> ag : rev.entrySet()) {
-            if (count++>nz) {
-                sample.put(ag.getValue(),ag.getKey());
-            }
-        }
-        return sample;
-    }
-    
+  // private Map<Object, ObjectID> filterByOid(Map<Object, ObjectID> sample) {
+  // TreeMap<ObjectID,Object> rev = new TreeMap<ObjectID, Object>();
+  // for ( Map.Entry<Object,ObjectID> entry : sample.entrySet() ) {
+  // rev.put(entry.getValue(),entry.getKey());
+  // }
+  // int nz = sample.size()/2;
+  // int count = 0;
+  // sample.clear();
+  // for (Entry<ObjectID, Object> ag : rev.entrySet()) {
+  // if (count++>nz) {
+  // sample.put(ag.getValue(),ag.getKey());
+  // }
+  // }
+  // return sample;
+  // }
+
     public int getSampleCount() {
         return sampleCount;
     }
