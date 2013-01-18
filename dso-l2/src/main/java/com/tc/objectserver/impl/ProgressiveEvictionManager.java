@@ -467,10 +467,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             currentRun.cancel(false);
 
             if ( turnCount > 6 && isEmergency && !isStopped ) {
-                if ( turnCount > 16 ) {
+                if ( turnCount > 100 ) {
                     stop(usage);
                 } else {
-                    throttle(usage,(turnCount-6)/10f);
+                    throttle(usage,(usage.getReservedMemory()*1f/usage.getMaxMemory()));
                 }
             }
 
