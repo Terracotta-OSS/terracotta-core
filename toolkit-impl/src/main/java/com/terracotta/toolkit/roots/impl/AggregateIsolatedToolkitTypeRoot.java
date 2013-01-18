@@ -105,6 +105,14 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
     ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
   }
 
+  private void readLock(ToolkitObjectType toolkitObjectType, String name) {
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+  }
+
+  private void readUnlock(ToolkitObjectType toolkitObjectType, String name) {
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+  }
+
   @Override
   public void applyDestroy(String name) {
     this.isolatedTypes.remove(name);
@@ -148,7 +156,12 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
 
   @Override
   public S lookupClusteredObject(String name, ToolkitObjectType type, Configuration config) {
-    return getToolkitTypeRoot(name).getClusteredObject(name);
+    readLock(type, name);
+    try {
+      return getToolkitTypeRoot(name).getClusteredObject(name);
+    } finally {
+      readUnlock(type, name);
+    }
   }
 
   @Override
