@@ -7,13 +7,16 @@ import org.terracotta.toolkit.feature.NonStopFeature;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.feature.EnabledToolkitFeature;
 
 public class NonStopImpl extends EnabledToolkitFeature implements NonStopFeature {
   private final NonStopToolkitImpl nonStopToolkitImpl;
+  private final AbortableOperationManager abortableOperationManager;
 
-  public NonStopImpl(NonStopToolkitImpl nonStopToolkitImpl) {
+  public NonStopImpl(NonStopToolkitImpl nonStopToolkitImpl, AbortableOperationManager abortableOperationManager) {
     this.nonStopToolkitImpl = nonStopToolkitImpl;
+    this.abortableOperationManager = abortableOperationManager;
   }
 
   @Override
@@ -31,6 +34,11 @@ public class NonStopImpl extends EnabledToolkitFeature implements NonStopFeature
   @Override
   public NonStopConfigurationRegistry getNonStopConfigurationRegistry() {
     return nonStopToolkitImpl.getNonStopConfigurationToolkitRegistry();
+  }
+
+  @Override
+  public boolean isTimedOut() {
+    return abortableOperationManager.isAborted();
   }
 
 }
