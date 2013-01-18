@@ -157,11 +157,6 @@ public class TestMessageChannel implements MessageChannel {
     throw new ImplementMe();
   }
 
-  @Override
-  public void reopen() {
-    throw new ImplementMe();
-  }
-
   public static class CreateMessageContext {
     public final TCMessageType type;
     public final TCMessage     returnedMessage;

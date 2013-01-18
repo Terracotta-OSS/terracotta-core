@@ -196,10 +196,6 @@ public class HydrateHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    @Override
-    public void reopen() {
-      throw new ImplementMe();
-    }
   }
 
   private static class Message implements TCMessage {

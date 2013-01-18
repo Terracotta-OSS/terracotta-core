@@ -4,16 +4,16 @@
 package com.tc.object.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 
 public class RejoinContext implements EventContext {
-  private final MessageChannel messageChannel;
+  private final ClientMessageChannel messageChannel;
 
-  public RejoinContext(MessageChannel messageChannel) {
+  public RejoinContext(ClientMessageChannel messageChannel) {
     this.messageChannel = messageChannel;
   }
 
-  public MessageChannel getMessageChannel() {
+  public ClientMessageChannel getMessageChannel() {
     return messageChannel;
   }
 

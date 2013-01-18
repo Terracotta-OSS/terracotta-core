@@ -15,6 +15,8 @@ public interface ClientHandshakeManager {
 
   public void connected(NodeID remoteNode);
 
+  public void reconnectionRejected();
+
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck);
 
   public boolean serverIsPersistent();

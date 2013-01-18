@@ -49,6 +49,7 @@ public class MockMessageChannel implements MessageChannelInternal {
     this.knownMessageTypes.put(messageType, theClass);
   }
 
+  @Override
   public void reset() {
     this.numSends = 0;
     this.lastSentMessage = null;
@@ -245,11 +246,6 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   public void setRemoteNodeID(NodeID destination) {
     this.destination = destination;
-  }
-
-  @Override
-  public void reopen() {
-    throw new ImplementMe();
   }
 
 }

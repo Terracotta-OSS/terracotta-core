@@ -113,6 +113,11 @@ public class StageImpl implements Stage {
   }
 
   @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
   public String toString() {
     return "StageImpl(" + name + ")";
   }

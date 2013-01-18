@@ -12,6 +12,7 @@ import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.context.PauseContext;
 import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -27,12 +28,14 @@ public class ClientChannelEventController {
   private final Sink                   pauseSink;
   private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
   private final RejoinManager          rejoinManager;
+  private final DSOClientMessageChannel channel;
 
   public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
                                       ClientHandshakeManager clientHandshakeManager, RejoinManager rejoinManager) {
     this.pauseSink = pauseSink;
     this.clientHandshakeManager = clientHandshakeManager;
     this.rejoinManager = rejoinManager;
+    this.channel = channel;
     channel.addListener(new ChannelEventListenerImpl(this));
   }
 
@@ -66,28 +69,25 @@ public class ClientChannelEventController {
   }
 
   private void channelReconnectionRejected(ChannelEvent event) {
-    if (rejoinManager.isRejoinEnabled()) {
-      requestRejoin(event);
-    } else {
-      DSO_LOGGER
-          .fatal("Reconnection was rejected by the L2, but rejoin is not enabled. This client will never be able to join the cluster again.");
-    }
+    requestRejoin(event);
   }
 
   private void requestRejoin(ChannelEvent event) {
-    clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
+    clientHandshakeManager.reconnectionRejected();
     if (rejoinManager.isRejoinEnabled()) {
       logRejoinStatusMessages(event);
-      pauseSink.add(new RejoinContext(event.getChannel()));
+      pauseSink.add(new RejoinContext(channel.channel()));
     } else {
+      DSO_LOGGER
+          .fatal("Reconnection was rejected by the L2, but rejoin is not enabled. This client will never be able to join the cluster again.");
       DSO_LOGGER.info("Rejoin request ignored as rejoin is NOT enabled");
     }
   }
 
   private static void logRejoinStatusMessages(final ChannelEvent event) {
-    ChannelID channelID = event.getChannelID();
-    String msg = (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) ? "Channel " + channelID + " closed."
-        : "Reconnection rejected event fired, caused by " + channelID;
+    String msg = (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) ? "Channel " + event.getChannel()
+                                                                              + " closed."
+        : "Reconnection rejected event fired, caused by " + event;
     DSO_LOGGER.info(msg);
   }
 
@@ -104,6 +104,13 @@ public class ClientChannelEventController {
       final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
       DSO_LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event);
+      ChannelID eventChannelId = event.getChannelID();
+      ClientMessageChannel currentChannel = controller.channel.channel();
+      if (eventChannelId != null && !currentChannel.getChannelID().equals(eventChannelId)) {
+        DSO_LOGGER.info("Ignoring channel event " + event.getType() + " for channel " + eventChannelId
+                        + " as currentChannel " + currentChannel.getChannelID());
+        return;
+      }
       switch (event.getType()) {
         case TRANSPORT_CONNECTED_EVENT:
           controller.channelConnected(event);

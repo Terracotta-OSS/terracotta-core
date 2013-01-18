@@ -168,7 +168,8 @@ public class TestClientMessageChannel implements ClientMessageChannel {
   }
 
   @Override
-  public void reopen() {
+  public void reopen() throws Exception {
     throw new ImplementMe();
   }
+
 }

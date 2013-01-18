@@ -4,13 +4,13 @@
 package com.tc.platform.rejoin;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 
 public interface RejoinManagerInternal extends RejoinManager {
 
   void start();
 
-  void initiateRejoin(MessageChannel channel);
+  void initiateRejoin(ClientMessageChannel channel);
 
   boolean thisNodeJoined(ClientID newNodeId);
 }

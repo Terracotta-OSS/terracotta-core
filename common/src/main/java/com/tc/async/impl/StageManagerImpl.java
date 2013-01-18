@@ -24,6 +24,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -146,9 +147,14 @@ public class StageManagerImpl implements StageManager {
 
   @Override
   public void cleanup() {
+    // TODO: ClientConfigurationContext is not visible so can't use ClientConfigurationContext.CLUSTER_EVENTS_STAGE
+    Collection<String> skipStages = new HashSet<String>();
+    skipStages.add("cluster_events_stage");
     for (Object element : stages.values()) {
       Stage s = (Stage) element;
-      s.getSink().clear();
+      if (!skipStages.contains(s.getName())) {
+        s.getSink().clear();
+      }
     }
   }
 

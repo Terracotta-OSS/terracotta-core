@@ -81,7 +81,6 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   @Override
   public void addListener(ChannelEventListener listener) {
     if (listener == null) { return; }
-
     listeners.add(listener);
   }
 
@@ -288,6 +287,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     private ChannelState state;
 
     public ChannelStatus() {
+      this.state = ChannelState.INIT;
+    }
+
+    synchronized void reset() {
       this.state = ChannelState.INIT;
     }
 

@@ -57,6 +57,18 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
+  public void reset() {
+    init();
+  }
+
+  protected void init() {
+    ChannelStatus status = getStatus();
+    status.reset();
+    this.sendLayer.reset();
+    setLocalNodeID(ClientID.NULL_ID);
+  }
+
+  @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     return open(null);
@@ -90,21 +102,22 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public void reopen() {
-    String username = null;
-    char[] passwd = null;
+  public void reopen() throws Exception {
+    reset();
+    open(getPassword());
+  }
+
+  public char[] getPassword() {
+    char[] password = null;
     if (securityInfo.hasCredentials()) {
-      username = securityInfo.getUsername();
       Assert.assertNotNull("TCSecurityManager should not be null", pwProvider);
       // use user-password of first server in the group
       ConnectionInfo connectionInfo = addressProvider.getIterator().next();
-      passwd = pwProvider.getPasswordForTC(username, connectionInfo.getHostname(), connectionInfo.getPort());
+      password = pwProvider.getPasswordForTC(securityInfo.getUsername(), connectionInfo.getHostname(),
+                                           connectionInfo.getPort());
+      Assert.assertNotNull("password is null from securityInfo " + securityInfo, password);
     }
-
-    final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong(), username, passwd);
-    ((MessageTransport) this.sendLayer).initConnectionID(cid);
-
-    this.sendLayer.reopen();
+    return password;
   }
 
   @Override
@@ -156,7 +169,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public void notifyTransportDisconnected(final MessageTransport transport, final boolean forcedDisconnect) {
     // Move channel to new session
     this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
-    logger.info("ClientMessageChannel moves to " + this.channelSessionID);
+    logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
     fireTransportDisconnectedEvent();
   }
 

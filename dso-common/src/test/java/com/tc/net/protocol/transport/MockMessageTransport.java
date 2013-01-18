@@ -149,7 +149,7 @@ public class MockMessageTransport implements MessageTransport {
   }
 
   @Override
-  public void reopen() {
+  public void reset() {
     throw new ImplementMe();
   }
 }

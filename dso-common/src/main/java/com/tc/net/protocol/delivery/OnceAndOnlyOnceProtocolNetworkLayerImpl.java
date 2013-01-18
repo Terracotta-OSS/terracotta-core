@@ -283,9 +283,9 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   @Override
-  public void reopen() {
+  public void reset() {
     Assert.assertNotNull(sendLayer);
-    sendLayer.reopen();
+    sendLayer.reset();
   }
 
   @Override

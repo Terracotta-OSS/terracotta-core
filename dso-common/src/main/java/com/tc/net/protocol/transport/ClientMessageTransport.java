@@ -15,6 +15,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -98,9 +99,11 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public void reopen() {
-    // do a reconnect
-    this.connectionEstablisher.asyncReconnect(this);
+  public void reset() {
+    synchronized (this.isOpen) {
+      this.isOpen.set(false);
+      this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
+    }
   }
 
   private void handleHandshakeError(HandshakeResult result) throws IOException, MaxConnectionsExceededException,

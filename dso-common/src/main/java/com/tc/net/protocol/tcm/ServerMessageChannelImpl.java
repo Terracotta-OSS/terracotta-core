@@ -49,8 +49,8 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public void reopen() {
-    throw new UnsupportedOperationException("Server channels don't support reopen()");
+  public void reset() {
+    throw new UnsupportedOperationException("Server channels don't support reset()");
   }
 
 }

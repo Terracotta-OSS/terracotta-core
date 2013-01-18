@@ -51,6 +51,11 @@ public class MockStage implements Stage {
   }
 
   @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return null;
   }

@@ -46,8 +46,8 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public void reopen() {
-    throw new UnsupportedOperationException("Server transport doesn't support reopen()");
+  public void reset() {
+    throw new UnsupportedOperationException("Server transport doesn't support reset()");
   }
 
   @Override

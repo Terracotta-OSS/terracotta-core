@@ -10,6 +10,7 @@ import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.StripeID;
 import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.ClientHandshakeAckMessage;
@@ -24,6 +25,7 @@ import com.tc.util.Util;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +51,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final AtomicBoolean                       transitionInProgress = new AtomicBoolean(false);
   private final DsoClusterInternalEventsGun         dsoClusterEventsGun;
   private final Collection<ClearableCallback>       clearCallbacks;
+  protected Map<GroupID, StripeID>                  groupIDToStripeIDMap = new HashMap<GroupID, StripeID>();
+  private boolean                                   isMapReceived        = false;
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
@@ -128,22 +132,16 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     return false;
   }
 
-  // @Override
-  // public void notifyChannelEvent(final ChannelEvent event) {
-  // if (GroupID.ALL_GROUPS.equals(event.getChannel().getRemoteNodeID())) { throw new AssertionError(
-  // "Recd event for Group Channel : "
-  // + event); }
-  // if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-  // this.pauseSink.add(new PauseContext(true, event.getChannel().getRemoteNodeID()));
-  // } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
-  // this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
-  // } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
-  // disconnected(event.getChannel().getRemoteNodeID());
-  // }
-  // }
-
   private synchronized boolean isOnlyOneGroupDisconnected() {
     return 1 == this.disconnected;
+  }
+
+  @Override
+  public void reconnectionRejected() {
+    for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
+      logger.info("reconnection rejected from L2, disconnecting from " + groupId);
+      disconnected(groupId);
+    }
   }
 
   @Override
@@ -156,38 +154,33 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       // can happen when we get server disconnects before ack for client handshake
       this.logger.info("Disconnected: Ignoring disconnect event from  RemoteNode : " + remoteNode
                        + " as the current state is " + currentState + ". Disconnect count: " + getDisconnectedCount());
-      // Atomize manager and callbacks state changes
-      synchronized (transitionInProgress) {
-        waitForTransitionToComplete();
-        transitionInProgress.set(true);
-      }
-      changeToPaused(remoteNode);
-      pauseCallbacks(remoteNode, getDisconnectedCount());
-      notifyTransitionComplete();
-
-      this.sessionManager.newSession(remoteNode);
-      this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode));
+      pauseThisNode(remoteNode);
 
     } else {
       this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode
                        + ". Disconnect count: " + getDisconnectedCount());
-      // Atomize manager and callbacks state changes
-      synchronized (transitionInProgress) {
-        waitForTransitionToComplete();
-        transitionInProgress.set(true);
-      }
-      changeToPaused(remoteNode);
-      pauseCallbacks(remoteNode, getDisconnectedCount());
-      notifyTransitionComplete();
-      // all the activities paused then can switch to new session
-      this.sessionManager.newSession(remoteNode);
-      this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode));
+      pauseThisNode(remoteNode);
 
       // only send the operations disabled event when this was the first group to disconnect
       if (isOnlyOneGroupDisconnected()) {
         dsoClusterEventsGun.fireOperationsDisabled();
       }
     }
+  }
+
+  private void pauseThisNode(final NodeID remoteNode) {
+    // Atomize manager and callbacks state changes
+    synchronized (transitionInProgress) {
+      waitForTransitionToComplete();
+      transitionInProgress.set(true);
+    }
+    changeToPaused(remoteNode);
+    pauseCallbacks(remoteNode, getDisconnectedCount());
+    notifyTransitionComplete();
+
+    this.sessionManager.newSession(remoteNode);
+    this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
+                     + " for remote node " + remoteNode);
   }
 
   @Override
@@ -204,8 +197,32 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     initiateHandshake(remoteNode);
   }
 
+  private synchronized void receivedStripeIDMap(Map<GroupID, StripeID> map) {
+    if (!this.isMapReceived) {
+      this.groupIDToStripeIDMap = Collections.unmodifiableMap(map);
+      this.isMapReceived = true;
+    }
+  }
+
+  protected void verifyActiveCoordinator(GroupID groupId) {
+    // Overridden in sub-class ClientGroupHandshakeManagerImpl
+  }
+
   @Override
   public void acknowledgeHandshake(final ClientHandshakeAckMessage handshakeAck) {
+    Map<GroupID, StripeID> stripeIDMap = handshakeAck.getStripeIDMap();
+    logger.info("Received StripeIDMap size:" + stripeIDMap.size());
+    if (stripeIDMap.size() > 0) {
+      verifyActiveCoordinator(handshakeAck.getGroupID());
+      receivedStripeIDMap(stripeIDMap);
+      if (!groupIDToStripeIDMap.equals(stripeIDMap)) {
+        final String msg = "client can not join a new cluster before shutdown \n original " + groupIDToStripeIDMap
+                           + " \n received " + stripeIDMap;
+        logger.error(msg);
+        CONSOLE_LOGGER.error(msg);
+        return;
+      }
+    }
     acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(),
                          handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
   }
@@ -216,7 +233,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final ClientID thisNodeId,
                                       final ClientID[] clusterMembers, final String serverVersion) {
-    this.logger.info("Received Handshake ack for this node :" + remoteID);
+    this.logger.info("Received Handshake ack from remote node :" + remoteID);
     if (getState(remoteID) != State.STARTING) {
       this.logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));
       return;

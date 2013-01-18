@@ -6,12 +6,13 @@ package com.tc.platform.rejoin;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RejoinManagerImpl implements RejoinManagerInternal {
@@ -70,9 +71,13 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   @Override
-  public void initiateRejoin(MessageChannel channel) {
+  public void initiateRejoin(ClientMessageChannel channel) {
     assertRejoinEnabled();
-    rejoinWorker.requestRejoin(channel);
+    if (!rejoinInProgress.get()) {
+      rejoinWorker.requestRejoin(channel);
+    } else {
+      logger.info("Ignoring rejoin request as already rejoinInProgress for channel: " + channel);
+    }
   }
 
   @Override
@@ -91,18 +96,22 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   // only called by rejoin worker
-  private void doRejoin(MessageChannel channel) {
+  private void doRejoin(ClientMessageChannel channel) {
     logger.info("Doing rejoin for channel: " + channel);
     if (rejoinInProgress.compareAndSet(false, true)) {
-      // rejoin starting for first time, other channels can also initiate rejoin simultaneously
       notifyRejoinStart();
-    }
-    while (true) {
-      try {
-        channel.reopen();
-        break;
-      } catch (Throwable t) {
-        logger.error("Got error while reestablishing channel, going to retry... channel: " + channel, t);
+      while (true) {
+        try {
+          channel.reopen();
+          break;
+        } catch (Throwable t) {
+          logger.warn("Got error while reopen channel, going to retry after 1 second channel: " + channel, t);
+          try {
+            TimeUnit.SECONDS.sleep(1L);
+          } catch (InterruptedException e) {
+            logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
+          }
+        }
       }
     }
   }
@@ -117,16 +126,16 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     private final Object                monitor                 = new Object();
     private volatile RejoinManagerImpl  manager;
     private volatile boolean            shutdown                = false;
-    private final Queue<MessageChannel> rejoinRequestedChannels = new LinkedList<MessageChannel>();
+    private final Queue<ClientMessageChannel> rejoinRequestedChannels = new LinkedList<ClientMessageChannel>();
 
     public RejoinWorker(RejoinManagerImpl rejoinManager) {
       this.manager = rejoinManager;
     }
 
-    private void requestRejoin(MessageChannel channel) {
+    private void requestRejoin(ClientMessageChannel channel) {
       synchronized (monitor) {
         if (shutdown) {
-          logger.info("Ignoring request for rejoin as already shutdown - channel: " + channel);
+          logger.info("Ignoring rejoin request as already shutdown - channel: " + channel);
           return;
         }
         rejoinRequestedChannels.add(channel);
@@ -137,13 +146,13 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     @Override
     public void run() {
       while (true) {
-        MessageChannel channel = waitUntilRejoinRequestedOrShutdown();
+        ClientMessageChannel channel = waitUntilRejoinRequestedOrShutdown();
         if (shutdown) return;
         manager.doRejoin(channel);
       }
     }
 
-    private MessageChannel waitUntilRejoinRequestedOrShutdown() {
+    private ClientMessageChannel waitUntilRejoinRequestedOrShutdown() {
       synchronized (monitor) {
         while (rejoinRequestedChannels.isEmpty()) {
           if (shutdown) { return null; }
