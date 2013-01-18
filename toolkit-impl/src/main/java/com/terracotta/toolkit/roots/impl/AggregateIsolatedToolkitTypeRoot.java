@@ -106,11 +106,11 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   }
 
   private void readLock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.READ, platformService);
   }
 
   private void readUnlock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.READ, platformService);
   }
 
   @Override
