@@ -3,6 +3,20 @@
  */
 package com.terracotta.toolkit.config.cache;
 
+import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.config.SupportedConfigurationType;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
+import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
+
+import com.terracotta.toolkit.config.UnclusteredConfiguration;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import static org.terracotta.toolkit.config.SupportedConfigurationType.BOOLEAN;
 import static org.terracotta.toolkit.config.SupportedConfigurationType.INTEGER;
 import static org.terracotta.toolkit.config.SupportedConfigurationType.LONG;
@@ -18,6 +32,7 @@ import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_COMPRESSI
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_CONCURRENCY;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_CONSISTENCY;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_COPY_ON_READ_ENABLED;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_EVICTION_ENABLED;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_LOCAL_CACHE_ENABLED;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
@@ -27,6 +42,7 @@ import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTI_S
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_PINNING_STORE;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME;
@@ -36,20 +52,6 @@ import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTI_SECONDS_F
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.OFFHEAP_ENABLED_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.PINNING_STORE_FIELD_NAME;
-
-import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.config.SupportedConfigurationType;
-import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
-import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
-
-import com.terracotta.toolkit.config.UnclusteredConfiguration;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public enum InternalCacheConfigurationType {
   MAX_BYTES_LOCAL_HEAP(LONG, MAX_BYTES_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_BYTES_LOCAL_HEAP) {
@@ -199,6 +201,27 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integer(notNull(value)), -1);
+    }
+  },
+  EVICTION_ENABLED(BOOLEAN, EVICTION_ENABLED_FIELD_NAME, DEFAULT_EVICTION_ENABLED) {
+    @Override
+    public boolean isClusterWideConfig() {
+      return true;
+    }
+
+    @Override
+    public boolean isDynamicClusterWideChangeAllowed() {
+      return true;
+    }
+
+    @Override
+    public boolean isDynamicLocalChangeAllowed() {
+      return true;
+    }
+
+    @Override
+    public void validateLegalValue(Object value) {
+      bool(value);
     }
   },
   MAX_TTI_SECONDS(INTEGER, MAX_TTI_SECONDS_FIELD_NAME, DEFAULT_MAX_TTI_SECONDS) {
@@ -351,13 +374,14 @@ public enum InternalCacheConfigurationType {
 
   private final SupportedConfigurationType                         typeSupported;
   private final String                                             configString;
-  private Object                                                   defaultValue;
+  private final Object                                             defaultValue;
   private final static Map<String, InternalCacheConfigurationType> NAME_TO_TYPE_MAP;
   private final static Set<InternalCacheConfigurationType>         CLUSTER_WIDE_CONFIGS;
   private final static Set<InternalCacheConfigurationType>         LOCAL_CONFIGS;
 
   static {
     InternalCacheConfigurationType[] types = InternalCacheConfigurationType.values();
+    // EnumSet would be more efficient here
     Set<InternalCacheConfigurationType> clusterWideConfigs = new HashSet<InternalCacheConfigurationType>();
     Set<InternalCacheConfigurationType> localConfigs = new HashSet<InternalCacheConfigurationType>();
     Map<String, InternalCacheConfigurationType> map = new HashMap<String, InternalCacheConfigurationType>();
@@ -386,8 +410,8 @@ public enum InternalCacheConfigurationType {
     return NAME_TO_TYPE_MAP.get(configString);
   }
 
-  private InternalCacheConfigurationType(SupportedConfigurationType typeSupported, String configStringName,
-                                         Object defaultValue) {
+  InternalCacheConfigurationType(SupportedConfigurationType typeSupported, String configStringName,
+                                 Object defaultValue) {
     this.typeSupported = typeSupported;
     this.configString = configStringName;
     checkValidType(defaultValue);
@@ -460,13 +484,13 @@ public enum InternalCacheConfigurationType {
 
   /**
    * @throws IllegalArgumentException if existingValue is different from the value for this config type (if present in
-   *         the <code>newConfig</code>)
+   *         the {@code newConfig})
    */
   public void validateExistingMatchesValueFromConfig(Object existingValue, Configuration newConfig) {
     Object value = getValueIfExistsOrDefault(newConfig);
     if (!existingValue.equals(value)) {
       //
-      throw new IllegalArgumentException("'" + configString + "' should be same but does not match. Existing value: "
+      throw new IllegalArgumentException('\'' + configString + "' should be same but does not match. Existing value: "
                                          + existingValue + ", value passed in config: " + value);
     }
   }

@@ -78,6 +78,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private volatile int                                                    maxTTISeconds;
   private volatile int                                                    maxTTLSeconds;
   private volatile int                                                    maxCountInCluster;
+  private volatile boolean                                                evictionEnabled;
 
   // unclustered local fields
   protected volatile TCObjectServerMap<Long>                              tcObjectServerMap;
@@ -121,6 +122,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     this.localCacheEnabled = (Boolean) InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
         .getExistingValueOrException(config);
     this.maxCountInCluster = (Integer) InternalCacheConfigurationType.MAX_TOTAL_COUNT
+        .getExistingValueOrException(config);
+    this.evictionEnabled = (Boolean) InternalCacheConfigurationType.EVICTION_ENABLED
         .getExistingValueOrException(config);
     this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getExistingValueOrException(config);
     this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getExistingValueOrException(config);
@@ -1083,7 +1086,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public boolean isEmpty() {
-    return (size() == 0);
+    return size() == 0;
   }
 
   @Override
@@ -1250,28 +1253,30 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return localCacheEnabled;
   }
 
-  public static enum GetType {
-    LOCKED, UNLOCKED, UNSAFE;
+  public enum GetType {
+    LOCKED, UNLOCKED, UNSAFE
   }
 
-  private static enum MutateType {
-    LOCKED, UNLOCKED;
+  private enum MutateType {
+    LOCKED, UNLOCKED
   }
 
   @Override
   public void setConfigField(String name, Object value) {
-    if (name.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
-      setMaxTotalCount(((Integer) value).intValue());
-    } else if (name.equals(ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME)) {
-      setMaxTTI(((Integer) value).intValue());
-    } else if (name.equals(ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME)) {
-      setMaxTTL(((Integer) value).intValue());
-    } else if (name.equals(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME)) {
-      setLocalCacheEnabled(((Boolean) value).booleanValue());
-    } else if (name.equals(ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME)) {
-      setMaxEntriesLocalHeap(((Integer) value).intValue());
-    } else if (name.equals(ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
-      setMaxBytesLocalHeap(((Long) value).longValue());
+    if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(name)) {
+      setMaxTotalCount((Integer)value);
+    } else if (ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME.equals(name)) {
+      setEvictionEnabled((Boolean)value);
+    } else if (ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME.equals(name)) {
+      setMaxTTI((Integer)value);
+    } else if (ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME.equals(name)) {
+      setMaxTTL((Integer)value);
+    } else if (ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME.equals(name)) {
+      setLocalCacheEnabled((Boolean)value);
+    } else if (ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME.equals(name)) {
+      setMaxEntriesLocalHeap((Integer)value);
+    } else if (ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME.equals(name)) {
+      setMaxBytesLocalHeap((Long)value);
     } else {
       throw new IllegalArgumentException("ServerMap cannot set " + " name=" + name);
     }
@@ -1302,6 +1307,21 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       this.maxCountInCluster = intValue;
       platformService.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
           ServerMapApplicator.MAX_COUNT_IN_CLUSTER_FIELDNAME, this.maxCountInCluster });
+    } finally {
+      internalClearLocalCache();
+    }
+  }
+
+  @Override
+  public boolean isEvictionEnabled() {
+    return evictionEnabled;
+  }
+
+  private void setEvictionEnabled(boolean value) {
+    try {
+      this.evictionEnabled = value;
+      platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
+          ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
     } finally {
       internalClearLocalCache();
     }

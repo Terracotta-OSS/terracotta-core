@@ -10,22 +10,23 @@ import java.util.Map;
 
 public interface EvictableMap {
 
-  public int getMaxTotalCount();
+  int getMaxTotalCount();
 
-  public int getSize();
+  int getSize();
 
-  public int getTTLSeconds();
+  int getTTLSeconds();
 
-  public int getTTISeconds();
+  int getTTISeconds();
 
-  public Map<Object,ObjectID> getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
+  Map<Object, ObjectID> getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
 
-  public boolean startEviction();
-  
-  public boolean isEvicting();
+  boolean startEviction();
 
-  public void evictionCompleted();
+  boolean isEvicting();
 
-  public String getCacheName();
+  void evictionCompleted();
 
+  String getCacheName();
+
+  boolean isEvictionEnabled();
 }

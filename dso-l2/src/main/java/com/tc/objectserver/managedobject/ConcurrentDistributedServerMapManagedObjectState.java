@@ -50,6 +50,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public static final String    MAX_COUNT_IN_CLUSTER_FIELDNAME = "maxCountInCluster";
   public static final String    COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
   public static final String    COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
+  public static final String    EVICTION_ENABLED_FIELDNAME     = "evictionEnabled";
 
   protected int                 dsoLockType;
 
@@ -72,6 +73,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private int            maxTTLSeconds;
   private int            targetMaxTotalCount;
   private String         cacheName;
+  private boolean        evictionEnabled;
   private boolean        localCacheEnabled;
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
@@ -87,6 +89,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.localCacheEnabled = in.readBoolean();
     this.compressionEnabled = in.readBoolean();
     this.copyOnReadEnabled = in.readBoolean();
+    this.evictionEnabled = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
@@ -116,15 +119,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
-    writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, dsoLockType);
+    writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, this.dsoLockType);
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, this.maxTTISeconds);
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, this.maxTTLSeconds);
     writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, this.targetMaxTotalCount);
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, this.invalidateOnChange);
-    writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
-    writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
-    writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, compressionEnabled);
-    writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, copyOnReadEnabled);
+    writer.addPhysicalAction(CACHE_NAME_FIELDNAME, this.cacheName);
+    writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, this.localCacheEnabled);
+    writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, this.compressionEnabled);
+    writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, this.copyOnReadEnabled);
+    writer.addPhysicalAction(EVICTION_ENABLED_FIELDNAME, this.evictionEnabled);
   }
 
   @Override
@@ -160,31 +164,27 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   protected void applyPhysicalAction(final PhysicalAction action, final ObjectID objectID, final ApplyTransactionInfo info) {
     final String fieldName = action.getFieldName();
-    if (fieldName.equals(LOCK_TYPE_FIELDNAME)) {
-      this.dsoLockType = ((Integer)action.getObject());
-    } else if (fieldName.equals(MAX_TTI_SECONDS_FIELDNAME)) {
-      this.maxTTISeconds = ((Integer)action.getObject());
-    } else if (fieldName.equals(MAX_TTL_SECONDS_FIELDNAME)) {
-      this.maxTTLSeconds = ((Integer)action.getObject());
-    } else if (fieldName.equals(MAX_COUNT_IN_CLUSTER_FIELDNAME)) {
-      this.targetMaxTotalCount = ((Integer)action.getObject());
-    } else if (fieldName.equals(INVALIDATE_ON_CHANGE_FIELDNAME)) {
-      this.invalidateOnChange = ((Boolean)action.getObject());
+    if (LOCK_TYPE_FIELDNAME.equals(fieldName)) {
+      this.dsoLockType = (Integer)action.getObject();
+    } else if (MAX_TTI_SECONDS_FIELDNAME.equals(fieldName)) {
+      this.maxTTISeconds = (Integer)action.getObject();
+    } else if (MAX_TTL_SECONDS_FIELDNAME.equals(fieldName)) {
+      this.maxTTLSeconds = (Integer)action.getObject();
+    } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(fieldName)) {
+      this.targetMaxTotalCount = (Integer)action.getObject();
+    } else if (INVALIDATE_ON_CHANGE_FIELDNAME.equals(fieldName)) {
+      this.invalidateOnChange = (Boolean)action.getObject();
     } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
       Object value = action.getObject();
-      String name;
-      if (value instanceof UTF8ByteDataHolder) {
-        name = ((UTF8ByteDataHolder)value).asString();
-      } else {
-        name = (String)value;
-      }
-      this.cacheName = name;
-    } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
+      this.cacheName = asString(value);
+    } else if (LOCAL_CACHE_ENABLED_FIELDNAME.equals(fieldName)) {
       this.localCacheEnabled = (Boolean)action.getObject();
-    } else if (COMPRESSION_ENABLED_FIELDNAME.equals(action.getFieldName())) {
+    } else if (COMPRESSION_ENABLED_FIELDNAME.equals(fieldName)) {
       this.compressionEnabled = (Boolean)action.getObject();
-    } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(action.getFieldName())) {
+    } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(fieldName)) {
       this.copyOnReadEnabled = (Boolean)action.getObject();
+    } else if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
+      this.evictionEnabled = (Boolean)action.getObject();
     } else {
       throw new AssertionError("unexpected field name: " + fieldName);
     }
@@ -194,23 +194,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {
-      case SerializationUtil.INT_FIELD_CHANGED:
-        final String name;
-        Object nameValue = params[0];
-        int intValue = (Integer) params[1];
-        if (nameValue instanceof UTF8ByteDataHolder) {
-          name = ((UTF8ByteDataHolder) nameValue).asString();
-        } else {
-          name = (String) nameValue;
+      case SerializationUtil.FIELD_CHANGED:
+        final String fieldName = asString(params[0]);
+        final boolean boolValue = (Boolean) params[1];
+        if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
+          this.evictionEnabled = boolValue;
         }
-        if (MAX_TTI_SECONDS_FIELDNAME.equals(name)) {
+        break;
+      case SerializationUtil.INT_FIELD_CHANGED:
+        final String intFieldName = asString(params[0]);
+        final int intValue = (Integer) params[1];
+        if (MAX_TTI_SECONDS_FIELDNAME.equals(intFieldName)) {
           this.maxTTISeconds = intValue;
-        } else if (MAX_TTL_SECONDS_FIELDNAME.equals(name)) {
+        } else if (MAX_TTL_SECONDS_FIELDNAME.equals(intFieldName)) {
           this.maxTTLSeconds = intValue;
-        } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(name)) {
+        } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(intFieldName)) {
           this.targetMaxTotalCount = intValue;
         } else {
-          throw new AssertionError("Unknown int field changed for oid: " + objectID + " - name: " + name + ", value: "
+          throw new AssertionError("Unknown int field changed for oid: " + objectID + " - name: " + intFieldName + ", value: "
                                    + intValue);
         }
         break;
@@ -237,14 +238,25 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       default:
         super.applyLogicalAction(objectID, applyInfo, method, params);
     }
-    if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
-        && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {
-        if ( startEviction() ) {
-          applyInfo.initiateEvictionFor(objectID);
-        }
+
+    if (applyInfo.isActiveTxn()
+        && method == SerializationUtil.PUT
+        && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
+      if (startEviction()) {
+        applyInfo.initiateEvictionFor(objectID);
+      }
     }
   }
 
+  private static String asString(final Object value) {
+    final String str;
+    if (value instanceof UTF8ByteDataHolder) {
+      str = ((UTF8ByteDataHolder) value).asString();
+    } else {
+      str = (String) value;
+    }
+    return str;
+  }
 
 
   @Override
@@ -339,6 +351,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     out.writeBoolean(localCacheEnabled);
     out.writeBoolean(compressionEnabled);
     out.writeBoolean(copyOnReadEnabled);
+    out.writeBoolean(evictionEnabled);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -352,7 +365,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return super.basicEquals(o) && this.dsoLockType == mmo.dsoLockType && this.maxTTISeconds == mmo.maxTTISeconds
            && this.maxTTLSeconds == mmo.maxTTLSeconds && this.invalidateOnChange == mmo.invalidateOnChange
            && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled
-           && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
+           && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled
+           && this.evictionEnabled == mmo.evictionEnabled;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
@@ -366,6 +380,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public int getMaxTotalCount() {
     return this.targetMaxTotalCount;
+  }
+
+  @Override
+  public boolean isEvictionEnabled() {
+    return this.evictionEnabled;
   }
 
   @Override
@@ -386,26 +405,28 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public int getTTLSeconds() {
     return this.maxTTLSeconds;
   }
- //  locked by ManagedObject checkout 
+
+ //  locked by ManagedObject checkout
   @Override
   public synchronized boolean startEviction() {
-    if ( this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
+    // do not start eviction if it is turned off
+    if (!this.evictionEnabled || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
         return false;
     }
     this.evictionStatus = EvictionStatus.INITIATED;
     return true;
-  }    
-     
+  }
+
   @Override
   public synchronized boolean isEvicting() {
       return this.evictionStatus != EvictionStatus.NOT_INITIATED;
   }
- //  locked by ManagedObject checkout 
+ //  locked by ManagedObject checkout
   @Override
   public synchronized void evictionCompleted() {
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
- 
+
   @Override
   public Map<Object, ObjectID> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
       if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
@@ -468,6 +489,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     result = prime * result + targetMaxTotalCount;
     result = prime * result + (compressionEnabled ? 1231 : 1237);
     result = prime * result + (copyOnReadEnabled ? 1231 : 1237);
+    result = prime * result + (evictionEnabled ? 1231 : 1237);
     return result;
   }
 

@@ -92,7 +92,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final static String                                              CONFIG_CHANGE_LOCK_ID                = "__tc_config_change_lock";
   private final static List<ToolkitObjectType>                             VALID_TYPES                          = Arrays
                                                                                                                     .asList(ToolkitObjectType.STORE,
-                                                                                                                            ToolkitObjectType.CACHE);
+                                                                                                                        ToolkitObjectType.CACHE);
 
   private final int                                                        bulkOpsKbSize;
   private final int                                                        getAllBatchSize;
@@ -351,7 +351,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V unlockedGet(Object key, boolean quiet) {
-    return getServerMapForKey(key).unlockedGet((K) key, quiet);
+    return getServerMapForKey(key).unlockedGet((K)key, quiet);
   }
 
   @Override
@@ -539,14 +539,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
           removeNoReturn(key);
         }
         break;
-      case EVENTUAL: {
+      case EVENTUAL:
         Iterator<K> iter = keys.iterator();
         while (iter.hasNext()) {
           long currentByteSize = 0;
           Set<K> batchedEntries = createRemoveAllBatch(iter, currentByteSize);
           commitRemoveAllBatch(batchedEntries);
         }
-      }
     }
   }
 
@@ -577,7 +576,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private Map<K, V> doGetAll(final Collection<? extends K> keys, boolean quiet) {
-    if (keys == null || keys.isEmpty()) { return Collections.EMPTY_MAP; }
+    if (keys == null || keys.isEmpty()) { return Collections.emptyMap(); }
     if (isExplicitLocked()) { throw new UnsupportedOperationException(); }
     switch (consistency) {
       case STRONG:
@@ -668,37 +667,38 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void setConfigField(String fieldChanged, Serializable changedValue) {
+  public void setConfigField(final String fieldChanged, final Serializable changedValue) {
     ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
     try {
+      Serializable newValue = changedValue;
       InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
       Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
-                                  fieldChanged);
+          fieldChanged);
 
-      config.setObject(fieldChanged, changedValue);
+      config.setObject(fieldChanged, newValue);
 
       // set config changes ServerMap
       int[] values = null;
       for (int i = 0; i < this.serverMaps.length; i++) {
-        if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+        if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           if (values == null) {
-            values = distributeInStripes(((Integer) changedValue).intValue(), this.serverMaps.length);
+            values = distributeInStripes((Integer)newValue, this.serverMaps.length);
           }
-          changedValue = new Integer(values[i]);
+          newValue = values[i];
         }
-        serverMaps[i].setConfigField(fieldChanged, changedValue);
+        serverMaps[i].setConfigField(fieldChanged, newValue);
       }
 
       // set the config field in ClusteredObjectStripeImpl
       for (ToolkitObjectStripe stripe : this.stripeObjects) {
-        if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+        if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           int maxTotalCount = 0;
           for (InternalToolkitMap sm : serverMaps) {
             maxTotalCount += sm.getMaxCountInCluster();
           }
-          changedValue = maxTotalCount;
+          newValue = maxTotalCount;
         }
-        stripe.setConfigField(fieldChanged, changedValue);
+        stripe.setConfigField(fieldChanged, newValue);
       }
     } finally {
       ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);

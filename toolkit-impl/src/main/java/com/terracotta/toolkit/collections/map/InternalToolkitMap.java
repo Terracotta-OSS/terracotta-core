@@ -86,7 +86,7 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void unlockedRemoveNoReturn(Object key);
 
-  public void unlockedClear();
+  void unlockedClear();
 
   boolean isCompressionEnabled();
 
@@ -97,4 +97,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   ToolkitReadWriteLock createLockForKey(K key);
 
   void registerAttributeExtractor(ToolkitAttributeExtractor extractor);
+
+  boolean isEvictionEnabled();
 }

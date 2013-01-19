@@ -37,6 +37,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
   public static final String MAX_TTI_SECONDS_FIELDNAME      = "maxTTISeconds";
   public static final String MAX_TTL_SECONDS_FIELDNAME      = "maxTTLSeconds";
   public static final String MAX_COUNT_IN_CLUSTER_FIELDNAME = "maxCountInCluster";
+  public static final String EVICTION_ENABLED_FIELDNAME     = "evictionEnabled";
   public static final String COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
   public static final String COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
 
@@ -55,6 +56,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, serverMap.getMaxTTISeconds());
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, serverMap.getMaxTTLSeconds());
     writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, serverMap.getMaxCountInCluster());
+    writer.addPhysicalAction(EVICTION_ENABLED_FIELDNAME, serverMap.isEvictionEnabled());
     writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, serverMap.isCompressionEnabled());
     writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, serverMap.isCopyOnReadEnabled());
   }
@@ -79,34 +81,40 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
           config.setBoolean(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME,
                             (Boolean) physicalAction.getObject());
         } else if (MAX_TTI_SECONDS_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME, (Integer) physicalAction.getObject());
         } else if (MAX_TTL_SECONDS_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME, (Integer) physicalAction.getObject());
         } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(physicalAction.getFieldName())) {
-          config.setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, ((Integer) physicalAction.getObject()));
+          config.setInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, (Integer) physicalAction.getObject());
+        } else if (EVICTION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
+          config.setBoolean(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME,
+              (Boolean)physicalAction.getObject());
         } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
           config.setBoolean(ToolkitConfigFields.COMPRESSION_ENABLED_FIELD_NAME,
-                            ((Boolean) physicalAction.getObject()));
+              (Boolean) physicalAction.getObject());
         } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
           config.setBoolean(ToolkitConfigFields.COPY_ON_READ_ENABLED_FIELD_NAME,
-                            ((Boolean) physicalAction.getObject()));
+              (Boolean) physicalAction.getObject());
         } else {
           throw new AssertionError("Got unexpected physical action: " + physicalAction);
         }
       }
-      Consistency consistency;
-      switch(lockType) {
-        case CONCURRENT:
-          consistency = Consistency.EVENTUAL;
-          break;
-        case SYNCHRONOUS_WRITE:
-          consistency = Consistency.SYNCHRONOUS_STRONG;
-          break;
-        case WRITE:
-          consistency = Consistency.STRONG;
-          break;
-        default:
-          consistency = null;
+
+      Consistency consistency = null;
+      if (lockType != null) {
+        switch(lockType) {
+          case CONCURRENT:
+            consistency = Consistency.EVENTUAL;
+            break;
+          case SYNCHRONOUS_WRITE:
+            consistency = Consistency.SYNCHRONOUS_STRONG;
+            break;
+          case WRITE:
+            consistency = Consistency.STRONG;
+            break;
+          default:
+            consistency = null;
+        }
       }
       config.setString(ToolkitConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
       return new ServerMap(config, name);
@@ -151,9 +159,8 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
       // Can't assert here as resent transactions on server crash can be broadcasted as it might skip apply at the
       // server.
       // Resent transactions might need to be broadcasted.
-      getLogger()
-          .warn("ServerMap shouldn't normally be broadcasting changes unless its a clear/destroy, but could be a resent txn after crash : DNA "
-                    + dna);
+      getLogger().warn("ServerMap shouldn't normally be broadcasting changes " +
+                       "unless its a clear/destroy, but could be a resent txn after crash : DNA " + dna);
     }
   }
 }

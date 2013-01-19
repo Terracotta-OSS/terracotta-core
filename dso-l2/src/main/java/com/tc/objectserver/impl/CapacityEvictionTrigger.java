@@ -47,7 +47,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         restart = true;
         max = map.getMaxTotalCount();
         size = map.getSize();
-        if ( max > 0 && size > max ) {
+        if ( max >= 0 && size > max ) {
             if ( !map.isEvicting() ) {
                 throw new AssertionError("map is not in evicting state");
             }
@@ -63,17 +63,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             
     @Override
     public ServerMapEvictionContext collectEvictionCandidates(final int maxParam, String className, final EvictableMap map, final ClientObjectReferenceSet clients) {
-   // lets try and get smarter about this in the future but for now, just bring it back to capacity
+        // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int sample = boundsCheckSampleSize(size - maxParam);
-
-        if ( maxParam == 0 ) {
-            throw new AssertionError("triggers should never start evicting a pinned cache or store");
-        }
-        
         Map samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,ObjectID>emptyMap();
-
         count = samples.size();
- // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
+        // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
         if ( count < size - maxParam ) {
             repeat = true;
             if ( count == 0 ) {
