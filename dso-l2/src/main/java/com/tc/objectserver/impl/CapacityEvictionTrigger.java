@@ -47,11 +47,15 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         restart = true;
         max = map.getMaxTotalCount();
         size = map.getSize();
+    // ignore return value, capacity needs to make an independent decision on whether to run
+    
+        super.startEviction(map);
         if ( max >= 0 && size > max ) {
             if ( !map.isEvicting() ) {
+    // eviction state is set when capacity eviction is intiated outside the trigger
+    // this is the only trigger that does this for now
                 throw new AssertionError("map is not in evicting state");
             }
-            super.startEviction(map);
             return true;
         } else {
             map.evictionCompleted();
