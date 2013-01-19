@@ -373,14 +373,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         try {
           SampledRateCounter rate = counter.get();
           if (rate == null) { return; }
-          if (rate.getValue() == 0 && evictor.isLogging()) {
-            log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
-          } else {
-            log("Eviction Run:" + name + " " + rate);
+          if ( evictor.isLogging() ) {
+              if (rate.getValue() == 0 ) {
+                 log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
+              } else {
+                 log("Eviction Run:" + name + " " + rate);
+              }
           }
         } catch (ExecutionException exp) {
           logger.warn("eviction run", exp);
-          throw new AssertionError(exp);
+          evictionGrp.uncaughtException(Thread.currentThread(), exp);
         } catch (InterruptedException it) {
           logger.warn("eviction run", it);
         }
