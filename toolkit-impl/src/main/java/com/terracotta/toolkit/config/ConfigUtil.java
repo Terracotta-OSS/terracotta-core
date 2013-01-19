@@ -8,7 +8,6 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
-import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
 
 import java.util.Arrays;
 
@@ -47,7 +46,7 @@ public final class ConfigUtil {
     builder.evictionEnabled(ToolkitConfigFields.DEFAULT_EVICTION_ENABLED);
     builder.maxTTISeconds(ToolkitConfigFields.DEFAULT_MAX_TTI_SECONDS);
     builder.maxTTLSeconds(ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS);
-    builder.pinningStore(PinningStore.valueOf(ToolkitConfigFields.DEFAULT_PINNING_STORE));
+    builder.pinnedInLocalMemory(ToolkitConfigFields.DEFAULT_PINNED_IN_LOCAL_MEMORY);
     builder.configField(ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME,
                         ConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME);
     return builder.build();

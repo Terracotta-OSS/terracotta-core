@@ -6,7 +6,6 @@ package com.terracotta.toolkit.config.cache;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.config.SupportedConfigurationType;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
-import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
 
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 
@@ -41,7 +40,7 @@ import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TOTAL
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTI_SECONDS;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED;
-import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_PINNING_STORE;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.DEFAULT_PINNED_IN_LOCAL_MEMORY;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME;
@@ -51,7 +50,7 @@ import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TOTAL_COUNT_F
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitConfigFields.OFFHEAP_ENABLED_FIELD_NAME;
-import static org.terracotta.toolkit.store.ToolkitConfigFields.PINNING_STORE_FIELD_NAME;
+import static org.terracotta.toolkit.store.ToolkitConfigFields.PINNED_IN_LOCAL_MEMORY_FIELD_NAME;
 
 public enum InternalCacheConfigurationType {
   MAX_BYTES_LOCAL_HEAP(LONG, MAX_BYTES_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_BYTES_LOCAL_HEAP) {
@@ -308,10 +307,10 @@ public enum InternalCacheConfigurationType {
       enumInstanceIn(notBlank(string(notNull(value))), Consistency.class);
     }
   },
-  PINNING_STORE(STRING, PINNING_STORE_FIELD_NAME, DEFAULT_PINNING_STORE) {
+  PINNED_IN_LOCAL_MEMORY(BOOLEAN, PINNED_IN_LOCAL_MEMORY_FIELD_NAME, DEFAULT_PINNED_IN_LOCAL_MEMORY) {
     @Override
     public boolean isClusterWideConfig() {
-      return true;
+      return false;
     }
 
     @Override
@@ -326,7 +325,7 @@ public enum InternalCacheConfigurationType {
 
     @Override
     public void validateLegalValue(Object value) {
-      enumInstanceIn(notBlank(string(notNull(value))), PinningStore.class);
+      bool(value);
     }
   },
   COMPRESSION_ENABLED(BOOLEAN, COMPRESSION_ENABLED_FIELD_NAME, DEFAULT_COMPRESSION_ENABLED) {

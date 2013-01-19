@@ -14,8 +14,6 @@ import net.sf.ehcache.constructs.classloader.InternalClassLoaderAwareCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
-import org.terracotta.toolkit.store.ToolkitConfigFields.PinningStore;
-
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreConfig;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
@@ -87,9 +85,8 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
       }
     }
 
-    String ehcachePinningConfig = getEhcachePinningConfigString(config);
-    if (ehcachePinningConfig != null && !ehcachePinningConfig.trim().equals("")) {
-      cacheConfig.pinning(new PinningConfiguration().store(ehcachePinningConfig));
+    if (config.isPinnedInLocalMemory()) {
+      cacheConfig.pinning(new PinningConfiguration().store(PinningConfiguration.Store.LOCALMEMORY));
     }
 
     if (config.isOverflowToOffheap()) {
@@ -98,18 +95,5 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
     } else {
       return new Cache(cacheConfig);
     }
-  }
-
-  private static String getEhcachePinningConfigString(ServerMapLocalStoreConfig config) {
-    PinningStore pinning = PinningStore.valueOf(config.getPinningStore());
-    switch (pinning) {
-      case INCACHE:
-      case LOCALHEAP:
-      case LOCALMEMORY:
-        return pinning.name();
-      case NONE:
-        return "";
-    }
-    throw new UnsupportedOperationException();
   }
 }

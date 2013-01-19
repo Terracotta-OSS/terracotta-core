@@ -11,7 +11,7 @@ public class ServerMapLocalStoreConfigParameters {
 
   private volatile String  localStoreManagerName = ConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME;
   private volatile String  localStoreName        = "";
-  private volatile String  pinningStore          = ToolkitConfigFields.DEFAULT_PINNING_STORE;
+  private volatile boolean pinnedInLocalMemory   = ToolkitConfigFields.DEFAULT_PINNED_IN_LOCAL_MEMORY;
 
   private volatile long    maxBytesLocalHeap     = ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP;
   private volatile long    maxBytesLocalOffheap  = ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP;
@@ -26,8 +26,8 @@ public class ServerMapLocalStoreConfigParameters {
       this.localStoreManagerName(config.getString(ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME));
     }
 
-    if (config.hasField(ToolkitConfigFields.PINNING_STORE_FIELD_NAME)) {
-      this.pinningStore(config.getString(ToolkitConfigFields.PINNING_STORE_FIELD_NAME));
+    if (config.hasField(ToolkitConfigFields.PINNED_IN_LOCAL_MEMORY_FIELD_NAME)) {
+      this.pinnedInLocalMemory(config.getBoolean(ToolkitConfigFields.PINNED_IN_LOCAL_MEMORY_FIELD_NAME));
     }
 
     if (config.hasField(ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME)) {
@@ -106,12 +106,12 @@ public class ServerMapLocalStoreConfigParameters {
     return new ServerMapLocalStoreConfig(this);
   }
 
-  public String getPinningStore() {
-    return pinningStore;
+  public boolean isPinnedInLocalMemory() {
+    return pinnedInLocalMemory;
   }
 
-  public ServerMapLocalStoreConfigParameters pinningStore(String value) {
-    this.pinningStore = value;
+  public ServerMapLocalStoreConfigParameters pinnedInLocalMemory(boolean pinnedInLocalMemory) {
+    this.pinnedInLocalMemory = pinnedInLocalMemory;
     return this;
   }
 }

@@ -7,7 +7,7 @@ public class ServerMapLocalStoreConfig {
 
   private final String  localStoreManagerName;
   private final String  localStoreName;
-  private final String  pinningStore;
+  private final boolean pinnedInLocalMemory;
   private final long    maxBytesLocalHeap;
   private final long    maxBytesLocalOffheap;
   private final int     maxCountLocalHeap;
@@ -24,7 +24,7 @@ public class ServerMapLocalStoreConfig {
     this.maxBytesLocalOffheap = parameters.getMaxBytesLocalOffheap();
     this.maxCountLocalHeap = parameters.getMaxCountLocalHeap();
     this.overflowToOffheap = parameters.isOverflowToOffheap();
-    this.pinningStore = parameters.getPinningStore();
+    this.pinnedInLocalMemory = parameters.isPinnedInLocalMemory();
   }
 
   public String getLocalStoreManagerName() {
@@ -51,7 +51,7 @@ public class ServerMapLocalStoreConfig {
     return overflowToOffheap;
   }
 
-  public String getPinningStore() {
-    return pinningStore;
+  public boolean isPinnedInLocalMemory() {
+    return pinnedInLocalMemory;
   }
 }
