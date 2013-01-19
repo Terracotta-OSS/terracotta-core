@@ -11,7 +11,7 @@
 
   <artifactId>terracotta-toolkit-runtime</artifactId>
   <name>terracotta-toolkit-runtime</name>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <description>Terracotta toolkit runtime</description>
 
   <properties>
@@ -72,6 +72,16 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>     
+  
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -217,12 +227,11 @@
                 <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
                 <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
               </excludes>
-            </filter>		  
+            </filter>      
           </filters>    
           <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
           <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
           <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
-         
         </configuration>
         <executions>
           <execution>
@@ -283,6 +292,34 @@
           </execution>
         </executions>
       </plugin>       
+    <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.3.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <manifestLocation>${project.build.directory}</manifestLocation>
+          <instructions>
+            <Import-Package>javax.naming,
+            javax.management,
+            javax.transaction.xa,
+            org.w3c.dom,
+            org.xml.sax,
+            org.xml.sax.ext,
+            org.xml.sax.helpers,
+            javax.xml.parsers,
+            javax.xml.namespace,
+            javax.management.remote,
+            javax.management.loading,
+            javax.net.ssl</Import-Package>
+            <Export-Package>org.terracotta.toolkit.*</Export-Package>
+            <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+            <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>           
+            <Include-Resource> {maven-resources}, {maven-dependencies}, target/classes </Include-Resource>
+          </instructions>
+          <excludeDependencies>*;scope=provided|runtime</excludeDependencies>
+        </configuration>        
+      </plugin>        
     </plugins>
   </build>
 
