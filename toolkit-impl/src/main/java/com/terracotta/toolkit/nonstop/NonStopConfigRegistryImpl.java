@@ -44,6 +44,11 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                  }
 
                                                                                                  @Override
+                                                                                                 public long getDefaultSearchTimeoutMillis() {
+                                                                                                     return NonStopConfigurationFields.DEFAULT_SEARCH_TIMEOUT_MILLIS;
+                                                                                                 }
+
+                                                                                                 @Override
                                                                                                  public boolean isEnabled() {
                                                                                                    return NonStopConfigurationFields.DEFAULT_NON_STOP_ENABLED;
                                                                                                  }

@@ -20,6 +20,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     NonStopReadTimeoutBehavior readBehavior = NonStopReadTimeoutBehavior.LOCAL_READS;
     NonStopWriteTimeoutBehavior writeBehavior = NonStopWriteTimeoutBehavior.NO_OP;
     long timeout = 100;
+    long searchTimeout = 200;
 
     NonStopConfigurationBuilder builder = new NonStopConfigurationBuilder();
     builder.immediateTimeout(immediateTimeout);
@@ -27,6 +28,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     builder.nonStopReadTimeoutBehavior(readBehavior);
     builder.nonStopWriteTimeoutBehavior(writeBehavior);
     builder.timeoutMillis(timeout);
+    builder.defaultSearchTimeoutMillis(searchTimeout);
     NonStopConfiguration configuration = builder.build();
 
     Assert.assertEquals(immediateTimeout, configuration.isImmediateTimeoutEnabled());
@@ -34,6 +36,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     Assert.assertEquals(readBehavior, configuration.getReadOpNonStopTimeoutBehavior());
     Assert.assertEquals(writeBehavior, configuration.getWriteOpNonStopTimeoutBehavior());
     Assert.assertEquals(timeout, configuration.getTimeoutMillis());
+    Assert.assertEquals(searchTimeout, configuration.getDefaultSearchTimeoutMillis());
   }
 
   public void testDefault() {
@@ -48,6 +51,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     Assert.assertEquals(NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR,
                         configuration.getWriteOpNonStopTimeoutBehavior());
     Assert.assertEquals(NonStopConfigurationFields.DEFAULT_TIMEOUT_MILLIS, configuration.getTimeoutMillis());
+    Assert.assertEquals(NonStopConfigurationFields.DEFAULT_SEARCH_TIMEOUT_MILLIS, configuration.getDefaultSearchTimeoutMillis());
   }
 
   public void testImmediateTimeout() {
@@ -87,7 +91,25 @@ public class NonStopConfigBuilderTest extends TestCase {
     Assert.assertTrue(exception);
   }
 
-  public void testReadTimeoutBehavior() {
+  public void testSearchTimeout() {
+    NonStopConfigurationBuilder builder = new NonStopConfigurationBuilder();
+    NonStopConfiguration configuration = builder.defaultSearchTimeoutMillis(200).build();
+
+    Assert.assertEquals(200, configuration.getDefaultSearchTimeoutMillis());
+
+    boolean exception = false;
+    try {
+      builder.defaultSearchTimeoutMillis(-1).build();
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      exception = true;
+    }
+
+    Assert.assertTrue(exception);
+  }
+
+
+    public void testReadTimeoutBehavior() {
     NonStopConfigurationBuilder builder = new NonStopConfigurationBuilder();
 
     NonStopConfiguration configuration = null;
