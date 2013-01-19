@@ -241,7 +241,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
     if (applyInfo.isActiveTxn()
         && method == SerializationUtil.PUT
-        && this.isEvictionEnabled()
         && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
       if (startEviction()) {
         applyInfo.initiateEvictionFor(objectID);
