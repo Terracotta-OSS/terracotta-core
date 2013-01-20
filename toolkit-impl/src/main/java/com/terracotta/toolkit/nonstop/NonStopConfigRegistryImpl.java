@@ -44,7 +44,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                                  }
 
                                                                                                  @Override
-                                                                                                 public long getDefaultSearchTimeoutMillis() {
+                                                                                                 public long getSearchTimeoutMillis() {
                                                                                                      return NonStopConfigurationFields.DEFAULT_SEARCH_TIMEOUT_MILLIS;
                                                                                                  }
 
@@ -230,13 +230,21 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     return threadLocalConfiguration.get();
   }
 
+  /**
+  * {@inheritDoc}
+  */
   @Override
   public long getTimeoutForSearch(String instanceName, ToolkitObjectType objectType) {
+    Long searchTimeout;
     if (objectType == ToolkitObjectType.CACHE) {
-      return searchTimeoutsCache.get(instanceName);
+      searchTimeout = searchTimeoutsCache.get(instanceName);
     } else {
-      return searchTimeoutsStore.get(instanceName);
+      searchTimeout = searchTimeoutsStore.get(instanceName);
     }
+    if (searchTimeout == null) {
+      searchTimeout = getConfigForType(objectType).getSearchTimeoutMillis();
+    }
+    return searchTimeout;
   }
 
   @Override

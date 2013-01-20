@@ -28,7 +28,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     builder.nonStopReadTimeoutBehavior(readBehavior);
     builder.nonStopWriteTimeoutBehavior(writeBehavior);
     builder.timeoutMillis(timeout);
-    builder.defaultSearchTimeoutMillis(searchTimeout);
+    builder.searchTimeoutMillis(searchTimeout);
     NonStopConfiguration configuration = builder.build();
 
     Assert.assertEquals(immediateTimeout, configuration.isImmediateTimeoutEnabled());
@@ -36,7 +36,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     Assert.assertEquals(readBehavior, configuration.getReadOpNonStopTimeoutBehavior());
     Assert.assertEquals(writeBehavior, configuration.getWriteOpNonStopTimeoutBehavior());
     Assert.assertEquals(timeout, configuration.getTimeoutMillis());
-    Assert.assertEquals(searchTimeout, configuration.getDefaultSearchTimeoutMillis());
+    Assert.assertEquals(searchTimeout, configuration.getSearchTimeoutMillis());
   }
 
   public void testDefault() {
@@ -51,7 +51,7 @@ public class NonStopConfigBuilderTest extends TestCase {
     Assert.assertEquals(NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR,
                         configuration.getWriteOpNonStopTimeoutBehavior());
     Assert.assertEquals(NonStopConfigurationFields.DEFAULT_TIMEOUT_MILLIS, configuration.getTimeoutMillis());
-    Assert.assertEquals(NonStopConfigurationFields.DEFAULT_SEARCH_TIMEOUT_MILLIS, configuration.getDefaultSearchTimeoutMillis());
+    Assert.assertEquals(NonStopConfigurationFields.DEFAULT_SEARCH_TIMEOUT_MILLIS, configuration.getSearchTimeoutMillis());
   }
 
   public void testImmediateTimeout() {
@@ -93,13 +93,13 @@ public class NonStopConfigBuilderTest extends TestCase {
 
   public void testSearchTimeout() {
     NonStopConfigurationBuilder builder = new NonStopConfigurationBuilder();
-    NonStopConfiguration configuration = builder.defaultSearchTimeoutMillis(200).build();
+    NonStopConfiguration configuration = builder.searchTimeoutMillis(200).build();
 
-    Assert.assertEquals(200, configuration.getDefaultSearchTimeoutMillis());
+    Assert.assertEquals(200, configuration.getSearchTimeoutMillis());
 
     boolean exception = false;
     try {
-      builder.defaultSearchTimeoutMillis(-1).build();
+      builder.searchTimeoutMillis(-1).build();
       Assert.fail();
     } catch (IllegalArgumentException e) {
       exception = true;
