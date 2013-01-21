@@ -1,11 +1,16 @@
 package com.terracotta.management.test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.toolkit.ToolkitFactory;
 
+import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
 
@@ -84,19 +89,32 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     @Override
     protected final void doTest() throws Throwable {
       // wait for the TSA agent to finish up initialization
-      for (int i = 0; i < 5; i++) {
+      boolean initSuccessful =  false;
+      System.out.println("Starting test for " + getTerracottaUrl());
+      for (int i = 0; i < 10; i++) {
         try {
-          httpGet("http://" + this.getTerracottaUrl() + "/tc-management-api/agents");
+          for (int j = 0; j < getGroupData(0).getServerCount(); j++) {
+            httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(j) + "/tc-management-api/agents");
+          }
+          initSuccessful = true;
           break;
         } catch (IOException ioe) {
           Thread.sleep(1000);
         }
       }
+      assertThat("Server initialization issue", initSuccessful, is(true));
 
       doTsaTest();
     }
 
     protected abstract void doTsaTest() throws Throwable;
+
+    protected JSONArray getTsaJSONArrayContent(String host, int port, String path) throws IOException {
+      String result = httpGet("http://" + host + ":" + port + path);
+      System.out.println("Server ");
+      System.out.println(result);
+      return (JSONArray)JSONValue.parse(result);
+    }
 
     protected String httpGet(String urlString) throws IOException {
       URL url = new URL(urlString);
