@@ -148,20 +148,17 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.name = name;
     this.attrSchema = attributeTypes;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
-    setupStripeObjects(stripeObjects);
 
     this.config = new UnclusteredConfiguration(config);
     this.consistency = Consistency.valueOf((String) InternalCacheConfigurationType.CONSISTENCY
         .getExistingValueOrException(config));
     this.sizeOfEngine = new DefaultSizeOfEngine(DEFAULT_MAX_SIZEOF_DEPTH, true);
-    for (ToolkitObjectStripe stripeObject : stripeObjects) {
-      stripeObject.addConfigChangeListener(this);
-    }
 
     localCacheStore = createLocalCacheStore();
     pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
-    initializeLocalCache();
     this.timeSource = new SystemTimeSource();
+    setupStripeObjects(stripeObjects);
+
   }
 
   private void setupStripeObjects(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects) {
@@ -172,9 +169,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         list.add(serverMap);
       }
     }
-    this.serverMaps = list.toArray(new ServerMap[0]);
-    for (InternalToolkitMap<K, V> sm : serverMaps) {
+    initializeLocalCache(list);
+    for (InternalToolkitMap<K, V> sm : list) {
       sm.addCacheListener(this);
+    }
+    this.serverMaps = list.toArray(new ServerMap[0]);
+    for (ToolkitObjectStripe stripeObject : stripeObjects) {
+      stripeObject.addConfigChangeListener(this);
     }
   }
 
@@ -185,8 +186,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return false;
   }
 
-  private void initializeLocalCache() {
-    for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+  private void initializeLocalCache(List<InternalToolkitMap<K, V>> serverMapsParam) {
+    for (InternalToolkitMap<K, V> serverMap : serverMapsParam) {
       serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback);
     }
   }
@@ -207,7 +208,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
                                                                                          config);
     if (objects != null) {
       setupStripeObjects(objects);
-      initializeLocalCache();
       lookupSuccessfulAfterRejoin = true;
     } else {
       lookupSuccessfulAfterRejoin = false;
