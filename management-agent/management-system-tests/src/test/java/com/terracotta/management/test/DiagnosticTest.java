@@ -25,21 +25,33 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
-    testConfig.getClientConfig().setClientClasses(new Class[]{DiagnosticServerTestClient.class});
+    testConfig.getClientConfig().setClientClasses(new Class[]{DiagnosticThreadDumpTestClient.class});
   }
 
-  public static class DiagnosticServerTestClient extends AbstractTsaClient {
+  public static class DiagnosticThreadDumpTestClient extends AbstractTsaClient {
 
-    public DiagnosticServerTestClient(String[] args) {
+    public DiagnosticThreadDumpTestClient(String[] args) {
       super(args);
     }
 
     @Override
     protected void doTsaTest() throws Throwable {
-      testServerThreadDump();
+      testGroupThreadDump();
+
+      testSingleServerThreadDump();
     }
 
-    private void testServerThreadDump() throws IOException {
+    private void testGroupThreadDump() throws IOException {
+      for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
+        JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+            "/tc-management-api/agents/diagnostics/threadDump");
+        assertThat(contentArray.size(), is(MEMBER_COUNT));
+        JSONObject content = (JSONObject)contentArray.get(0);
+        assertThat(content.containsKey("dump"), is(true));
+      }
+    }
+
+    private void testSingleServerThreadDump() throws IOException {
       String serverName = getGroupData(0).getServerNames()[0];
       JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(0),
           "/tc-management-api/agents/diagnostics/threadDump/servers;names=" + serverName);
