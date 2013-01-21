@@ -108,6 +108,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
                              Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.COPY_ON_READ_ENABLED_FIELDNAME,
                              Boolean.valueOf(false), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME,
+                             Boolean.valueOf(false), false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
