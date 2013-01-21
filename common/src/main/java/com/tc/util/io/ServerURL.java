@@ -62,7 +62,8 @@ public class ServerURL {
     if (securityInfo.isSecure()) {
       HttpsURLConnection sslUrlConnection = (HttpsURLConnection) theURL.openConnection();
       if (securityInfo.getUsername() != null) {
-        uri = "tc://" + URLEncoder.encode(securityInfo.getUsername(), "UTF-8") + "@" + theURL.getHost() + ":" + theURL.getPort();
+        String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
+        uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
         final char[] passwordTo;
         try {
           final URI theURI = new URI(uri);
