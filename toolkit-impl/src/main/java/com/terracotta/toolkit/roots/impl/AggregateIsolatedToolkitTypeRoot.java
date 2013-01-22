@@ -61,10 +61,10 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
       if (isolatedType != null) {
         return isolatedType;
       } else {
-        S clusteredObject = getToolkitTypeRoot(name).getClusteredObject(name);
+        S clusteredObject = lookupClusteredObject(name);
         if (clusteredObject == null) {
           clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
-          getToolkitTypeRoot(name).addClusteredObject(name, clusteredObject);
+          getToolkitTypeRootForCreation(name).addClusteredObject(name, clusteredObject);
         }
         isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, this, name, configuration,
                                                                      clusteredObject);
@@ -87,13 +87,26 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
     lock(toolkitObjectType, name);
     try {
       isolatedTypes.remove(name);
-      getToolkitTypeRoot(name).removeClusteredObject(name);
+      ToolkitTypeRoot<S> hashBasedRoot = getToolkitTypeRootForCreation(name);
+      if (hashBasedRoot.getClusteredObject(name) != null) {
+        hashBasedRoot.removeClusteredObject(name);
+        return;
+      }
+
+      // We are looking up in all the stripes as a New stripe could have been added.
+      for (ToolkitTypeRoot<S> root : roots) {
+        S clusteredObject = root.getClusteredObject(name);
+        if (clusteredObject != null) {
+          root.removeClusteredObject(name);
+          return;
+        }
+      }
     } finally {
       unlock(toolkitObjectType, name);
     }
   }
 
-  private ToolkitTypeRoot<S> getToolkitTypeRoot(String name) {
+  private ToolkitTypeRoot<S> getToolkitTypeRootForCreation(String name) {
     return roots[Math.abs(name.hashCode() % roots.length)];
   }
 
@@ -158,10 +171,24 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   public S lookupClusteredObject(String name, ToolkitObjectType type, Configuration config) {
     readLock(type, name);
     try {
-      return getToolkitTypeRoot(name).getClusteredObject(name);
+      return lookupClusteredObject(name);
     } finally {
       readUnlock(type, name);
     }
+  }
+
+  private S lookupClusteredObject(String name) {
+    // perform a hash based lookup first.
+    S clusteredObject = getToolkitTypeRootForCreation(name).getClusteredObject(name);
+    if (clusteredObject != null) { return clusteredObject; }
+
+    // We are looking up in all the stripes as a New stripe could have been added.
+    for (ToolkitTypeRoot<S> root : roots) {
+      clusteredObject = root.getClusteredObject(name);
+      if (clusteredObject != null) { return clusteredObject; }
+    }
+    // return null If root not present in any stripe.
+    return null;
   }
 
   @Override

@@ -25,8 +25,10 @@ import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
@@ -64,9 +66,8 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
         return distributedType;
       } else {
         Configuration effectiveConfig = null;
-        final ToolkitObjectStripe<S>[] stripeObjects;
-        if (roots[0].getClusteredObject(name) != null) {
-          stripeObjects = lookupStripeObjects(name);
+        ToolkitObjectStripe<S>[] stripeObjects = lookupStripeObjects(name);
+        if (stripeObjects != null) {
           effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(stripeObjects, configuration);
         } else {
           // need to create stripe objects
@@ -112,31 +113,31 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
                                                       Configuration config) {
     readLock(type, name);
     try {
-      ToolkitObjectStripe<S>[] stripeObjects = null;
-      // check with first group
-      if (roots[0].getClusteredObject(name) != null) {
-        // this may be a problem, if the ACTIVE L2 of the rest of groups were fresh/clean L2's but not the
-        // first group's active L2
-        stripeObjects = lookupStripeObjects(name);
-      }
-      return stripeObjects;
+      return lookupStripeObjects(name);
     } finally {
       readUnlock(type, name);
     }
   }
 
   private ToolkitObjectStripe<S>[] lookupStripeObjects(String name) {
-    final ToolkitObjectStripe<S>[] stripeObjects = new ToolkitObjectStripe[roots.length];
-    // already created.. make sure was created in all stripes
-    for (int i = 0; i < roots.length; i++) {
-      ToolkitTypeRoot<ToolkitObjectStripe<S>> root = roots[i];
-      stripeObjects[i] = root.getClusteredObject(name);
-      if (stripeObjects[i] == null) {
-        //
-        throw new AssertionError("ClusteredObjectStripe not created in all stripes - missing in stripe: " + i);
+    final List<ToolkitObjectStripe<S>> stripeObjects = new ArrayList<ToolkitObjectStripe<S>>(roots.length);
+    int missingClusteredObjectStripe = -1;
+    int i = 0;
+    for (ToolkitTypeRoot<ToolkitObjectStripe<S>> root : roots) {
+      ToolkitObjectStripe<S> clusteredObject = root.getClusteredObject(name);
+      // If the Stripe was added after the object is created. It might not be present in the last stripes.
+      if (clusteredObject != null) {
+        if (missingClusteredObjectStripe > -1) {
+          // missing object can be present only in newly added stripes.
+          throw new AssertionError("ClusteredObjectStrip not created in stripe : " + missingClusteredObjectStripe);
+        }
+        stripeObjects.add(clusteredObject);
+      } else {
+        missingClusteredObjectStripe = i;
       }
+      i++;
     }
-    return stripeObjects;
+    return stripeObjects.size() == 0 ? null : stripeObjects.toArray(new ToolkitObjectStripe[0]);
   }
 
   @Override
