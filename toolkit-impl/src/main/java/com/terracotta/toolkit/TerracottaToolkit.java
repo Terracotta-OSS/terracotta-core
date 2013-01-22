@@ -102,9 +102,12 @@ public class TerracottaToolkit implements ToolkitInternal {
   private ToolkitProperties                                       toolkitProperties;
   protected final PlatformService                                 platformService;
   private final ClusterInfo                                       clusterInfoInstance;
+  protected final boolean                                         isNonStop;
 
-  public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider) {
+  public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider,
+                           boolean isNonStop) {
     this.tcClient = tcClient;
+    this.isNonStop = isNonStop;
     this.platformService = PlatformServiceProvider.getPlatformService();
     clusterInfoInstance = new TerracottaClusterInfo(platformService);
     SerializationStrategy strategy = createSerializationStrategy();
