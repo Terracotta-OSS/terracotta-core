@@ -4,9 +4,11 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
+
 import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.ToolkitFeatureType;
 import org.terracotta.toolkit.ToolkitFeatureTypeInternal;
+import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -265,7 +267,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public <V> ToolkitCache<String, V> getCache(String name, Configuration configuration, Class<V> klazz) {
     if (configuration == null) {
-      configuration = new ToolkitStoreConfigBuilder().build();
+      configuration = new ToolkitCacheConfigBuilder().build();
     }
     return clusteredCacheFactory.getOrCreate(name, configuration);
   }
