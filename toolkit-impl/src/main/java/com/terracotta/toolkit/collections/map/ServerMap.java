@@ -1318,12 +1318,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void setEvictionEnabled(boolean value) {
-    try {
+    if (this.evictionEnabled != value) {
       this.evictionEnabled = value;
       platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
           ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
-    } finally {
-      internalClearLocalCache();
     }
   }
 
