@@ -85,7 +85,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       "ObjectFlushRate", "TransactionRate"                         };
 
   private static final String[]  SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
-      "ObjectFaultRate", "ObjectFlushRate", "OperationRate", "OffheapMaxSize", "OffheapReservedSize",
+      "ObjectFaultRate", "ObjectFlushRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize",
       "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
 
   private final JmxConnectorPool jmxConnectorPool;
