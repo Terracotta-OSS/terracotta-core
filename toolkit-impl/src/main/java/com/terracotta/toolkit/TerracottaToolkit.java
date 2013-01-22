@@ -28,6 +28,7 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
+import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 import org.terracotta.toolkit.store.ToolkitStore;
 
@@ -163,10 +164,17 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public <V> ToolkitStore<String, V> getStore(String name, Configuration configuration, Class<V> klazz) {
+    final ToolkitStore<String, V> store;
     if (configuration == null) {
-      configuration = new ToolkitStoreConfigBuilder().build();
+      store = clusteredStoreFactory.getOrCreate(name, new ToolkitStoreConfigBuilder().build());
+    } else {
+      store = clusteredStoreFactory.getOrCreate(name, configuration);
+      // if user sets evictionEnabled=true for store - ignore it
+      if (configuration.getBoolean(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME)) {
+        store.setConfigField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME, false);
+      }
     }
-    return clusteredStoreFactory.getOrCreate(name, configuration);
+    return store;
   }
 
   @Override
