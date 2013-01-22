@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.PostInit;
@@ -81,7 +82,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   MetaDataManager createMetaDataManager(Sink sink);
 
-  IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
+  IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink, StorageManager storageManager)
       throws IOException;
 
   L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,

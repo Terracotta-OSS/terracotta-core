@@ -49,7 +49,7 @@ public class Persistor {
     persistentMapStore = new PersistentMapStoreImpl(storageManager);
   }
 
-  protected StorageManager getStorageManager() {
+  public StorageManager getStorageManager() {
     return storageManager;
   }
 
@@ -152,4 +152,6 @@ public class Persistor {
     if (false) { throw new IOException(); }
     throw new UnsupportedOperationException("Can not backup a non-persistent L2.");
   }
+
+
 }

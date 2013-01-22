@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.ConfigurationContext;
@@ -150,7 +151,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
+  public IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink, StorageManager storageManager)
       throws IOException {
     return new NullIndexHACoordinator();
   }

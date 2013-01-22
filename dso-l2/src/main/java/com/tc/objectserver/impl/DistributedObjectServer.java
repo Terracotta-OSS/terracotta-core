@@ -988,7 +988,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                      this.transactionManager,
                                                                                                      host, serverPort);
     logger.info("L2 Networked HA Enabled ");
-    this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink);
+    this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink, persistor.getStorageManager());
 
     SequenceGenerator indexSequenceGenerator = new SequenceGenerator();
 
