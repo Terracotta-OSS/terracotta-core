@@ -19,6 +19,7 @@ import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Conversion;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1149,6 +1151,51 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
+
+  @Override
+  public Map<String, Integer> getUnreadOperatorEventCount() throws ServiceExecutionException {
+    Map<String, Integer> result = new HashMap<String, Integer>();
+    
+    for (EventType severity : EventType.values()) {
+      result.put(severity.name(), Integer.valueOf(0));
+    }
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        for (L2Info member : serverGroupInfo.members()) {
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(member.host(), member.jmxPort());
+
+            DSOMBean dsoMBean = JMX.newMBeanProxy(jmxConnector.getMBeanServerConnection(),
+                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+
+            Map<String, Integer> serverResult = dsoMBean.getUnreadOperatorEventCount();
+            for(String key : serverResult.keySet()) {
+              Integer value = result.get(key);
+              Integer serverValue = serverResult.get(key);
+              
+              value = Integer.valueOf(value.intValue() + serverValue.intValue());
+              result.put(key, value);
+            }
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return result;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting unread operator event count", e);
+    }
+  }
+
   @Override
   public void shutdownServers(Set<String> serverNames) throws ServiceExecutionException {
     try {
@@ -1381,5 +1428,4 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     Object state = mBeanServerConnection.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "State");
     return "ACTIVE-COORDINATOR".equals(state);
   }
-
 }

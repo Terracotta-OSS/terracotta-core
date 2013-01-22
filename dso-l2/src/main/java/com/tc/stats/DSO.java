@@ -195,15 +195,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   @Override
   public boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
-    List<TerracottaOperatorEvent> operatorEvents = getOperatorEvents();
-    for (TerracottaOperatorEvent event : operatorEvents) {
-      if (event.equals(operatorEvent)) {
-        if (read) { event.markRead(); }
-        else { event.markUnread(); }
-        return true;
-      }
-    }
-    return false;
+    return operatorEventHistoryProvider.markOperatorEvent(operatorEvent, read);
+  }
+
+  @Override
+  public Map<String, Integer> getUnreadOperatorEventCount() {
+    return operatorEventHistoryProvider.getUnreadCounts();
   }
 
   @Override
@@ -517,8 +514,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public long getOperationRate() {
-    return getStats().getOperationRate();
+  public long getWriteOperationRate() {
+    return getStats().getWriteOperationRate();
   }
 
   @Override

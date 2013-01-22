@@ -3,23 +3,35 @@
  */
 package com.tc.operatorevent;
 
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.CircularLossyQueue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventHistoryProvider {
-  private final CircularLossyQueue<TerracottaOperatorEvent> operatorEventHistory = new CircularLossyQueue<TerracottaOperatorEvent>(
-                                                                                                                                   TCPropertiesImpl
-                                                                                                                                       .getProperties()
-                                                                                                                                       .getInt(
-                                                                                                                                               TCPropertiesConsts.L2_OPERATOR_EVENTS_STORE,
-                                                                                                                                               1500));
+  private final CircularLossyQueue<TerracottaOperatorEvent> operatorEventHistory;
+  private final HashMap<String, Integer>                    unreadCounts;
+
+  public DsoOperatorEventHistoryProvider() {
+    operatorEventHistory = new CircularLossyQueue<TerracottaOperatorEvent>(TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_OPERATOR_EVENTS_STORE, 1500));
+
+    unreadCounts = new HashMap<String, Integer>();
+    for (EventType severity : EventType.values()) {
+      unreadCounts.put(severity.name(), Integer.valueOf(0));
+    }
+  }
 
   @Override
-  public void push(TerracottaOperatorEvent event) {
-    operatorEventHistory.push(event);
+  public synchronized void push(TerracottaOperatorEvent event) {
+    updateUnreadCounts(event, operatorEventHistory.push(event));
   }
 
   @Override
@@ -43,4 +55,48 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
     return eventList;
   }
 
+  private void updateUnreadCounts(TerracottaOperatorEvent newEvent, TerracottaOperatorEvent removedEvent) {
+    if (removedEvent != null && !removedEvent.isRead()) {
+      incrementUnread(removedEvent, -1);
+    }
+    incrementUnread(newEvent, 1);
+  }
+
+  private void incrementUnread(TerracottaOperatorEvent operatorEvent, int count) {
+    String eventTypeName = operatorEvent.getEventType().name();
+    Integer value = unreadCounts.get(eventTypeName);
+    unreadCounts.put(eventTypeName, Integer.valueOf(value.intValue() + count));
+  }
+
+  @Override
+  public Map<String, Integer> getUnreadCounts() {
+    return (Map<String, Integer>) unreadCounts.clone();
+  }
+
+  private boolean markRead(TerracottaOperatorEvent operatorEvent, boolean read) {
+    if (read) {
+      if (!operatorEvent.isRead()) {
+        operatorEvent.markRead();
+        incrementUnread(operatorEvent, -1);
+        return true;
+      }
+      return false;
+    } else {
+      if (operatorEvent.isRead()) {
+        operatorEvent.markUnread();
+        incrementUnread(operatorEvent, 1);
+        return true;
+      }
+      return false;
+    }
+  }
+
+  @Override
+  public synchronized boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
+    List<TerracottaOperatorEvent> operatorEvents = getOperatorEvents();
+    for (TerracottaOperatorEvent event : operatorEvents) {
+      if (event.equals(operatorEvent)) { return markRead(event, read); }
+    }
+    return false;
+  }
 }

@@ -118,7 +118,7 @@ public class DSOStatsImpl implements DSOStats {
   }
 
   @Override
-  public long getOperationRate() {
+  public long getWriteOperationRate() {
     return serverStats.getOperationCounter().getMostRecentSample().getCounterValue();
   }
 }

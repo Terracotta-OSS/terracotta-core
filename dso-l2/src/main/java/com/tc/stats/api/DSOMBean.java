@@ -106,4 +106,6 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
   int getActiveLicensedClientCount();
 
   int getLicensedClientHighCount();
+
+  Map<String, Integer> getUnreadOperatorEventCount();
 }

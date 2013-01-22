@@ -20,9 +20,12 @@ public class CircularLossyQueue<T> {
     this.maxSize = size;
   }
 
-  public void push(T newVal) {
+  public T push(T newVal) {
     int index = (int) (currentIndex.incrementAndGet() % maxSize);
-    circularArray[index].set(newVal);
+    AtomicReference<T> ref = circularArray[index];
+    T oldVal = ref.get();
+    ref.set(newVal);
+    return oldVal;
   }
 
   public T[] toArray(T[] type) {

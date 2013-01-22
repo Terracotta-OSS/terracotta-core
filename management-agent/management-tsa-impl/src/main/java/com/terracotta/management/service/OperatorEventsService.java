@@ -8,6 +8,7 @@ import org.terracotta.management.ServiceExecutionException;
 import com.terracotta.management.resource.OperatorEventEntity;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,4 +56,9 @@ public interface OperatorEventsService {
    */
   boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
 
+  /**
+   * Returns the number of unread operator events.
+   * @throws ServiceExecutionException
+   */
+  Map<String, Integer> getUnreadCount() throws ServiceExecutionException;
 }

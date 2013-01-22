@@ -4,6 +4,7 @@
 package com.tc.operatorevent;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TerracottaOperatorEventHistoryProvider {
   void push(TerracottaOperatorEvent event);
@@ -11,4 +12,13 @@ public interface TerracottaOperatorEventHistoryProvider {
   List<TerracottaOperatorEvent> getOperatorEvents();
 
   List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
+
+  /**
+   * Returns the unread event counts broken out by event type name.
+   * 
+   * @see TerracottaOperatorEvent.EventType
+   */
+  Map<String, Integer> getUnreadCounts();
+
+  boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read);
 }

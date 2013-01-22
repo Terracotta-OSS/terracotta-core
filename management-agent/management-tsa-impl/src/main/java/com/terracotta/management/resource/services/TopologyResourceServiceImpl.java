@@ -11,6 +11,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
+import com.terracotta.management.service.OperatorEventsService;
 import com.terracotta.management.service.TopologyService;
 
 import java.util.Collection;
@@ -31,9 +32,11 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
   private final TopologyService topologyService;
   private final RequestValidator requestValidator;
+  private final OperatorEventsService operatorEventsService;
 
   public TopologyResourceServiceImpl() {
     this.topologyService = ServiceLocator.locate(TopologyService.class);
+    this.operatorEventsService = ServiceLocator.locate(OperatorEventsService.class);
     this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
   }
 
@@ -45,6 +48,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       TopologyEntity result = new TopologyEntity();
+      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       result.getClientEntities().addAll(topologyService.getClients());
       return Collections.singleton(result);

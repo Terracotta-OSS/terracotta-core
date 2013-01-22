@@ -4,6 +4,7 @@
 package com.terracotta.management.resource;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,8 +14,10 @@ import java.util.Set;
  */
 public class TopologyEntity extends AbstractTsaEntity {
 
-  private Set<ServerGroupEntity> serverGroupEntities = new HashSet<ServerGroupEntity>();
-  private Set<ClientEntity> clientEntities = new HashSet<ClientEntity>();
+  private final Set<ServerGroupEntity> serverGroupEntities = new HashSet<ServerGroupEntity>();
+  private final Set<ClientEntity> clientEntities = new HashSet<ClientEntity>();
+
+  private Map<String, Integer>         unreadOperatorEventCount;
 
   public Set<ServerGroupEntity> getServerGroupEntities() {
     return serverGroupEntities;
@@ -24,4 +27,11 @@ public class TopologyEntity extends AbstractTsaEntity {
     return clientEntities;
   }
 
+  public void setUnreadOperatorEventCount(Map<String, Integer> unreadCount) {
+    this.unreadOperatorEventCount = unreadCount;
+  }
+
+  public Map<String, Integer> getUnreadOperatorEventCount() {
+    return unreadOperatorEventCount;
+  }
 }

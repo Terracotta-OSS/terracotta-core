@@ -11,6 +11,7 @@ import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.util.TimeStringParser;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,5 +41,10 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
   @Override
   public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
     return tsaManagementClientService.markOperatorEvent(operatorEventEntity, read);
+  }
+
+  @Override
+  public Map<String, Integer> getUnreadCount() throws ServiceExecutionException {
+    return tsaManagementClientService.getUnreadOperatorEventCount();
   }
 }

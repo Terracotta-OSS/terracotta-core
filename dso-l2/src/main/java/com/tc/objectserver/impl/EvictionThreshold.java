@@ -3,9 +3,10 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 import java.util.Arrays;
 import java.util.Comparator;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  *

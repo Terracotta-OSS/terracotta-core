@@ -4,6 +4,7 @@
 package com.terracotta.management.service;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
+
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.BackupEntity;
@@ -17,6 +18,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -72,4 +74,6 @@ public interface TsaManagementClientService {
   void shutdownServers(Set<String> serverNames) throws ServiceExecutionException;
 
   Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException;
+
+  Map<String, Integer> getUnreadOperatorEventCount() throws ServiceExecutionException;
 }
