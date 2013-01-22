@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.matchers.JUnitMatchers.containsString;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -57,17 +58,17 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
       assertThat(attributes, is(notNullValue()));
 
       String environment = (String)attributes.get("environment");
-      assertThat(environment.contains("user.home"), is(true));
+      assertThat(environment, containsString("user.home"));
 
       JSONArray arguments = (JSONArray)attributes.get("processArguments");
       assertThat(arguments.size(), is(not(0)));
 
       String config = (String)attributes.get("config");
       System.out.println(config);
-      assertThat(config.contains("<mirror-group group-name=\"testGroup"+ groupIndex + "\">"), is(true));
+      assertThat(config, containsString("<mirror-group group-name=\"testGroup" + groupIndex + "\">"));
 
       String tcProperties = (String)attributes.get("tcProperties");
-      assertThat(tcProperties.contains("tc.config.total.timeout"), is(true));
+      assertThat(tcProperties, containsString("tc.config.total.timeout"));
     }
   }
 
