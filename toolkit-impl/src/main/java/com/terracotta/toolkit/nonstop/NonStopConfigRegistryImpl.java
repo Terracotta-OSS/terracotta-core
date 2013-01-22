@@ -242,7 +242,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
       searchTimeout = searchTimeoutsStore.get(instanceName);
     }
     if (searchTimeout == null) {
-      searchTimeout = getConfigForType(objectType).getSearchTimeoutMillis();
+      searchTimeout = getConfigForInstance(instanceName, objectType).getSearchTimeoutMillis();
     }
     return searchTimeout;
   }
