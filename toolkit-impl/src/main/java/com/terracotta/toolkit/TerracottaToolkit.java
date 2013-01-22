@@ -172,7 +172,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     } else {
       store = clusteredStoreFactory.getOrCreate(name, configuration);
       // if user sets evictionEnabled=true for store - ignore it
-      if (configuration.getBoolean(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME)) {
+      if (configuration.hasField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME)) {
         store.setConfigField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME, false);
       }
     }
