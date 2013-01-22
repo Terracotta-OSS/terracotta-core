@@ -954,8 +954,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
               }
             }
           } catch (Exception e) {
-            e.printStackTrace();
-            LOG.error("Fuck", e);
+            LOG.error("Connecting to server at '" + jmxHost + ":" + jmxPort + "'", e);
           } finally {
             if (jmxConnector != null) {
               jmxConnector.close();
