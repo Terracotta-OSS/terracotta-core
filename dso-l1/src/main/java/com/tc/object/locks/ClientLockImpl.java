@@ -1200,6 +1200,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unlock.flushCompleted();
       ClientLockImpl.this.notifyAll();
       release(remote, unlock);
+      unparkFirstQueuedAcquire();
     }
   }
 
