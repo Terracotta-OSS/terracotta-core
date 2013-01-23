@@ -15,5 +15,5 @@ public interface TransactionPersistor {
 
   void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx);
 
-  void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs);
+  void deleteAllGlobalTransactionDescriptors(SortedSet<GlobalTransactionID> globalTransactionIDs);
 }

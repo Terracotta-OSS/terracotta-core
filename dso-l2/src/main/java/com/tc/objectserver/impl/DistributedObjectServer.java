@@ -6,9 +6,6 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -291,6 +288,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -752,8 +752,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                             new LowWaterMarkCallbackHandler(), 1, maxStageSize);
     final ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator,
                                                                                        transactionStore,
-                                                                                       transactionStorePTP,
-                                                                                       gidSequenceProvider,
+        gidSequenceProvider,
                                                                                        globalTransactionIDSequence,
                                                                                        lwmCallbackStage.getSink());
 

@@ -23,7 +23,7 @@ public class NullTransactionPersistor implements TransactionPersistor {
   }
 
   @Override
-  public void deleteAllGlobalTransactionDescriptors(final Transaction tx, final SortedSet<GlobalTransactionID> globalTransactionIDs) {
+  public void deleteAllGlobalTransactionDescriptors(final SortedSet<GlobalTransactionID> globalTransactionIDs) {
     // do nothing
   }
 }

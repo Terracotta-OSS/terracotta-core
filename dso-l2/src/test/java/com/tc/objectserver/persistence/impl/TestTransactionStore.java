@@ -102,7 +102,7 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, ServerTransactionID lowWaterMark) {
+  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark) {
     for (final Entry<ServerTransactionID, GlobalTransactionDescriptor> e : volatileMap
         .entrySet()) {
       ServerTransactionID sid = e.getKey();
@@ -117,7 +117,7 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void shutdownNode(Transaction transaction, NodeID nid) {
+  public void shutdownNode(NodeID nid) {
     throw new ImplementMe();
   }
 
@@ -128,7 +128,7 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void shutdownAllClientsExcept(Transaction tx, Set cids) {
+  public void shutdownAllClientsExcept(Set cids) {
     throw new ImplementMe();
   }
 
@@ -141,7 +141,7 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, GlobalTransactionID lowWaterMark) {
+  public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowWaterMark) {
     throw new ImplementMe();
   }
 

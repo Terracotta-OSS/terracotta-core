@@ -8,7 +8,6 @@ import com.tc.async.api.Sink;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
@@ -25,7 +24,6 @@ import java.util.TreeMap;
 
 public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransactionManager {
   private final TransactionStore                    transactionStore;
-  private final TransactionProvider                 persistenceTransactionProvider;
   private final SequenceValidator                   sequenceValidator;
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
   private final Sequence                            globalTransactionIDSequence;
@@ -33,12 +31,10 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   private final Sink                                callbackSink;
 
   public ServerGlobalTransactionManagerImpl(SequenceValidator sequenceValidator, TransactionStore transactionStore,
-                                            TransactionProvider ptxp,
                                             GlobalTransactionIDSequenceProvider gidSequenceProvider,
                                             Sequence globalTransactionIDSequence, Sink callbackSink) {
     this.sequenceValidator = sequenceValidator;
     this.transactionStore = transactionStore;
-    this.persistenceTransactionProvider = ptxp;
     this.gidSequenceProvider = gidSequenceProvider;
     this.globalTransactionIDSequence = globalTransactionIDSequence;
     this.callbackSink = callbackSink;
@@ -47,17 +43,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   @Override
   public void shutdownNode(NodeID nodeID) {
     this.sequenceValidator.remove(nodeID);
-    Transaction tx = this.persistenceTransactionProvider.newTransaction();
-    transactionStore.shutdownNode(tx, nodeID);
-    tx.commit();
+    transactionStore.shutdownNode(nodeID);
     processCallbacks();
   }
 
   @Override
   public void shutdownAllClientsExcept(Set cids) {
-    Transaction tx = this.persistenceTransactionProvider.newTransaction();
-    transactionStore.shutdownAllClientsExcept(tx, cids);
-    tx.commit();
+    transactionStore.shutdownAllClientsExcept(cids);
     processCallbacks();
   }
 
@@ -69,17 +61,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   @Override
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
-    Transaction tx = this.persistenceTransactionProvider.newTransaction();
-    transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, sid);
-    tx.commit();
+    transactionStore.clearCommitedTransactionsBelowLowWaterMark(sid);
     processCallbacks();
   }
 
   @Override
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    Transaction tx = this.persistenceTransactionProvider.newTransaction();
-    transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, lowGlobalTransactionIDWatermark);
-    tx.commit();
+    transactionStore.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
   @Override

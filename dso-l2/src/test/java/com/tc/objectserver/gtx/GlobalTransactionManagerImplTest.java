@@ -13,11 +13,9 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
@@ -33,7 +31,6 @@ import junit.framework.TestCase;
 public class GlobalTransactionManagerImplTest extends TestCase {
 
   private TestTransactionStore               transactionStore;
-  private TestPersistenceTransactionProvider ptxp;
   private ServerGlobalTransactionManager     gtxm;
 
   @Override
@@ -41,9 +38,8 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     super.setUp();
     Sequence sequence = new SimpleSequence();
     transactionStore = new TestTransactionStore(sequence);
-    ptxp = new TestPersistenceTransactionProvider();
     GlobalTransactionIDSequenceProvider gsp = new GlobalTransactionIDBatchRequestHandler(new TestMutableSequence());
-    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, ptxp, gsp, sequence,
+    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, gsp, sequence,
                                                   new LWMCallbackMockSink());
   }
 
@@ -151,9 +147,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertFalse(gtxm.initiateApply(stxid2));
 
     ServerTransactionID stxid3 = new ServerTransactionID(stxid2.getSourceID(), stxid2.getClientTransactionID().next());
-    Transaction txn = ptxp.newTransaction();
     gtxm.clearCommitedTransactionsBelowLowWaterMark(stxid3);
-    txn.commit();
   }
 
   public void testLWMCallbacks() throws Exception {
@@ -167,7 +161,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     callback = noopFuture();
     gtxm.registerCallbackOnLowWaterMarkReached(callback);
     try {
-      callback.get(10, TimeUnit.SECONDS);
+      callback.get(5, TimeUnit.SECONDS);
       Assert.fail("Expecting callback to stay queued");
     } catch (TimeoutException e) {
       // expected;

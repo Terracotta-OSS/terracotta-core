@@ -47,7 +47,7 @@ public class TransactionPersistorImpl implements TransactionPersistor {
   }
 
   @Override
-  public void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs) {
+  public void deleteAllGlobalTransactionDescriptors(SortedSet<GlobalTransactionID> globalTransactionIDs) {
     committed.removeAll(globalTransactionIDs);
   }
 

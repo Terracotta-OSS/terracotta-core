@@ -8,7 +8,6 @@ import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.api.Transaction;
 
 import java.util.Collection;
 import java.util.Set;
@@ -26,18 +25,16 @@ public interface TransactionStore {
   /**
    * This method clears the server transaction ids less than the low water mark, for that particular node.
    */
-  public void clearCommitedTransactionsBelowLowWaterMark(Transaction transaction,
-                                                         ServerTransactionID lowWaterMark);
+  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark);
 
   /**
    * This is used by the passive to clear completed Transaction ids.
    */
-  public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx,
-                                                         GlobalTransactionID lowGlobalTransactionIDWatermark);
+  public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark);
 
-  public void shutdownNode(Transaction transaction, NodeID nid);
+  public void shutdownNode(NodeID nid);
 
-  public void shutdownAllClientsExcept(Transaction tx, Set cids);
+  public void shutdownAllClientsExcept(Set cids);
 
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 

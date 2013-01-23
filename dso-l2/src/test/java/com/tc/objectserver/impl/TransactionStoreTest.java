@@ -78,7 +78,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(originalMin == gtxs.get(0));
 
     // delete the set
-    store.clearCommitedTransactionsBelowLowWaterMark(null, getGlobalTransactionID(gtxs.get(0)));
+    store.clearCommitedTransactionsBelowLowWaterMark(getGlobalTransactionID(gtxs.get(0)));
 
     GlobalTransactionDescriptor currentMin = gtxs.get(0);
     // make sure the min has been adjusted properly
@@ -91,7 +91,7 @@ public class TransactionStoreTest extends TCTestCase {
     }
 
     // make sure the persistor is told to delete them all
-    verify(transactionPersistor).deleteAllGlobalTransactionDescriptors(null, new TreeSet<GlobalTransactionID>(deletedGids));
+    verify(transactionPersistor).deleteAllGlobalTransactionDescriptors(new TreeSet<GlobalTransactionID>(deletedGids));
   }
 
   public void testLeastGlobalTransactionID() throws Exception {
@@ -119,14 +119,14 @@ public class TransactionStoreTest extends TCTestCase {
     // Still the least Global Txn ID is the same
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(0))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(0))
         .getServerTransactionID());
 
     // Still the least Global Txn ID is the same, since CLIENT(1) is still holding the low water mark
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
     ServerTransactionID stx2 = new ServerTransactionID(stx1.getSourceID(), stx1.getClientTransactionID().next());
-    store.clearCommitedTransactionsBelowLowWaterMark(null, stx2);
+    store.clearCommitedTransactionsBelowLowWaterMark(stx2);
 
     // least Global Txn ID is not the same
     assertNotEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
@@ -134,7 +134,7 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the next txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(1))
         .getServerTransactionID());
 
     // least Global Txn ID is not the same
@@ -143,7 +143,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the last txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(gds.size() - 1))
         .getServerTransactionID());
 
     // least Global Txn ID is not the same
@@ -154,7 +154,7 @@ public class TransactionStoreTest extends TCTestCase {
     // send LWM above the last txn
     ServerTransactionID sid = (gds.get(gds.size() - 1)).getServerTransactionID();
     sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
-    store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
+    store.clearCommitedTransactionsBelowLowWaterMark(sid);
 
     // least Global Txn ID is not the same, its null
     assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
@@ -186,7 +186,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
     // No need to send LWM per client in the PASSIVE, Client(1)'s txn is cleared
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(0))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(0))
         .getGlobalTransactionID());
 
     // least Global Txn ID is not the same
@@ -195,7 +195,7 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the next txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is STILL the same, since the transactions are not commited.
@@ -210,7 +210,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     // send LWM again
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(1))
         .getGlobalTransactionID());
 
     // Now LWM should have moved up
@@ -219,7 +219,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the last txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(gds.size() - 1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is STILL the same, since the transactions are not commited.
@@ -236,7 +236,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     // send LWM again
-    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark((gds.get(gds.size() - 1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is not the same
@@ -247,7 +247,7 @@ public class TransactionStoreTest extends TCTestCase {
     // send LWM above the last txn - we use SID instead of GID here, not a real case in passive
     ServerTransactionID sid = (gds.get(gds.size() - 1)).getServerTransactionID();
     sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
-    store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
+    store.clearCommitedTransactionsBelowLowWaterMark(sid);
 
     // least Global Txn ID is not the same, its null
     assertNotEquals(currentLWM, store.getLeastGlobalTransactionID());
@@ -282,7 +282,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertEquals(lowmk1, lowmk2);
 
     ClientID cid0 = new ClientID(0);
-    store.shutdownNode(null, cid0);
+    store.shutdownNode(cid0);
 
     // Check if all channel1 IDs are gone
     for (int i = initialMin; i < laterMax; i++) {
