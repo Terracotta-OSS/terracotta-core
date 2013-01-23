@@ -3,8 +3,11 @@ package com.terracotta.management.test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import net.sf.ehcache.CacheManager;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
+import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
@@ -80,7 +83,9 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTestBase.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);
     String jsonParser = TestBaseUtil.jarFor(JSONValue.class);
-    return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser);
+    String ehCache = TestBaseUtil.jarFor(CacheManager.class);
+    String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
+    return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {

@@ -1,7 +1,16 @@
 package com.terracotta.management.test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.matchers.JUnitMatchers.containsString;
+
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.config.TerracottaClientConfiguration;
+import net.sf.ehcache.config.TerracottaConfiguration;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -23,7 +32,11 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
   public static abstract class AbstractTopologyTestClient extends AbstractTsaClient {
 
-    protected void parseAndAssertServerGroupEntities(AbstractTsaClient testBase, JSONObject o0) {
+    public AbstractTopologyTestClient(String[] args) {
+      super(args);
+    }
+
+    protected void parseAndAssertServerGroupEntities(JSONObject o0) {
       JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
       assertThat(serverGroupEntities.size(), is(1));
       JSONObject o1 = (JSONObject)serverGroupEntities.get(0);
@@ -34,27 +47,52 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
       JSONObject attributes0 = (JSONObject)((JSONObject)servers.get(0)).get("attributes");
       if (attributes0.get("Name").equals("testserver0")) {
-        assertEquals((long) testBase.getGroupData(0).getTsaGroupPort(0), attributes0.get("TSAGroupPort"));
+        assertEquals((long) getGroupData(0).getTsaGroupPort(0), attributes0.get("TSAGroupPort"));
         assertEquals("ACTIVE-COORDINATOR", attributes0.get("State"));
       } else {
         assertEquals("testserver1", attributes0.get("Name"));
-        assertEquals((long) testBase.getGroupData(0).getTsaGroupPort(1), attributes0.get("TSAGroupPort"));
+        assertEquals((long) getGroupData(0).getTsaGroupPort(1), attributes0.get("TSAGroupPort"));
         assertEquals("PASSIVE-STANDBY", attributes0.get("State"));
       }
 
       JSONObject attributes1 = (JSONObject)((JSONObject)servers.get(1)).get("attributes");
       if (attributes1.get("Name").equals("testserver1")) {
-        assertEquals((long) testBase.getGroupData(0).getTsaGroupPort(1), attributes1.get("TSAGroupPort"));
+        assertEquals((long) getGroupData(0).getTsaGroupPort(1), attributes1.get("TSAGroupPort"));
         assertEquals("PASSIVE-STANDBY", attributes1.get("State"));
       } else {
         assertEquals("testserver0", attributes1.get("Name"));
-        assertEquals((long) testBase.getGroupData(0).getTsaGroupPort(0), attributes1.get("TSAGroupPort"));
+        assertEquals((long) getGroupData(0).getTsaGroupPort(0), attributes1.get("TSAGroupPort"));
         assertEquals("ACTIVE-COORDINATOR", attributes1.get("State"));
       }
     }
 
-    public AbstractTopologyTestClient(String[] args) {
-      super(args);
+    protected CacheManager createCacheManager(String host, String port) {Configuration configuration = new Configuration();
+      TerracottaClientConfiguration terracottaClientConfiguration = new TerracottaClientConfiguration();
+      terracottaClientConfiguration.url(host, port);
+
+      configuration.addTerracottaConfig(terracottaClientConfiguration);
+
+      configuration.addDefaultCache(new CacheConfiguration("default", 100).eternal(false));
+
+      CacheConfiguration cacheConfiguration = new CacheConfiguration("topology", 100).eternal(false)
+          .terracotta(new TerracottaConfiguration());
+
+      configuration.addCache(cacheConfiguration);
+
+      return new CacheManager(configuration);
+    }
+
+    protected void parseAndAssertClientEntities(JSONObject o0) {
+      JSONArray clientEntitiesArray = (JSONArray)o0.get("clientEntities");
+
+      for (int i = 0; i < clientEntitiesArray.size(); i++) {
+        JSONObject clientEntity = (JSONObject)clientEntitiesArray.get(i);
+
+        JSONObject attributes = (JSONObject)clientEntity.get("attributes");
+        assertThat((String) attributes.get("RemoteAddress"), containsString("localhost"));
+        assertThat(attributes.get("ClientID"), notNullValue());
+      }
+
     }
   }
 
@@ -62,20 +100,26 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     @Override
     protected void doTsaTest() throws Throwable {
 
+      String host = ConfigHelper.HOST;
+
+      CacheManager cacheManager = createCacheManager(host, Integer.toString(getGroupData(0).getTsaPort(0)));
+
       for (int i = 0; i < MEMBER_COUNT; i++) {
         int port = getGroupData(0).getTsaGroupPort(i);
-        String host = ConfigHelper.HOST;
 
         JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies");
 
         assertThat(content.size(), is(1));
         JSONObject o0 = (JSONObject)content.get(0);
-        parseAndAssertServerGroupEntities(this, o0);
+        parseAndAssertServerGroupEntities(o0);
 
-        //TODO find a way to have client data and assert it
+        parseAndAssertClientEntities(o0);
+
+        JSONObject unreadOperatorEventCount = (JSONObject)o0.get("unreadOperatorEventCount");
+        assertThat(unreadOperatorEventCount.size(), is(5));
       }
 
-
+      cacheManager.shutdown();
     }
 
     public TopologyTestClient(String[] args) {
@@ -95,10 +139,12 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
         assertThat(content.size(), is(1));
         JSONObject o0 = (JSONObject)content.get(0);
-        parseAndAssertServerGroupEntities(this, o0);
+        parseAndAssertServerGroupEntities(o0);
 
         JSONArray clientEntities = (JSONArray)o0.get("clientEntities");
         assertThat(clientEntities.size(), is(0));
+
+        assertThat(o0.get("unreadOperatorEventCount"), nullValue());
       }
     }
 
@@ -112,6 +158,9 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
+
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaPort(0)));
+
       for (int i = 0; i < MEMBER_COUNT; i++) {
         int port = getGroupData(0).getTsaGroupPort(i);
         String host = ConfigHelper.HOST;
@@ -121,11 +170,16 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
         assertThat(content.size(), is(1));
         JSONObject o0 = (JSONObject)content.get(0);
 
+        parseAndAssertClientEntities(o0);
+
         JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
         assertThat(serverGroupEntities.size(), is(0));
 
-        //TODO find a way to have client data and assert it
+        assertThat(o0.get("unreadOperatorEventCount"), nullValue());
+
       }
+
+      cacheManager.shutdown();
     }
 
     public TopologyClientTestClient(String[] args) {
