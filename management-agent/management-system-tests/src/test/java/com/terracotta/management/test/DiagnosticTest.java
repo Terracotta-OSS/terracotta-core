@@ -5,6 +5,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
+import net.sf.ehcache.CacheManager;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -36,19 +38,38 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
-      testGroupThreadDump();
 
-      testSingleServerThreadDump();
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaPort(0)));
+
+      try {
+        testGroupThreadDump();
+
+        testSingleServerThreadDump();
+
+        testSingleClientThreadDump();
+      } finally {
+        cacheManager.shutdown();
+      }
+
     }
 
     private void testGroupThreadDump() throws IOException {
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
         JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
             "/tc-management-api/agents/diagnostics/threadDump");
-        assertThat(contentArray.size(), is(MEMBER_COUNT));
+        assertThat(contentArray.size(), is(MEMBER_COUNT + 1));
         JSONObject content = (JSONObject)contentArray.get(0);
         assertThat(content.containsKey("dump"), is(true));
       }
+    }
+
+    private void testSingleClientThreadDump() throws IOException {
+      String clientId = "0";
+      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(0),
+          "/tc-management-api/agents/diagnostics/threadDump/clients;ids=" + clientId);
+
+      assertThreadDumpEntity(clientId, contentArray);
+
     }
 
     private void testSingleServerThreadDump() throws IOException {
@@ -56,16 +77,19 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(0),
           "/tc-management-api/agents/diagnostics/threadDump/servers;names=" + serverName);
 
+      assertThreadDumpEntity(serverName, contentArray);
+    }
+
+    private void assertThreadDumpEntity(String sourceId, JSONArray contentArray) {
       assertThat(contentArray.size(), is(1));
 
       JSONObject content = (JSONObject)contentArray.get(0);
 
       String source = (String)content.get("sourceId");
-      assertThat(source, equalTo(serverName));
+      assertThat(source, equalTo(sourceId));
 
       String dump = (String)content.get("dump");
       assertThat(dump.trim().length(), is(not(0)));
-
     }
   }
 
