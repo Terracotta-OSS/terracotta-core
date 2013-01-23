@@ -172,10 +172,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     if (configuration == null) {
       configuration = new ToolkitStoreConfigBuilder().build();
     }
-    final ToolkitStore<String, V> store = clusteredStoreFactory.getOrCreate(name, configuration);
-    // eviction is off for ToolkitStore by default
-    store.setConfigField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME, false);
-    return store;
+    return clusteredStoreFactory.getOrCreate(name, configuration);
   }
 
   @Override

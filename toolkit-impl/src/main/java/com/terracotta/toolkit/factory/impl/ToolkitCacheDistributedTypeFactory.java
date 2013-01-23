@@ -5,6 +5,7 @@ package com.terracotta.toolkit.factory.impl;
 
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
@@ -55,6 +56,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
                                                       String name,
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
                                                       Configuration configuration, PlatformService platformService) {
+    validateConfigurationForType(factory.getManufacturedToolkitObjectType(), configuration);
     validateExistingClusterWideConfigs(stripeObjects, configuration);
     ToolkitMap<String, ToolkitAttributeType> attrSchema = toolkit.getMap(name + "|" + SEARCH_ATTR_TYPES_MAP_SUFFIX,
                                                                          String.class, ToolkitAttributeType.class);
@@ -63,6 +65,16 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
                                                                    configuration, attrSchema, serverMapLocalStoreFactory,
                                                                    platformService);
     return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);
+  }
+
+  private static void validateConfigurationForType(final ToolkitObjectType type, final Configuration configuration) {
+    if (type == ToolkitObjectType.STORE) {
+      if (!configuration.hasField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME)
+          || configuration.getBoolean(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME)) {
+        throw new IllegalArgumentException("Eviction should be always disabled for store");
+      }
+      //TODO: verify other fields, like maxTotalCount, TTI, TTL
+    }
   }
 
   @Override
