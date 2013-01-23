@@ -145,7 +145,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void disconnected(final NodeID remoteNode) {
+  public synchronized void disconnected(final NodeID remoteNode) {
     if (checkShutdown()) return;
     State currentState = getState(remoteNode);
     if (currentState == State.PAUSED) {
@@ -331,7 +331,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private synchronized void changeToPaused(final NodeID node) {
     Object old = this.groupStates.put(node, State.PAUSED);
 
-    if (old == State.PAUSED) { throw new AssertionError("old value was already equal PAUSED"); }
+    if (old == State.PAUSED) { throw new AssertionError("old value was already equal PAUSED for remote node " + node); }
 
     if (old == State.RUNNING) {
       this.disconnected++;
