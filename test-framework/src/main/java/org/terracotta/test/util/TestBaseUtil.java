@@ -170,8 +170,8 @@ public class TestBaseUtil {
   public static void enableL1Reconnect(TestConfig testConfig) {
     testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
     if (Os.isLinux() || Os.isSolaris()) {
-      // default 5000 ms seems to small occasionally in few linux machines
-      testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
+      // default 5000 ms seems too small occasionally in few linux machines
+      testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "20000");
     }
   }
 
