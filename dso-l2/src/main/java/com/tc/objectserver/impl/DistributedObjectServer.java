@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -214,7 +217,6 @@ import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.OffheapStatsImpl;
-import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
@@ -288,9 +290,6 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -537,7 +536,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                      this.persistor
                                                                                          .getPersistentStateStore()));
 
-    PersistenceTransactionProvider transactionStorePTP = this.persistor.getPersistenceTransactionProvider();
     MutableSequence gidSequence;
     TransactionPersistor transactionPersistor = this.persistor.getTransactionPersistor();
     gidSequence = this.persistor.getGlobalTransactionIDSequence();
