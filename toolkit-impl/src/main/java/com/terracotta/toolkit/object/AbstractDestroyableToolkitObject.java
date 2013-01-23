@@ -4,15 +4,21 @@
 package com.terracotta.toolkit.object;
 
 import org.terracotta.toolkit.object.ToolkitObject;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.factory.impl.AbstractPrimaryToolkitObjectFactory;
+import com.terracotta.toolkit.rejoin.RejoinCallback;
 
-public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> implements DestroyableToolkitObject {
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> implements DestroyableToolkitObject,
+    RejoinCallback {
 
   protected final AbstractPrimaryToolkitObjectFactory factory;
   private final DestroyApplicator                     destroyApplicator;
   private volatile boolean                            destroyed;
+  private final AtomicBoolean                         rejoinInProgress = new AtomicBoolean(false);
 
   public AbstractDestroyableToolkitObject(ToolkitObjectFactory<T> factory) {
     if (!(factory instanceof AbstractPrimaryToolkitObjectFactory)) { throw new IllegalStateException(); }
@@ -32,8 +38,27 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
   @Override
   public final void destroy() {
+    if (rejoinInProgress.get()) { throw new RejoinException("Cannot destroy object with name: '" + getName()
+                                                            + "' as rejoin is in progress. (type: "
+                                                            + getClass().getName() + ")"); }
     factory.destroy(this);
   }
+
+  @Override
+  public final void rejoinStarted() {
+    rejoinInProgress.set(true);
+    doRejoinStarted();
+  }
+
+  @Override
+  public final void rejoinCompleted() {
+    rejoinInProgress.set(false);
+    doRejoinCompleted();
+  }
+
+  protected abstract void doRejoinStarted();
+
+  protected abstract void doRejoinCompleted();
 
   public void destroyFromCluster() {
     doDestroy();

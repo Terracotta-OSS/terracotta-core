@@ -49,14 +49,14 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
     aggregateServerMap.rejoinStarted();
     status.incrementRejoinCount();
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     aggregateServerMap.rejoinCompleted();
     if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
       this.activeDelegate = aggregateServerMap;

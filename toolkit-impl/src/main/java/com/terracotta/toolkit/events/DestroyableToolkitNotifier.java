@@ -38,12 +38,12 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.notifier = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitNotifier.class);
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     if (!isDestroyed()) {
       ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.NOTIFIER, null);
       if (afterRejoin == null) {

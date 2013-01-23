@@ -41,13 +41,13 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
     status.incrementRejoinCount();
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     if (!isDestroyed()) {
       ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.MAP, null);
       if (afterRejoin == null) {

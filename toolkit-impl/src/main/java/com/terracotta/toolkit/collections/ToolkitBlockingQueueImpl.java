@@ -33,12 +33,12 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.backingList.rejoinStarted();
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     this.backingList.rejoinCompleted();
   }
 

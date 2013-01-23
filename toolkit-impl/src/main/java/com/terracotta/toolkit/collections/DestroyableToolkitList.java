@@ -41,13 +41,13 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitListInternal.class);
     status.incrementRejoinCount();
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     if (!isDestroyed()) {
       ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.LIST, null);
       if (afterRejoin == null) {

@@ -44,13 +44,13 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   }
 
   @Override
-  public void rejoinStarted() {
+  public void doRejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitSortedMap.class);
     status.incrementRejoinCount();
   }
 
   @Override
-  public void rejoinCompleted() {
+  public void doRejoinCompleted() {
     if (!isDestroyed()) {
       ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.SORTED_MAP, null);
       if (afterRejoin == null) {
