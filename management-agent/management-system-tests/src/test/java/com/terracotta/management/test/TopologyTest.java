@@ -7,10 +7,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.containsString;
 
 import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.Configuration;
-import net.sf.ehcache.config.TerracottaClientConfiguration;
-import net.sf.ehcache.config.TerracottaConfiguration;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -64,22 +60,6 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
         assertEquals((long) getGroupData(0).getTsaGroupPort(0), attributes1.get("TSAGroupPort"));
         assertEquals("ACTIVE-COORDINATOR", attributes1.get("State"));
       }
-    }
-
-    protected CacheManager createCacheManager(String host, String port) {Configuration configuration = new Configuration();
-      TerracottaClientConfiguration terracottaClientConfiguration = new TerracottaClientConfiguration();
-      terracottaClientConfiguration.url(host, port);
-
-      configuration.addTerracottaConfig(terracottaClientConfiguration);
-
-      configuration.addDefaultCache(new CacheConfiguration("default", 100).eternal(false));
-
-      CacheConfiguration cacheConfiguration = new CacheConfiguration("topology", 100).eternal(false)
-          .terracotta(new TerracottaConfiguration());
-
-      configuration.addCache(cacheConfiguration);
-
-      return new CacheManager(configuration);
     }
 
     protected void parseAndAssertClientEntities(JSONObject o0) {

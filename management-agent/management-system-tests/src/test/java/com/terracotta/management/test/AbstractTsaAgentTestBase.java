@@ -4,6 +4,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.config.TerracottaClientConfiguration;
+import net.sf.ehcache.config.TerracottaConfiguration;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
@@ -91,6 +95,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
   public abstract static class AbstractTsaClient extends AbstractClientBase {
 
 
+    protected static final String TSA_TEST_CACHE = "tsaTest";
+
     @Override
     protected final void doTest() throws Throwable {
       // wait for the TSA agent to finish up initialization
@@ -149,6 +155,22 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     public AbstractTsaClient(String[] args) {
       super(args);
+    }
+
+    protected CacheManager createCacheManager(String host, String port) {Configuration configuration = new Configuration();
+      TerracottaClientConfiguration terracottaClientConfiguration = new TerracottaClientConfiguration();
+      terracottaClientConfiguration.url(host, port);
+
+      configuration.addTerracottaConfig(terracottaClientConfiguration);
+
+      configuration.addDefaultCache(new CacheConfiguration("default", 100).eternal(false));
+
+      CacheConfiguration cacheConfiguration = new CacheConfiguration(TSA_TEST_CACHE, 100).eternal(false)
+          .terracotta(new TerracottaConfiguration());
+
+      configuration.addCache(cacheConfiguration);
+
+      return new CacheManager(configuration);
     }
   }
 
