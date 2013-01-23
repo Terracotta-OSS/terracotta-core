@@ -195,8 +195,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       logger.info("threshold monitor not registered", uns);
     }
 
-    this.evictionStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
-    this.expirationStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(5, 100, true, 0));
+    this.evictionStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
+    this.expirationStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
   }
 
   @Override
