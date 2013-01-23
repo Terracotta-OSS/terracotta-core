@@ -84,7 +84,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       return;
     }
 
-
     ApplyTransactionContext atc = (ApplyTransactionContext) context;
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
@@ -93,12 +92,9 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       txnObjectMgr.applyTransactionComplete(applyInfo);
-      commit(applyInfo.getObjectsToRelease(), txn.getNewRoots(), stxnID, applyInfo.getObjectIDsToDelete(),
-             txn.getObjectIDs().isEmpty());
     } else {
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
-      commit(applyInfo.getObjectsToRelease());
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
 
@@ -122,11 +118,22 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
       broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo));
     }
+
+    commit(atc, applyInfo);
   }
 
   private void begin() {
     if (localCommitContext.get() == null) {
       localCommitContext.set(new CommitContext());
+    }
+  }
+
+  private void commit(ApplyTransactionContext atc, ApplyTransactionInfo applyInfo) {
+    if (atc.needsApply()) {
+      commit(applyInfo.getObjectsToRelease(), atc.getTxn().getNewRoots(), atc.getTxn().getServerTransactionID(),
+             applyInfo.getObjectIDsToDelete(), atc.getTxn().getObjectIDs().isEmpty());
+    } else {
+      commit(applyInfo.getObjectsToRelease());
     }
   }
 
