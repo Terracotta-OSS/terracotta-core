@@ -3,6 +3,8 @@
  */
 package com.tc.net.protocol;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.util.Assert;
@@ -10,15 +12,14 @@ import com.tc.util.Assert;
 import java.util.zip.Adler32;
 
 /**
- * TODO: document me
- * 
+ * A base class to represent network message header.
+ * Contains convinient methods to manipulate underlying byte buffer.
+ *
  * @author teck
  */
 public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
   protected static final int  LENGTH_NOT_AVAIL = -1;
-
-  private static final byte[] EMTPY_BYTE_ARRAY = new byte[] {};
-  private static final byte[] FOUR_ZERO_BYTES  = new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 0 };
+  private static final byte[] FOUR_ZERO_BYTES  = { (byte) 0, (byte) 0, (byte) 0, (byte) 0 };
 
   protected final int         minLength;
   protected final int         maxLength;
@@ -52,7 +53,9 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
 
     Assert.eval(!this.data.isDirect());
     Assert.eval(this.data.capacity() >= this.maxLength);
-    if (this.data.limit() % 4 != 0) { throw new AssertionError("buffer limit not a multiple of 4: " + this.data.limit()); }
+    if (this.data.limit() % 4 != 0) {
+      throw new AssertionError("buffer limit not a multiple of 4: " + this.data.limit());
+    }
   }
 
   protected AbstractTCNetworkHeader(int min, int max) {
@@ -63,9 +66,6 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
   public TCByteBuffer getDataBuffer() {
     return data;
   }
-
-  @Override
-  abstract public void validate() throws TCProtocolException;
 
   @Override
   public void recycle() {
@@ -94,9 +94,9 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
   protected byte[] getBytes(int offset, int len) {
     Assert.eval(len >= 0);
 
-    if (0 == len) { return EMTPY_BYTE_ARRAY; }
+    if (0 == len) { return ArrayUtils.EMPTY_BYTE_ARRAY; }
 
-    byte rv[] = new byte[len];
+    byte[] rv = new byte[len];
     data.get(offset, rv, 0, len);
 
     return rv;
@@ -123,7 +123,7 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     Adler32 adler = new Adler32();
 
     // save off the existing checksum
-    byte cksum[] = getBytes(pos, 4);
+    byte[] cksum = getBytes(pos, 4);
 
     // zero out the checksum bytes before doing the calculation
     setBytes(pos, FOUR_ZERO_BYTES);
@@ -137,7 +137,6 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
       // restore the original checksum bytes
       setBytes(pos, cksum);
     }
-
     return rv;
   }
 
@@ -150,18 +149,17 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
    *        options should be set in this header
    */
   public void setOptions(byte[] options) {
-    if (options == null) {
-      options = new byte[] {};
-    }
+    final byte[] optionsBuf =
+        (options == null) ? ArrayUtils.EMPTY_BYTE_ARRAY : options;
 
-    int optionsLen = options.length;
+    int optionsLen = optionsBuf.length;
 
     Assert.eval((optionsLen % 4) == 0);
     Assert.eval(optionsLen <= (maxLength - minLength));
 
     if (optionsLen > 0) {
       setLimit(minLength + optionsLen);
-      setBytes(minLength, options);
+      setBytes(minLength, optionsBuf);
     } else {
       setLimit(minLength);
     }

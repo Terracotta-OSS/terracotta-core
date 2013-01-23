@@ -23,6 +23,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.TCAssertionError;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test case for MessageTransportImpl
@@ -181,6 +182,19 @@ public class MessageTransportTest extends TCTestCase {
     serverTransport.close();
     assertTrue(serverEventMonitor.waitForClose(1000));
     assertTrue(extraMonitor.waitForClose(1000));
+  }
+
+  public void testClientServerTimeDifference() throws Exception {
+    createServerTransport();
+
+    // to establish connection, the status checked at closing
+    TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId, this.serverTransport
+        .getConnection());
+    final WireProtocolHeader header = ack.getWireProtocolHeader();
+    assertTrue(header.getTimestamp() > 0L);
+    header.setTimestamp(0L);
+    assertTrue(TimeUnit.MILLISECONDS.toMinutes(ServerMessageTransport.getTimeDifference(ack)) > 30L);
+    this.serverTransport.receiveTransportMessage(ack);
   }
 
   public void testCloseBeforeOpen() throws Exception {

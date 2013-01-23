@@ -11,6 +11,8 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
+import java.util.Date;
+
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
  * safe! All concurrent access must be syncronized
@@ -35,6 +37,10 @@ import com.tc.util.Conversion;
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |          Message Count        |          Padding              |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *        |                                                               |
+ *        +                        64 bit Timestamp                       +
+ *        |                                                               |
+ *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |     Options                                |    Padding       |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * </pre>
@@ -45,7 +51,7 @@ import com.tc.util.Conversion;
 public class WireProtocolHeader extends AbstractTCNetworkHeader implements Cloneable {
   public static final byte     VERSION_1                    = 1;
   public static final byte     VERSION_2                    = 2;
-  private static final byte[]  VALID_VERSIONS               = new byte[] { VERSION_1, VERSION_2 };
+  private static final byte[]  VALID_VERSIONS               = { VERSION_1, VERSION_2 };
 
   public static final short    DEFAULT_TTL                  = 64;
   public static final int      MAX_MESSAGE_COUNT            = 0xFFFF;
@@ -59,14 +65,15 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   private static final int     MAGIC_NUM                    = 0xAAAAAAAA;
 
-  private static final short[] VALID_PROTOCOLS              = new short[] { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
-      PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES, PROTOCOL_MSGGROUP };
+  private static final short[] VALID_PROTOCOLS = { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
+                                                   PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES,
+                                                   PROTOCOL_MSGGROUP };
 
-  // 15 32-bit words max
+  // 17 32-bit words max
   static final short           MAX_LENGTH                   = 15 * 4;
 
-  // 8 32-bit words min
-  static final short           MIN_LENGTH                   = 8 * 4;
+  // 10 32-bit words min
+  static final short           MIN_LENGTH                   = 10 * 4;
 
   public static short getProtocolForMessageClass(TCNetworkMessage msg) {
     // TODO: is there a better way to do this (ie. not using instanceof)?
@@ -82,118 +89,127 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
     setMagicNum(MAGIC_NUM);
     setVersion(VERSION_2);
-    setHeaderLength((byte) (MIN_LENGTH / 4));
+    setHeaderLength((byte)(MIN_LENGTH / 4));
     setTimeToLive(DEFAULT_TTL);
     setTypeOfService(TypeOfService.DEFAULT_TOS.getByteValue());
+    setTimestamp(System.currentTimeMillis());
   }
 
-  public WireProtocolHeader(TCByteBuffer buffer) {
+  WireProtocolHeader(TCByteBuffer buffer) {
     super(buffer, MIN_LENGTH, MAX_LENGTH);
   }
 
-  private void setMagicNum(int magic_num2) {
-    data.putInt(4, MAGIC_NUM);
+  private void setMagicNum(int magicNum) {
+    data.putInt(4, magicNum);
   }
 
-  public void setVersion(byte version) {
+  public final void setVersion(byte version) {
     if ((version <= 0) || (version > 15)) { throw new IllegalArgumentException("invalid version: " + version); }
 
     set4BitValue(0, true, version);
   }
 
   @Override
-  protected void setHeaderLength(short length) {
+  protected final void setHeaderLength(short length) {
     if ((length < 6) || (length > 15)) { throw new IllegalArgumentException("Header length must in range 6-15"); }
 
-    set4BitValue(0, false, (byte) length);
+    set4BitValue(0, false, (byte)length);
   }
 
-  public void setTypeOfService(short tos) {
+  public final void setTypeOfService(short tos) {
     data.putUbyte(1, tos);
   }
 
-  public void setTimeToLive(short ttl) {
+  public final void setTimeToLive(short ttl) {
     data.putUbyte(2, ttl);
   }
 
-  public void setProtocol(short protocol) {
+  public final void setProtocol(short protocol) {
     data.putUbyte(3, protocol);
   }
 
-  public void setTotalPacketLength(int length) {
+  public final void setTotalPacketLength(int length) {
     data.putInt(8, length);
   }
 
-  public void setSourceAddress(byte[] srcAddr) {
+  public final void setSourceAddress(byte[] srcAddr) {
     data.put(16, srcAddr, 0, 4);
   }
 
-  public void setDestinationAddress(byte[] destAddr) {
+  public final void setDestinationAddress(byte[] destAddr) {
     data.put(20, destAddr, 0, 4);
   }
 
-  public void setSourcePort(int srcPort) {
+  public final void setSourcePort(int srcPort) {
     data.putUshort(24, srcPort);
   }
 
-  public void setDestinationPort(int dstPort) {
+  public final void setDestinationPort(int dstPort) {
     data.putUshort(26, dstPort);
   }
 
-  public void setMessageCount(int count) {
+  public final void setMessageCount(int count) {
     Assert.eval(count <= MAX_MESSAGE_COUNT);
     data.putUshort(28, count);
   }
 
-  public int getMessageCount() {
+  public final void setTimestamp(long timestamp) {
+    data.putLong(32, timestamp);
+  }
+
+  public final long getTimestamp() {
+    return data.getLong(32);
+  }
+
+  public final int getMessageCount() {
     return data.getUshort(28);
   }
 
-  public int getMagicNum() {
+  public final int getMagicNum() {
     return data.getInt(4);
   }
 
-  public byte getVersion() {
+  public final byte getVersion() {
     return get4BitValue(0, true);
   }
 
-  public byte getHeaderLength() {
+  public final byte getHeaderLength() {
     return get4BitValue(0, false);
   }
 
-  public short getTypeOfService() {
+  public final short getTypeOfService() {
     return data.getUbyte(1);
   }
 
-  public short getTimeToLive() {
+  public final short getTimeToLive() {
     return data.getUbyte(2);
   }
 
-  public short getProtocol() {
+  public final short getProtocol() {
     return data.getUbyte(3);
   }
 
-  public int getTotalPacketLength() {
+  public final int getTotalPacketLength() {
     return data.getInt(8);
   }
 
-  public long getChecksum() {
+  public final long getChecksum() {
     return data.getUint(12);
   }
 
-  public byte[] getSourceAddress() {
+  public final byte[] getSourceAddress() {
     return getBytes(16, 4);
   }
 
-  public byte[] getDestinationAddress() {
+  public final byte[] getDestinationAddress() {
     return getBytes(20, 4);
   }
 
-  public int getSourcePort() {
+  public final int getSourcePort() {
     return data.getUshort(24);
   }
 
-  public int getDestinationPort() {
+  public final int getDestinationPort() {
     return data.getUshort(26);
   }
 
@@ -278,43 +294,46 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append("Version: ").append(Conversion.byte2uint(getVersion())).append(", ");
     buf.append("Header Length: ").append(Conversion.byte2uint(getHeaderLength())).append(", ");
     buf.append("TOS: ").append(getTypeOfService()).append(", ");
     buf.append("TTL: ").append(getTimeToLive()).append(", ");
     buf.append("Protocol: ").append(getProtocolString());
-    buf.append("\n");
-    buf.append("Total Packet Length: ").append(getTotalPacketLength()).append("\n");
+    buf.append('\n');
+    buf.append("Total Packet Length: ").append(getTotalPacketLength()).append('\n');
     buf.append("Adler32 Checksum: ").append(getChecksum()).append(" (valid: ").append(isChecksumValid()).append(")\n");
     buf.append("Source Addresss: ");
 
-    byte src[] = getSourceAddress();
-    byte dest[] = getDestinationAddress();
+    byte[] src = getSourceAddress();
+    byte[] dest = getDestinationAddress();
 
     for (int i = 0; i < src.length; i++) {
       buf.append(Conversion.byte2uint(src[i]));
       if (i != (src.length - 1)) {
-        buf.append(".");
+        buf.append('.');
       }
     }
-    buf.append("\n");
+    buf.append('\n');
 
     buf.append("Destination Addresss: ");
     for (int i = 0; i < dest.length; i++) {
       buf.append(Conversion.byte2uint(dest[i]));
       if (i != (dest.length - 1)) {
-        buf.append(".");
+        buf.append('.');
       }
     }
-    buf.append("\n");
+    buf.append('\n');
 
     buf.append("Source Port: ").append(getSourcePort());
     buf.append(", Destination Port: ").append(getDestinationPort());
-    buf.append("\n");
+    buf.append('\n');
 
-    buf.append("Total Msg Count: " + getMessageCount());
-    buf.append("\n");
+    buf.append("Total Msg Count: ").append(getMessageCount());
+    buf.append('\n');
+
+    buf.append("Timestamp: ").append(new Date(getTimestamp()));
+    buf.append('\n');
 
     String errMsg = "no message";
     boolean valid = true;
@@ -334,33 +353,27 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
   private String getProtocolString() {
     final short protocol = getProtocol();
     switch (protocol) {
-      case PROTOCOL_TCM: {
+      case PROTOCOL_TCM:
         return "TCM";
-      }
-      case PROTOCOL_OOOP: {
+      case PROTOCOL_OOOP:
         return "OOOP";
-      }
-      case PROTOCOL_HEALTHCHECK_PROBES: {
+      case PROTOCOL_HEALTHCHECK_PROBES:
         return "HEALTHCHECK_PROBES";
-      }
-      case PROTOCOL_TRANSPORT_HANDSHAKE: {
+      case PROTOCOL_TRANSPORT_HANDSHAKE:
         return "TRANSPORT HANDSHAKE";
-      }
-      case PROTOCOL_MSGGROUP: {
+      case PROTOCOL_MSGGROUP:
         return "TRANSPORT MSGGROUP";
-      }
-      default: {
-        return "UNKNOWN (" + protocol + ")";
-      }
+      default:
+        return "UNKNOWN (" + protocol + ')';
     }
   }
 
   public int getMaxByteLength() {
-    return WireProtocolHeader.MAX_LENGTH;
+    return MAX_LENGTH;
   }
 
   public int getMinByteLength() {
-    return WireProtocolHeader.MIN_LENGTH;
+    return MIN_LENGTH;
   }
 
   @Override
@@ -379,7 +392,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
   }
 
   @Override
-  protected Object clone() {
+  protected final Object clone() {
     WireProtocolHeader rv = new WireProtocolHeader();
     rv.setVersion(this.getVersion());
     rv.setHeaderLength(this.getHeaderLength());
@@ -395,6 +408,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     rv.setSourcePort(this.getSourcePort());
     rv.setDestinationPort(this.getDestinationPort());
     rv.setMessageCount(this.getMessageCount());
+    rv.setTimestamp(this.getTimestamp());
     return rv;
   }
 
