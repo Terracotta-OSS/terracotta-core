@@ -115,7 +115,13 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   @Override
   public ManagedObject getObjectByID(ObjectID id) {
-    throw new ImplementMe();
+    if (checkedOutObjects.containsKey(id)) {
+      throw new AssertionError("Object is already checked out!");
+    } else {
+      ManagedObject mo = new TestManagedObject(id);
+      checkedOutObjects.put(id, mo);
+      return mo;
+    }
   }
 
   @Override

@@ -19,7 +19,9 @@ import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
+import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
@@ -28,12 +30,16 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.util.TCCollections;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 
 /**
  * Applies all the changes in a transaction then releases the objects and passes the changes off to be broadcast to the
@@ -54,7 +60,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private volatile GlobalTransactionID   lowWaterMark                    = GlobalTransactionID.NULL_ID;
   private final TransactionProvider      persistenceTransactionProvider;
 
-  private final ThreadLocal<Transaction> currentTransaction = new ThreadLocal<Transaction>();
+  private final ThreadLocal<CommitContext> localCommitContext = new ThreadLocal<CommitContext>();
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
                                        TransactionProvider persistenceTransactionProvider) {
@@ -71,27 +77,28 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   @Override
   public void handleEvent(final EventContext context) {
 
+    begin();
+
+    if (context instanceof FlushApplyCommitContext) {
+      commit(((FlushApplyCommitContext)context).getObjectsToRelease());
+      return;
+    }
+
+
     ApplyTransactionContext atc = (ApplyTransactionContext) context;
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
     ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
 
     if (atc.needsApply()) {
-      if (currentTransaction.get() == null) {
-        currentTransaction.set(persistenceTransactionProvider.newTransaction());
-      }
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       txnObjectMgr.applyTransactionComplete(applyInfo);
-      if (!applyInfo.getObjectsToRelease().isEmpty()) {
-        currentTransaction.get().commit();
-        currentTransaction.set(null);
-      }
-      transactionManager.commit(applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(txn.getServerTransactionID()), applyInfo.getObjectIDsToDelete());
+      commit(applyInfo.getObjectsToRelease(), txn.getNewRoots(), stxnID, applyInfo.getObjectIDsToDelete(),
+             txn.getObjectIDs().isEmpty());
     } else {
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
-      transactionManager.commit(applyInfo.getObjectsToRelease(), Collections.<String, ObjectID>emptyMap(),
-          Collections.<ServerTransactionID>emptySet(), TCCollections.EMPTY_OBJECT_ID_SET);
+      commit(applyInfo.getObjectsToRelease());
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
 
@@ -117,6 +124,26 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
   }
 
+  private void begin() {
+    if (localCommitContext.get() == null) {
+      localCommitContext.set(new CommitContext());
+    }
+  }
+
+  private void commit(Collection<ManagedObject> objectsToRelease, Map<String, ObjectID> moreRoots,
+                      ServerTransactionID stxID, SortedSet<ObjectID> moreObjectsToDelete,
+                      boolean done) {
+    if (localCommitContext.get().commit(objectsToRelease, moreRoots, stxID, moreObjectsToDelete, done)) {
+      localCommitContext.set(null);
+    }
+  }
+
+  private void commit(Collection<ManagedObject> objectsToRelease) {
+    if (localCommitContext.get().commit(objectsToRelease, false)) {
+      localCommitContext.set(null);
+    }
+  }
+
   @Override
   public void initialize(final ConfigurationContext context) {
     super.initialize(context);
@@ -126,5 +153,31 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.evictionInitiateSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
+  }
+
+  public class CommitContext {
+    private final Transaction transaction = persistenceTransactionProvider.newTransaction();
+    private final Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
+    private final Collection<ServerTransactionID> stxIDs = new HashSet<ServerTransactionID>();
+    private final SortedSet<ObjectID> objectsToDelete = new TreeSet<ObjectID>();
+
+    public boolean commit(Collection<ManagedObject> objectsToRelease, boolean done) {
+      if (done || !objectsToRelease.isEmpty()) {
+        transaction.commit();
+        transactionManager.commit(objectsToRelease, newRoots, stxIDs, objectsToDelete);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    public boolean commit(Collection<ManagedObject> objectsToRelease, Map<String, ObjectID> moreRoots,
+                          ServerTransactionID stxID, SortedSet<ObjectID> moreObjectsToDelete,
+                          boolean done) {
+      stxIDs.add(stxID);
+      newRoots.putAll(moreRoots);
+      objectsToDelete.addAll(moreObjectsToDelete);
+      return commit(objectsToRelease, done);
+    }
   }
 }

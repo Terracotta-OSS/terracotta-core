@@ -3,11 +3,11 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.objectserver.context.ApplyTransactionContext;
+import com.tc.async.api.EventContext;
 
 public interface TransactionalStageCoordinator {
 
-  public void addToApplyStage(ApplyTransactionContext context);
+  public void addToApplyStage(EventContext context);
 
   public void initiateLookup();
 

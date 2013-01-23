@@ -13,6 +13,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.context.ApplyTransactionContext;
+import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -160,8 +161,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       } else if (!checkedOutObjects.containsKey(oid)) {
         newRequests.add(oid);
       }
-      // Anything we need to consider for lookup doesn't belong in liveObjectGroupings, to preserve transaction ordering.
-      liveObjectGroupings.remove(oid);
     }
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
@@ -176,6 +175,21 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
     if (makePending) {
+      if (grouping != null) {
+        // Would have merged here, but the new object lookup went pending. Most likely due to DGC blocking all lookups
+
+        // Kill all object groupings associated with this txn.
+        for (ObjectID oid : txn.getObjectIDs()) {
+          liveObjectGroupings.remove(oid);
+        }
+
+        // Try to "finish" the grouping. If we so happen to be the last transaction (that would have triggered a commit)
+        // send it through to the appropriate apply thread to perform the commit.
+        if (grouping.transactionComplete(txn.getServerTransactionID())) {
+          txnStageCoordinator.addToApplyStage(new FlushApplyCommitContext(grouping));
+        }
+      }
+
 //      log("lookupObjectsForApplyAndAddToSink(): Make Pending : " + txn.getServerTransactionID());
       makePending(transactionLookupContext);
       if (lookupContext != null) {

@@ -4,9 +4,9 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
-import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
@@ -28,7 +28,7 @@ public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoo
   }
 
   @Override
-  public void addToApplyStage(ApplyTransactionContext context) {
+  public void addToApplyStage(EventContext context) {
     applySink.add(context);
   }
 
