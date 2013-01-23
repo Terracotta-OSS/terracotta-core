@@ -84,22 +84,25 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
       CacheManager cacheManager = createCacheManager(host, Integer.toString(getGroupData(0).getTsaPort(0)));
 
-      for (int i = 0; i < MEMBER_COUNT; i++) {
-        int port = getGroupData(0).getTsaGroupPort(i);
+      try {
+        for (int i = 0; i < MEMBER_COUNT; i++) {
+          int port = getGroupData(0).getTsaGroupPort(i);
 
-        JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies");
+          JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies");
 
-        assertThat(content.size(), is(1));
-        JSONObject o0 = (JSONObject)content.get(0);
-        parseAndAssertServerGroupEntities(o0);
+          assertThat(content.size(), is(1));
+          JSONObject o0 = (JSONObject)content.get(0);
+          parseAndAssertServerGroupEntities(o0);
 
-        parseAndAssertClientEntities(o0);
+          parseAndAssertClientEntities(o0);
 
-        JSONObject unreadOperatorEventCount = (JSONObject)o0.get("unreadOperatorEventCount");
-        assertThat(unreadOperatorEventCount.size(), is(5));
+          JSONObject unreadOperatorEventCount = (JSONObject)o0.get("unreadOperatorEventCount");
+          assertThat(unreadOperatorEventCount.size(), is(5));
+        }
+      } finally {
+        cacheManager.shutdown();
       }
 
-      cacheManager.shutdown();
     }
 
     public TopologyTestClient(String[] args) {
@@ -141,25 +144,28 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
 
       CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaPort(0)));
 
-      for (int i = 0; i < MEMBER_COUNT; i++) {
-        int port = getGroupData(0).getTsaGroupPort(i);
-        String host = ConfigHelper.HOST;
+      try {
+        for (int i = 0; i < MEMBER_COUNT; i++) {
+          int port = getGroupData(0).getTsaGroupPort(i);
+          String host = ConfigHelper.HOST;
 
-        JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies/clients");
+          JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies/clients");
 
-        assertThat(content.size(), is(1));
-        JSONObject o0 = (JSONObject)content.get(0);
+          assertThat(content.size(), is(1));
+          JSONObject o0 = (JSONObject)content.get(0);
 
-        parseAndAssertClientEntities(o0);
+          parseAndAssertClientEntities(o0);
 
-        JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
-        assertThat(serverGroupEntities.size(), is(0));
+          JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
+          assertThat(serverGroupEntities.size(), is(0));
 
-        assertThat(o0.get("unreadOperatorEventCount"), nullValue());
+          assertThat(o0.get("unreadOperatorEventCount"), nullValue());
 
+        }
+      } finally {
+        cacheManager.shutdown();
       }
 
-      cacheManager.shutdown();
     }
 
     public TopologyClientTestClient(String[] args) {
