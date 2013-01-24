@@ -117,7 +117,7 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   static long getTimeDifference(final WireProtocolMessage message) {
     final long timestamp = message.getWireProtocolHeader().getTimestamp();
-    return System.currentTimeMillis() - timestamp;
+    return Math.abs(System.currentTimeMillis() - timestamp);
   }
 
   private void handleAck(TransportHandshakeMessage ack) {

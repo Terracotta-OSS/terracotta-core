@@ -194,6 +194,8 @@ public class MessageTransportTest extends TCTestCase {
     assertTrue(header.getTimestamp() > 0L);
     header.setTimestamp(0L);
     assertTrue(TimeUnit.MILLISECONDS.toMinutes(ServerMessageTransport.getTimeDifference(ack)) > 30L);
+    header.setTimestamp(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(8));
+    assertTrue(TimeUnit.MILLISECONDS.toMinutes(ServerMessageTransport.getTimeDifference(ack)) > 30L);
     this.serverTransport.receiveTransportMessage(ack);
   }
 
