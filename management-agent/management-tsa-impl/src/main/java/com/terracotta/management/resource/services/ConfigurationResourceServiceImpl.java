@@ -43,7 +43,7 @@ public class ConfigurationResourceServiceImpl implements ConfigurationResourceSe
 
   @Override
   public Collection<ConfigEntity> geConfigs(UriInfo info) {
-    LOG.info(String.format("Invoking ConfigurationResourceServiceImpl.geConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.geConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -63,7 +63,7 @@ public class ConfigurationResourceServiceImpl implements ConfigurationResourceSe
 
   @Override
   public Collection<ConfigEntity> getClientConfigs(UriInfo info) {
-    LOG.info(String.format("Invoking ConfigurationResourceServiceImpl.getClientConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getClientConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -83,7 +83,7 @@ public class ConfigurationResourceServiceImpl implements ConfigurationResourceSe
 
   @Override
   public Collection<ConfigEntity> getServerConfigs(UriInfo info) {
-    LOG.info(String.format("Invoking ConfigurationResourceServiceImpl.getServerConfigs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ConfigurationResourceServiceImpl.getServerConfigs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

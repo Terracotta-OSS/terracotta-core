@@ -42,7 +42,7 @@ public class LogsResourceServiceImpl implements LogsResourceService {
 
   @Override
   public Collection<LogEntity> getLogs(UriInfo info) {
-    LOG.info(String.format("Invoking LogsResourceServiceImpl.getLogs: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking LogsResourceServiceImpl.getLogs: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

@@ -38,7 +38,7 @@ public class BackupResourceServiceImpl implements BackupResourceService {
 
   @Override
   public Collection<BackupEntity> getBackupStatus(UriInfo info) {
-    LOG.info(String.format("Invoking BackupResourceServiceImpl.getBackupStatus: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking BackupResourceServiceImpl.getBackupStatus: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -55,7 +55,7 @@ public class BackupResourceServiceImpl implements BackupResourceService {
 
   @Override
   public Collection<BackupEntity> backup(UriInfo info) {
-    LOG.info(String.format("Invoking BackupResourceServiceImpl.backup: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking BackupResourceServiceImpl.backup: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

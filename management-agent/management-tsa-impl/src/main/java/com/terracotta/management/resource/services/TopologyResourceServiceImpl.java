@@ -42,7 +42,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
   @Override
   public Collection<TopologyEntity> getTopologies(UriInfo info) {
-    LOG.info(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -61,7 +61,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
   @Override
   public Collection<TopologyEntity> getServerTopologies(UriInfo info) {
-    LOG.info(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -78,7 +78,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
   @Override
   public Collection<TopologyEntity> getConnectedClients(UriInfo info) {
-    LOG.info(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

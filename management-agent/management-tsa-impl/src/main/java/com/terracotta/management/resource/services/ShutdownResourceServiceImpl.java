@@ -39,7 +39,7 @@ public class ShutdownResourceServiceImpl implements ShutdownResourceService {
 
   @Override
   public void shutdown(UriInfo info) {
-    LOG.info(String.format("Invoking ShutdownResourceServiceImpl.shutdown: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking ShutdownResourceServiceImpl.shutdown: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

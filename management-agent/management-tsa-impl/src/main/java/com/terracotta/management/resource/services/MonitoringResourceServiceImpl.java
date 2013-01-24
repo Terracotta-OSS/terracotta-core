@@ -44,7 +44,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
 
   @Override
   public Collection<StatisticsEntity> getServerStatistics(UriInfo info) {
-    LOG.info(String.format("Invoking MonitoringResourceServiceImpl.getServerStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getServerStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -79,7 +79,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
 
   @Override
   public Collection<StatisticsEntity> getDgcStatistics(UriInfo info) {
-    LOG.info(String.format("Invoking MonitoringResourceServiceImpl.getDgcStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getDgcStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -96,7 +96,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
 
   @Override
   public Collection<StatisticsEntity> getClientStatistics(UriInfo info) {
-    LOG.info(String.format("Invoking MonitoringResourceServiceImpl.getClientStatistics: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking MonitoringResourceServiceImpl.getClientStatistics: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

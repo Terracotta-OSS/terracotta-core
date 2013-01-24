@@ -42,7 +42,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
   @Override
   public Collection<OperatorEventEntity> getOperatorEvents(UriInfo info) {
-    LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.getOperatorEvents: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking OperatorEventsResourceServiceImpl.getOperatorEvents: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -66,7 +66,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
   @Override
   public boolean markOperatorEventAsRead(UriInfo info, Collection<OperatorEventEntity> operatorEventEntities) {
-    LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsRead: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsRead: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -106,7 +106,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
   @Override
   public boolean markOperatorEventAsUnread(UriInfo info, Collection<OperatorEventEntity> operatorEventEntities) {
-    LOG.info(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsUnread: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking OperatorEventsResourceServiceImpl.markOperatorEventAsUnread: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 

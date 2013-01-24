@@ -43,7 +43,7 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
 
   @Override
   public Collection<ThreadDumpEntity> clusterThreadDump(UriInfo info) {
-    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.clusterThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clusterThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -60,7 +60,7 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
 
   @Override
   public Collection<ThreadDumpEntity> serversThreadDump(UriInfo info) {
-    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.serversThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.serversThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -80,7 +80,7 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
 
   @Override
   public Collection<ThreadDumpEntity> clientsThreadDump(UriInfo info) {
-    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.clientsThreadDump: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clientsThreadDump: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -100,7 +100,7 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
 
   @Override
   public boolean runDgc(UriInfo info) {
-    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.runDgc: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.runDgc: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
@@ -117,7 +117,7 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
 
   @Override
   public Collection<TopologyReloadStatusEntity> reloadConfiguration(UriInfo info) {
-    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
