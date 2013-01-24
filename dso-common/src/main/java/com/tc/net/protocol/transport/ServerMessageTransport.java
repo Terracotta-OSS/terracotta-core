@@ -18,9 +18,9 @@ public class ServerMessageTransport extends MessageTransportBase {
   private static final TCLogger smtLogger = TCLogging.getLogger(ServerMessageTransport.class);
   // log a message no more than once per minute
   private static final TCLogger lossyLogger = new LossyTCLogger(
-      smtLogger, TimeUnit.MINUTES.toMillis(1L), LossyTCLogger.LossyTCLoggerType.TIME_BASED);
+      smtLogger, TimeUnit.MINUTES.toMillis(5L), LossyTCLogger.LossyTCLoggerType.TIME_BASED);
 
-  // by default the maximum time difference between server and client is 5 mins
+  // default maximum time difference between server and client
   private static final long TIME_DIFF_THRESHOLD_MINUTES = 5L;
 
   public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
