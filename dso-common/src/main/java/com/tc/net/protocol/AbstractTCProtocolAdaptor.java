@@ -48,20 +48,20 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     }
 
     // only return the subset of buffers that can actually receive more bytes
-    final TCByteBuffer[] buffers = new TCByteBuffer[dataBuffers.length - bufferIndex];
-    System.arraycopy(dataBuffers, bufferIndex, buffers, 0, buffers.length);
+    final TCByteBuffer[] rv = new TCByteBuffer[dataBuffers.length - bufferIndex];
+    System.arraycopy(dataBuffers, bufferIndex, rv, 0, rv.length);
 
     // Make sure we're not passing back a set of arrays with no space left in them
     boolean spaceAvail = false;
-    for (final TCByteBuffer buffer : buffers) {
-      if (buffer.hasRemaining()) {
+    for (int i = 0, n = rv.length; i < n; i++) {
+      if (rv[i].hasRemaining()) {
         spaceAvail = true;
         break;
       }
     }
 
     Assert.assertTrue("No space in buffers to read more data", spaceAvail);
-    return buffers;
+    return rv;
   }
 
   abstract protected AbstractTCNetworkHeader getNewProtocolHeader();
@@ -124,6 +124,8 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
       buf.limit(headerLength);
       return null;
     } else {
+      Assert.eval(bufferLength == headerLength);
+
       if (buf.position() == headerLength) {
         this.header.validate();
 
@@ -148,7 +150,9 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   }
 
   private TCNetworkMessage processPayloadData(TCConnection source, final TCByteBuffer[] data) throws TCProtocolException {
-    for (final TCByteBuffer buffer : data) {
+    for (int i = 0; i < data.length; i++) {
+      final TCByteBuffer buffer = data[i];
+
       if (!buffer.hasRemaining()) {
         buffer.flip();
         dataBytesNeeded -= buffer.limit();

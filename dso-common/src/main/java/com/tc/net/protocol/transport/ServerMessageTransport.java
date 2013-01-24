@@ -3,7 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
@@ -11,17 +10,9 @@ import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.util.Assert;
 
-import java.util.concurrent.TimeUnit;
-
 public class ServerMessageTransport extends MessageTransportBase {
 
   private static final TCLogger smtLogger = TCLogging.getLogger(ServerMessageTransport.class);
-  // log a message no more than once per minute
-  private static final TCLogger lossyLogger = new LossyTCLogger(
-      smtLogger, TimeUnit.MINUTES.toMillis(5L), LossyTCLogger.LossyTCLoggerType.TIME_BASED);
-
-  // default maximum time difference between server and client
-  private static final long TIME_DIFF_THRESHOLD_MINUTES = 5L;
 
   public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
@@ -78,8 +69,6 @@ public class ServerMessageTransport extends MessageTransportBase {
         recycleAndReturn = true;
       }
     }
-    // is there any time difference between server and client ?
-    verifyTimestamp(message);
 
     if (recycleAndReturn) {
       if (notifyTransportConnected) {
@@ -88,6 +77,7 @@ public class ServerMessageTransport extends MessageTransportBase {
         fireTransportConnectedEvent();
       }
       message.recycle();
+      return;
     } else {
       // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
       super.receiveToReceiveLayer(message);
@@ -106,18 +96,6 @@ public class ServerMessageTransport extends MessageTransportBase {
       handleAck((TransportHandshakeMessage) message);
       return true;
     }
-  }
-
-  private static void verifyTimestamp(final WireProtocolMessage message) {
-    final long diffInMinutes = TimeUnit.MILLISECONDS.toMinutes(getTimeDifference(message));
-    if (diffInMinutes > TIME_DIFF_THRESHOLD_MINUTES) {
-      lossyLogger.warn(diffInMinutes + " min difference between client and server time has been detected");
-    }
-  }
-
-  static long getTimeDifference(final WireProtocolMessage message) {
-    final long timestamp = message.getWireProtocolHeader().getTimestamp();
-    return Math.abs(System.currentTimeMillis() - timestamp);
   }
 
   private void handleAck(TransportHandshakeMessage ack) {

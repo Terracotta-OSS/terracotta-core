@@ -3,10 +3,10 @@
  */
 package com.tc.net.protocol.transport;
 
-import org.apache.commons.lang.ArrayUtils;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.net.protocol.transport.WireProtocolHeader;
+import com.tc.net.protocol.transport.WireProtocolHeaderFormatException;
 import com.tc.util.Conversion;
 
 import java.util.Arrays;
@@ -14,15 +14,13 @@ import java.util.zip.Adler32;
 
 import junit.framework.TestCase;
 
-import static org.junit.Assert.assertArrayEquals;
-
 /**
  * @author teck
  */
 public class WireProtocolHeaderTest extends TestCase {
 
-  private final static byte[] goodHeader = { // make formatter pretty
-                                   (byte) 0x2A, // version == 2, length = 40
+  private static byte[] goodHeader = { // make formatter pretty
+                                   (byte) 0x28, // version == 2, length = 32
                                    (byte) 2, // TOS == 2
                                    (byte) 3, // TTL == 3
                                    (byte) 5, // Protocol == 5
@@ -33,8 +31,6 @@ public class WireProtocolHeaderTest extends TestCase {
                                    (byte) 1, (byte) 0xFF, (byte) 1, (byte) 0xFF, // dest addr
                                    (byte) 0xAA, (byte) 0x55, (byte) 0x55, (byte) 0xAA, // src/dest ports
                                    (byte) 0x00, (byte) 0x05, (byte) 0xFF, (byte) 0xFF, // message count=5 and fill
-                                   (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, // timestamp
-                                   (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, // timestamp
                                    };
 
   static {
@@ -44,7 +40,7 @@ public class WireProtocolHeaderTest extends TestCase {
     System.arraycopy(Conversion.uint2bytes(adler.getValue()), 0, goodHeader, 12, 4);
   }
 
-  private static byte[] getGoodHeader() {
+  private byte[] getGoodHeader() {
     byte[] rv = new byte[goodHeader.length];
     System.arraycopy(goodHeader, 0, rv, 0, rv.length);
     return rv;
@@ -56,29 +52,30 @@ public class WireProtocolHeaderTest extends TestCase {
     WireProtocolHeader header = new WireProtocolHeader();
 
     byte oldLength = header.getHeaderLength();
-    header.setOptions(ArrayUtils.EMPTY_BYTE_ARRAY);
+    header.setOptions(new byte[] {});
     byte newLength = header.getHeaderLength();
     assertTrue(newLength >= oldLength);
-    assertEquals(WireProtocolHeader.MIN_LENGTH / 4, newLength);
+    assertTrue(newLength == (WireProtocolHeader.MIN_LENGTH / 4));
 
     byte[] maxOptions = new byte[WireProtocolHeader.MAX_LENGTH - WireProtocolHeader.MIN_LENGTH];
     Arrays.fill(maxOptions, (byte) 0xFF);
     header.setOptions(maxOptions);
-    assertEquals(WireProtocolHeader.MAX_LENGTH, header.getHeaderLength() * 4);
-    assertArrayEquals(maxOptions, header.getOptions());
+    assertTrue(header.getHeaderLength() * 4 == WireProtocolHeader.MAX_LENGTH);
+    Arrays.equals(maxOptions, header.getOptions());
+
     header.setOptions(null);
-    assertEquals(WireProtocolHeader.MIN_LENGTH, header.getHeaderLength() * 4);
-    assertEquals(0, header.getOptions().length);
+    assertTrue(header.getHeaderLength() * 4 == WireProtocolHeader.MIN_LENGTH);
+    assertTrue(header.getOptions().length == 0);
   }
 
   public void testVersion() {
     WireProtocolHeader header = new WireProtocolHeader();
 
     header.setVersion((byte) 15);
-    assertEquals(15, header.getVersion());
+    assertTrue(15 == header.getVersion());
 
     header.setVersion(WireProtocolHeader.VERSION_2);
-    assertEquals(WireProtocolHeader.VERSION_2, header.getVersion());
+    assertTrue(WireProtocolHeader.VERSION_2 == header.getVersion());
 
     boolean exception = false;
 
@@ -118,20 +115,20 @@ public class WireProtocolHeaderTest extends TestCase {
 
     assertTrue(header.isChecksumValid());
 
-    assertEquals(WireProtocolHeader.VERSION_2, header.getVersion());
-    assertEquals(10, header.getHeaderLength());
-    assertEquals(2, header.getTypeOfService());
-    assertEquals(3, header.getTimeToLive());
+    assertTrue(header.getVersion() == WireProtocolHeader.VERSION_2);
+    assertTrue(header.getHeaderLength() == 8);
+    assertTrue(header.getTypeOfService() == 2);
+    assertTrue(header.getTimeToLive() == 3);
 
-    assertEquals(255, header.getTotalPacketLength());
-    assertEquals(47057885L, header.getChecksum());
-    assertArrayEquals(header.getSourceAddress(), new byte[] { (byte)0xFF, (byte)1, (byte)0xFF, (byte)1 });
-    assertArrayEquals(header.getDestinationAddress(), new byte[] { (byte)1, (byte)0xFF, (byte)1, (byte)0xFF });
-    assertEquals(43605, header.getSourcePort());
-    assertEquals(21930, header.getDestinationPort());
-    assertEquals(5, header.getMessageCount());
-    assertEquals(0L, header.getTimestamp());
-    assertEquals(0, header.getOptions().length);
+    assertTrue(header.getTotalPacketLength() == 255);
+    assertTrue(header.getChecksum() == 2744585179L);
+    assertTrue(Arrays.equals(header.getSourceAddress(), new byte[] { (byte) 0xFF, (byte) 1, (byte) 0xFF, (byte) 1 }));
+    assertTrue(Arrays.equals(header.getDestinationAddress(),
+                             new byte[] { (byte) 1, (byte) 0xFF, (byte) 1, (byte) 0xFF }));
+    assertTrue(header.getSourcePort() == 43605);
+    assertTrue(header.getDestinationPort() == 21930);
+    assertTrue(header.getMessageCount() == 5);
+    assertTrue(header.getOptions().length == 0);
 
     try {
       header.validate();
