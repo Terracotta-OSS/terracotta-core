@@ -76,8 +76,12 @@ public final class TSAIdentityAsserter implements RequestIdentityAsserter {
 
     try {
       URIKeyName uriAlias = new URIKeyName(alias);
+      byte[] keyMaterial = keyChainAccessor.retrieveSecret(uriAlias);
+      if (keyMaterial == null) {
+        throw new RuntimeException("Missing keychain entry for URL [" + alias + "]");
+      }
       response.setHeader("signature",
-          HMACBuilder.getInstance(keyChainAccessor.retrieveSecret(uriAlias)).addMessageComponent(reqTicket)
+          HMACBuilder.getInstance(keyMaterial).addMessageComponent(reqTicket)
               .addMessageComponent(sessId).addMessageComponent(alias).addMessageComponent(clientNonce)
               .addUserDetail(user).buildEncoded());
     } catch (NoSuchAlgorithmException e) {
