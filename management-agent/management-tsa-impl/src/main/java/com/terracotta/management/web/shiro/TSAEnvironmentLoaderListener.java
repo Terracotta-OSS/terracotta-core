@@ -92,8 +92,11 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
               env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, socketFactory);
               env.put("com.sun.jndi.rmi.factory.socket", socketFactory);
               String intraL2Username = TSAConfig.getIntraL2Username();
-              byte[] secret = TSAConfig.getKeyChain()
-                  .retrieveSecret(new URIKeyName("jmx://" + intraL2Username + "@" + host + ":" + port));
+              URIKeyName alias = new URIKeyName("jmx://" + intraL2Username + "@" + host + ":" + port);
+              byte[] secret = TSAConfig.getKeyChain().retrieveSecret(alias);
+              if (secret == null) {
+                throw new RuntimeException("Missing keychain entry for URL [" + alias + "]");
+              }
               env.put("jmx.remote.credentials", new Object[] { intraL2Username, SecretUtils.toCharsAndWipe(secret)});
               return env;
             } catch (Exception e) {
