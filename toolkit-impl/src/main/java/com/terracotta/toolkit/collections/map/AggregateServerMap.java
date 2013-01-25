@@ -92,7 +92,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final static String                                              CONFIG_CHANGE_LOCK_ID                = "__tc_config_change_lock";
   private final static List<ToolkitObjectType>                             VALID_TYPES                          = Arrays
                                                                                                                     .asList(ToolkitObjectType.STORE,
-                                                                                                                        ToolkitObjectType.CACHE);
+                                                                                                                            ToolkitObjectType.CACHE);
 
   private final int                                                        bulkOpsKbSize;
   private final int                                                        getAllBatchSize;
@@ -351,7 +351,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V unlockedGet(Object key, boolean quiet) {
-    return getServerMapForKey(key).unlockedGet((K)key, quiet);
+    return getServerMapForKey(key).unlockedGet((K) key, quiet);
   }
 
   @Override
@@ -656,14 +656,23 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void configChanged(String fieldChanged, Serializable changedValue) {
-    if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
-      int maxTotalCount = 0;
-      for (ToolkitObjectStripe stripe : stripeObjects) {
-        maxTotalCount += stripe.getConfiguration().getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
+    InternalCacheConfigurationType type = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
+
+    if (type == null || type.isClusterWideConfig()) {
+      if (fieldChanged.equals(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME)) {
+        int maxTotalCount = 0;
+        for (ToolkitObjectStripe stripe : stripeObjects) {
+          maxTotalCount += stripe.getConfiguration().getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
+        }
+        changedValue = maxTotalCount;
+      } else {
+        for (InternalToolkitMap sm : serverMaps) {
+          sm.setConfigFieldInternal(fieldChanged, changedValue);
+        }
       }
-      changedValue = maxTotalCount;
+      config.setObject(fieldChanged, changedValue);
     }
-    config.setObject(fieldChanged, changedValue);
+
   }
 
   @Override
@@ -673,7 +682,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       Serializable newValue = changedValue;
       InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
       Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
-          fieldChanged);
+                                  fieldChanged);
 
       config.setObject(fieldChanged, newValue);
 
@@ -682,7 +691,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       for (int i = 0; i < this.serverMaps.length; i++) {
         if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           if (values == null) {
-            values = distributeInStripes((Integer)newValue, this.serverMaps.length);
+            values = distributeInStripes((Integer) newValue, this.serverMaps.length);
           }
           newValue = values[i];
         }

@@ -99,4 +99,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   void registerAttributeExtractor(ToolkitAttributeExtractor extractor);
 
   boolean isEvictionEnabled();
+
+  void setConfigFieldInternal(String fieldChanged, Object changedValue);
 }

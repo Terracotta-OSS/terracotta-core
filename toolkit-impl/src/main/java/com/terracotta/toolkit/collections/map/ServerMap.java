@@ -918,8 +918,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           metaData.set(SearchMetaData.COMMAND, SearchCommand.REPLACE);
         }
         eventualConcurrentLock.lock();
-        SerializedMapValue newSerializedMapValue = createSerializedMapValue(value,
-                                                                            timeSource.nowInSeconds(),
+        SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
                                                                             ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                             ToolkitConfigFields.NO_MAX_TTL_SECONDS);
         try {
@@ -967,8 +966,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (old != null && old.equals(oldValue)) {
         eventualConcurrentLock.lock();
         try {
-          SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue,
-                                                                              timeSource.nowInSeconds(),
+          SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue, timeSource.nowInSeconds(),
                                                                               ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
 
@@ -1243,6 +1241,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return maxTTLSeconds;
   }
 
+  // This field might not be up-to-date from the value in cluster.
   @Override
   public int getMaxCountInCluster() {
     return maxCountInCluster;
@@ -1264,21 +1263,32 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void setConfigField(String name, Object value) {
     if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(name)) {
-      setMaxTotalCount((Integer)value);
+      setMaxTotalCount((Integer) value);
     } else if (ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME.equals(name)) {
-      setEvictionEnabled((Boolean)value);
+      setEvictionEnabled((Boolean) value);
     } else if (ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME.equals(name)) {
-      setMaxTTI((Integer)value);
+      setMaxTTI((Integer) value);
     } else if (ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME.equals(name)) {
-      setMaxTTL((Integer)value);
+      setMaxTTL((Integer) value);
     } else if (ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME.equals(name)) {
-      setLocalCacheEnabled((Boolean)value);
+      setLocalCacheEnabled((Boolean) value);
     } else if (ToolkitConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME.equals(name)) {
-      setMaxEntriesLocalHeap((Integer)value);
+      setMaxEntriesLocalHeap((Integer) value);
     } else if (ToolkitConfigFields.MAX_BYTES_LOCAL_HEAP_FIELD_NAME.equals(name)) {
-      setMaxBytesLocalHeap((Long)value);
+      setMaxBytesLocalHeap((Long) value);
     } else {
       throw new IllegalArgumentException("ServerMap cannot set " + " name=" + name);
+    }
+  }
+
+  @Override
+  public void setConfigFieldInternal(String name, Object value) {
+    if (ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME.equals(name)) {
+      this.evictionEnabled = (Boolean) value;
+    } else if (ToolkitConfigFields.MAX_TTI_SECONDS_FIELD_NAME.equals(name)) {
+      this.maxTTISeconds = (Integer) value;
+    } else if (ToolkitConfigFields.MAX_TTL_SECONDS_FIELD_NAME.equals(name)) {
+      this.maxTTLSeconds = (Integer) value;
     }
   }
 
