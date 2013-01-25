@@ -162,7 +162,7 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   @Override
   public void commitLock(Object lockID, LockLevel level) throws AbortedOperationException {
-    assertRejoinNotInProgress();
+    // do not assert and throw rejoin ex when rejoin is in progress.
     try {
       delegate.commitLock(lockID, level);
       removeContext(lockID);

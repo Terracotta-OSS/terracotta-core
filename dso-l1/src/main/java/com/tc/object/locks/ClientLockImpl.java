@@ -98,7 +98,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                                 final RemoteLockManager remote, final ThreadID thread, final LockLevel level)
       throws InterruptedException, GarbageLockException, AbortedOperationException {
     markUsed();
-    if (Thread.interrupted()) { throw new InterruptedException(); }
+    if (Thread.interrupted()) {
+      handleInterrupt(abortableOperationManager);
+    }
     if (!tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()) {
       acquireQueuedInterruptibly(abortableOperationManager, remote, thread, level);
     }
@@ -135,7 +137,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                          final ThreadID thread, final LockLevel level, final long timeout) throws InterruptedException,
       GarbageLockException, AbortedOperationException {
     markUsed();
-    if (Thread.interrupted()) { throw new InterruptedException(); }
+    if (Thread.interrupted()) {
+      handleInterrupt(abortableOperationManager);
+    }
     return tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()
            || acquireQueuedTimeout(abortableOperationManager, remote, thread, level, timeout);
   }
@@ -224,7 +228,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                    final WaitListener listener, final ThreadID thread, final Object waitObject, final long timeout)
       throws InterruptedException, AbortedOperationException {
     markUsed();
-    if (Thread.interrupted()) { throw new InterruptedException(); }
+    if (Thread.interrupted()) {
+      handleInterrupt(abortableOperationManager);
+    }
 
     if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
 
@@ -1379,5 +1385,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     return sb.toString();
+  }
+
+  private void handleInterrupt(AbortableOperationManager abortableOperationManager) throws InterruptedException,
+      AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      throw new InterruptedException();
+    }
   }
 }
