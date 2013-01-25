@@ -58,6 +58,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
@@ -160,8 +161,35 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if (configurationSetupManager.isSecure()) {
       this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
+      verifySecurityManagerFindsCredentialsForAllL2Servers();
     } else {
       this.securityManager = null;
+    }
+  }
+
+  private void verifySecurityManagerFindsCredentialsForAllL2Servers() {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Checking that keychain information is complete for cluster");
+    }
+    List<ActiveServerGroupConfig> activeServerGroups = configurationSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroups();
+    for (ActiveServerGroupConfig activeServerGroup : activeServerGroups) {
+      for (String server : activeServerGroup.getMembers()) {
+        if (!configurationSetupManager.getL2Identifier().equals(server)) {
+          try {
+            L2DSOConfig dsoConfig = configurationSetupManager.dsoL2ConfigFor(server);
+            try {
+              // Following will throw NPE if password not found - which is what we want
+              securityManager.getPasswordForTC(securityManager.getIntraL2Username(),
+                  dsoConfig.host(), dsoConfig.tsaGroupPort().getIntValue());
+            } catch (NullPointerException npex) {
+              throw new IllegalStateException("Invalid cluster security configuration. Unable to find connection credentials to server " + dsoConfig.serverName(), npex);
+            }
+          } catch (ConfigurationSetupException e) {
+            throw new IllegalStateException("Unexpected error browsing cluster configuration", e);
+          }
+        }
+      }
     }
   }
 
