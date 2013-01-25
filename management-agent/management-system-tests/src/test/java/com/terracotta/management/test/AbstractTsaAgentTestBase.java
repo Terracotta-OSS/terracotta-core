@@ -27,6 +27,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -152,6 +156,33 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
       return sb.toString();
     }
+
+    protected void httpPost(String urlString) throws IOException, MalformedURLException, ProtocolException {
+      HttpURLConnection httpConnection = (HttpURLConnection) new URL(urlString).openConnection();
+      try {
+        httpConnection.setRequestMethod("POST");
+        httpConnection.setDoOutput(true); // Triggers POST.
+        String charset = "UTF-8";
+        httpConnection.setRequestProperty("Accept-Charset", charset);
+        httpConnection.setRequestProperty("Content-Type", "application/json;charset=" + charset);
+
+        if (httpConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          throw new RuntimeException("Failed : HTTP error code : " + httpConnection.getResponseCode());
+        }
+
+        BufferedReader br = new BufferedReader(new InputStreamReader((httpConnection.getInputStream())));
+
+        String output;
+        System.out.println("Output from Server .... \n");
+        while ((output = br.readLine()) != null) {
+          System.out.println(output);
+        }
+      } finally {
+        httpConnection.disconnect();
+      }
+
+    }
+
 
     public AbstractTsaClient(String[] args) {
       super(args);

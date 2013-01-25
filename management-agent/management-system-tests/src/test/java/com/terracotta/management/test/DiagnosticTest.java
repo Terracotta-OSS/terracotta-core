@@ -27,7 +27,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
-    testConfig.getClientConfig().setClientClasses(new Class[]{DiagnosticThreadDumpTestClient.class});
+    testConfig.getClientConfig().setClientClasses(new Class[]{DiagnosticThreadDumpTestClient.class, DiagnosticDGCTestClient.class});
   }
 
   public static class DiagnosticThreadDumpTestClient extends AbstractTsaClient {
@@ -90,6 +90,18 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
       String dump = (String)content.get("dump");
       assertThat(dump.trim().length(), is(not(0)));
+    }
+  }
+
+  public static class DiagnosticDGCTestClient extends AbstractTsaClient {
+
+    public DiagnosticDGCTestClient(String[] args) {
+      super(args);
+    }
+
+    @Override
+    protected void doTsaTest() throws Throwable {
+      httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(0) + "/tc-management-api/agents/diagnostics/dgc");
     }
   }
 
