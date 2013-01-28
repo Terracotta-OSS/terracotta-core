@@ -14,7 +14,7 @@ import java.util.Set;
 
 public interface TransactionStore {
 
-  public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID);
+  public void commitTransactionDescriptor(ServerTransactionID stxID);
 
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID);
 
@@ -38,6 +38,6 @@ public interface TransactionStore {
 
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
-  public void commitAllTransactionDescriptor(Transaction persistenceTransaction, Collection stxIDs);
+  public void commitAllTransactionDescriptor(Collection stxIDs);
 
 }

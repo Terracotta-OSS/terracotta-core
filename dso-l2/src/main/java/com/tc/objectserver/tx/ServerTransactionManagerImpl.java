@@ -389,7 +389,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     fireTransactionAppliedEvent(stxnID, txn.getNewObjectIDs());
 
-    this.gtxm.commit(null, stxnID);
+    this.gtxm.commit(stxnID);
   }
 
   @Override

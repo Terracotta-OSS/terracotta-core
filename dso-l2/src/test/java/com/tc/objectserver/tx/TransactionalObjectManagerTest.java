@@ -131,7 +131,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testAlreadyCommittedTransaction() throws Exception {
-    gtxMgr.commit(null, new ServerTransactionID(new ClientID(0), new TransactionID(1)));
+    gtxMgr.commit(new ServerTransactionID(new ClientID(0), new TransactionID(1)));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
     verify(coordinator).addToApplyStage(argThat(allOf(hasTransactionID(1), not(needsApply()))));

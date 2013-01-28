@@ -11,11 +11,11 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -29,15 +29,18 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   private final Sequence                            globalTransactionIDSequence;
   private final SortedMap<GlobalTransactionID, List<Runnable>> lwmCallbacks = new TreeMap<GlobalTransactionID, List<Runnable>>();
   private final Sink                                callbackSink;
+  private final PersistenceTransactionProvider      persistenceTransactionProvider;
 
   public ServerGlobalTransactionManagerImpl(SequenceValidator sequenceValidator, TransactionStore transactionStore,
                                             GlobalTransactionIDSequenceProvider gidSequenceProvider,
-                                            Sequence globalTransactionIDSequence, Sink callbackSink) {
+                                            Sequence globalTransactionIDSequence, Sink callbackSink,
+                                            PersistenceTransactionProvider persistenceTransactionProvider) {
     this.sequenceValidator = sequenceValidator;
     this.transactionStore = transactionStore;
     this.gidSequenceProvider = gidSequenceProvider;
     this.globalTransactionIDSequence = globalTransactionIDSequence;
     this.callbackSink = callbackSink;
+    this.persistenceTransactionProvider = persistenceTransactionProvider;
   }
 
   @Override
@@ -61,23 +64,22 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   @Override
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
+    Transaction tx = persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(sid);
+    tx.commit();
     processCallbacks();
   }
 
   @Override
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
+    Transaction tx = persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
+    tx.commit();
   }
 
   @Override
-  public void commit(Transaction persistenceTransaction, ServerTransactionID stxID) {
-    transactionStore.commitTransactionDescriptor(persistenceTransaction, stxID);
-  }
-
-  @Override
-  public void commitAll(Transaction persistenceTransaction, Collection stxIDs) {
-    transactionStore.commitAllTransactionDescriptor(persistenceTransaction, stxIDs);
+  public void commit(ServerTransactionID stxID) {
+    transactionStore.commitTransactionDescriptor(stxID);
   }
 
   @Override

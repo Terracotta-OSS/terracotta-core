@@ -10,7 +10,6 @@ import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
 import java.nio.ByteBuffer;
@@ -42,7 +41,7 @@ public class TransactionPersistorImpl implements TransactionPersistor {
   }
 
   @Override
-  public void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx) {
+  public void saveGlobalTransactionDescriptor(GlobalTransactionDescriptor gtx) {
     committed.put(gtx.getGlobalTransactionID(), gtx);
   }
 

@@ -8,10 +8,8 @@ import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.util.sequence.Sequence;
 
-import java.util.Collection;
 import java.util.Set;
 
 public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator {
@@ -25,12 +23,7 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   /**
    * Commits the state of the transaciton.
    */
-  public void commit(Transaction persistenceTransaction, ServerTransactionID stxID);
-
-  /**
-   * Commits all the state of the all the transacitons.
-   */
-  public void commitAll(Transaction persistenceTransaction, Collection gtxIDs);
+  public void commit(ServerTransactionID stxID);
 
   /**
    * Notifies the transaction manager that the ServerTransactionIDs in the given collection are no longer active (i.e.,

@@ -9,7 +9,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.TransactionCommittedError;
@@ -68,11 +67,11 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID) {
+  public void commitTransactionDescriptor(ServerTransactionID stxID) {
     GlobalTransactionDescriptor txID = getTransactionDescriptor(stxID);
     if (txID.isCommitted()) { throw new TransactionCommittedError("Already committed : " + txID); }
     try {
-      commitContextQueue.put(new Object[] { transaction, txID });
+      commitContextQueue.put(new Object[] { txID });
       if (!volatileMap.containsValue(txID)) throw new AssertionError();
       basicPut(durableMap, txID);
       txID.commitComplete();
@@ -133,10 +132,10 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void commitAllTransactionDescriptor(Transaction persistenceTransaction, Collection stxIDs) {
+  public void commitAllTransactionDescriptor(Collection stxIDs) {
     for (final Object stxID : stxIDs) {
       ServerTransactionID sid = (ServerTransactionID)stxID;
-      commitTransactionDescriptor(persistenceTransaction, sid);
+      commitTransactionDescriptor(sid);
     }
   }
 

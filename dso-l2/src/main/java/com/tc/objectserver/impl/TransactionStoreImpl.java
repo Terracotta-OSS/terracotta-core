@@ -9,7 +9,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.ServerTransactionIDBookKeeper;
@@ -48,7 +47,7 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   @Override
-  public void commitAllTransactionDescriptor(Transaction transaction, Collection stxIDs) {
+  public void commitAllTransactionDescriptor(Collection stxIDs) {
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
       GlobalTransactionDescriptor gtx = this.sids.get(stxnID);
@@ -57,7 +56,7 @@ public class TransactionStoreImpl implements TransactionStore {
         this.sids.remove(stxnID);
         this.ids.remove(gtx.getGlobalTransactionID());
       } else {
-        this.persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+        this.persistor.saveGlobalTransactionDescriptor(gtx);
         gtx.commitComplete();
       }
     }
@@ -65,10 +64,10 @@ public class TransactionStoreImpl implements TransactionStore {
 
   // used only in tests
   @Override
-  public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID) {
+  public void commitTransactionDescriptor(ServerTransactionID stxID) {
     ArrayList stxIDs = new ArrayList(1);
     stxIDs.add(stxID);
-    commitAllTransactionDescriptor(transaction, stxIDs);
+    commitAllTransactionDescriptor(stxIDs);
   }
 
   @Override

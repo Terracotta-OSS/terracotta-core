@@ -1,7 +1,6 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
 import java.util.Collection;
@@ -18,7 +17,7 @@ public class NullTransactionPersistor implements TransactionPersistor {
   }
 
   @Override
-  public void saveGlobalTransactionDescriptor(final Transaction tx, final GlobalTransactionDescriptor gtx) {
+  public void saveGlobalTransactionDescriptor(final GlobalTransactionDescriptor gtx) {
     // Do nothing
   }
 

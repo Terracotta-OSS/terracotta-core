@@ -6,9 +6,6 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -290,6 +287,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -748,11 +748,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        globalTransactionIDSequence);
     final Stage lwmCallbackStage = stageManager.createStage(ServerConfigurationContext.LOW_WATERMARK_CALLBACK_STAGE,
                                                             new LowWaterMarkCallbackHandler(), 1, maxStageSize);
-    final ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator,
-                                                                                       transactionStore,
-        gidSequenceProvider,
-                                                                                       globalTransactionIDSequence,
-                                                                                       lwmCallbackStage.getSink());
+    final ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator, transactionStore,
+                                                                                       gidSequenceProvider, globalTransactionIDSequence,
+                                                                                       lwmCallbackStage.getSink(),
+                                                                                       persistor.getPersistenceTransactionProvider());
 
     final TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxm, txnStageCoordinator);

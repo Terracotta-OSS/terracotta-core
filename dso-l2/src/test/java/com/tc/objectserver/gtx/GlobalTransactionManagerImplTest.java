@@ -13,8 +13,10 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.util.SequenceValidator;
@@ -28,6 +30,9 @@ import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 public class GlobalTransactionManagerImplTest extends TestCase {
 
   private TestTransactionStore               transactionStore;
@@ -39,8 +44,11 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     Sequence sequence = new SimpleSequence();
     transactionStore = new TestTransactionStore(sequence);
     GlobalTransactionIDSequenceProvider gsp = new GlobalTransactionIDBatchRequestHandler(new TestMutableSequence());
+    PersistenceTransactionProvider transactionProvider = mock(PersistenceTransactionProvider.class);
+    Transaction transaction = mock(Transaction.class);
+    doReturn(transaction).when(transactionProvider).newTransaction();
     gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, gsp, sequence,
-                                                  new LWMCallbackMockSink());
+                                                  new LWMCallbackMockSink(), transactionProvider);
   }
 
   public void testStartAndCommitApply() throws Exception {
@@ -60,15 +68,15 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertFalse(gtxm.initiateApply(stxID2));
 
     // now commit them
-    gtxm.commit(null, stxID1);
-    gtxm.commit(null, stxID2);
+    gtxm.commit(stxID1);
+    gtxm.commit(stxID2);
 
     assertFalse(gtxm.initiateApply(stxID1));
     assertFalse(gtxm.initiateApply(stxID2));
 
     // now try to commit again
     try {
-      gtxm.commit(null, stxID1);
+      gtxm.commit(stxID1);
       fail("TransactionCommittedError");
     } catch (TransactionCommittedError e) {
       // expected
@@ -107,7 +115,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gid3 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertTrue(gid2.equals(gid3));
 
-    gtxm.commit(null, stxid);
+    gtxm.commit(stxid);
     assertGlobalTxWasLoaded(stxid);
 
     assertNotNull(transactionStore.commitContextQueue.poll(1));
@@ -124,7 +132,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertNextGlobalTxNotCalled();
 
     try {
-      gtxm.commit(null, stxid);
+      gtxm.commit(stxid);
       fail("Should not be able to commit twice");
     } catch (TransactionCommittedError e) {
       // expected
@@ -142,7 +150,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
 
     // apply does create
     gtxm.getOrCreateGlobalTransactionID(stxid2);
-    gtxm.commit(null, stxid2);
+    gtxm.commit(stxid2);
 
     assertFalse(gtxm.initiateApply(stxid2));
 
@@ -161,7 +169,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     callback = noopFuture();
     gtxm.registerCallbackOnLowWaterMarkReached(callback);
     try {
-      callback.get(5, TimeUnit.SECONDS);
+      callback.get(2, TimeUnit.SECONDS);
       Assert.fail("Expecting callback to stay queued");
     } catch (TimeoutException e) {
       // expected;
@@ -176,7 +184,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     gtxm.registerCallbackOnLowWaterMarkReached(callback);
     gtxm.clearCommitedTransactionsBelowLowWaterMark(newServerTransactionID(1, 4));
     try {
-      callback.get(10, TimeUnit.SECONDS);
+      callback.get(2, TimeUnit.SECONDS);
       Assert.fail("Expecting callback to stay queued");
     } catch (TimeoutException e) {
       // expected;
