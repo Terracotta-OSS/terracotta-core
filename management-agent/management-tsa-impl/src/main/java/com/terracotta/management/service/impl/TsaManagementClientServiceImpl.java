@@ -606,6 +606,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           }
           urls.add(prefix + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
         } catch (ServiceExecutionException see) {
+          LOG.warn("Error building L2 URL of " + l2Info.host(), see);
           urls.add("?");
         }
       }
