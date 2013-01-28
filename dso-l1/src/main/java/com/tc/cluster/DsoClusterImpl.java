@@ -339,6 +339,15 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
+  public void fireRejoinRejected() {
+    final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
+
+    for (DsoClusterListener listener : listeners) {
+      fireEvent(DsoClusterEventType.REJOIN_REJECTED, event, listener);
+    }
+  }
+
+  @Override
   public void fireOperationsEnabled() {
     if (currentNode != null) {
       stateWriteLock.lock();
@@ -432,8 +441,8 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
         case NODE_REJOINED:
           listener.nodeRejoined(event);
           break;
-        default:
-          throw new AssertionError("Unknown type of cluster event - " + eventType);
+        case REJOIN_REJECTED:
+          listener.nodeRejoinRejected(event);
       }
     } catch (TCNotRunningException tcnre) {
       LOGGER.error("Ignoring TCNotRunningException when notifying " + event + " : " + eventType);

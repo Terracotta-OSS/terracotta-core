@@ -90,8 +90,12 @@ public class TerracottaClusterInfo implements ClusterInfo {
     return Collections.unmodifiableMap(translation);
   }
 
-  private ClusterEvent translateEvent(final DsoClusterEvent event, final Type type) {
+  private static ClusterEvent translateEvent(final DsoClusterEvent event, final Type type) {
     return new ClusterEventImpl(event.getNode(), type);
+  }
+
+  private static ClusterEvent translateEvent(final DsoClusterEvent event, final Type type, String msg) {
+    return new ClusterEventImpl(event.getNode(), type, msg);
   }
 
   private class ClusterListenerWrapper implements OutOfBandDsoClusterListener {
@@ -125,6 +129,11 @@ public class TerracottaClusterInfo implements ClusterInfo {
     @Override
     public void nodeRejoined(DsoClusterEvent event) {
       listener.onClusterEvent(translateEvent(event, Type.NODE_REJOINED));
+    }
+
+    @Override
+    public void nodeRejoinRejected(DsoClusterEvent event) {
+      listener.onClusterEvent(translateEvent(event, Type.NODE_ERROR, "Rejoin rejected"));
     }
 
     @Override
@@ -173,10 +182,16 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
     private final TerracottaNode clusterNode;
     private final Type           type;
+    private final String         msg;
 
     public ClusterEventImpl(DsoNode node, Type type) {
+      this(node, type, null);
+    }
+
+    public ClusterEventImpl(DsoNode node, Type type, String msg) {
       clusterNode = new TerracottaNode(node);
       this.type = type;
+      this.msg = "Node: " + node.toString() + ", Type: " + type + (msg == null ? "" : " - " + msg);
     }
 
     @Override
@@ -191,7 +206,34 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
     @Override
     public String toString() {
-      return "ClusterEvent [type=" + type + ", clusterNode=" + clusterNode + "]";
+      return "ClusterEvent [type=" + type + ", clusterNode=" + clusterNode + ", msg=" + msg + "]";
+    }
+
+    @Override
+    public String getDetailedMessage() {
+      return msg;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((clusterNode == null) ? 0 : clusterNode.hashCode());
+      result = prime * result + ((type == null) ? 0 : type.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      ClusterEventImpl other = (ClusterEventImpl) obj;
+      if (clusterNode == null) {
+        if (other.clusterNode != null) return false;
+      } else if (!clusterNode.equals(other.clusterNode)) return false;
+      if (type != other.type) return false;
+      return true;
     }
 
   }

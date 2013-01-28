@@ -4,7 +4,6 @@
  */
 package com.tc.cluster;
 
-
 /**
  * A listener interface that can be implemented to be notified about DSO cluster events.
  * <p>
@@ -27,7 +26,7 @@ package com.tc.cluster;
  * The {@code operations enabled} and {@code operations disabled} events are repeatable and indicate temporary
  * situations that may resolve themselves automatically over time. Only the current node will receive events concerning
  * its own cluster operations. Nodes in the cluster don't get cluster operation events about other nodes.
- *
+ * 
  * @since 3.0.0
  */
 public interface DsoClusterListener {
@@ -35,7 +34,7 @@ public interface DsoClusterListener {
    * Sent when a node joined the cluster, including the current node.
    * <p>
    * This event happens once for the lifetime of a node.
-   *
+   * 
    * @param event provides more information about the event
    * @see DsoCluster#isNodeJoined()
    */
@@ -48,7 +47,7 @@ public interface DsoClusterListener {
    * <p>
    * Note that this event might never be triggered for the node in question, other nodes in the cluster will however
    * always receive this event about nodes that have permanently left the cluster.
-   *
+   * 
    * @param event provides more information about the event
    * @see DsoCluster#isNodeJoined()
    */
@@ -58,11 +57,11 @@ public interface DsoClusterListener {
    * Sent when cluster operations are enabled on a node, any operations will go through and propagate through the
    * cluster.
    * <p>
-   * This event can be repeated as many times as appropriate, but you're guaranteed to have always received a {@code
-   * node left} or {@code operations disabled} event before.
+   * This event can be repeated as many times as appropriate, but you're guaranteed to have always received a
+   * {@code node left} or {@code operations disabled} event before.
    * <p>
    * Only the current node will receive events concerning its own cluster operations.
-   *
+   * 
    * @param event provides more information about the event
    * @see DsoCluster#areOperationsEnabled()
    */
@@ -74,15 +73,23 @@ public interface DsoClusterListener {
    * They might propagate through the cluster if the operations are enabled again afterwards, however it's also possible
    * that the nodes is forced to leave the cluster instead.
    * <p>
-   * This event can be repeated as many times as appropriate, but you're guaranteed to have always received an {@code
-   * operations enabled} event before.
+   * This event can be repeated as many times as appropriate, but you're guaranteed to have always received an
+   * {@code operations enabled} event before.
    * <p>
    * Only the current node will receive events concerning its own cluster operations.
-   *
+   * 
    * @param event provides more information about the event
    * @see DsoCluster#areOperationsEnabled()
    */
   public void operationsDisabled(DsoClusterEvent event);
 
+  /**
+   * Fired when node rejoin happens
+   */
   void nodeRejoined(DsoClusterEvent event);
+
+  /**
+   * Fired when node rejoin is rejected
+   */
+  void nodeRejoinRejected(DsoClusterEvent event);
 }

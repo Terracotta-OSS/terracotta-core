@@ -216,10 +216,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       verifyActiveCoordinator(handshakeAck.getGroupID());
       receivedStripeIDMap(stripeIDMap);
       if (!groupIDToStripeIDMap.equals(stripeIDMap)) {
-        final String msg = "client can not join a new cluster before shutdown \n original " + groupIDToStripeIDMap
+        final String msg = "Client can not join a new cluster before shutdown \n original " + groupIDToStripeIDMap
                            + " \n received " + stripeIDMap;
         logger.error(msg);
         CONSOLE_LOGGER.error(msg);
+        dsoClusterEventsGun.fireRejoinRejected();
         return;
       }
     }
