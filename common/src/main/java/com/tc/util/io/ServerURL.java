@@ -34,6 +34,9 @@ import javax.net.ssl.X509TrustManager;
 @SuppressWarnings("restriction")
 public class ServerURL {
 
+  private static final boolean DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
+  private static final boolean TRUST_ALL_CERTS = Boolean.getBoolean("tc.ssl.trustAllCerts");
+
   private final URL          theURL;
   private final int          timeout;
   private final SecurityInfo securityInfo;
@@ -53,14 +56,14 @@ public class ServerURL {
   }
 
   public InputStream openStream(PwProvider pwProvider) throws IOException {
-    URLConnection urlConnection;
     if(securityInfo.isSecure()) {
       Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
     }
+
+    URLConnection urlConnection = theURL.openConnection();
     String uri = null;
 
     if (securityInfo.isSecure()) {
-      HttpsURLConnection sslUrlConnection = (HttpsURLConnection) theURL.openConnection();
       if (securityInfo.getUsername() != null) {
         String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
         uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
@@ -72,54 +75,13 @@ public class ServerURL {
           throw new TCRuntimeException("Couldn't create URI to connect to " + uri, e);
         }
         Assert.assertNotNull("No password for " + theURL + " found!", passwordTo);
-        sslUrlConnection.addRequestProperty("Authorization", "Basic " + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(passwordTo))
+        urlConnection.addRequestProperty("Authorization", "Basic " + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(passwordTo))
             .getBytes()));
       }
 
-      if (Boolean.getBoolean("tc.ssl.disableHostnameVerifier")) {
-        // don't verify hostname
-        sslUrlConnection.setHostnameVerifier(new HostnameVerifier() {
-          @Override
-          public boolean verify(String hostname, SSLSession session) {
-            return true;
-          }
-        });
+      if (DISABLE_HOSTNAME_VERIFIER || TRUST_ALL_CERTS) {
+        tweakSecureConnectionSettings(urlConnection);
       }
-
-      TrustManager[] trustManagers = null;
-      if (Boolean.getBoolean("tc.ssl.trustAllCerts")) {
-        // trust all certs
-        trustManagers = new TrustManager[] {
-            new X509TrustManager() {
-              @Override
-              public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
-                //
-              }
-
-              @Override
-              public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
-                //
-              }
-
-              @Override
-              public X509Certificate[] getAcceptedIssuers() {
-                return null;
-              }
-            }
-        };
-      }
-
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustManagers, null);
-        sslUrlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
-      } catch (Exception e) {
-        throw new RuntimeException("unable to create SSL connection from " + theURL, e);
-      }
-
-      urlConnection = sslUrlConnection;
-    } else {
-      urlConnection = theURL.openConnection();
     }
 
     if (timeout > -1) {
@@ -153,5 +115,57 @@ public class ServerURL {
   @Override
   public String toString() {
     return theURL.toString();
+  }
+
+  private static void tweakSecureConnectionSettings(URLConnection urlConnection) {
+    HttpsURLConnection sslUrlConnection;
+
+    try {
+      sslUrlConnection = (HttpsURLConnection) urlConnection;
+    } catch (ClassCastException e) {
+      throw new IllegalStateException("Unable to cast " + urlConnection + " to javax.net.ssl.HttpsURLConnection. " +
+                                      "Options tc.ssl.trustAllCerts and tc.ssl.disableHostnameVerifier are causing this issue.", e);
+    }
+
+    if (DISABLE_HOSTNAME_VERIFIER) {
+      // don't verify hostname
+      sslUrlConnection.setHostnameVerifier(new HostnameVerifier() {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+          return true;
+        }
+      });
+    }
+
+    TrustManager[] trustManagers = null;
+    if (TRUST_ALL_CERTS) {
+      // trust all certs
+      trustManagers = new TrustManager[] {
+          new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
+              //
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
+              //
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+              return null;
+            }
+          }
+      };
+    }
+
+    try {
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustManagers, null);
+      sslUrlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+    } catch (Exception e) {
+      throw new RuntimeException("unable to create SSL connection from " + urlConnection.getURL(), e);
+    }
   }
 }
