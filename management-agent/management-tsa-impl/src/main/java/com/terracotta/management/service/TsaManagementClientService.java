@@ -18,6 +18,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -76,4 +77,7 @@ public interface TsaManagementClientService {
   Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException;
 
   Map<String, Integer> getUnreadOperatorEventCount() throws ServiceExecutionException;
+
+  List<String> performSecurityChecks();
+
 }

@@ -83,6 +83,22 @@ public class TSAConfig {
     }
   }
 
+  public static String getManagementUrl() {
+    if (!isSslEnabled()) {
+      return null;
+    }
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      Object securityHostnameAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityHostname");
+      Object tsaGroupPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "TSAGroupPort");
+
+      return "https://" + securityHostnameAttribute.toString() + ":" + tsaGroupPortAttribute + "/tc-management-api";
+    } catch (Exception e) {
+      throw new RuntimeException("Error building ManagementUrl", e);
+    }
+  }
+
   public static String getSecurityCallbackUrl() {
     if (!isSslEnabled()) {
       return null;

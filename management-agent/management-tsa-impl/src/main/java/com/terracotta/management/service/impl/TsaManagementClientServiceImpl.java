@@ -23,6 +23,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Conversion;
+import com.terracotta.management.keychain.URIKeyName;
 import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
@@ -34,16 +35,23 @@ import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.ThreadDumpEntity.NodeType;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
+import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
+import com.terracotta.management.web.utils.TSAConfig;
+import com.terracotta.management.web.utils.TSASslSocketFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -68,6 +76,7 @@ import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * @author Ludovic Orban
@@ -213,6 +222,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   private ServerEntity buildServerEntity(L2Info l2Info) throws ServiceExecutionException {
+    return buildServerEntity(l2Info, SERVER_ENTITY_ATTRIBUTE_NAMES);
+  }
+
+  private ServerEntity buildServerEntity(L2Info l2Info, String[] attributeNames) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       ServerEntity serverEntity = new ServerEntity();
@@ -227,7 +240,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
 
       AttributeList attributes = mBeanServer.getAttributes(
-          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), SERVER_ENTITY_ATTRIBUTE_NAMES);
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), attributeNames);
       for (Object attributeObj : attributes) {
         Attribute attribute = (Attribute)attributeObj;
         serverEntity.getAttributes().put(attribute.getName(), attribute.getValue());
@@ -599,12 +612,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       for (L2Info l2Info : l2Infos) {
         try {
-          ServerEntity serverEntity = buildServerEntity(l2Info);
+          ServerEntity serverEntity = buildServerEntity(l2Info, new String[] {"SecurityHostname", "TSAGroupPort"});
           String prefix = "http://";
           if (secure) {
             prefix = "https://";
           }
-          urls.add(prefix + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
+          urls.add(prefix + serverEntity.getAttributes().get("SecurityHostname") + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
         } catch (ServiceExecutionException see) {
           LOG.warn("Error building L2 URL of " + l2Info.host(), see);
           urls.add("?");
@@ -1298,6 +1311,114 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     } catch (Exception e) {
       throw new ServiceExecutionException("error reloading configuration", e);
     }
+  }
+
+  public List<String> performSecurityChecks() {
+    List<String> errors = new ArrayList<String>();
+
+    // no need to do anything if we're not running secured
+    if (!TSAConfig.isSslEnabled()) {
+      return errors;
+    }
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    L2Info[] l2Infos;
+    try {
+      l2Infos = (L2Info[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+    } catch (Exception e) {
+      errors.add("Error querying Platform MBean Server: " + e.getMessage());
+      return errors;
+    }
+
+    // Check that we can connect to all L2s via JMX
+    for (L2Info l2Info : l2Infos) {
+      String jmxHost = l2Info.host();
+      int jmxPort = l2Info.jmxPort();
+
+      JMXConnector jmxConnector = null;
+      try {
+        jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      } catch (Exception e) {
+        errors.add("Error opening JMX connection to " + jmxHost + ":" + jmxPort + " - " + getRootCause(e).getMessage());
+      } finally {
+        if (jmxConnector != null) {
+          try {
+            jmxConnector.close();
+          } catch (IOException ioe) {
+            // ignore
+          }
+        }
+      }
+    }
+
+    // Check that we can perform IA
+    String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
+    if (securityServiceLocation == null) {
+      errors.add("No Security Service Location configured");
+    } else {
+      try {
+        URL url = new URL(securityServiceLocation);
+        HttpsURLConnection sslUrlConnection = (HttpsURLConnection) url.openConnection();
+
+        TSASslSocketFactory tsaSslSocketFactory = new TSASslSocketFactory();
+        sslUrlConnection.setSSLSocketFactory(tsaSslSocketFactory);
+
+        Integer securityTimeout = TSAConfig.getSecurityTimeout();
+        if (securityTimeout > -1) {
+          sslUrlConnection.setConnectTimeout(securityTimeout);
+          sslUrlConnection.setReadTimeout(securityTimeout);
+        }
+
+        InputStream inputStream;
+        try {
+          inputStream = sslUrlConnection.getInputStream();
+          inputStream.close();
+          throw new IOException("No Identity Assertion service running");
+        } catch (IOException ioe) {
+          // 401 is the expected response code
+          if (sslUrlConnection.getResponseCode() != 401) {
+            throw ioe;
+          }
+        }
+
+      } catch (IOException ioe) {
+        errors.add("Error opening connection to Security Service Location [" + securityServiceLocation + "]: " + getRootCause(ioe).getMessage());
+      } catch (Exception e) {
+        errors.add("Error setting up SSL socket factory: " + e.getMessage());
+      }
+
+      // Check that the keychain contains this server's URL
+      try {
+        String managementUrl = TSAConfig.getManagementUrl();
+        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName(managementUrl));
+        if (secret == null) {
+          errors.add("Missing keychain entry for Management URL [" + managementUrl + "]");
+        } else {
+          Arrays.fill(secret, (byte)0);
+        }
+      } catch (KeychainInitializationException kie) {
+        errors.add("Error accessing keychain: " + kie.getMessage());
+      } catch (URISyntaxException mue) {
+        errors.add("Malformed Security Management URL: " + mue.getMessage());
+      }
+
+      // Check that Ehcache can perform IA
+      try {
+        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName("jmx:net.sf.ehcache:type=RepositoryService"));
+        if (secret == null) {
+          errors.add("Missing keychain entry for Ehcache URI [jmx:net.sf.ehcache:type=RepositoryService]");
+        } else {
+          Arrays.fill(secret, (byte)0);
+        }
+      } catch (KeychainInitializationException kie) {
+        errors.add("Error accessing keychain: " + kie.getMessage());
+      } catch (URISyntaxException mue) {
+        errors.add("Malformed Ehcache management URI: " + mue.getMessage());
+      }
+    }
+
+    return errors;
   }
 
   private JMXConnector findActiveServer() throws JMException, IOException, InterruptedException {

@@ -10,6 +10,8 @@ import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
 import net.sf.ehcache.management.service.impl.JmxRepositoryService;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -59,6 +61,7 @@ import com.terracotta.management.web.utils.TSASslSocketFactory;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.management.remote.rmi.RMIConnectorServer;
@@ -69,6 +72,8 @@ import javax.servlet.ServletContextEvent;
  * @author Ludovic Orban
  */
 public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TSAEnvironmentLoaderListener.class);
 
   private volatile JmxConnectorPool jmxConnectorPool;
 
@@ -171,6 +176,11 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, l1Agent));
 
       ServiceLocator.load(serviceLocator);
+
+      List<String> strings = tsaManagementClientService.performSecurityChecks();
+      for (String string : strings) {
+        LOG.warn(string);
+      }
 
       super.contextInitialized(sce);
     } catch (Exception e) {
