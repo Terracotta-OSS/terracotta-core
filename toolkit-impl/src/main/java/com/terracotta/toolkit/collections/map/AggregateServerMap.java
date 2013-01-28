@@ -199,11 +199,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void rejoinStarted() {
-    getAnyServerMap().cleanLocalState();
+    // nothing to do
   }
 
   @Override
   public void rejoinCompleted() {
+    getAnyServerMap().cleanLocalState();
     ToolkitObjectStripe<InternalToolkitMap<K, V>>[] objects = lookup.lookupStripeObjects(name, this.toolkitObjectType,
                                                                                          config);
     if (objects != null) {
