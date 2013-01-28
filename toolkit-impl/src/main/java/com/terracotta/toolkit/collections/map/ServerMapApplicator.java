@@ -113,7 +113,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
             consistency = Consistency.STRONG;
             break;
           default:
-            consistency = null;
+            break;
         }
       }
       config.setString(ToolkitConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());

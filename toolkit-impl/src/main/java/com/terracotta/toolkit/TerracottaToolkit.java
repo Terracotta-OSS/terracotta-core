@@ -30,7 +30,6 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 import org.terracotta.toolkit.store.ToolkitStore;
 

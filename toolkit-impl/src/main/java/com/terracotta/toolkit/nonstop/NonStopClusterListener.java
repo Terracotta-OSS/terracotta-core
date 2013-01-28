@@ -12,7 +12,7 @@ import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NonStopClusterListener implements ClusterListener {
-  // Initally Operations are Disabled.
+  // Initially Operations are Disabled.
   private final AtomicBoolean             operationsEnabled = new AtomicBoolean(false);
   private final AbortableOperationManager abortableOperationManager;
 

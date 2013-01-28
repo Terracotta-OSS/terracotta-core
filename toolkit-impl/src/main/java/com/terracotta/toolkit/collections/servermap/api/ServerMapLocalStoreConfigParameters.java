@@ -110,8 +110,8 @@ public class ServerMapLocalStoreConfigParameters {
     return pinnedInLocalMemory;
   }
 
-  public ServerMapLocalStoreConfigParameters pinnedInLocalMemory(boolean pinnedInLocalMemory) {
-    this.pinnedInLocalMemory = pinnedInLocalMemory;
+  public ServerMapLocalStoreConfigParameters pinnedInLocalMemory(boolean pinnedLocalMemory) {
+    this.pinnedInLocalMemory = pinnedLocalMemory;
     return this;
   }
 }
