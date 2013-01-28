@@ -927,11 +927,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       securityHostname = configurationSetupManager.getSecurity().getSecurityHostname();
     }
     if (securityHostname == null) {
-      try {
-        securityHostname = InetAddress.getLocalHost().getHostName();
-      } catch (UnknownHostException e) {
-        // ignore
-      }
+      securityHostname = configurationSetupManager.commonl2Config().host();
     }
     return securityHostname;
   }
