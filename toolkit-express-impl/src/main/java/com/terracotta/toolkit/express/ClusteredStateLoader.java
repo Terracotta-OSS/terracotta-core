@@ -14,8 +14,10 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.SecureClassLoader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -83,6 +85,17 @@ class ClusteredStateLoader extends SecureClassLoader {
     InputStream in = super.getResourceAsStream(name);
     if (in != null) return in;
     return appLoader.getResourceAsStream(name);
+  }
+
+  @Override
+  public Enumeration<URL> getResources(String name) throws IOException {
+    Enumeration<URL> resources = DEV_MODE ? devModeUrlClassLoader.getResources(name) : findResourcesWithPrefix(name);
+    if (resources != null && resources.hasMoreElements()) { return resources; }
+
+    resources = super.getResources(name);
+    if (resources != null && resources.hasMoreElements()) { return resources; }
+
+    return appLoader.getResources(name);
   }
 
   @Override
@@ -161,6 +174,25 @@ class ClusteredStateLoader extends SecureClassLoader {
       URL url = appLoader.getResource(prefix + resource);
       if (url != null) { return url; }
     }
+    return null;
+  }
+
+  private Enumeration<URL> findResourcesWithPrefix(String name) throws IOException {
+    String resource = name.endsWith(".class") ? name.substring(0, name.lastIndexOf(".class")) + PRIVATE_CLASS_SUFFIX
+        : name;
+
+    Vector<URL> urls = new Vector<URL>();
+    for (String prefix : embeddedResourcePrefixes) {
+      Enumeration<URL> e = appLoader.getResources(prefix + resource);
+      if (e != null) {
+        while (e.hasMoreElements()) {
+          urls.add(e.nextElement());
+        }
+      }
+    }
+
+    if (urls.size() > 0) { return urls.elements(); }
+
     return null;
   }
 
