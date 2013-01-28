@@ -158,6 +158,15 @@ public interface TestHandlerMBean {
   public int waitForServerExit(int groupIndex, int serverIndex) throws Exception;
 
   /**
+   * Disconnects the client from this group
+   * 
+   * @param groupIndex group for the server
+   */
+  public void bringClientNetworkDown(int groupIndex) throws Exception;
+
+  public void bringClientNetworkUp(int groupIndex) throws Exception;
+
+  /**
    * Execute custom command
    */
   public Serializable executeCustomCommand(String cmd, Serializable[] params);

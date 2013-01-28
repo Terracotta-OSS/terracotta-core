@@ -140,6 +140,16 @@ public class TestHandler implements TestHandlerMBean {
     return "No Command executor registered. Failed to execute: " + cmd + ", params: " + Arrays.asList(params);
   }
 
+  @Override
+  public void bringClientNetworkDown(int groupIndex) throws Exception {
+    testServerManager.clientNetworkDown(groupIndex);
+  }
+
+  @Override
+  public void bringClientNetworkUp(int groupIndex) throws Exception {
+    testServerManager.clientNetworkUp(groupIndex);
+  }
+
   public void setCustomCommandExecutor(CustomCommandExecutor executor) {
     this.executor = executor;
   }

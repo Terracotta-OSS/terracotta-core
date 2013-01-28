@@ -181,7 +181,6 @@ public class TestServerManager {
 
   public boolean isPassiveStandBy(int groupIndex) {
     return groups[groupIndex].isPassiveStandBy();
-
   }
 
   public boolean isServerRunning(int groupIndex, int serverIndex) {
@@ -232,6 +231,16 @@ public class TestServerManager {
   public void closeClientConnections(int groupIndex) {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
     this.groups[groupIndex].stopTsaProxy();
+  }
+
+  public void clientNetworkDown(int groupIndex) {
+    Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
+    this.groups[groupIndex].stopL1Proxy(groupIndex);
+  }
+
+  public void clientNetworkUp(int groupIndex) {
+    Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
+    this.groups[groupIndex].startL1Proxy(groupIndex);
   }
 
   public int waitForServerExit(int groupIndex, int serverIndex) throws Exception {

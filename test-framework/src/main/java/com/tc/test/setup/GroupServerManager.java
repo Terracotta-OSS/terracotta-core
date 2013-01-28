@@ -278,7 +278,7 @@ public class GroupServerManager {
     }
   }
 
-  private void startL1Proxy(int index) {
+  public void startL1Proxy(int index) {
     if (isProxyTsaPort()) {
       System.out.println("*** Starting the DSO proxy with proxy port as " + proxyL1Managers[index].getProxyPort()
                          + " and DSO port as " + proxyL1Managers[index].getTsaPort());
@@ -335,7 +335,7 @@ public class GroupServerManager {
     }
   }
 
-  private void stopL1Proxy(int index) {
+  public void stopL1Proxy(int index) {
     if (isProxyTsaPort()) {
       proxyL1Managers[index].proxyDown();
     }
