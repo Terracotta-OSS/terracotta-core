@@ -57,9 +57,11 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private void notifyRejoinStart() {
     assertRejoinEnabled();
     logger.info("Notifying rejoin start...");
+    // this calls cleanup for all ClearableCallbacks
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinStart();
     }
+    logger.info("Notified rejoin start...");
   }
 
   private void notifyRejoinComplete() {
@@ -68,6 +70,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinComplete();
     }
+    logger.info("Notified rejoin complete...");
   }
 
   @Override
