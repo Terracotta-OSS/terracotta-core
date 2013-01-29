@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.heap.HeapStorageManager;
@@ -13,13 +16,11 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.persistence.TransactionPersistorImpl;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.test.TCTestCase;
 import com.tc.util.sequence.Sequence;
 
@@ -33,9 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
-
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class TransactionStoreTest extends TCTestCase {
 
@@ -331,7 +329,6 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionDescriptor gtx2 = store.getOrCreateTransactionDescriptor(stxid2);
     assertEquals(gtx2, store.getTransactionDescriptor(stxid2));
 
-    Transaction ptx = new TestPersistenceTransaction();
     store.commitTransactionDescriptor(stxid1);
     verify(transactionPersistor).saveGlobalTransactionDescriptor(gtx1);
 
