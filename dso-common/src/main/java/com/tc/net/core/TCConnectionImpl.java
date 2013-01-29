@@ -922,7 +922,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
-  private static class WriteContext {
+  protected static class WriteContext {
     private final TCNetworkMessage message;
     private int                    index = 0;
     private final TCByteBuffer[]   entireMessageData;
@@ -973,11 +973,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
      * Copies full message contents onto series of 4K chunk direct byte buffers. Since this routine operates on source
      * message byte buffer's backing arrays, these buffers shouldn't be readOnlyBuffers.
      */
-    private static TCByteBuffer[] getPackedUpMessage(final TCByteBuffer[] sourceMessageByteBuffers) {
+    protected static TCByteBuffer[] getPackedUpMessage(final TCByteBuffer[] sourceMessageByteBuffers) {
 
       int srcIndex = 0, srcOffset = 0, dstIndex = 0, srcRem = 0, dstRem = 0, written = 0, len = 0;
       for (TCByteBuffer sourceMessageByteBuffer : sourceMessageByteBuffers) {
-        len += sourceMessageByteBuffer.remaining();
+        len += sourceMessageByteBuffer.limit();
       }
 
       // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
