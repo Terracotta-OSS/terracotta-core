@@ -88,6 +88,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.0-tc-patch</version>
         <configuration>
+          <useBaseVersion>true</useBaseVersion>
           <artifactSet>
             <includes>
               <include>org.terracotta.internal:*</include>
