@@ -78,6 +78,9 @@ public class RejoinAwarePlatformService implements PlatformService {
     AtomicInteger count = localMap.get(lockId);
     if (count != null) {
       int current = count.decrementAndGet();
+      if (current == 0) {
+        localMap.remove(lockId);
+      }
       if (current < 0) { throw new IllegalStateException("isLockedBeforeRejoin removed more times " + lockId); }
       return current >= 0;
     }
