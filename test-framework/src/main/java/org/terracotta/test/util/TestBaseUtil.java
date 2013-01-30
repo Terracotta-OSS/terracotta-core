@@ -176,6 +176,12 @@ public class TestBaseUtil {
     }
   }
 
+  public static void enabledL1ProxyConnection(TestConfig testConfig) {
+    testConfig.getL2Config().setProxyTsaPorts(true);
+    testConfig.getL2Config().setManualProxycontrol(true);
+    testConfig.getClientConfig().addExtraClientJvmArg("-Dskip.validation.for.proxy.tests=true");
+  }
+
   public static String getThreadDump() {
     final String newline = System.getProperty("line.separator", "\n");
     StringBuffer rv = new StringBuffer();
