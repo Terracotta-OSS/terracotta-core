@@ -10,6 +10,7 @@ import org.terracotta.toolkit.ToolkitInstantiationException;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import java.util.Properties;
 import java.util.concurrent.BrokenBarrierException;
 
 public abstract class ClientBase extends AbstractClientBase {
@@ -40,6 +41,19 @@ public abstract class ClientBase extends AbstractClientBase {
     try {
       return (ToolkitInternal) ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
     } catch (ToolkitInstantiationException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected ToolkitInternal createProxyToolkit(boolean rejoinEnabled) {
+    try {
+      Properties properties = new Properties();
+      properties.setProperty("tcConfigSnippet", getTestControlMbean().getTsaProxyTcConfig());
+      properties.put("rejoin", rejoinEnabled);
+      return (ToolkitInternal) ToolkitFactory.createToolkit(getTerracottaTypeSubType()
+                                                                + getTestControlMbean().getTsaProxyTerracottaUrl(),
+                                                            properties);
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

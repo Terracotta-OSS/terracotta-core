@@ -7,13 +7,11 @@ import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
-import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.test.config.model.TestConfig;
 
-import java.util.Properties;
 import java.util.concurrent.Callable;
 
 public class BasicTsaProxyTest extends AbstractToolkitTestBase {
@@ -33,15 +31,7 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
 
     @Override
     protected ToolkitInternal createToolkit() {
-      try {
-        Properties properties = new Properties();
-        properties.setProperty("tcConfigSnippet", getTestControlMbean().getTsaProxyTcConfig());
-        return (ToolkitInternal) ToolkitFactory.createToolkit(getTerracottaTypeSubType()
-                                                                  + getTestControlMbean().getTsaProxyTerracottaUrl(),
-                                                              properties);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      return createProxyToolkit(true);
     }
 
     @Override
@@ -56,6 +46,13 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
       });
       getTestControlMbean().stopTsaProxy(0);
       WaitUtil.waitUntilCallableReturnsFalse(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return clusterInfo.areOperationsEnabled();
+        }
+      });
+      getTestControlMbean().startTsaProxy(0);
+      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return clusterInfo.areOperationsEnabled();
