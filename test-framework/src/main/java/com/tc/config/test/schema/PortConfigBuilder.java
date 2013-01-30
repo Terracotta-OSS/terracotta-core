@@ -3,7 +3,7 @@
  */
 package com.tc.config.test.schema;
 
-class PortConfigBuilder extends BaseConfigBuilder {
+public class PortConfigBuilder extends BaseConfigBuilder {
   public static enum PortType {
     JMXPORT, TSAPORT, GROUPPORT
   }

@@ -100,7 +100,7 @@ public class TestHandler implements TestHandlerMBean {
 
   @Override
   public String getTerracottaUrl() {
-    return TestBaseUtil.getTerracottaURL(getGroupsData());
+    return TestBaseUtil.getTerracottaURL(getGroupsData(), false);
   }
 
   @Override
@@ -141,17 +141,27 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
-  public void bringClientNetworkDown(int groupIndex) throws Exception {
-    testServerManager.clientNetworkDown(groupIndex);
+  public void stopTsaProxy(int groupIndex) throws Exception {
+    testServerManager.stopTsaProxy(groupIndex);
   }
 
   @Override
-  public void bringClientNetworkUp(int groupIndex) throws Exception {
-    testServerManager.clientNetworkUp(groupIndex);
+  public void startTsaProxy(int groupIndex) throws Exception {
+    testServerManager.startTsaProxy(groupIndex);
   }
 
   public void setCustomCommandExecutor(CustomCommandExecutor executor) {
     this.executor = executor;
+  }
+
+  @Override
+  public String getTsaProxyTerracottaUrl() {
+    return TestBaseUtil.getTerracottaURL(getGroupsData(), true);
+  }
+
+  @Override
+  public String getTsaProxyTcConfig() throws Exception {
+    return testServerManager.getTsaProxyConfigFile();
   }
 
 }

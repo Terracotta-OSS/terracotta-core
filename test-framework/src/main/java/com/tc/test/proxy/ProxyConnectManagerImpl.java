@@ -64,6 +64,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
 
   @Override
   public void setManualControl(boolean manualControl) {
+    System.out.println("XXX " + manualControl + " manual proxy control");
     this.manualControl = manualControl;
   }
 

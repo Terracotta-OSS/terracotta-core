@@ -150,8 +150,8 @@ public interface TestHandlerMBean {
 
   /**
    * Wait for a server to exit, returning the exit code.
-   *
-   * @param groupIndex  group for the server
+   * 
+   * @param groupIndex group for the server
    * @param serverIndex server index
    * @return exit code
    */
@@ -162,13 +162,28 @@ public interface TestHandlerMBean {
    * 
    * @param groupIndex group for the server
    */
-  public void bringClientNetworkDown(int groupIndex) throws Exception;
+  public void stopTsaProxy(int groupIndex) throws Exception;
 
-  public void bringClientNetworkUp(int groupIndex) throws Exception;
+  public void startTsaProxy(int groupIndex) throws Exception;
 
   /**
    * Execute custom command
    */
   public Serializable executeCustomCommand(String cmd, Serializable[] params);
-}
 
+  /**
+   * returns the tc url with proxyL1Ports<br>
+   * e.g if there are two mirror groups having two servers in each this will return
+   * "server1Host:server1TsaPort,server2Host:server2TsaPort,server3Host:server3TsaPort,server4Host:server4TsaPort"
+   */
+  String getTsaProxyTerracottaUrl();
+
+  /**
+   * returns the tc config file after replacing the tsa ports with proxy ports<br>
+   * e.g if there are two mirror groups having two servers in each this will return
+   * "server1Host:server1TsaPort,server2Host:server2TsaPort,server3Host:server3TsaPort,server4Host:server4TsaPort"
+   * 
+   * @throws Exception
+   */
+  String getTsaProxyTcConfig() throws Exception;
+}

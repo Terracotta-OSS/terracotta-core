@@ -59,11 +59,12 @@ public class TestBaseUtil {
     }
   }
 
-  public static String getTerracottaURL(GroupsData[] groupsData) {
+  public static String getTerracottaURL(GroupsData[] groupsData, boolean useTsaProxy) {
     StringBuilder tcUrl = new StringBuilder();
     for (GroupsData groupData : groupsData) {
       for (int i = 0; i < groupData.getServerCount(); i++) {
-        tcUrl.append(ConfigHelper.HOST + ":" + groupData.getTsaPort(i) + ",");
+        tcUrl.append(ConfigHelper.HOST + ":" + (useTsaProxy ? groupData.getProxyTsaPort(i) : groupData.getTsaPort(i))
+                     + ",");
       }
     }
 
@@ -233,4 +234,5 @@ public class TestBaseUtil {
       e.printStackTrace();
     }
   }
+
 }

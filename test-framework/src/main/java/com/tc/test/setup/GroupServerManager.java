@@ -130,6 +130,7 @@ public class GroupServerManager {
       for (int i = 0; i < groupData.getServerCount(); ++i) {
         proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getTsaGroupPort(i),
                                                          groupData.getProxyTsaGroupPort(i));
+        proxyL2Managers[i].setManualControl(this.testConfig.getL2Config().isManualProxycontrol());
         proxyL2Managers[i].setProxyWaitTime(this.testConfig.getL2Config().getProxyWaitTime());
         proxyL2Managers[i].setProxyDownTime(this.testConfig.getL2Config().getProxyDownTime());
         proxyL2Managers[i].setupProxy();
@@ -142,6 +143,7 @@ public class GroupServerManager {
       proxyL1Managers = new ProxyConnectManager[groupData.getServerCount()];
       for (int i = 0; i < groupData.getServerCount(); ++i) {
         proxyL1Managers[i] = new ProxyConnectManagerImpl(groupData.getTsaPort(i), groupData.getProxyTsaPort(i));
+        proxyL1Managers[i].setManualControl(this.testConfig.getL2Config().isManualProxycontrol());
         proxyL1Managers[i].setupProxy();
       }
     }
@@ -227,7 +229,7 @@ public class GroupServerManager {
     expectedServerRunning[index] = true;
     // this is the only server running. start an async thread to start l1 proxy when the server becomes active.
     if (expectedRunningServerCount() == 1) {
-      startL1ProxyOnActiveServer();
+      startL1ProxyOnActiveServerAsync();
     }
     System.out.println("*** Server started [" + serverControl[index].getTsaPort() + "]");
   }
@@ -261,7 +263,7 @@ public class GroupServerManager {
     }
   }
 
-  private void startL1ProxyOnActiveServer() {
+  private void startL1ProxyOnActiveServerAsync() {
     if (isProxyTsaPort()) {
       asyncExecutor.submit(new Runnable() {
         @Override
@@ -278,7 +280,18 @@ public class GroupServerManager {
     }
   }
 
-  public void startL1Proxy(int index) {
+  public void startTsaProxyOnActiveServer() {
+    if (isProxyTsaPort()) {
+      int activeServerIndex = getActiveServerIndex();
+      while (activeServerIndex < 0) {
+        ThreadUtil.reallySleep(1000);
+        activeServerIndex = getActiveServerIndex();
+      }
+      startL1Proxy(activeServerIndex);
+    }
+  }
+
+  private void startL1Proxy(int index) {
     if (isProxyTsaPort()) {
       System.out.println("*** Starting the DSO proxy with proxy port as " + proxyL1Managers[index].getProxyPort()
                          + " and DSO port as " + proxyL1Managers[index].getTsaPort());
@@ -322,7 +335,7 @@ public class GroupServerManager {
     if (active) {
       stopL1Proxy(index);
       if (expectedRunningServerCount() > 0) {
-        startL1ProxyOnActiveServer();
+        startL1ProxyOnActiveServerAsync();
       }
     }
 
@@ -335,8 +348,10 @@ public class GroupServerManager {
     }
   }
 
-  public void stopL1Proxy(int index) {
+  private void stopL1Proxy(int index) {
     if (isProxyTsaPort()) {
+      System.out.println("*** stopping the DSO proxy with proxy port as " + proxyL1Managers[index].getProxyPort()
+                         + " and DSO port as " + proxyL1Managers[index].getTsaPort());
       proxyL1Managers[index].proxyDown();
     }
   }
@@ -535,7 +550,7 @@ public class GroupServerManager {
     if (active) {
       stopL1Proxy(index);
       if (expectedRunningServerCount() > 1) {
-        startL1ProxyOnActiveServer();
+        startL1ProxyOnActiveServerAsync();
       }
     }
     debugPrintln("***** Done sleeping after crashing active server ");
@@ -755,13 +770,24 @@ public class GroupServerManager {
     this.serverCrasher.stop();
   }
 
-  public void stopTsaProxy() {
-    for (ProxyConnectManager proxy : this.proxyL1Managers) {
-      proxy.closeClientConnections();
+  public synchronized void closeTsaProxyOnActiveServer() {
+    if (isProxyTsaPort()) {
+      int activeServerIndex = getActiveServerIndex();
+      System.out.println("*** stopping the DSO proxy with proxy port as "
+                         + proxyL1Managers[activeServerIndex].getProxyPort() + " and DSO port as "
+                         + proxyL1Managers[activeServerIndex].getTsaPort());
+      proxyL1Managers[activeServerIndex].closeClientConnections();
     }
   }
 
   public int waitForServerExit(int serverIndex) throws Exception {
     return serverControl[serverIndex].waitFor();
+  }
+
+  public synchronized void stopTsaProxyOnActiveServer() {
+    if (isProxyTsaPort()) {
+      int activeServerIndex = getActiveServerIndex();
+      stopL1Proxy(activeServerIndex);
+    }
   }
 }

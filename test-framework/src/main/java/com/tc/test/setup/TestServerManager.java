@@ -1,14 +1,18 @@
 package com.tc.test.setup;
 
+import org.terracotta.license.util.IOUtils;
 import org.terracotta.tests.base.TestFailureListener;
 
 import com.tc.config.test.schema.ConfigHelper;
+import com.tc.config.test.schema.PortConfigBuilder;
+import com.tc.config.test.schema.PortConfigBuilder.PortType;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.PortChooser;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +24,7 @@ public class TestServerManager {
   private final GroupServerManager[] groups;
   private final ConfigHelper         configHelper;
   private static final boolean       DEBUG = Boolean.getBoolean("test.framework.debug");
+  private final File                 tcConfigFile;
 
   public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome,
                            TestFailureListener failureCallback) throws Exception {
@@ -28,7 +33,6 @@ public class TestServerManager {
 
     this.configHelper = new ConfigHelper(portChooser, testConfig, tcConfigFile, tempDir);
     this.configHelper.writeConfigFile();
-
     final int numOfGroups = testConfig.getNumOfGroups();
     this.groups = new GroupServerManager[numOfGroups];
 
@@ -36,6 +40,7 @@ public class TestServerManager {
       this.groups[groupIndex] = new GroupServerManager(configHelper.getGroupData(groupIndex), testConfig, tempDir,
                                                        javaHome, tcConfigFile, failureCallback);
     }
+    this.tcConfigFile = tcConfigFile;
   }
 
   public void startAllServers() throws Exception {
@@ -228,22 +233,39 @@ public class TestServerManager {
    * 
    * @param groupIndex the group index for which the client connections is to be closed
    */
-  public void closeClientConnections(int groupIndex) {
+  public void closeTsaProxy(int groupIndex) {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
-    this.groups[groupIndex].stopTsaProxy();
+    this.groups[groupIndex].closeTsaProxyOnActiveServer();
   }
 
-  public void clientNetworkDown(int groupIndex) {
+  public void stopTsaProxy(int groupIndex) {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
-    this.groups[groupIndex].stopL1Proxy(groupIndex);
+    this.groups[groupIndex].stopTsaProxyOnActiveServer();
   }
 
-  public void clientNetworkUp(int groupIndex) {
+  public void startTsaProxy(int groupIndex) {
     Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
-    this.groups[groupIndex].startL1Proxy(groupIndex);
+    this.groups[groupIndex].startTsaProxyOnActiveServer();
   }
 
   public int waitForServerExit(int groupIndex, int serverIndex) throws Exception {
     return groups[groupIndex].waitForServerExit(serverIndex);
+  }
+
+  // writes tc-config-proxy.xml with proxy ports
+  public String getTsaProxyConfigFile() throws Exception {
+    String tcConfig = IOUtils.readToString(new FileInputStream(tcConfigFile));
+    if (testConfig.getL2Config().isProxyTsaPorts()) {
+      for (GroupsData groupData : getGroupsData()) {
+        for (int i = 0; i < testConfig.getGroupConfig().getMemberCount(); i++) {
+          PortConfigBuilder tsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
+          tsaPortConfig.setBindPort(groupData.getTsaPort(i));
+          PortConfigBuilder proxyTsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
+          proxyTsaPortConfig.setBindPort(groupData.getProxyTsaPort(i));
+          tcConfig = tcConfig.replace(tsaPortConfig.toString(), proxyTsaPortConfig.toString());
+        }
+      }
+    }
+    return tcConfig;
   }
 }

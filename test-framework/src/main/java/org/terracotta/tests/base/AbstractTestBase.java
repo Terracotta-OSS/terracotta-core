@@ -6,8 +6,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.terracotta.license.util.IOUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
+import com.tc.config.test.schema.PortConfigBuilder;
+import com.tc.config.test.schema.PortConfigBuilder.PortType;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
@@ -26,6 +29,7 @@ import com.tc.util.runtime.Vm;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -291,7 +295,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected String getTerracottaURL() {
-    return TestBaseUtil.getTerracottaURL(getGroupsData());
+    return TestBaseUtil.getTerracottaURL(getGroupsData(), false);
   }
 
   @Override
@@ -447,5 +451,22 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   protected void stopClient(final int index) {
     this.clientRunner.stopClient(index);
+  }
+
+  // writes tc-config-proxy.xml with proxy ports
+  public String getTsaProxyConfigFile() throws Exception {
+    String tcConfig = IOUtils.readToString(new FileInputStream(tcConfigFile));
+    if (testConfig.getL2Config().isProxyTsaPorts()) {
+      for (GroupsData groupData : testServerManager.getGroupsData()) {
+        for (int i = 0; i < testConfig.getGroupConfig().getMemberCount(); i++) {
+          PortConfigBuilder tsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
+          tsaPortConfig.setBindPort(groupData.getTsaPort(i));
+          PortConfigBuilder proxyTsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
+          proxyTsaPortConfig.setBindPort(groupData.getProxyTsaPort(i));
+          tcConfig.replace(tsaPortConfig.toString(), proxyTsaPortConfig.toString());
+        }
+      }
+    }
+    return tcConfig;
   }
 }

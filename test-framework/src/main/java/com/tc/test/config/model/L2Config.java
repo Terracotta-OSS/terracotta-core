@@ -26,8 +26,10 @@ public class L2Config {
   private int                     directMemorySize     = -1;
   private int                     proxyWaitTime        = 20 * 1000;
   private int                     proxyDownTime        = 100;
+  private boolean                 manualProxycontrol   = false;
+
   private final BytemanConfig     bytemanConfig        = new BytemanConfig();
-  private boolean                 autoOffHeapEnable     = true;
+  private boolean                 autoOffHeapEnable    = true;
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -59,7 +61,6 @@ public class L2Config {
   public void setOffHeapEnabled(boolean offHeapEnabled) {
     this.offHeapEnabled = offHeapEnabled;
   }
-
 
   /**
    * max off heap data size in MBs
@@ -215,5 +216,13 @@ public class L2Config {
 
   public BytemanConfig getBytemanConfig() {
     return bytemanConfig;
+  }
+
+  public boolean isManualProxycontrol() {
+    return manualProxycontrol;
+  }
+
+  public void setManualProxycontrol(boolean manualProxycontrol) {
+    this.manualProxycontrol = manualProxycontrol;
   }
 }

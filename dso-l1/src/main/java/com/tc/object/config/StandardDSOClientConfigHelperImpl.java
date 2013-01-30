@@ -269,6 +269,11 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
   @Override
   public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException {
+    if (Boolean.getBoolean("skip.validation.for.proxy.tests")) {
+      logger.info("*************Skipping group info Validation for Proxy Tests*************");
+      return;
+    }
+
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager, pwProvider);
     ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
         .getServerGroups();
