@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.config.cache;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.config.SupportedConfigurationType;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
@@ -74,6 +75,10 @@ public enum InternalCacheConfigurationType {
       greaterThanOrEqualTo(integerOrLong(notNull(value)), 0L);
     }
 
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
   },
   MAX_BYTES_LOCAL_OFFHEAP(LONG, MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME, DEFAULT_MAX_BYTES_LOCAL_OFFHEAP) {
     @Override
@@ -94,6 +99,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integerOrLong(notNull(value)), 0L);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   },
   MAX_COUNT_LOCAL_HEAP(INTEGER, MAX_COUNT_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_COUNT_LOCAL_HEAP) {
@@ -117,6 +127,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integer(notNull(value)), 0);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
   },
   LOCAL_CACHE_ENABLED(BOOLEAN, LOCAL_CACHE_ENABLED_FIELD_NAME, DEFAULT_LOCAL_CACHE_ENABLED) {
     @Override
@@ -137,6 +152,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       bool(value);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   },
   OFFHEAP_ENABLED(BOOLEAN, OFFHEAP_ENABLED_FIELD_NAME, DEFAULT_OFFHEAP_ENABLED) {
@@ -159,6 +179,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       bool(value);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
   },
   LOCAL_STORE_MANAGER_NAME(STRING, LOCAL_STORE_MANAGER_NAME_NAME, DEFAULT_LOCAL_STORE_MANAGER_NAME) {
     @Override
@@ -179,6 +204,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       notNull(value);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   },
   MAX_TOTAL_COUNT(INTEGER, MAX_TOTAL_COUNT_FIELD_NAME, DEFAULT_MAX_TOTAL_COUNT) {
@@ -201,6 +231,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integer(notNull(value)), -1);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.CACHE;
+    }
   },
   EVICTION_ENABLED(BOOLEAN, EVICTION_ENABLED_FIELD_NAME, DEFAULT_EVICTION_ENABLED) {
     @Override
@@ -221,6 +256,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       bool(value);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.CACHE;
     }
   },
   MAX_TTI_SECONDS(INTEGER, MAX_TTI_SECONDS_FIELD_NAME, DEFAULT_MAX_TTI_SECONDS) {
@@ -243,6 +283,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integer(notNull(value)), 0);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.CACHE;
+    }
   },
   MAX_TTL_SECONDS(INTEGER, MAX_TTL_SECONDS_FIELD_NAME, DEFAULT_MAX_TTL_SECONDS) {
     @Override
@@ -263,6 +308,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       greaterThanOrEqualTo(integer(notNull(value)), 0);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.CACHE;
     }
   },
   CONCURRENCY(INTEGER, CONCURRENCY_FIELD_NAME, DEFAULT_CONCURRENCY) {
@@ -285,6 +335,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       greaterThan(integer(notNull(value)), 0);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
   },
   CONSISTENCY(STRING, CONSISTENCY_FIELD_NAME, DEFAULT_CONSISTENCY) {
     @Override
@@ -305,6 +360,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       enumInstanceIn(notBlank(string(notNull(value))), Consistency.class);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   },
   PINNED_IN_LOCAL_MEMORY(BOOLEAN, PINNED_IN_LOCAL_MEMORY_FIELD_NAME, DEFAULT_PINNED_IN_LOCAL_MEMORY) {
@@ -327,6 +387,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       bool(value);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.CACHE;
+    }
   },
   COMPRESSION_ENABLED(BOOLEAN, COMPRESSION_ENABLED_FIELD_NAME, DEFAULT_COMPRESSION_ENABLED) {
     @Override
@@ -348,6 +413,11 @@ public enum InternalCacheConfigurationType {
     public void validateLegalValue(Object value) {
       bool(value);
     }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
   },
   COPY_ON_READ_ENABLED(BOOLEAN, COPY_ON_READ_ENABLED_FIELD_NAME, DEFAULT_COPY_ON_READ_ENABLED) {
     @Override
@@ -368,6 +438,11 @@ public enum InternalCacheConfigurationType {
     @Override
     public void validateLegalValue(Object value) {
       bool(value);
+    }
+
+    @Override
+    public boolean isSupportedBy(final ToolkitObjectType objectType) {
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   };
 
@@ -397,12 +472,27 @@ public enum InternalCacheConfigurationType {
     NAME_TO_TYPE_MAP = Collections.unmodifiableMap(map);
   }
 
-  public static Set<InternalCacheConfigurationType> getClusterWideConfigs() {
-    return CLUSTER_WIDE_CONFIGS;
+  // cache these values in a map [objectType -> set of types]
+  public static Set<InternalCacheConfigurationType> getConfigsFor(final ToolkitObjectType objectType) {
+    final Set<InternalCacheConfigurationType> types = new HashSet<InternalCacheConfigurationType>();
+    for (InternalCacheConfigurationType type : InternalCacheConfigurationType.values()) {
+      if (type.isSupportedBy(objectType)) {
+        types.add(type);
+      }
+    }
+    return types;
   }
 
-  public static Set<InternalCacheConfigurationType> getLocalConfigs() {
-    return LOCAL_CONFIGS;
+  public static Set<InternalCacheConfigurationType> getClusterWideConfigsFor(final ToolkitObjectType objectType) {
+    final Set<InternalCacheConfigurationType> configs = getConfigsFor(objectType);
+    configs.retainAll(CLUSTER_WIDE_CONFIGS);
+    return Collections.unmodifiableSet(configs);
+  }
+
+  public static Set<InternalCacheConfigurationType> getLocalConfigsFor(final ToolkitObjectType objectType) {
+    final Set<InternalCacheConfigurationType> configs = getConfigsFor(objectType);
+    configs.retainAll(LOCAL_CONFIGS);
+    return Collections.unmodifiableSet(configs);
   }
 
   public static InternalCacheConfigurationType getTypeFromConfigString(String configString) {
@@ -447,7 +537,7 @@ public enum InternalCacheConfigurationType {
    * Returns the value from the config if it is present in the config. Otherwise returns default value of the config
    */
   public Object getValueIfExistsOrDefault(Configuration config) {
-    return isPresentInConfig(config) ? typeSupported.getFromConfig(config, configString) : getDefaultValue();
+    return isPresentInConfig(config) ? typeSupported.getFromConfig(config, configString) : defaultValue;
   }
 
   /**
@@ -488,7 +578,6 @@ public enum InternalCacheConfigurationType {
   public void validateExistingMatchesValueFromConfig(Object existingValue, Configuration newConfig) {
     Object value = getValueIfExistsOrDefault(newConfig);
     if (!existingValue.equals(value)) {
-      //
       throw new IllegalArgumentException('\'' + configString + "' should be same but does not match. Existing value: "
                                          + existingValue + ", value passed in config: " + value);
     }
@@ -514,6 +603,8 @@ public enum InternalCacheConfigurationType {
    * Throws {@link IllegalArgumentException} for illegal values for this config
    */
   public abstract void validateLegalValue(Object value);
+
+  protected abstract boolean isSupportedBy(ToolkitObjectType objectType);
 
   public Object notNull(Object value) {
     return Validator.notNull(name(), value);

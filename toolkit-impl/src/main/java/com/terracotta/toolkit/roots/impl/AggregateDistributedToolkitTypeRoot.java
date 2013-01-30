@@ -39,7 +39,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   private final WeakValueMap<T>                           localCache;
   private final PlatformService                           platformService;
   private final String                                    rootName;
-  private volatile Set<String>                            currentKeys = Collections.EMPTY_SET;
+  private volatile Set<String>                            currentKeys = Collections.emptySet();
 
   protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
@@ -57,15 +57,16 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
 
-    ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
+    final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
     lock(type, name);
     try {
-      T distributedType = localCache.get(name);
+      final T distributedType = localCache.get(name);
       if (distributedType != null) {
+        // validate and reuse existing distributed object
         distributedTypeFactory.validateExistingLocalInstanceConfig(distributedType, configuration);
         return distributedType;
       } else {
-        Configuration effectiveConfig = null;
+        final Configuration effectiveConfig;
         ToolkitObjectStripe<S>[] stripeObjects = lookupStripeObjects(name);
         if (stripeObjects != null) {
           effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(stripeObjects, configuration);
@@ -73,13 +74,14 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
           // need to create stripe objects
           // make sure config is complete
           effectiveConfig = distributedTypeFactory.newConfigForCreationInCluster(configuration);
-          stripeObjects = createStripeObjects(name, effectiveConfig);
+          stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length);
+          injectStripeObjects(name, stripeObjects);
         }
-
-        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, this, name, stripeObjects,
-                                                                       effectiveConfig, platformService);
-        localCache.put(name, distributedType);
-        return distributedType;
+        // create new distributed object
+        final T newDistributedType = distributedTypeFactory.createDistributedType(
+            toolkit, factory, this, name, stripeObjects, effectiveConfig, platformService);
+        localCache.put(name, newDistributedType);
+        return newDistributedType;
       }
     } finally {
       unlock(type, name);
@@ -91,21 +93,17 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     }
   }
 
-  private ToolkitObjectStripe<S>[] createStripeObjects(String name, Configuration configuration) throws AssertionError {
-    final ToolkitObjectStripe<S>[] stripeObjects = distributedTypeFactory.createStripeObjects(name, configuration,
-                                                                                              roots.length);
+  private void injectStripeObjects(final String name, final ToolkitObjectStripe<S>[] stripeObjects)
+      throws AssertionError {
     if (stripeObjects == null || stripeObjects.length != roots.length) {
-      //
-      throw new AssertionError(
-                               "DistributedTypeFactory should create as many ClusteredObjectStripe's as there are stripes - numStripes: "
-                                   + roots.length + ", created: "
-                                   + (stripeObjects == null ? "null" : stripeObjects.length));
+      throw new AssertionError("DistributedTypeFactory should create as many ClusteredObjectStripe's " +
+                               "as there are stripes - numStripes: " + roots.length + ", created: "
+                               + (stripeObjects == null ? "null" : stripeObjects.length));
     }
     for (int i = 0; i < roots.length; i++) {
       ToolkitTypeRoot<ToolkitObjectStripe<S>> root = roots[i];
       root.addClusteredObject(name, stripeObjects[i]);
     }
-    return stripeObjects;
   }
 
   @Override
@@ -210,7 +208,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
         wrapper.rejoinCompleted();
       }
     }
-    currentKeys = Collections.EMPTY_SET;
+    currentKeys = Collections.emptySet();
   }
 
   @Override

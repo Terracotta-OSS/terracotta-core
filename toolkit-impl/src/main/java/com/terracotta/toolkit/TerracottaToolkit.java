@@ -67,6 +67,7 @@ import com.terracotta.toolkit.factory.impl.ToolkitReadWriteLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitStoreFactoryImpl;
 import com.terracotta.toolkit.feature.NoopLicenseFeature;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
@@ -136,7 +137,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, context);
     clusteredMapFactory = new ToolkitMapFactoryImpl(this, context);
     clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, context);
-    clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, context);
+    clusteredStoreFactory = ToolkitStoreFactoryImpl.newToolkitStoreFactory(this, context);
     clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, context);
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()

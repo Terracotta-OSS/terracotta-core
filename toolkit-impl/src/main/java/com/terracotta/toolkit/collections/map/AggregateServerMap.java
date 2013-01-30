@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -76,6 +74,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity {
@@ -491,9 +491,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
           putNoReturn(entry.getKey(), entry.getValue());
         }
         break;
-      case EVENTUAL: {
+      case EVENTUAL:
         unlockedPutAll(map);
-      }
     }
   }
 
@@ -613,9 +612,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     for (Entry<K, V> entry : rv.entrySet()) {
-      V nonExpiredValue = getServerMapForKey(entry.getKey()).checkAndGetNonExpiredValue(entry.getKey(),
-                                                                                        entry.getValue(),
-                                                                                        GetType.UNLOCKED, quiet);
+      V nonExpiredValue = getServerMapForKey(entry.getKey())
+          .checkAndGetNonExpiredValue(entry.getKey(), entry.getValue(), GetType.UNLOCKED, quiet);
       entry.setValue(nonExpiredValue);
     }
     return rv;
@@ -626,8 +624,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       InternalToolkitMap<K, V> serverMap = getServerMapForKey(key);
       assertKeyLiteral(key);
       TCObject tcObject = serverMap.__tc_managed();
-      if (tcObject == null) { throw new UnsupportedOperationException(
-                                                                      "unlockedGetAll is not supported in a non-shared ServerMap"); }
+      if (tcObject == null) {
+        throw new UnsupportedOperationException("unlockedGetAll is not supported in a non-shared ServerMap");
+      }
       ObjectID mapId = tcObject.getObjectID();
       Set<K> keysForThisServerMap = mapIdToKeysMap.get(mapId);
       if (keysForThisServerMap == null) {
@@ -656,7 +655,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void configChanged(String fieldChanged, Serializable changedValue) {
+  public void configChanged(final String fieldChanged, final Serializable changedValue) {
+    Serializable newValue = changedValue;
     InternalCacheConfigurationType type = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
 
     if (type == null || type.isClusterWideConfig()) {
@@ -665,13 +665,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         for (ToolkitObjectStripe stripe : stripeObjects) {
           maxTotalCount += stripe.getConfiguration().getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME);
         }
-        changedValue = maxTotalCount;
+        newValue = maxTotalCount;
       } else {
         for (InternalToolkitMap sm : serverMaps) {
-          sm.setConfigFieldInternal(fieldChanged, changedValue);
+          sm.setConfigFieldInternal(fieldChanged, newValue);
         }
       }
-      config.setObject(fieldChanged, changedValue);
+      config.setObject(fieldChanged, newValue);
     }
 
   }
@@ -680,13 +680,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void setConfigField(final String fieldChanged, final Serializable changedValue) {
     ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
     try {
+      // to prevent user from manually setting a wrong configuration option
+      validateField(fieldChanged);
       Serializable newValue = changedValue;
-      InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
-      Preconditions.checkArgument(configType.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
-                                  fieldChanged);
-
       config.setObject(fieldChanged, newValue);
-
       // set config changes ServerMap
       int[] values = null;
       for (int i = 0; i < this.serverMaps.length; i++) {
@@ -713,6 +710,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     } finally {
       ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
     }
+  }
+
+  private void validateField(final String fieldChanged) {
+    final InternalCacheConfigurationType type = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
+    Preconditions.checkArgument(InternalCacheConfigurationType.getConfigsFor(toolkitObjectType).contains(type),
+        "%s does not support configuration option '%s'", toolkitObjectType, fieldChanged);
+    Preconditions.checkArgument(type.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
+        fieldChanged);
   }
 
   @Override

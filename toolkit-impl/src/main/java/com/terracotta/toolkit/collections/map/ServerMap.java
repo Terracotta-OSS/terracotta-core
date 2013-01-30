@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
@@ -52,6 +53,7 @@ import com.terracotta.toolkit.object.serialization.SerializedMapValueParameters;
 import com.terracottatech.search.SearchCommand;
 import com.terracottatech.search.SearchMetaData;
 
+import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.HashMap;
@@ -119,14 +121,17 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
     this.lockType = tmpLockType;
 
+    // eviction configuration doesn't exist for store
+    final Serializable value = InternalCacheConfigurationType.EVICTION_ENABLED
+        .getValueIfExists(config);
+    this.evictionEnabled = (value == null) ? false : (Boolean)value;
+
     this.localCacheEnabled = (Boolean) InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
         .getExistingValueOrException(config);
     this.maxCountInCluster = (Integer) InternalCacheConfigurationType.MAX_TOTAL_COUNT
-        .getExistingValueOrException(config);
-    this.evictionEnabled = (Boolean) InternalCacheConfigurationType.EVICTION_ENABLED
-        .getExistingValueOrException(config);
-    this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getExistingValueOrException(config);
-    this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getExistingValueOrException(config);
+        .getValueIfExistsOrDefault(config);
+    this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getValueIfExistsOrDefault(config);
+    this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getValueIfExistsOrDefault(config);
 
     this.listeners = new CopyOnWriteArraySet<ToolkitCacheListener<K>>();
     this.timeSource = new SystemTimeSource();

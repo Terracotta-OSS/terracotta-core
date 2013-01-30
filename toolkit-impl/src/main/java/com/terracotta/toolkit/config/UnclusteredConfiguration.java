@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class UnclusteredConfiguration extends AbstractConfiguration implements Configuration {
+public class UnclusteredConfiguration extends AbstractConfiguration {
 
   private final ConcurrentHashMap<String, Serializable> map = new ConcurrentHashMap<String, Serializable>();
 

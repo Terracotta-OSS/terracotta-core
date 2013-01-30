@@ -20,9 +20,11 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
   private static final Random random = new Random(System.currentTimeMillis());
 
   public void testSingleConcurrencyMultipleStripes() {
+    ToolkitCacheDistributedTypeFactory stubFactory = new ToolkitCacheDistributedTypeFactory(null, null);
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
+
     builder.maxTotalCount(100).concurrency(1);
-    Configuration[] configs = ToolkitCacheDistributedTypeFactory.distributeConfigAmongStripes(builder.build(), 2);
+    Configuration[] configs = stubFactory.distributeConfigAmongStripes(builder.build(), 2);
     Assert.assertEquals(2, configs.length);
     Assert.assertEquals(1, configs[0].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
     Assert.assertEquals(100, configs[0].getInt(ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME));
@@ -31,9 +33,11 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
   }
 
   public void testMultiConcurrencyMultiStripe() {
+    ToolkitCacheDistributedTypeFactory stubFactory = new ToolkitCacheDistributedTypeFactory(null, null);
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
+
     builder.maxTotalCount(100).concurrency(4);
-    Configuration[] configs = ToolkitCacheDistributedTypeFactory.distributeConfigAmongStripes(builder.build(), 5);
+    Configuration[] configs = stubFactory.distributeConfigAmongStripes(builder.build(), 5);
     Assert.assertEquals(5, configs.length);
     for (int i = 0; i < 4; i++) {
       Assert.assertEquals(1, configs[i].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
@@ -72,10 +76,11 @@ public class ClusteredCacheDistributedTypeFactoryTest extends TestCase {
     final String msg = "numStripes: " + randomNumStripes + ", concurrency: " + randomConcurrency + ", maxTotalCount: "
                        + randomMaxTotalCount;
 
+    ToolkitCacheDistributedTypeFactory stubFactory = new ToolkitCacheDistributedTypeFactory(null, null);
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
+
     builder.maxTotalCount(randomMaxTotalCount).concurrency(randomConcurrency);
-    Configuration[] configs = ToolkitCacheDistributedTypeFactory.distributeConfigAmongStripes(builder.build(),
-                                                                                              randomNumStripes);
+    Configuration[] configs = stubFactory.distributeConfigAmongStripes(builder.build(), randomNumStripes);
     Assert.assertEquals(msg, randomNumStripes, configs.length);
 
     int overallActualConcurrency = 0;
