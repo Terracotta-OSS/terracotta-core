@@ -602,9 +602,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Set<String> getL2Urls() throws ServiceExecutionException {
+  public Collection<String> getL2Urls() throws ServiceExecutionException {
+    Collection<String> urls = new ArrayList<String>();
+    Collection<String> exceptions = new ArrayList<String>();
     try {
-      HashSet<String> urls = new HashSet<String>();
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
       L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
@@ -619,15 +620,27 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           }
           urls.add(prefix + serverEntity.getAttributes().get("SecurityHostname") + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
         } catch (ServiceExecutionException see) {
-          LOG.warn("Error building L2 URL of " + l2Info.host(), see);
+          if (LOG.isDebugEnabled()) {
+            LOG.warn("Error building L2 URL of " + l2Info.host(), see);
+          } else {
+            LOG.warn("Error building L2 URL of " + l2Info.host() + ": " + see.getMessage());
+          }
+          exceptions.add("Error building L2 URL of " + l2Info.host() + ": " + see.getMessage());
           urls.add("?");
         }
       }
 
-      return urls;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
+
+    // throw ServiceExecutionException if we did not manage to build a single URL
+    HashSet<String> urlSet = new HashSet<String>(urls);
+    if (urlSet.size() == 1 && urlSet.contains("?")) {
+      throw new ServiceExecutionException(exceptions.toString());
+    }
+
+    return urls;
   }
 
   @Override

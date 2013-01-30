@@ -49,7 +49,7 @@ public interface TsaManagementClientService {
 
   Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException;
 
-  Set<String> getL2Urls() throws ServiceExecutionException;
+  Collection<String> getL2Urls() throws ServiceExecutionException;
 
   Set<String> getL1Nodes() throws ServiceExecutionException;
 

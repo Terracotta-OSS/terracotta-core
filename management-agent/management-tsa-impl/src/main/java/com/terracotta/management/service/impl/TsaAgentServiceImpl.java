@@ -134,7 +134,7 @@ public class TsaAgentServiceImpl implements AgentService {
   private String createL2Urls() throws ServiceExecutionException {
     StringBuilder sb = new StringBuilder();
 
-    Set<String> l2Urls = tsaManagementClientService.getL2Urls();
+    Collection<String> l2Urls = tsaManagementClientService.getL2Urls();
     for (String l2Url : l2Urls) {
       sb.append(l2Url).append(",");
     }
