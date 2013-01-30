@@ -49,7 +49,7 @@ public abstract class ClientBase extends AbstractClientBase {
     try {
       Properties properties = new Properties();
       properties.setProperty("tcConfigSnippet", getTestControlMbean().getTsaProxyTcConfig());
-      properties.put("rejoin", rejoinEnabled);
+      properties.put("rejoin", Boolean.toString(rejoinEnabled));
       return (ToolkitInternal) ToolkitFactory.createToolkit(getTerracottaTypeSubType()
                                                                 + getTestControlMbean().getTsaProxyTerracottaUrl(),
                                                             properties);

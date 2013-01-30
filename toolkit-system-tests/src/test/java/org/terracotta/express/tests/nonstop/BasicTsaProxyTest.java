@@ -7,25 +7,57 @@ import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
+import org.terracotta.toolkit.cluster.ClusterEvent;
+import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.cluster.ClusterInfo;
+import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.test.config.model.TestConfig;
 
 import java.util.concurrent.Callable;
 
+import junit.framework.Assert;
+
 public class BasicTsaProxyTest extends AbstractToolkitTestBase {
 
   public BasicTsaProxyTest(TestConfig testConfig) {
-    super(testConfig, Client.class);
+    super(testConfig, ProxyClient.class, SimpleClient.class);
     testConfig.getL2Config().setProxyTsaPorts(true);
     testConfig.getL2Config().setManualProxycontrol(true);
     testConfig.getClientConfig().addExtraClientJvmArg("-Dskip.validation.for.proxy.tests=true");
   }
 
-  public static class Client extends ClientBase {
+  public static class SimpleClient extends ClientBase {
+    private volatile boolean operationsDisconnected = false;
 
-    public Client(String[] args) {
+    public SimpleClient(String[] args) {
+      super(args);
+    }
+
+    @Override
+    protected void test(Toolkit toolkit) throws Throwable {
+      final ClusterInfo clusterInfo = toolkit.getClusterInfo();
+      clusterInfo.addClusterListener(new ClusterListener() {
+
+        @Override
+        public void onClusterEvent(ClusterEvent event) {
+          if (event.getType().equals(Type.NODE_LEFT)) {
+            if (clusterInfo.getCurrentNode().equals(event.getNode())) {
+              operationsDisconnected = true;
+            }
+          }
+        }
+      });
+      getBarrierForAllClients().await(); // wait until other client starts.
+      getBarrierForAllClients().await(); // wait until second client finishes.
+      Assert.assertFalse(operationsDisconnected);
+    }
+  }
+
+  public static class ProxyClient extends ClientBase {
+
+    public ProxyClient(String[] args) {
       super(args);
     }
 
@@ -36,7 +68,7 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
 
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
-      System.out.println("Terracotta URL : " + getTerracottaUrl());
+      getBarrierForAllClients().await();
       final ClusterInfo clusterInfo = toolkit.getClusterInfo();
       WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
         @Override
@@ -58,6 +90,7 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
           return clusterInfo.areOperationsEnabled();
         }
       });
+      getBarrierForAllClients().await();
 
     }
 
