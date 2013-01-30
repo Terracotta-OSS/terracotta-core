@@ -144,7 +144,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     return this.createTime;
   }
 
-  public synchronized byte[] getValue() {
+  private byte[] getValue() {
     return this.value;
   }
 
@@ -202,11 +202,12 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
    * Discard the local copy of this entry's serialized state.
    */
   @Override
-  public synchronized void addedToLocalCache() {
+  public void addedToLocalCache() {
     this.alreadyInCache = true;
   }
 
-  private synchronized void doNullByteArray() {
+  // called from within synchronized.
+  private void doNullByteArray() {
     if (cached == null) {
       // no one has deserialized yet nor the put happened from this node, don't null byte[] yet
       return;
@@ -214,7 +215,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     value = null;
   }
 
-  public synchronized byte[] internalGetValue() {
+  public byte[] internalGetValue() {
     return value;
   }
 
