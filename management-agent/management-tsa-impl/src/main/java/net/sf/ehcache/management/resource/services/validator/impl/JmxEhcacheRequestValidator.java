@@ -8,13 +8,13 @@ package net.sf.ehcache.management.resource.services.validator.impl;
 import net.sf.ehcache.management.resource.services.validator.AbstractEhcacheRequestValidator;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.List;
 import java.util.Set;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -57,8 +57,9 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
           String[] idsArray = ids.split("\\,");
           for (String id : idsArray) {
             if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
-              throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-                  .entity(String.format("Agent ID must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID)).build());
+              throw new ResourceRuntimeException(
+                  String.format("Agent ID must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID),
+                  Response.Status.BAD_REQUEST.getStatusCode());
             }
           }
         } catch (ServiceExecutionException see) {
@@ -69,19 +70,20 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
       }
     } else {
       if (ids == null) {
-        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-            .entity(String.format("Only a single agent id can be used.")).build());
+        throw new ResourceRuntimeException("Only a single agent id can be used.",
+            Response.Status.BAD_REQUEST.getStatusCode());
       } else {
         if (ids.split(",").length > 1) {
-          throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-              .entity(String.format("Only a single agent id can be used.")).build());
+          throw new ResourceRuntimeException("Only a single agent id can be used.",
+              Response.Status.BAD_REQUEST.getStatusCode());
         }
 
         try {
           Set<String> nodes = tsaManagementClientService.getL1Nodes();
           if (!nodes.contains(ids) && !AgentEntity.EMBEDDED_AGENT_ID.equals(ids)) {
-            throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-                .entity(String.format("Agent ID must be in '%s'.", nodes)).build());
+            throw new ResourceRuntimeException(
+                String.format("Agent ID must be in '%s'.", nodes),
+                Response.Status.BAD_REQUEST.getStatusCode());
           }
         } catch (ServiceExecutionException see) {
           throw new RuntimeException(see);

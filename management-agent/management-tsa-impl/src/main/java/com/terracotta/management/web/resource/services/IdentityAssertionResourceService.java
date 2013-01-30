@@ -5,9 +5,8 @@
 
 package com.terracotta.management.web.resource.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.security.RequestIdentityAsserter;
 
@@ -16,7 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -28,7 +26,6 @@ import javax.ws.rs.core.Response;
  */
 @Path("/assertIdentity")
 public final class IdentityAssertionResourceService {
-  private static final Logger LOG = LoggerFactory.getLogger(IdentityAssertionResourceService.class);
   private final RequestIdentityAsserter idAsserter;
 
   public IdentityAssertionResourceService() {
@@ -42,8 +39,7 @@ public final class IdentityAssertionResourceService {
     try {
       return Response.ok(idAsserter.assertIdentity(request, response)).build();
     } catch (Exception e) {
-      LOG.error("Identity assertion failure!", e);
-      throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).build());
+      throw new ResourceRuntimeException("Identity assertion failure", e, Response.Status.UNAUTHORIZED.getStatusCode());
     }
   }
 }

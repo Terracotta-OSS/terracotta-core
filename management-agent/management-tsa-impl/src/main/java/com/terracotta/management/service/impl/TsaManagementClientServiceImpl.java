@@ -8,6 +8,7 @@ import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
@@ -46,7 +47,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -718,7 +718,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     } catch (ServiceExecutionException see) {
       throw see;
     } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", getRootCause(e));
+      throw new ServiceExecutionException("error making JMX call", ExceptionUtils.getRootCause(e));
     } finally {
       if (jmxConnector != null) {
         try {
@@ -728,18 +728,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
     }
-  }
-
-  private static Throwable getRootCause(Throwable t) {
-    Throwable last = null;
-    while (t != null) {
-      last = t;
-      t = t.getCause();
-    }
-    if (last instanceof InvocationTargetException) {
-      last = ((InvocationTargetException)last).getTargetException();
-    }
-    return last;
   }
 
   @Override
@@ -1340,7 +1328,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       try {
         jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
       } catch (Exception e) {
-        errors.add("Error opening JMX connection to " + jmxHost + ":" + jmxPort + " - " + getRootCause(e).getMessage());
+        errors.add("Error opening JMX connection to " + jmxHost + ":" + jmxPort + " - " + ExceptionUtils.getRootCause(e).getMessage());
       } finally {
         if (jmxConnector != null) {
           try {
@@ -1383,7 +1371,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
 
       } catch (IOException ioe) {
-        errors.add("Error opening connection to Security Service Location [" + securityServiceLocation + "]: " + getRootCause(ioe).getMessage());
+        errors.add("Error opening connection to Security Service Location [" + securityServiceLocation + "]: " + ExceptionUtils.getRootCause(ioe).getMessage());
       } catch (Exception e) {
         errors.add("Error setting up SSL socket factory: " + e.getMessage());
       }

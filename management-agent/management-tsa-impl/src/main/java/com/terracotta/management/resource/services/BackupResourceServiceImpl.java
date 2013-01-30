@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.BackupEntity;
@@ -16,7 +17,6 @@ import com.terracotta.management.service.BackupService;
 import java.util.Collection;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -45,11 +45,7 @@ public class BackupResourceServiceImpl implements BackupResourceService {
     try {
       return backupService.getBackupStatus();
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA backup status.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to get TSA backup status: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA backup status", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -62,11 +58,7 @@ public class BackupResourceServiceImpl implements BackupResourceService {
     try {
       return backupService.backup();
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to perform TSA backup.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to perform TSA backup: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to perform TSA backup", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 }

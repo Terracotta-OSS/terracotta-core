@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
@@ -17,7 +18,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -49,11 +49,7 @@ public class ShutdownResourceServiceImpl implements ShutdownResourceService {
 
       shutdownService.shutdown(serverNames);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to perform TSA diagnostics.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to perform TSA diagnostics: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.StatisticsEntity;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -69,11 +69,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
 
       return statistics;
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA statistics.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to get TSA statistics: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -86,11 +82,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
     try {
       return monitoringService.getDgcStatistics();
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA statistics.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to get TSA statistics: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -121,10 +113,7 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
 
       return statistics;
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA statistics.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to get TSA statistics: " + see.getCause().getClass().getName() + ": " + see.getCause().getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 

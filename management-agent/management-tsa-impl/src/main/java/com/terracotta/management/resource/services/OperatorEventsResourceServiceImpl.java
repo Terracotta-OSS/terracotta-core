@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.OperatorEventEntity;
@@ -19,7 +20,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -56,11 +56,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
       return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, filterOutRead);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA operator events.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST)
-              .entity("Failed to get TSA operator events: " + see.getCause().getClass().getName() + ": " + see.getCause()
-                  .getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA operator events", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -91,13 +87,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
         rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, true);
       } catch (ServiceExecutionException see) {
-        LOG.error("Failed to mark TSA operator event as read.", see);
-        Throwable cause = see.getCause();
-        String causeClassName = cause == null ? see.getClass().getName() : cause.getClass().getName();
-        String causeMessage = cause == null ? see.getMessage() : cause.getMessage();
-        throw new WebApplicationException(
-            Response.status(Response.Status.BAD_REQUEST)
-                .entity("Failed to mark TSA operator event as read: " + causeClassName + ": " + causeMessage).build());
+        throw new ResourceRuntimeException("Failed to mark TSA operator event as read", see, Response.Status.BAD_REQUEST.getStatusCode());
       }
     }
 
@@ -131,13 +121,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
 
         rc &= operatorEventsService.markOperatorEvent(operatorEventEntity, false);
       } catch (ServiceExecutionException see) {
-        LOG.error("Failed to mark TSA operator event as unread.", see);
-        Throwable cause = see.getCause();
-        String causeClassName = cause == null ? see.getClass().getName() : cause.getClass().getName();
-        String causeMessage = cause == null ? see.getMessage() : cause.getMessage();
-        throw new WebApplicationException(
-            Response.status(Response.Status.BAD_REQUEST)
-                .entity("Failed to mark TSA operator event as unread: " + causeClassName + ": " + causeMessage).build());
+        throw new ResourceRuntimeException("Failed to mark TSA operator event as unread", see, Response.Status.BAD_REQUEST.getStatusCode());
       }
     }
 

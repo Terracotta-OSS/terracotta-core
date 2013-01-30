@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.TopologyEntity;
@@ -18,7 +19,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -53,9 +53,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
       result.getClientEntities().addAll(topologyService.getClients());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA topologies.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -70,9 +68,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA servers topologies.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA servers topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -87,9 +83,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
       result.getClientEntities().addAll(topologyService.getClients());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA clients topologies.", see.getCause());
-      throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
+      throw new ResourceRuntimeException("Failed to get TSA clients topologies", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
