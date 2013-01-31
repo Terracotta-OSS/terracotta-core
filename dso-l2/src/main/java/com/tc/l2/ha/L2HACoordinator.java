@@ -148,6 +148,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
                     final ObjectIDSequence objectIDSequence, final MonitoredResource resource, int electionTimeInSecs) {
 
+    registerForStateChangeEvents(indexHACoordinator);
+
     isCleanDB = isCleanDB(perstStateStore);
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
