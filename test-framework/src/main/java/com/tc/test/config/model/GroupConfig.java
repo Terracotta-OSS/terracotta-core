@@ -27,7 +27,7 @@ public class GroupConfig {
   }
 
   /**
-   * @return elcection time in seconds
+   * @return election time in seconds
    */
   public int getElectionTime() {
     return electionTime;

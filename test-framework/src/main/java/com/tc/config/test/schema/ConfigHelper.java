@@ -23,6 +23,7 @@ public class ConfigHelper {
   private final TestConfig    testConfig;
   private final int           numOfGroups;
   private final int           numOfServersPerGroup;
+  private final int           electionTime;
   private final File          tcConfigFile;
   private final File          tempDir;
   private final GroupsData[]  groupData;
@@ -32,6 +33,7 @@ public class ConfigHelper {
     this.testConfig = testConfig;
     numOfGroups = testConfig.getNumOfGroups();
     numOfServersPerGroup = testConfig.getGroupConfig().getMemberCount();
+    electionTime = testConfig.getGroupConfig().getElectionTime();
     groupData = new GroupsData[numOfGroups];
     this.tcConfigFile = tcConfigFile;
     this.tempDir = tempDir;
@@ -47,6 +49,7 @@ public class ConfigHelper {
     this.testConfig = testConfig;
     numOfGroups = testConfig.getNumOfGroups();
     numOfServersPerGroup = testConfig.getGroupConfig().getMemberCount();
+    electionTime = testConfig.getGroupConfig().getElectionTime();
     this.tcConfigFile = tcConfigFile;
     this.tempDir = tempDir;
     portChooser = new PortChooser();
@@ -105,6 +108,7 @@ public class ConfigHelper {
 
       GroupConfigBuilder group = new GroupConfigBuilder(getGroupName(groupIndex));
       group.setL2s(l2Builders);
+      group.setElectionTime(electionTime);
       groups[groupIndex] = group;
     }
 

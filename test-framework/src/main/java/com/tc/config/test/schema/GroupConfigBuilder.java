@@ -14,7 +14,7 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
   private Integer           electionTime = null;
 
   public GroupConfigBuilder(String groupName) {
-    super(5, new String[0]);
+    super(5, new String[] { "election-time" });
     this.groupName = groupName;
   }
 
