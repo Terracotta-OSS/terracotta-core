@@ -301,7 +301,17 @@
         <configuration>
           <manifestLocation>${project.build.directory}</manifestLocation>
           <instructions>
-            <Import-Package>javax.naming,
+            <Import-Package>
+            net.sf.ehcache;resolution:=optional,
+            net.sf.ehcache.config;resolution:=optional,
+            net.sf.ehcache.terracotta;resolution:=optional,
+            net.sf.ehcache.pool;resolution:=optional,
+            net.sf.ehcache.pool.impl;resolution:=optional,
+            net.sf.ehcache.store;resolution:=optional,
+            net.sf.ehcache.event;resolution:=optional,
+            org.slf4j;resolution:=optional,
+            org.slf4j.impl;resolution:=optional,
+            javax.naming,
             javax.management,
             javax.transaction.xa,
             org.w3c.dom,
@@ -312,8 +322,8 @@
             javax.xml.namespace,
             javax.management.remote,
             javax.management.loading,
-            javax.net.ssl</Import-Package>
-            <Export-Package>org.terracotta.toolkit.*</Export-Package>
+            javax.net.ssl,*</Import-Package>
+            <Export-Package>org.terracotta.toolkit.*;-split-package:=merge-last</Export-Package>
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
             <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>           
             <Include-Resource> {maven-resources}, {maven-dependencies}, target/classes </Include-Resource>
