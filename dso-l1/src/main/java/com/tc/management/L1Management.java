@@ -12,7 +12,6 @@ import com.tc.management.beans.L1Dumper;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
@@ -44,7 +43,6 @@ public class L1Management extends TerracottaManagement {
   private final Object                   mBeanServerLock;
   private MBeanServer                    mBeanServer;
 
-  private final TerracottaCluster        clusterBean;
   private final L1Info                   l1InfoBean;
   private final L1Dumper                 l1DumpBean;
 
@@ -61,7 +59,6 @@ public class L1Management extends TerracottaManagement {
     try {
       l1InfoBean = new L1Info(client, rawConfigText);
       l1DumpBean = new L1Dumper(client, l1InfoBean);
-      clusterBean = new TerracottaCluster();
     } catch (NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException(
                                    "Unable to construct one of the L1 MBeans: this is a programming error in one of those beans",
@@ -204,7 +201,6 @@ public class L1Management extends TerracottaManagement {
   protected void registerMBeans() throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, MalformedObjectNameException {
     registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
-    registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
     registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
   }
 
