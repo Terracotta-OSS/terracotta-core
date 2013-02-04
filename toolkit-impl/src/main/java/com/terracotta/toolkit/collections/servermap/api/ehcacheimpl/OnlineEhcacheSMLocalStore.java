@@ -175,7 +175,7 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
     if (pinningConfiguration == null) {
       return false;
     } else {
-      return pinningConfiguration.getStore() == Store.INCACHE;
+      return pinningConfiguration.getStore() == Store.LOCALMEMORY;
     }
   }
 
