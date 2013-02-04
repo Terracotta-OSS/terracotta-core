@@ -183,7 +183,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   }
 
   @Override
-  public boolean isLocalHeapOrMemoryTierPinned() {
+  public boolean isPinned() {
     return false;
   }
 

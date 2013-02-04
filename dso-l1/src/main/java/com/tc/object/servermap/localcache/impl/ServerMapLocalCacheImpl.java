@@ -427,7 +427,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           initiateLockRecall(removeLockIDMetaMapping(key, removed));
         }
         remoteRemoveObjectIfPossible(removed);
-        if (isKeyPinnedOrTierPinned(key)) {
+        if (localStore.isPinned()) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("XXX put pinned entry in notifyPinnedEntryInvalidated " + key + " " + oid);
           }
@@ -528,9 +528,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   public boolean removeEntriesForObjectId(ObjectID objectId) {
     Object key = getMappingUnlocked(objectId);
     if (key == null) { return false; }
-    boolean wasPinned = isKeyPinnedOrTierPinned(key);
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key + " wasPinned: " + wasPinned);
+      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key + " wasPinned: "
+                   + localStore.isPinned());
     }
 
     ReentrantReadWriteLock lock = getLock(key);
@@ -541,7 +541,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) remove(key);
         initiateLockRecall(removeLockIDMetaMapping(key, value));
         remoteRemoveObjectIfPossible(value);
-        if (wasPinned) {
+        if (localStore.isPinned()) {
           notifyPinnedEntryInvalidated(key, value.isEventualConsistentValue());
         }
       }
@@ -549,10 +549,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       lock.writeLock().unlock();
     }
     return true;
-  }
-
-  private boolean isKeyPinnedOrTierPinned(Object key) {
-    return localStore.isLocalHeapOrMemoryTierPinned();
   }
 
   private void notifyPinnedEntryInvalidated(Object key, boolean eventual) {
@@ -582,10 +578,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     try {
       if (ObjectID.NULL_ID.equals(removedTuple.valueObjectID)) {
         // value was a literal so dont need to remote remove it
-        boolean wasPinned = isKeyPinnedOrTierPinned(removedTuple.key);
         AbstractLocalCacheStoreValue localValue = getLocalValue(removedTuple.key);
         remove(removedTuple.key);
-        if (wasPinned) {
+        if (localStore.isPinned()) {
           notifyPinnedEntryInvalidated(removedTuple.key, localValue.isEventualConsistentValue());
         }
         // remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);

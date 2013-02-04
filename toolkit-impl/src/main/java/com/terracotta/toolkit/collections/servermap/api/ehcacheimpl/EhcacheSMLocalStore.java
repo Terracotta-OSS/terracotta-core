@@ -284,10 +284,10 @@ public class EhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> 
   }
 
   @Override
-  public boolean isLocalHeapOrMemoryTierPinned() {
+  public boolean isPinned() {
     readLock.lock();
     try {
-      return getActiveStore().isLocalHeapOrMemoryTierPinned();
+      return getActiveStore().isPinned();
     } finally {
       readLock.unlock();
     }

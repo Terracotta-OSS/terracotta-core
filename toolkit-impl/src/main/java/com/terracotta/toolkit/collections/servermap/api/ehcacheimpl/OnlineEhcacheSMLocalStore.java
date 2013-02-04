@@ -170,12 +170,12 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
   }
 
   @Override
-  public boolean isLocalHeapOrMemoryTierPinned() {
+  public boolean isPinned() {
     PinningConfiguration pinningConfiguration = localStoreCache.getCacheConfiguration().getPinningConfiguration();
     if (pinningConfiguration == null) {
       return false;
     } else {
-      return pinningConfiguration.getStore() == Store.LOCALMEMORY;
+      return pinningConfiguration.getStore() == Store.INCACHE;
     }
   }
 

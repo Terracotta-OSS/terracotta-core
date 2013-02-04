@@ -122,6 +122,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
 
   public void recalculateSize(K key);
 
-  public boolean isLocalHeapOrMemoryTierPinned();
+  public boolean isPinned();
 
 }

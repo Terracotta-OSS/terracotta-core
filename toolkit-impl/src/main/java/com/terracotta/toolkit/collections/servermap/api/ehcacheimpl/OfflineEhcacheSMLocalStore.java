@@ -197,7 +197,7 @@ public class OfflineEhcacheSMLocalStore implements ServerMapLocalStore<Object, O
   }
 
   @Override
-  public boolean isLocalHeapOrMemoryTierPinned() {
+  public boolean isPinned() {
     if (shouldLog()) {
       LOGGER.info("Ignoring isLocalHeapOrMemoryTierPinned as inner cache is not alive.");
     }

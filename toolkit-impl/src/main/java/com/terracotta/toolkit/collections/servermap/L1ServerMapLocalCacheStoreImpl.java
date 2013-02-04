@@ -145,7 +145,7 @@ public class L1ServerMapLocalCacheStoreImpl<K, V> implements L1ServerMapLocalCac
   }
 
   @Override
-  public boolean isLocalHeapOrMemoryTierPinned() {
-    return toolkitStore.isLocalHeapOrMemoryTierPinned();
+  public boolean isPinned() {
+    return toolkitStore.isPinned();
   }
 }
