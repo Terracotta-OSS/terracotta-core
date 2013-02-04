@@ -91,8 +91,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
    * @throws ClassNotFoundException if a necessary class definition is missing
    */
   public synchronized T getDeserializedValueCopy(final SerializationStrategy strategy, boolean compression,
-                                                 boolean local)
-      throws IOException, ClassNotFoundException {
+                                                 boolean local) throws IOException, ClassNotFoundException {
     byte[] valueLocal = getValue();
     if (valueLocal == null) {
       if (cached == null) { throw new AssertionError("Cached value cannot be null when byte array is null"); }
@@ -117,27 +116,30 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
    */
   public synchronized T getDeserializedValue(final SerializationStrategy strategy, boolean compression,
                                              L1ServerMapLocalCacheStore l1ServerMapLocalCacheStore, Object key,
-                                             boolean local)
-      throws IOException, ClassNotFoundException {
+                                             boolean local) throws IOException, ClassNotFoundException {
     T actualObject = this.cached;
-    if (actualObject == null) {
-      byte[] bytes = getValue();
-      if (bytes == null) { throw new AssertionError(
-                                                    "bytes array is null for serializedEntry and not already cached - oid: "
-                                                        + getObjectID()); }
-      actualObject = (T) strategy.deserialize(bytes, compression, local);
-    }
+    try {
+      if (actualObject != null && value == null) { return actualObject; }
 
-    if (this.alreadyInCache && this.cached == null) {
-      this.cached = actualObject;
-      doNullByteArray();
-      l1ServerMapLocalCacheStore.recalculateSize(key);
-    }
+      if (actualObject == null) {
+        byte[] bytes = getValue();
+        if (bytes == null) { throw new AssertionError(
+                                                      "bytes array is null for serializedEntry and not already cached - oid: "
+                                                          + getObjectID()); }
+        actualObject = (T) strategy.deserialize(bytes, compression, local);
+        this.cached = actualObject;
+      }
 
-    if (actualObject instanceof TimestampedValue) {
-      ((TimestampedValue) actualObject).updateTimestamps(createTime, lastAccessedTime);
+      if (this.alreadyInCache) {
+        doNullByteArray();
+        l1ServerMapLocalCacheStore.recalculateSize(key);
+      }
+      return actualObject;
+    } finally {
+      if (actualObject instanceof TimestampedValue) {
+        ((TimestampedValue) actualObject).updateTimestamps(createTime, lastAccessedTime);
+      }
     }
-    return actualObject;
   }
 
   public int getCreateTime() {
