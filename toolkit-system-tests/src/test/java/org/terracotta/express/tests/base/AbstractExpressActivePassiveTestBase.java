@@ -7,9 +7,9 @@ package org.terracotta.express.tests.base;
 import com.tc.test.config.model.ServerCrashMode;
 import com.tc.test.config.model.TestConfig;
 
-public abstract class AbstractExpressActivePassiveTest extends AbstractToolkitTestBase {
+public abstract class AbstractExpressActivePassiveTestBase extends AbstractToolkitTestBase {
 
-  public AbstractExpressActivePassiveTest(TestConfig testConfig, Class<? extends ClientBase>... c) {
+  public AbstractExpressActivePassiveTestBase(TestConfig testConfig, Class<? extends ClientBase>... c) {
     super(testConfig, c);
     testConfig.setNumOfGroups(1);
     testConfig.getGroupConfig().setMemberCount(2);
