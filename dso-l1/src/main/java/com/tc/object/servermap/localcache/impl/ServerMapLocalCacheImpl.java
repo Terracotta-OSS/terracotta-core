@@ -541,7 +541,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) remove(key);
         initiateLockRecall(removeLockIDMetaMapping(key, value));
         remoteRemoveObjectIfPossible(value);
-        if (localStore.isPinned()) {
+        if (value != null && localStore.isPinned()) {
           notifyPinnedEntryInvalidated(key, value.isEventualConsistentValue());
         }
       }
@@ -580,7 +580,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         // value was a literal so dont need to remote remove it
         AbstractLocalCacheStoreValue localValue = getLocalValue(removedTuple.key);
         remove(removedTuple.key);
-        if (localStore.isPinned()) {
+        if (localValue != null && localStore.isPinned()) {
           notifyPinnedEntryInvalidated(removedTuple.key, localValue.isEventualConsistentValue());
         }
         // remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
