@@ -10,6 +10,7 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
 import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
@@ -22,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
-    DestroyableToolkitObject {
+    DestroyableToolkitObject, ToolkitStore<K, V> {
   private final ToolkitObjectLookup<ToolkitCacheInternal<K, V>> delegate;
   private final ToolkitCacheInternal<K, V>                      noOpBehaviourResolver;
 

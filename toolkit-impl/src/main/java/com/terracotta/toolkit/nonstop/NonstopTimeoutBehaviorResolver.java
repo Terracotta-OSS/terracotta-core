@@ -18,6 +18,7 @@ import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;
 import org.terracotta.toolkit.object.ToolkitObject;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.TimeoutBehaviorToolkitCacheImpl;
@@ -120,6 +121,7 @@ public class NonstopTimeoutBehaviorResolver {
   public Object resolveNoOpTimeoutBehavior(ToolkitObjectType objectType) {
     switch (objectType) {
       case STORE:
+        return noOpBehaviorResolver.resolve(ToolkitStore.class);
       case CACHE:
         return noOpBehaviorResolver.resolve(ToolkitCacheInternal.class);
       case MAP:
@@ -144,6 +146,7 @@ public class NonstopTimeoutBehaviorResolver {
       case ATOMIC_LONG:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitAtomicLong.class);
       case STORE:
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitStore.class);
       case CACHE:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitCacheInternal.class);
       case LIST:
