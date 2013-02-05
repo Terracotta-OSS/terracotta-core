@@ -146,7 +146,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     return this.createTime;
   }
 
-  private byte[] getValue() {
+  private synchronized byte[] getValue() {
     return this.value;
   }
 
@@ -204,7 +204,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
    * Discard the local copy of this entry's serialized state.
    */
   @Override
-  public void addedToLocalCache() {
+  public synchronized void addedToLocalCache() {
     this.alreadyInCache = true;
   }
 
@@ -217,7 +217,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     value = null;
   }
 
-  public byte[] internalGetValue() {
+  public synchronized byte[] internalGetValue() {
     return value;
   }
 
@@ -273,21 +273,21 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   }
 
   public void updateLastAccessedTime(Object key, TCObjectServerMap tcObjectServerMap, int usedAtTime) {
-    synchronized (getResolveLock()) {
-      // TODO: DEV-8099
-      // Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
-      // if (checkedOutObject == null) { return; }
+    // TODO: DEV-8099
+    // Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
+    // if (checkedOutObject == null) { return; }
 
-      UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
-      try {
+    UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
+    try {
+      synchronized (getResolveLock()) {
         registerTransactionListener(key, tcObjectServerMap);
 
         this.lastAccessedTime = usedAtTime;
         this.logicalInvoke(SerializationUtil.FIELD_CHANGED, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
             SerializedMapValueApplicator.LAST_ACCESS_TIME_FIELD_NAME, usedAtTime });
-      } finally {
-        UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.unlock();
       }
+    } finally {
+      UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.unlock();
     }
   }
 
