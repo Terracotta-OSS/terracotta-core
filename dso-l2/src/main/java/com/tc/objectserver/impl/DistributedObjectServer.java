@@ -609,7 +609,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Stage garbageCollectStage = stageManager.createStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE,
                                                                new GarbageCollectHandler(objectManagerConfig,
-                                                                                         gcPublisher, persistor.getPersistenceTransactionProvider()),
+                                                                   persistor.getPersistenceTransactionProvider()),
         1, -1);
 
     this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink()

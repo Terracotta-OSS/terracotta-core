@@ -17,7 +17,6 @@ import com.tc.objectserver.context.GarbageCollectContext;
 import com.tc.objectserver.context.InlineGCContext;
 import com.tc.objectserver.context.PeriodicGarbageCollectContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -46,7 +45,7 @@ public class GarbageCollectHandler extends AbstractEventHandler {
   private Sink                                 gcSink;
 
   public GarbageCollectHandler(final ObjectManagerConfig objectManagerConfig,
-                               final GarbageCollectionInfoPublisher gcPublisher, final PersistenceTransactionProvider persistenceTransactionProvider) {
+                               final PersistenceTransactionProvider persistenceTransactionProvider) {
     this.fullGCEnabled = objectManagerConfig.doGC();
     this.fullGCInterval = objectManagerConfig.gcThreadSleepTime();
     this.persistenceTransactionProvider = persistenceTransactionProvider;
