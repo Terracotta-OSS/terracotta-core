@@ -366,13 +366,23 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListRequest(final NodeID nodeID, final ObjectListSyncMessage clusterMsg)
       throws GroupException {
     if (!this.stateManager.isActiveCoordinator()) {
-      final Set knownIDs = this.objectManager.getAllObjectIDs();
-      this.rTxnManager.init(knownIDs);
-      logger.info("Send response to Active's query : known id lists = " + knownIDs.size() + " isCleanDB: "
-                  + this.isCleanDB + " currentState " + clusterMsg.getCurrentState());
-      this.groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
-          .createObjectListSyncResponseMessage(clusterMsg, this.stateManager.getCurrentState(), knownIDs,
-                                               this.isCleanDB, resource));
+      transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+        @Override
+        public void onCompletion() {
+          final Set knownIDs = objectManager.getAllObjectIDs();
+          rTxnManager.init(knownIDs);
+          logger.info("Send response to Active's query : known id lists = " + knownIDs.size() + " isCleanDB: "
+                      + isCleanDB + " currentState " + clusterMsg.getCurrentState());
+          try {
+            groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
+                .createObjectListSyncResponseMessage(clusterMsg, stateManager.getCurrentState(), knownIDs,
+                    isCleanDB, resource));
+          } catch (GroupException e) {
+            logger.error("Failed to send object list response to the active.", e);
+            throw new AssertionError(e);
+          }
+        }
+      });
     } else {
       logger.error("Recd. ObjectListRequest when in ACTIVE state from " + nodeID + ". Zapping node ...");
       this.groupManager.sendTo(nodeID,
