@@ -516,7 +516,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
             i.remove();
             objectStore.removeAllObjectsByID(Collections.singleton(id));
           }
-          removeReferenceIfNecessary(ref);
+          removeReferenceAndDestroyIfNecessary(id);
           unmarkReferenced(ref);
           makeUnBlocked(id);
         }

@@ -46,7 +46,7 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
     MyMockSerializedEntry serializedEntry = new MyMockSerializedEntry(oid, "1001".getBytes(), null);
     serializedEntry.setLastAccessedTime(100);
     ClientObjectManager objectManager = Mockito.mock(ClientObjectManager.class);
-    Mockito.when(objectManager.lookup(oid)).thenReturn(serializedEntry);
+    Mockito.when(objectManager.lookupQuiet(oid)).thenReturn(serializedEntry);
     TCObjectSelfStore store = new MyTCObjectSelfStore();
     store.addTCObjectSelf(null, null, serializedEntry, false);
 
