@@ -85,6 +85,7 @@ public class ManagedObjectSyncContext implements EventContext {
     this.dnaCount = count;
     this.serializer = os;
     this.deletedOids = deletedObjects;
+    Assert.assertTrue(deletedObjects.size() + dnaCount > 0);
   }
 
   public NodeID getNodeID() {
@@ -102,7 +103,6 @@ public class ManagedObjectSyncContext implements EventContext {
   }
 
   public int getDNACount() {
-    Assert.assertTrue(this.dnaCount > 0);
     return this.dnaCount;
   }
 
