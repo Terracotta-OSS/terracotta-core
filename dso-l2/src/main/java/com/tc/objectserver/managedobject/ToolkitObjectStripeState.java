@@ -5,12 +5,8 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.*;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
@@ -27,10 +23,10 @@ import java.util.Set;
 
 public class ToolkitObjectStripeState extends AbstractManagedObjectState {
 
-  private final long                   classID;
+  private final long classID;
 
   private volatile Map<String, Object> configMap = new HashMap<String, Object>();
-  private Object[]                     componentObjects;
+  private Object[] componentObjects;
 
   public ToolkitObjectStripeState(final long classID) {
     this.classID = classID;
@@ -56,7 +52,7 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
 
   @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
-      throws IOException {
+          throws IOException {
     while (cursor.next()) {
       Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
@@ -90,18 +86,8 @@ public class ToolkitObjectStripeState extends AbstractManagedObjectState {
         break;
       default:
         throw new AssertionError("Gor unhandled logical action: objectId: " + objectID + ", method: " + method
-                                 + ", params: " + Arrays.asList(params));
+                + ", params: " + Arrays.asList(params));
     }
-  }
-
-  /**
-   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
-   * represented by this state object will never have any reference to other objects. false : The Managed object
-   * represented by this state object can have references to other objects.
-   */
-  @Override
-  public boolean hasNoReferences() {
-    return false;
   }
 
   @Override

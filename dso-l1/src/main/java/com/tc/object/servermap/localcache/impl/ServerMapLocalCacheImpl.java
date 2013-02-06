@@ -267,7 +267,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       removeAllKeys(this.pendingTransactionEntries.keySet());
       removeAllKeys(this.localStore.getKeys());
     } finally {
-      realeseAllLocks();
+      releaseAllLocks();
     }
   }
 
@@ -285,7 +285,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       lockIDs = removeAllKeysWithInlineLockRecall(this.localStore.getKeys(), true);
       lockIDs.addAll(removeAllKeysWithInlineLockRecall(this.pendingTransactionEntries.keySet(), false));
     } finally {
-      realeseAllLocks();
+      releaseAllLocks();
     }
     recallLocksInline(lockIDs);
   }
@@ -321,7 +321,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private void realeseAllLocks() {
+  private void releaseAllLocks() {
     for (ReentrantReadWriteLock lock : locks) {
       lock.writeLock().unlock();
     }

@@ -150,6 +150,10 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       return true;
     }
 
+    @Override
+    public boolean isIgnoreMissing() {
+      return false;
+    }
   }
 
   private class MyTCObjectSelfStore implements TCObjectSelfStore {

@@ -54,11 +54,6 @@ import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.impl.DGCOperatorEventPublisher;
-import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
-import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -113,27 +108,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     this.logger.info("Standard DSO Server created");
     this.haConfig = haConfig;
     this.thisGroupID = this.haConfig.getThisGroupID();
-  }
-
-  @Override
-  public GarbageCollector createGarbageCollector(final List<PostInit> toInit,
-                                                 final ObjectManagerConfig objectManagerConfig,
-                                                 final ObjectManager objectMgr, final ClientStateManager stateManager,
-                                                 final StageManager stageManager, final int maxStageSize,
-                                                 final GarbageCollectionInfoPublisher gcPublisher,
-                                                 final ObjectManager objectManager,
-                                                 final ClientStateManager clientStateManger,
-                                                 final GCStatsEventPublisher gcEventListener,
-                                                 final DGCSequenceProvider dgcSequenceProvider,
-                                                 final ServerTransactionManager serverTransactionManager,
-                                                 final GarbageCollectionManager garbageCollectionManager) {
-    final MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr,
-                                                                             stateManager, gcPublisher,
-                                                                             dgcSequenceProvider,
-                                                                             garbageCollectionManager);
-    gc.addListener(gcEventListener);
-    gc.addListener(new DGCOperatorEventPublisher());
-    return gc;
   }
 
   @Override
@@ -255,11 +229,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public GCStatsEventPublisher getLocalDGCStatsEventPublisher() {
-    throw new AssertionError("Not supported");
-  }
-
-  @Override
   public void dump() {
     TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
   }
@@ -330,9 +299,11 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public Persistor createPersistor(final boolean persistent, final File l2DataPath, final L2State l2State)
-      throws IOException {
+          throws IOException {
     // make warning go away
-    if (false) { throw new IOException(); }
+    if (false) {
+      throw new IOException();
+    }
 
     if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
     return new Persistor(HeapStorageManagerFactory.INSTANCE);

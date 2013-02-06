@@ -46,7 +46,7 @@ public class ObjectSyncMessageTest extends TestCase {
     this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, oids, true, 100, 10, 0);
     this.managedObjectSyncContext
         .setDehydratedBytes(oids, TCCollections.EMPTY_OBJECT_ID_SET, new TCByteBuffer[] { tcbb }, dnaCount,
-                            this.objectStringSerializer);
+                            this.objectStringSerializer, TCCollections.EMPTY_OBJECT_ID_SET);
     this.managedObjectSyncContext.setSequenceID(11);
   }
 

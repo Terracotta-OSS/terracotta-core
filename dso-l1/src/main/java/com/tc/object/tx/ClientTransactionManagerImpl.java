@@ -8,6 +8,7 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCError;
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -38,9 +39,9 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.Banner;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.AbortedOperationUtil;
 import com.tc.util.StringUtil;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
@@ -367,13 +368,20 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       Assert.assertTrue(dna.isDelta());
 
       try {
-        tcobj = this.clientObjectManager.lookup(dna.getObjectID());
+        tcobj = this.clientObjectManager.lookupQuiet(dna.getObjectID());
       } catch (final ClassNotFoundException cnfe) {
         logger.warn("Could not apply change because class not local: " + dna.getTypeName());
         continue;
       } catch (AbortedOperationException e) {
         // Called from Stage Thread. Never Throw aborted exception
         throw new TCRuntimeException(e);
+      } catch (TCObjectNotFoundException e) {
+        if (!dna.isIgnoreMissing()) {
+          logger.info("Failing due to a missing object " + dna.getObjectID());
+          throw e;
+        } else if (logger.isDebugEnabled()) {
+          logger.debug("Ignoring transaction on " + dna.getObjectID() + " since the object is missing.");
+        }
       }
       // Important to have a hard reference to the object while we apply
       // changes so that it doesn't get gc'd on us

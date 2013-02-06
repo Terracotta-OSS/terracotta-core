@@ -197,7 +197,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
-    return spy(new ApplyTransactionInfo(true, new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)), true));
+    return spy(new ApplyTransactionInfo(true, new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)), true, Collections.EMPTY_SET));
   }
 
   private Matcher<Collection<ManagedObject>> containsObjectWithID(final ObjectID id) {

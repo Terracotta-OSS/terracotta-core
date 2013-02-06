@@ -9,22 +9,24 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.GarbageCollectContext;
 import com.tc.objectserver.context.InlineGCContext;
 import com.tc.objectserver.context.PeriodicGarbageCollectContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.impl.GarbageCollectionID;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -34,11 +36,9 @@ public class GarbageCollectHandler extends AbstractEventHandler {
 
   private final Timer                          timer          = new Timer("GarbageCollectHandler Timer");
   private final boolean                        fullGCEnabled;
-  private final boolean                        youngGCEnabled;
   private final long                           fullGCInterval;
-  private final long                           youngGCInterval;
   private final LifeCycleState                 gcState        = new GCState();
-  private final GarbageCollectionInfoPublisher gcPublisher;
+  private final PersistenceTransactionProvider persistenceTransactionProvider;
   private volatile boolean                     gcRunning      = false;
   private GarbageCollector                     collector;
   private ObjectManager                        objectManager;
@@ -46,12 +46,10 @@ public class GarbageCollectHandler extends AbstractEventHandler {
   private Sink                                 gcSink;
 
   public GarbageCollectHandler(final ObjectManagerConfig objectManagerConfig,
-                               final GarbageCollectionInfoPublisher gcPublisher) {
+                               final GarbageCollectionInfoPublisher gcPublisher, final PersistenceTransactionProvider persistenceTransactionProvider) {
     this.fullGCEnabled = objectManagerConfig.doGC();
-    this.youngGCEnabled = objectManagerConfig.isYoungGenDGCEnabled();
     this.fullGCInterval = objectManagerConfig.gcThreadSleepTime();
-    this.youngGCInterval = objectManagerConfig.getYoungGenDGCFrequencyInMillis();
-    this.gcPublisher = gcPublisher;
+    this.persistenceTransactionProvider = persistenceTransactionProvider;
   }
 
   @Override
@@ -77,20 +75,17 @@ public class GarbageCollectHandler extends AbstractEventHandler {
         }
       }
     } else if (context instanceof InlineGCContext) {
-      GarbageCollectionInfo gcInfo = new GarbageCollectionInfo(GarbageCollectionID.NULL_ID, GarbageCollectionInfo.Type.INLINE_GC);
-      collector.waitToStartInlineGC();
       final ObjectIDSet objectsToDelete = garbageCollectionManager.nextObjectsToDelete();
       if (logger.isDebugEnabled()) {
         logger.debug("Deleting objects: " + objectsToDelete);
       }
 
       if (!objectsToDelete.isEmpty()) {
-        objectManager.deleteObjects(objectsToDelete);
+        Transaction t = persistenceTransactionProvider.newTransaction();
+        Set<ObjectID> missingObjects = objectManager.deleteObjects(objectsToDelete);
+        t.commit();
+        garbageCollectionManager.missingObjectsToDelete(missingObjects);
       }
-      collector.notifyGCComplete();
-      gcInfo.setActualGarbageCount(objectsToDelete.size());
-      gcPublisher.fireGCCycleCompletedEvent(gcInfo, objectsToDelete);
-      gcPublisher.fireGCCompletedEvent(gcInfo);
       garbageCollectionManager.scheduleInlineGarbageCollectionIfNecessary();
     } else {
       throw new AssertionError("Unknown context type: " + context.getClass().getName());
@@ -123,9 +118,6 @@ public class GarbageCollectHandler extends AbstractEventHandler {
     @Override
     public void start() {
       if (fullGCEnabled) {
-        if (youngGCEnabled) {
-          gcSink.add(new PeriodicGarbageCollectContext(GCType.YOUNG_GEN_GC, youngGCInterval));
-        }
         gcSink.add(new PeriodicGarbageCollectContext(GCType.FULL_GC, fullGCInterval));
         collector.setPeriodicEnabled(true);
       }

@@ -113,7 +113,9 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    */
   public void notifyGCComplete(DGCResultContext dgcResultContext);
 
-  public void deleteObjects(Set<ObjectID> objectsToDelete);
+  public Set<ObjectID> deleteObjects(Set<ObjectID> objectsToDelete);
+
+  public Set<ObjectID> tryDeleteObjects(Set<ObjectID> objectsToDelete);
 
   public void setStatsListener(ObjectManagerStatsListener listener);
 
@@ -134,10 +136,5 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    * @return ManagedObject if it exists; null otherwise
    */
   public ManagedObject getObjectByIDReadOnly(ObjectID id);
-
-  /**
-   * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.
-   */
-  public ManagedObject getQuietObjectByID(ObjectID id);
 
 }

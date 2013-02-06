@@ -106,21 +106,6 @@ public class NullGarbageCollector implements GarbageCollector {
   }
 
   @Override
-  public void notifyNewObjectInitalized(ObjectID id) {
-    // do nothing null
-  }
-
-  @Override
-  public void notifyObjectCreated(ObjectID id) {
-    // do nothing null
-  }
-
-  @Override
-  public void notifyObjectsEvicted(Collection evicted) {
-    // do nothing null
-  }
-
-  @Override
   public boolean requestGCStart() {
     return false;
   }

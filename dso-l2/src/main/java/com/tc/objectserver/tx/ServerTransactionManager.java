@@ -64,13 +64,13 @@ public interface ServerTransactionManager {
   public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs,
                     ObjectInstanceMonitor instanceMonitor);
 
+  public void cleanup(Set<ObjectID> deletedObjects);
   /**
    * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgment to the
    * originating client.
    */
   public void commit(Collection<ManagedObject> objects,
-                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs,
-                     SortedSet<ObjectID> deletedObjects);
+                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs);
 
   /**
    * The broadcast stage is completed. This could potentially trigger an acknowledgment to the originating client.

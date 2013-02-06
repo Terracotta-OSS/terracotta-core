@@ -36,6 +36,7 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -95,9 +96,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final ObjectManagerConfig                             config;
   private final TransactionProvider                             persistenceTransactionProvider;
 
-  // TODO: Flip this around to ReferencesIDStore? It's highly probable that we'll have more objects with no references
-  private final NoReferencesIDStore                             noReferencesIDStore;
-
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
                            final PersistentManagedObjectStore objectStore,
                            final TransactionProvider persistenceTransactionProvider) {
@@ -107,7 +105,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.objectStore = objectStore;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
-    this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
   }
 
   @Override
@@ -248,14 +245,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
   }
 
-  /**
-   * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.
-   */
-  @Override
-  public ManagedObject getQuietObjectByID(ObjectID id) {
-    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, AccessLevel.READ_WRITE);
-  }
-
   @Override
   public ManagedObject getObjectByIDReadOnly(final ObjectID id) {
     return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, AccessLevel.READ);
@@ -295,14 +284,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * 
    * @return null if the object is missing
    */
-  private ManagedObjectReference getOrLookupReference(final ObjectManagerLookupContext context, final ObjectID id) {
+  private ManagedObjectReference getOrLookupReference(final ObjectID id) {
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
       ManagedObject mo = objectStore.getObjectByID(id);
       if (mo == null) {
         // Object doesn't exist, bail out early.
-        context.missingObject(id);
         return null;
       } else {
         rv = addNewReference(mo, false);
@@ -368,8 +356,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      final ManagedObjectReference reference = getOrLookupReference(context, id);
-      if (reference == null || !available) {
+      final ManagedObjectReference reference = getOrLookupReference(id);
+      if (reference == null) {
+        context.missingObject(id);
+        continue;
+      } else if (!available) {
         continue;
       }
 
@@ -508,54 +499,54 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
-  private void removeAllObjectsByID(final Set<ObjectID> toDelete) {
-    Set<ObjectID> referenced = null;
-    this.lock.readLock().lock();
-    try {
-      for (final ObjectID id : toDelete) {
-        ManagedObjectReference ref = this.references.get(id);
-        if (ref != null) {
-          if (markReferenced(ref)) {
-            removeReferenceAndDestroyIfNecessary(id);
-            unmarkReferenced(ref);
-            makeUnBlocked(id);
-
-          } else {
-            if (logger.isDebugEnabled()) {
-              // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
-              // looking up this object or with eventual consistency another node is looking up/faulting this object.
-              logger.debug("Reference : " + ref + " is referenced by someone. So waiting to remove !");
-            }
-            if (referenced == null) {
-              referenced = new ObjectIDSet();
-            }
-            referenced.add(id);
-            continue;
-          }
+  private ObjectIDSet removeAllObjectsByID(final Set<ObjectID> toDelete) {
+    ObjectIDSet missingObjects = new ObjectIDSet();
+    while(!toDelete.isEmpty()) {
+      Iterator<ObjectID> i = toDelete.iterator();
+      while (i.hasNext()) {
+        ObjectID id = i.next();
+        ManagedObjectReference ref = getOrLookupReference(id);
+        if (ref == null) {
+          missingObjects.add(id);
+          i.remove();
+          continue;
         }
-        this.noReferencesIDStore.clearFromNoReferencesStore(id);
-        if (ref != null) {
-          if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
+        if (markReferenced(ref)) {
+          if (!ref.isNew()) {
+            i.remove();
+            objectStore.removeAllObjectsByID(Collections.singleton(id));
+          }
+          removeReferenceIfNecessary(ref);
+          unmarkReferenced(ref);
+          makeUnBlocked(id);
         }
       }
-    } finally {
-      this.lock.readLock().unlock();
     }
-    if (referenced != null) {
-      logger.warn("References : " + referenced + " are referenced by someone. So waiting to remove !");
-      lockAndwait(1000, TimeUnit.MILLISECONDS);
-      removeAllObjectsByID(referenced);
-    }
+    return missingObjects;
   }
 
-  private void lockAndwait(int time, TimeUnit unit) {
-    this.lock.writeLock().lock();
-    try {
-      wait(time, unit);
-    } finally {
-      this.lock.writeLock().unlock();
+  @Override
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+    Set<ObjectID> retry = new ObjectIDSet();
+    for (ObjectID objectID : objectsToDelete) {
+      ManagedObjectReference ref = getOrLookupReference(objectID);
+      if (ref == null || !markReferenced(ref)) {
+        // The object either doesn't exist or we failed to mark it, drop it into the retry set.
+        retry.add(objectID);
+        continue;
+      } else if (ref.isNew()) {
+        // Don't delete new objects as they haven't been created yet. Fall through since we still need to unmark the object
+        retry.add(objectID);
+      } else {
+        // The object exists and is deletable, delete it.
+        objectStore.removeAllObjectsByID(Collections.singleton(objectID));
+      }
+      removeReferenceIfNecessary(ref);
+      unmarkReferenced(ref);
+      makeUnBlocked(objectID);
     }
-
+    processPendingLookups();
+    return retry;
   }
 
   @Override
@@ -596,13 +587,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public Set<ObjectID> getObjectReferencesFrom(final ObjectID id, final boolean cacheOnly) {
-    if (this.noReferencesIDStore.hasNoReferences(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
+    if (this.objectStore.hasNoReferences(id)) {
+      return TCCollections.EMPTY_OBJECT_ID_SET;
+    }
     final ManagedObjectReference mor = getReference(id);
     if ((mor == null && cacheOnly) || (mor != null && mor.isNew())) {
       // Object either not in cache or is a new object, return emtpy set
       return TCCollections.EMPTY_OBJECT_ID_SET;
     }
-    final ManagedObject mo = lookup(id, MissingObjects.NOT_OK, NewObjects.LOOKUP, AccessLevel.READ);
+    final ManagedObject mo = lookup(id, MissingObjects.OK, NewObjects.LOOKUP, AccessLevel.READ);
+    if ( mo == null ) {
+      return TCCollections.EMPTY_OBJECT_ID_SET;
+    }
     final Set<ObjectID> references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
@@ -618,7 +614,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void basicRelease(final ManagedObject object) {
     final ManagedObjectReference mor = object.getReference();
-    updateNewFlagAndCreateIfNecessary(object);
+    updateNewFlag(object);
     removeReferenceIfNecessary(mor);
     unmarkReferenced(mor);
     makeUnBlocked(object.getID());
@@ -631,16 +627,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     makeUnBlocked(object.getID());
   }
 
-  private void updateNewFlagAndCreateIfNecessary(final ManagedObject object) {
+  private void updateNewFlag(final ManagedObject object) {
     if (object.isNew()) {
-      this.noReferencesIDStore.addToNoReferences(object);
       object.setIsNew(false);
-      fireNewObjectinitialized(object.getID());
     }
-  }
-
-  private void fireNewObjectinitialized(final ObjectID id) {
-    this.collector.notifyNewObjectInitalized(id);
   }
 
   private void removeReferenceIfNecessary(final ManagedObjectReference mor) {
@@ -651,7 +641,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         logger.info(mor + " is DIRTY but isRemoveOnRelease is true, resetting it");
         mor.setRemoveOnRelease(false);
       } else {
-        final Object removed = this.removeReferenceAndDestroyIfNecessary(mor.getObjectID());
+        final ManagedObjectReference removed = this.removeReferenceAndDestroyIfNecessary(mor.getObjectID());
+
         if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
       }
     }
@@ -720,20 +711,25 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     } finally {
       this.lock.writeLock().unlock();
     }
+    Transaction transaction = persistenceTransactionProvider.newTransaction();
     deleteObjects(gcResult.getGarbageIDs());
+    transaction.commit();
   }
 
   @Override
-  public void deleteObjects(final Set<ObjectID> toDelete) {
-    Assert.assertTrue(this.collector.isDelete());
-    Transaction t = persistenceTransactionProvider.newTransaction();
-    removeAllObjectsByID(toDelete);
-    this.objectStore.removeAllObjectsByID(toDelete);
-    t.commit();
+  public Set<ObjectID> deleteObjects(Set<ObjectID> toDelete) {
+    ObjectIDSet missing = removeAllObjectsByID(new ObjectIDSet(toDelete));
+
     // Process pending, since we disabled process pending while GC pause was initiate.
     processPendingLookups();
-  }
 
+    return missing;
+//
+//    if (!notDeleted.isEmpty()) {
+//      lookupAndDelete(notDeleted);
+//    }
+  }
+  
   private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {
     this.objectStore.commitAllObjects(persistenceTransaction, managedObjects);
     persistenceTransaction.commit();
@@ -753,11 +749,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     addNewReference(object, false);
 
     this.stats.newObjectCreated();
-    fireObjectCreated(oid);
-  }
-
-  private void fireObjectCreated(final ObjectID id) {
-    this.collector.notifyObjectCreated(id);
   }
 
   public PersistentManagedObjectStore getObjectStore() {

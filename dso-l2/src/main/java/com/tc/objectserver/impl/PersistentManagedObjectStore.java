@@ -8,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrinter;
@@ -89,10 +90,9 @@ public class PersistentManagedObjectStore {
     return this.objectPersistor.snapshotEvictableObjectIDs();
   }
 
-  public ObjectIDSet getAllMapTypeObjectIDs() {
+  public boolean hasNoReferences(ObjectID id) {
     assertNotInShutdown();
-    throw new UnsupportedOperationException();
-//    return this.objectPersistor.snapshotObjectIDs();
+    return this.objectPersistor.hasNoReferences(id);
   }
 
   public ManagedObject getObjectByID(final ObjectID id) {
@@ -108,10 +108,6 @@ public class PersistentManagedObjectStore {
   public void shutdown() {
     assertNotInShutdown();
     this.inShutdown = true;
-  }
-
-  public boolean inShutdown() {
-    return this.inShutdown;
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

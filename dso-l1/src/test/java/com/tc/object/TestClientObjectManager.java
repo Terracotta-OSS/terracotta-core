@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
@@ -109,6 +110,11 @@ public class TestClientObjectManager implements ClientObjectManager {
   public TCObject lookup(final ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
     return (TCObject) this.objects.get(id);
+  }
+
+  @Override
+  public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
+    return lookup(id);
   }
 
   @Override
@@ -264,11 +270,6 @@ public class TestClientObjectManager implements ClientObjectManager {
 
   @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcoObjectSelf) {
-    throw new ImplementMe();
-
-  }
-
-  public void removedTCObjectSelfFromStore(ObjectID objectID) {
     throw new ImplementMe();
 
   }

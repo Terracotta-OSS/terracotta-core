@@ -20,27 +20,26 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
 public class GCTestObjectManager implements ObjectManager {
 
-  protected Set<ObjectID>                  roots               = new HashSet<ObjectID>();
-  protected Map<ObjectID, ManagedObjectReference> managed             = new LinkedHashMap<ObjectID, ManagedObjectReference>();
-  protected Map<ObjectID, ManagedObjectReference> swappedToDisk       = new HashMap<ObjectID, ManagedObjectReference>();
-  protected GarbageCollector               gcCollector;
-  protected Set<ObjectID>                  gced                = new HashSet<ObjectID>();
+  protected Set<ObjectID> roots = new HashSet<ObjectID>();
+  protected Map<ObjectID, ManagedObjectReference> managed = new LinkedHashMap<ObjectID, ManagedObjectReference>();
+  protected Map<ObjectID, ManagedObjectReference> swappedToDisk = new HashMap<ObjectID, ManagedObjectReference>();
+  protected GarbageCollector gcCollector;
+  protected Set<ObjectID> gced = new HashSet<ObjectID>();
 
-  protected Set<ObjectID>                  lookedUp            = null;
-  protected Set<ObjectID>                  released            = null;
+  protected Set<ObjectID> lookedUp = null;
+  protected Set<ObjectID> released = null;
   protected TransactionProvider transactionProvider = null;
   protected GarbageCollectionInfoPublisher gcPublisher;
 
@@ -172,14 +171,14 @@ public class GCTestObjectManager implements ObjectManager {
 
   public void createObject(ObjectID id, ManagedObjectReference mor) {
     managed.put(id, mor);
-    gcCollector.notifyObjectCreated(id);
-    gcCollector.notifyNewObjectInitalized(id);
   }
 
   @Override
   public ManagedObject getObjectByIDReadOnly(ObjectID id) {
     ManagedObject mo = getObjectByID(id);
-    if (mo != null && mo.isNew()) { return null; }
+    if (mo != null && mo.isNew()) {
+      return null;
+    }
     return mo;
   }
 
@@ -199,14 +198,6 @@ public class GCTestObjectManager implements ObjectManager {
   @Override
   public ObjectIDSet getObjectIDsInCache() {
     return new ObjectIDSet(managed.keySet());
-  }
-
-  public void evict(ObjectID id) {
-    ManagedObjectReference swapped = managed.remove(id);
-    swappedToDisk.put(id, swapped);
-    List<ManagedObject> evicted = new ArrayList<ManagedObject>();
-    evicted.add(swapped.getObject());
-    gcCollector.notifyObjectsEvicted(evicted);
   }
 
   public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
@@ -230,7 +221,9 @@ public class GCTestObjectManager implements ObjectManager {
       return new ObjectIDSet(refs);
     } else {
       ManagedObject obj = getObjectByIDReadOnly(id);
-      if (obj == null) { return new ObjectIDSet(); }
+      if (obj == null) {
+        return new ObjectIDSet();
+      }
       Set refs = obj.getObjectReferences();
       releaseReadOnly(obj);
       return new ObjectIDSet(refs);
@@ -253,12 +246,12 @@ public class GCTestObjectManager implements ObjectManager {
   }
 
   @Override
-  public ManagedObject getQuietObjectByID(ObjectID id) {
-    return getObjectByID(id);
+  public Set<ObjectID> deleteObjects(final Set<ObjectID> objectsToDelete) {
+    return Collections.EMPTY_SET;
   }
 
   @Override
-  public void deleteObjects(final Set<ObjectID> objectsToDelete) {
-    //
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+    return Collections.EMPTY_SET;
   }
 }

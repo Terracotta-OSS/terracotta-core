@@ -89,7 +89,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 import junit.framework.Assert;
 
@@ -247,6 +246,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     @Override
     public boolean isResent() {
       return false;
+    }
+
+    @Override
+    public Set<ObjectID> ignorableObjects() {
+      return Collections.EMPTY_SET;
     }
   }
 
@@ -868,6 +872,13 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+        @Override
+        public void cleanup(Set<ObjectID> deletedObjects) {
+      throw new ImplementMe();
+        }
+    
+    
+
     @Override
     public void broadcasted(final NodeID waiter, final TransactionID requestID) {
       //
@@ -886,8 +897,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     @Override
     public void commit(final Collection<ManagedObject> objects,
                        final Map<String, ObjectID> newRoots,
-                       final Collection<ServerTransactionID> appliedServerTransactionIDs,
-                       final SortedSet<ObjectID> deletedObjects) {
+                       final Collection<ServerTransactionID> appliedServerTransactionIDs) {
       throw new ImplementMe();
     }
 

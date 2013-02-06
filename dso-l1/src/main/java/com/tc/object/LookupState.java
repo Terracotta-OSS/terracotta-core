@@ -93,6 +93,15 @@ enum LookupState implements LookupStateTransition {
 
   MISSING_OBJECT_ID {
     @Override
+    public LookupState makeMissingObject() {
+      // DEV-9048: It's currently possible that the responses to prefetch and the client's lookup request both
+      // land at the same time on the client. In the case that both are marked as missing objects, it's safe
+      // to ignore the transition from MISSING_OBJECT_ID->MISSING_OBJECT_ID since essentially both responses are
+      // telling the client the same thing.
+      return this;
+    }
+
+    @Override
     public boolean isMissing() {
       return true;
     }

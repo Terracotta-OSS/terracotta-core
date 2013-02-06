@@ -122,7 +122,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     // Now create Object Sync Txn for 4,5,6
     LinkedHashMap syncTxns = createTxns(1, 4, 3, true);
     objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
-    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next(), Collections.EMPTY_SET);
     assertTrue(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
     objectSyncAckManager.reset();
 
@@ -143,7 +143,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     // Now create Object Sync txn for 7,8,9
     syncTxns = createTxns(1, 7, 3, true);
     objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
-    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next(), Collections.EMPTY_SET);
     assertTrue(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
     objectSyncAckManager.reset();
 
@@ -172,7 +172,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     // Redo the object sync for objects 7,8,9. Since we already have the objects, the change should be entirely pruned.
     syncTxns = createTxns(1, 7, 3, true);
     objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
-    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next(), Collections.EMPTY_SET);
     assertFalse(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
   }
 

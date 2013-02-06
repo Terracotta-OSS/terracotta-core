@@ -31,6 +31,7 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,8 +99,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   }
 
   @Override
-  public synchronized void addObjectSyncTransaction(ServerTransaction txn) {
-    delegate.addObjectSyncTransaction(txn);
+  public synchronized void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects) {
+    delegate.addObjectSyncTransaction(txn, deletedObjects);
   }
 
   @Override
@@ -167,7 +168,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     @Override
-    public void addObjectSyncTransaction(ServerTransaction txn) {
+    public void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects) {
       throw new AssertionError("Recd. ObjectSyncTransaction while in ACTIVE state : " + txn);
     }
 
@@ -188,7 +189,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     @Override
-    public void addObjectSyncTransaction(ServerTransaction txn) {
+    public void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects) {
       // XXX::NOTE:: This is possible when there are 2 or more passive servers in standby and when the active crashes.
       // One of them will become passive and it is possible that the one became active has some objects that is missing
       // from the other guy. So the current active is going to think that the other guy is in passive uninitialized
@@ -287,7 +288,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     @Override
-    public void addObjectSyncTransaction(ServerTransaction txn) {
+    public void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects) {
+      clearPendingChangesFor(deletedObjects);
       ServerTransaction newTxn = createCompoundTransactionFrom(txn);
       if (newTxn != null) {
         addIncommingTransactions(txn.getSourceID(), Collections.singleton(txn.getServerTransactionID()),
@@ -296,6 +298,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         logger
             .warn("Not adding Txn " + txn.getServerTransactionID() + " to queue since all changes have been ignored.");
         objectSyncAckManager.ackObjectSyncTxn(txn.getServerTransactionID());
+      }
+    }
+
+    private void clearPendingChangesFor(Set<ObjectID> oids) {
+      for (ObjectID oid : oids) {
+        pca.getAnyPendingChangesForAndClear(oid);
       }
     }
 

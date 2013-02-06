@@ -20,6 +20,7 @@ import com.tc.util.ObjectIDSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -48,6 +49,8 @@ public interface ServerTransaction extends GlobalTransaction {
   public ObjectIDSet getObjectIDs();
 
   public ObjectIDSet getNewObjectIDs();
+
+  public Set<ObjectID> ignorableObjects();
 
   public Collection getNotifies();
 

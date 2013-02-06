@@ -88,6 +88,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   private final SampledCounter                    evictionStats;
   private final ResourceManager                   resourceManager;
   private final EvictionThreshold                 threshold;
+  private final AggregateSampleRateCounter        pulse                               = new AggregateSampleRateCounter();
 
   private final static Future<SampledRateCounter> completedFuture                     = new Future<SampledRateCounter>() {
 
@@ -357,7 +358,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   }
 
   @Override
-  public void evict(ObjectID oid, Map samples, String className, String cacheName) {
+  public void evict(ObjectID oid, Map<Object,ObjectID> samples, String className, String cacheName) {
     evictor.evictFrom(oid, samples, className, cacheName);
   }
 
@@ -380,6 +381,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                  log("Eviction Run:" + name + " " + rate);
               }
           }
+          pulse.increment(rate.getValue());
         } catch (ExecutionException exp) {
           logger.warn("eviction run", exp);
           evictionGrp.uncaughtException(Thread.currentThread(), exp);
@@ -389,7 +391,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       }
     });
   }
-
+  
   class Responder implements ResourceEventListener {
 
     private long               last        = System.currentTimeMillis();
@@ -400,6 +402,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private boolean            isStopped   = false;
     // private long brake = 0;
     private int                turnCount   = 1;
+    private long               notified    = 0;
+    private long               tick        = 0;
 
     Future<SampledRateCounter> currentRun  = completedFuture;
 
@@ -410,10 +414,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         long max = usage.getMaxMemory();
         long reserve = usage.getReservedMemory();
 
-        if (evictor.isLogging()) {
+        if ((evictor.isLogging() && System.currentTimeMillis() - tick > (10*1000)) || System.currentTimeMillis() - tick > (60*1000) ) {
           if (max != 0) {
             log("Percent usage:" + (usage.getUsedMemory() * 100 / max) + " reserved:" + (reserve * 100 / max)
-                + " time:" + (current - last) + " msec. threshold:" + threshold);
+                + " poll time:" + (current - last) + " msec.");
+            tick = System.currentTimeMillis();
+            long count = pulse.getAndReset();
+            if ( count > 0 ) {
+                log("Evicted and expired " + count + " total elements");
+            }
           }
         }
 
@@ -459,15 +468,20 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         throttle(usage, 1f);
       }
 
-      if (throttle == 0f && threshold.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
-        throttle(usage, 0.5f);
+      if (throttle == 0f ) {
+          if ( threshold.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+            throttle(usage, 0.5f);
+          } else if ( this.notified > 0 && this.notified < System.currentTimeMillis() - (60 * 1000) ) {
+            notifyAllClear(usage);
+          }
       }
     }
 
     private void stopEmergency(DetailedMemoryUsage usage) {
       isEmergency = false;
       currentRun.cancel(false);
-      log("Emergency Eviction Stopped - " + usage.getUsedPercentage());
+      log("Emergency Eviction Stopped - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory())  + "/"
+          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()));
       turnCount = 1;
       if (isStopped || throttle > 0f) {
         clear(usage);
@@ -475,7 +489,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     private void triggerEmergency(DetailedMemoryUsage usage) {
-      log("Emergency Triggered - " + usage.getUsedPercentage() + "/"
+      log("Emergency Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
           + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " turns:" + turnCount);
       currentRun.cancel(false);
 
@@ -483,7 +497,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         if (turnCount > 100) {
           stop(usage);
         } else {
-          throttle(usage, (usage.getReservedMemory() * 1f / usage.getMaxMemory()));
+          double start = usage.getMaxMemory() * .75D;
+          double span = usage.getMaxMemory() - start;
+          double amt = (usage.getReservedMemory() - start) / span;
+          if ( amt < .2D ) {
+              amt = .2D;
+          } else if ( amt > 1.0D ) {
+              amt = 1.0D;
+          }
+          throttle(usage, (float)amt);
         }
       }
 
@@ -509,15 +531,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       size = currentSize;
     }
 
-    private void throttle(MemoryUsage reserved, float level) {
+    private void throttle(DetailedMemoryUsage reserved, float level) {
       if (isStopped || level <= throttle) { return; }
       resourceManager.setThrottle(level);
-      if (throttle == 0f) {
+      if (shouldNotify()) {
         TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNearResourceCapacityEvent("pool", reserved
             .getUsedPercentage());
         TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
         resetEpoc(System.currentTimeMillis(), reserved.getUsedMemory());
       }
+      log("Throttling Clients at " + level);
       throttle = level;
     }
 
@@ -528,18 +551,37 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool", reserved
           .getUsedPercentage());
       TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
+      log("Stopping Clients");
+    }
+    
+    private boolean shouldNotify() {
+        try {
+            if ( throttle == 0f && notified == 0 ) {
+                return true;
+            }
+            return false;
+        } finally {
+            notified = System.currentTimeMillis();
+        }
+    }
+    
+    private void notifyAllClear(MemoryUsage reserved) {
+      TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool", reserved
+        .getUsedPercentage());
+      TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
+      resetEpoc(System.currentTimeMillis(), reserved.getUsedMemory());
+      notified = 0;
     }
 
     public void clear(MemoryUsage reserved) {
+      if ( isStopped ) {
+          notifyAllClear(reserved);
+      }
       if (throttle == 0f && !isStopped) { return; }
       isStopped = false;
       throttle = 0f;
       // brake = 0;
       resourceManager.clear();
-      TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createNormalResourceCapacityEvent("pool", reserved
-          .getUsedPercentage());
-      TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
-      resetEpoc(System.currentTimeMillis(), reserved.getUsedMemory());
     }
   }
 }

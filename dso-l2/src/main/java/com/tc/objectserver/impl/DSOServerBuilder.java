@@ -113,15 +113,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       StageManager stageManager, ServerID serverNodeID, Sink httpSink,
                                       StripeIDStateManager stripeStateManager, ServerGlobalTransactionManager gtxm);
 
-  GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
-                                          ObjectManager objectMgr, ClientStateManager stateManager,
-                                          StageManager stageManager, int maxStageSize,
-                                          GarbageCollectionInfoPublisher gcPublisher, ObjectManager objectManager,
-                                          ClientStateManager clientStateManger, GCStatsEventPublisher gcEventListener,
-                                          DGCSequenceProvider dgcSequenceProvider,
-                                          ServerTransactionManager serverTransactionManager,
-                                          GarbageCollectionManager garbageCollectionManager);
-
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
                                                               ObjectRequestManager objRequestMgr,
                                                               ServerMapRequestManager serverTCMapRequestManager,
@@ -146,8 +137,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                               GarbageCollectionManager deleteObjectManager);
 
   GroupManager getClusterGroupCommManager();
-
-  GCStatsEventPublisher getLocalDGCStatsEventPublisher();
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, GroupManager groupCommsManager,

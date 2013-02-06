@@ -240,6 +240,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       // NotSynchedOids are picked up first as its a stored set and thus prefetching that happened is not a waste.
       missingOids.addAll(mosc.getNotSynchedOids());
       totalObjectsSynced += mosc.getSynchedOids().size();
+      totalObjectsSynced += mosc.getDeletedOids().size();
       if (this.missingOids.isEmpty()) {
         this.state = IN_SYNC_PENDING_NOTIFY;
         L2ObjectStateManagerImpl.this.transactionManager

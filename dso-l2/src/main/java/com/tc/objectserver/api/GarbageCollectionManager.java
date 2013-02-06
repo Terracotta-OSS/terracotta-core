@@ -9,9 +9,12 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Set;
 import java.util.SortedSet;
 
 public interface GarbageCollectionManager extends PostInit, StateChangeListener {
+
+  public void missingObjectsToDelete(Set<ObjectID> objects);
 
   public void deleteObjects(SortedSet<ObjectID> objects);
 

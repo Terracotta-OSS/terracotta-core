@@ -5,6 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.MetaDataReader;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -47,6 +49,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final TxnBatchID             batchID;
   private final int                    numApplicationTxn;
   private final long[]                 highWaterMarks;
+  private final Set<ObjectID>          missingOkObjects;
 
   private GlobalTransactionID          globalTxnID;
 
@@ -71,12 +74,16 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.serializer = serializer;
     final ObjectIDSet ids = new ObjectIDSet();
     final ObjectIDSet newIDs = new ObjectIDSet();
+    missingOkObjects = new ObjectIDSet();
     boolean added = true;
     for (final Iterator i = this.changes.iterator(); i.hasNext();) {
       final DNA dna = (DNA) i.next();
       added &= ids.add(dna.getObjectID());
       if (!dna.isDelta()) {
         newIDs.add(dna.getObjectID());
+      }
+      if (dna.isIgnoreMissing()) {
+        missingOkObjects.add(dna.getObjectID());
       }
     }
     Assert.assertTrue(added);
@@ -222,5 +229,10 @@ public class ServerTransactionImpl implements ServerTransaction {
   @Override
   public boolean isEviction() {
     return false;
+  }
+
+  @Override
+  public Set<ObjectID> ignorableObjects() {
+    return missingOkObjects;
   }
 }

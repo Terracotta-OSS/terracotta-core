@@ -118,4 +118,8 @@ public class ManagedObjectPersistor  {
   public ObjectIDSequence getObjectIDSequence() {
     return objectIDSequence;
   }
+
+  public boolean hasNoReferences(ObjectID id) {
+    return oidSetMaintainer.hasNoReferences(id);
+  }
 }

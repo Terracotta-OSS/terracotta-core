@@ -120,4 +120,10 @@ public interface DNAWriter {
    */
   void copyTo(TCByteBufferOutput dest);
 
+  /**
+   * Mark this change list as ignorable if the objects are missing.
+   *
+   * @param ignoreMissing true to ignore changes if the objects are missing
+   */
+  void setIgnoreMissing(boolean ignoreMissing);
 }

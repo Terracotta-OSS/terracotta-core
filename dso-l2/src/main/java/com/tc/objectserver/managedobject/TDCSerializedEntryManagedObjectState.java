@@ -99,7 +99,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
       } else {
         final LogicalAction la = (LogicalAction) action;
         switch (la.getMethod()) {
-          case SerializationUtil.FIELD_CHANGED:
+          case SerializationUtil.IGNORABLE_FIELD_CHANGE:
             Object[] parameters = la.getParameters();
             String fieldName = getString(parameters[0]);
             if (LAST_ACCESS_TIME_FIELD.equals(fieldName)) {
@@ -145,16 +145,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     } else {
       logger.error("recieved data for field named [" + field + "] -- ignoring it");
     }
-  }
-
-  /**
-   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
-   * represented by this state object will never have any reference to other objects. false : The Managed object
-   * represented by this state object can have references to other objects.
-   */
-  @Override
-  public boolean hasNoReferences() {
-    return true;
   }
 
   protected static void logInvalidType(final String field, final Object val) {

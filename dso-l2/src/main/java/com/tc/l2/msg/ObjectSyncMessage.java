@@ -33,6 +33,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   public static final int        MANAGED_OBJECT_SYNC_TYPE = 0;
 
+  private ObjectIDSet            deletedOids;
   private ObjectIDSet            oids;
   private int                    dnaCount;
   private TCByteBuffer[]         dnas;
@@ -64,6 +65,8 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     this.serializer.deserializeFrom(in);
     this.dnas = readByteBuffers(in);
     this.sequenceID = in.readLong();
+    deletedOids = new ObjectIDSet();
+    deletedOids.deserializeFrom(in);
   }
 
   @Override
@@ -80,6 +83,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     recycle(this.dnas);
     this.dnas = null;
     out.writeLong(this.sequenceID);
+    deletedOids.serializeTo(out);
   }
 
   private void writeRootsMap(final TCByteBufferOutput out) {
@@ -111,7 +115,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   public void initialize(final ServerTransactionID stxnID, final ObjectIDSet dnaOids, final int count,
                          final TCByteBuffer[] serializedDNAs, final ObjectStringSerializer objectSerializer,
-                         final Map roots, final long sqID) {
+                         final Map roots, final long sqID, final ObjectIDSet deletedObjectIds) {
     this.servertxnID = stxnID;
     this.oids = dnaOids;
     this.dnaCount = count;
@@ -119,6 +123,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     this.serializer = objectSerializer;
     this.rootsMap = roots;
     this.sequenceID = sqID;
+    this.deletedOids = deletedObjectIds;
   }
 
   public int getDnaCount() {
@@ -173,5 +178,9 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   public ServerTransactionID getServerTransactionID() {
     return this.servertxnID;
+  }
+
+  public ObjectIDSet getDeletedOids() {
+    return deletedOids;
   }
 }

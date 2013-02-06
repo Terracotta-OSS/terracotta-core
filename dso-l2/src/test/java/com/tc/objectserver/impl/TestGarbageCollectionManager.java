@@ -11,12 +11,18 @@ import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
+import java.util.Set;
 import java.util.SortedSet;
 
 public class TestGarbageCollectionManager implements GarbageCollectionManager {
 
   @Override
   public void deleteObjects(SortedSet<ObjectID> objects) {
+    // do nothing
+  }
+
+  @Override
+  public void missingObjectsToDelete(final Set<ObjectID> objects) {
     // do nothing
   }
 

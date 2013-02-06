@@ -23,6 +23,11 @@ public class TestDNAWriter implements DNAWriter {
   }
 
   @Override
+  public void setIgnoreMissing(final boolean ignoreMissing) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
   public void addLogicalAction(final int method, final Object[] parameters) {
     this.actions.add(new LogicalAction(method, parameters));
   }

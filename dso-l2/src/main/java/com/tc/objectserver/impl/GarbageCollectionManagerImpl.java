@@ -6,30 +6,37 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Set;
 import java.util.SortedSet;
 
 public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
   private final GarbageCollectionManager    activeGCManager;
   private volatile GarbageCollectionManager delegate = new PassiveGarbageCollectionManager();
 
-  public GarbageCollectionManagerImpl(final Sink garbageCollectSink,
-                                      final ClientObjectReferenceSet clientObjectReferenceSet) {
-    activeGCManager = new ActiveGarbageCollectionManager(garbageCollectSink, clientObjectReferenceSet);
+  public GarbageCollectionManagerImpl(final Sink garbageCollectSink) {
+    activeGCManager = new ActiveGarbageCollectionManager(garbageCollectSink);
   }
 
   @Override
   public void l2StateChanged(StateChangedEvent sce) {
     if (sce.movedToActive()) {
       delegate = activeGCManager;
+    } else {
+      delegate.l2StateChanged(sce);
     }
+  }
+
+  @Override
+  public void missingObjectsToDelete(final Set<ObjectID> objects) {
+    delegate.missingObjectsToDelete(objects);
   }
 
   @Override
@@ -73,22 +80,33 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     delegate.scheduleInlineCleanupIfNecessary();
   }
 
-  private static class PassiveGarbageCollectionManager implements GarbageCollectionManager {
-    private static final TCLogger logger = TCLogging.getLogger(PassiveGarbageCollectionManager.class);
+  private class PassiveGarbageCollectionManager implements GarbageCollectionManager {
+    private volatile boolean acceptMissing = true;
+    private final ObjectIDSet missingObjects = new ObjectIDSet();
+    private final TCLogger logger = TCLogging.getLogger(PassiveGarbageCollectionManager.class);
 
     @Override
     public void deleteObjects(SortedSet<ObjectID> objects) {
-      // Passive doesn't do inline dgc.
+      activeGCManager.deleteObjects(objects);
+    }
+
+    @Override
+    public void missingObjectsToDelete(final Set<ObjectID> objects) {
+      if (acceptMissing) {
+        missingObjects.addAll(objects);
+      } else {
+        activeGCManager.missingObjectsToDelete(objects);
+      }
     }
 
     @Override
     public ObjectIDSet nextObjectsToDelete() {
-      throw new AssertionError("Inline-dgc should not be running on a passive.");
+      return activeGCManager.nextObjectsToDelete();
     }
 
     @Override
     public void scheduleInlineGarbageCollectionIfNecessary() {
-      throw new AssertionError("Inline-dgc should not be scheduled on a passive.");
+      activeGCManager.scheduleInlineGarbageCollectionIfNecessary();
     }
 
     @Override
@@ -118,7 +136,11 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
 
     @Override
     public void l2StateChanged(StateChangedEvent sce) {
-      // do nothing.
+      if (StateManager.PASSIVE_STANDBY.equals(sce.getCurrentState())) {
+        acceptMissing = false;
+        deleteObjects(missingObjects);
+        missingObjects.clear();
+      }
     }
   }
 }

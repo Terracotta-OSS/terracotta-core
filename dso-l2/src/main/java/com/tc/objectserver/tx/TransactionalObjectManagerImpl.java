@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentMap;
  * server. It wraps calls going to object manager from lookup, apply, commit stages
  */
 public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
-
   private static final TCLogger                                       logger                  = TCLogging
                                                                                                   .getLogger(TransactionalObjectManagerImpl.class);
 
@@ -197,14 +196,15 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     } else {
       ServerTransactionID txnID = txn.getServerTransactionID();
+      Collection<ObjectID> missingObjects;
       if (grouping == null) {
         grouping = new TxnObjectGrouping(txnID);
-        addObjectsToGrouping(txn.getObjectIDs(), grouping);
+        missingObjects = addObjectsToGrouping(txn.getObjectIDs(), grouping, txn.ignorableObjects());
       } else {
-        addObjectsToGrouping(txn.getNewObjectIDs(), grouping);
+        missingObjects = addObjectsToGrouping(txn.getNewObjectIDs(), grouping, txn.ignorableObjects());
       }
       applyPendingTxns.put(txnID, grouping);
-      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, grouping.getObjects(txn.getObjectIDs()), needsApply, grouping));
+      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, grouping, needsApply, missingObjects));
       makeUnpending(txn);
 //      log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
     }
@@ -212,20 +212,29 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   public String shortDescription() {
     return "TxnObjectManager : checked Out count = " + this.checkedOutObjects.size() + " pending txns = "
-           + this.pendingTxnList.size() + " pending object requests = " + this.pendingObjectRequest.size();
+           + this.pendingTxnList.size() + " pending object requests = " + this.pendingObjectRequest.size()
+           + " live object checkouts = " + liveObjectGroupings.size();
   }
 
-  private void addObjectsToGrouping(Collection<ObjectID> oids, TxnObjectGrouping txnObjectGrouping) {
+  private Collection<ObjectID> addObjectsToGrouping(Collection<ObjectID> oids, TxnObjectGrouping txnObjectGrouping, Set<ObjectID> missingOKObjects) {
+    Collection<ObjectID> missingObjects = new HashSet<ObjectID>();
     for (ObjectID oid : oids) {
       ManagedObject mo = checkedOutObjects.remove(oid);
       if (mo == null) {
-        dumpToLogger();
-        log("NULL !! " + oid + " not found ! " + oids);
-        throw new AssertionError("Object is NULL !! : " + oid);
+        if (!missingOKObjects.contains(oid)) {
+          dumpToLogger();
+          log("NULL !! " + oid + " not found ! " + oids);
+          throw new AssertionError("Object is NULL !! : " + oid);
+        } else {
+          log("Missing " + oid + ", skipping apply.");
+          missingObjects.add(oid);
+        }
+      } else {
+        txnObjectGrouping.addObject(oid, mo);
+        liveObjectGroupings.put(oid, txnObjectGrouping);
       }
-      txnObjectGrouping.addObject(oid, mo);
-      liveObjectGroupings.put(oid, txnObjectGrouping);
     }
+    return missingObjects;
   }
 
   private void dumpToLogger() {
@@ -240,12 +249,14 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private synchronized void addLookedupObjects(LookupContext context) {
     Map<ObjectID, ManagedObject> lookedUpObjects = context.getLookedUpObjects();
-    if (lookedUpObjects == null || lookedUpObjects.isEmpty()) { throw new AssertionError("Lookedup object is null : "
-                                                                                         + lookedUpObjects
-                                                                                         + " context = " + context); }
+    if (lookedUpObjects == null) { throw new AssertionError("Lookedup object is null : " + lookedUpObjects + " context = " + context); }
     for (Entry<ObjectID, ManagedObject> e : lookedUpObjects.entrySet()) {
       this.pendingObjectRequest.remove(e.getKey());
       this.checkedOutObjects.put(e.getKey(), e.getValue());
+    }
+
+    for (ObjectID missingObject : context.getMissingObjects()) {
+      pendingObjectRequest.remove(missingObject);
     }
   }
 
@@ -293,6 +304,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       for (ManagedObject mo : grouping.getObjects()) {
         liveObjectGroupings.remove(mo.getID());
       }
+      applyInfo.setCommitNow(true);
+    } else {
+      applyInfo.setCommitNow(false);
     }
   }
 
@@ -310,13 +324,14 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     private boolean                      pending    = false;
     private boolean                      resultsSet = false;
     private Map<ObjectID, ManagedObject> lookedUpObjects;
+    private Set<ObjectID> missingObjects;
 
-    public LookupContext(ObjectIDSet oids, ServerTransaction txn) {
+    LookupContext(ObjectIDSet oids, ServerTransaction txn) {
       this.oids = oids;
       this.txn = txn;
     }
 
-    public synchronized void makePending() {
+    synchronized void makePending() {
       this.pending = true;
       if (this.resultsSet) {
         TransactionalObjectManagerImpl.this.addProcessedPending(this);
@@ -327,14 +342,19 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     public synchronized void setResults(ObjectManagerLookupResults results) {
       this.lookedUpObjects = results.getObjects();
       assertNoMissingObjects(results.getMissingObjectIDs());
+      missingObjects = results.getMissingObjectIDs();
       this.resultsSet = true;
       if (this.pending) {
         TransactionalObjectManagerImpl.this.addProcessedPending(this);
       }
     }
 
-    public synchronized Map<ObjectID, ManagedObject> getLookedUpObjects() {
+    synchronized Map<ObjectID, ManagedObject> getLookedUpObjects() {
       return this.lookedUpObjects;
+    }
+
+    synchronized Set<ObjectID> getMissingObjects() {
+      return missingObjects;
     }
 
     @Override
@@ -342,7 +362,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return "LookupContext [ txnID = " + this.txn.getServerTransactionID() + ", oids = " + this.oids + ", seqID = "
              + this.txn.getClientSequenceID() + ", clientTxnID = " + this.txn.getTransactionID() + ", numTxn = "
              + this.txn.getNumApplicationTxn() + "] = { pending = " + this.pending + ", lookedupObjects.size() = "
-             + (this.lookedUpObjects == null ? "0" : Integer.toString(this.lookedUpObjects.size())) + "}";
+             + (this.lookedUpObjects == null ? "0" : this.lookedUpObjects.size()) + ", missingOKObjects= " + txn.ignorableObjects() + "}";
     }
 
     @Override
@@ -356,7 +376,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     private void assertNoMissingObjects(ObjectIDSet missing) {
-      if (!missing.isEmpty()) { throw new AssertionError("Lookup for non-exisistent Objects : " + missing
+      if (!txn.ignorableObjects().containsAll(missing)) {
+        throw new AssertionError("Lookup for non-exisistent Objects : " + missing
                                                          + " lookup context is : " + this); }
     }
 

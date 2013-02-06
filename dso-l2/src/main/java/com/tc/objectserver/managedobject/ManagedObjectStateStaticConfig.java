@@ -30,6 +30,7 @@ public enum ManagedObjectStateStaticConfig {
    */
   SERIALIZED_CLUSTER_OBJECT(ToolkitTypeNames.SERIALIZED_CLUSTERED_OBJECT_IMPL,
       Factory.SERIALIZED_CLUSTERED_OBJECT_FACTORY),
+
   /**
    * Toolkit Serializer map - reuses map managed object state
    */
@@ -52,7 +53,7 @@ public enum ManagedObjectStateStaticConfig {
   SERIALIZED_MAP_VALUE(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**
-   * CustomeLifespanSerializedEntry - explicit state factory
+   * CustomLifespanSerializedEntry - explicit state factory
    */
   CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE,
       Factory.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY),

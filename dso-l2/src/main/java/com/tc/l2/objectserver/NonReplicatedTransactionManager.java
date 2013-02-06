@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 
@@ -21,7 +22,7 @@ public class NonReplicatedTransactionManager implements ReplicatedTransactionMan
   }
 
   @Override
-  public void addObjectSyncTransaction(ServerTransaction txn) {
+  public void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects) {
     throw new AssertionError("Shouldn't be called");
   }
 

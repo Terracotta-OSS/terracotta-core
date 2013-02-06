@@ -19,6 +19,11 @@ public class TestDNA implements DNA {
   public ObjectID  parentObjectID = ObjectID.NULL_ID;
   public boolean   isDelta;
 
+  @Override
+  public boolean isIgnoreMissing() {
+    return false;
+  }
+
   public TestDNA(DNACursor cursor) {
     this.cursor = cursor;
   }

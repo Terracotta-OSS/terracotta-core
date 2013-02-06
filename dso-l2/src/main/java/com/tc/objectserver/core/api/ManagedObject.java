@@ -43,8 +43,6 @@ public interface ManagedObject {
 
   public boolean isNew();
 
-  public boolean isNewInDB();
-
   public void setIsNew(boolean isNew);
 
   public ManagedObjectState getManagedObjectState();

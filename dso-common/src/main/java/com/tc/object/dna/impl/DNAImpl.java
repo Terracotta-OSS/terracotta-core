@@ -42,6 +42,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   private int                              actionCount           = 0;
   private int                              origActionCount;
   private boolean                          isDelta;
+  private boolean                          ignoreMissing;
 
   // Header info; parsed on deserializeFrom()
   private ObjectID                         id;
@@ -322,6 +323,8 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
       this.arrayLength = DNA.NULL_ARRAY_SIZE;
     }
 
+    ignoreMissing = Conversion.getFlag(flags, DNA.IGNORE_MISSING_OBJECT);
+
     if (hasMetaData()) {
       TCByteBufferInput metaDataInput = this.input.duplicate();
       metaDataInput.skip(metaDataOffset - (this.input.getTotalLength() - this.input.available()));
@@ -339,6 +342,11 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   @Override
   public boolean isDelta() {
     return this.isDelta;
+  }
+
+  @Override
+  public boolean isIgnoreMissing() {
+    return ignoreMissing;
   }
 
   @Override

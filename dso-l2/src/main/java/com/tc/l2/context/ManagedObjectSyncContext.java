@@ -32,6 +32,7 @@ public class ManagedObjectSyncContext implements EventContext {
   private long                        sequenceID;
   private ObjectIDSet                 syncedOids    = TCCollections.EMPTY_OBJECT_ID_SET;
   private ObjectIDSet                 notSyncedOids = TCCollections.EMPTY_OBJECT_ID_SET;
+  private ObjectIDSet                 deletedOids = TCCollections.EMPTY_OBJECT_ID_SET;
 
   public ManagedObjectSyncContext(final NodeID nodeID, final ObjectIDSet oids, final boolean more,
                                   final int totalObjectsToSync, final int totalObjectsSynced, final long sessionId) {
@@ -77,12 +78,13 @@ public class ManagedObjectSyncContext implements EventContext {
   }
 
   public void setDehydratedBytes(ObjectIDSet synced, ObjectIDSet notSynced, TCByteBuffer[] buffers, int count,
-                                 ObjectStringSerializer os) {
+                                 ObjectStringSerializer os, final ObjectIDSet deletedObjects) {
     this.syncedOids = synced;
     this.notSyncedOids = notSynced;
     this.dnas = buffers;
     this.dnaCount = count;
     this.serializer = os;
+    this.deletedOids = deletedObjects;
   }
 
   public NodeID getNodeID() {
@@ -127,10 +129,6 @@ public class ManagedObjectSyncContext implements EventContext {
            + this.requestedOids + " ,  rootsMap = " + this.rootsMap + " , more = " + this.more + "]";
   }
 
-  public boolean updateStats() {
-    return true;
-  }
-
   public ObjectIDSet getSynchedOids() {
     return syncedOids;
   }
@@ -139,4 +137,7 @@ public class ManagedObjectSyncContext implements EventContext {
     return notSyncedOids;
   }
 
+  public ObjectIDSet getDeletedOids() {
+    return deletedOids;
+  }
 }

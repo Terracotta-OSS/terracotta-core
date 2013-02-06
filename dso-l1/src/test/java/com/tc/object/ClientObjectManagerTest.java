@@ -503,6 +503,10 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return false;
     }
 
+    @Override
+    public boolean isIgnoreMissing() {
+      return false;
+    }
   }
 
   private static class TestMutualReferenceObjectFactory implements TCObjectFactory {

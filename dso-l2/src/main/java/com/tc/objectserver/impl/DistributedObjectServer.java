@@ -165,9 +165,11 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.impl.DGCOperatorEventPublisher;
 import com.tc.objectserver.dgc.impl.GCControllerImpl;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
+import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
@@ -602,23 +604,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final SequenceValidator sequenceValidator = new SequenceValidator(0);
 
-    final long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc")
-        .getLong("enterpriseMarkStageInterval");
-    final TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
-    final boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
-    final long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
-
     final ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
-                                                                            restartable, enableYoungGenDGC,
-                                                                            youngGenDGCFrequency,
-                                                                            enterpriseMarkStageInterval);
+            restartable);
 
     final Stage garbageCollectStage = stageManager.createStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE,
                                                                new GarbageCollectHandler(objectManagerConfig,
-                                                                                         gcPublisher), 1, -1);
+                                                                                         gcPublisher, persistor.getPersistenceTransactionProvider()),
+        1, -1);
 
-    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
-                                                                     clientObjectReferenceSet);
+    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink()
+    );
     toInit.add(this.garbageCollectionManager);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
@@ -781,7 +776,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                      channelManager);
 
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
-                             maxStageSize);
+        maxStageSize);
 
     // Lookup stage should never be blocked trying to add to apply stage
     int applyStageThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS, 8);
@@ -810,7 +805,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                      changesPerBroadcast,
                                                                                      invalidateObjMgr);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
-                             maxStageSize);
+        maxStageSize);
     final Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                        new RequestLockUnLockHandler(), stageWorkerThreadCount, 1,
                                                        maxStageSize);
@@ -864,7 +859,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE,
-                             new ServerMapEvictionBroadcastHandler(broadcastCounter), 1, maxStageSize);
+        new ServerMapEvictionBroadcastHandler(broadcastCounter), 1, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE,
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
@@ -898,15 +893,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                           new JMXEventsHandler(appEvents), 1, maxStageSize);
 
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
-                                                                 new ClientConnectEventHandler(), 1, maxStageSize);
+        new ClientConnectEventHandler(), 1, maxStageSize);
 
     final Stage jmxRemoteDisconnectStage = stageManager
         .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, new ClientConnectEventHandler(), 1,
-                     maxStageSize);
+            maxStageSize);
 
     cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
-                                                                cteh, 1, maxStageSize);
+        cteh, 1, maxStageSize);
 
     final Stage clientLockStatisticsRespondStage = stageManager
         .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_RESPOND_STAGE,
@@ -916,9 +911,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
-                      transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
-                      clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
-                      searchQueryRequestStage);
+        transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
+        clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
+        searchQueryRequestStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
@@ -960,13 +955,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final MutableSequence dgcSequence = persistor.getSequenceManager()
         .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
-    final GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig,
-                                                                          this.objectManager, this.clientStateManager,
-                                                                          stageManager, maxStageSize, gcPublisher,
-                                                                          this.objectManager, this.clientStateManager,
-                                                                          getGcStatsEventPublisher(),
-                                                                          dgcSequenceProvider, this.transactionManager,
-                                                                          this.garbageCollectionManager);
+    final GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, this.objectManager,
+            this.clientStateManager, gcPublisher,
+            dgcSequenceProvider,
+            garbageCollectionManager);
+    gc.addListener(getGcStatsEventPublisher());
+    gc.addListener(new DGCOperatorEventPublisher());
+
     this.objectManager.setGarbageCollector(gc);
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(new GCControllerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
@@ -977,14 +972,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }
     });
 
-    // TODO: currently making all with L2hacoordinator which should probably the case after this feature
     final WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
                                                                                                      channelManager,
                                                                                                      transactionBatchManager,
                                                                                                      this.transactionManager,
                                                                                                      host, serverPort);
-    logger.info("L2 Networked HA Enabled ");
-    this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink, persistor.getStorageManager());
+    this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink,
+        persistor.getStorageManager());
 
     SequenceGenerator indexSequenceGenerator = new SequenceGenerator();
 

@@ -50,6 +50,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.UUID;
 
 import java.util.Collections;
@@ -235,7 +236,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
     message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
                                                new TransactionID(342)), dnaOids, count, serializedDNAs,
-                       objectSerializer, roots, sID);
+                       objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
     sendGroupMessage(message);
   }
 

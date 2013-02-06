@@ -32,6 +32,11 @@ public class VersionizedDNAWrapper implements DNA {
   }
 
   @Override
+  public boolean isIgnoreMissing() {
+    return dna.isIgnoreMissing();
+  }
+
+  @Override
   public long getVersion() {
     return version;
   }

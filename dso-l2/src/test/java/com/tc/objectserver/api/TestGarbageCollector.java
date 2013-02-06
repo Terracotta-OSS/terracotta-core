@@ -316,21 +316,6 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   @Override
-  public void notifyNewObjectInitalized(final ObjectID id) {
-    // NOP
-  }
-
-  @Override
-  public void notifyObjectCreated(final ObjectID id) {
-    // NOP
-  }
-
-  @Override
-  public void notifyObjectsEvicted(final Collection evicted) {
-    // NOP
-  }
-
-  @Override
   public synchronized boolean requestGCStart() {
     if (!this.isStarted) {
       this.isStarted = true;

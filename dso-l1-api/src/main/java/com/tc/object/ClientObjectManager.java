@@ -249,6 +249,16 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
   public TCObject lookup(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
+   * Find a managed object quietly by id.
+   *
+   * @param id Identifier
+   * @return Managed object
+   * @throws ClassNotFoundException If a class needed to hydrate cannot be found
+   * @throws AbortedOperationException
+   */
+  public TCObject lookupQuiet(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
+
+  /**
    * Find managed object by instance, which may be null
    * 
    * @param pojo Instance

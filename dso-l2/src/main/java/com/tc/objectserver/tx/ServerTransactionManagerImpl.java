@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -354,6 +353,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final boolean active = isActive();
 
     for (DNA orgDNA : changes) {
+      if (applyInfo.isObjectIgnored(orgDNA.getObjectID())) {
+        // Just skip broadcasts for changes that are ignorable and missing objects.
+        Assert.assertTrue(orgDNA.isIgnoreMissing());
+        applyInfo.ignoreBroadcastFor(orgDNA.getObjectID());
+        continue;
+      }
       long version = orgDNA.getVersion();
       if (version == DNA.NULL_VERSION) {
         Assert.assertFalse(gtxID.isNull());
@@ -391,6 +396,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     this.gtxm.commit(stxnID);
   }
+  
+  @Override
+  public void cleanup(Set<ObjectID> delete) {
+      this.objectManager.deleteObjects(delete);
+  }
 
   @Override
   public void skipApplyAndCommit(final ServerTransaction txn) {
@@ -414,10 +424,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   @Override
   public void commit(final Collection<ManagedObject> objects,
                      final Map<String, ObjectID> newRoots,
-                     final Collection<ServerTransactionID> appliedServerTransactionIDs,
-                     final SortedSet<ObjectID> deletedObjects) {
+                     final Collection<ServerTransactionID> appliedServerTransactionIDs) {
     this.objectManager.releaseAll(objects);
-    this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
     if (this.commitLoggingEnabled) {

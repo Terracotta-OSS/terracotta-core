@@ -73,6 +73,11 @@ public final class ServerMapEvictionDNA implements DNAInternal {
   }
 
   @Override
+  public boolean isIgnoreMissing() {
+    return false;
+  }
+
+  @Override
   public MetaDataReader getMetaDataReader() {
     return new ServerMapEvictionMetaDataReader(oid, cacheName, evictionCandidates);
   }

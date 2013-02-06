@@ -44,6 +44,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
+import com.tc.util.TCCollections;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
@@ -325,7 +326,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
     message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
                                                new TransactionID(342)), dnaOids, count, serializedDNAs,
-                       objectSerializer, roots, sID);
+                       objectSerializer, roots, sID, TCCollections.EMPTY_OBJECT_ID_SET);
     return (message);
   }
 

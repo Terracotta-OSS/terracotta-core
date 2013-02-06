@@ -229,7 +229,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     return lastAccessedTime;
   }
 
-  public synchronized void internalSetValue(byte[] valueParam) {
+  public void internalSetValue(byte[] valueParam) {
     this.value = valueParam;
   }
 
@@ -283,7 +283,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
         registerTransactionListener(key, tcObjectServerMap);
 
         this.lastAccessedTime = usedAtTime;
-        this.logicalInvoke(SerializationUtil.FIELD_CHANGED, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
+        this.logicalInvoke(SerializationUtil.IGNORABLE_FIELD_CHANGE, SerializationUtil.IGNORABLE_FIELD_CHANGE_SIGNATURE, new Object[] {
             SerializedMapValueApplicator.LAST_ACCESS_TIME_FIELD_NAME, usedAtTime });
       }
     } finally {

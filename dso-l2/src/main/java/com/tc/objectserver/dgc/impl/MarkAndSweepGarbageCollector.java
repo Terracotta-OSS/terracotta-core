@@ -38,7 +38,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   private final GarbageCollectionManager       garbageCollectionManager;
 
   private volatile ChangeCollector             referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
-  private volatile YoungGenChangeCollector     youngGenReferenceCollector = YoungGenChangeCollector.NULL_YOUNG_CHANGE_COLLECTOR;
   protected volatile boolean                   started                    = false;
   protected volatile LifeCycleState            gcState                    = NULL_LIFECYCLE_STATE;
 
@@ -66,9 +65,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
       case INLINE_CLEANUP_GC:
         hook = new FullGCHook(this, this.objectManager, this.stateManager, true);
         break;
-      case YOUNG_GEN_GC:
-        hook = new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector, false);
-        break;
     }
     final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
                                                                        this.dgcSequenceProvider.getNextId());
@@ -77,7 +73,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
 
   @Override
   public void deleteGarbage(final DGCResultContext dgcResultContext) {
-    youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
     objectManager.notifyGCComplete(dgcResultContext);
     notifyGCComplete();
 
@@ -91,32 +86,15 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
 
   public void startMonitoringReferenceChanges() {
     this.referenceCollector = new NewReferenceCollector();
-    this.youngGenReferenceCollector.startMonitoringChanges();
   }
 
   public void stopMonitoringReferenceChanges() {
     this.referenceCollector = ChangeCollector.NULL_CHANGE_COLLECTOR;
-    this.youngGenReferenceCollector.stopMonitoringChanges();
   }
 
   @Override
   public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
     this.referenceCollector.changed(changedObject, oldReference, newReference);
-  }
-
-  @Override
-  public void notifyObjectCreated(final ObjectID id) {
-    this.youngGenReferenceCollector.notifyObjectCreated(id);
-  }
-
-  @Override
-  public void notifyNewObjectInitalized(final ObjectID id) {
-    this.youngGenReferenceCollector.notifyObjectInitalized(id);
-  }
-
-  @Override
-  public void notifyObjectsEvicted(final Collection evicted) {
-    this.youngGenReferenceCollector.notifyObjectsEvicted(evicted);
   }
 
   public void addNewReferencesTo(final Set rescueIds) {
@@ -143,9 +121,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
 
   @Override
   public void start() {
-    if (this.objectManagerConfig.isYoungGenDGCEnabled()) {
-      this.youngGenReferenceCollector = new YoungGenChangeCollectorImpl();
-    }
     this.started = true;
     this.gcState.start();
     garbageCollectionManager.scheduleInlineCleanupIfNecessary();

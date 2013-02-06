@@ -22,7 +22,10 @@ public interface TCPropertiesConsts {
       "l2.nha.mcast.enabled", "l2.nha.tcgroupcomm.response.timelimit", "net.core.recv.buffer", "net.core.send.buffer",
       "l2.objectmanager.loadObjectID.measure.performance", "console.showObjectID", "l2.lfu.debug.enabled",
       "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad", "l2.objectmanager.loadObjectID.fastLoad",
-      "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize"          };
+      "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize", "l2.objectmanager.dgc.young.enabled",
+      "l2.objectmanager.dgc.young.frequencyInMillis", "l2.objectmanager.dgc.enterpriseMarkStageInterval",
+      "l2.objectmanager.dgc.faulting.optimization"
+  };
 
   /*********************************************************************************************************************
    * <code>
@@ -126,15 +129,6 @@ public interface TCPropertiesConsts {
    *                                 requests for references from object manager
    * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
    *                                 from object manager after which dgc will throttle
-   * dgc.faulting.optimization      - This property will not fault in objects that has no references during DGC mark stage
-   *                                   0 - disable faulting optimization
-   *                                   1 - enabled with standard implementation (continous oids)
-   *                                   2 - enabled with compressed implementation (spare oids)
-   * dgc.enterpriseMarkStageInterval - The time between tokens are sent to see if each L2 finished marking (collect/rescue).
-   *                                   This is for enterprise only.
-   * dgc.young.enabled              - Enables/Disables the young gen collector
-   * dgc.young.frequencyInMillis    - The time in millis between each young gen collection.
-   *                                  (default : 1 min, not advisable to run more frequently)
    * dgc.inline.enabled             - Enables/disable inline dgc of CDSMs.
    * dgc.inline.intervalInSeconds   - Interval in seconds at which to delete objects selected by inline dgc.
    * dgc.inline.maxObjects          - Maximum inline dgc batch size
@@ -165,10 +159,6 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_PENDING_MSGS            = "l2.objectmanager.passive.sync.throttle.maxPendingMessages";
   public static final String L2_OBJECTMANAGER_DGC_THROTTLE_TIME                             = "l2.objectmanager.dgc.throttle.timeInMillis";
   public static final String L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                      = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
-  public static final String L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION                     = "l2.objectmanager.dgc.faulting.optimization";
-  public static final String L2_OBJECTMANAGER_DGC_YOUNG_ENABLED                             = "l2.objectmanager.dgc.young.enabled";
-  public static final String L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                           = "l2.objectmanager.dgc.young.frequencyInMillis";
-  public static final String L2_OBJECTMANAGER_DGC_ENTERPRISE_MARK_STAGE_INTERVAL            = "l2.objectmanager.dgc.enterpriseMarkStageInterval";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_ENABLED                            = "l2.objectmanager.dgc.inline.enabled";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS                   = "l2.objectmanager.dgc.inline.intervalInSeconds";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS                        = "l2.objectmanager.dgc.inline.maxObjects";

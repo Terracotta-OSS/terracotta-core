@@ -26,6 +26,7 @@ public interface DNA {
   public static final byte HAS_PARENT_ID    = 1 << 1;
   public static final byte IS_DELTA         = 1 << 2;
   public static final byte HAS_VERSION      = 1 << 3;
+  public static final byte IGNORE_MISSING_OBJECT = 1 << 4;
 
   /**
    * Get the version of this DNA based on the global transaction ID, may be {@link #NULL_VERSION}.
@@ -86,4 +87,5 @@ public interface DNA {
    */
   public DNACursor getCursor();
 
+  public boolean isIgnoreMissing();
 }

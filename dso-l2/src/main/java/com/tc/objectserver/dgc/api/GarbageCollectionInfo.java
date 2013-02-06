@@ -13,7 +13,7 @@ import java.io.IOException;
 
 public class GarbageCollectionInfo implements TCSerializable {
   public static enum Type {
-    NULL_GC, FULL_GC, YOUNG_GC, INLINE_CLEANUP, INLINE_GC
+    NULL_GC, FULL_GC, INLINE_CLEANUP, INLINE_GC
   }
 
   protected static final long               NOT_INITIALIZED       = -1L;

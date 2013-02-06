@@ -27,8 +27,6 @@ import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-import gnu.trove.TLinkable;
-
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.Serializable;
@@ -42,27 +40,18 @@ import java.util.Set;
 public class TestManagedObject implements ManagedObject, ManagedObjectReference, Serializable {
   public final NoExceptionLinkedQueue   setTransientStateCalls   = new NoExceptionLinkedQueue();
 
-  public static final TestManagedObject NULL_TEST_MANAGED_OBJECT = new TestManagedObject(new ObjectID(-1));
   private final ObjectID                id;
   private final ArrayList<ObjectID>     references;
   public boolean                        isDirty;
   public boolean                        isNew;
-  public boolean                        noReferences;
-  TLinkable                             next                     = null;
-  TLinkable                             previous                 = null;
 
   public TestManagedObject(final ObjectID id, final ArrayList<ObjectID> references) {
-    this(id, references, false);
-  }
-
-  public TestManagedObject(final ObjectID id, final ArrayList<ObjectID> references, final boolean noReferences) {
     this.id = id;
     this.references = references;
-    this.noReferences = noReferences;
   }
 
   public TestManagedObject(final ObjectID id) {
-    this(id, new ArrayList<ObjectID>(), false);
+    this(id, new ArrayList<ObjectID>());
   }
 
   public void setReference(final int index, final ObjectID id) {
@@ -137,11 +126,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return this.isNew;
   }
 
-  @Override
-  public boolean isNewInDB() {
-    return false;
-  }
-
   public void setTransientState(final ManagedObjectStateFactory stateFactory) {
     this.setTransientStateCalls.put(stateFactory);
   }
@@ -200,7 +184,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   @Override
   public ManagedObjectState getManagedObjectState() {
-    return this.noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
+    return new NullManagedObjectState();
   }
 
   @Override
@@ -234,14 +218,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     out.writeLong(getVersion());
     out.writeLong(getObjectID().toLong());
     stateSerializer.serializeTo(getManagedObjectState(), out);
-  }
-
-  private class NullNoReferencesManagedObjectState extends NullManagedObjectState {
-
-    @Override
-    public boolean hasNoReferences() {
-      return true;
-    }
   }
 
   private class NullManagedObjectState extends AbstractManagedObjectState {

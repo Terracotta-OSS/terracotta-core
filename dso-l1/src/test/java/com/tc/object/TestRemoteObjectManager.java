@@ -145,6 +145,11 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     public boolean isDelta() {
       throw new ImplementMe();
     }
+
+    @Override
+    public boolean isIgnoreMissing() {
+      return false;
+    }
   }
 
   @Override

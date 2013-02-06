@@ -134,34 +134,30 @@ public class ServerMapEvictionEngine {
   }
 
   void evictFrom(final ObjectID oid, final Map candidates, final String className, final String cacheName) {
-
-    try {
-        if ( candidates.isEmpty() ) {
-          notifyEvictionCompletedFor(oid);
-          return;
-        }
-
-        if (EVICTOR_LOGGING) {
-          logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
-        }
-    
-        final NodeID localNodeID = this.groupManager.getLocalNodeID();
-        final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-        final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
-                                                                                                          className,
-                                                                                                          candidates,
-                                                                                                          serializer,
-                                                                                                          cacheName);
-        final TransactionBatchContext batchContext = new ServerMapEvictionTransactionBatchContext(localNodeID, txn,
-                                                                                                  serializer);
-        this.transactionBatchManager.processTransactions(batchContext);
-
-        if (EVICTOR_LOGGING) {
-          logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
-        }
-    } finally {
-        broadcastEvictedEntries(oid, candidates);
+    if ( candidates.isEmpty() ) {
+      notifyEvictionCompletedFor(oid);
+      return;
     }
+
+    if (EVICTOR_LOGGING) {
+      logger.debug("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
+    }
+
+    final NodeID localNodeID = this.groupManager.getLocalNodeID();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
+    final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
+                                                                                                      className,
+                                                                                                      candidates,
+                                                                                                      serializer,
+                                                                                                      cacheName);
+    final TransactionBatchContext batchContext = new ServerMapEvictionTransactionBatchContext(localNodeID, txn,
+                                                                                              serializer);
+    this.transactionBatchManager.processTransactions(batchContext);
+
+    if (EVICTOR_LOGGING) {
+      logger.debug("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
+    }
+    broadcastEvictedEntries(oid, candidates);
   }
   
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {

@@ -70,6 +70,11 @@ public class DNAWriterImpl implements DNAWriterInternal {
   }
 
   @Override
+  public void setIgnoreMissing(final boolean ignoreMissing) {
+    flags = Conversion.setFlag(flags, DNA.IGNORE_MISSING_OBJECT, ignoreMissing);
+  }
+
+  @Override
   public DNAWriter createAppender() {
     if (contiguous) {
       contiguous = !hasMetaData && (output.getBytesWritten() == lastStreamPos);
@@ -303,6 +308,12 @@ public class DNAWriterImpl implements DNAWriterInternal {
       this.parent = parent;
       this.output = output;
       this.startMark = output.mark();
+    }
+
+    @Override
+    public void setIgnoreMissing(final boolean ignoreMissing) {
+      // TODO: Is this actually correct?
+      parent.setIgnoreMissing(ignoreMissing);
     }
 
     void copyMetaDataTo(TCByteBufferOutput dest) {

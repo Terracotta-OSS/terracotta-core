@@ -69,23 +69,18 @@ public class ManagedObjectTest extends TCTestCase {
 
     assertTrue(mo.isDirty());
     assertTrue(mo.isNew());
-    assertTrue(mo.isNewInDB());
 
     mo.setIsDirty(true);
     assertTrue(mo.isDirty());
-    assertTrue(mo.isNewInDB());
 
     mo.setIsDirty(false);
     assertFalse(mo.isDirty());
-    assertFalse(mo.isNewInDB());
 
     mo.setIsDirty(true);
     assertTrue(mo.isDirty());
-    assertFalse(mo.isNewInDB());
 
     mo.setIsDirty(false);
     assertFalse(mo.isDirty());
-    assertFalse(mo.isNewInDB());
 
   }
 

@@ -154,7 +154,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
       m.toDNA(out, objectStringSerializer, DNAType.L2_SYNC);
     }
     managedObjectSyncContext.setDehydratedBytes(oidSet, TCCollections.EMPTY_OBJECT_ID_SET, out.toArray(),
-                                                (int) oidsCount, objectStringSerializer);
+                                                (int) oidsCount, objectStringSerializer, TCCollections.EMPTY_OBJECT_ID_SET);
     managedObjectSyncContext.setSequenceID(11);
 
     final ObjectSyncMessage osm = ObjectSyncMessageFactory

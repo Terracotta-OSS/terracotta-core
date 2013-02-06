@@ -603,6 +603,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return lookup(id, null, false, false);
   }
 
+  @Override
+  public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
+    return lookup(id, null, false, true);
+  }
   private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
       throws AbortedOperationException, ClassNotFoundException {
     TCObject obj = null;

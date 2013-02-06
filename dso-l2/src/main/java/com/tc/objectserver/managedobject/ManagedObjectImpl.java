@@ -50,10 +50,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private final static byte                IS_DIRTY_OFFSET          = 2;
   private final static byte                REFERENCED_OFFSET        = 4;
   private final static byte                REMOVE_ON_RELEASE_OFFSET = 8;
-  private final static byte                IS_DB_NEW_OFFSET         = 32;
 
-  private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET
-                                                                      | IS_DB_NEW_OFFSET;
+  private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
 
   private static final long                UNINITIALIZED_VERSION    = -1;
 
@@ -62,7 +60,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private transient ManagedObjectState     state;
 
   // TODO::Split this flag into two so that concurrency is maintained
-  private volatile transient byte          flags                    = INITIAL_FLAG_VALUE;
+  private byte                             flags                    = INITIAL_FLAG_VALUE;
 
   private final ManagedObjectPersistor persistor;
 
@@ -94,11 +92,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   private void setBasicIsDirty(final boolean isDirty) {
-    if (isDirty) {
-      setFlag(IS_DIRTY_OFFSET, isDirty);
-    } else {
-      setFlag(IS_DIRTY_OFFSET | IS_DB_NEW_OFFSET, isDirty);
-    }
+    setFlag(IS_DIRTY_OFFSET, isDirty);
   }
 
   private synchronized boolean compareAndSetFlag(final int offset, final boolean expected, final boolean value) {
@@ -120,11 +114,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   @Override
   public boolean isNew() {
     return getFlag(IS_NEW_OFFSET);
-  }
-
-  @Override
-  public boolean isNewInDB() {
-    return getFlag(IS_DB_NEW_OFFSET);
   }
 
   @Override
@@ -201,6 +190,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
     // TODO: Do something about that null.
     persistor.saveObject(null, this);
+
     // Not unsetting isNew() flag on apply, but rather on release
     // setBasicIsNew(false);
   }
@@ -287,7 +277,9 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   @Override
   public boolean isRemoveOnRelease() {
     // Serialized entries are always remove on release
-    return (state != null && state instanceof TDCSerializedEntryManagedObjectState) || getFlag(REMOVE_ON_RELEASE_OFFSET);
+    return (state != null && state instanceof TDCSerializedEntryManagedObjectState)
+            || getFlag(REMOVE_ON_RELEASE_OFFSET);
+
   }
   
   @Override

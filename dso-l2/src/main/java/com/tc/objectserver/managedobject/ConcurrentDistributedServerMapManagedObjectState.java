@@ -36,10 +36,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   private static final TCLogger LOGGER                         = TCLogging
                                                                    .getLogger(ConcurrentDistributedServerMapManagedObjectState.class);
-  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE  = TCPropertiesImpl
-                                                                   .getProperties()
-                                                                   .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
-                                                                               true);
 
   public static final String    CACHE_NAME_FIELDNAME           = "cacheName";
   public static final String    INVALIDATE_ON_CHANGE_FIELDNAME = "invalidateOnChange";
@@ -265,9 +261,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (invalidateOnChange) {
       applyInfo.invalidate(mapID, old);
     }
-    if (ENABLE_DELETE_VALUE_ON_REMOVE) {
       applyInfo.deleteObject(old);
-    }
   }
 
   @Override
@@ -278,13 +272,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
     // Does not need to be batched here since deletion batching will happen in the lower layers.
-    if (ENABLE_DELETE_VALUE_ON_REMOVE) {
       for (Object o : values) {
         if (o instanceof ObjectID) {
           applyInfo.deleteObject((ObjectID) o);
         }
       }
-    }
   }
 
   private void applyRemoveIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, final Object[] params) {
@@ -409,7 +401,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
  //  locked by ManagedObject checkout
   @Override
-  public synchronized boolean startEviction() {
+  public boolean startEviction() {
     // do not start eviction if it is turned off
     if (!this.evictionEnabled || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
         return false;
@@ -419,12 +411,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  public synchronized boolean isEvicting() {
+  public boolean isEvicting() {
       return this.evictionStatus != EvictionStatus.NOT_INITIATED;
   }
  //  locked by ManagedObject checkout
   @Override
-  public synchronized void evictionCompleted() {
+  public void evictionCompleted() {
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 

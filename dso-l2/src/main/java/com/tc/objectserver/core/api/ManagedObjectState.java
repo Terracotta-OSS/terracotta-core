@@ -61,13 +61,6 @@ public interface ManagedObjectState {
 
   public String getClassName();
 
-  /**
-   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
-   * represented by this state object will never have any reference to other objects. false : The Managed object
-   * represented by this state object can have references to other objects.
-   */
-  public boolean hasNoReferences();
-
   public void writeTo(ObjectOutput o) throws IOException;
 
   // The readFrom() method is currently a static implementation in each state object till I figure out

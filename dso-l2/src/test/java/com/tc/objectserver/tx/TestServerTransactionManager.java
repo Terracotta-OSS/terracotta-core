@@ -92,9 +92,13 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   @Override
+  public void cleanup(Set<ObjectID> deletedObjects) {
+    throw new ImplementMe();
+  }
+
+  @Override
   public void commit(Collection<ManagedObject> objects,
-                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs,
-                     SortedSet<ObjectID> deletedObjects) {
+                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs) {
     // NOP
   }
 

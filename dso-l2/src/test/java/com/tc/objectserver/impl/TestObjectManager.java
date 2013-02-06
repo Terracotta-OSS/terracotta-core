@@ -27,6 +27,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -195,7 +196,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public void deleteObjects(Set<ObjectID> objectsToDelete) {
+  public Set<ObjectID> deleteObjects(Set<ObjectID> objectsToDelete) {
     throw new ImplementMe();
   }
 
@@ -259,7 +260,12 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public ManagedObject getQuietObjectByID(ObjectID id) {
-    return getObjectByID(id);
+  public int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+    return Collections.EMPTY_SET;
   }
 }

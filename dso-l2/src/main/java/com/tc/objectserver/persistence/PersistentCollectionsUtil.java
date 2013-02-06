@@ -22,6 +22,15 @@ public class PersistentCollectionsUtil {
     }
   }
 
+  public static boolean isNoReferenceObjectType(final byte type) {
+    if (type == ManagedObjectStateStaticConfig.SERIALIZED_CLUSTER_OBJECT.getStateObjectType() ||
+            type == ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY ||
+            type == ManagedObjectState.TDC_SERIALIZED_ENTRY) {
+      return true;
+    }
+    return false;
+  }
+
   public static boolean isEvictableMapType(final byte type) {
     if (ManagedObjectStateStaticConfig.SERVER_MAP.getStateObjectType() == type) { return true; }
     return false;

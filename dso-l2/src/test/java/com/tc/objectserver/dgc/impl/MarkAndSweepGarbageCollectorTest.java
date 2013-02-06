@@ -6,25 +6,23 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
+import com.tc.objectserver.impl.NullTransactionProvider;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.impl.NullTransactionProvider;
-import com.tc.objectserver.api.TransactionProvider;
 import com.tc.util.sequence.DGCSequenceProvider;
+import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-
-import junit.framework.TestCase;
 
 public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected long                           objectIDCounter     = 0;
@@ -65,9 +63,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     this.stateManager = new TestClientStateManager();
     this.garbageCollectionManager = new TestGarbageCollectionManager();
-    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000,
-                                                                              1000), this.objectManager,
-                                                      this.stateManager, new GarbageCollectionInfoPublisherImpl(),
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true), this.objectManager,
+            this.stateManager, new GarbageCollectionInfoPublisherImpl(),
                                                       new DGCSequenceProvider(new TestMutableSequence()),
                                                       garbageCollectionManager);
     this.objectManager.setGarbageCollector(this.collector);
@@ -194,16 +191,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     assertTrue(this.lookedUp.equals(this.released));
   }
 
-  private void createLoopFrom(TestManagedObject tmo, int count) {
-    TestManagedObject prev = tmo;
-    while (count-- > 0) {
-      final TestManagedObject next = createObject(3);
-      prev.setReference(0, next.getID());
-      prev = next;
-    }
-    prev.setReference(0, tmo.getID());
-  }
-
   public void testIsInGCPause() throws Exception {
     assertFalse(this.collector.isPausingOrPaused());
     this.collector.requestGCPause();
@@ -211,64 +198,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     assertTrue(this.collector.isPausingOrPaused());
     this.collector.notifyGCComplete();
     assertFalse(this.collector.isPausingOrPaused());
-  }
-
-  public void testYoungGenGC() throws Exception {
-    // Create a loop
-    final TestManagedObject tmo1 = createObject(3);
-    createLoopFrom(tmo1, 10);
-    this.root1.setReference(0, tmo1.getID());
-
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    Set deleted = this.objectManager.getGCedObjectIDs();
-    assertTrue(deleted.isEmpty());
-
-    // Create a loop 2
-    final TestManagedObject tmo2 = createObject(3);
-    createLoopFrom(tmo2, 10);
-    this.root1.setReference(1, tmo2.getID());
-
-    // Create a loop 3
-    final TestManagedObject tmo3 = createObject(3);
-    createLoopFrom(tmo3, 10);
-    this.root1.setReference(2, tmo3.getID());
-
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertTrue(deleted.isEmpty());
-
-    // evict tmo1, still youngGen returns no garbage
-    this.objectManager.evict(tmo1.getID());
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertTrue(deleted.isEmpty());
-
-    // now make the first loop garbage, still young gen returns no garbage
-    this.root1.setReference(0, ObjectID.NULL_ID);
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertTrue(deleted.isEmpty());
-
-    // now make the second loop garbage
-    this.root1.setReference(1, ObjectID.NULL_ID);
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertFalse(deleted.isEmpty());
-    assertTrue(deleted.contains(tmo2.getID()));
-    assertEquals(11, deleted.size());
-
-    // perform yet another young generation GC, but no garbage
-    this.collector.doGC(GCType.YOUNG_GEN_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertTrue(deleted.isEmpty());
-
-    // perform full GC and find the garbage
-    this.collector.doGC(GCType.FULL_GC);
-    deleted = this.objectManager.getGCedObjectIDs();
-    assertFalse(deleted.isEmpty());
-    assertTrue(deleted.contains(tmo1.getID()));
-    assertEquals(11, deleted.size());
-
   }
 
   private ObjectID nextID() {

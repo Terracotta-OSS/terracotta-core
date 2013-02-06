@@ -57,11 +57,7 @@ public class DetailedMemoryUsage implements MemoryUsage {
 
             @Override
             public int getUsedPercentage() {
-                if ( cacheUsed > 0 ) {
-                return Math.round(cacheUsed*100f/max);
-                } else {
                 return Math.round(reserved*100f/max);
-                }
             }
 
             @Override

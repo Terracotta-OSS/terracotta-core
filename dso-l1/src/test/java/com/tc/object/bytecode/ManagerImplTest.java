@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
@@ -445,5 +446,9 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
+    @Override
+    public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
+      throw new ImplementMe();
+    }
   }
 }

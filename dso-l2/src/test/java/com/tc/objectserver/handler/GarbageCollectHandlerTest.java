@@ -31,9 +31,9 @@ import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.impl.ActiveGarbageCollectionManager;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
@@ -52,6 +52,7 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.mockito.Mockito.mock;
 
 public class GarbageCollectHandlerTest extends TCTestCase {
   {
@@ -75,6 +76,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   private SortedSet<ObjectID>      deletedObjects;
   private AtomicInteger            inlineGCCount;
   private AtomicInteger            periodicDGCCount;
+  private PersistenceTransactionProvider persistenceTransactionProvider;
 
   @Override
   protected void setUp() throws Exception {
@@ -85,14 +87,15 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     testClientId = new ClientID(1);
     clientStateManager = new ClientStateManagerImpl(logger);
     clientStateManager.startupNode(testClientId);
-    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, false, true, false, 10, 10),
-                                        new GarbageCollectionInfoPublisherImpl());
+    persistenceTransactionProvider = mock(PersistenceTransactionProvider.class);
+    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, true, false),
+                                        new GarbageCollectionInfoPublisherImpl(), persistenceTransactionProvider);
     gc = new TestGarbageCollector();
     objectManager = new TestObjectManager();
     gcStage = new MockStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE);
     gcSink = (MockSink) gcStage.getSink();
-    gcManager = new ActiveGarbageCollectionManager(gcSink, new ClientObjectReferenceSet(clientStateManager));
-    ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
+    gcManager = new ActiveGarbageCollectionManager(gcSink);
+    ServerConfigurationContext scc = mock(ServerConfigurationContext.class);
     Mockito.when(scc.getObjectManager()).thenReturn(objectManager);
     Mockito.when(scc.getStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE)).thenReturn(gcStage);
     Mockito.when(scc.getGarbageCollectionManager()).thenReturn(gcManager);
@@ -425,14 +428,15 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     }
 
     @Override
-    public ManagedObject getQuietObjectByID(ObjectID id) {
-      throw new ImplementMe();
+    public Set<ObjectID> deleteObjects(Set<ObjectID> objectsToDelete) {
+      deletedObjects.addAll(objectsToDelete);
+      inlineGCCount.incrementAndGet();
+      return Collections.EMPTY_SET;
     }
 
     @Override
-    public void deleteObjects(Set<ObjectID> objectsToDelete) {
-      deletedObjects.addAll(objectsToDelete);
-      inlineGCCount.incrementAndGet();
+    public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+      return Collections.EMPTY_SET;
     }
   }
 
@@ -474,21 +478,6 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     @Override
     public void deleteGarbage(DGCResultContext resultContext) {
-      // no-op
-    }
-
-    @Override
-    public void notifyObjectCreated(ObjectID id) {
-      // no-op
-    }
-
-    @Override
-    public void notifyNewObjectInitalized(ObjectID id) {
-      // no-op
-    }
-
-    @Override
-    public void notifyObjectsEvicted(Collection evicted) {
       // no-op
     }
   }

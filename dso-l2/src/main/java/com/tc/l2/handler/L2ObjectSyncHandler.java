@@ -148,7 +148,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     // avoid a race with completing the transaction
     this.objectSyncAckManager.addObjectSyncMessageToAck(syncMsg.getServerTransactionID(), syncMsg.getMessageID());
     final ServerTransaction txn = this.serverTransactionFactory.createTxnFrom(syncMsg);
-    this.rTxnManager.addObjectSyncTransaction(txn);
+    this.rTxnManager.addObjectSyncTransaction(txn, syncMsg.getDeletedOids());
   }
 
   @Override

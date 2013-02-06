@@ -12,7 +12,7 @@ public class ObjectSyncMessageFactory {
   public static ObjectSyncMessage createObjectSyncMessageFrom(ManagedObjectSyncContext mosc, ServerTransactionID sid) {
     ObjectSyncMessage msg = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
     msg.initialize(sid, mosc.getSynchedOids(), mosc.getDNACount(), mosc.getSerializedDNAs(),
-                   mosc.getObjectSerializer(), mosc.getRootsMap(), mosc.getSequenceID());
+                   mosc.getObjectSerializer(), mosc.getRootsMap(), mosc.getSequenceID(), mosc.getDeletedOids());
     return msg;
   }
 
