@@ -11,8 +11,6 @@ import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.LifeCycleState;
 
-import java.util.Collection;
-
 public class NullGarbageCollector implements GarbageCollector {
 
   @Override

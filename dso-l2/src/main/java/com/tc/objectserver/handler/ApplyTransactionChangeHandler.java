@@ -181,12 +181,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       }
     }
 
-    public boolean commit(Collection<ManagedObject> objectsToRelease, Map<String, ObjectID> moreRoots,
+    public boolean commit(Collection<ManagedObject> objectsToReleaseParam, Map<String, ObjectID> moreRoots,
                           ServerTransactionID stxID,
                           boolean done) {
       stxIDs.add(stxID);
       newRoots.putAll(moreRoots);
-      return commit(objectsToRelease, done);
+      return commit(objectsToReleaseParam, done);
     }
   }
 }

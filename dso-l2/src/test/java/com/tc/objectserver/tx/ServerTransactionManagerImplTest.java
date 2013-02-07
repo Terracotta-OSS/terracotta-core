@@ -39,7 +39,6 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
-import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -52,13 +51,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-
 
 import junit.framework.TestCase;
 

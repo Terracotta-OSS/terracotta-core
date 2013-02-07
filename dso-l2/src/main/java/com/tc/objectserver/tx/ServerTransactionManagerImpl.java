@@ -67,7 +67,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
                                                                                          .synchronizedMap(new HashMap<NodeID, TransactionAccount>());
   private final ClientStateManager                      stateManager;
   private final ObjectManager                           objectManager;
-  private final GarbageCollectionManager                garbageCollectionManager;
   private final ResentTransactionSequencer              resentTxnSequencer;
   private final TransactionAcknowledgeAction            action;
   private final LockManager                             lockManager;
@@ -126,7 +125,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.broadcastStatsLoggingEnabled = config.isPrintBroadcastStatsEnabled();
     this.objectStatsRecorder = objectStatsRecorder;
     this.metaDataManager = metaDataManager;
-    this.garbageCollectionManager = garbageCollectionManager;
   }
 
   @Override

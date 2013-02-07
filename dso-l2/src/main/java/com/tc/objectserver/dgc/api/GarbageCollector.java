@@ -10,8 +10,6 @@ import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
 
-import java.util.Collection;
-
 public interface GarbageCollector extends PrettyPrintable {
 
   public static enum GCType {

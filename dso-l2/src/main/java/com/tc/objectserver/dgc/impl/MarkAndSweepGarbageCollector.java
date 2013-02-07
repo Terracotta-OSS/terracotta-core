@@ -31,7 +31,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
                                                                               .getLogger(MarkAndSweepGarbageCollector.class);
 
   private final GarbageCollectionInfoPublisher gcPublisher;
-  private final ObjectManagerConfig            objectManagerConfig;
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
   private final DGCSequenceProvider            dgcSequenceProvider;
@@ -46,7 +45,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
                                       final GarbageCollectionInfoPublisher gcPublisher,
                                       final DGCSequenceProvider dgcSequenceProvider,
                                       final GarbageCollectionManager garbageCollectionManager) {
-    this.objectManagerConfig = objectManagerConfig;
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
     this.gcPublisher = gcPublisher;

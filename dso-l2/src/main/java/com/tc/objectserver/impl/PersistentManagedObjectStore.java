@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrinter;
