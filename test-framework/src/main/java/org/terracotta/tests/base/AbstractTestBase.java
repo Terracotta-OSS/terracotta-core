@@ -6,11 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.terracotta.license.util.IOUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.config.test.schema.PortConfigBuilder;
-import com.tc.config.test.schema.PortConfigBuilder.PortType;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
@@ -29,7 +26,6 @@ import com.tc.util.runtime.Vm;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,6 +46,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected static final String            SEP              = File.pathSeparator;
   private final TestConfig                 testConfig;
   private final File                       tcConfigFile;
+  private final File                       tcConfigProxyFile;
   protected TestServerManager              testServerManager;
   protected final File                     tempDir;
   protected File                           javaHome;
@@ -68,6 +65,7 @@ public abstract class AbstractTestBase extends TCTestCase {
       tempDir.mkdir();
       FileUtils.cleanDirectory(tempDir);
       tcConfigFile = getTempFile("tc-config.xml");
+      tcConfigProxyFile = getTempFile("tc-config-proxy.xml");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -128,6 +126,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         if (!testConfig.isStandAloneTest()) {
           testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome,
                                                     new FailTestCallback());
+          writeProxyTcConfigFile();
           startServers();
         }
         TestHandler testHandlerMBean = new TestHandler(testServerManager, testConfig);
@@ -139,6 +138,12 @@ public abstract class AbstractTestBase extends TCTestCase {
         e.printStackTrace();
         throw new AssertionError(e);
       }
+    }
+  }
+
+  private void writeProxyTcConfigFile() throws Exception {
+    if (testConfig.getL2Config().isProxyTsaPorts()) {
+      FileUtils.writeStringToFile(tcConfigProxyFile, testServerManager.getTsaProxyConfigFile());
     }
   }
 
@@ -459,20 +464,8 @@ public abstract class AbstractTestBase extends TCTestCase {
     this.clientRunner.stopClient(index);
   }
 
-  // writes tc-config-proxy.xml with proxy ports
-  public String getTsaProxyConfigFile() throws Exception {
-    String tcConfig = IOUtils.readToString(new FileInputStream(tcConfigFile));
-    if (testConfig.getL2Config().isProxyTsaPorts()) {
-      for (GroupsData groupData : testServerManager.getGroupsData()) {
-        for (int i = 0; i < testConfig.getGroupConfig().getMemberCount(); i++) {
-          PortConfigBuilder tsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
-          tsaPortConfig.setBindPort(groupData.getTsaPort(i));
-          PortConfigBuilder proxyTsaPortConfig = new PortConfigBuilder(PortType.TSAPORT);
-          proxyTsaPortConfig.setBindPort(groupData.getProxyTsaPort(i));
-          tcConfig.replace(tsaPortConfig.toString(), proxyTsaPortConfig.toString());
-        }
-      }
-    }
-    return tcConfig;
+  public File getTsaProxyConfigFile() {
+    return tcConfigProxyFile;
   }
+
 }
