@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
@@ -122,14 +121,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     this.lockType = tmpLockType;
 
     // eviction configuration doesn't exist for store
-    final Serializable value = InternalCacheConfigurationType.EVICTION_ENABLED
-        .getValueIfExists(config);
-    this.evictionEnabled = (value == null) ? false : (Boolean)value;
+    final Serializable value = InternalCacheConfigurationType.EVICTION_ENABLED.getValueIfExists(config);
+    this.evictionEnabled = (value == null) ? false : (Boolean) value;
 
     this.localCacheEnabled = (Boolean) InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
         .getExistingValueOrException(config);
-    this.maxCountInCluster = (Integer) InternalCacheConfigurationType.MAX_TOTAL_COUNT
-        .getValueIfExistsOrDefault(config);
+    this.maxCountInCluster = (Integer) InternalCacheConfigurationType.MAX_TOTAL_COUNT.getValueIfExistsOrDefault(config);
     this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getValueIfExistsOrDefault(config);
     this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getValueIfExistsOrDefault(config);
 
@@ -287,6 +284,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (serializedMapValue == null) { return null; }
 
     if (isUnsafeGet(getType)) {
+      serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
       // don't touch tc layer when doing unsafe reads
       return deserialize(key, serializedMapValue, true);
     }
@@ -312,14 +310,16 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       int now = timeSource.nowInSeconds();
       final boolean expired;
       if (serializedMapValue.isExpired(now, maxTTISeconds, maxTTLSeconds)) {
-        boolean readLocked = createLockForKey(key).readLock().isHeldByCurrentThread();
-        if (!readLocked) {
-          expire(key, serializedMapValue, getType);
+        if (!isUnsafeGet(getType)) {
+          boolean readLocked = createLockForKey(key).readLock().isHeldByCurrentThread();
+          if (!readLocked) {
+            expire(key, serializedMapValue, getType);
+          }
         }
         expired = true;
         serializedMapValue = null;
       } else {
-        if (!quiet) {
+        if (!quiet && !isUnsafeGet(getType)) {
           markUsed(key, serializedMapValue, now);
         }
         expired = false;
