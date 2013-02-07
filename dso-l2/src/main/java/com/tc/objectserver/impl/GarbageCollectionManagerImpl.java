@@ -29,6 +29,7 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
   public void l2StateChanged(StateChangedEvent sce) {
     if (sce.movedToActive()) {
       delegate = activeGCManager;
+      scheduleInlineCleanupIfNecessary();
     } else {
       delegate.l2StateChanged(sce);
     }

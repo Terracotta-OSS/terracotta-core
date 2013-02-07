@@ -6,9 +6,6 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -292,6 +289,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -955,9 +955,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
     final GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, this.objectManager,
-            this.clientStateManager, gcPublisher,
-            dgcSequenceProvider,
-            garbageCollectionManager);
+            this.clientStateManager, gcPublisher, dgcSequenceProvider);
     gc.addListener(getGcStatsEventPublisher());
     gc.addListener(new DGCOperatorEventPublisher());
 

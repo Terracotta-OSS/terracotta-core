@@ -7,7 +7,6 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
@@ -34,7 +33,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
   private final DGCSequenceProvider            dgcSequenceProvider;
-  private final GarbageCollectionManager       garbageCollectionManager;
 
   private volatile ChangeCollector             referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
   protected volatile boolean                   started                    = false;
@@ -43,13 +41,11 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   public MarkAndSweepGarbageCollector(final ObjectManagerConfig objectManagerConfig, final ObjectManager objectMgr,
                                       final ClientStateManager stateManager,
                                       final GarbageCollectionInfoPublisher gcPublisher,
-                                      final DGCSequenceProvider dgcSequenceProvider,
-                                      final GarbageCollectionManager garbageCollectionManager) {
+                                      final DGCSequenceProvider dgcSequenceProvider) {
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
     this.gcPublisher = gcPublisher;
     this.dgcSequenceProvider = dgcSequenceProvider;
-    this.garbageCollectionManager = garbageCollectionManager;
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 
@@ -121,7 +117,6 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   public void start() {
     this.started = true;
     this.gcState.start();
-    garbageCollectionManager.scheduleInlineCleanupIfNecessary();
   }
 
   @Override

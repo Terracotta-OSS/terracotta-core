@@ -22,12 +22,13 @@ import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.DGCSequenceProvider;
-import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import junit.framework.TestCase;
 
 public class GCStatsEventPublisherTest extends TestCase {
   protected long                           objectIDCounter     = 0;
@@ -53,8 +54,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true), this.objectManager,
                                                       new TestClientStateManager(), gcPublisher,
-                                                      new DGCSequenceProvider(new TestMutableSequence()),
-                                                      garbageCollectionManager);
+                                                      new DGCSequenceProvider(new TestMutableSequence()));
     this.objectManager.setPublisher(gcPublisher);
     this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();
