@@ -42,6 +42,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
+import com.tc.util.CallableWaiter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.TCCollections;
@@ -59,6 +60,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -338,7 +340,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private TCGroupMember getMember(TCGroupManagerImpl mgr, int idx) {
-    return (TCGroupMember) (new ArrayList(mgr.getMembers())).get(idx);
+    return new ArrayList<TCGroupMember>(mgr.getMembers()).get(idx);
   }
 
   public void testJoin() throws Exception {
@@ -353,9 +355,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     groups[0].join(nodes[0], nodeStore);
     groups[1].join(nodes[1], nodeStore);
-    ThreadUtil.reallySleep(1000);
-    assertEquals(1, groups[0].size());
-    assertEquals(1, groups[1].size());
+    waitForMembersToJoin();
 
     GroupMessage sMesg = createTestObjectSyncMessage();
     TCGroupMember member = getMember(groups[0], 0);
@@ -402,10 +402,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < nGrp; ++i) {
       groups[i].join(nodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(5000);
-    for (int i = 0; i < nGrp; ++i) {
-      assertEquals(nGrp - 1, groups[i].size());
-    }
+    waitForMembersToJoin();
 
     // test with one to one first
     GroupMessage sMesg = createGCResultMessage();
@@ -454,7 +451,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     HashMap<NodeID, TestGroupMessageListener> listenerMap = new HashMap<NodeID, TestGroupMessageListener>();
 
     for (int i = 0; i < nGrp; ++i) {
-      listeners[i] = new responseL2StateMessageListener(groups[i], 1000);
+      listeners[i] = new ResponseL2StateMessageListener(groups[i], 1000);
       groups[i].registerForMessages(L2StateMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
@@ -465,10 +462,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < nGrp; ++i) {
       groups[i].join(nodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(5000);
-    for (int i = 0; i < nGrp; ++i) {
-      assertEquals(nGrp - 1, groups[i].size());
-    }
+    waitForMembersToJoin();
 
     for (int i = 0; i < groups[0].getMembers().size(); ++i) {
       GroupMessage sMesg = createL2StateMessage();
@@ -491,12 +485,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   public void testSendAllAndWait() throws Exception {
-    int nGrp = 5;
+    final int nGrp = 5;
     setupGroups(nGrp);
     HashMap<NodeID, TestGroupMessageListener> listenerMap = new HashMap<NodeID, TestGroupMessageListener>();
 
     for (int i = 0; i < nGrp; ++i) {
-      listeners[i] = new responseL2StateMessageListener(groups[i], 1000);
+      listeners[i] = new ResponseL2StateMessageListener(groups[i], 1000);
       groups[i].registerForMessages(L2StateMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
@@ -507,10 +501,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].join(nodes[i], nodeStore);
     }
 
-    ThreadUtil.reallySleep(5000);
-    for (int i = 0; i < nGrp; ++i) {
-      assertEquals(nGrp - 1, groups[i].size());
-    }
+    waitForMembersToJoin();
 
     for (int m = 0; m < nGrp; ++m) {
       TCGroupManagerImpl ms = groups[m];
@@ -551,10 +542,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < nGrp; ++i) {
       nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(1000);
-    for (int i = 0; i < nGrp; ++i) {
-      assertEquals(nGrp - 1, groups[i].size());
-    }
+    waitForMembersToJoin();
 
     TestMessage msg1 = new TestMessage("Hello there");
     TCGroupMember member = getMember(groups[0], 0);
@@ -583,6 +571,21 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertNull(r2);
 
     tearGroups();
+  }
+
+  private void waitForMembersToJoin() throws Exception {
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        int members = groups.length - 1;
+        for (final TCGroupManagerImpl group : groups) {
+          if (members != group.size()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 
   private void checkMessagesOrdering(final TCGroupManagerImpl mgr1, final TestGroupMessageListener l1,
@@ -760,10 +763,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
   }
 
-  private class responseL2StateMessageListener extends TestGroupMessageListener {
+  private class ResponseL2StateMessageListener extends TestGroupMessageListener {
     TCGroupManagerImpl manager;
 
-    responseL2StateMessageListener(TCGroupManagerImpl manager, long timeout) {
+    ResponseL2StateMessageListener(TCGroupManagerImpl manager, long timeout) {
       super(timeout);
       this.manager = manager;
     }
