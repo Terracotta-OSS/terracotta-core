@@ -38,10 +38,6 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_SEND_TIMER);
     exemptedProperties.add(TCPropertiesConsts.L1_OBJECTMANAGER_REMOVED_OBJECTS_THRESHOLD);
 
-    exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_THRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_CRITICALTHRESHOLD);
-    exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL);    
-    
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD);
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL);
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND);
@@ -52,34 +48,21 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
 
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_CONCURRENCY);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_INITIAL_DATASIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_TABLESIZE);
 
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_FAULTSTAGE_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_FLUSHSTAGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
 
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
 
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MAX_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MIN_CHUNK_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MAX_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MIN_PAGE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MAX_PAGE_COUNT);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_CHUNK_SIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_CHUNK_SIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_SIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_PAGE_SIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_COUNT);
     
-    exemptedProperties.add(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_SYSTEM_DURABILITY);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_LOG_DEVICE);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_LOG_BUFFER_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_LOG_BUFFER_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE);
-    exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_SYSTEM_DURABILITY);
-    exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_LOG_DEVICE);
-    exemptedProperties.add(TCPropertiesConsts.DERBY_STREAM_ERROR_METHOD);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_USE_COMMIT_THREAD);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MERGE_FACTOR);

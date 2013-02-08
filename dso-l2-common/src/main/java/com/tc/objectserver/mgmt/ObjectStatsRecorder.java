@@ -10,14 +10,9 @@ import com.tc.statistics.util.StatsRecorder;
 import java.text.MessageFormat;
 
 public class ObjectStatsRecorder {
-  private boolean                    faultDebug;
-  private StatsRecorder              faultStatsRecorder;
 
   private boolean                    requestDebug;
   private StatsRecorder              requestStatsRecorder;
-
-  private boolean                    flushDebug;
-  private StatsRecorder              flushStatsRecorder;
 
   private boolean                    broadcastDebug;
   private StatsRecorder              broadcastStatsRecorder;
@@ -28,37 +23,14 @@ public class ObjectStatsRecorder {
   private static final StatsRecorder NULL_RECORDER = new NullStatsRecorder();
 
   public ObjectStatsRecorder() {
-    this(false, false, false, false, false);
+    this(false, false, false);
   }
 
-  public ObjectStatsRecorder(boolean faultDebug, boolean requestDebug, boolean flushDebug, boolean broadcastDebug,
+  public ObjectStatsRecorder(boolean requestDebug, boolean broadcastDebug,
                              boolean commitDebug) {
-    setFaultDebug(faultDebug);
     setRequestDebug(requestDebug);
-    setFlushDebug(flushDebug);
     setBroadcastDebug(broadcastDebug);
     setCommitDebug(commitDebug);
-  }
-
-  public synchronized boolean getFaultDebug() {
-    return faultDebug;
-  }
-
-  public synchronized void setFaultDebug(boolean faultDebug) {
-    this.faultDebug = faultDebug;
-    if (faultStatsRecorder != null) {
-      faultStatsRecorder.finish();
-    }
-    if (faultDebug) {
-      faultStatsRecorder = new StatsPrinter(new MessageFormat("Faulted from disk/offheap in the Last {0} ms"),
-                                            new MessageFormat(" {0} instances"), true);
-    } else {
-      faultStatsRecorder = NULL_RECORDER;
-    }
-  }
-
-  public void updateFaultStats(String type) {
-    faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
   public synchronized void setRequestDebug(boolean requestDebug) {
@@ -80,27 +52,6 @@ public class ObjectStatsRecorder {
 
   public void updateRequestStats(String type) {
     requestStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
-  }
-
-  public synchronized boolean getFlushDebug() {
-    return flushDebug;
-  }
-
-  public synchronized void setFlushDebug(boolean flushDebug) {
-    this.flushDebug = flushDebug;
-    if (flushStatsRecorder != null) {
-      flushStatsRecorder.finish();
-    }
-    if (flushDebug) {
-      flushStatsRecorder = new StatsPrinter(new MessageFormat("Flushed to disk/offheap in the Last {0} ms"),
-                                            new MessageFormat(" {0} instances"), true);
-    } else {
-      flushStatsRecorder = NULL_RECORDER;
-    }
-  }
-
-  public void updateFlushStats(String type) {
-    flushStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
   public synchronized void setBroadcastDebug(boolean broadcastDebug) {

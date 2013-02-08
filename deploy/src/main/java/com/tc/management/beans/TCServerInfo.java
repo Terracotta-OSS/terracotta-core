@@ -419,16 +419,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public boolean getFaultDebug() {
-    return objectStatsRecorder.getFaultDebug();
-  }
-
-  @Override
-  public void setFaultDebug(boolean faultDebug) {
-    objectStatsRecorder.setFaultDebug(faultDebug);
-  }
-
-  @Override
   public boolean getRequestDebug() {
     return objectStatsRecorder.getRequestDebug();
   }
@@ -436,16 +426,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public void setRequestDebug(boolean requestDebug) {
     objectStatsRecorder.setRequestDebug(requestDebug);
-  }
-
-  @Override
-  public boolean getFlushDebug() {
-    return objectStatsRecorder.getFlushDebug();
-  }
-
-  @Override
-  public void setFlushDebug(boolean flushDebug) {
-    objectStatsRecorder.setFlushDebug(flushDebug);
   }
 
   @Override

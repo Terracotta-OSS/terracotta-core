@@ -24,56 +24,56 @@ public interface TCPropertiesConsts {
       "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad", "l2.objectmanager.loadObjectID.fastLoad",
       "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize", "l2.objectmanager.dgc.young.enabled",
       "l2.objectmanager.dgc.young.frequencyInMillis", "l2.objectmanager.dgc.enterpriseMarkStageInterval",
-      "l2.objectmanager.dgc.faulting.optimization"
+      "l2.objectmanager.dgc.faulting.optimization", "l2.cachemanager.enabled", "l2.cachemanager.logging.enabled",
+      "l2.cachemanager.leastCount", "l2.cachemanager.percentageToEvict", "l2.cachemanager.sleepInterval", "l2.cachemanager.criticalThreshold",
+      "l2.cachemanager.threshold", "l2.cachemanager.monitorOldGenOnly", "l2.cachemanager.criticalObjectThreshold",
+      "l2.cachemanager.resourcePollInterval", "l2.transactionmanager.logging.enabled", "l2.transactionmanager.logging.verbose",
+      "l2.transactionmanager.logging.printStats", "l2.transactionmanager.logging.printCommits", "l2.objectmanager.deleteBatchSize",
+      "l2.objectmanager.cachePolicy", "l2.objectmanager.maxObjectsToCommit", "l2.objectmanager.maxObjectsInTxnObjGrouping",
+      "l2.objectmanager.fault.logging.enabled", "l2.objectmanager.flush.logging.enabled", "l2.objectmanager.loadObjectID.longsPerDiskEntry",
+      "l2.objectmanager.loadObjectID.checkpoint.changes", "l2.objectmanager.loadObjectID.checkpoint.maxlimit",
+      "l2.objectmanager.loadObjectID.checkpoint.timeperiod", "l2.data.backup.throttle.timeInMillis", "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry",
+      "l2.objectmanager.loadObjectID.measure.performance", "l2.objectmanager.loadObjectID.checkpoint.maxsleep",
+      "l2.seda.faultstage.threads", "l2.seda.flushstage.threads", "l2.seda.commitstage.threads", "l2.seda.gcdeletestage.threads",
+      "l2.berkeleydb.je.lock.timeout", "l2.berkeleydb.je.maxMemoryPercent", "l2.berkeleydb.je.lock.nLockTables",
+      "l2.berkeleydb.je.cleaner.bytesInterval", "l2.berkeleydb.je.checkpointer.bytesInterval", "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage",
+      "l2.berkeleydb.je.cleaner.lookAheadCacheSize", "l2.berkeleydb.je.cleaner.minAge", "l2.derbydb.derby.storage.pageSize",
+      "l2.derbydb.derby.storage.pageCacheSize", "l2.derbydb.derby.system.durability", "l2.derbydb.derby.stream.error.method",
+      "l2.derbydb.derby.maxMemoryPercent", "l2.derbydb.derby.storage.logBufferSize", "l2.derbydb.logDevice",
+      "l2.derbydb.derby.storage.checkpointInterval", "l2.derbydb.derby.storage.logSwitchInterval", "l2.derbydb.derby.locks.escalationThreshold",
+      "l2.derbydb.derby.locks.deadlockTimeout", "l2.derbydb.derby.locks.waitTimeout", "l2.derbydb.derby.locks.deadlockTrace",
+      "l2.lfu.agingFactor", "l2.lfu.recentlyAccessedIgnorePercentage", "aw.asmclassinfo.ignore.errors", "l2.offHeapCache.operator.event.generator.threshold",
+      "l2.offHeapCache.operator.event.generator.sleepInterval", "l2.offHeapCache.allocation.slow", "l2.offHeapCache.allocation.critical",
+      "l2.offHeapCache.allocation.critical.halt", "l2.offHeapCache.min.page.size", "l2.offHeapCache.max.page.size",
+      "l2.offHeapCache.max.page.count", "l2.offHeapCache.map.tableSize", "l2.offHeapCache.map.concurrency",
+      "l2.offHeapCache.operator.event.generator.threshold", "l2.offHeapCache.operator.event.generator.sleepInterval",
+      "l2.offHeapCache.max.chunk.size", "l2.offHeapCache.min.chunk.size", "l2.offHeapCache.object.initialDataSize",
+      "l2.offHeapCache.object.tableSize", "l2.offHeapCache.object.concurrency", "l2.offHeapCache.temp.swap.flush.to.disk.count",
+      "l2.offHeapCache.temp.swap.throttle.megaBytes", "l2.offHeapCache.skip.jvmarg.check"
+
+
   };
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Cache Manager Properties
-   * Description : This section contains the defaults for the cache manager for the L2
-   * enabled             : Enable/disable L2's cache manager
-   * logging.enabled     : Enable/disable L2's cache manager logging
-   * leastCount          : Minimum increase in the % usage of memory for starting eviction
-   *                       once the threshold value specified of memory used is reached
-   * percentageToEvict   : % of memory to evict once it reaches threshold
-   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis
-   * criticalThreshold   : % of memory used after which memory manager will evict aggressively
-   * threshold           : % of memory used after which eviction may start
-   * monitorOldGenOnly   : Only monitor old gen objects
-   * criticalObjectThreshold : Number of objects that the cache can hold after which the eviction
-   *                           may start, its highly recommended to not to set it as the size
-   *                           of the objects is not generally known
+   * Section : L2 Evictor properties
+   * Description : This section contains the defaults for evictor on the L2
    * resourcePoolInterval    : poll time on resource monitoring in msec
    * haltThreshold           : the threshold where l2 singles l1 to halt additive operations
    * criticalUpperbound      : the upperbound bytes available above the threshold levels
    * criticalLowerbound      : the lowerbound bytes available above the threshold levels
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_CACHEMANAGER_ENABLED                                        = "l2.cachemanager.enabled";
-  public static final String L2_CACHEMANAGER_LOGGING_ENABLED                                = "l2.cachemanager.logging.enabled";
-  public static final String L2_CACHEMANAGER_LEASTCOUNT                                     = "l2.cachemanager.leastCount";
-  public static final String L2_CACHEMANAGER_PERCENTAGETOEVICT                              = "l2.cachemanager.percentageToEvict";
-  public static final String L2_CACHEMANAGER_SLEEPINTERVAL                                  = "l2.cachemanager.sleepInterval";
-  public static final String L2_CACHEMANAGER_CRITICALTHRESHOLD                              = "l2.cachemanager.criticalThreshold";
-  public static final String L2_CACHEMANAGER_THRESHOLD                                      = "l2.cachemanager.threshold";
-  public static final String L2_CACHEMANAGER_MONITOROLDGENONLY                              = "l2.cachemanager.monitorOldGenOnly";
-  public static final String L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                        = "l2.cachemanager.criticalObjectThreshold";
-  public static final String L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL                        = "l2.cachemanager.resourcePollInterval";
-
 
   public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
   public static final String L2_EVICTION_HALTTHRESHOLD                                  = "l2.eviction.haltThreshold";
-  public static final String L2_EVICTION_CRITICALUPPERBOUND                                  = "l2.eviction.criticalUpperbound";
-  public static final String L2_EVICTION_CRITICALLOWERBOUND                                  = "l2.eviction.criticalLowerbound";
+  public static final String L2_EVICTION_CRITICALUPPERBOUND                             = "l2.eviction.criticalUpperbound";
+  public static final String L2_EVICTION_CRITICALLOWERBOUND                             = "l2.eviction.criticalLowerbound";
 
   /*********************************************************************************************************************
    * <code>
    * Section : L2 Transaction Manager Properties
-   * logging.enabled              : Enable/disable L2's tx mgr logging
-   * logging.verbose              : Turns on debug loggings for tx mgr
-   * logging.printStats           : Enables/disables logging for tx stats
-   * logging.printCommits         : Enables/disables logging for tx commits
    * logging.printBroadCastStats  : Enables/disables logging for tx Broadcasts
    * passive.throttle.enabled     : Enables/disables throttling of active from Passive when
    *                                the number of pending txns reaches the threshold
@@ -82,10 +82,6 @@ public interface TCPropertiesConsts {
    * passive.throttle.maxSleepSeconds  : Sleep time for active when passive throttles it
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_TRANSACTIONMANAGER_LOGGING_ENABLED                          = "l2.transactionmanager.logging.enabled";
-  public static final String L2_TRANSACTIONMANAGER_LOGGING_VERBOSE                          = "l2.transactionmanager.logging.verbose";
-  public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS                       = "l2.transactionmanager.logging.printStats";
-  public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS                     = "l2.transactionmanager.logging.printCommits";
   public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS            = "l2.transactionmanager.logging.printBroadcastStats";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED                 = "l2.transactionmanager.passive.throttle.enabled";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD               = "l2.transactionmanager.passive.throttle.threshold";
@@ -95,32 +91,15 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : L2 Object Manager Properties Description :
    * This section contains the defaults for the object manager of the L2
-   * cachePolicy : <lru>/<lfu>      - Least Recently Used or Least Frequenctly used
-   * deleteBatchSize                - Max number of objects deleted in one batch when
-   *                                  removing from the object store after a GC
-   * maxObjectsToCommit             - Max number of Objects commited in one batch in
-   *                                  the commit stage and flush stage
-   * maxObjectsInTxnObjGrouping     - Max number of Objects allowed in the TransactionalObject
-   *                                  grouping
    * maxTxnsInTxnObjectGrouping     - Max number of Transactions allowed in the
    *                                  TransactionalObject grouping
    * objectrequest.split.size       - The maximum number of objects that l2 will lookup in one shot
    * objectrequest.logging.enabled  - Turn on logging to see what object request cache saved
-   * fault.logging.enabled          - Enables/Disables logging of ManagedObject Faults from
-   *                                  disk. If enabled, it logs every 1000 faults.
    * request.logging.enabled        - Enables/Disables logging of ManagedObject requests from
    *                                  clients. If enabled, logs counts of requested instance types
    *                                  every 5 seconds.
-   * flush.logging.enabled          - Enables/Disables logging of ManagedObject flush to
-   *                                  disk. If enabled, it logs every 1000 faults.
    * persistor.logging.enabled      - Enables/Disables logging of commits to disk while running
    *                                  in persistent mode.
-   * loadObjectID.longsPerDiskEntry - Size of long array entry to store object IDs
-   *                                  in persistent store. One bit for each ID.
-   * loadObjectID.mapsdatabase.longsPerDiskEntry - Size of long array entry to store existence of
-   *                                  persistent state. One bit for each ID.
-   * loadObjectID.checkpoint.maxlimit - Max number of changes to process in one run checkpoint.
-   * loadObjectID.checkpoint.maxsleep - Max sleep time in milliseconds between checkpoints
    * passive.sync.batch.size        - Number of objects in each message that is sent from
    *                                  active to passive while synching
    * passive.sync.throttle.timeInMillis - Time to wait before sending the next batch of
@@ -133,26 +112,15 @@ public interface TCPropertiesConsts {
    * dgc.inline.intervalInSeconds   - Interval in seconds at which to delete objects selected by inline dgc.
    * dgc.inline.maxObjects          - Maximum inline dgc batch size
    * dgc.inline.cleanup.delaySeconds - Seconds to delay the start of inline dgc cleanup after a server becomes active
-   * l2.data.backup.throttle.timeInMillis - time to sleep between copying of each file from the db while taking backup
    * l2.objectmanager.invalidate.strong.cache.enabled - Enable/disable invalidations for strong cache
    * </code>
    ********************************************************************************************************************/
 
-  public static final String L2_OBJECTMANAGER_DELETEBATCHSIZE                               = "l2.objectmanager.deleteBatchSize";
-  public static final String L2_OBJECTMANAGER_CACHEPOLICY                                   = "l2.objectmanager.cachePolicy";
-  public static final String L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT                          = "l2.objectmanager.maxObjectsToCommit";
-  public static final String L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING                  = "l2.objectmanager.maxObjectsInTxnObjGrouping";
   public static final String L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING                  = "l2.objectmanager.maxTxnsInTxnObjectGrouping";
   public static final String L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE                     = "l2.objectmanager.objectrequest.split.size";
   public static final String L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED                = "l2.objectmanager.objectrequest.logging.enabled";
-  public static final String L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED                         = "l2.objectmanager.fault.logging.enabled";
   public static final String L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED                       = "l2.objectmanager.request.logging.enabled";
-  public static final String L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                         = "l2.objectmanager.flush.logging.enabled";
   public static final String L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED                     = "l2.objectmanager.persistor.logging.enabled";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_LONGS_PERDISKENTRY               = "l2.objectmanager.loadObjectID.longsPerDiskEntry";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_CHANGES               = "l2.objectmanager.loadObjectID.checkpoint.changes";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXLIMIT              = "l2.objectmanager.loadObjectID.checkpoint.maxlimit";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_TIMEPERIOD            = "l2.objectmanager.loadObjectID.checkpoint.timeperiod";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE                       = "l2.objectmanager.passive.sync.batch.size";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_MAXSIZE_MB               = "l2.objectmanager.passive.sync.message.maxSizeInMegaBytes";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                    = "l2.objectmanager.passive.sync.throttle.timeInMillis";
@@ -163,10 +131,6 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS                   = "l2.objectmanager.dgc.inline.intervalInSeconds";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS                        = "l2.objectmanager.dgc.inline.maxObjects";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS              = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
-  public static final String L2_DATA_BACKUP_THROTTLE_TIME                                   = "l2.data.backup.throttle.timeInMillis";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY         = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                     = "l2.objectmanager.loadObjectID.measure.performance";
-  public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP              = "l2.objectmanager.loadObjectID.checkpoint.maxsleep";
   public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
 
   /*********************************************************************************************************************
@@ -174,24 +138,17 @@ public interface TCPropertiesConsts {
    * Section : L2 Seda stage properties
    * Description : This section contains configuration for SEDA stages for L2
    * apply.stage.threads                : Number of threads for the transaction apply stage
-   * commitstage.threads                : Number of seda commit stage thread
    * faultstage.threads                 : Number of seda fault stage thread
    * managedobjectrequeststage.threads  : Number of threads for object request seda stage
    *                                      (experimental, do not change)
    * managedobjectresponsestage.threads : Number of threads for object response seda stage
    * flushstage.threads                 : Number of threads for flusing of objects to disk
    *                                      seda stage
-   * gcdeletestage.threads              : Number of threads for deletetion of objects after
-   *                                      dgc finishes marking
    * stage.sink.capacity                : Capacity of seda stage queue, Integer.MAX_VALUE if not set
    *                                      (experimental, do not change)
    * </code>
    ********************************************************************************************************************/
   public static final String L2_SEDA_APPLY_STAGE_THREADS                                    = "l2.seda.apply.stage.threads";
-  public static final String L2_SEDA_COMMITSTAGE                                            = "l2.seda.commitstage.threads";
-  public static final String L2_SEDA_FAULTSTAGE_THREADS                                     = "l2.seda.faultstage.threads";
-  public static final String L2_SEDA_FLUSHSTAGE_THREADS                                     = "l2.seda.flushstage.threads";
-  public static final String L2_SEDA_GCDELETESTAGE_THREADS                                  = "l2.seda.gcdeletestage.threads";
   public static final String L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS                     = "l2.seda.managedobjectresponsestage.threads";
   public static final String L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS                      = "l2.seda.managedobjectrequeststage.threads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
@@ -212,69 +169,6 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L1_SEDA_STAGE_SINK_CAPACITY                                    = "l1.seda.stage.sink.capacity";
   public static final String L1_SEDA_PINNED_ENTRY_FAULT_STAGE_THREADS                       = "l1.seda.pinned.entry.fault.stage.threads";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L2 Berkeley DB Persistence Layer Properties
-   * Description : This section contains the of Berkeley DB JE properties thats used in L2
-   * For an explanation of these properties look at Berkeley DB documentation
-   * (l2.berkeleydb is removed before giving to Berkeley DB JE)
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_BERKELEYDB_JE_LOCK_TIMEOUT                                  = "l2.berkeleydb.je.lock.timeout";
-  public static final String L2_BERKELEYDB_JE_MAXMEMORYPERCENT                              = "l2.berkeleydb.je.maxMemoryPercent";
-  public static final String L2_BERKELEYDB_JE_LOCK_NLOCK_TABLES                             = "l2.berkeleydb.je.lock.nLockTables";
-  public static final String L2_BERKELEYDB_JE_CLEANER_BYTES_INTERVAL                        = "l2.berkeleydb.je.cleaner.bytesInterval";
-  public static final String L2_BERKELEYDB_JE_CHECKPOINTER_BYTESINTERVAL                    = "l2.berkeleydb.je.checkpointer.bytesInterval";
-  public static final String L2_BERKELEYDB_JE_CLEANER_DETAIL_MAXMEMORY_PERCENTAGE           = "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage";
-  public static final String L2_BERKELEYDB_JE_CLEANER_LOOKAHEAD_CACHESIZE                   = "l2.berkeleydb.je.cleaner.lookAheadCacheSize";
-  public static final String L2_BERKELEYDB_JE_CLEANER_MINAGE                                = "l2.berkeleydb.je.cleaner.minAge";
-  public static final String L2_DB_FACTORY_NAME                                             = "l2.db.factory.name";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L2 Derby DB Persistence Layer Properties
-   * Description : Section for properties related to tuning Derby. See description of tunable properties in
-   * the Derby documentation.
-   * pageCache.heapUsage (float) - Controls percentage of the heap to be given to Derby's page cache.
-   * </code>
-   ********************************************************************************************************************/
-  public static final String DERBY_STORAGE_PAGESIZE                                         = "derby.storage.pageSize";
-  public static final String DERBY_STORAGE_PAGECACHESIZE                                    = "derby.storage.pageCacheSize";
-  public static final String DERBY_SYSTEM_DURABILITY                                        = "derby.system.durability";
-  public static final String DERBY_STREAM_ERROR_METHOD                                      = "derby.stream.error.method";
-  public static final String DERBY_MAXMEMORYPERCENT                                         = "derby.maxMemoryPercent";
-  public static final String DERBY_LOG_BUFFER_SIZE                                          = "derby.storage.logBufferSize";
-  public static final String DERBY_LOG_DEVICE                                               = "logDevice";
-  public static final String L2_DERBYDB_DERBY_STORAGE_PAGESIZE                              = "l2.derbydb."
-                                                                                              + DERBY_STORAGE_PAGESIZE;
-  public static final String L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE                         = "l2.derbydb."
-                                                                                              + DERBY_STORAGE_PAGECACHESIZE;
-  public static final String L2_DERBYDB_DERBY_SYSTEM_DURABILITY                             = "l2.derbydb."
-                                                                                              + DERBY_SYSTEM_DURABILITY;
-  public static final String L2_DERBYDB_MAXMEMORYPERCENT                                    = "l2.derbydb."
-                                                                                              + DERBY_MAXMEMORYPERCENT;
-  public static final String L2_DERBYDB_LOG_DEVICE                                          = "l2.derbydb."
-                                                                                              + DERBY_LOG_DEVICE;
-  public static final String L2_DERBYDB_DERBY_STORAGE_CHECKPOINTINTERVAL                    = "l2.derbydb.derby.storage.checkpointInterval";
-  public static final String L2_DERBYDB_DERBY_STORAGE_LOG_SWITCH_INTERVAL                   = "l2.derbydb.derby.storage.logSwitchInterval";
-  public static final String L2_DERBYDB_DERBY_STORAGE_LOG_BUFFER_SIZE                       = "l2.derbydb."
-                                                                                              + DERBY_LOG_BUFFER_SIZE;
-  public static final String L2_DERBYDB_DERBY_LOCK_ESCALATION_THRESHOLD                     = "l2.derbydb.derby.locks.escalationThreshold";
-  public static final String L2_DERBYDB_DERBY_LOCKS_DEADLOCK_TIMEOUT                        = "l2.derbydb.derby.locks.deadlockTimeout";
-  public static final String L2_DERBYDB_DERBY_LOCKS_WAIT_TIMEOUT                            = "l2.derbydb.derby.locks.waitTimeout";
-  public static final String L2_DERBYDB_DERBY_LOCKS_DEADLOCK_TRACE                          = "l2.derbydb.derby.locks.deadlockTrace";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L2 LFU cachepolicy defaults
-   * Description : If cachePolicy is set to lfu, then these values take effect
-   * agingFactor (float)                    - valid values 0 to 1
-   * recentlyAccessedIgnorePercentage (int) - valid values 0 - 100
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_LFU_AGINGFACTOR                                             = "l2.lfu.agingFactor";
-  public static final String L2_LFU_RECENTLY_ACCESSED_IGNORE_PERCENTAGE                     = "l2.lfu.recentlyAccessedIgnorePercentage";
 
   /*********************************************************************************************************************
    * <code>
@@ -898,35 +792,29 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section :  OffHeap Cache Settings
+   * Section :  OffHeap Settings
    * </code>
    ********************************************************************************************************************/
 
-  public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeapCache.allocation.slow";
-  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeapCache.allocation.critical";
-  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeapCache.allocation.critical.halt";
+  public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeap.allocation.slow";
+  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeap.allocation.critical";
+  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeap.allocation.critical.halt";
 
-  public static final String L2_OFFHEAP_CACHE_MIN_PAGE_SIZE                                 = "l2.offHeapCache.min.page.size";
-  public static final String L2_OFFHEAP_CACHE_MAX_PAGE_SIZE                                 = "l2.offHeapCache.max.page.size";
-  public static final String L2_OFFHEAP_CACHE_MAX_PAGE_COUNT                                 = "l2.offHeapCache.max.page.count";
-  public static final String L2_OFFHEAP_MAP_CACHE_TABLESIZE                                 = "l2.offHeapCache.map.tableSize";
-  public static final String L2_OFFHEAP_MAP_CACHE_CONCURRENCY                               = "l2.offHeapCache.map.concurrency";
-  public static final String L2_OFFHEAP_EVENT_GENERATOR_THRESHOLD                           = "l2.offHeapCache.operator.event.generator.threshold";
-  public static final String L2_OFFHEAP_EVENT_GENERATOR_SLEEP_INTERVAL                      = "l2.offHeapCache.operator.event.generator.sleepInterval";
+  public static final String L2_OFFHEAP_MIN_PAGE_SIZE                                       = "l2.offHeap.min.page.size";
+  public static final String L2_OFFHEAP_MAX_PAGE_SIZE                                       = "l2.offHeap.max.page.size";
+  public static final String L2_OFFHEAP_MAX_PAGE_COUNT                                      = "l2.offHeap.max.page.count";
+  public static final String L2_OFFHEAP_MAP_TABLESIZE                                       = "l2.offHeap.map.tableSize";
+  public static final String L2_OFFHEAP_MAP_CONCURRENCY                                     = "l2.offHeap.map.concurrency";
 
   // we calculate the right values. user can still override them explicitly
-  public static final String L2_OFFHEAP_CACHE_MAX_CHUNK_SIZE                                = "l2.offHeapCache.max.chunk.size";
-  public static final String L2_OFFHEAP_CACHE_MIN_CHUNK_SIZE                                = "l2.offHeapCache.min.chunk.size";
-  public static final String L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE                       = "l2.offHeapCache.object.initialDataSize";
-  public static final String L2_OFFHEAP_OBJECT_CACHE_TABLESIZE                              = "l2.offHeapCache.object.tableSize";
-  public static final String L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY                            = "l2.offHeapCache.object.concurrency";
-  public static final String L2_OFFHEAP_TEMP_SWAP_FLUSH_TO_DISK_COUNT                       = "l2.offHeapCache.temp.swap.flush.to.disk.count";
-  public static final String L2_OFFHEAP_TEMP_SWAP_THROTTLE_MEGABYTES                        = "l2.offHeapCache.temp.swap.throttle.megaBytes";
+  public static final String L2_OFFHEAP_MAX_CHUNK_SIZE                                      = "l2.offHeap.max.chunk.size";
+  public static final String L2_OFFHEAP_MIN_CHUNK_SIZE                                      = "l2.offHeap.min.chunk.size";
+  public static final String L2_OFFHEAP_OBJECTDB_INITIAL_DATASIZE                           = "l2.offHeap.object.initialDataSize";
+  public static final String L2_OFFHEAP_OBJECTDB_TABLESIZE                                  = "l2.offHeap.object.tableSize";
+  public static final String L2_OFFHEAP_OBJECTDB_CONCURRENCY                                = "l2.offHeap.object.concurrency";
 
   // for tests
   public static final String L2_OFFHEAP_SKIP_JVMARG_CHECK                                   = "l2.offHeapCache.skip.jvmarg.check";
-
-  public static final String AW_ASMCLASSINFO_IGNORE_ERRORS                                  = "aw.asmclassinfo.ignore.errors";
 
   public static final String SEARCH_QUERY_WAIT_FOR_TXNS                                     = "search.query.wait.for.txns";
   public static final String SEARCH_USE_COMMIT_THREAD                                       = "search.use.commit.thread";

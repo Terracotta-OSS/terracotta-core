@@ -549,13 +549,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
-                                                                      tcProps
+        tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
-                                                                      tcProps
+        tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
                                                                       tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));

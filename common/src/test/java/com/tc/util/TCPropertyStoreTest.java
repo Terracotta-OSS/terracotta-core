@@ -35,9 +35,9 @@ public class TCPropertyStoreTest extends TestCase {
   public void testLoad() {
     TCPropertyStore propertyStore = new TCPropertyStore();
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE, propertyStore);
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED));
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED.toUpperCase()));
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED.replace("e", "E")));
+    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
+    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED.toUpperCase()));
+    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED.replace("e", "E")));
   }
 
   public void testTrim() {

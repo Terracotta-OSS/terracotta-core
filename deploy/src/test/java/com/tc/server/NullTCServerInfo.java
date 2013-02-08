@@ -187,32 +187,12 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public boolean getFaultDebug() {
-    return false;
-  }
-
-  @Override
-  public void setFaultDebug(boolean faultDebug) {
-    /**/
-  }
-
-  @Override
   public boolean getRequestDebug() {
     return false;
   }
 
   @Override
   public void setRequestDebug(boolean requestDebug) {
-    /**/
-  }
-
-  @Override
-  public boolean getFlushDebug() {
-    return false;
-  }
-
-  @Override
-  public void setFlushDebug(boolean flushDebug) {
     /**/
   }
 

@@ -7,6 +7,8 @@ package com.tc.objectserver.tx;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -17,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
-  private static final int MAX_TXN_COUNT = 10;
+  private static final int MAX_TXN_COUNT = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
 
   private int addedTxns = 0;
   private ServerTransactionID txnID;

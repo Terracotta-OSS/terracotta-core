@@ -92,17 +92,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getState();
 
-  void setFaultDebug(boolean faultDebug);
-
-  boolean getFaultDebug();
-
   void setRequestDebug(boolean requestDebug);
 
   boolean getRequestDebug();
-
-  void setFlushDebug(boolean flushDebug);
-
-  boolean getFlushDebug();
 
   void setBroadcastDebug(boolean broadcastDebug);
 
