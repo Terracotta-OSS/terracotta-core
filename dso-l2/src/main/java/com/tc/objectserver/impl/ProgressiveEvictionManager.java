@@ -462,6 +462,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private void throttleIfNeeded(DetailedMemoryUsage usage) {
       // if we are this low, stop no matter what
       if (usage.getReservedMemory() >= usage.getMaxMemory() - (16l * 1024 * 1024)) {
+          logger.warn("resource usage at max");
         stop(usage);
       } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
                  && usage.getUsedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)) {
@@ -495,6 +496,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
       if (turnCount > 6 && isEmergency && !isStopped) {
         if (turnCount > 100) {
+            logger.warn("turn count:" + turnCount);
           stop(usage);
         } else {
           double start = usage.getMaxMemory() * .75D;

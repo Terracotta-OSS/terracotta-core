@@ -29,12 +29,9 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     private int sampleCount;
     private int sizeCount;
 
-  // private final ObjectManager mgr;
-
     public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
         super(oid);
         this.blowout = blowout;
-    // this.mgr = mgr;
     }
 
     @Override

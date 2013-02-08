@@ -25,6 +25,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     private long startTime = 0;
     private long endTime = 0;
     private int count;
+    private int mapSize;
 
     public AbstractEvictionTrigger(final ObjectID oid) {
         this.oid = oid;
@@ -56,7 +57,8 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         name = map.getCacheName();
         startTime = System.currentTimeMillis();
         mapEvicting = map.isEvicting();
-        if (!map.isEvicting() && map.getSize() > 0 ) {
+        mapSize = map.getSize();
+        if (!map.isEvicting() && mapSize > 0 ) {
             return map.startEviction();
         } else {
             return false;
@@ -123,6 +125,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
                 + ", endTime=" + endTime
                 + ", processed=" + processed
                 + ", map evicting=" + mapEvicting
+                + ", map size=" + mapSize
                 + ", evicting=" + evicting + '}';
     }
 }
