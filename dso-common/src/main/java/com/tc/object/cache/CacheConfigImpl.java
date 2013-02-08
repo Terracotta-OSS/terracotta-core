@@ -28,12 +28,6 @@ public class CacheConfigImpl implements CacheConfig {
 
   private static final long TWO_GB                                   = 2 * 1024 * 1024 * 1024L;
 
-  public CacheConfigImpl(TCProperties cacheManagerProperties, boolean isPersistent, boolean isOffHeap) {
-    this(cacheManagerProperties, cacheManagerProperties.getInt("threshold",
-                                                               getDefaultThreshold(isPersistent, isOffHeap)),
-         cacheManagerProperties.getInt("criticalThreshold", getDefaultCriticalThreshold(isPersistent, isOffHeap)));
-  }
-
   public CacheConfigImpl(TCProperties cacheManagerProperties) {
     this(cacheManagerProperties, cacheManagerProperties.getInt("threshold"), cacheManagerProperties
         .getInt("criticalThreshold"));

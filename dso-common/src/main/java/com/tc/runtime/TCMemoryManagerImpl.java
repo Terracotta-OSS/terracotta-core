@@ -18,28 +18,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private static final TCLogger logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
-  private final String          CMS_NAME      = "ConcurrentMarkSweep";
-  private final String          CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
+  private static final String          CMS_NAME      = "ConcurrentMarkSweep";
+  private static final String          CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
+  private static final int      LEAST_COUNT = 2;
+  private static final long     SLEEP_INTERVAL = 3000;
 
   private final List            listeners     = new CopyOnWriteArrayList();
 
-  private final int             leastCount;
-  private final long            sleepInterval;
-  private final boolean         recommendOffheap;
-  private final boolean         monitorOldGenOnly;
 
   private MemoryMonitor         monitor;
 
   private final TCThreadGroup   threadGroup;
 
-  public TCMemoryManagerImpl(long sleepInterval, int leastCount, boolean monitorOldGenOnly, TCThreadGroup threadGroup,
-                             boolean recommendOffheap) {
+  public TCMemoryManagerImpl(TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    verifyInput(sleepInterval, leastCount);
-    this.monitorOldGenOnly = monitorOldGenOnly;
-    this.leastCount = leastCount;
-    this.sleepInterval = sleepInterval;
-    this.recommendOffheap = recommendOffheap;
   }
 
   // CDV-1181 warn if using CMS
@@ -95,7 +87,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
-      this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), this.sleepInterval, this.monitorOldGenOnly);
+      this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), SLEEP_INTERVAL);
       Thread t = new Thread(this.threadGroup, this.monitor);
       t.setDaemon(true);
       if (Os.isSolaris()) {
@@ -111,27 +103,20 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   private void fireMemoryEvent(MemoryUsage mu) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MemoryEventsListener listener = (MemoryEventsListener) i.next();
-      listener.memoryUsed(mu, this.recommendOffheap);
+      listener.memoryUsed(mu);
     }
-  }
-
-  @Override
-  public synchronized boolean isMonitorOldGenOnly() {
-    return monitor.monitorOldGenOnly();
   }
 
   public class MemoryMonitor implements Runnable {
 
     private final JVMMemoryManager manager;
-    private final boolean          oldGen;
     private volatile boolean       run = true;
     private int                    lastUsed;
     private long                   sleepTime;
 
-    public MemoryMonitor(JVMMemoryManager manager, long sleepInterval, boolean monitorOldGenOnly) {
+    public MemoryMonitor(JVMMemoryManager manager, long sleepInterval) {
       this.manager = manager;
       this.sleepTime = sleepInterval;
-      this.oldGen = monitorOldGenOnly && manager.isMemoryPoolMonitoringSupported();
     }
 
     public void stop() {
@@ -141,11 +126,10 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     @Override
     public void run() {
       logger.debug("Starting Memory Monitor - sleep interval - " + sleepTime);
-      final boolean _oldGen = oldGen;
       while (run) {
         try {
           Thread.sleep(sleepTime);
-          MemoryUsage mu = (_oldGen ? manager.getOldGenUsage() : manager.getMemoryUsage());
+          MemoryUsage mu = manager.getMemoryUsage();
           fireMemoryEvent(mu);
           adjust(mu);
         } catch (Throwable t) {
@@ -166,23 +150,19 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
         if (lastUsed != 0 && lastUsed < usedPercentage) {
           int diff = usedPercentage - lastUsed;
           long l_sleep = this.sleepTime;
-          if (diff > leastCount * 1.5 && l_sleep > 1) {
+          if (diff > LEAST_COUNT * 1.5 && l_sleep > 1) {
             // decrease sleep time
-            this.sleepTime = Math.max(1, l_sleep * leastCount / diff);
+            this.sleepTime = Math.max(1, l_sleep * LEAST_COUNT / diff);
             logger.info("Sleep time changed to : " + this.sleepTime);
-          } else if (diff < leastCount * 0.5 && l_sleep < sleepInterval) {
+          } else if (diff < LEAST_COUNT * 0.5 && l_sleep < SLEEP_INTERVAL) {
             // increase sleep time
-            this.sleepTime = Math.min(sleepInterval, l_sleep * leastCount / diff);
+            this.sleepTime = Math.min(SLEEP_INTERVAL, l_sleep * LEAST_COUNT / diff);
             logger.info("Sleep time changed to : " + this.sleepTime);
           }
         }
       } finally {
         lastUsed = usedPercentage;
       }
-    }
-
-    public boolean monitorOldGenOnly() {
-      return oldGen;
     }
   }
 

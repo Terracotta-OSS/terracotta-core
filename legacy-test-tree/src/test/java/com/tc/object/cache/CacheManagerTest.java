@@ -39,15 +39,14 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
     v = new Vector();
     cacheConfig = new TestCacheConfig();
     thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(CacheManagerTest.class)));
-    tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(), cacheConfig
-        .isOnlyOldGenMonitored(), thrdGrp, true);
+    tcMemManager = new TCMemoryManagerImpl(thrdGrp);
     System.gc();
     System.gc();
     System.gc();
   }
 
   public void test() throws Exception {
-    CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, tcMemManager);
+    CacheManager cm = new CacheManager(this, cacheConfig, tcMemManager);
     cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();
@@ -59,7 +58,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
     CacheManager cm = new CacheManager(new CritialObjectCountCacheValidator(cacheConfig
                                                                                 .getObjectCountCriticalThreshold(),
                                                                             cacheConfig.getPercentageToEvict()),
-                                       cacheConfig, thrdGrp, tcMemManager);
+                                       cacheConfig, tcMemManager);
     cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();

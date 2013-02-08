@@ -154,8 +154,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       }
 
         @Override
-        public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
-            delegate.memoryUsed(usage, recommendOffheap);
+        public void memoryUsed(MemoryUsage usage) {
+            delegate.memoryUsed(usage);
         }
       
       public boolean isDetailed() {

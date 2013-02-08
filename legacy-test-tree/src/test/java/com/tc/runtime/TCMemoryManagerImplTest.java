@@ -31,9 +31,9 @@ public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEv
   private final Vector errors                = new Vector();
 
   public void test() throws Throwable {
-    TCMemoryManager mm = new TCMemoryManagerImpl(sleepInterval, lc, true,
-                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
-                                                     .getLogger(TCMemoryManagerImplTest.class))), true);
+    TCMemoryManager mm = new TCMemoryManagerImpl(
+        new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                     .getLogger(TCMemoryManagerImplTest.class))));
 
     new CacheMemoryManagerEventGenerator(usedThreshold, usedCriticalThreshold, lc, mm, this);
     try {

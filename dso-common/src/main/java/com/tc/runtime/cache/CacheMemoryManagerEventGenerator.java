@@ -15,7 +15,6 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
   private final int                       threshold;
   private final int                       criticalThreshold;
   private final int                       leastCount;
-  private final boolean                   isOldGen;
 
   public CacheMemoryManagerEventGenerator(int threshold, int criticalThreshold, int leastCount,
                                           TCMemoryManager manager, CacheMemoryEventsListener listener) {
@@ -25,7 +24,6 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
     this.criticalThreshold = criticalThreshold;
     this.leastCount = leastCount;
     manager.registerForMemoryEvents(this);
-    this.isOldGen = manager.isMonitorOldGenOnly();
     this.currentState = CacheMemoryEventType.BELOW_THRESHOLD;
   }
 
@@ -42,7 +40,7 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
   }
 
   @Override
-  public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
+  public void memoryUsed(MemoryUsage usage) {
     int usedPercentage = usage.getUsedPercentage();
     if (usedPercentage < threshold) {
       if (currentState != CacheMemoryEventType.BELOW_THRESHOLD) {
@@ -50,7 +48,7 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
         fire(CacheMemoryEventType.BELOW_THRESHOLD, usage);
       }
     } else if (usedPercentage >= criticalThreshold) {
-      if (!isOldGen || currentState != CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD
+      if (currentState != CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD
           || isLeastCountReached(usedPercentage) || isGCCompleted(usage)) {
         // Send an event every time if we are monitoring the entire heap or else if we are monitoring only old gen
         // then send an event only if greater than least count or if we just reached ABOVE_CRITICAL_THRESHOLD or if a gc

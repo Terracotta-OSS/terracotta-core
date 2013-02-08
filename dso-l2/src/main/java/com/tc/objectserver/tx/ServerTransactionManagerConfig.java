@@ -5,6 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 
 public final class ServerTransactionManagerConfig {
 
@@ -15,11 +16,11 @@ public final class ServerTransactionManagerConfig {
   private final boolean printBroadcastStats;
 
   public ServerTransactionManagerConfig(TCProperties tcproperties) {
-    this.loggingEnabled = tcproperties.getBoolean("logging.enabled");
-    this.verboseLogging = tcproperties.getBoolean("logging.verbose");
-    this.printStats = tcproperties.getBoolean("logging.printStats");
-    this.printCommits = tcproperties.getBoolean("logging.printCommits");
-    this.printBroadcastStats = tcproperties.getBoolean("logging.printBroadcastStats");
+    this.loggingEnabled = tcproperties.getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_ENABLED);
+    this.verboseLogging = tcproperties.getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_VERBOSE);
+    this.printStats = tcproperties.getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS);
+    this.printCommits = tcproperties.getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS);
+    this.printBroadcastStats = tcproperties.getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS);
   }
 
   // Used in tests

@@ -5,6 +5,6 @@ package com.tc.runtime;
 
 public interface MemoryEventsListener {
 
-  void memoryUsed(MemoryUsage usage, boolean recommendOffheap);
+  void memoryUsed(MemoryUsage usage);
 
 }

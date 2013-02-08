@@ -4,9 +4,6 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -211,6 +208,9 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * This is the main point of entry into the DSO client.
@@ -572,8 +572,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final TCProperties cacheManagerProperties = this.l1Properties.getPropertiesFor("cachemanager");
     final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
-    this.tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(),
-                                                cacheConfig.isOnlyOldGenMonitored(), getThreadGroup(), false);
+    this.tcMemManager = new TCMemoryManagerImpl(
+        getThreadGroup());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.dsoClientBuilder.createLongGCLogger(timeOut);
     this.tcMemManager.registerForMemoryEvents(gcLogger);
@@ -581,7 +581,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.tcMemManager.checkGarbageCollectors();
 
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, getThreadGroup(), this.tcMemManager);
+      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, this.tcMemManager);
       this.cacheManager.start();
       if (DSO_LOGGER.isDebugEnabled()) {
         DSO_LOGGER.debug("CacheManager Enabled : " + this.cacheManager);

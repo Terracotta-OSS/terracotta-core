@@ -24,7 +24,7 @@ public class CacheMemoryEventGenaratorTest extends TCTestCase {
   private void register() {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(CacheMemoryEventGenaratorTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, true);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(thrdGrp);
     int threshold = 20;
     int criticalThreshold = 30;
     int leastCount = 2;

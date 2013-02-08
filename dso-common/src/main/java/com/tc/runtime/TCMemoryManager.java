@@ -11,7 +11,5 @@ public interface TCMemoryManager {
 
   public void unregisterForMemoryEvents(MemoryEventsListener listener);
 
-  public boolean isMonitorOldGenOnly();
-
   public void shutdown();
 }

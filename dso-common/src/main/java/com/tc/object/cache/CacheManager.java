@@ -3,7 +3,6 @@
  */
 package com.tc.object.cache;
 
-import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.runtime.MemoryUsage;
@@ -32,8 +31,7 @@ public class CacheManager implements CacheMemoryEventsListener {
   private CacheStatistics                lastStat                    = null;
   private final TCMemoryManagerImpl      memoryManager;
 
-  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup,
-                      TCMemoryManagerImpl memoryManager) {
+  public CacheManager(Evictable evictable, CacheConfig config, TCMemoryManagerImpl memoryManager) {
     this.evictable = evictable;
     this.config = config;
     this.memoryManager = memoryManager;

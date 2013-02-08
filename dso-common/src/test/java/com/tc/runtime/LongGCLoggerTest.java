@@ -8,9 +8,9 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.test.TCTestCase;
 
@@ -137,7 +137,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
   private void register(boolean offheapEnabled) {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, !offheapEnabled);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(thrdGrp);
     LongGCLogger logger = new TestLongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);
   }

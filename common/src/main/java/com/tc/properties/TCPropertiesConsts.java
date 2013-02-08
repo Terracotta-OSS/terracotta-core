@@ -74,6 +74,10 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * <code>
    * Section : L2 Transaction Manager Properties
+   * logging.enabled              : Enable/disable L2's tx mgr logging
+   * logging.verbose              : Turns on debug loggings for tx mgr
+   * logging.printStats           : Enables/disables logging for tx stats
+   * logging.printCommits         : Enables/disables logging for tx commits
    * logging.printBroadCastStats  : Enables/disables logging for tx Broadcasts
    * passive.throttle.enabled     : Enables/disables throttling of active from Passive when
    *                                the number of pending txns reaches the threshold
@@ -82,6 +86,10 @@ public interface TCPropertiesConsts {
    * passive.throttle.maxSleepSeconds  : Sleep time for active when passive throttles it
    * </code>
    ********************************************************************************************************************/
+  public static final String L2_TRANSACTIONMANAGER_LOGGING_ENABLED                          = "l2.transactionmanager.logging.enabled";
+  public static final String L2_TRANSACTIONMANAGER_LOGGING_VERBOSE                          = "l2.transactionmanager.logging.verbose";
+  public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS                       = "l2.transactionmanager.logging.printStats";
+  public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS                     = "l2.transactionmanager.logging.printCommits";
   public static final String L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS            = "l2.transactionmanager.logging.printBroadcastStats";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED                 = "l2.transactionmanager.passive.throttle.enabled";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD               = "l2.transactionmanager.passive.throttle.threshold";
@@ -155,6 +163,7 @@ public interface TCPropertiesConsts {
   public static final String L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE                      = "l2.seda.evictionprocessorstage.sink.capacity";
   public static final String L2_SEDA_SEARCH_THREADS                                         = "l2.seda.search.threads";
   public static final String L2_SEDA_QUERY_THREADS                                          = "l2.seda.query.threads";
+  public static final String L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS             = "l2.seda.server.map.capacity.eviction.stage.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_THREADS                            = "l2.seda.local.cache.transaction.complete.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_SINK_CAPACITY                      = "l2.seda.local.cache.transaction.complete.sink.capacity";
   public static final String L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY                     = "l2.seda.local.cache.invalidations.sink.capacity";
