@@ -427,12 +427,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           initiateLockRecall(removeLockIDMetaMapping(key, removed));
         }
         remoteRemoveObjectIfPossible(removed);
-        if (localStore.isPinned()) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("XXX put pinned entry in notifyPinnedEntryInvalidated " + key + " " + oid);
-          }
-          notifyPinnedEntryInvalidated(key, value.isEventualConsistentValue());
-        }
       }
     } finally {
       lock.writeLock().unlock();
