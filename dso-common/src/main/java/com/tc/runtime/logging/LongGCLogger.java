@@ -30,8 +30,8 @@ public class LongGCLogger implements MemoryEventsListener {
     long timeDiff = currentUsage.getCollectionTime() - lastMemoryUsage.getCollectionTime();
     if (countDiff > 0 && timeDiff > gcTimeout) {
 
-      TerracottaOperatorEvent tcEvent = TerracottaOperatorEventFactory.createLongGCAndRecommendationOperatorEvent(new Object[] { gcTimeout,
-            countDiff, timeDiff });
+      TerracottaOperatorEvent tcEvent = TerracottaOperatorEventFactory.createLongGCOperatorEvent(
+          new Object[] { gcTimeout, countDiff, timeDiff });
 
       fireLongGCEvent(tcEvent);
     }

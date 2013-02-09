@@ -20,18 +20,24 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   private static final TCLogger logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
   private static final String          CMS_NAME      = "ConcurrentMarkSweep";
   private static final String          CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
-  private static final int      LEAST_COUNT = 2;
-  private static final long     SLEEP_INTERVAL = 3000;
 
   private final List            listeners     = new CopyOnWriteArrayList();
 
+  private final int leastCount;
+  private final long sleepInterval;
 
   private MemoryMonitor         monitor;
 
   private final TCThreadGroup   threadGroup;
 
-  public TCMemoryManagerImpl(TCThreadGroup threadGroup) {
+  public TCMemoryManagerImpl(long sleepInterval, int leastCount, TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
+    this.sleepInterval = sleepInterval;
+    this.leastCount = leastCount;
+  }
+
+  public TCMemoryManagerImpl(TCThreadGroup threadGroup) {
+    this(3000, 2, threadGroup);
   }
 
   // CDV-1181 warn if using CMS
@@ -87,7 +93,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
-      this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), SLEEP_INTERVAL);
+      this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), sleepInterval);
       Thread t = new Thread(this.threadGroup, this.monitor);
       t.setDaemon(true);
       if (Os.isSolaris()) {
@@ -129,7 +135,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
       while (run) {
         try {
           Thread.sleep(sleepTime);
-          MemoryUsage mu = manager.getMemoryUsage();
+          MemoryUsage mu = manager.isMemoryPoolMonitoringSupported() ? manager.getOldGenUsage() : manager.getMemoryUsage();
           fireMemoryEvent(mu);
           adjust(mu);
         } catch (Throwable t) {
@@ -150,13 +156,13 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
         if (lastUsed != 0 && lastUsed < usedPercentage) {
           int diff = usedPercentage - lastUsed;
           long l_sleep = this.sleepTime;
-          if (diff > LEAST_COUNT * 1.5 && l_sleep > 1) {
+          if (diff > leastCount * 1.5 && l_sleep > 1) {
             // decrease sleep time
-            this.sleepTime = Math.max(1, l_sleep * LEAST_COUNT / diff);
+            this.sleepTime = Math.max(1, l_sleep * leastCount / diff);
             logger.info("Sleep time changed to : " + this.sleepTime);
-          } else if (diff < LEAST_COUNT * 0.5 && l_sleep < SLEEP_INTERVAL) {
+          } else if (diff < leastCount * 0.5 && l_sleep < sleepInterval) {
             // increase sleep time
-            this.sleepTime = Math.min(SLEEP_INTERVAL, l_sleep * LEAST_COUNT / diff);
+            this.sleepTime = Math.min(sleepInterval, l_sleep * leastCount / diff);
             logger.info("Sleep time changed to : " + this.sleepTime);
           }
         }
