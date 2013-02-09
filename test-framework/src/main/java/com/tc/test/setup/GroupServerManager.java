@@ -505,7 +505,7 @@ public class GroupServerManager {
     int activeIndex = getActiveServerIndex();
     for (int i = 0; i < groupData.getServerCount(); i++) {
       if (i != activeIndex && expectedServerRunning[i]) {
-        crashServer(i);
+        crashServer(i, true);
       }
     }
     System.out.println("***** Done Crashing all passives");
@@ -517,7 +517,7 @@ public class GroupServerManager {
     if (isActive(passiveToCrash)) { throw new AssertionError("**** Trying to crash server ["
                                                              + serverControl[passiveToCrash].getTsaPort()
                                                              + "] as passive server but it is in ACTIVE state."); }
-    crashServer(passiveToCrash);
+    crashServer(passiveToCrash, true);
   }
 
   public synchronized void crashRandomServer() throws Exception {
@@ -532,12 +532,16 @@ public class GroupServerManager {
     }
   }
 
-  public synchronized void crashServer(int index) throws Exception {
+  public void crashServer(int index) throws Exception {
+    crashServer(index, false);
+  }
+
+  private synchronized void crashServer(int index, boolean ignoreState) throws Exception {
     System.out.println("******** Crashing Server " + index);
 
     boolean active = isActive(index);
     System.out.println("Crashing server: dsoPort=[" + serverControl[index].getTsaPort() + "]");
-    if (expectedRunningServerCount() > 1) {
+    if (!ignoreState && expectedRunningServerCount() > 1) {
       waituntilPassiveStandBy();
     }
     ServerControl server = serverControl[index];
