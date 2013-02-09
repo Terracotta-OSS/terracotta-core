@@ -533,16 +533,16 @@ public class GroupServerManager {
   }
 
   public synchronized void crashServer(int index) throws Exception {
-    System.out.println("******** Crashing active Server");
+    System.out.println("******** Crashing Server " + index);
 
     boolean active = isActive(index);
-    System.out.println("Crashing active server: dsoPort=[" + serverControl[index].getTsaPort() + "]");
+    System.out.println("Crashing server: dsoPort=[" + serverControl[index].getTsaPort() + "]");
     if (expectedRunningServerCount() > 1) {
       waituntilPassiveStandBy();
     }
     ServerControl server = serverControl[index];
     server.crash();
-    debugPrintln("***** Sleeping after crashing active server ");
+    debugPrintln("***** Sleeping after crashing server ");
     waitForServerCrash(server);
     stopL2GroupProxy(index);
     expectedServerRunning[index] = false;
@@ -553,7 +553,7 @@ public class GroupServerManager {
         startL1ProxyOnActiveServerAsync();
       }
     }
-    debugPrintln("***** Done sleeping after crashing active server ");
+    debugPrintln("***** Done sleeping after crashing server ");
     lastCrashedIndex = index;
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
     if (expectedRunningServerCount() > 0 && testConfig.getCrashConfig().shouldCleanDbOnCrash()) {
