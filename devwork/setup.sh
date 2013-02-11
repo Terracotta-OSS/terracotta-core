@@ -1,6 +1,7 @@
 # trunk: https://svn.terracotta.org/repo/internal/enterprise/trunk
 svn co https://svn.terracotta.org/repo/internal/search/trunk search
 svn co https://svn.terracotta.org/repo/forge/enterprise/terracotta-license/trunk/ terracotta-license
+svn co https://svn.terracotta.org/repo/forge/enterprise/security-modules/trunk security-modules
 svn co https://svn.terracotta.org/repo/forge/enterprise/management-apps/trunk management-apps
 svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/trunk fast-restartable-store
 svn co https://svn.terracotta.org/repo/internal/offheap-store/trunk offheap-store
