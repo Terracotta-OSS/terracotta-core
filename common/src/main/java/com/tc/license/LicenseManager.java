@@ -4,8 +4,6 @@
 package com.tc.license;
 
 import static org.terracotta.license.LicenseConstants.CAPABILITY_AUTHENTICATION;
-import static org.terracotta.license.LicenseConstants.CAPABILITY_OPERATOR_CONSOLE;
-import static org.terracotta.license.LicenseConstants.CAPABILITY_ROOTS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SEARCH;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SECURITY;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING;
@@ -108,20 +106,12 @@ public class LicenseManager {
     }
   }
 
-  public static void verifyOperatorConsoleCapability() {
-    verifyCapability(CAPABILITY_OPERATOR_CONSOLE);
-  }
-
   public static void verifyAuthenticationCapability() {
     verifyCapability(CAPABILITY_AUTHENTICATION);
   }
 
   public static void verifyServerStripingCapability() {
     verifyCapability(CAPABILITY_SERVER_STRIPING);
-  }
-
-  public static void verifyRootCapability() {
-    verifyCapability(CAPABILITY_ROOTS);
   }
 
   public static void verifySessionCapability() {
