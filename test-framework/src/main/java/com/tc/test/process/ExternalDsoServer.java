@@ -146,6 +146,14 @@ public class ExternalDsoServer {
     IOUtils.closeQuietly(logOutputStream);
   }
 
+  public void stop(String username, String passwd) throws Exception {
+    Assert.assertNotNull(serverProc);
+    Assert.assertNotNull(logOutputStream);
+    serverProc.shutdown(username, passwd);
+    inited = false;
+    IOUtils.closeQuietly(logOutputStream);
+  }
+
   public void stopSecured(String username, String passwd) throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);

@@ -162,8 +162,13 @@ public class CommandLineBuilder {
   public static JMXConnector getJMXConnector(String username, String password, String host, int port, boolean secured) {
     Map<String, Object> env = new HashMap<String, Object>();
     if (username != null && password != null) {
-      Object[] creds = { username, secured ? password.toCharArray() : password };
-      env.put("jmx.remote.credentials", creds);
+      if (secured) {
+        Object[] creds = { username, password.toCharArray() };
+        env.put("jmx.remote.credentials", creds);
+      } else {
+        String[] creds = { username, password };
+        env.put("jmx.remote.credentials", creds);
+      }
     }
     return new JMXConnectorProxy(host, port, env, secured);
   }

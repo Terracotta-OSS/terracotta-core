@@ -83,6 +83,16 @@ public class TcConfigBuilder {
     return getServer(0).getHost();
   }
 
+  public void setAuthenticationPasswordFile(String filename) {
+    ensureServers();
+    getServer(0).getAuthentication().getMode().setPasswordFile(filename);
+  }
+
+  public void setAuthenticationAccessFile(String filename) {
+    ensureServers();
+    getServer(0).getAuthentication().setAccessFile(filename);
+  }
+
   public void setTsaPort(int portNo) {
     setTsaPort(0, portNo);
   }

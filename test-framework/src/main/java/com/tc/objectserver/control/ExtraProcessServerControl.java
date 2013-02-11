@@ -394,20 +394,28 @@ public class ExtraProcessServerControl extends ServerControlBase {
     attemptForceShutdownInternal(false, null, null);
   }
 
+  public void attemptForceShutdown(String username, String passwd) throws Exception {
+    attemptForceShutdownInternal(false, username, passwd);
+  }
+
   public void attemptForceShutdownSecured(String username, String passwd) throws Exception {
     attemptForceShutdownInternal(true, username, passwd);
   }
 
   private void attemptForceShutdownInternal(boolean secured, String username, String passwd) throws Exception {
     System.out.println("Force Shutting down server (secured=" + secured
-                       + (secured ? ", username: " + username + ", passwd: " + passwd : ")"));
+                       + (username != null ? ", username: " + username : "") + (passwd != null ? ", passwd: " + passwd : "") + ")");
     List<String> mainClassArguments = new ArrayList<String>();
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
     if (secured) {
       mainClassArguments.add("-s");
+    }
+    if (username != null) {
       mainClassArguments.add("-u");
       mainClassArguments.add(username);
+    }
+    if (passwd != null) {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
@@ -443,6 +451,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public void shutdown() throws Exception {
     try {
       attemptForceShutdown();
+    } catch (Exception e) {
+      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
+    }
+    waitUntilShutdown();
+    System.out.println(this.name + " stopped.");
+  }
+
+  public void shutdown(String username, String passwd) throws Exception {
+    try {
+      attemptForceShutdown(username, passwd);
     } catch (Exception e) {
       System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
     }
