@@ -8,7 +8,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
@@ -25,14 +24,13 @@ public class ToolkitNotifierManagedObjectState extends AbstractManagedObjectStat
     this.classID = classID;
   }
 
+  /**
+   * This apply method is empty because it doesnt need to do anything. The server doesnt maintain any state. All we care
+   * is to see that the server broadcasts messages to the Clients.
+   */
   @Override
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo applyInfo) throws IOException {
-    while (cursor.next()) {
-      final Object action = cursor.getAction();
-      if (action instanceof LogicalAction) {
-        // do nothing
-      }
-    }
+    //
   }
 
   @Override
