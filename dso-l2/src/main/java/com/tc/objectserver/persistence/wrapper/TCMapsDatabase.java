@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.wrapper;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -65,11 +66,7 @@ public interface TCMapsDatabase {
   public BackingMapFactory getBackingMapFactory(TCCollectionsSerializer serializer);
 
   public interface BackingMapFactory {
-
     public Map createBackingMapFor(ObjectID mapID);
-
-    public Map createBackingTinyMapFor(ObjectID mapID);
-
   }
 
 }
