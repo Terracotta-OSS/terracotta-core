@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class L2Config {
 
   private boolean                 offHeapEnabled       = false;
-  private int                     maxOffHeapDataSize   = 128;
+  private int                     maxOffHeapDataSize   = 512;
   private final ArrayList<String> extraServerJvmArgs;
   private boolean                 isProxyTsaGroupPorts = false;
   private boolean                 isProxyTsaPorts      = false;
