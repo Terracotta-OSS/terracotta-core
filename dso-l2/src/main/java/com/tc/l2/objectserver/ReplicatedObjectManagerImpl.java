@@ -121,7 +121,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
             this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
                                       "Passive : " + msg.messageFrom() + " joined in partially synced state. "
                                           + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-          } else if (StateManager.PASSIVE_STANDBY.equals(curState) && !msg.isCleanDB()) {
+          } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isCleanDB()) {
             logger.error("Syncing to passives which were restarted before active is not supported. msg : " + msg);
             this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
                 "Passive : " + msg.messageFrom() + " was restarted before active." +

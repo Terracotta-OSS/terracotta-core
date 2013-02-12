@@ -66,7 +66,7 @@ public class L2HADisabledCooridinator implements L2Coordinator {
   @Override
   public void start() {
     // Give the state manager an opportunity to notify that we are active to interested parties.
-    stateMgr.startElection();
+    stateMgr.startElection(startedWithCleanDB);
   }
 
   @Override

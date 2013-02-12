@@ -48,13 +48,14 @@ public class DummyStateManager implements StateManager {
     throw new UnsupportedOperationException();
   }
 
+
   @Override
   public void registerForStateChangeEvents(StateChangeListener listener) {
     stateListeners.add(listener);
   }
 
   @Override
-  public void startElection() {
+  public void startElection(boolean isNew) {
     // No need to start election, if we are here, we are active, notify it.
     fireStateChangedEvent(new StateChangedEvent(StateManager.PASSIVE_STANDBY, StateManager.ACTIVE_COORDINATOR));
   }

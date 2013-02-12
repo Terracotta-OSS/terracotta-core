@@ -25,7 +25,6 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
-import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StateManagerImpl implements StateManager {
@@ -38,7 +37,7 @@ public class StateManagerImpl implements StateManager {
   private final Sink                   stateChangeSink;
   private final WeightGeneratorFactory weightsFactory;
 
-  private final CopyOnWriteArrayList   listeners           = new CopyOnWriteArrayList();
+  private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<StateChangeListener>();
   private final Object                 electionLock        = new Object();
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
@@ -65,17 +64,15 @@ public class StateManagerImpl implements StateManager {
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
   @Override
-  public void startElection() {
+  public void startElection(boolean isNew) {
     debugInfo("Starting election");
     synchronized (electionLock) {
       if (electionInProgress) return;
       electionInProgress = true;
     }
     try {
-      if (state == START_STATE) {
-        runElection(true);
-      } else if (state == PASSIVE_STANDBY) {
-        runElection(false);
+      if (state == START_STATE || state == PASSIVE_STANDBY) {
+        runElection(isNew);
       } else {
         info("Ignoring Election request since not in right state");
       }
@@ -143,8 +140,7 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void fireStateChangedEvent(StateChangedEvent sce) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
-      StateChangeListener listener = (StateChangeListener) i.next();
+    for (StateChangeListener listener : listeners) {
       listener.l2StateChanged(sce);
     }
   }
@@ -380,7 +376,7 @@ public class StateManagerImpl implements StateManager {
     }
     if (elect) {
       info("Starting Election to determine cluser wide ACTIVE L2");
-      startElection();
+      startElection(false);
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
     }

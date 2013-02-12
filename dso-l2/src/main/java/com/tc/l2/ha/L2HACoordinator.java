@@ -279,31 +279,32 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
   @Override
   public void start() {
-    if (wasShutdownInPassiveStateInPreviousLife()) {
-      while (true) {
-        try {
-          consoleLogger.warn("Waiting for ACTIVE server to start...");
-          logger.warn("Detected that this server was shutdown and restarted in a state other than ACTIVE-COORDINATOR." +
-                      " Sleeping until ACTIVE-COORDINATOR server zaps it.");
-          Thread.sleep(60 * 1000);
-        } catch (InterruptedException e) {
-          // ignore
+    State b4Shutdown = getStateBeforeRestart();
+    boolean isNew = true;
+    if (b4Shutdown != null) {
+      isNew = false;
+      if (!StateManager.ACTIVE_COORDINATOR.equals(b4Shutdown)) {
+        while (true) {
+          try {
+            consoleLogger.warn("Waiting for ACTIVE server to start...");
+            logger
+                .warn("Detected that this server was shutdown and restarted in a state other than ACTIVE-COORDINATOR."
+                      + " Sleeping until ACTIVE-COORDINATOR server zaps it.");
+            Thread.sleep(60 * 1000);
+          } catch (InterruptedException e) {
+            // ignore
+          }
         }
       }
-    } else {
-      this.stateManager.startElection();
     }
+    this.stateManager.startElection(isNew);
   }
 
-  private boolean wasShutdownInPassiveStateInPreviousLife() {
+  private State getStateBeforeRestart() {
     String stateStr = persistentStateStore.get(ClusterStateDBKeyNames.L2_STATE_KEY);
-    if (stateStr != null) {
-      State stateB4Crash = new State(stateStr);
-      return !StateManager.ACTIVE_COORDINATOR.equals(stateB4Crash);
-    } else {
-      // case when Server is started for the first time
-      return false;
-    }
+
+    return stateStr == null /* case when Server is started for the first time */
+    ? null : new State(stateStr);
   }
 
   @Override

@@ -325,7 +325,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     Collections.addAll(nodeSet, allNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     ids[0] = groupMgr[0].join(allNodes[0], nodeStore);
-    managers[0].startElection();
+    managers[0].startElection(true);
     ThreadUtil.reallySleep(100);
 
     // move following join nodes to passive-standby
@@ -483,7 +483,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     @Override
     public void run() {
-      mgr.startElection();
+      mgr.startElection(true);
     }
   }
 
