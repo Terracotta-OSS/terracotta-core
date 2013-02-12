@@ -158,9 +158,10 @@ public class TerracottaClusterInfo implements ClusterInfo {
           return Type.OPERATIONS_DISABLED;
         case NODE_REJOINED:
           return Type.NODE_REJOINED;
-        default:
-          throw new AssertionError("Unknown type: " + type);
+        case REJOIN_REJECTED:
+          return Type.NODE_ERROR;
       }
+      throw new AssertionError("Unhandled event type: " + type);
     }
 
     @Override
