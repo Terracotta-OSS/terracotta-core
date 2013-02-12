@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit;
 
+import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.abortable.AbortableOperationManager;
@@ -36,7 +37,7 @@ public class AsyncToolkitInitializer {
           handleInterruptedException(e);
           interrupted = true;
         } catch (ExecutionException e) {
-          throw new RuntimeException(e);
+          throw new ToolkitRuntimeException(e.getCause());
         }
       }
     } finally {

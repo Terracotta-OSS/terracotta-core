@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.express;
 
+import org.terracotta.toolkit.ToolkitRuntimeException;
+
 import com.terracotta.toolkit.express.loader.Util;
 
 import java.io.BufferedReader;
@@ -82,7 +84,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       Object context = boot.call();
       this.dsoContext = context;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ToolkitRuntimeException(e);
     }
   }
 

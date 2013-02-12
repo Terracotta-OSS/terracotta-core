@@ -4,10 +4,13 @@
 package com.terracotta.toolkit;
 
 import org.terracotta.toolkit.Toolkit;
+import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -15,10 +18,12 @@ import java.util.List;
 import java.util.Set;
 
 public class NonStopClusterInfo implements ClusterInfo {
+  private static final TCLogger         LOGGER         = TCLogging.getLogger(NonStopClusterInfo.class);
   private final AsyncToolkitInitializer asyncToolkitInitializer;
   private volatile ClusterInfo          delegate;
   private final Thread                  initializer;
-  private final List<ClusterListener>   listeners = new ArrayList<ClusterListener>();
+  private final List<ClusterListener>   listeners      = new ArrayList<ClusterListener>();
+  private volatile ClusterEvent         nodeErrorEvent = null;
 
   public NonStopClusterInfo(AsyncToolkitInitializer asyncToolkitInitializer) {
     this.asyncToolkitInitializer = asyncToolkitInitializer;
@@ -31,13 +36,39 @@ public class NonStopClusterInfo implements ClusterInfo {
     return new Thread("Non Stop Cluster Info register") {
       @Override
       public void run() {
-        ClusterInfo localClusterInfo = getToolkit().getClusterInfo();
-        synchronized (NonStopClusterInfo.this) {
-          delegate = localClusterInfo;
-          for (ClusterListener clusterListener : listeners) {
-            delegate.addClusterListener(clusterListener);
+        try {
+          ClusterInfo localClusterInfo = getToolkit().getClusterInfo();
+          synchronized (NonStopClusterInfo.this) {
+            delegate = localClusterInfo;
+            for (ClusterListener clusterListener : listeners) {
+              delegate.addClusterListener(clusterListener);
+            }
+            listeners.clear();
           }
-          listeners.clear();
+        } catch (final Throwable e) {
+          LOGGER.error("Got Exception while initializing Toolkit :" + e);
+          // Notify the listeners of the NODE_ERROR event.
+          nodeErrorEvent = new ClusterEvent() {
+
+            @Override
+            public Type getType() {
+              return Type.NODE_ERROR;
+            }
+
+            @Override
+            public ClusterNode getNode() {
+              // return null as toolkit is not yet initialized.
+              return null;
+            }
+
+            @Override
+            public String getDetailedMessage() {
+              return e.getMessage();
+            }
+          };
+          for (ClusterListener listener : listeners) {
+            listener.onClusterEvent(nodeErrorEvent);
+          }
         }
       }
 
@@ -61,6 +92,10 @@ public class NonStopClusterInfo implements ClusterInfo {
       }
 
       listeners.add(listener);
+
+      if (nodeErrorEvent != null) {
+        listener.onClusterEvent(nodeErrorEvent);
+      }
     }
   }
 
