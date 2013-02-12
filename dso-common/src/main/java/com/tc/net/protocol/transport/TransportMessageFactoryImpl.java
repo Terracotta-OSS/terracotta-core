@@ -22,6 +22,12 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
   }
 
   @Override
+  public HealthCheckerProbeMessage createTimeCheck(ConnectionID connectionId, TCConnection source) {
+    return createNewMessage(TransportMessageImpl.TIME_CHECK, connectionId, null, source, false, 0,
+                            WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES);
+  }
+
+  @Override
   public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags,
                                              int callbackPort) {
     return createNewMessage(TransportMessageImpl.SYN, connectionId, null, source, false, 0,
@@ -49,16 +55,16 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
                             maxConnections, TransportHandshakeMessage.NO_CALLBACK_PORT);
   }
 
-  private TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
-                                                TransportHandshakeErrorContext errorContext, TCConnection source,
-                                                boolean isMaxConnectionsExceeded, int maxConnections, short protocol) {
+  private static TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
+                                                       TransportHandshakeErrorContext errorContext, TCConnection source,
+                                                       boolean isMaxConnectionsExceeded, int maxConnections, short protocol) {
     return createNewMessage(type, connectionId, errorContext, source, isMaxConnectionsExceeded, maxConnections,
                             protocol, (short) -1, TransportHandshakeMessage.NO_CALLBACK_PORT);
   }
 
-  private TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
-                                                TransportHandshakeErrorContext errorContext, TCConnection source,
-                                                boolean isMaxConnectionsExceeded, int maxConnections, int callbackPort) {
+  private static TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
+                                                       TransportHandshakeErrorContext errorContext, TCConnection source,
+                                                       boolean isMaxConnectionsExceeded, int maxConnections, int callbackPort) {
     return createNewMessage(type, connectionId, errorContext, source, isMaxConnectionsExceeded, maxConnections,
                             WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE, (short) -1, callbackPort);
   }
@@ -68,10 +74,10 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
    * the flags set for the present layers in the communication stack All other kinds of packet will have it as -1 and
    * this wouldn't be send to the server
    */
-  private TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
-                                                TransportHandshakeErrorContext errorContext, TCConnection source,
-                                                boolean isMaxConnectionsExceeded, int maxConnections, short protocol,
-                                                short stackLayerFlags, int callbackPort) {
+  private static TransportMessageImpl createNewMessage(byte type, ConnectionID connectionId,
+                                                       TransportHandshakeErrorContext errorContext, TCConnection source,
+                                                       boolean isMaxConnectionsExceeded, int maxConnections, short protocol,
+                                                       short stackLayerFlags, int callbackPort) {
     TCByteBufferOutputStream bbos = new TCByteBufferOutputStream();
 
     bbos.write(TransportMessageImpl.VERSION);
@@ -87,6 +93,9 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
       bbos.writeShort(errorType);
       if (errorType == TransportHandshakeError.ERROR_STACK_MISMATCH) bbos.writeString(errorContext.getMessage());
       else bbos.writeString(errorContext.toString());
+    }
+    if (type == TransportMessageImpl.TIME_CHECK) {
+      bbos.writeLong(System.currentTimeMillis()); // timestamp
     }
 
     final WireProtocolHeader header = new WireProtocolHeader();

@@ -5,9 +5,12 @@ package com.tc.net.protocol.transport;
 
 
 public interface HealthCheckerProbeMessage extends WireProtocolMessage {
-  
-  public boolean isPing();
 
-  public boolean isPingReply();
+  boolean isPing();
 
+  boolean isPingReply();
+
+  long getTime();
+
+  boolean isTimeCheck();
 }

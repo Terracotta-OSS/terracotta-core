@@ -12,11 +12,12 @@ package com.tc.net.protocol.transport;
 public interface ConnectionHealthCheckerContext {
 
   /* Transport is lively */
-  public void refresh();
+  void refresh();
 
   /* Probe Message send and receive */
-  public boolean probeIfAlive();
+  boolean probeIfAlive();
 
-  public boolean receiveProbe(HealthCheckerProbeMessage message);
+  boolean receiveProbe(HealthCheckerProbeMessage message);
 
+  void checkTime();
 }

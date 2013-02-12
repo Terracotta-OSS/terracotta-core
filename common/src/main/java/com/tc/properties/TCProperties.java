@@ -31,7 +31,7 @@ public interface TCProperties {
 
   Properties addAllPropertiesTo(Properties properties);
 
-  public void overwriteTcPropertiesFromConfig(Map<String, String> props);
+  void overwriteTcPropertiesFromConfig(Map<String, String> props);
 
-  public void setProperty(String key, String value);
+  void setProperty(String key, String value);
 }

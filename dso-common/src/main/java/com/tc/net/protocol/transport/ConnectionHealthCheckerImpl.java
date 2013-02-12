@@ -14,7 +14,11 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The Engine which does the peer health checking work. Based on the config passed, it probes the peer once in specified
@@ -119,20 +123,24 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   }
 
   static class HealthCheckerMonitorThreadEngine implements Runnable {
-    private final ConcurrentHashMap   connectionMap = new ConcurrentHashMap();
+    private final ConcurrentMap<ConnectionID, MessageTransport> connectionMap =
+        new ConcurrentHashMap<ConnectionID, MessageTransport>();
     private final long                pingIdleTime;
     private final long                pingInterval;
     private final int                 pingProbes;
+    private final long                checkTimeInterval;
     private final SetOnceFlag         stop          = new SetOnceFlag();
     private final HealthCheckerConfig config;
     private final TCLogger            logger;
     private final TCConnectionManager connectionManager;
+    private final AtomicLong          lastCheckTime = new AtomicLong(System.currentTimeMillis());
 
     public HealthCheckerMonitorThreadEngine(HealthCheckerConfig healthCheckerConfig,
                                             TCConnectionManager connectionManager, TCLogger logger) {
       this.pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
       this.pingInterval = healthCheckerConfig.getPingIntervalMillis();
       this.pingProbes = healthCheckerConfig.getPingProbes();
+      this.checkTimeInterval = healthCheckerConfig.getCheckTimeInterval();
       this.connectionManager = connectionManager;
       this.config = healthCheckerConfig;
 
@@ -148,15 +156,14 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
     }
 
-    public void addConnection(MessageTransport transport) {
+    private void addConnection(MessageTransport transport) {
       MessageTransportBase mtb = (MessageTransportBase) transport;
       mtb.setHealthCheckerContext(getHealthCheckerContext(mtb, config, connectionManager));
       connectionMap.put(transport.getConnectionId(), transport);
     }
 
-    public boolean removeConnection(MessageTransport transport) {
-      if ((connectionMap.remove(transport.getConnectionId())) != null) { return true; }
-      return false;
+    private boolean removeConnection(MessageTransport transport) {
+      return (connectionMap.remove(transport.getConnectionId())) != null;
     }
 
     protected ConnectionHealthCheckerContext getHealthCheckerContext(MessageTransportBase transport,
@@ -177,6 +184,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
           logger.info("HealthChecker SHUTDOWN");
           return;
         }
+
+        // same interval for all connections
+        final boolean canCheckTime = canCheckTime();
 
         Iterator connectionIterator = connectionMap.values().iterator();
         while (connectionIterator.hasNext()) {
@@ -200,14 +210,27 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
               mtb.disconnect();
               connectionIterator.remove();
             }
-
           } else {
             connContext.refresh();
           }
+          // is there any significant time difference between hosts ?
+          if (canCheckTime) {
+            connContext.checkTime();
+          }
+        }
+
+        // update last check time once for all connections
+        if (canCheckTime) {
+          this.lastCheckTime.set(System.currentTimeMillis());
         }
 
         ThreadUtil.reallySleep(this.pingInterval);
       }
+    }
+
+    boolean canCheckTime() {
+      return config.isCheckTimeEnabled() &&
+             (System.currentTimeMillis() - this.lastCheckTime.get() >= this.checkTimeInterval);
     }
 
     /* For testing only */

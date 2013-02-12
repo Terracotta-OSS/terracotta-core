@@ -24,6 +24,11 @@ public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealth
   }
 
   @Override
+  public void checkTime() {
+    throw new AssertionError("Dummy HealthCheckerContext.");
+  }
+
+  @Override
   public boolean probeIfAlive() {
     throw new AssertionError("Dummy HealthCheckerContext.");
   }

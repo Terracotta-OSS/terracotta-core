@@ -14,6 +14,7 @@ import com.tc.net.protocol.transport.HealthCheckerSocketConnect.SocketConnectSta
 import com.tc.util.Assert;
 import com.tc.util.State;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -63,6 +64,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   // stats
   private final AtomicLong                       pingProbeSentCount         = new AtomicLong(0);
 
+  private final long                             timeDiffThreshold;
+
   public ConnectionHealthCheckerContextImpl(MessageTransportBase mtb, HealthCheckerConfig config,
                                             TCConnectionManager connMgr) {
     this.transport = mtb;
@@ -70,6 +73,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.maxProbeCountWithoutReply = config.getPingProbes();
     this.config = config;
     this.connectionManager = connMgr;
+    this.timeDiffThreshold = config.getTimeDiffThreshold();
     this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
                                       + config.getHealthCheckerName());
     this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
@@ -90,7 +94,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       } else if (status == SocketConnectStartStatus.NOT_STARTED) {
         // 2. callback port not handshaked -- just log it, no config upgrade, move to next state
         changeState(START);
-      } else if (status.equals(SocketConnectStartStatus.STARTED)) {
+      } else if (status == SocketConnectStartStatus.STARTED) {
         // async socket connect to callback port has started. HC state remains at INIT. state change happens on
         // connection events
       } else {
@@ -201,6 +205,13 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   @Override
+  public synchronized void checkTime() {
+    if (currentState.equals(START) || currentState.equals(ALIVE)) {
+      sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionId(), transport.getConnection()));
+    }
+  }
+
+  @Override
   public synchronized boolean probeIfAlive() {
 
     if (!isIntervalTimeElapsed()) { return true; }
@@ -267,7 +278,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   @Override
-  public synchronized boolean receiveProbe(HealthCheckerProbeMessage message) {
+  public synchronized boolean receiveProbe(final HealthCheckerProbeMessage message) {
     if (message.isPing()) {
       // Echo back but no change in this health checker state
       sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
@@ -282,11 +293,23 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       if (wasInLongGC()) {
         initSocketConnectCycle();
       }
+    } else if (message.isTimeCheck()) {
+      // log a warning if threshold exceeded
+      long diff = Math.abs(System.currentTimeMillis() - message.getTime());
+      if (diff > timeDiffThreshold) {
+        handleTimeDesync(message, diff);
+      }
     } else {
       // error message thrown at transport layers
       return false;
     }
     return true;
+  }
+
+  void handleTimeDesync(final HealthCheckerProbeMessage message, final long diff) {
+    logger.warn(String.format("%d min time difference between %s and %s has been detected",
+        TimeUnit.MILLISECONDS.toMinutes(diff), message.getSource().getLocalAddress(),
+        message.getSource().getRemoteAddress()));
   }
 
   private void sendProbeMessage(HealthCheckerProbeMessage message) {

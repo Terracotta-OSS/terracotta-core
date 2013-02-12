@@ -240,7 +240,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     assertNotNull(connHC);
 
     while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
-      System.out.println("Yet to start the connection health cheker thread...");
+      System.out.println("Yet to start the connection health checker thread...");
       ThreadUtil.reallySleep(1000);
     }
 

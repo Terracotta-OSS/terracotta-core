@@ -7,12 +7,14 @@ import com.tc.net.core.TCConnection;
 
 /**
  * Probe Messages to monitor peer nodes health
- * 
+ *
  * @author Manoj
  */
 public interface HealthCheckerProbeMessageFactory {
-  public HealthCheckerProbeMessage createPing(ConnectionID connectionId, TCConnection source);
 
-  public HealthCheckerProbeMessage createPingReply(ConnectionID connectionId, TCConnection source);
+  HealthCheckerProbeMessage createPing(ConnectionID connectionId, TCConnection source);
 
+  HealthCheckerProbeMessage createPingReply(ConnectionID connectionId, TCConnection source);
+
+  HealthCheckerProbeMessage createTimeCheck(ConnectionID connectionId, TCConnection source);
 }

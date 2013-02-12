@@ -65,4 +65,19 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
     return false;
   }
 
+  @Override
+  public boolean isCheckTimeEnabled() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
+  @Override
+  public long getCheckTimeInterval() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
+  @Override
+  public long getTimeDiffThreshold() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
 }

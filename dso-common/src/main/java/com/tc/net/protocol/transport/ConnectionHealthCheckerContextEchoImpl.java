@@ -34,6 +34,11 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
   }
 
   @Override
+  public void checkTime() {
+    throw new AssertionError("Echo HealthChecker");
+  }
+
+  @Override
   public boolean probeIfAlive() {
     throw new AssertionError("Echo HealthChecker");
   }

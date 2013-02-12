@@ -34,6 +34,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   static final byte          SYN_ACK    = 3;
   static final byte          PING       = 4;
   static final byte          PING_REPLY = 5;
+  static final byte TIME_CHECK = 6;
 
   private final byte         version;
   private final byte         type;
@@ -45,6 +46,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final short        stackLayerFlags;
   private final short        errorType;
   private final int          callbackPort;
+  private final long         timestamp;
 
   TransportMessageImpl(TCConnection source, TCNetworkHeader header, TCByteBuffer[] payload) throws TCProtocolException {
     super(source, header, payload);
@@ -76,7 +78,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
         this.errorType = TransportHandshakeError.ERROR_NONE;
         this.errorContext = null;
       }
-
+      this.timestamp = (type == TIME_CHECK) ? in.readLong() : -1;
     } catch (IOException e) {
       throw new TCProtocolException("IOException reading data: " + e.getMessage());
     }
@@ -89,7 +91,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
 
   @Override
   protected String describePayload() {
-    return "type: " + typeToString() + ", connectionId: " + connectionId + ", errorContext " + errorContext + "\n";
+    return "type: " + typeToString() + ", connectionId: " + connectionId + ", timestamp: " + timestamp
+           + ", errorContext " + errorContext + "\n";
   }
 
   private String typeToString() {
@@ -104,6 +107,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
         return "PING";
       case PING_REPLY:
         return "PING_REPLY";
+      case TIME_CHECK:
+        return "TIME_CHECK";
       default:
         return "UNKNOWN";
     }
@@ -142,6 +147,11 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   }
 
   @Override
+  public long getTime() {
+    return this.timestamp;
+  }
+
+  @Override
   public boolean isSynAck() {
     return type == SYN_ACK;
   }
@@ -154,6 +164,11 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   @Override
   public boolean isAck() {
     return type == ACK;
+  }
+
+  @Override
+  public boolean isTimeCheck() {
+    return type == TIME_CHECK;
   }
 
   public boolean hasDefaultConnectionId() {

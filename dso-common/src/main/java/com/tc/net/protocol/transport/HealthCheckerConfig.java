@@ -46,4 +46,21 @@ public interface HealthCheckerConfig {
 
   int getCallbackPortListenerBindPort();
 
+  /**
+   * Checking time difference between hosts enabled/disabled.
+   */
+  boolean isCheckTimeEnabled();
+
+  /**
+   * If {@link #isCheckTimeEnabled()} is {@code true}, HC checks time difference
+   * no more than once per this interval in milliseconds.
+   */
+  long getCheckTimeInterval();
+
+  /**
+   * HC logs a warning if {@link #isCheckTimeEnabled()} is {@code true}
+   * and the time difference exceeds this threshold.
+   */
+  long getTimeDiffThreshold();
+
 }
