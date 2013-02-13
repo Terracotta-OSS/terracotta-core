@@ -3,8 +3,8 @@
  */
 package com.terracotta.toolkit;
 
-import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.util.Util;
@@ -37,7 +37,7 @@ public class AsyncToolkitInitializer {
           handleInterruptedException(e);
           interrupted = true;
         } catch (ExecutionException e) {
-          throw new ToolkitRuntimeException(e.getCause());
+          throw new NonStopToolkitInstantiationException(e.getCause());
         }
       }
     } finally {
