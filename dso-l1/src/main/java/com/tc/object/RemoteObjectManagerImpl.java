@@ -394,11 +394,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private void scheduleRequestForLater(final ObjectLookupState ctxt) {
     ctxt.makePending();
-    if (!this.pendingSendTaskScheduled) {
+    if (!pendingSendTaskScheduled) {
       // one-shot delayed action
-      sendPendingRequestTask = this.taskRunner.schedule(new SendPendingRequestsTask(),
+      sendPendingRequestTask = taskRunner.schedule(new SendPendingRequestsTask(),
           BATCH_LOOKUP_TIME_PERIOD, TimeUnit.MILLISECONDS);
-      this.pendingSendTaskScheduled = true;
+      pendingSendTaskScheduled = true;
     }
   }
 
@@ -607,11 +607,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.removeObjects.add(id);
     if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD
         && this.removeTaskScheduled != RemovedObjectsSendState.SCHEDULED_NOW) {
-      removedObjectTask = this.taskRunner.schedule(new RemovedObjectTask(),
+      removedObjectTask = taskRunner.schedule(new RemovedObjectTask(),
           REMOVED_OBJECTS_SEND_NOW, TimeUnit.MILLISECONDS);
       this.removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_NOW;
     } else if (this.removeObjects.size() == 1 && this.removeTaskScheduled == RemovedObjectsSendState.NOT_SCHEDULED) {
-      removedObjectTask = this.taskRunner.schedule(new RemovedObjectTask(),
+      removedObjectTask = taskRunner.schedule(new RemovedObjectTask(),
           REMOVED_OBJECTS_SEND_TIMER, TimeUnit.MILLISECONDS);
       this.removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_LATER;
     }

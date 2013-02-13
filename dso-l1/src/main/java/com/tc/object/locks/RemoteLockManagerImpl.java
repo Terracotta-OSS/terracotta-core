@@ -17,7 +17,6 @@ import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
@@ -35,10 +34,9 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final GroupID                        group;
   private final ClientIDProvider               clientIdProvider;
 
-  private final Queue<RecallBatchContext>            queue                       = new LinkedList<RecallBatchContext>();
-  private BatchRecallCommitsTask batchRecallCommitsRunnable = null;
+  private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
   private final TaskRunner                     taskRunner;
-  private boolean                              shutdown                    = false;
+  private boolean                              shutdown;
 
   @Deprecated
   private final ClientLockStatManager          statManager;
@@ -172,9 +170,8 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
         return;
       }
       // start a timer to send the request, if not already started
-      if (batchRecallCommitsRunnable == null && !shutdown) {
-        batchRecallCommitsRunnable = new BatchRecallCommitsTask();
-        batchRecallTask = taskRunner.schedule(batchRecallCommitsRunnable, MAX_TIME_IN_QUEUE, TimeUnit.MILLISECONDS);
+      if (batchRecallTask == null && !shutdown) {
+        batchRecallTask = taskRunner.schedule(new BatchRecallCommitsTask(), MAX_TIME_IN_QUEUE, TimeUnit.MILLISECONDS);
       }
     }
   }
@@ -183,9 +180,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   public void shutdown() {
     synchronized (queue) {
       shutdown = true;
-      if (batchRecallTask != null) {
-        batchRecallTask.cancel(false);
-      }
+      cancelTimerTask();
     }
   }
 
@@ -197,10 +192,10 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   private void cancelTimerTask() {
-    if (batchRecallCommitsRunnable != null && batchRecallTask != null) {
+    if (batchRecallTask != null) {
       batchRecallTask.cancel(false);
     }
-    batchRecallCommitsRunnable = null;
+    batchRecallTask = null;
   }
 
   public void sendPendingRecallCommits() {
@@ -216,9 +211,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     LockRequestMessage lrm = createMessage();
     lrm.initializeBatchedRecallCommit();
 
-    Iterator<RecallBatchContext> contexts = queue.iterator();
-    while (contexts.hasNext()) {
-      RecallBatchContext context = contexts.next();
+    for (final RecallBatchContext context : queue) {
       lrm.addRecallBatchContext(context);
     }
 
@@ -251,7 +244,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
           return;
         }
         sendBatchedRequestsImmediately();
-        batchRecallCommitsRunnable = null;
+        batchRecallTask = null;
       }
     }
 

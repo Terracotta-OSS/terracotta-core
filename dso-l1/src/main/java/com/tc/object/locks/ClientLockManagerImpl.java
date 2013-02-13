@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
@@ -64,7 +65,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final AbortableOperationManager         abortableOperationManager;
 
   private final ScheduledFuture<?>                gcTask;
-  private ScheduledFuture<?>                      leaseTask;
+  private final Collection<ScheduledFuture<?>>    leaseTasks          = new ConcurrentLinkedQueue<ScheduledFuture<?>>();
 
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
@@ -540,8 +541,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       if (lockState != null) {
         if (lockState.recall(this.remoteLockManager, level, lease, batch)) {
           // schedule the greedy lease
-          leaseTask = this.taskRunner.schedule(new LeaseTask(node, session, lock, level, batch),
-              lease, TimeUnit.MILLISECONDS);
+          leaseTasks.add(taskRunner.schedule(new LeaseTask(node, session, lock, level, batch),
+              lease, TimeUnit.MILLISECONDS)); // O(1)
         }
       }
     } finally {
@@ -663,15 +664,20 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     try {
       state = state.shutdown();
       gcTask.cancel(false);
-      if (leaseTask != null) {
-        leaseTask.cancel(false);
-      }
+      cancelLeaseTasks();
       remoteLockManager.shutdown();
       runningCondition.signalAll();
       LockStateNode.shutdown();
     } finally {
       stateGuard.writeLock().unlock();
     }
+  }
+
+  private void cancelLeaseTasks() {
+    for (ScheduledFuture<?> leaseTask : leaseTasks) {
+      leaseTask.cancel(false);
+    }
+    leaseTasks.clear(); // O(n)
   }
 
   @Override
