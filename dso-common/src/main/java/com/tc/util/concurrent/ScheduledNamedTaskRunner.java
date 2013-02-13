@@ -96,7 +96,8 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
           future.get();
         }
       } catch (CancellationException ce) {
-        e = ce;
+        logger.debug("A task executed by '" + t.getName() + "' thread has been gracefully cancelled");
+        // do nothing
       } catch (ExecutionException ee) {
         e = ee.getCause();
       } catch (InterruptedException ie) {

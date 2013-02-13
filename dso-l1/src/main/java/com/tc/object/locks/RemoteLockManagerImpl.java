@@ -183,7 +183,9 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   public void shutdown() {
     synchronized (queue) {
       shutdown = true;
-      batchRecallTask.cancel(false);
+      if (batchRecallTask != null) {
+        batchRecallTask.cancel(false);
+      }
     }
   }
 
@@ -195,7 +197,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   private void cancelTimerTask() {
-    if (batchRecallCommitsRunnable != null) {
+    if (batchRecallCommitsRunnable != null && batchRecallTask != null) {
       batchRecallTask.cancel(false);
     }
     batchRecallCommitsRunnable = null;

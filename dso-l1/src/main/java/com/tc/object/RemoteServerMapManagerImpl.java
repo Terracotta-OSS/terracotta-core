@@ -562,11 +562,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   @Override
   public void shutdown() {
-    this.state = State.STOPPED;
+    state = State.STOPPED;
     reInvalidateHandler.shutdown();
-    synchronized (this) {
-      this.sendPendingRequestsTask.cancel(false);
-      notifyAll();
+    if (sendPendingRequestsTask != null) {
+      synchronized (this) {
+        sendPendingRequestsTask.cancel(false);
+        notifyAll();
+      }
     }
   }
 

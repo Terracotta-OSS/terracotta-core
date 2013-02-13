@@ -659,16 +659,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public void shutdown() {
-    this.stateGuard.writeLock().lock();
+    stateGuard.writeLock().lock();
     try {
-      this.state = this.state.shutdown();
-      this.gcTask.cancel(false);
-      this.leaseTask.cancel(false);
-      this.remoteLockManager.shutdown();
-      this.runningCondition.signalAll();
+      state = state.shutdown();
+      gcTask.cancel(false);
+      if (leaseTask != null) {
+        leaseTask.cancel(false);
+      }
+      remoteLockManager.shutdown();
+      runningCondition.signalAll();
       LockStateNode.shutdown();
     } finally {
-      this.stateGuard.writeLock().unlock();
+      stateGuard.writeLock().unlock();
     }
   }
 

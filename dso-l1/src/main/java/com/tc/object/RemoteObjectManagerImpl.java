@@ -165,9 +165,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   private void cancellTasks() {
-    this.cleanupUnusedDnaTask.cancel(false);
-    this.sendPendingRequestTask.cancel(false);
-    this.removedObjectTask.cancel(false);
+    cleanupUnusedDnaTask.cancel(false);
+    if (sendPendingRequestTask != null) {
+      sendPendingRequestTask.cancel(false);
+    }
+    if (removedObjectTask != null) {
+      removedObjectTask.cancel(false);
+    }
   }
 
   private boolean isStopped() {
