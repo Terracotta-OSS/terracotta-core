@@ -14,6 +14,7 @@ import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.TestConfig;
 
 import java.util.Properties;
@@ -27,7 +28,7 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
     super(testConfig, ProxyClient.class, SimpleClient.class);
     testConfig.getL2Config().setProxyTsaPorts(true);
     testConfig.getL2Config().setManualProxycontrol(true);
-    testConfig.getClientConfig().addExtraClientJvmArg("-Dskip.validation.for.proxy.tests=true");
+    testConfig.addTcProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
   }
 
   public static class SimpleClient extends ClientBase {
