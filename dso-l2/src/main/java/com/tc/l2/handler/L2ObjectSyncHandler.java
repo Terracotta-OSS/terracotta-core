@@ -27,6 +27,8 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.util.concurrent.NamedRunnable;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
@@ -34,28 +36,34 @@ import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
   private static final TCLogger          logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
+  private static final int               LWM_UPDATE_INTERVAL = 10000;
+
   private TransactionBatchReaderFactory  batchReaderFactory;
 
   private Sink                           sendSink;
   private ReplicatedTransactionManager   rTxnManager;
   private StateSyncManager               stateSyncManager;
   private GroupManager                   groupManager;
-  private Timer                          lwmUpdater;
+  private volatile boolean               lwmUpdaterRunning;
 
   private volatile GlobalTransactionID   currentLWM = GlobalTransactionID.NULL_ID;
 
   private final ServerTransactionFactory serverTransactionFactory;
   private final L2ObjectSyncAckManager   objectSyncAckManager;
 
-  public L2ObjectSyncHandler(final ServerTransactionFactory factory, final L2ObjectSyncAckManager objectSyncAckManager) {
+  private final TaskRunner taskRunner;
+
+  public L2ObjectSyncHandler(final ServerTransactionFactory factory,
+                             final L2ObjectSyncAckManager objectSyncAckManager,
+                             final TaskRunner taskRunner) {
     this.serverTransactionFactory = factory;
     this.objectSyncAckManager = objectSyncAckManager;
+    this.taskRunner = taskRunner;
   }
 
   @Override
@@ -100,9 +108,11 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   }
 
   private void startLWMUpdaterIfNecessary() {
-    if (lwmUpdater == null) {
-      lwmUpdater = new Timer("LWM updater", true);
-      lwmUpdater.schedule(new TimerTask() {
+    if (!lwmUpdaterRunning) {
+      lwmUpdaterRunning = true;
+
+      taskRunner.scheduleAtFixedRate(new NamedRunnable() {
+        // thread-confined variable - does not require synchronization
         private GlobalTransactionID lastUpdate = GlobalTransactionID.NULL_ID;
         @Override
         public void run() {
@@ -111,7 +121,10 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
             rTxnManager.clearTransactionsBelowLowWaterMark(currentLWM);
           }
         }
-      }, 10000, 10000);
+
+        @Override
+        public String getName() { return "LWM updater"; }
+      }, LWM_UPDATE_INTERVAL, LWM_UPDATE_INTERVAL, TimeUnit.MILLISECONDS);
     }
   }
 

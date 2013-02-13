@@ -259,6 +259,8 @@ import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
+import com.tc.util.concurrent.Runners;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDMap;
@@ -354,6 +356,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
+  private final TaskRunner taskRunner;
+
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
@@ -389,6 +393,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup = threadGroup;
     this.seda = seda;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
+    this.taskRunner = Runners.newCachedScheduledTaskRunner(this.threadGroup);
   }
 
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger, final TCServer server,
@@ -399,6 +404,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected DSOServerBuilder getServerBuilder() {
     return this.serverBuilder;
+  }
+
+  public TaskRunner getTaskRunner() {
+    return taskRunner;
   }
 
   @Override
@@ -769,7 +778,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     int applyStageThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS, 8);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor
-                                 .getPersistenceTransactionProvider()), applyStageThreads, 1, -1);
+                                 .getPersistenceTransactionProvider(), taskRunner), applyStageThreads, 1, -1);
 
     txnStageCoordinator.lookUpSinks();
 

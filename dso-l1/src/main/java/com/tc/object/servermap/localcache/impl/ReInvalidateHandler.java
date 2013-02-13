@@ -6,15 +6,16 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.object.ObjectID;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.TCTimerService;
+import com.tc.util.concurrent.TaskRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReInvalidateHandler {
@@ -24,17 +25,22 @@ public class ReInvalidateHandler {
   private final L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager;
   private ConcurrentMapToObjectIDSet         prev                       = null;
   private ConcurrentMapToObjectIDSet         current                    = new ConcurrentMapToObjectIDSet();
-  private final Timer                        timer                      = TCTimerService.getInstance()
-                                                                            .getTimer("Re-invalidation Timer");
 
-  public ReInvalidateHandler(L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager) {
+  private final ScheduledFuture<?>           expireSetTask;
+  private final ScheduledFuture<?>           reInvalidateTask;
+
+  public ReInvalidateHandler(final L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager,
+                             final TaskRunner taskRunner) {
     this.l1ServerMapLocalCacheManager = l1ServerMapLocalCacheManager;
-    timer.schedule(new ExpireSetTimerTask(), EXPIRE_SET_TIMER_PERIOD, EXPIRE_SET_TIMER_PERIOD);
-    timer.schedule(new ReInvalidateTimerTask(), RE_INVALIDATE_TIMER_PERIOD, RE_INVALIDATE_TIMER_PERIOD);
+    expireSetTask = taskRunner.scheduleWithFixedDelay(new ExpireSetTimerTask(),
+        EXPIRE_SET_TIMER_PERIOD, EXPIRE_SET_TIMER_PERIOD, TimeUnit.MILLISECONDS);
+    reInvalidateTask = taskRunner.scheduleWithFixedDelay(new ReInvalidateTimerTask(),
+        RE_INVALIDATE_TIMER_PERIOD, RE_INVALIDATE_TIMER_PERIOD, TimeUnit.MILLISECONDS);
   }
 
   public void shutdown() {
-    timer.cancel();
+    expireSetTask.cancel(false);
+    reInvalidateTask.cancel(false);
   }
 
   public void add(ObjectID mapId, ObjectIDSet set) {

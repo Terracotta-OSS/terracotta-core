@@ -4,6 +4,9 @@
  */
 package com.tc.object.tx;
 
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
+import com.tc.util.concurrent.Runners;
 import org.mockito.Mockito;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
@@ -36,6 +39,7 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -62,6 +66,10 @@ public class RemoteTransactionManagerTest extends TestCase {
   private SampledRateCounter           transactionsPerBatchCounter, transactionSizeCounter;
   private Counter                      outstandingBatchCounter, pendingBatchesSize;
 
+  private final TCThreadGroup          threadGroup =
+      new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(RemoteTransactionManagerTest.class)));
+  private final TaskRunner             taskRunner = Runners.newSingleThreadScheduledTaskRunner(threadGroup);
+
   @Override
   public void setUp() throws Exception {
     this.batchFactory = new TestTransactionBatchFactory();
@@ -78,7 +86,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, 0,
-                                                    new NullAbortableOperationManager());
+                                                    new NullAbortableOperationManager(),
+                                                    taskRunner);
     this.batchAccounting = this.manager.getBatchAccounting();
     this.number = new SynchronizedInt(0);
     this.error = new SynchronizedRef(null);
@@ -91,8 +100,8 @@ public class RemoteTransactionManagerTest extends TestCase {
       Throwable t = (Throwable) this.error.get();
       fail(t.getMessage());
     }
-    for (Iterator i = this.batchAccounting.addIncompleteTransactionIDsTo(new LinkedList()).iterator(); i.hasNext();) {
-      TransactionID txID = (TransactionID) i.next();
+    for (Object o : this.batchAccounting.addIncompleteTransactionIDsTo(new LinkedList())) {
+      TransactionID txID = (TransactionID) o;
       this.manager.receivedAcknowledgement(SessionID.NULL_ID, txID, GroupID.NULL_ID);
     }
     this.batchAccounting.clear();
@@ -108,7 +117,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
-                                                    new NullAbortableOperationManager());
+                                                    new NullAbortableOperationManager(),
+                                                    taskRunner);
     this.batchAccounting = this.manager.getBatchAccounting();
 
     final LockID lockID1 = new StringLockID("lock1");
@@ -145,7 +155,8 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     new MockChannel(), this.outstandingBatchCounter,
                                                     this.pendingBatchesSize, this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
-                                                    new NullAbortableOperationManager());
+                                                    new NullAbortableOperationManager(),
+                                                    taskRunner);
     this.batchAccounting = this.manager.getBatchAccounting();
 
     final LockID lockID1 = new StringLockID("lock1");

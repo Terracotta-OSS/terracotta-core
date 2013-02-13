@@ -4,7 +4,6 @@
 package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
@@ -26,12 +25,12 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.ThreadUtil;
+import junit.framework.TestCase;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import junit.framework.TestCase;
 
 public class DEV6342Test extends TestCase {
   @Override
@@ -56,7 +55,7 @@ public class DEV6342Test extends TestCase {
 
     groupID = new GroupID(0);
     manager = new RemoteObjectManagerImpl(groupID, new NullTCLogger(), rrmf, rmomf, 500, new NullSessionManager(),
-                                          new NullAbortableOperationManager());
+                                          new NullAbortableOperationManager(), Runners.newSingleThreadScheduledTaskRunner());
 
     final CyclicBarrier barrier = new CyclicBarrier(2);
     final Thread thread = new Thread("Test Thread Saro") {

@@ -58,6 +58,7 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -89,7 +90,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     clientLockManager = new ClientLockManagerImpl(logger, new NullSessionManager(), rmtLockManager, threadManager,
                                                   new NullClientLockManagerConfig(),
                                                   ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                                  new NullAbortableOperationManager());
+                                                  new NullAbortableOperationManager(),
+                                                  Runners.newSingleThreadScheduledTaskRunner());
 
     AbstractEventHandler serverLockUnlockHandler = new RequestLockUnLockHandler();
 
@@ -511,7 +513,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     public TestRemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager,
                                      BoundedLinkedQueue clientLockRequestQueue) {
       super(new ClientIDProviderImpl(new TestChannelIDProvider()), GroupID.NULL_ID, lrmf, gtxManager,
-            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, Runners.newSingleThreadScheduledTaskRunner());
       this.clientLockRequestQueue = clientLockRequestQueue;
     }
 

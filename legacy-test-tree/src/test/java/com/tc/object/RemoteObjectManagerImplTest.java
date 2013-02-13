@@ -5,7 +5,6 @@
 package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
@@ -30,6 +29,7 @@ import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -63,7 +63,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     this.threadGroup = new ThreadGroup(getClass().getName());
     this.groupID = new GroupID(0);
     this.manager = new RemoteObjectManagerImpl(this.groupID, new NullTCLogger(), this.rrmf, this.rmomf, 500,
-                                               new NullSessionManager(), new NullAbortableOperationManager());
+                                               new NullSessionManager(), new NullAbortableOperationManager(),
+                                               Runners.newSingleThreadScheduledTaskRunner());
     this.rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), this.manager);
   }
 

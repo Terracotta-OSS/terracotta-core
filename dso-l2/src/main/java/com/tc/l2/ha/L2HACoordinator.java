@@ -188,7 +188,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                                  MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(serverTransactionFactory,
-                                                                                  objectSyncAckManager), 1,
+                                                                                  objectSyncAckManager,
+                                                                                  this.server.getTaskRunner()), 1,
                                                           MAX_STAGE_SIZE).getSink();
 
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,

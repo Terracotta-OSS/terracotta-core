@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.handler;
 
+import com.tc.util.concurrent.ScheduledNamedTaskRunner;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
@@ -72,8 +73,9 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
-    this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(), mock(ServerGlobalTransactionManager.class),
-        persistenceTransactionProvider);
+    this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
+        mock(ServerGlobalTransactionManager.class),
+        persistenceTransactionProvider, new ScheduledNamedTaskRunner(1));
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);
@@ -106,7 +108,8 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
   private void verifyNotifies(ServerTransaction tx) {
     verify(lockManager, times(tx.getNotifies()
-        .size())).notify(any(LockID.class), any(ClientID.class), any(ThreadID.class), any(ServerLock.NotifyAction.class), any(NotifiedWaiters.class));
+        .size())).notify(any(LockID.class), any(ClientID.class), any(ThreadID.class),
+        any(ServerLock.NotifyAction.class), any(NotifiedWaiters.class));
     verify(broadcastSink, atLeastOnce()).add(any(EventContext.class));
     for (Notify notify : (Collection<Notify>) tx.getNotifies()) {
       verify(lockManager).notify(eq(notify.getLockID()), eq((ClientID)tx.getSourceID()), eq(notify.getThreadID()),
@@ -117,7 +120,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     verify(broadcastSink).add(argThat(new BroadcastNotifiedWaiterMatcher(notifiedWaitersArgumentCaptor.getValue())));
   }
 
-  private class BroadcastNotifiedWaiterMatcher extends BaseMatcher<EventContext> {
+  private static class BroadcastNotifiedWaiterMatcher extends BaseMatcher<EventContext> {
     private final NotifiedWaiters notifiedWaiters;
 
     private BroadcastNotifiedWaiterMatcher(final NotifiedWaiters notifiedWaiters) {
@@ -143,9 +146,9 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
   }
 
-  private ServerTransaction createServerTransaction() {
+  private static ServerTransaction createServerTransaction() {
     final ClientID cid = new ClientID(1);
-    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
+    LockID[] lockIDs = { new StringLockID("1") };
 
     List<Notify> notifies = new LinkedList<Notify>();
     for (int i = 0; i < 10; i++) {

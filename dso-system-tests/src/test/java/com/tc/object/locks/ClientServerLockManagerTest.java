@@ -20,6 +20,7 @@ import com.tc.objectserver.locks.ServerLockContextBean;
 import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
@@ -47,7 +48,8 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
                                                   new NullClientLockManagerConfig(),
                                                   ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                                  new NullAbortableOperationManager());
+                                                  new NullAbortableOperationManager(),
+                                                  Runners.newSingleThreadScheduledTaskRunner());
 
     serverLockManager = new LockManagerImpl(sink, new NullChannelManager(), new NonGreedyLockPolicyFactory());
     glue.set(clientLockManager, serverLockManager);

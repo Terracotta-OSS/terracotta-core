@@ -19,19 +19,20 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.FindbugsSuppressWarnings;
-import com.tc.util.TCTimerService;
 import com.tc.util.Util;
+import com.tc.util.concurrent.NamedRunnable;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,11 +44,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
                                                                         }
                                                                       };
 
-  private final Timer                             gcTimer             = TCTimerService.getInstance()
-                                                                          .getTimer("ClientLockManager LockGC");
-  private final Timer                             lockLeaseTimer      = TCTimerService
-                                                                          .getInstance()
-                                                                          .getTimer("ClientLockManager Lock Lease Timer");
+  private final TaskRunner                        taskRunner;
   private final ConcurrentMap<LockID, ClientLock> locks;
   private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
   private final Condition                         runningCondition    = this.stateGuard.writeLock().newCondition();
@@ -66,10 +63,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   private final AbortableOperationManager         abortableOperationManager;
 
+  private final ScheduledFuture<?>                gcTask;
+  private ScheduledFuture<?>                      leaseTask;
+
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
                                final ClientLockManagerConfig config, final ClientLockStatManager statManager,
-                               AbortableOperationManager abortableOperationManager) {
+                               final AbortableOperationManager abortableOperationManager, final TaskRunner taskRunner) {
     this.logger = logger;
     this.remoteLockManager = remoteLockManager;
     this.threadManager = threadManager;
@@ -78,7 +78,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.statManager = statManager;
     this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
     final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
-    this.gcTimer.schedule(new LockGcTimerTask(), gcPeriod, gcPeriod);
+    this.taskRunner = taskRunner;
+    this.gcTask = this.taskRunner.scheduleWithFixedDelay(new LockGcTimerTask(), gcPeriod, gcPeriod, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -539,8 +540,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       if (lockState != null) {
         if (lockState.recall(this.remoteLockManager, level, lease, batch)) {
           // schedule the greedy lease
-          TimerTask leaseTimerTask = new LeaseTimerTask(node, session, lock, level, batch);
-          this.lockLeaseTimer.schedule(leaseTimerTask, lease);
+          leaseTask = this.taskRunner.schedule(new LeaseTask(node, session, lock, level, batch),
+              lease, TimeUnit.MILLISECONDS);
         }
       }
     } finally {
@@ -661,8 +662,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.stateGuard.writeLock().lock();
     try {
       this.state = this.state.shutdown();
-      this.gcTimer.cancel();
-      this.lockLeaseTimer.cancel();
+      this.gcTask.cancel(false);
+      this.leaseTask.cancel(false);
       this.remoteLockManager.shutdown();
       this.runningCondition.signalAll();
       LockStateNode.shutdown();
@@ -956,14 +957,14 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
-  class LeaseTimerTask extends TimerTask {
+  class LeaseTask implements NamedRunnable {
     private final NodeID          node;
     private final SessionID       session;
     private final LockID          lock;
     private final ServerLockLevel level;
     private final boolean         batch;
 
-    public LeaseTimerTask(NodeID node, SessionID session, LockID lock, ServerLockLevel level, boolean batch) {
+    public LeaseTask(NodeID node, SessionID session, LockID lock, ServerLockLevel level, boolean batch) {
       this.node = node;
       this.session = session;
       this.lock = lock;
@@ -977,14 +978,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         ClientLockManagerImpl.this.recall(node, session, lock, level, -1, batch);
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-        this.cancel();
       } catch (PlatformRejoinException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
+
+    @Override
+    public String getName() {
+      return "ClientLockManager-lockLeaseTask";
+    }
   }
 
-  class LockGcTimerTask extends TimerTask {
+  class LockGcTimerTask implements NamedRunnable {
     private static final int GCED_LOCK_THRESHOLD = 1000;
 
     @Override
@@ -1023,8 +1028,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-        this.cancel();
+        gcTask.cancel(false);
       }
+    }
+
+    @Override
+    public String getName() {
+      return "ClientLockManager-lockGcTask";
     }
   }
 

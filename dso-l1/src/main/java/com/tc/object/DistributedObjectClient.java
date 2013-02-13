@@ -181,9 +181,10 @@ import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.TCTimerService;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
+import com.tc.util.concurrent.Runners;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockState;
@@ -267,6 +268,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   private final UUID                                 uuid;
 
+  private final TaskRunner taskRunner;
+
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
@@ -298,6 +301,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoClientBuilder = createClientBuilder();
     this.rejoinManager = rejoinManager;
     this.uuid = uuid;
+    this.taskRunner = Runners.newCachedScheduledTaskRunner(this.threadGroup);
   }
 
   protected DSOClientBuilder createClientBuilder() {
@@ -482,7 +486,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .createRemoteTransactionManager(this.channel.getClientIDProvider(), encoding,
                                         FoldingConfig.createFromProperties(tcProperties), new TransactionIDGenerator(),
                                         sessionManager, this.channel, outstandingBatchesCounter, pendingBatchesSize,
-                                        transactionSizeCounter, transactionsPerBatchCounter, abortableOperationManager);
+                                        transactionSizeCounter, transactionsPerBatchCounter, abortableOperationManager,
+                                        taskRunner);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.remoteTxnManager));
     final RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(
@@ -508,7 +513,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                        .getLogger(RemoteObjectManager.class)), this.channel, faultCount,
-                                   sessionManager, abortableOperationManager);
+                                   sessionManager, abortableOperationManager, this.taskRunner);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(remoteObjectManager));
 
     LockRecallHandler lockRecallHandler = new LockRecallHandler();
@@ -545,7 +550,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                           .getLogger(RemoteObjectManager.class)), this.channel, sessionManager,
-                                      globalLocalCacheManager, abortableOperationManager);
+                                      globalLocalCacheManager, abortableOperationManager, this.taskRunner);
     final CallbackDumpAdapter remoteServerMgrDumpAdapter = new CallbackDumpAdapter(remoteServerMapManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(remoteServerMgrDumpAdapter);
     this.dumpHandler.registerForDump(remoteServerMgrDumpAdapter);
@@ -620,7 +625,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                .getLogger(ClientLockManager.class)), sessionManager, lockStatManager, this.channel
                                .getLockRequestMessageFactory(), this.threadIDManager, gtxManager,
                            new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")),
-                           abortableOperationManager);
+                           abortableOperationManager, this.taskRunner);
     this.globalLocalCacheManager.setLockManager(this.lockManager);
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
@@ -1123,8 +1128,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void shutdown() {
     final TCLogger logger = DSO_LOGGER;
-
-    TCTimerService.getInstance().shutdown();
 
     if (this.rejoinManager != null) {
       this.rejoinManager.shutdown();

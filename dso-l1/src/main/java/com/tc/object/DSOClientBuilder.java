@@ -57,6 +57,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -93,12 +94,14 @@ public interface DSOClientBuilder {
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final int faultCount, final SessionManager sessionManager,
-                                                AbortableOperationManager abortableOperationManager);
+                                                final AbortableOperationManager abortableOperationManager,
+                                                final TaskRunner taskRunner);
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
                                                       final L1ServerMapLocalCacheManager globalLocalCacheManager,
-                                                      final AbortableOperationManager abortableOperationManager);
+                                                      final AbortableOperationManager abortableOperationManager,
+                                                      final TaskRunner taskRunner);
 
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
@@ -129,7 +132,8 @@ public interface DSOClientBuilder {
                                       final ThreadIDManager threadManager,
                                       final ClientGlobalTransactionManager clientGlobalTransactionManager,
                                       final ClientLockManagerConfig clientLockManagerConfig,
-                                      final AbortableOperationManager abortableOperationManager);
+                                      final AbortableOperationManager abortableOperationManager,
+                                      final TaskRunner taskRunner);
 
   @Deprecated
   ClientLockStatManager createLockStatsManager();
@@ -142,9 +146,10 @@ public interface DSOClientBuilder {
                                                           final DSOClientMessageChannel dsoChannel,
                                                           final Counter outstandingBatchesCounter,
                                                           final Counter pendingBatchesSize,
-                                                          SampledRateCounter transactionSizeCounter,
-                                                          SampledRateCounter transactionPerBatchCounter,
-                                                          AbortableOperationManager abortableOperationManager);
+                                                          final SampledRateCounter transactionSizeCounter,
+                                                          final SampledRateCounter transactionPerBatchCounter,
+                                                          final AbortableOperationManager abortableOperationManager,
+                                                          final TaskRunner taskRunner);
 
   ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence);
 

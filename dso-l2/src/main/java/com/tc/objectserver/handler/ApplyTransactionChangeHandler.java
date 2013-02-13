@@ -24,6 +24,8 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.util.concurrent.NamedRunnable;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -38,8 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Applies all the changes in a transaction then releases the objects and passes the changes off to be broadcast to the
@@ -63,16 +64,18 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private final ThreadLocal<CommitContext> localCommitContext = new ThreadLocal<CommitContext>();
   private GarbageCollectionManager garbageCollectionManager;
 
-  public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
-                                       TransactionProvider persistenceTransactionProvider) {
+  public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
+                                       final GlobalTransactionManager gtxm,
+                                       final TransactionProvider persistenceTransactionProvider,
+                                       final TaskRunner taskRunner) {
     this.instanceMonitor = instanceMonitor;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
-    new Timer("Apply Transaction Change Timer", true).schedule(new TimerTask() {
+    taskRunner.scheduleAtFixedRate(new NamedRunnable() {
       @Override
-      public void run() {
-        lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark();
-      }
-    }, 0, LWM_UPDATE_INTERVAL);
+      public void run() { lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark(); }
+      @Override
+      public String getName() { return "Apply Transaction Change Timer"; }
+    }, 0, LWM_UPDATE_INTERVAL, TimeUnit.MILLISECONDS);
   }
 
   @Override
