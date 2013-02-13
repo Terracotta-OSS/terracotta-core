@@ -101,9 +101,10 @@ public abstract class AbstractTestBase extends TCTestCase {
           testConfig.getL2Config().setDirectMemorySize(1024);
           testConfig.getL2Config().setMaxOffHeapDataSize(512);
         } else {
+          boolean isRestartable = testConfig.getRestartable();
           // reduce memory settings for AA tests until RAM is increased on MNK machines.
-          testConfig.getL2Config().setDirectMemorySize(750);
-          testConfig.getL2Config().setMaxOffHeapDataSize(300);
+          TestBaseUtil.configureOffHeap(testConfig, 512, 300);
+          testConfig.setRestartable(isRestartable);
         }
       } else {
         Banner.warnBanner("Offheap is disabled and auto-enable-offheap is also set to false! L2 may suffer OOME");
