@@ -15,27 +15,31 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectServerMap;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
+import com.terracotta.toolkit.util.collections.OnGCCallable;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
-    ToolkitStore<K, V> {
+    ToolkitStore<K, V>, OnGCCallable {
 
   private volatile AggregateServerMap<K, V>   aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
   private volatile ToolkitCacheInternal<K, V> localDelegate;
   private final String                        name;
   private final ToolkitSubtypeStatusImpl      status;
+  private volatile OnGCCallable               onGCCallable;
 
   public ToolkitCacheImpl(ToolkitObjectFactory factory, ToolkitInternal toolkit, String name,
                           AggregateServerMap<K, V> delegate) {
@@ -46,6 +50,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     this.localDelegate = aggregateServerMap;
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
     status = new ToolkitSubtypeStatusImpl();
+    this.onGCCallable = new OnGCCallable(aggregateServerMap);
   }
 
   @Override
@@ -342,4 +347,22 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     return activeDelegate.unlockedGetAll(keys, quiet);
   }
 
+  @Override
+  public Callable<Void> onGCCallable() {
+    return onGCCallable;
+  }
+  
+  private static class OnGCCallable implements Callable<Void> {
+    private final TCObjectServerMap objectServerMap;
+
+    public OnGCCallable(AggregateServerMap aggregateServerMap) {
+      objectServerMap = ((TCObjectServerMap) aggregateServerMap.getAnyServerMap().__tc_managed());
+    }
+
+    @Override
+    public Void call() throws Exception {
+      objectServerMap.clearAllLocalCacheInline();
+      return null;
+    }
+  }
 }

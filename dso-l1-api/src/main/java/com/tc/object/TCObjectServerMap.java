@@ -198,7 +198,7 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   public void cleanLocalState();
 
-  public void clearAllLocalCacheInline(final TCServerMap map);
+  public void clearAllLocalCacheInline();
 
   /**
    * Clears local cache for the corresponding key

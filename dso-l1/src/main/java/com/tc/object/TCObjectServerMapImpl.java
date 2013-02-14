@@ -631,7 +631,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public void clearAllLocalCacheInline(final TCServerMap map) {
+  public void clearAllLocalCacheInline() {
     synchronized (localLock) {
       if (!isCacheInitialized()) { return; }
       this.cache.clearInline();

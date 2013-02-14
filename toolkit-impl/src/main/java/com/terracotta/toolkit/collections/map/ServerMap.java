@@ -576,7 +576,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void internalClearLocalCache() {
-    this.tcObjectServerMap.clearAllLocalCacheInline(this);
+    this.tcObjectServerMap.clearAllLocalCacheInline();
   }
 
   @Override
@@ -1165,7 +1165,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void setLocalCacheEnabled(boolean enabled) {
     if (isLocalCacheEnabled() && !enabled) {
-      tcObjectServerMap.clearAllLocalCacheInline(this);
+      tcObjectServerMap.clearAllLocalCacheInline();
     }
 
     tcObjectServerMap.setLocalCacheEnabled(enabled);

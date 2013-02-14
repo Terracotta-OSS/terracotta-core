@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class WeakValueMap<V> {
   private final ReferenceQueue                     referenceQueue = new ReferenceQueue();
@@ -34,7 +35,12 @@ public class WeakValueMap<V> {
   public synchronized V put(String name, V value) {
     cleanupReferenceQueue();
 
-    NamedWeakReference<V> reference = new NamedWeakReference(name, value, referenceQueue);
+    Callable<Void> onGcCallable = null;
+    if (value instanceof OnGCCallable) {
+      onGcCallable = ((OnGCCallable) value).onGCCallable();
+    }
+
+    NamedWeakReference<V> reference = new NamedWeakReference(name, value, referenceQueue, onGcCallable);
     NamedWeakReference<V> oldReference = internalMap.put(name, reference);
     return oldReference == null ? null : oldReference.get();
   }
@@ -52,20 +58,35 @@ public class WeakValueMap<V> {
       if (gcdObject == null) { return; }
 
       NamedWeakReference<V> weakReference = (NamedWeakReference) gcdObject;
+      Callable<Void> onGCCallable = weakReference.getOnGcCallback();
+      if (onGCCallable != null) {
+        try {
+          onGCCallable.call();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+
       internalMap.remove(weakReference.getName());
     }
   }
 
   private static class NamedWeakReference<V> extends WeakReference<V> {
-    private final String              name;
+    private final String         name;
+    private final Callable<Void> onGcCallback;
 
-    public NamedWeakReference(String name, V reference, ReferenceQueue referenceQueue) {
+    public NamedWeakReference(String name, V reference, ReferenceQueue referenceQueue, Callable<Void> onGcCallback) {
       super(reference, referenceQueue);
       this.name = name;
+      this.onGcCallback = onGcCallback;
     }
 
     public String getName() {
       return name;
+    }
+
+    public Callable<Void> getOnGcCallback() {
+      return onGcCallback;
     }
   }
 }
