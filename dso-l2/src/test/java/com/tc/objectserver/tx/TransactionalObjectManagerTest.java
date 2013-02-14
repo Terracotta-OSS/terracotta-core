@@ -24,6 +24,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -47,7 +48,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
   @Override
   public void setUp() {
-    this.objectManager = new TestObjectManager();
+    this.objectManager = spy(new TestObjectManager());
     this.coordinator = spy(new TestTransactionalStageCoordinator());
     this.gtxMgr = new TestGlobalTransactionManager();
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxMgr, this.coordinator);
@@ -56,6 +57,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testSimpleLookup() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(2L, 3L));
     txObjectManager.addTransactions(asList(createTransaction(1, asList(1L), asList(2L, 3L))));
     verify(coordinator).initiateLookup();
 
@@ -68,6 +70,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testOverlappedLookups() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(1L, 2L, 3L));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L, 2L))));
 
     txObjectManager.lookupObjectsForTransactions();
@@ -86,6 +89,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testProcessPendingInOrder() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(1L, 2L));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
     verify(coordinator).addToApplyStage(argThat(hasTransactionID(1)));
@@ -131,6 +135,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testAlreadyCommittedTransaction() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(1L));
     gtxMgr.commit(new ServerTransactionID(new ClientID(0), new TransactionID(1)));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
@@ -143,6 +148,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testCheckoutBatching() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(1L, 3L));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.addTransactions(asList(createTransaction(2, asList(2L), asList(1L))));
     txObjectManager.addTransactions(asList(createTransaction(3, Collections.EMPTY_SET, asList(1L, 3L))));
@@ -159,7 +165,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     ApplyTransactionInfo applyTransactionInfo2 = applyInfoWithTransactionID(2);
     txObjectManager.applyTransactionComplete(applyTransactionInfo2);
-    verify(applyTransactionInfo2).addObjectsToBeReleased(argThat(containsObjectWithID(new ObjectID(1))));
+    verify(applyTransactionInfo2).addObjectsToBeReleased((Collection<ManagedObject>) argThat(containsObjectWithID(new ObjectID(1))));
     objectManager.releaseAll(applyTransactionInfo2.getObjectsToRelease());
 
     txObjectManager.lookupObjectsForTransactions();
@@ -168,6 +174,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   public void testBlockedMergeCheckout() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(1L, 2L));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
     verify(coordinator).addToApplyStage(argThat(hasTransactionID(1)));
@@ -196,12 +203,32 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     inOrder.verify(coordinator).addToApplyStage(argThat(hasTransactionID(3)));
   }
 
+  public void testSkipApplyWithMissingNewObject() throws Exception {
+    objectManager.addExistingObjectIDs(asCollectionOfObjectIDs(2L));
+    ServerTransaction tx = createTransaction(0, asList(1L), asList(2L));
+    gtxMgr.commit(tx.getServerTransactionID());
+
+    txObjectManager.addTransactions(asList(tx));
+    txObjectManager.lookupObjectsForTransactions();
+
+    verify(objectManager, never()).createNewObjects((Set) argThat(containsObjectWithID(new ObjectID(1L))));
+    verify(coordinator).addToApplyStage(argThat(allOf(hasTransactionID(0), hasIgnorableObject(new ObjectID(1L)))));
+  }
+
+  private static Collection<ObjectID> asCollectionOfObjectIDs(Long ... longs) {
+    Set<ObjectID> oids = new ObjectIDSet();
+    for (long l : longs) {
+      oids.add(new ObjectID(l));
+    }
+    return oids;
+  }
+
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
     return spy(new ApplyTransactionInfo(true, new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)), true, Collections.EMPTY_SET));
   }
 
-  private Matcher<Collection<ManagedObject>> containsObjectWithID(final ObjectID id) {
-    return new BaseMatcher<Collection<ManagedObject>>() {
+  private <T> Matcher<T> containsObjectWithID(final ObjectID id) {
+    return new BaseMatcher<T>() {
       @Override
       public boolean matches(final Object o) {
         if (o instanceof Collection) {
@@ -217,6 +244,24 @@ public class TransactionalObjectManagerTest extends TCTestCase {
       @Override
       public void describeTo(final Description description) {
         //
+      }
+    };
+  }
+
+  private Matcher<ApplyTransactionContext> hasIgnorableObject(final ObjectID oid) {
+    return new BaseMatcher<ApplyTransactionContext>() {
+      @Override
+      public boolean matches(final Object o) {
+        if (o instanceof ApplyTransactionContext) {
+          return ((ApplyTransactionContext)o).getIgnoredObjects().contains(oid);
+        } else {
+          return false;
+        }
+      }
+
+      @Override
+      public void describeTo(final Description description) {
+
       }
     };
   }
@@ -265,7 +310,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     for (long l : newObjects) {
       newObjectIDs.add(new ObjectID(l));
     }
-    ObjectIDSet objectIDs = new ObjectIDSet();
+    ObjectIDSet objectIDs = new ObjectIDSet(newObjectIDs);
     for (long l : objects) {
       objectIDs.add(new ObjectID(l));
     }

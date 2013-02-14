@@ -37,19 +37,16 @@ import java.util.Set;
 
 public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
+  private final Set<ObjectID> existingObjectIDs = new ObjectIDSet();
   private final Map<ObjectID, ManagedObject> checkedOutObjects = new HashMap<ObjectID, ManagedObject>();
   private List<ObjectManagerResultsContext> pendingLookups = new ArrayList<ObjectManagerResultsContext>();
 
-  public TestObjectManager() {
-    super();
+  public void addExistingObjectIDs(Collection<ObjectID> objectIDs) {
+    existingObjectIDs.addAll(objectIDs);
   }
 
   @Override
   public void stop() {
-    throw new ImplementMe();
-  }
-
-  public ManagedObjectFacade lookupFacade(ObjectID id) {
     throw new ImplementMe();
   }
 
@@ -68,7 +65,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     }
     context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs()),
                        TCCollections.EMPTY_OBJECT_ID_SET,
-                       TCCollections.EMPTY_OBJECT_ID_SET));
+                       missingObjects(context.getLookupIDs())));
     return true;
   }
 
@@ -83,11 +80,19 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   private Map<ObjectID, ManagedObject> createLookResults(Collection<ObjectID> ids) {
     Map<ObjectID, ManagedObject> results = new HashMap<ObjectID, ManagedObject>();
     for (final ObjectID id : ids) {
-      TestManagedObject tmo = new TestManagedObject(id);
-      results.put(id, tmo);
-      checkedOutObjects.put(id, tmo);
+      if (existingObjectIDs.contains(id)) {
+        TestManagedObject tmo = new TestManagedObject(id);
+        results.put(id, tmo);
+        checkedOutObjects.put(id, tmo);
+      }
     }
     return results;
+  }
+
+  private ObjectIDSet missingObjects(Collection<ObjectID> ids) {
+    ObjectIDSet missingObjects = new ObjectIDSet(ids);
+    missingObjects.removeAll(existingObjectIDs);
+    return missingObjects;
   }
 
   @Override
@@ -221,7 +226,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   @Override
   public void createNewObjects(Set ids) {
-    // Nope
+    addExistingObjectIDs(ids);
   }
 
   @Override

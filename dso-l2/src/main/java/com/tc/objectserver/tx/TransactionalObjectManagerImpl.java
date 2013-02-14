@@ -163,7 +163,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      lookupContext = new LookupContext(newRequests, txn);
+      lookupContext = new LookupContext(newRequests, txn, transactionLookupContext.initiateApply());
       if (this.objectManager.lookupObjectsFor(txn.getSourceID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
@@ -199,9 +199,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       Collection<ObjectID> missingObjects;
       if (grouping == null) {
         grouping = new TxnObjectGrouping(txnID);
-        missingObjects = addObjectsToGrouping(txn.getObjectIDs(), grouping, txn.ignorableObjects());
+        missingObjects = addObjectsToGrouping(txn.getObjectIDs(), grouping, txn.ignorableObjects(), transactionLookupContext.initiateApply());
       } else {
-        missingObjects = addObjectsToGrouping(txn.getNewObjectIDs(), grouping, txn.ignorableObjects());
+        missingObjects = addObjectsToGrouping(txn.getNewObjectIDs(), grouping, txn.ignorableObjects(), transactionLookupContext.initiateApply());
       }
       applyPendingTxns.put(txnID, grouping);
       txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, grouping, needsApply, missingObjects));
@@ -216,12 +216,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
            + " live object checkouts = " + liveObjectGroupings.size();
   }
 
-  private Collection<ObjectID> addObjectsToGrouping(Collection<ObjectID> oids, TxnObjectGrouping txnObjectGrouping, Set<ObjectID> missingOKObjects) {
+  private Collection<ObjectID> addObjectsToGrouping(Collection<ObjectID> oids, TxnObjectGrouping txnObjectGrouping, Set<ObjectID> missingOKObjects, final boolean initiateApply) {
     Collection<ObjectID> missingObjects = new HashSet<ObjectID>();
     for (ObjectID oid : oids) {
       ManagedObject mo = checkedOutObjects.remove(oid);
       if (mo == null) {
-        if (!missingOKObjects.contains(oid)) {
+        if (initiateApply && !missingOKObjects.contains(oid)) {
           dumpToLogger();
           log("NULL !! " + oid + " not found ! " + oids);
           throw new AssertionError("Object is NULL !! : " + oid);
@@ -321,14 +321,16 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
     private final ObjectIDSet            oids;
     private final ServerTransaction      txn;
+    private final boolean                initiateApply;
     private boolean                      pending    = false;
     private boolean                      resultsSet = false;
     private Map<ObjectID, ManagedObject> lookedUpObjects;
     private Set<ObjectID> missingObjects;
 
-    LookupContext(ObjectIDSet oids, ServerTransaction txn) {
+    LookupContext(ObjectIDSet oids, ServerTransaction txn, final boolean initiateApply) {
       this.oids = oids;
       this.txn = txn;
+      this.initiateApply = initiateApply;
     }
 
     synchronized void makePending() {
@@ -376,7 +378,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     private void assertNoMissingObjects(ObjectIDSet missing) {
-      if (!txn.ignorableObjects().containsAll(missing)) {
+      if (initiateApply && !txn.ignorableObjects().containsAll(missing)) {
         throw new AssertionError("Lookup for non-exisistent Objects : " + missing
                                                          + " lookup context is : " + this); }
     }
