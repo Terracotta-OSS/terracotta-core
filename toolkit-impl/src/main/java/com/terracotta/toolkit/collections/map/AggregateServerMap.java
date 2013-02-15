@@ -308,6 +308,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (InternalToolkitMap<K, V> map : serverMaps) {
       map.clear();
     }
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
     clearLocalCache();
   }
 
