@@ -565,11 +565,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         platformService.logicalInvoke(this, SerializationUtil.CLEAR_LOCAL_CACHE_SIGNATURE, NO_ARGS);
       } finally {
         commitLock(getInstanceDsoLockName(), this.lockType);
-        try {
-          platformService.waitForAllCurrentTransactionsToComplete();
-        } catch (AbortedOperationException e) {
-          throw new ToolkitAbortableOperationException(e);
-        }
         internalClearLocalCache();
       }
     }
@@ -577,6 +572,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void internalClearLocalCache() {
     this.tcObjectServerMap.clearAllLocalCacheInline();
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override
@@ -1053,7 +1053,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       } catch (AbortedOperationException e) {
         throw new ToolkitAbortableOperationException(e);
       }
-      internalClearLocalCache();
     }
   }
 
