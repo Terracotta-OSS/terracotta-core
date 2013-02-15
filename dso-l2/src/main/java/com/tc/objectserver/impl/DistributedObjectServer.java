@@ -393,7 +393,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup = threadGroup;
     this.seda = seda;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
-    this.taskRunner = Runners.newCachedScheduledTaskRunner(this.threadGroup);
+    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
   }
 
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger, final TCServer server,

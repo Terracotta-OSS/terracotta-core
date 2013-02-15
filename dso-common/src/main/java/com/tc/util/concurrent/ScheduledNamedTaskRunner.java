@@ -4,8 +4,7 @@
 
 package com.tc.util.concurrent;
 
-import com.google.common.util.concurrent.UncaughtExceptionHandlers;
-import com.tc.lang.TCThreadGroup;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
@@ -56,15 +55,14 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
     super(corePoolSize, threadFactory, handler);
   }
 
+  public ScheduledNamedTaskRunner(final int corePoolSize, final ThreadGroup threadGroup) {
+    super(corePoolSize, newThreadFactory(threadGroup));
+  }
+
   protected void handleUncaughtException(final Throwable e) {
     final Thread t = Thread.currentThread();
-    final ThreadGroup group = t.getThreadGroup();
-    // honors existing TCThreadGroup uncaught exception handler if any
-    if (group instanceof TCThreadGroup) {
-      group.uncaughtException(t, e);
-    } else { // exits JVM by default
-      UncaughtExceptionHandlers.systemExit().uncaughtException(t, e);
-    }
+    // honors existing Thread's uncaught exception handler
+    t.getUncaughtExceptionHandler().uncaughtException(t, e);
   }
 
   @Override
@@ -80,8 +78,7 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
 
   /**
    * {@inheritDoc}
-   *
-   * <p>Since {@link FutureTask} maintains exceptions internally, and {@link Thread.UncaughtExceptionHandler} is not called,
+   * <p/>Since {@link FutureTask} maintains exceptions internally, and {@link Thread.UncaughtExceptionHandler} is not called,
    * we need to manually invoke the handler.
    */
   @Override
@@ -124,6 +121,26 @@ public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implem
       return new NamedRunnableScheduledFuture<V>(((NamedRunnable)runnable).getName(), task);
     } else {
       return super.decorateTask(runnable, task);
+    }
+  }
+
+  private static ThreadFactory newThreadFactory(final ThreadGroup threadGroup) {
+    final ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
+    if (threadGroup != null) {
+      builder.setThreadFactory(new ThreadGroupAwareFactory(threadGroup));
+    }
+    builder.setDaemon(true).setNameFormat("task-runner-thread-%s").setPriority(Thread.NORM_PRIORITY);
+    return builder.build();
+  }
+
+  private static final class ThreadGroupAwareFactory implements ThreadFactory {
+    private final ThreadGroup group;
+
+    private ThreadGroupAwareFactory(final ThreadGroup group) {this.group = group;}
+
+    @Override
+    public Thread newThread(final Runnable r) {
+      return new Thread(group, r);
     }
   }
 

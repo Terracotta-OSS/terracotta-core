@@ -301,7 +301,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoClientBuilder = createClientBuilder();
     this.rejoinManager = rejoinManager;
     this.uuid = uuid;
-    this.taskRunner = Runners.newCachedScheduledTaskRunner(this.threadGroup);
+    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
   }
 
   protected DSOClientBuilder createClientBuilder() {

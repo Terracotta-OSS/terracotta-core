@@ -4,7 +4,6 @@
 
 package com.tc.util.concurrent;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
