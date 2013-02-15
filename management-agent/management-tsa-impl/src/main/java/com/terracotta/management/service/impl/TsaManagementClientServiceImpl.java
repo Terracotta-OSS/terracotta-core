@@ -1165,7 +1165,13 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           JMXConnector jmxConnector = null;
           try {
             jmxConnector = jmxConnectorPool.getConnector(member.host(), member.jmxPort());
-
+          }
+          catch(Exception e) {
+            //that's ok to catch the exception here, it means the member of the  array is not up
+            // and can not give us any Operator Events
+            break;
+          }
+          try {
             DSOMBean dsoMBean = JMX.newMBeanProxy(jmxConnector.getMBeanServerConnection(),
                 new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
 
