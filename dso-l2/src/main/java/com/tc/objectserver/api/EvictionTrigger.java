@@ -51,4 +51,6 @@ public interface EvictionTrigger {
     String getName();
     
     boolean isValid();
+    
+    boolean resubmit();
 }

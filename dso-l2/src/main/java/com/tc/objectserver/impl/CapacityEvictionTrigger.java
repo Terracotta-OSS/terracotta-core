@@ -10,6 +10,7 @@ import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
 import java.util.Collections;
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  * This trigger is invoked by a server map with the size of the map goes over 
@@ -21,6 +22,7 @@ import java.util.Map;
  */
 public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements ClientObjectReferenceSetChangedListener {
     
+    Logger  logger = Logger.getLogger(CapacityEvictionTrigger.class);
     private boolean aboveCapacity = true;
     private int count = 0;
     private int clientSetCount = 0;
@@ -37,13 +39,14 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     @Override
     public boolean startEviction(EvictableMap map) {
   //  capacity eviction ignores underlying strategy b/c map.startEviction has already been called
+        repeat = false;
+
         if ( restart ) {
             if ( !map.startEviction() ) {
                 return false;
             }
         } 
         
-        repeat = false;
         restart = true;
         max = map.getMaxTotalCount();
         size = map.getSize();
@@ -94,6 +97,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     
     private synchronized void waitForClient() {
         while ( clientSet != null ) {
+            logger.debug("waiting for client " + clientSet);
             try {
                 this.wait(2000);
                 if ( clientSet != null ) {
@@ -119,12 +123,18 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         }
         return super.isValid();
     }
+    
+    @Override
+    public boolean resubmit() {
+        return repeat;
+    }
 
     @Override
     public void completeEviction(EvictableMap map) {
         if ( restart ) {
             super.completeEviction(map);
         }
+        logger.debug(this.toString());
     }
 
      @Override

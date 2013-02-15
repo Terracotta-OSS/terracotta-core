@@ -240,9 +240,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     final Future<SampledRateCounter> run = agent.submit(new Runnable() {
       @Override
       public void run() {
-        while (triggerParam.isValid()) {
+        if (triggerParam.isValid()) {
           doEvictionOn(triggerParam);
           count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
+          if ( triggerParam.resubmit() ) {
+              scheduleEvictionTrigger(triggerParam);
+          }
         }
       }
     }, count);
@@ -498,43 +501,43 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       currentRun.cancel(false);
 
       if (turnCount > 5 && isEmergency && !isStopped) {
-        long nanoTime = System.nanoTime();
+      long nanoTime = System.nanoTime();
         if (turnCount > 100000) {
           logger.warn("turn count:" + turnCount);
           stop(usage);
         } else if ( nanoTime - throttlePoll > Math.pow(10, 1) ) {
-          double start = usage.getMaxMemory() * .75D;
-          double span = usage.getMaxMemory() - start;
-          double amt = (usage.getReservedMemory() - start) / span;
-          long used = usage.getUsedMemory();
-          double rate = calculateRate(nanoTime,used);
+      double start = usage.getMaxMemory() * .75D;
+      double span = usage.getMaxMemory() - start;
+      double amt = (usage.getReservedMemory() - start) / span;
+      long used = usage.getUsedMemory();
+      double rate = calculateRate(nanoTime,used);
           if ( this.throttle < 1 ) {
-              float setThrottle = this.throttle;
-              if ( setThrottle == 0 ) {
-                  setThrottle = 0.001f;
-              }
-              if ( rate < (DEFAULT_RATE * (1.0f - amt)) ) {
-                  setThrottle *= .90; 
-              } else {
-                  setThrottle *= 1.10;
-              }
-              if ( setThrottle < 0f ) {
-                  setThrottle = .000001f;
-                  resetEpoc(nanoTime,used);
-              } else if ( setThrottle > 1.0 ) {
-                  setThrottle = .999999f;
-                  resetEpoc(nanoTime,used);
-              } else {
-                  resetEpocIfNeeded(nanoTime, used, usage.getMaxMemory());
-              }
-              if (evictor.isLogging() && logger.isDebugEnabled()) {
-                logger.debug("Throttling rate:" + rate + " amt:" + (DEFAULT_RATE * (1.0f - amt)));
-              }
-              throttle(usage, setThrottle);          
-          }
-          throttlePoll = nanoTime;
-        }
+      float setThrottle = this.throttle;
+      if ( setThrottle == 0 ) {
+          setThrottle = 0.001f;
       }
+      if ( rate < (DEFAULT_RATE * (1.0f - amt)) ) {
+          setThrottle *= .90; 
+      } else {
+          setThrottle *= 1.10;
+      }
+      if ( setThrottle < 0f ) {
+          setThrottle = .000001f;
+          resetEpoc(nanoTime,used);
+      } else if ( setThrottle > 1.0 ) {
+          setThrottle = .999999f;
+          resetEpoc(nanoTime,used);
+      } else {
+          resetEpocIfNeeded(nanoTime, used, usage.getMaxMemory());
+      }
+      if (evictor.isLogging() && logger.isDebugEnabled()) {
+        logger.debug("Throttling rate:" + rate + " amt:" + (DEFAULT_RATE * (1.0f - amt)));
+      }
+      throttle(usage, setThrottle); 
+          }
+      throttlePoll = nanoTime;
+    }
+          }
 
       currentRun = emergencyEviction(false, turnCount++);
 

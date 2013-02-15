@@ -115,6 +115,11 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     }
 
     @Override
+    public boolean resubmit() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "AbstractEvictionTrigger{"
                 + "name=" + name
