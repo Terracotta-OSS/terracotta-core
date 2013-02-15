@@ -131,14 +131,12 @@ public class ProtocolSwitch implements TCProtocolAdaptor {
   @Override
   public TCByteBuffer[] getReadBuffers() {
     switch (protocol) {
-      case PROTOCOL_NOT_HTTP: {
+      case PROTOCOL_NOT_HTTP:
         return delegate.getReadBuffers();
-      }
-      case PROTOCOL_UNKNOWN: {
+      case PROTOCOL_UNKNOWN:
         return buffer;
-      }
       default:
-        throw new AssertionError("Protocol is " + protocol);
+        throw new IllegalStateException("Unexpected protocol: " + protocol);
     }
 
     // unreachable

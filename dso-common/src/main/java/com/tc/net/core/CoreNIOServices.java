@@ -294,6 +294,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       try {
         selectLoop();
       } catch (Throwable t) {
+        // if something goes wrong on selector level, we cannot recover
         logger.error("Unhandled exception from selectLoop", t);
         throw new RuntimeException(t);
       } finally {
@@ -576,7 +577,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         boolean isInterrupted = false;
         // run any pending selector tasks
         while (true) {
-          Runnable task = null;
+          Runnable task;
           while (true) {
             try {
               task = (Runnable) localSelectorTasks.poll(0, TimeUnit.MILLISECONDS);
@@ -646,6 +647,11 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
           } catch (CancelledKeyException cke) {
             logger.info("selection key cancelled key@" + key.hashCode());
+          } catch (Throwable e) {
+            logger.info("Unhandled exception occured on connection layer", e);
+            TCConnectionImpl conn = (TCConnectionImpl) key.attachment();
+            // TCConnectionManager will take care of closing and cleaning up resources
+            conn.fireErrorEvent(new RuntimeException(e), null);
           }
         } // for
       } // while (true)
