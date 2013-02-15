@@ -205,10 +205,6 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
-    fireTransportDisconnectedEvent();
-  }
-
-  protected void fireTransportDisconnectedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_DISCONNECTED_EVENT, AbstractMessageChannel.this));
   }
 
@@ -283,6 +279,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
             + " <--> " + getRemoteAddress());
   }
 
+  private enum ChannelState {
+    INIT, OPEN, CLOSED
+  }
+
   class ChannelStatus {
     private ChannelState state;
 
@@ -328,36 +328,6 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       return "Status:" + this.state.toString();
     }
 
-  }
-
-  private static class ChannelState {
-    private static final int  STATE_INIT   = 0;
-    private static final int  STATE_OPEN   = 1;
-    private static final int  STATE_CLOSED = 2;
-
-    static final ChannelState INIT         = new ChannelState(STATE_INIT);
-    static final ChannelState OPEN         = new ChannelState(STATE_OPEN);
-    static final ChannelState CLOSED       = new ChannelState(STATE_CLOSED);
-
-    private final int         state;
-
-    private ChannelState(int state) {
-      this.state = state;
-    }
-
-    @Override
-    public String toString() {
-      switch (state) {
-        case STATE_INIT:
-          return "INIT";
-        case STATE_OPEN:
-          return "OPEN";
-        case STATE_CLOSED:
-          return "CLOSED";
-        default:
-          return "UNKNOWN";
-      }
-    }
   }
 
   // for testing purpose

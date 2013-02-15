@@ -90,7 +90,7 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
       if (nextSessionID == SessionID.NULL_ID) {
         nextSessionID = new SessionID(sequence.next());
       }
-      return (nextSessionID);
+      return nextSessionID;
     }
 
     public synchronized void newSession() {
