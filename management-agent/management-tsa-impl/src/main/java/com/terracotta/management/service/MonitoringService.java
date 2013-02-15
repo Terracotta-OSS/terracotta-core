@@ -56,10 +56,11 @@ public interface MonitoringService {
   /**
    * Get the DGC statistics.
    *
+   * @param serverNames A set of server names, null meaning all of them.
    * @return a {@link Collection} object of {@link StatisticsEntity} objects representing the DGC statistics,
    * one {@link StatisticsEntity} per DGC iteration.
    * @throws ServiceExecutionException
    */
-  Collection<StatisticsEntity> getDgcStatistics() throws ServiceExecutionException;
+  Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException;
 
 }

@@ -202,9 +202,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             threadDumpEntity.setDump("Unavailable");
             threadDumpEntities.add(threadDumpEntity);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -492,29 +490,48 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public boolean runDgc() throws ServiceExecutionException {
-    JMXConnector jmxConnector = null;
-
+  public boolean runDgc(Set<String> serverNames) throws ServiceExecutionException {
     try {
-      MBeanServerConnection mBeanServerConnection;
-      if (isLocalNodeActive()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findActiveServer();
-        if (jmxConnector == null) {
-          // no active node at the moment, DGC cannot run
-          return false;
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-      }
-      ObjectManagementMonitorMBean objectManagementMonitorMBean = JMX.newMBeanProxy(mBeanServerConnection,
-          new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
+      boolean success = true;
 
-      return objectManagementMonitorMBean.runGC();
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            if (!serverIsActive(mBeanServerConnection)) {
+              continue;
+            }
+
+            ObjectManagementMonitorMBean objectManagementMonitorMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
+
+            objectManagementMonitorMBean.runGC();
+          } catch (Exception e) {
+            success = false;
+          } finally {
+            closeConnector(jmxConnector);
+          }
+        }
+      }
+
+      return success;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
-    } finally {
-      closeConnector(jmxConnector);
     }
   }
 
@@ -529,41 +546,71 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException {
-
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-
-    Collection<StatisticsEntity> statisticsEntities = new ArrayList<StatisticsEntity>();
-
+  public Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames, int maxDgcStatsEntries) throws ServiceExecutionException {
     try {
-      GCStats[] attributes = (GCStats[])mBeanServer.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
+      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
 
-      int count = 0;
-      for (GCStats gcStat : attributes) {
-        StatisticsEntity statisticsEntity = new StatisticsEntity();
-        statisticsEntity.setSourceId("DGC");
-        statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
-        statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
-        statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
-        statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
-        statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
-        statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
-        statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
-        statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());
-        statisticsEntity.getStatistics().put("PausedStageTime", gcStat.getPausedStageTime());
-        statisticsEntity.getStatistics().put("StartTime", gcStat.getStartTime());
-        statisticsEntity.getStatistics().put("Status", gcStat.getStatus());
-        statisticsEntity.getStatistics().put("Type", gcStat.getType());
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
 
-        statisticsEntities.add(statisticsEntity);
-        count++;
-        if (count >= maxDgcStatsEntries) {
-          break;
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            GCStats[] attributes = (GCStats[])mBeanServerConnection.getAttribute(
+                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
+
+            for (GCStats gcStat : attributes) {
+              if (result.size() >= 100) {
+                return result;
+              }
+
+              StatisticsEntity statisticsEntity = new StatisticsEntity();
+              statisticsEntity.setSourceId(member.name());
+              statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+              statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
+              statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
+              statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
+              statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
+              statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
+              statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
+              statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());
+              statisticsEntity.getStatistics().put("PausedStageTime", gcStat.getPausedStageTime());
+              statisticsEntity.getStatistics().put("StartTime", gcStat.getStartTime());
+              statisticsEntity.getStatistics().put("Status", gcStat.getStatus());
+              statisticsEntity.getStatistics().put("Type", gcStat.getType());
+
+              result.add(statisticsEntity);
+            }
+
+          } catch (Exception e) {
+            StatisticsEntity statisticsEntity = new StatisticsEntity();
+            statisticsEntity.setSourceId(member.name());
+            statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+            statisticsEntity.getStatistics().put("Error", e.getMessage());
+
+            result.add(statisticsEntity);
+          } finally {
+            closeConnector(jmxConnector);
+          }
         }
       }
 
-      return statisticsEntities;
+      return result;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
@@ -741,9 +788,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             configEntity.setSourceId(member.name());
             configEntities.add(configEntity);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -854,9 +899,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
               }
             }
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -921,9 +964,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           } catch (Exception e) {
             LOG.error("Connecting to server at '" + jmxHost + ":" + jmxPort + "'", e);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -984,9 +1025,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             logEntities.add(logEntity);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -1056,9 +1095,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             operatorEventEntities.add(operatorEventEntity);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -1105,13 +1142,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     } catch (Exception e) {
       throw new ServiceExecutionException("error marking operator event as read", e);
     } finally {
-      if (jmxConnector != null) {
-        try {
-          jmxConnector.close();
-        } catch (IOException ioe) {
-          throw new ServiceExecutionException("error closing jmx connector", ioe);
-        }
-      }
+      closeConnector(jmxConnector);
     }
   }
 
@@ -1147,9 +1178,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
               result.put(key, value);
             }
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -1196,9 +1225,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           } catch (Exception e) {
             // ignore
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -1252,9 +1279,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             topologyReloadStatusEntities.add(topologyReloadStatusEntity);
           } finally {
-            if (jmxConnector != null) {
-              jmxConnector.close();
-            }
+            closeConnector(jmxConnector);
           }
         }
       }
@@ -1294,11 +1319,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         errors.add("Error opening JMX connection to " + jmxHost + ":" + jmxPort + " - " + ExceptionUtils.getRootCause(e).getMessage());
       } finally {
         if (jmxConnector != null) {
-          try {
-            jmxConnector.close();
-          } catch (IOException ioe) {
-            // ignore
-          }
+          closeConnector(jmxConnector);
         }
       }
     }
@@ -1370,27 +1391,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
 
     return errors;
-  }
-
-  private JMXConnector findActiveServer() throws JMException, IOException, InterruptedException {
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
-        new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
-
-    for (L2Info l2Info : l2Infos) {
-      String jmxHost = l2Info.host();
-      int jmxPort = l2Info.jmxPort();
-
-      JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-
-      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-      if (serverIsActive(mBeanServerConnection)) {
-        return jmxConnector;
-      } else {
-        jmxConnector.close();
-      }
-    }
-    return null; // no server has any client in the cluster at the moment
   }
 
   private ThreadDumpEntity threadDump(TCServerInfoMBean tcServerInfoMBean) throws IOException {

@@ -46,7 +46,7 @@ public class MonitoringServiceImpl implements MonitoringService {
   }
 
   @Override
-  public Collection<StatisticsEntity> getDgcStatistics() throws ServiceExecutionException {
-    return tsaManagementClientService.getDgcStatistics(MAX_DGC_STATS_ENTRIES);
+  public Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames) throws ServiceExecutionException {
+    return tsaManagementClientService.getDgcStatistics(serverNames, MAX_DGC_STATS_ENTRIES);
   }
 }

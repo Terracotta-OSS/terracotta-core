@@ -50,10 +50,11 @@ public interface DiagnosticsService {
   /**
    * Run the Distributed Garbage Collector in the server array.
    *
+   * @param serverNames A set of server names, null meaning all of them.
    * @return true if the DGC cycle started, false otherwise.
    * @throws ServiceExecutionException
    */
-  boolean runDgc() throws ServiceExecutionException;
+  boolean runDgc(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Reload TSA configuration.

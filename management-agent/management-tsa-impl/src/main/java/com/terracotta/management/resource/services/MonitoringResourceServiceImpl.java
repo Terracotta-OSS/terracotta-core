@@ -80,7 +80,10 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
     requestValidator.validateSafe(info);
 
     try {
-      return monitoringService.getDgcStatistics();
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+
+      return monitoringService.getDgcStatistics(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

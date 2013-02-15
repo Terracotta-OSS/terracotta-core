@@ -94,7 +94,10 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
     requestValidator.validateSafe(info);
 
     try {
-      return diagnosticsService.runDgc();
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+
+      return diagnosticsService.runDgc(serverNames);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

@@ -45,9 +45,9 @@ public interface TsaManagementClientService {
 
   Set<String> getAllServerNames() throws ServiceExecutionException;
 
-  boolean runDgc() throws ServiceExecutionException;
+  boolean runDgc(Set<String> serverNames) throws ServiceExecutionException;
 
-  Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames, int maxDgcStatsEntries) throws ServiceExecutionException;
 
   Collection<String> getL2Urls() throws ServiceExecutionException;
 

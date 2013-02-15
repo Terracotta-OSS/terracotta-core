@@ -46,8 +46,8 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
   }
 
   @Override
-  public boolean runDgc() throws ServiceExecutionException {
-    return tsaManagementClientService.runDgc();
+  public boolean runDgc(Set<String> serverNames) throws ServiceExecutionException {
+    return tsaManagementClientService.runDgc(serverNames);
   }
 
   @Override
