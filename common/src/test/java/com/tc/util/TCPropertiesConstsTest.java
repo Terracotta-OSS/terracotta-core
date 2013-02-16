@@ -70,6 +70,13 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_DOCS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES);
+
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_POLICY);
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD);
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD);
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD);
+    exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_AMOUNT);
   }
 
   private void loadDefaults(String propFile) {

@@ -141,6 +141,26 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS              = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
   public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
 
+  /**
+   * ******************************************************************************************************************
+   * <code>
+   * Section : L2 FRS Properties
+   * Description : This section contains configuration for FRS on the L2
+   * compactor.policy                   : Compactor policy to use. One of LSNGapCompactionPolicy, SizeBasedCompactionPolicy
+   * compactor.lsnGap.minLoad           : LSNGapCompactionPolicy: lower load threshold before compaction starts.
+   * compactor.lsnGap.maxLoad           : LSNGapCompactionPolicy: load at which a compaction run stops.
+   * compactor.sizeBased.threshold      : SizeBasedCompactionPolicy: Start threshold.
+   * compactor.sizeBased.amount         : SizeBasedCompactionPolicy: Amount to compact per compactor run.
+   * </code>
+   * ******************************************************************************************************************
+   */
+  public static final String L2_FRS_PREFIX                        = "l2.frs";
+  public static final String L2_FRS_COMPACTOR_POLICY              = L2_FRS_PREFIX + ".compactor.policy";
+  public static final String L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD     = L2_FRS_PREFIX + ".compactor.lsnGap.minLoad";
+  public static final String L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD     = L2_FRS_PREFIX + ".compactor.lsnGap.maxLoad";
+  public static final String L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD = L2_FRS_PREFIX + ".compactor.sizeBased.threshold";
+  public static final String L2_FRS_COMPACTOR_SIZEBASED_AMOUNT    = L2_FRS_PREFIX + ".compactor.sizeBased.amount";
+
   /*********************************************************************************************************************
    * <code>
    * Section : L2 Seda stage properties
