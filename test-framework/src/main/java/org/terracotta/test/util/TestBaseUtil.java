@@ -179,7 +179,7 @@ public class TestBaseUtil {
   public static void enabledL1ProxyConnection(TestConfig testConfig) {
     testConfig.getL2Config().setProxyTsaPorts(true);
     testConfig.getL2Config().setManualProxycontrol(true);
-    testConfig.addTcProperty("l1.l2.config.validation.enabled", "false");
+    testConfig.addTcProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
   }
 
   public static String getThreadDump() {

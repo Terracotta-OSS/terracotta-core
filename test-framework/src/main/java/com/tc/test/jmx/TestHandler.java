@@ -161,7 +161,12 @@ public class TestHandler implements TestHandlerMBean {
 
   @Override
   public String getTsaProxyTcConfig() throws Exception {
-    return testServerManager.getTsaProxyConfigFile();
+    return testServerManager.getTsaProxyConfig();
+  }
+
+  @Override
+  public String getTsaProxyTcConfigFilePath() {
+    return testServerManager.getTsaProxyConfigFile().getAbsolutePath();
   }
 
 }

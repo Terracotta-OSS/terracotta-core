@@ -1,6 +1,7 @@
 package com.tc.test.setup;
 
 import org.terracotta.license.util.IOUtils;
+import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.tests.base.TestFailureListener;
 
 import com.tc.config.test.schema.ConfigHelper;
@@ -253,7 +254,7 @@ public class TestServerManager {
   }
 
   // writes tc-config-proxy.xml with proxy ports
-  public String getTsaProxyConfigFile() throws Exception {
+  public String getTsaProxyConfig() throws Exception {
     String tcConfig = IOUtils.readToString(new FileInputStream(tcConfigFile));
     if (testConfig.getL2Config().isProxyTsaPorts()) {
       for (GroupsData groupData : getGroupsData()) {
@@ -267,5 +268,13 @@ public class TestServerManager {
       }
     }
     return tcConfig;
+  }
+
+  public File getTsaProxyConfigFile() {
+    if (testConfig.getL2Config().isProxyTsaPorts()) {
+      File file = new File(tcConfigFile.getParent(), AbstractTestBase.TC_CONFIG_PROXY_FILE_NAME);
+      if (file.exists()) { return file; }
+    }
+    return null;
   }
 }

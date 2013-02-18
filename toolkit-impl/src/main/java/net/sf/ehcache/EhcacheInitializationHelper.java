@@ -28,7 +28,7 @@ public class EhcacheInitializationHelper {
    */
   public void initializeEhcache(final Ehcache cache) {
     // CacheManager can be loaded using clusteredStateLoader in case of embedded ehcache or AppClassLoader if
-    // ehcache-core is present in classpath. Relection is used here to handle both the cases.
+    // ehcache-core is present in classpath. Reflection is used here to handle both the cases.
     try {
       Method method = this.cacheManager.getClass().getDeclaredMethod("initializeEhcache", Ehcache.class, boolean.class);
       method.setAccessible(true);

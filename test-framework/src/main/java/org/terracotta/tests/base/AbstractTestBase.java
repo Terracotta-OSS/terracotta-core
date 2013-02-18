@@ -43,7 +43,9 @@ import javax.management.MBeanServerConnection;
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
   private static final String              DEFAULT_CONFIG   = "default-config";
+  public static final String               TC_CONFIG_PROXY_FILE_NAME = "tc-config-proxy.xml";
   protected static final String            SEP              = File.pathSeparator;
+  private final String                     TC_CONFIG_FILE_NAME = "tc-config.xml";
   private final TestConfig                 testConfig;
   private final File                       tcConfigFile;
   private final File                       tcConfigProxyFile;
@@ -64,8 +66,8 @@ public abstract class AbstractTestBase extends TCTestCase {
       this.tempDir = getTempDirectory();
       tempDir.mkdir();
       FileUtils.cleanDirectory(tempDir);
-      tcConfigFile = getTempFile("tc-config.xml");
-      tcConfigProxyFile = getTempFile("tc-config-proxy.xml");
+      tcConfigFile = getTempFile(TC_CONFIG_FILE_NAME);
+      tcConfigProxyFile = getTempFile(TC_CONFIG_PROXY_FILE_NAME);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -144,7 +146,7 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   private void writeProxyTcConfigFile() throws Exception {
     if (testConfig.getL2Config().isProxyTsaPorts()) {
-      FileUtils.writeStringToFile(tcConfigProxyFile, testServerManager.getTsaProxyConfigFile());
+      FileUtils.writeStringToFile(tcConfigProxyFile, testServerManager.getTsaProxyConfig());
     }
   }
 

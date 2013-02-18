@@ -5,6 +5,7 @@ package org.terracotta.express.tests.nonstop;
 
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
+import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitFactory;
@@ -14,7 +15,6 @@ import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.TestConfig;
 
 import java.util.Properties;
@@ -26,9 +26,7 @@ public class BasicTsaProxyTest extends AbstractToolkitTestBase {
 
   public BasicTsaProxyTest(TestConfig testConfig) {
     super(testConfig, ProxyClient.class, SimpleClient.class);
-    testConfig.getL2Config().setProxyTsaPorts(true);
-    testConfig.getL2Config().setManualProxycontrol(true);
-    testConfig.addTcProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
+    TestBaseUtil.enabledL1ProxyConnection(testConfig);
   }
 
   public static class SimpleClient extends ClientBase {

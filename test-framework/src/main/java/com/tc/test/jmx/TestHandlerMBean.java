@@ -186,4 +186,10 @@ public interface TestHandlerMBean {
    * @throws Exception
    */
   String getTsaProxyTcConfig() throws Exception;
+
+  /**
+   * returns the absolute path of tc-config-proxy file
+   */
+
+  String getTsaProxyTcConfigFilePath();
 }
