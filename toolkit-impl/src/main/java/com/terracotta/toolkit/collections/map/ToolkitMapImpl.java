@@ -7,8 +7,8 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
-import com.tc.abortable.AbortedOperationException;
 import com.google.common.base.Preconditions;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
@@ -207,9 +207,9 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     Object tcKey = getOrCreateObjectForKey(key);
     Object tcVal = createTCCompatibleObject(value);
 
+    platformService.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
     keyValueHolder.put(key, value, getObjectIDForKey(tcKey));
 
-    platformService.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
     return rv;
   }
 
@@ -281,10 +281,10 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     applyPendingChanges();
     ObjectID oidKey = keyValueHolder.getKeyObjectID(key);
     if (oidKey == null) { return null; }
-    V oldValue = keyValueHolder.remove(key);
 
     Object tcKey = getOrCreateObjectForKey(key);
     platformService.logicalInvoke(this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+    V oldValue = keyValueHolder.remove(key);
 
     return oldValue;
   }
@@ -310,8 +310,8 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        this.keyValueHolder.clear();
         platformService.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+        this.keyValueHolder.clear();
       }
     } finally {
       lock.writeLock().unlock();
@@ -658,9 +658,9 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(currentValue);
-          keyValueHolder.removeObjectIDForKey(currentValue);
           platformService
               .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          keyValueHolder.removeObjectIDForKey(currentValue);
         }
       } finally {
         lock.writeLock().unlock();
@@ -1060,9 +1060,9 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(entry.getKey());
-          keyValueHolder.removeObjectIDForKey(entry.getKey());
           platformService
               .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          keyValueHolder.removeObjectIDForKey(entry.getKey());
         }
       } finally {
         lock.writeLock().unlock();
