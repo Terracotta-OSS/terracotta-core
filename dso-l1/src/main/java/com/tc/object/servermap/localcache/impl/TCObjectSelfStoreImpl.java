@@ -65,11 +65,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
       try {
-        if (tcObjectSelfTempCache.containsKey(oid)) {
-          removeTCObjectSelfTemp(tcObjectSelfTempCache.get(oid), true);
-          return;
-        }
-
         if (!tcObjectSelfStoreOids.contains(oid)) { return; }
       } finally {
         tcObjectStoreLock.writeLock().unlock();
