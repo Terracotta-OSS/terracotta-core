@@ -35,39 +35,46 @@ public class DetailedMemoryUsage implements MemoryUsage {
         return reserved;
     }
 
-            @Override
-            public long getFreeMemory() {
-                return max - reserved;
-            }
+    @Override
+    public long getFreeMemory() {
+        return max - reserved;
+    }
 
-            @Override
-            public String getDescription() {
-                return rsrc.getType().toString();
-            }
+    @Override
+    public String getDescription() {
+        return rsrc.getType().toString();
+    }
 
-            @Override
-            public long getMaxMemory() {
-                return max;
-            }
+    @Override
+    public long getMaxMemory() {
+        return max;
+    }
 
-            @Override
-            public long getUsedMemory() {
-                return checkUsed();
-            }
+    @Override
+    public long getUsedMemory() {
+        return checkUsed();
+    }
 
-            @Override
-            public int getUsedPercentage() {
-                return Math.round(reserved*100f/max);
-            }
+    @Override
+    public int getUsedPercentage() {
+        return Math.round(reserved*100f/max);
+    }
 
-            @Override
-            public long getCollectionCount() {
-                return count;
-            }
+    @Override
+    public long getCollectionCount() {
+        return count;
+    }
 
-            @Override
-            public long getCollectionTime() {
-                return 0;
-            }
+    @Override
+    public long getCollectionTime() {
+        return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "DetailedMemoryUsage{" + "rsrc=" + rsrc + ", max=" + max + ", reserved=" + reserved + ", used=" + cacheUsed + '}';
+    }
+    
+    
            
 }

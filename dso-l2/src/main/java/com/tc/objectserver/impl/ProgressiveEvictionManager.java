@@ -138,8 +138,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     return evictionStats;
   }
 
-  public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store,
-                                    ClientObjectReferenceSet clients, ServerTransactionFactory trans,
+  public ProgressiveEvictionManager(final ObjectManager mgr,final MonitoredResource monitored, final PersistentManagedObjectStore store,
+                                    final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
                                     final CounterManager counterManager) {
     this.objectManager = mgr;
@@ -185,14 +185,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         @Override
         public void run() {
-          log("Threshold crossed");
+          log("Threshold crossed used:" + monitored.getUsed() + " reserved:" + monitored.getReserved() + " total:" + monitored.getTotal());
           resourceManager.setThrowException();
         }
 
       };
       if (monitored.getType() == MonitoredResource.Type.OFFHEAP) {
         monitored
-            .addReservedThreshold(MonitoredResource.Direction.RISING, monitored.getTotal() - 32l * 1024 * 1024, rb);
+            .addReservedThreshold(MonitoredResource.Direction.RISING, monitored.getTotal() - 16l * 1024 * 1024, rb);
       }
     } catch (UnsupportedOperationException uns) {
       logger.info("threshold monitor not registered", uns);
@@ -471,8 +471,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           logger.warn("resource usage at max");
           stop(usage);
       } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
-                 && usage.getUsedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)) {
-//        throttle(usage, 1f);
+                 && usage.getUsedMemory() >= usage.getMaxMemory() - (96l * 1024 * 1024)) {
+          controlledThrottle(usage);
       }
 
       if (throttle == 0f ) {
@@ -494,24 +494,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         clear(usage);
       }
     }
-
-    private void triggerEmergency(DetailedMemoryUsage usage) {
-      log("Emergency Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
-          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " turns:" + turnCount);
-      currentRun.cancel(false);
-
-      if (turnCount > 5 && isEmergency && !isStopped) {
+    
+    private void controlledThrottle(DetailedMemoryUsage usage) {
       long nanoTime = System.nanoTime();
-        if (turnCount > 100000) {
-          logger.warn("turn count:" + turnCount);
-          stop(usage);
-        } else if ( nanoTime - throttlePoll > Math.pow(10, 1) ) {
       double start = usage.getMaxMemory() * .75D;
       double span = usage.getMaxMemory() - start;
       double amt = (usage.getReservedMemory() - start) / span;
       long used = usage.getUsedMemory();
       double rate = calculateRate(nanoTime,used);
-          if ( this.throttle < 1 ) {
       float setThrottle = this.throttle;
       if ( setThrottle == 0 ) {
           setThrottle = 0.001f;
@@ -530,14 +520,29 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       } else {
           resetEpocIfNeeded(nanoTime, used, usage.getMaxMemory());
       }
-      if (evictor.isLogging() && logger.isDebugEnabled()) {
-        logger.debug("Throttling rate:" + rate + " amt:" + (DEFAULT_RATE * (1.0f - amt)));
-      }
       throttle(usage, setThrottle); 
-          }
       throttlePoll = nanoTime;
     }
+
+    private void triggerEmergency(DetailedMemoryUsage usage) {
+      log("Emergency Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
+          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " turns:" + turnCount);
+      if ( logger.isDebugEnabled() ) {
+          logger.debug("Emergency triggered with usage " + usage);
+      }
+      currentRun.cancel(false);
+
+      if (turnCount > 5 && isEmergency && !isStopped) {
+        long nanoTime = System.nanoTime();
+        if (turnCount > 100000) {
+          logger.warn("turn count:" + turnCount);
+          stop(usage);
+        } else if ( nanoTime - throttlePoll > Math.pow(10, 1) ) {
+          if ( this.throttle < 1 ) {
+              controlledThrottle(usage);
           }
+        }
+      }
 
       currentRun = emergencyEviction(false, turnCount++);
 
@@ -585,6 +590,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         resetEpoc(System.nanoTime(), reserved.getUsedMemory());
       }
       throttle = level;
+      log("Throttling clients to " + throttle +" with usage " + reserved);
     }
 
     private void stop(MemoryUsage reserved) {
@@ -594,7 +600,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool", reserved
           .getUsedPercentage());
       TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
-      log("Stopping Clients");
+      log("Stopping Clients with usage " + reserved);
     }
     
     private boolean shouldNotify() {
