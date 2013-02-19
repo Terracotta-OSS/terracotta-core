@@ -40,6 +40,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
                                                                     .getProperties()
                                                                     .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS,
                                                                         10000);
+  private static final boolean           INLINE_DGC_ENABLED     = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, true);
   private static final long              DELETE_LOG_INTERVAL    = SECONDS.toNanos(60);
   public static final InlineGCContext    INLINE_GC_CONTEXT      = new InlineGCContext();
   private ObjectIDSet                    objectsToDelete        = new ObjectIDSet();
@@ -136,7 +137,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
 
   @Override
   public void scheduleInlineCleanupIfNecessary() {
-    if (!garbageCollector.isPeriodicEnabled()) {
+    if (INLINE_DGC_ENABLED && !garbageCollector.isPeriodicEnabled()) {
       // This delay is here as a failsafe in case there's some aspect of startup we missed. This can be increased in
       // order to not collide with other stuff in that case.
       final long delay = 1000 * TCPropertiesImpl.getProperties()
