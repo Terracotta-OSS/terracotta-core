@@ -7,7 +7,8 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
-import java.util.Timer;
+import java.util.Collections;
+import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 public class NonStopManagerImpl implements NonStopManager {
   private static final TCLogger                         LOGGER     = TCLogging.getLogger(NonStopManagerImpl.class);
   private final AbortableOperationManager               abortableOperationManager;
-  private final Timer                                   timer      = new Timer("Timer for Non Stop tasks", true);
+  private final NonStopTimer                            timer      = new NonStopTimer();
   private final ConcurrentMap<Thread, NonStopTimerTask> timerTasks = new ConcurrentHashMap<Thread, NonStopTimerTask>();
 
   public NonStopManagerImpl(AbortableOperationManager abortableOperationManager) {
@@ -30,7 +31,7 @@ public class NonStopManagerImpl implements NonStopManager {
 
     if (!timerTasks.containsKey(Thread.currentThread())) {
       abortableOperationManager.begin();
-      NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread());
+      NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread(), abortableOperationManager);
       timerTasks.put(Thread.currentThread(), task);
       // Do not start timer for negative timeouts.
       if (timeout > 0 && (timeout + System.currentTimeMillis()) > 0) {
@@ -53,6 +54,10 @@ public class NonStopManagerImpl implements NonStopManager {
 
   }
 
+  Map getTimerTasks() {
+    return Collections.unmodifiableMap(timerTasks);
+  }
+
   @Override
   public void finish() {
     if (LOGGER.isDebugEnabled()) {
@@ -72,16 +77,18 @@ public class NonStopManagerImpl implements NonStopManager {
     timer.cancel();
   }
 
-  private enum NonStopTimerTaskState {
+  private static enum NonStopTimerTaskState {
     INIT, ABORTED, CANCELLED
   }
 
-  private class NonStopTimerTask extends TimerTask {
-    private final Thread          thread;
-    private NonStopTimerTaskState state = NonStopTimerTaskState.INIT;
+  private static class NonStopTimerTask extends TimerTask {
+    private final Thread                    thread;
+    private NonStopTimerTaskState           state = NonStopTimerTaskState.INIT;
+    private final AbortableOperationManager abortableOperationManager;
 
-    public NonStopTimerTask(Thread thread) {
+    public NonStopTimerTask(Thread thread, AbortableOperationManager abortableOperationManager) {
       this.thread = thread;
+      this.abortableOperationManager = abortableOperationManager;
     }
 
     public synchronized boolean cancelTaskIfRequired() {

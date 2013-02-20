@@ -5,6 +5,12 @@ package com.terracotta.toolkit.nonstop;
 
 import com.tc.abortable.AbortableOperationManagerImpl;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -115,5 +121,50 @@ public class NonStopManagerTest extends TestCase {
     } catch (IllegalStateException e) {
       // expected
     }
+  }
+
+  public void testNonStopManagerLeakTest() throws Throwable {
+    List<WeakReference> weakReferences = new ArrayList<WeakReference>();
+    for (int i = 0; i < 100; i++) {
+      nonStopManager.begin(TimeUnit.MINUTES.toMillis(10));
+      try {
+
+        Collection collection = nonStopManager.getTimerTasks().values();
+        Assert.assertEquals(1, collection.size());
+
+        Object o = collection.iterator().next();
+        weakReferences.add(new WeakReference(o));
+      } finally {
+        nonStopManager.finish();
+      }
+    }
+
+    {
+      Collection collection = nonStopManager.getTimerTasks().values();
+      Assert.assertEquals(0, collection.size());
+    }
+    int gcRefCount = 0;
+    for (long time = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2); System.currentTimeMillis() < time;) {
+      gcRefCount = 0;
+
+      System.err.println("Looping for GC");
+      for (int i = 0; i < 10; i++) {
+        System.gc();
+      }
+      for (WeakReference ref : weakReferences) {
+        if (ref.get() == null) {
+          gcRefCount++;
+        }
+      }
+      if (gcRefCount > 95) {
+        break;
+      }
+
+      Thread.sleep(500);
+    }
+
+    System.err.println("Test passed");
+
+    Assert.assertTrue(gcRefCount > 95);
   }
 }
