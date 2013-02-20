@@ -24,7 +24,7 @@ public final class Runners {
 
   public static TaskRunner newDefaultCachedScheduledTaskRunner(final ThreadGroup threadGroup) {
     final ScheduledNamedTaskRunner runner = new ScheduledNamedTaskRunner(16, threadGroup);
-    runner.setKeepAliveTime(5L, TimeUnit.MINUTES); // automatically shrinks after 5 min being idle
+    runner.setKeepAliveTime(2L, TimeUnit.MINUTES); // automatically shrinks after some idle period
     runner.allowCoreThreadTimeOut(true); // allow removing core pool threads
     //runner.setRemoveOnCancelPolicy(true); // JDK 1.7 only
     return runner;

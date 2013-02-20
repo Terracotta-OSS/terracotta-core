@@ -207,6 +207,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -1212,6 +1213,21 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         logger.error("Error shutting down communications manager", t);
       } finally {
         this.communicationsManager = null;
+      }
+    }
+
+    if (taskRunner != null) {
+      logger.info("Shutting down TaskRunner");
+      taskRunner.shutdownNow();
+      boolean timedout = false;
+      try {
+        timedout = !taskRunner.awaitTermination(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        if (timedout) {
+          logger.warn("Not all TaskRunner threads gracefully finished execution");
+        }
       }
     }
 
