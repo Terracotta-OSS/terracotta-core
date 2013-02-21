@@ -351,12 +351,14 @@ public class TCTestCase extends TestCase {
     if (timerTask != null) {
       timerTask.cancel();
     }
-
+    final Thread testVMThread = Thread.currentThread();
     timerTask = new TimerTask() {
 
       @Override
       public void run() {
         timeoutCallback(delay);
+        // DEV-8901 interrupt the test VM thread so that if its waiting somewhere, It comes out and the test vm exits.
+        testVMThread.interrupt();
       }
     };
     timeoutTimer.schedule(timerTask, delay);
