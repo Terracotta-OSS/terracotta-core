@@ -21,6 +21,8 @@ import javax.xml.namespace.QName;
 public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Config {
 
   private final BindPort jmxPort;
+  private final BindPort tsaPort;
+  private final BindPort tsaGroupPort;
   private final String   host;
   private final boolean  authentication;
   private final String   passwordFile;
@@ -86,6 +88,8 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
     this.userRealmFile = userRealm;
 
     this.jmxPort = server.getJmxPort();
+    this.tsaPort = server.getTsaPort();
+    this.tsaGroupPort = server.getTsaGroupPort();
   }
 
   @Override
@@ -115,6 +119,16 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
   @Override
   public BindPort jmxPort() {
     return this.jmxPort;
+  }
+
+  @Override
+  public BindPort tsaPort() {
+    return this.tsaPort;
+  }
+
+  @Override
+  public BindPort tsaGroupPort() {
+    return this.tsaGroupPort;
   }
 
   @Override

@@ -25,6 +25,10 @@ public interface CommonL2Config extends Config {
 
   BindPort jmxPort();
 
+  BindPort tsaPort();
+
+  BindPort tsaGroupPort();
+
   String host();
 
   boolean authentication();

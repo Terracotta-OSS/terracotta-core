@@ -618,44 +618,21 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   @Override
   public Collection<String> getL2Urls() throws ServiceExecutionException {
-    Collection<String> urls = new ArrayList<String>();
-    Collection<String> exceptions = new ArrayList<String>();
     try {
+      Collection<String> urls = new ArrayList<String>();
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
       L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
 
       for (L2Info l2Info : l2Infos) {
-        try {
-          ServerEntity serverEntity = buildServerEntity(l2Info, new String[] {"SecurityHostname", "TSAGroupPort"});
-          String prefix = "http://";
-          if (secure) {
-            prefix = "https://";
-          }
-          urls.add(prefix + serverEntity.getAttributes().get("SecurityHostname") + ":" + serverEntity.getAttributes().get("TSAGroupPort"));
-        } catch (ServiceExecutionException see) {
-          if (LOG.isDebugEnabled()) {
-            LOG.warn("Error building L2 URL of " + l2Info.host(), see);
-          } else {
-            LOG.warn("Error building L2 URL of " + l2Info.host() + ": " + see.getMessage());
-          }
-          exceptions.add("Error building L2 URL of " + l2Info.host() + ": " + see.getMessage());
-          urls.add("?");
-        }
+        final String prefix = secure ? "https://" : "http://";
+        urls.add(prefix + l2Info.securityHostname() + ":" + l2Info.tsaGroupPort());
       }
-
+      return urls;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
-
-    // throw ServiceExecutionException if we did not manage to build a single URL
-    HashSet<String> urlSet = new HashSet<String>(urls);
-    if (urlSet.size() == 1 && urlSet.contains("?")) {
-      throw new ServiceExecutionException(exceptions.toString());
-    }
-
-    return urls;
   }
 
   @Override
