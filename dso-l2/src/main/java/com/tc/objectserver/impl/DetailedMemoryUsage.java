@@ -12,8 +12,8 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  */
 public class DetailedMemoryUsage implements MemoryUsage {
   private final MonitoredResource rsrc;
-  private final long max ;
-  private final long reserved ;
+  private final long max;
+  private final long reserved;
   private long cacheUsed = -1;
   private final long count;
 
@@ -57,7 +57,7 @@ public class DetailedMemoryUsage implements MemoryUsage {
 
     @Override
     public int getUsedPercentage() {
-        return Math.round(reserved*100f/max);
+        return Math.round((reserved*100f)/max);
     }
 
     @Override

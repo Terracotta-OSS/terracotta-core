@@ -24,7 +24,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     
     Logger  logger = Logger.getLogger(CapacityEvictionTrigger.class);
     private boolean aboveCapacity = true;
-    private int count = 0;
     private int clientSetCount = 0;
     private int max = 0;
     private int size = 0;
@@ -73,18 +72,19 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int sample = boundsCheckSampleSize(size - maxParam);
         Map samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,ObjectID>emptyMap();
-        count = samples.size();
         // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
-        if ( count < size - maxParam ) {
-            repeat = true;
-            if ( count == 0 ) {
-                restart = false;
-                registerForUpdates(clients);
-                samples = Collections.<Object,ObjectID>emptyMap();
+        try {
+            return createEvictionContext(className, samples);
+        } finally {
+            int count = getCount();
+            if ( count < size - maxParam ) {
+                repeat = true;
+                if ( count == 0 ) {
+                    restart = false;
+                    registerForUpdates(clients);
+                }
             }
         }
-        
-        return createEvictionContext(className, samples);
     } 
     
     private synchronized void registerForUpdates(ClientObjectReferenceSet clients) {
@@ -126,6 +126,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     
     @Override
     public boolean resubmit() {
+        if ( super.resubmit() ) {
+            return true;
+        }
         return repeat;
     }
 
@@ -150,7 +153,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     @Override
     public String toString() {
         return "CapacityEvictionTrigger{"
-                + "count=" + count 
                 + ", size=" + size 
                 + ", max=" + max 
                 + ", repeat=" + repeat 

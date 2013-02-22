@@ -116,6 +116,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
 
     @Override
     public boolean resubmit() {
+        evicting = false;
+        count = 0;
+        processed = false;
         return false;
     }
 
