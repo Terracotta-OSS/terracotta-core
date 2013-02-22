@@ -159,7 +159,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     long sleeptime = L2_EVICTION_RESOURCEPOLLINGINTERVAL;
     if (sleeptime < 0) {
       // 1GB a second
-      sleeptime = (monitored.getTotal() * 1000) / (1024 * 1024 * 1024);
+      sleeptime = (monitored.getTotal() * 1000) / (256 * 1024 * 1024);
       if (sleeptime > 120 * 1000) {
         // max out at 2 min.
         sleeptime = 120 * 1000;
@@ -467,7 +467,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
     private void throttleIfNeeded(DetailedMemoryUsage usage) {
       // if we are this low, stop no matter what
-      if (usage.getReservedMemory() >= usage.getMaxMemory() - (16l * 1024 * 1024)) {
+      if (usage.getReservedMemory() >= usage.getMaxMemory() - (16l * 1024 * 1024) && usage.getUsedMemory() > usage.getMaxMemory() / 2 ) {
           logger.warn("resource usage at max");
           stop(usage);
       } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
@@ -527,7 +527,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private void triggerEmergency(DetailedMemoryUsage usage) {
       log("Emergency Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
           + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " turns:" + turnCount);
-      if ( logger.isDebugEnabled() ) {
+      if ( evictor.isLogging() && logger.isDebugEnabled() ) {
           logger.debug("Emergency triggered with usage " + usage);
       }
       currentRun.cancel(false);
