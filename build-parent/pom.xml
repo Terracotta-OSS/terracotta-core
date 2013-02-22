@@ -25,23 +25,23 @@
     <group>unit</group>
     
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <core-storage-api.version>1.0-SNAPSHOT</core-storage-api.version>
-    <heap-core-storage.version>1.0.0-SNAPSHOT</heap-core-storage.version>
-    <bigmemory-core-storage.version>1.0.1-SNAPSHOT</bigmemory-core-storage.version>
+    <core-storage-api.version>1.0</core-storage-api.version>
+    <heap-core-storage.version>1.0.0</heap-core-storage.version>
+    <bigmemory-core-storage.version>1.0.0</bigmemory-core-storage.version>
     <jetty.version>8.1.7.v20120910</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.6.6</slf4j.version>
-    <offheap-store.version>1.1.1-SNAPSHOT</offheap-store.version>
-    <search.version>1.2.1-SNAPSHOT</search.version>
-    <security-core-version>1.2.0-SNAPSHOT</security-core-version>
-    <security-keychain-version>1.2.0-SNAPSHOT</security-keychain-version>
+    <offheap-store.version>1.1.0</offheap-store.version>
+    <search.version>1.2.0</search.version>
+    <security-core-version>1.1.0</security-core-version>
+    <security-keychain-version>1.1.0</security-keychain-version>
     <management.version>2.8.0-SNAPSHOT</management.version>
-    <terracotta-license.version>1.0.8-SNAPSHOT</terracotta-license.version>
+    <terracotta-license.version>1.0.7</terracotta-license.version>
     <toolkit-api.version>2.0-SNAPSHOT</toolkit-api.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.8.0-SNAPSHOT</ehcache.version>
     <maven-forge-plugin.version>1.0.7</maven-forge-plugin.version>
-    <tcconfig.version>4.1.0-SNAPSHOT</tcconfig.version>
+    <tcconfig.version>4.1.0</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
