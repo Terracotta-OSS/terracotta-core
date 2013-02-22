@@ -356,7 +356,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final TCSecurityManager              tcSecurityManager;
 
-  private final TaskRunner taskRunner;
+  private final TaskRunner                       taskRunner;
 
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
@@ -775,7 +775,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         maxStageSize);
 
     // Lookup stage should never be blocked trying to add to apply stage
-    int applyStageThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS, 8);
+    int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor
                                  .getPersistenceTransactionProvider(), taskRunner), applyStageThreads, 1, -1);
