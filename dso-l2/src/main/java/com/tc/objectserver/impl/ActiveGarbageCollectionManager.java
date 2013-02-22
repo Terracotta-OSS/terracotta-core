@@ -71,7 +71,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
   @Override
   public void missingObjectsToDelete(final Set<ObjectID> objects) {
     if (!objects.isEmpty()) {
-      logger.warn("Missing objects to delete " + objects);
+      logger.warn("Missing " + objects.size() + " objects on inline delete.");
     }
   }
 
