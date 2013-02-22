@@ -522,6 +522,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath(), l2State);
+    dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
     persistor.start();
 
     // register the terracotta operator event logger

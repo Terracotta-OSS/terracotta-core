@@ -5,6 +5,9 @@ import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
+import com.tc.util.Conversion;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.File;
@@ -16,7 +19,7 @@ import java.util.Map;
 /**
  * @author tim
  */
-public class Persistor {
+public class Persistor implements PrettyPrintable {
   private static final String GLOBAL_TRANSACTION_ID_SEQUENCE = "global_transaction_id_sequence";
 
   private final StorageManager storageManager;
@@ -153,5 +156,25 @@ public class Persistor {
     throw new UnsupportedOperationException("Can not backup a non-persistent L2.");
   }
 
+  @Override
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    out.print(getClass().getName()).flush();
+    if (!started) {
+      out.indent().print("PersistorImpl not started.").flush();
+    } else {
+      out.indent().print("Resource Type: " + getMonitoredResource().getType()).flush();
+      out.indent().print("Resource Total: " + safeByteSizeAsString(getMonitoredResource().getTotal())).flush();
+      out.indent().print("Resource Reserved: " + safeByteSizeAsString(getMonitoredResource().getReserved())).flush();
+      out.indent().print("Resource Used: " + safeByteSizeAsString(getMonitoredResource().getUsed())).flush();
+    }
+    return out;
+  }
 
+  private static String safeByteSizeAsString(long size) {
+    try {
+      return Conversion.memoryBytesAsSize(size);
+    } catch (Conversion.MetricsFormatException e) {
+      return size + "b";
+    }
+  }
 }
