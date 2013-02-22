@@ -36,9 +36,9 @@ public class L2Utils {
    */
   public static int getOptimalApplyStageWorkerThreads(boolean restartable) {
     final int cpus = Runtime.getRuntime().availableProcessors();
-    // in restartable mode wait/compute time ratio is different due to disk I/O
-    final int threadsCount = (restartable) ? calculateOptimalThreadsCount(cpus, 30, 70, BigDecimal.ONE)
-        : calculateOptimalThreadsCount(cpus, 0, 100, BigDecimal.ONE);
+    // in restartable mode wait/compute time ratio is low due to disk I/O
+    final int threadsCount = (restartable) ? calculateOptimalThreadsCount(cpus, 30, 70, 0.75)
+        : calculateOptimalThreadsCount(cpus, 0, 100, 0.75);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS,
         Math.min(threadsCount, MAX_APPLY_STAGE_THREADS));
   }
@@ -57,18 +57,18 @@ public class L2Utils {
    * @return the optimal number of threads
    */
   public static int calculateOptimalThreadsCount(final int cpus, final long wait, final long compute,
-                                                 final BigDecimal targetUtilization) {
+                                                 final double targetUtilization) {
     Preconditions.checkArgument(compute > 0);
     Preconditions.checkArgument(wait >= 0);
     Preconditions.checkArgument(cpus > 0);
-    Preconditions.checkArgument(targetUtilization != null
-                                && targetUtilization.compareTo(BigDecimal.ZERO) > 0
-                                && targetUtilization.compareTo(BigDecimal.ONE) <= 0);
+    Preconditions.checkArgument(targetUtilization > 0 && targetUtilization <= 1);
 
     final BigDecimal cpusCount = new BigDecimal(cpus);
     final BigDecimal waitTime = new BigDecimal(wait);
     final BigDecimal computeTime = new BigDecimal(compute);
-    int threadsCount = cpusCount.multiply(targetUtilization).multiply(BigDecimal.ONE
+    final BigDecimal utilization = new BigDecimal(targetUtilization);
+
+    int threadsCount = cpusCount.multiply(utilization).multiply(BigDecimal.ONE
         .add(waitTime.divide(computeTime, 1, RoundingMode.HALF_UP))).setScale(0, RoundingMode.HALF_UP).intValue();
     return (wait == 0) ? threadsCount + 1 : threadsCount;
   }
