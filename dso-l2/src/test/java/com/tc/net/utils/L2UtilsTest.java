@@ -4,11 +4,9 @@
 
 package com.tc.net.utils;
 
-import org.junit.Test;
-
-import java.math.BigDecimal;
-
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 /**
  * @author Eugene Shelestovich
