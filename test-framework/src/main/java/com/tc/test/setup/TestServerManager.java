@@ -11,6 +11,7 @@ import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.PortChooser;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -139,12 +140,19 @@ public class TestServerManager {
   }
 
   public void dumpClusterState(int dumpCount, long dumpInterval) {
+    for (int i = 0; i < dumpCount; i++) {
+      dumpClusterState();
+      ThreadUtil.reallySleep(dumpInterval);
+    }
+  }
+
+  public void dumpClusterState() {
     debugPrintln("***** dumping ClusterState ");
     int grpCount = testConfig.getNumOfGroups();
     for (int i = 0; i < grpCount; i++) {
       try {
         System.out.println("Trying to take dump for " + i + "th group");
-        groups[i].dumpClusterState(dumpCount, dumpInterval);
+        groups[i].dumpClusterState();
       } catch (Exception e) {
         System.out.println("Error while taking cluster dump for " + i + "th group,printing stack trace");
         e.printStackTrace();

@@ -638,16 +638,15 @@ public class GroupServerManager {
     return testConfig.getL2Config().isProxyTsaPorts();
   }
 
-  public boolean dumpClusterState(int dumpCount, long dumpInterval) throws Exception {
+  public boolean dumpClusterState() throws Exception {
 
     for (int i = 0; i < getGroupData().getServerCount(); i++) {
-      if (!dumpClusterStateInternal(dumpCount, dumpInterval, i)) return false;
+      if (!dumpClusterStateInternal(i)) return false;
     }
     return true;
   }
 
-  private boolean dumpClusterStateInternal(int dumpCount, long dumpInterval, int serverIndex) throws IOException,
-      InterruptedException, Exception {
+  private boolean dumpClusterStateInternal(int serverIndex) throws IOException, InterruptedException, Exception {
     if (serverControl[serverIndex].isRunning()) {
       System.out.println("Dumping server=[" + serverControl[serverIndex].getTsaPort() + "]");
 
@@ -670,14 +669,10 @@ public class GroupServerManager {
         mbean.dumpClusterState();
         return true;
       } catch (Exception e) {
-        System.out.println("Could not find L2DumperMBean... sleep for 1 sec.");
-        Thread.sleep(1000);
+        System.out.println("Could not find L2DumperMBean....");
+        System.out.println("Thread dumping server=[" + serverControl[serverIndex].getTsaPort() + "] ");
+        mbean.doThreadDump();
       }
-
-      mbean.setThreadDumpCount(dumpCount);
-      mbean.setThreadDumpInterval(dumpInterval);
-      System.out.println("Thread dumping server=[" + serverControl[serverIndex].getTsaPort() + "] ");
-      mbean.doThreadDump();
 
     }
 
