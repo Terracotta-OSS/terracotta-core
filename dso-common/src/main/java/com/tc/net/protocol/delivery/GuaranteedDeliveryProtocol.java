@@ -42,9 +42,10 @@ class GuaranteedDeliveryProtocol {
 
   public void receive(OOOProtocolMessage msg) {
     if (msg.isSend()) {
-      receiver.execute(msg);
       // Handle the ACKed sequence from the message.
       sender.execute(msg);
+
+      receiver.execute(msg);
     } else if (msg.isAck() || msg.isHandshakeReplyOk()) {
       sender.execute(msg);
     } else {
