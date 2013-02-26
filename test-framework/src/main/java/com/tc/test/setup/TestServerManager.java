@@ -141,27 +141,15 @@ public class TestServerManager {
   public void dumpClusterState(int dumpCount, long dumpInterval) {
     debugPrintln("***** dumping ClusterState ");
     int grpCount = testConfig.getNumOfGroups();
-    boolean dumpTaken = false;
-    List<Exception> errors = new ArrayList<Exception>();
     for (int i = 0; i < grpCount; i++) {
       try {
-        dumpTaken = groups[i].dumpClusterState(dumpCount, dumpInterval);
+        System.out.println("Trying to take dump for " + i + "th group");
+        groups[i].dumpClusterState(dumpCount, dumpInterval);
       } catch (Exception e) {
-        System.out.println("Error while taking cluster dump");
-        errors.add(e);
+        System.out.println("Error while taking cluster dump for " + i + "th group,printing stack trace");
         e.printStackTrace();
       }
-      if (dumpTaken) {
-        break;
-      }
     }
-    if (!dumpTaken) {
-      System.out.println("******* Dumping ClusterState Failed. Printing All Exceptions");
-      for (Exception exception : errors) {
-        exception.printStackTrace();
-      }
-    }
-
   }
 
   public GroupsData getGroupData(int groupIndex) {

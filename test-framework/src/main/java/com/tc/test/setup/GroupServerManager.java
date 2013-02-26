@@ -640,19 +640,10 @@ public class GroupServerManager {
 
   public boolean dumpClusterState(int dumpCount, long dumpInterval) throws Exception {
 
-    boolean dumpTaken = false;
-    int serverIndex = getActiveServerIndex();
-    if (serverIndex != -1) {
-      dumpTaken = dumpClusterStateInternal(dumpCount, dumpInterval, serverIndex);
-    } else {
-      // active server not present dump all passives.
-      for (int i = 0; i < groupData.getServerCount(); i++) {
-        dumpTaken = dumpTaken | dumpClusterStateInternal(dumpCount, dumpInterval, i);
-      }
-
+    for (int i = 0; i < getGroupData().getServerCount(); i++) {
+      if (!dumpClusterStateInternal(dumpCount, dumpInterval, i)) return false;
     }
-    return dumpTaken;
-
+    return true;
   }
 
   private boolean dumpClusterStateInternal(int dumpCount, long dumpInterval, int serverIndex) throws IOException,
