@@ -45,7 +45,6 @@
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
-    <module>toolkit-system-tests</module>
 
     <module>management</module>
     <module>management-agent</module>
