@@ -255,6 +255,18 @@
         <module>devwork/statistics</module>
       </modules>
     </profile>     
+
+    <profile>
+      <id>security-modules</id>
+      <activation>
+        <file>
+          <exists>devwork/security-modules</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/security-modules</module>
+      </modules>
+    </profile>     
   </profiles>
   
   <repositories>
