@@ -21,7 +21,7 @@
   <name>legacy-test-tree</name>
   
   <properties>  
-    <group>dso2</group>
+    <group>dso1</group>
     <skip.deploy>true</skip.deploy>
     <skip.findbugs>true</skip.findbugs>
   </properties>
