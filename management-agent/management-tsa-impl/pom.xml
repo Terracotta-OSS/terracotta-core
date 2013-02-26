@@ -22,31 +22,51 @@
       <groupId>org.terracotta</groupId>
       <artifactId>management-tsa</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-json</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>security-REST</artifactId>
-      <version>${management.apps.parent.version}</version>
+      <version>1.1.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-json</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.jersey-core</artifactId>
+      <version>1.16</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.jersey-json</artifactId>
+      <version>1.16</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.jackson-core-asl</artifactId>
+      <version>1.9.2</version>
     </dependency>
     <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>management-ehcache-impl</artifactId>
       <version>${ehcache.management.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-json</artifactId>
-      <version>1.12</version>
-      <exclusions>
-        <exclusion>
-          <groupId>stax</groupId>
-          <artifactId>stax-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.xml.stream</groupId>
-          <artifactId>stax-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>

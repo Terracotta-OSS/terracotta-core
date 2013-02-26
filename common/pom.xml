@@ -101,9 +101,9 @@ Apache Ivy version: 2.2.0 20100923230623
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
-      <scope>compile</scope>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.servlet-api</artifactId>
+      <version>3.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
