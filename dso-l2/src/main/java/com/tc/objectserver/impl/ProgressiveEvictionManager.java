@@ -318,7 +318,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                               final String className) {
     int max = ev.getMaxTotalCount();
 
-    if (max < 0) {
+    if (max < 0 || !ev.isEvictionEnabled() ) {  //  check again because the flag could have changed
       // cache has no count capacity max is MAX_VALUE;
       max = Integer.MAX_VALUE;
     }
