@@ -64,6 +64,7 @@ import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -696,20 +697,20 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           if (values == null) {
             values = distributeInStripes((Integer) newValue, this.serverMaps.length);
-          }
-          newValue = values[i];
+          } 
+          newValue = ((Integer)changedValue) < 0 ? -1 : values[i];
         }
         serverMaps[i].setConfigField(fieldChanged, newValue);
       }
 
       // set the config field in ClusteredObjectStripeImpl
-      for (ToolkitObjectStripe stripe : this.stripeObjects) {
+      for (ToolkitObjectStripe<InternalToolkitMap<K, V>> stripe : this.stripeObjects) {
         if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           int maxTotalCount = 0;
-          for (InternalToolkitMap sm : serverMaps) {
+          for (InternalToolkitMap<K, V> sm : stripe) {
             maxTotalCount += sm.getMaxCountInCluster();
           }
-          newValue = maxTotalCount;
+          newValue = maxTotalCount < 0  ? -1 : maxTotalCount;
         }
         stripe.setConfigField(fieldChanged, newValue);
       }
