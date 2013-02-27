@@ -21,6 +21,7 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
+import com.tc.util.CallStackTrace;
 import com.tc.util.DebugUtil;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -49,7 +50,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private final String                     debugId;
   private UUID                             sessionId        = UUID.NULL_ID;
   private final Timer                      restoreConnectTimer;
-  private static final boolean             debug            = false;
+  private static final boolean             debug            = Boolean.getBoolean("ooo.logging.enabled");
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
                                                  OOOProtocolMessageParser messageParser,
@@ -253,6 +254,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   private void resetModesAndfireTransportConnectedEvent() {
+    debugLog("resetModesAndfireTransportConnectedEvent handshakeMode " + handshakeMode.get() + " channelConnected "
+             + channelConnected.get() +" "+ CallStackTrace.getCallStack());
     handshakeMode.set(false);
     if (!channelConnected.get()) {
       channelConnected.set(true);
@@ -483,7 +486,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   @Override
   public void connectionRestoreFailed() {
-    debugLog("RestoreConnectionFailed - resetting stack");
+    debugLog("RestoreConnectionFailed - resetting stack channelConnected " + channelConnected + " "
+             + CallStackTrace.getCallStack());
     if (channelConnected.get()) {
       // forcedDisconnect flag is not useful in above layers. defaulting to false
       receiveLayer.notifyTransportDisconnected(this, false);
