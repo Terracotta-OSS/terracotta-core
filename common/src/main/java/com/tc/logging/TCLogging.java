@@ -46,6 +46,8 @@ import java.util.Properties;
  */
 public class TCLogging {
 
+  public static final String        LOG_CONFIGURATION_PREFIX           = "The configuration read for Logging: ";
+
   private static final int          MAX_BUFFERED_LOG_MESSAGES          = 10 * 1000;
 
   private static final String       TERRACOTTA_L1_LOG_FILE_NAME        = "terracotta-client.log";
@@ -92,6 +94,8 @@ public class TCLogging {
   private static File               currentLoggingDirectory            = null;
   private static FileLock           currentLoggingDirectoryFileLock    = null;
   private static boolean            lockingDisabled                    = false;
+
+  private static Properties         loggingProperties;
 
   public static TCLogger getLogger(Class clazz) {
     if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
@@ -180,7 +184,7 @@ public class TCLogging {
     try {
       Properties devLoggingProperties = new Properties();
 
-      // Specify the order of LEAST importantance; last one in wins
+      // Specify the order of LEAST importance; last one in wins
       File[] devLoggingLocations = new File[] { new File(System.getProperty("user.home"), LOG4J_PROPERTIES_FILENAME),
           new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME) };
 
@@ -209,6 +213,7 @@ public class TCLogging {
       if (devLog4JPropsFilePresent) {
         Logger.getRootLogger().setLevel(Level.INFO);
         PropertyConfigurator.configure(devLoggingProperties);
+        loggingProperties = devLoggingProperties;
         return true;
       }
     } catch (Exception e) {
@@ -217,6 +222,7 @@ public class TCLogging {
 
     return false;
   }
+
 
   private static boolean customConfiguration() {
     try {
@@ -241,6 +247,7 @@ public class TCLogging {
           }
 
           PropertyConfigurator.configure(properties);
+          loggingProperties = properties;
           return true;
         }
       }
@@ -495,6 +502,7 @@ public class TCLogging {
 
       writeVersion();
       writePID();
+      writeLoggingConfigurations();
     } catch (Exception e) {
       reportLoggingError(e);
     } finally {
@@ -606,6 +614,16 @@ public class TCLogging {
   // This method for use in tests only
   public static void closeFileAppender() {
     if (delegateFileAppender != null) delegateFileAppender.close();
+  }
+
+  
+  /**
+   * This method will print the logging configurations being used by the logger.
+   */
+  private static void writeLoggingConfigurations() {
+    if (loggingProperties != null) {
+      getLogger(TCLogging.class).info(LOG_CONFIGURATION_PREFIX + loggingProperties);
+    }
   }
 
 }
