@@ -248,4 +248,10 @@ public class PlatformServiceImpl implements PlatformService {
   public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     ManagerUtil.throttlePutIfNecessary(object);
   }
+
+  @Override
+  public boolean isLockedBeforeRejoin() {
+    return false;
+  }
+
 }

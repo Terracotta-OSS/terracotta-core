@@ -105,4 +105,5 @@ public interface PlatformService {
 
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 
+  public boolean isLockedBeforeRejoin();
 }

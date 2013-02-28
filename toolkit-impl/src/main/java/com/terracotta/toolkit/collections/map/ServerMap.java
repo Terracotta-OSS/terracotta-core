@@ -49,6 +49,7 @@ import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializedMapValueParameters;
+import com.terracotta.toolkit.util.ExternalLockingWrapper;
 import com.terracottatech.search.SearchCommand;
 import com.terracottatech.search.SearchMetaData;
 
@@ -159,7 +160,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public void __tc_managed(TCObject t) {
     super.__tc_managed(t);
     if (!(t instanceof TCObjectServerMap)) { throw new AssertionError("Wrong tc object created for ServerMap - " + t); }
-    this.tcObjectServerMap = (TCObjectServerMap) t;
+    // as cache won't go through RejoinAwarePlatformService, we make this proxy to
+    // check that any operation that we do on cache, is not being done under a lock which was taken before rejoin:
+    // dev-9033
+    this.tcObjectServerMap = ExternalLockingWrapper
+        .newExternalLockingProxy(TCObjectServerMap.class, platformService, t);
     this.lockStrategy = new LongLockStrategy<K>(getInstanceDsoLockName());
   }
 
