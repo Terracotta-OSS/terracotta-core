@@ -12,16 +12,15 @@ import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.events.ToolkitNotifier;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopReadTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopWriteTimeoutBehavior;
 import org.terracotta.toolkit.object.ToolkitObject;
-import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.TimeoutBehaviorToolkitCacheImpl;
+import com.terracotta.toolkit.collections.map.ToolkitCacheImplInterface;
 
 public class NonstopTimeoutBehaviorResolver {
 
@@ -61,8 +60,8 @@ public class NonstopTimeoutBehaviorResolver {
     E writeTimeoutBehavior = resolveWriteTimeoutBehavior(objectType,
                                                          nonStopConfiguration.getWriteOpNonStopTimeoutBehavior(),
                                                          toolkitObjectLookup);
-    return (E) new TimeoutBehaviorToolkitCacheImpl((ToolkitCacheInternal) readTimeoutBehavior,
-                                                   (ToolkitCacheInternal) writeTimeoutBehavior);
+    return (E) new TimeoutBehaviorToolkitCacheImpl((ToolkitCacheImplInterface) readTimeoutBehavior,
+                                                   (ToolkitCacheImplInterface) writeTimeoutBehavior);
 
   }
 
@@ -100,7 +99,7 @@ public class NonstopTimeoutBehaviorResolver {
       case CACHE:
       case STORE:
         return (E) new LocalReadsToolkitCacheImpl(toolkitObjectLookup,
-                                                  (ToolkitCacheInternal) resolveNoOpTimeoutBehavior(objectType));
+                                                  (ToolkitCacheImplInterface) resolveNoOpTimeoutBehavior(objectType));
       case ATOMIC_LONG:
       case BARRIER:
       case BLOCKING_QUEUE:
@@ -121,9 +120,8 @@ public class NonstopTimeoutBehaviorResolver {
   public Object resolveNoOpTimeoutBehavior(ToolkitObjectType objectType) {
     switch (objectType) {
       case STORE:
-        return noOpBehaviorResolver.resolve(ToolkitStore.class);
       case CACHE:
-        return noOpBehaviorResolver.resolve(ToolkitCacheInternal.class);
+        return noOpBehaviorResolver.resolve(ToolkitCacheImplInterface.class);
       case MAP:
       case SET:
       case SORTED_MAP:
@@ -146,9 +144,8 @@ public class NonstopTimeoutBehaviorResolver {
       case ATOMIC_LONG:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitAtomicLong.class);
       case STORE:
-        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitStore.class);
       case CACHE:
-        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitCacheInternal.class);
+        return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitCacheImplInterface.class);
       case LIST:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitListInternal.class);
       case LOCK:

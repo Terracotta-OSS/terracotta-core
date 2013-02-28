@@ -9,10 +9,8 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
-import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectServerMap;
@@ -31,12 +29,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
-    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
-    ToolkitStore<K, V>, OnGCCallable {
+    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
+    OnGCCallable {
 
   private volatile AggregateServerMap<K, V>   aggregateServerMap;
-  private volatile ToolkitCacheInternal<K, V> activeDelegate;
-  private volatile ToolkitCacheInternal<K, V> localDelegate;
+  private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
+  private volatile ToolkitCacheImplInterface<K, V> localDelegate;
   private final String                        name;
   private final ToolkitSubtypeStatusImpl      status;
   private volatile OnGCCallable               onGCCallable;
@@ -55,7 +53,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void doRejoinStarted() {
-    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
+    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
     aggregateServerMap.rejoinStarted();
     status.incrementRejoinCount();
   }
@@ -72,8 +70,8 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void applyDestroy() {
-    this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
-    this.localDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
+    this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
+    this.localDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
     status.setDestroyed();
   }
 
@@ -169,8 +167,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Collection<V> values() {
-    return new SubTypeWrapperCollection<V>(activeDelegate.values(), status, this.name,
-                                                             ToolkitObjectType.CACHE);
+    return new SubTypeWrapperCollection<V>(activeDelegate.values(), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
@@ -215,14 +212,12 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public Map<K, V> getAll(Collection<? extends K> keys) {
-    return new SubTypeWrapperMap<K, V>(activeDelegate.getAll(keys), status, this.name,
-                                                         ToolkitObjectType.CACHE);
+    return new SubTypeWrapperMap<K, V>(activeDelegate.getAll(keys), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
   public Map<K, V> getAllQuiet(Collection<K> keys) {
-    return new SubTypeWrapperMap<K, V>(activeDelegate.getAllQuiet(keys), status, this.name,
-                                                         ToolkitObjectType.CACHE);
+    return new SubTypeWrapperMap<K, V>(activeDelegate.getAllQuiet(keys), status, this.name, ToolkitObjectType.CACHE);
   }
 
   @Override
@@ -351,7 +346,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public Callable<Void> onGCCallable() {
     return onGCCallable;
   }
-  
+
   private static class OnGCCallable implements Callable<Void> {
     private final TCObjectServerMap objectServerMap;
 

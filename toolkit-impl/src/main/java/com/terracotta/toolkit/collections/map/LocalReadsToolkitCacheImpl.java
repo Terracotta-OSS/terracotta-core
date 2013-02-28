@@ -7,7 +7,6 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -22,19 +21,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
     DestroyableToolkitObject, ToolkitStore<K, V> {
-  private final ToolkitObjectLookup<ToolkitCacheInternal<K, V>> delegate;
-  private final ToolkitCacheInternal<K, V>                      noOpBehaviourResolver;
+  private final ToolkitObjectLookup<ToolkitCacheImplInterface<K, V>> delegate;
+  private final ToolkitCacheImplInterface<K, V>                      noOpBehaviourResolver;
 
-  public LocalReadsToolkitCacheImpl(ToolkitObjectLookup<ToolkitCacheInternal<K, V>> delegate,
-                                    ToolkitCacheInternal<K, V> noOpBehaviourResolver) {
+  public LocalReadsToolkitCacheImpl(ToolkitObjectLookup<ToolkitCacheImplInterface<K, V>> delegate,
+                                    ToolkitCacheImplInterface<K, V> noOpBehaviourResolver) {
     this.delegate = delegate;
     this.noOpBehaviourResolver = noOpBehaviourResolver;
   }
 
-  private ToolkitCacheInternal<K, V> getDelegate() {
-    ToolkitCacheInternal<K, V> rv = delegate.getInitializedObjectOrNull();
+  private ToolkitCacheImplInterface<K, V> getDelegate() {
+    ToolkitCacheImplInterface<K, V> rv = delegate.getInitializedObjectOrNull();
     if (rv == null) { return noOpBehaviourResolver; }
     return rv;
   }

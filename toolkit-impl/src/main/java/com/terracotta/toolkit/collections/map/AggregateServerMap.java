@@ -14,7 +14,6 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.QueryBuilder;
@@ -64,7 +63,6 @@ import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,7 +77,8 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity {
+    ToolkitCacheListener<K>, ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>,
+    SearchableEntity {
   private static final TCLogger                                            LOGGER                               = TCLogging
                                                                                                                     .getLogger(AggregateServerMap.class);
   private static final int                                                 KB                                   = 1024;
@@ -697,7 +696,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         if (ToolkitConfigFields.MAX_TOTAL_COUNT_FIELD_NAME.equals(fieldChanged)) {
           if (values == null) {
             values = distributeInStripes((Integer) newValue, this.serverMaps.length);
-          } 
+          }
           newValue = ((Integer)changedValue) < 0 ? -1 : values[i];
         }
         serverMaps[i].setConfigField(fieldChanged, newValue);

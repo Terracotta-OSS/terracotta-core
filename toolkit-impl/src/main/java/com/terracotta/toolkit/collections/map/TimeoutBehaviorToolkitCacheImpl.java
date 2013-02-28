@@ -7,7 +7,6 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -18,13 +17,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheInternal<K, V>,
+public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplInterface<K, V>,
     DestroyableToolkitObject {
-  private final ToolkitCacheInternal<K, V> mutationBehaviourResolver;
-  private final ToolkitCacheInternal<K, V> immutationBehaviourResolver;
+  private final ToolkitCacheImplInterface<K, V> mutationBehaviourResolver;
+  private final ToolkitCacheImplInterface<K, V> immutationBehaviourResolver;
 
-  public TimeoutBehaviorToolkitCacheImpl(ToolkitCacheInternal<K, V> immutationBehaviourResolver,
-                                         ToolkitCacheInternal<K, V> mutationBehaviourResolver) {
+  public TimeoutBehaviorToolkitCacheImpl(ToolkitCacheImplInterface<K, V> immutationBehaviourResolver,
+                                         ToolkitCacheImplInterface<K, V> mutationBehaviourResolver) {
     this.immutationBehaviourResolver = immutationBehaviourResolver;
     this.mutationBehaviourResolver = mutationBehaviourResolver;
   }

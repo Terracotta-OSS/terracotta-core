@@ -4,7 +4,8 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
+
+import com.terracotta.toolkit.collections.map.ToolkitCacheImplInterface;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ class LocalMethodUtil {
     cacheLocalMethodSet.add("localOffHeapSize");
     cacheLocalMethodSet.add("containsKeyLocalOnHeap");
     cacheLocalMethodSet.add("containsKeyLocalOffHeap");
-    validateMethodNamesExist(ToolkitCacheInternal.class, cacheLocalMethodSet);
+    validateMethodNamesExist(ToolkitCacheImplInterface.class, cacheLocalMethodSet);
     localMethods.put(ToolkitObjectType.CACHE, cacheLocalMethodSet);
     localMethods.put(ToolkitObjectType.STORE, cacheLocalMethodSet);
   }
@@ -45,7 +46,7 @@ class LocalMethodUtil {
   }
 
   private static boolean exist(Class klazz, String method) {
-    Method[] methods = klazz.getDeclaredMethods();
+    Method[] methods = klazz.getMethods();
     for (Method m : methods) {
       if (m.getName().equals(method)) { return true; }
     }
