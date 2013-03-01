@@ -83,6 +83,7 @@
         <module>../toolkit-express-impl-ee</module>
         <module>../toolkit-runtime-ee</module>
         <module>../toolkit-ee-system-tests</module>
+        <module>../toolkit-lrt-system-tests</module>
       </modules>        
     </profile>
     
