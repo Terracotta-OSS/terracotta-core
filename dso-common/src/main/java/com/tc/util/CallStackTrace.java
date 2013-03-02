@@ -9,10 +9,14 @@ import java.io.StringWriter;
 public class CallStackTrace {
 
   public static String getCallStack() {
-    Throwable t = new Throwable();
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    t.printStackTrace(pw);
-    return sw.toString();
+    boolean enabled = Boolean.getBoolean("ooo.logging.enabled");
+    if (enabled) {
+      Throwable t = new Throwable();
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      t.printStackTrace(pw);
+      return "\n" + Thread.currentThread().getName() + " " + sw.toString();
+    }
+    return "";
   }
 }

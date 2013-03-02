@@ -215,7 +215,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
     } else if (msg.isHandshakeReplyFail()) {
       if (debug) {
-        debugLog("Received handshake fail reply - request for OOO reset");
+        debugLog("Received handshake fail reply - request for OOO reset channelConnected " + channelConnected);
       }
       Assert.inv(isClient);
       Assert.inv(handshakeMode.get());
@@ -255,7 +255,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   private void resetModesAndfireTransportConnectedEvent() {
     debugLog("resetModesAndfireTransportConnectedEvent handshakeMode " + handshakeMode.get() + " channelConnected "
-             + channelConnected.get() +" "+ CallStackTrace.getCallStack());
+             + channelConnected.get() + " reconnectMode " + reconnectMode.get() + CallStackTrace.getCallStack());
     handshakeMode.set(false);
     if (!channelConnected.get()) {
       channelConnected.set(true);
@@ -331,7 +331,9 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     final boolean restoreConnectionMode = reconnectMode.get();
-    debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
+    debugLog("Transport Disconnected - pausing delivery, reconnectMode = " + restoreConnectionMode
+             + " channelConnected " + channelConnected.get() + " forcedDisconnect " + forcedDisconnect
+             + CallStackTrace.getCallStack());
     this.delivery.pause();
     if (!restoreConnectionMode) {
       if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, forcedDisconnect);
@@ -486,7 +488,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   @Override
   public void connectionRestoreFailed() {
-    debugLog("RestoreConnectionFailed - resetting stack channelConnected " + channelConnected + " "
+    debugLog("RestoreConnectionFailed - resetting stack channelConnected " + channelConnected
              + CallStackTrace.getCallStack());
     if (channelConnected.get()) {
       // forcedDisconnect flag is not useful in above layers. defaulting to false

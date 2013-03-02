@@ -17,6 +17,7 @@ import com.tc.object.context.PauseContext;
 import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.util.CallStackTrace;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -103,7 +104,8 @@ public class ClientChannelEventController {
     public void notifyChannelEvent(ChannelEvent event) {
       final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
-      DSO_LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event);
+      DSO_LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
+                      + CallStackTrace.getCallStack());
       ChannelID eventChannelId = event.getChannelID();
       ClientMessageChannel currentChannel = controller.channel.channel();
       if (eventChannelId != null && !currentChannel.getChannelID().equals(eventChannelId)) {

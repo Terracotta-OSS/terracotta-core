@@ -22,6 +22,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
+import com.tc.util.CallStackTrace;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -169,16 +170,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public void notifyTransportDisconnected(final MessageTransport transport, final boolean forcedDisconnect) {
     ChannelStatus status = getStatus();
     logger.info("ClientMessageChannel notifyTransportDisconnected status " + status + " " + getChannelID().toLong()
-                + " " + transport.getConnectionId().getChannelID() + " forcedDisconnect " + forcedDisconnect);
-    if (status.isOpen()) {
-      // Move channel to new session
-      this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
-      logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
-      super.notifyTransportDisconnected(transport, forcedDisconnect);
-    } else {
-      logger.info("Ignoring transport disconnect for channel " + getChannelID() + " because channel status is "
-                  + status);
-    }
+                + " " + transport.getConnectionId().getChannelID() + " forcedDisconnect " + forcedDisconnect
+                + CallStackTrace.getCallStack());
+    this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
+    logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
+    super.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
   @Override
