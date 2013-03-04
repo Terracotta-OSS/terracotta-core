@@ -33,9 +33,11 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServerConnection;
@@ -267,8 +269,13 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected String makeClasspath(String... jars) {
-    String cp = "";
+    Set<String> uniqueJars = new LinkedHashSet<String>();
     for (String jar : jars) {
+      uniqueJars.add(jar);
+    }
+
+    String cp = "";
+    for (String jar : uniqueJars) {
       cp += SEP + jar;
     }
 
