@@ -189,7 +189,12 @@ public abstract class AbstractTestBase extends TCTestCase {
     }, "Test execution thread");
     testExecutionThread.setDaemon(true);
     testExecutionThread.start();
-    testExecutionThread.join();
+    try {
+      testExecutionThread.join();
+    } catch (InterruptedException e) {
+      testExecutionThread.interrupt(); // stop the test execution thread.
+      throw new RuntimeException("Test timed out");
+    }
 
     tcTestCaseTearDown(testException.get());
   }
