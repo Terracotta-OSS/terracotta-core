@@ -10,7 +10,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Conversion;
 import com.tc.util.sequence.MutableSequence;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -148,12 +147,6 @@ public class Persistor implements PrettyPrintable {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
-  }
-
-  public void backup(File path) throws IOException {
-    // make warning go away
-    if (false) { throw new IOException(); }
-    throw new UnsupportedOperationException("Can not backup a non-persistent L2.");
   }
 
   @Override
