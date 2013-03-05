@@ -12,7 +12,7 @@
   </parent>
 
   <properties>
-    <management.apps.parent.version>1.2.0-SNAPSHOT</management.apps.parent.version>
+    <management-core.version>1.1.1-SNAPSHOT</management-core.version>
   </properties>
 
 
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>management-core</artifactId>
-      <version>${management.apps.parent.version}</version>
+      <version>${management-core.version}</version>
     </dependency>
   </dependencies>
 
