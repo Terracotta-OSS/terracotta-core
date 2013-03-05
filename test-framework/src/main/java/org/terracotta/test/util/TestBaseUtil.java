@@ -9,9 +9,12 @@ import com.tc.test.setup.GroupsData;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -29,12 +32,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 public class TestBaseUtil {
+  private static final Pattern ARTIFACT_PATTERN = Pattern.compile("^\\s*([^:]+):([^:]+):([^:]+):([^:]+):(.+)$");
 
   public static void removeDuplicateJvmArgs(List<String> jvmArgs) {
     Map<String, String> argsMap = new HashMap<String, String>();
@@ -238,6 +244,46 @@ public class TestBaseUtil {
     } catch (Exception e) {
       System.out.println("Caught exception while trying to heap dump:");
       e.printStackTrace();
+    }
+  }
+
+  public static List<String> jarsFromMavenDependenciesList(URL resourceList) {
+    if (resourceList == null) { throw new NullPointerException("resourceList is null"); }
+
+    List<String> jarList = new ArrayList<String>();
+    InputStream in = null;
+    try {
+      in = resourceList.openStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        Matcher m = ARTIFACT_PATTERN.matcher(line);
+        if (m.matches() && "compile".equals(m.group(5))) {
+          String jarFile = constructMavenLocalFile(m.group(1), m.group(2), m.group(3), m.group(4));
+          jarList.add(jarFile);
+        }
+      }
+      return jarList;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      IOUtils.closeQuietly(in);
+    }
+  }
+
+  private static String constructMavenLocalFile(String groupId, String artifactId, String type, String version) {
+    String base = System.getProperty("localMavenRepository");
+    if (base == null) {
+      base = System.getProperty("user.home") + "/.m2/repository";
+    }
+    File artifact = new File(base, groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
+                                   + "-" + version + "." + type);
+    if (!artifact.exists()) { throw new AssertionError("Can't find Maven artifact: " + groupId + ":" + artifactId + ":"
+                                                       + type + ":" + version); }
+    try {
+      return artifact.getCanonicalFile().getAbsolutePath();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

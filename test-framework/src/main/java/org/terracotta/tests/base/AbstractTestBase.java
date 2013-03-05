@@ -30,6 +30,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,10 +45,10 @@ import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  private static final String              DEFAULT_CONFIG   = "default-config";
+  private static final String              DEFAULT_CONFIG            = "default-config";
   public static final String               TC_CONFIG_PROXY_FILE_NAME = "tc-config-proxy.xml";
-  protected static final String            SEP              = File.pathSeparator;
-  private final String                     TC_CONFIG_FILE_NAME = "tc-config.xml";
+  protected static final String            SEP                       = File.pathSeparator;
+  private final String                     TC_CONFIG_FILE_NAME       = "tc-config.xml";
   private final TestConfig                 testConfig;
   private final File                       tcConfigFile;
   private final File                       tcConfigProxyFile;
@@ -58,9 +59,9 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected TestJMXServerManager           jmxServerManager;
   private Thread                           duringRunningClusterThread;
   private volatile Thread                  testExecutionThread;
-  private static final String              log4jPrefix      = "log4j.logger.";
-  private final Map<String, LogLevel>      tcLoggingConfigs = new HashMap<String, LogLevel>();
-  private final AtomicReference<Throwable> testException    = new AtomicReference<Throwable>();
+  private static final String              log4jPrefix               = "log4j.logger.";
+  private final Map<String, LogLevel>      tcLoggingConfigs          = new HashMap<String, LogLevel>();
+  private final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
 
   public AbstractTestBase(TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -283,6 +284,14 @@ public abstract class AbstractTestBase extends TCTestCase {
       cp += SEP + getTCLoggingFilePath();
     }
     return cp;
+  }
+
+  protected String makeClasspath(List<String> list, String... jars) {
+    List<String> fullList = new ArrayList<String>(list);
+    for (String jar : jars) {
+      fullList.add(jar);
+    }
+    return makeClasspath(fullList.toArray(new String[0]));
   }
 
   private String getTCLoggingFilePath() {
