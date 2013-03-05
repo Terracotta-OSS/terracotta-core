@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>management-tsa-impl</artifactId>
   <packaging>jar</packaging>
@@ -14,6 +15,7 @@
   <properties>
     <ehcache.management.version>2.8.0-SNAPSHOT</ehcache.management.version>
     <management.apps.parent.version>1.2.0-SNAPSHOT</management.apps.parent.version>
+    <should_skip_tests>${skipTests}</should_skip_tests>
   </properties>
 
 
@@ -138,9 +140,29 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skipTests>false</skipTests>
+          <skipTests>${should_skip_tests}</skipTests>
           <forkMode>never</forkMode>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>create-build-info</id>
+            <goals>
+              <goal>buildinfo</goal>
+            </goals>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>default-test</id>
+            <phase>none</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
