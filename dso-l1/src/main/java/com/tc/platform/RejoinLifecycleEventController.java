@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class RejoinLifecycleEventController {
 
   private final CopyOnWriteArrayList<RejoinLifecycleListener> upperLayerListeners = new CopyOnWriteArrayList<RejoinLifecycleListener>();
-  private final ClientHandshakeManager                       clientHandshakeManager;
+  private final ClientHandshakeManager                        clientHandshakeManager;
 
   public RejoinLifecycleEventController(RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {
     this.clientHandshakeManager = clientHandshakeManager;
@@ -28,12 +28,13 @@ public class RejoinLifecycleEventController {
   }
 
   private void onRejoinStart() {
-    // reset all subsystems
-    clientHandshakeManager.reset();
     // notify upper listeners
     for (RejoinLifecycleListener listener : upperLayerListeners) {
       listener.onRejoinStart();
     }
+    // reset all subsystems
+    clientHandshakeManager.reset();
+
   }
 
   private void onRejoinComplete() {
