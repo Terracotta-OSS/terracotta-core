@@ -9,6 +9,4 @@ package com.tc.objectserver.api;
  */
 public interface Transaction {
     void commit();
-    void abort();
-    void addTransactionListener(TransactionListener l);
 }

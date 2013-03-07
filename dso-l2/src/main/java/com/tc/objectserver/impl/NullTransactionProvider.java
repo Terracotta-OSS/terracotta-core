@@ -5,7 +5,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.api.TransactionListener;
 import com.tc.objectserver.api.TransactionProvider;
 
 public class NullTransactionProvider implements TransactionProvider {
@@ -24,18 +23,7 @@ public class NullTransactionProvider implements TransactionProvider {
   private final static class NullPersistenceTransaction implements Transaction {
     @Override
     public void commit() {
-      return;
+      // It's null!
     }
-
-    @Override
-    public void abort() {
-      //
-    }
-
-    @Override
-    public void addTransactionListener(TransactionListener l) {
-      //
-    }
-
   }
 }
