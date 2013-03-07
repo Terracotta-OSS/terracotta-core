@@ -117,8 +117,8 @@ public class ApplicationTsaTest {
 
   private void findAndAddClassesFromRootPath(File file, Set<Class<?>> classes, File rootPath) throws ClassNotFoundException {
     if(file.isFile() && file.getAbsolutePath().endsWith(".class")) {
-      String replace = file.getAbsolutePath().replace(rootPath.getAbsolutePath() + System.getProperty("file.separator"), "");
-      String className = replace.replaceAll(System.getProperty("file.separator"), ".").substring(0,replace.length()-6);
+      String replace = file.getAbsolutePath().replace(rootPath.getAbsolutePath() + File.separator, "");
+      String className = replace.replaceAll(File.separator, ".").substring(0,replace.length()-6);
       try {
         classes.add(Class.forName(className));
       }
