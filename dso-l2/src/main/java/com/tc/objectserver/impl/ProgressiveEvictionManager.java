@@ -186,7 +186,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         @Override
         public void run() {
           log("Threshold crossed used:" + monitored.getUsed() + " reserved:" + monitored.getReserved() + " total:" + monitored.getTotal());
-          resourceManager.setThrowException();
+          resourceManager.setRestricted();
         }
 
       };
@@ -596,7 +596,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private void stop(MemoryUsage reserved) {
       if (isStopped) { return; }
       isStopped = true;
-      resourceManager.setThrowException();
+      resourceManager.setRestricted();
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool", reserved
           .getUsedPercentage());
       TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
@@ -630,7 +630,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       isStopped = false;
       throttle = 0f;
       // brake = 0;
-      resourceManager.clear();
+      resourceManager.resetState();
     }
   }
 }

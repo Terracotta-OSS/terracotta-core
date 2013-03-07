@@ -65,7 +65,7 @@ public class ResourceManagerImplTest {
 
   @Test
   public void testThrowException() throws Exception {
-    resourceManager.setThrowException();
+    resourceManager.setRestricted();
     verify(channelManager).getActiveChannels();
     verify(channel).createMessage(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE);
     verify(throttleMessage).initialize(groupID, true, 0.0f);
@@ -85,9 +85,9 @@ public class ResourceManagerImplTest {
   @Test
   public void testClear() throws Exception {
     resourceManager.setThrottle(0.1f);
-    resourceManager.setThrowException();
-    resourceManager.clear();
-    resourceManager.clear();
+    resourceManager.setRestricted();
+    resourceManager.resetState();
+    resourceManager.resetState();
     verify(throttleMessage, times(1)).initialize(groupID, false, 0.1f);
     verify(throttleMessage, times(1)).initialize(groupID, true, 0.0f);
     verify(throttleMessage, times(1)).initialize(groupID, false, 0.0f);

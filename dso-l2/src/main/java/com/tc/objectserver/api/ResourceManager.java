@@ -15,7 +15,7 @@ public interface ResourceManager extends DSOChannelManagerEventListener, PrettyP
 
   void setThrottle(float ratio);
 
-  void setThrowException();
+  void setRestricted();
 
-  void clear();
+  void resetState();
 }

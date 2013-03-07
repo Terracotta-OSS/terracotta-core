@@ -42,14 +42,14 @@ public class ResourceManagerImpl implements ResourceManager {
   }
 
   @Override
-  public synchronized void setThrowException() {
+  public synchronized void setRestricted() {
     throttleAmount = 0.0f;
     state = State.RESTRICTED;
     broadcastMessage();
   }
 
   @Override
-  public synchronized void clear() {
+  public synchronized void resetState() {
     throttleAmount = 0.0f;
     state = State.NORMAL;
     broadcastMessage();
