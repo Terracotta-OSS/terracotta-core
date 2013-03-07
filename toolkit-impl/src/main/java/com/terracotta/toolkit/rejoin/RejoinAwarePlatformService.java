@@ -62,7 +62,7 @@ public class RejoinAwarePlatformService implements PlatformService {
     if (lockState != null) {
       lockState.incrementLockCount();
     } else {
-      localMap.put(lockId, new RejoinLockState(rejoinState.getCurrentRejoinCount(), 1));
+      localMap.put(lockId, new RejoinLockState(rejoinState.getRejoinCount(), 1));
     }
   }
 
@@ -85,7 +85,7 @@ public class RejoinAwarePlatformService implements PlatformService {
     Map<Object, RejoinLockState> localMap = lockIdToCount.get();
     if (localMap.size() > 0) {
       RejoinLockState lockState = localMap.entrySet().iterator().next().getValue();
-      if (lockState.getRejoinCount() < rejoinState.getCurrentRejoinCount()) { return true; }
+      if (lockState.getRejoinCount() < rejoinState.getRejoinCount()) { return true; }
     }
     return false;
 
@@ -494,26 +494,26 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   private static class RejoinStateListener implements RejoinLifecycleListener {
-    private final AtomicBoolean rejoinInProgress   = new AtomicBoolean(false);
-    private final AtomicInteger currentRejoinCount = new AtomicInteger();
+    private final AtomicBoolean rejoinInProgress = new AtomicBoolean(false);
+    private final AtomicInteger rejoinCount      = new AtomicInteger();
 
     @Override
     public void onRejoinStart() {
       rejoinInProgress.set(true);
+      rejoinCount.incrementAndGet();
     }
 
     @Override
     public void onRejoinComplete() {
       rejoinInProgress.set(false);
-      currentRejoinCount.incrementAndGet();
     }
 
     public void assertRejoinNotInProgress() throws RejoinException {
       if (rejoinInProgress.get()) throw new RejoinException("Rejoin is in progress");
     }
 
-    public int getCurrentRejoinCount() {
-      return currentRejoinCount.get();
+    public int getRejoinCount() {
+      return rejoinCount.get();
     }
 
   }
