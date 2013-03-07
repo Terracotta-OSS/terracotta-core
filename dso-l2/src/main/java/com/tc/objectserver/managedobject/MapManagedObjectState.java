@@ -25,7 +25,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -183,11 +182,6 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     out.writeLong(id.toLong());
   }
 
-//
-//  public Map getMap() {
-//    return this.references;
-//  }
-
   // CollectionsPersistor will save retrieve data in references map.
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException,
       ClassNotFoundException {
@@ -237,9 +231,5 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   @Deprecated
   public boolean containsKey(Object key) {
     return references.containsKey(key);
-  }
-
-  public Map getPersistentCollection() {
-    throw new UnsupportedClassVersionError();
   }
 }
