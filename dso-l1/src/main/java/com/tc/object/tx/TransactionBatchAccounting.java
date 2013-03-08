@@ -28,7 +28,7 @@ public class TransactionBatchAccounting {
   }
 
   @Override
-  public synchronized String toString() {
+  public String toString() {
     return "TransactionBatchAccounting[batchesByTransaction=" + batchesByTransaction + "]";
   }
 

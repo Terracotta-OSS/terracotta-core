@@ -105,7 +105,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private static final int                      COMMIT_SIZE                  = 100;
 
-  private volatile State                                 state                        = RUNNING;
+  private State                                 state                        = RUNNING;
   private final ConcurrentMap<Object, TCObject>       pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
@@ -284,8 +284,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void waitUntilRunningAbortable() throws AbortedOperationException {
     boolean isInterrupted = false;
-    if ( this.state == RUNNING ) { return; }
-    synchronized (this) {
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
@@ -299,7 +297,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       }
     } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
-    }
     }
   }
 
@@ -1123,7 +1120,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.pojoToManaged.get(obj);
   }
 
-  private synchronized void basicAddLocal(final TCObject obj, final boolean fromLookup) {
+  private void basicAddLocal(final TCObject obj, final boolean fromLookup) {
+    synchronized (this) {
       final ObjectID id = obj.getObjectID();
       if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: Object of class "
                                                     + obj.getClass() + " [Identity Hashcode : 0x"
@@ -1148,6 +1146,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       }
       lookupDone(id, fromLookup);
       notifyAll();
+    }
   }
 
   private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action,
@@ -1274,15 +1273,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
     reserveObjectIds(pojos.size(), gid);
 
-      if ( this.state != RUNNING ) {
-          waitUntilRunningAbortable();
-      }
-      
+    synchronized (this) {
+      waitUntilRunningAbortable();
       final List tcObjects = new ArrayList(pojos.size());
       for (final Iterator i = pojos.iterator(); i.hasNext();) {
         tcObjects.add(basicCreateIfNecessary(i.next(), gid));
       }
       return tcObjects;
+    }
   }
 
   private void reserveObjectIds(final int size, final GroupID gid) {

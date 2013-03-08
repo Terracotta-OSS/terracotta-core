@@ -29,13 +29,9 @@ public interface ClientTransactionBatch extends TransactionBatch {
    */
   public FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                 TransactionIDGenerator transactionIDGenerator);
-  
-  public TransactionBuffer addSimpleTransaction(ClientTransaction txn, SequenceID id, TransactionID txnid);
 
   public TransactionBuffer removeTransaction(TransactionID txID);
-  
-  public boolean contains(TransactionID txID);
-    
+
   /**
    * Send the transaction to the server.
    */
@@ -50,7 +46,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
   public SequenceID getMinTransactionSequence();
 
   public Collection addTransactionSequenceIDsTo(Collection sequenceIDs);
-  
+
   // For testing
   public String dump();
 }
