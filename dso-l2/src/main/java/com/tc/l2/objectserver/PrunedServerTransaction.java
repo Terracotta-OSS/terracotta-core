@@ -4,9 +4,12 @@
  */
 package com.tc.l2.objectserver;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -28,12 +31,13 @@ public class PrunedServerTransaction implements ServerTransaction {
 
   private static final long[]     EMPTY_LONG_ARRAY = new long[0];
 
-  private final List              prunedChanges;
+  private final List<DNAInternal> prunedChanges;
   private final ServerTransaction orgTxn;
   private final ObjectIDSet       oids;
   private final ObjectIDSet       newOids;
 
-  public PrunedServerTransaction(final List prunedChanges, final ServerTransaction st, final ObjectIDSet oids,
+  public PrunedServerTransaction(final List<DNAInternal> prunedChanges, final ServerTransaction st,
+                                 final ObjectIDSet oids,
                                  final ObjectIDSet newOids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
@@ -68,7 +72,18 @@ public class PrunedServerTransaction implements ServerTransaction {
 
   @Override
   public MetaDataReader[] getMetaDataReaders() {
-    return this.orgTxn.getMetaDataReaders();
+    // Use metadata from changes (if any), NOT from original txn! Reason being that txn carries metadata for containing maps, 
+    // pruned changes in this case are applied as they are relayed, while metadata must be saved off with pending changes to await
+    // object sync txns
+    return Iterables.toArray(Iterables.transform(prunedChanges, new Function<DNAInternal, MetaDataReader>() {
+
+      @Override
+      public MetaDataReader apply(DNAInternal from) {
+        return from.getMetaDataReader();
+      }
+
+    }), MetaDataReader.class);
+
   }
 
   @Override
@@ -160,4 +175,5 @@ public class PrunedServerTransaction implements ServerTransaction {
   public boolean isEviction() {
     return this.orgTxn.isEviction();
   }
+
 }

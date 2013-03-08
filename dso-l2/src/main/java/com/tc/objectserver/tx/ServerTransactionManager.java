@@ -91,7 +91,7 @@ public interface ServerTransactionManager {
 
   public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionListener l);
 
-  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection<ServerTransaction> txns, boolean relayed);
+  public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, boolean relayed);
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs);
 

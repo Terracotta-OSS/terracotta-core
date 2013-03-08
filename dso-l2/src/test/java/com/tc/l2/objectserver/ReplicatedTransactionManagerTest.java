@@ -84,37 +84,37 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     NullRecyclableMessage message = new NullRecyclableMessage();
 
     LinkedHashMap txns = createTxns(1, 1, 2, false);
-    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns, message);
 
     // Since both are know oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // create a txn containing a new Object (OID 3)
     txns = createTxns(1, 3, 1, true);
-    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns, message);
 
     // Should go thru too
     assertAndClear(txns.values());
 
     // Now create a txn with all three objects
     txns = createTxns(1, 1, 3, false);
-    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns, message);
 
     // Since all are known oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // Now create a txn with all unknown ObjectIDs (4,5,6)
     txns = createTxns(1, 4, 3, false);
-    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns, message);
 
     // None should be sent thru
     assertTrue(this.txnMgr.incomingTxns.isEmpty());
 
     // Create more txns with all unknown ObjectIDs (7,8,9)
     LinkedHashMap txns1 = createTxns(1, 7, 1, false);
-    this.rtm.addCommitedTransactions(this.clientID, txns1.keySet(), txns1.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns1, message);
     LinkedHashMap txns2 = createTxns(1, 8, 2, false);
-    this.rtm.addCommitedTransactions(this.clientID, txns2.keySet(), txns2.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns2, message);
 
     // None should be sent thru
     assertTrue(this.txnMgr.incomingTxns.isEmpty());
@@ -136,7 +136,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // Now send transaction complete for txn1, with new Objects (10), this should clear pending changes for 7
     txns = createTxns(1, 10, 1, true);
-    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommittedTransactions(this.clientID, txns, message);
     this.rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns1.values()));
     assertAndClear(txns.values());
 
@@ -151,21 +151,25 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     // to the transactionalObjectManager
     assertTrue(this.txnMgr.incomingTxns.size() == 1);
     gotTxn = (ServerTransaction) this.txnMgr.incomingTxns.remove(0);
-    List changes = gotTxn.getChanges();
-    assertEquals(5, changes.size());
-    DNA dna = (DNA) changes.get(0);
+    List<DNA> changes = gotTxn.getChanges();
+    assertEquals(6, changes.size());
+    DNA dna = changes.get(0);
     assertEquals(new ObjectID(7), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
-    dna = (DNA) changes.get(1);
+    dna = changes.get(1);
+    assertEquals(new ObjectID(7), dna.getObjectID());
+    assertTrue(dna.getVersion() > changes.get(0).getVersion());
+    assertTrue(dna.isDelta());
+    dna = changes.get(2);
     assertEquals(new ObjectID(8), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
-    dna = (DNA) changes.get(2);
+    dna = changes.get(3);
     assertEquals(new ObjectID(8), dna.getObjectID());
     assertTrue(dna.isDelta()); // Change to that object
-    dna = (DNA) changes.get(3);
+    dna = changes.get(4);
     assertEquals(new ObjectID(9), dna.getObjectID());
     assertFalse(dna.isDelta()); // New object
-    dna = (DNA) changes.get(4);
+    dna = changes.get(5);
     assertEquals(new ObjectID(9), dna.getObjectID());
     assertTrue(dna.isDelta()); // Change to that object
 

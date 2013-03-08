@@ -365,7 +365,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
 
     @Override
     public Iterator<MetaDataDescriptorInternal> iterator() {
-      return new MetaDataIterator(input, serializer);
+      return new MetaDataIterator(input.duplicate(), serializer);
     }
   }
 

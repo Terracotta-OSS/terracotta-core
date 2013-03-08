@@ -26,6 +26,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
@@ -144,12 +145,14 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(commitMessage);
       ServerTransaction txn;
       // XXX:: Order has to be maintained.
-      final Map txns = new LinkedHashMap(reader.getNumberForTxns());
+      final Map<ServerTransactionID, ServerTransaction> txns = new LinkedHashMap<ServerTransactionID, ServerTransaction>(
+                                                                                                                         reader
+                                                                                                                             .getNumberForTxns());
       while ((txn = reader.getNextTransaction()) != null) {
         txn.setGlobalTransactionID(commitMessage.getGlobalTransactionIDFor(txn.getServerTransactionID()));
         txns.put(txn.getServerTransactionID(), txn);
       }
-      this.rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), commitMessage);
+      this.rTxnManager.addCommittedTransactions(reader.getNodeID(), txns, commitMessage);
       return txns.keySet();
     } catch (final Exception e) {
       throw new AssertionError(e);

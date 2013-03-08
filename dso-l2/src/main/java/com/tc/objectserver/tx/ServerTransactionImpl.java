@@ -177,7 +177,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     return "ServerTransaction[" + this.seqID + " , " + this.txID + "," + this.sourceID + "," + this.transactionType
            + ", HighWaterMarks: " + Arrays.toString(this.highWaterMarks) + "] = { changes = " + this.changes.size()
            + ", notifies = " + this.notifies.size() + ", newRoots = " + this.newRoots.size() + ", numTxns = "
-           + getNumApplicationTxn() + ", oids =  " + this.objectIDs + ", newObjectIDs = " + this.newObjectIDs + ",\n"
+           + getNumApplicationTxn() + ", oids =  " + this.objectIDs + ", newObjectIDs = " + this.newObjectIDs
+           + ", globalTxnID = " + globalTxnID + ",\n"
            + getChangesDetails() + " }";
   }
 

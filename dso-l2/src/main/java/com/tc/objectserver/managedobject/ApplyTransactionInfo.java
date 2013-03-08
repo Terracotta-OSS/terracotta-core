@@ -34,7 +34,7 @@ public class ApplyTransactionInfo {
   private Collection<ManagedObject> objectsToRelease = Collections.EMPTY_SET;
   private Invalidations             invalidate         = null;
   private final boolean             isSearchEnabled;
-  private final ObjectIDSet         keyPresentForValue = new ObjectIDSet();
+  private final Map<ObjectID, Boolean> keyPresentForValue = new HashMap<ObjectID, Boolean>();
   private boolean commitNow;
 
   // For tests
@@ -185,12 +185,12 @@ public class ApplyTransactionInfo {
     return stxnID;
   }
 
-  public boolean isKeyPresentForValue(ObjectID value) {
-    return this.keyPresentForValue.contains(value);
+  public Boolean getKeyStatusForValue(ObjectID value) {
+    return this.keyPresentForValue.get(value);
   }
 
-  public void addKeyPresentForValue(ObjectID val) {
-    this.keyPresentForValue.add(val);
+  public void recordValue(ObjectID val, boolean keyExists) {
+    this.keyPresentForValue.put(val, keyExists);
   }
 
   public boolean isSearchEnabled() {
@@ -215,5 +215,9 @@ public class ApplyTransactionInfo {
 
   public void setCommitNow(final boolean commitNow) {
     this.commitNow = commitNow;
+  }
+
+  public void removeKeyPresentForValue(ObjectID value) {
+    keyPresentForValue.remove(value);
   }
 }

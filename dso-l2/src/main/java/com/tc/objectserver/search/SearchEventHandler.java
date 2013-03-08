@@ -81,6 +81,16 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
+    } else if (context instanceof SearchPutIfAbsentContext) {
+      SearchPutIfAbsentContext src = (SearchPutIfAbsentContext) context;
+      try {
+        this.indexManager.putIfAbsent(src.getCacheName(), src.getCacheKey(), src.getCacheValue(), src.getAttributes(),
+                                      src.getSegmentOid(), src.getMetaDataProcessingContext());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
+
     } else if (context instanceof DirectExecuteSearchContext) {
       DirectExecuteSearchContext desc = (DirectExecuteSearchContext) context;
       try {

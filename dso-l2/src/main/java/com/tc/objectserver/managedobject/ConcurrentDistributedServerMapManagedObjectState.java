@@ -265,18 +265,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  protected void addKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
-    if (applyInfo.isSearchEnabled()) applyInfo.addKeyPresentForValue(value);
+  protected void addValue(ApplyTransactionInfo applyInfo, Object value, boolean keyExists) {
+    if (applyInfo.isSearchEnabled() && value instanceof ObjectID) applyInfo.recordValue((ObjectID) value, keyExists);
+  }
+
+  @Override
+  protected void removeKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
+    if (applyInfo.isSearchEnabled()) applyInfo.removeKeyPresentForValue(value);
   }
 
   @Override
   protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
     // Does not need to be batched here since deletion batching will happen in the lower layers.
-      for (Object o : values) {
-        if (o instanceof ObjectID) {
+    for (Object o : values) {
+      if (o instanceof ObjectID) {
           applyInfo.deleteObject((ObjectID) o);
-        }
+        applyInfo.removeKeyPresentForValue((ObjectID) o);
       }
+    }
   }
 
   private void applyRemoveIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, final Object[] params) {
@@ -300,10 +306,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       this.references.put(key, newValue);
       if (valueInMap instanceof ObjectID) {
         removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
+        addValue(applyInfo, newValue, true);
       }
     } else if (newValue instanceof ObjectID) {
       // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
       removedValueFromMap(mapID, applyInfo, (ObjectID) newValue);
+      addValue(applyInfo, newValue, false);
     }
   }
 
@@ -313,6 +321,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final Object valueInMap = this.references.get(key);
     if (valueInMap != null) {
       this.references.put(key, newValue);
+      addValue(applyInfo, newValue, true);
+    } else {
+      addValue(applyInfo, newValue, false);
     }
     if (valueInMap instanceof ObjectID) {
       removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
@@ -325,10 +336,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final Object valueInMap = this.references.get(key);
     if (valueInMap == null) {
       this.references.put(key, value);
+      addValue(applyInfo, value, false);
     } else if (value instanceof ObjectID) {
       // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
       removedValueFromMap(mapID, applyInfo, (ObjectID) value);
-      addKeyPresentForValue(applyInfo, (ObjectID) value);
+      addValue(applyInfo, value, true);
     }
   }
 

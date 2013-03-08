@@ -68,10 +68,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
           final ObjectID v = (ObjectID) value;
           getListener().changed(objectID, null, v);
           addBackReferenceForValue(applyInfo, v, objectID);
+          addValue(applyInfo, v, old instanceof ObjectID);
         }
         if (old instanceof ObjectID) {
           removedValueFromMap(objectID, applyInfo, (ObjectID) old);
-          if (value instanceof ObjectID) addKeyPresentForValue(applyInfo, (ObjectID) value);
         }
         break;
       case SerializationUtil.REMOVE:
@@ -79,6 +79,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         this.references.remove(params[0]);
         if (old instanceof ObjectID) {
           removedValueFromMap(objectID, applyInfo, (ObjectID) old);
+          removeKeyPresentForValue(applyInfo, (ObjectID) old);
         }
         break;
       case SerializationUtil.CLEAR:
@@ -101,8 +102,12 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     // Overridden by subclasses
   }
 
-  protected void addKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
+  protected void addValue(ApplyTransactionInfo applyInfo, Object value, boolean keyExists) {
     // Overridden by subclasses
+  }
+
+  protected void removeKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
+    // Override
   }
 
   protected void addBackReferenceForKey(final ApplyTransactionInfo includeIDs, final ObjectID key, final ObjectID map) {

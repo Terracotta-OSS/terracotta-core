@@ -8,24 +8,26 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VersionizedDNAWrapper implements DNA {
+public class VersionizedDNAWrapper<T extends DNA> implements DNAInternal {
 
   private final long    version;
-  private final DNA     dna;
+  private final T       dna;
   private final boolean resetSupported;
 
-  public VersionizedDNAWrapper(DNA dna, long version) {
+  public VersionizedDNAWrapper(T dna, long version) {
     this(dna, version, false);
   }
 
-  public VersionizedDNAWrapper(DNA dna, long version, boolean resetSupported) {
+  public VersionizedDNAWrapper(T dna, long version, boolean resetSupported) {
     this.dna = dna;
     this.version = version;
     this.resetSupported = resetSupported;
@@ -141,5 +143,15 @@ public class VersionizedDNAWrapper implements DNA {
       return cursor.toString();
     }
 
+  }
+
+  @Override
+  public MetaDataReader getMetaDataReader() {
+    return dna instanceof DNAInternal ? ((DNAInternal) dna).getMetaDataReader() : DNAImpl.NULL_META_DATA_READER;
+  }
+
+  @Override
+  public boolean hasMetaData() {
+    return dna instanceof DNAInternal ? ((DNAInternal) dna).hasMetaData() : false;
   }
 }

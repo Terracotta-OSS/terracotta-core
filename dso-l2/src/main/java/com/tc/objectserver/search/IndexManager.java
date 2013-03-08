@@ -30,7 +30,10 @@ public interface IndexManager {
               MetaDataProcessingContext metaDataContext) throws IndexException;
 
   void insert(String cacheName, String key, ValueID cacheValue, List<NVPair> attributes, ObjectID segmentOid,
-              MetaDataProcessingContext MetaDataProcessingContext) throws IndexException;
+              MetaDataProcessingContext metaDataContext) throws IndexException;
+
+  public void putIfAbsent(String indexName, String key, ValueID value, List<NVPair> attributes, ObjectID segmentOid,
+                          MetaDataProcessingContext metaDataContext) throws IndexException;
 
   void clear(String indexName, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
@@ -40,6 +43,7 @@ public interface IndexManager {
   public SearchResult searchIndex(String indexName, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
                                   List<NVPair> aggregators, int maxResults) throws IndexException;
+
 
   public SyncSnapshot snapshot(String id) throws IndexException;
 

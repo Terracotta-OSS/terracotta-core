@@ -459,8 +459,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   @Override
-  public synchronized void incomingTransactions(final NodeID source, final Set txnIDs, final Collection<ServerTransaction> txns,
-                                   final boolean relayed) {
+  public void incomingTransactions(final NodeID source, final Map<ServerTransactionID, ServerTransaction> txns, final boolean relayed) {
     final boolean active = isActive();
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
 
@@ -476,12 +475,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     Util.selfInterruptIfNeeded(interrupted);
 
-    ci.incomingTransactions(txnIDs);
-    this.totalPendingTransactions.addAndGet(txnIDs.size());
+    ci.incomingTransactions(txns.keySet());
+    this.totalPendingTransactions.addAndGet(txns.size());
     if (isActive()) {
-      this.totalNumOfActiveTransactions.addAndGet(txnIDs.size());
+      this.totalNumOfActiveTransactions.addAndGet(txns.size());
     }
-    for (ServerTransaction txn : txns) {
+    for (ServerTransaction txn : txns.values()) {
       final ServerTransactionID stxnID = txn.getServerTransactionID();
       final TransactionID txnID = stxnID.getClientTransactionID();
 
@@ -492,8 +491,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
 
     }
-    fireIncomingTransactionsEvent(source, txnIDs);
-    this.resentTxnSequencer.addTransactions(txns);
+    fireIncomingTransactionsEvent(source, txns.keySet());
+    this.resentTxnSequencer.addTransactions(txns.values());
   }
 
   @Override
@@ -648,7 +647,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     gtxm.registerCallbackOnLowWaterMarkReached(r);
   }
 
-  private void fireIncomingTransactionsEvent(final NodeID nodeID, final Set serverTxnIDs) {
+  private void fireIncomingTransactionsEvent(final NodeID nodeID, final Set<ServerTransactionID> serverTxnIDs) {
     for (final Iterator iter = this.txnEventListeners.iterator(); iter.hasNext();) {
       try {
         final ServerTransactionListener listener = (ServerTransactionListener) iter.next();

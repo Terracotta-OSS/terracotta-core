@@ -6,21 +6,25 @@ package com.tc.l2.ha;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.TCConnection;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.net.MockChannelManager;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
+import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.TestServerTransaction;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.test.TCTestCase;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -155,11 +159,12 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
   }
 
   private void addTxnCount(TestWGServerTransactionManager mgr, int count) {
-    Set txnIDs = new HashSet();
+    Map<ServerTransactionID, ServerTransaction> txnIDs = new HashMap<ServerTransactionID, ServerTransaction>();
     for (int i = 0; i < count; ++i) {
-      txnIDs.add(new TransactionID(i));
+      ServerTransactionID id = new ServerTransactionID(new ClientID(i), new TransactionID(i));
+      txnIDs.put(id, new TestServerTransaction(id, TxnBatchID.NULL_BATCH_ID));
     }
-    mgr.incomingTransactions(ServerID.NULL_ID, txnIDs, null, false);
+    mgr.incomingTransactions(ServerID.NULL_ID, txnIDs, false);
   }
 
   private void setServerActive(TestWGServerTransactionManager mgr, boolean active) {
@@ -236,8 +241,8 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
     private final AtomicLong numOfTransactions = new AtomicLong(0);
 
     @Override
-    public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
-      if (isActive) this.numOfTransactions.addAndGet(txnIDs.size());
+    public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, boolean relayed) {
+      if (isActive) this.numOfTransactions.addAndGet(txns.size());
     }
 
     public void setActive(boolean active) {

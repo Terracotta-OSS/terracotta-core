@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.tx;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
@@ -140,11 +142,20 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         for (final ServerTransaction txn : txns) {
           txn.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
         }
+        Map<ServerTransactionID, ServerTransaction> txnMap = Maps
+            .uniqueIndex(txns, new Function<ServerTransaction, ServerTransactionID>() {
+
+              @Override
+              public ServerTransactionID apply(ServerTransaction from) {
+                return from.getServerTransactionID();
+              }
+
+            });
         if (this.replicatedObjectMgr.relayTransactions()) {
-          this.transactionManager.incomingTransactions(nodeID, batchContext.getTransactionIDs(), txns, true);
+          this.transactionManager.incomingTransactions(nodeID, txnMap, true);
           this.txnRelaySink.add(batchContext);
         } else {
-          this.transactionManager.incomingTransactions(nodeID, batchContext.getTransactionIDs(), txns, false);
+          this.transactionManager.incomingTransactions(nodeID, txnMap, false);
         }
       } catch (final Exception e) {
         logger.error("Error reading transaction batch. : ", e);
