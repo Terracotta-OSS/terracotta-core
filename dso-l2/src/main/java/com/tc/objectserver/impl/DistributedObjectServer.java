@@ -222,6 +222,7 @@ import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
+import com.tc.objectserver.tx.ResentTransactionSequencer;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
@@ -695,10 +696,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Sink searchEventSink = searchEventStage.getSink();
 
+    ResentTransactionSequencer resentTransactionSequencer = new ResentTransactionSequencer();
+    toInit.add(resentTransactionSequencer);
     final TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator,
                                                                                                 recycler, txnFilter,
                                                                                                 syncWriteTxnRecvdAckStage
-                                                                                                    .getSink());
+                                                                                                    .getSink(), resentTransactionSequencer);
     toInit.add(transactionBatchManager);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(transactionBatchManager));
 
@@ -758,7 +761,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                globalTxnCounter, channelStats,
                                                                new ServerTransactionManagerConfig(TCPropertiesImpl.getProperties()),
                                                                this.objectStatsRecorder, this.metaDataManager,
-                                                               this.garbageCollectionManager);
+                                                               resentTransactionSequencer);
 
     this.metaDataManager.setTransactionManager(transactionManager);
 

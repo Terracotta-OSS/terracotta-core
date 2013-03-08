@@ -80,8 +80,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   @Override
-  public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, boolean relayed) {
-    this.incomingTxnContexts.add(new Object[] { nodeID, txns, Boolean.valueOf(relayed) });
+  public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns) {
+    this.incomingTxnContexts.add(new Object[] { nodeID, txns });
     this.incomingTxns.addAll(txns.values());
   }
 

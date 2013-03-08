@@ -28,7 +28,6 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
@@ -58,6 +57,9 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 public class ServerTransactionManagerImplTest extends TestCase {
 
   private ServerTransactionManagerImpl       transactionManager;
@@ -69,6 +71,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private TestChannelStats                   channelStats;
   private TestGlobalTransactionManager       gtxm;
   private ObjectInstanceMonitor              imo;
+  private ResentTransactionSequencer         resentTransactionSequencer;
 
   @Override
   protected void setUp() throws Exception {
@@ -81,6 +84,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.channelStats = new TestChannelStats();
     this.gtxm = new TestGlobalTransactionManager();
     this.imo = new ObjectInstanceMonitorImpl();
+    this.resentTransactionSequencer = mock(ResentTransactionSequencer.class);
     newTransactionManager();
   }
 
@@ -96,9 +100,15 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                                this.transactionRateCounter, this.channelStats,
                                                                new ServerTransactionManagerConfig(),
                                                                new ObjectStatsRecorder(), new NullMetaDataManager(),
-                                                               new TestGarbageCollectionManager());
+                                                               resentTransactionSequencer);
     this.transactionManager.goToActiveMode();
     this.transactionManager.start(Collections.EMPTY_SET);
+  }
+
+  public void testCallbackOnResentTxnComplete() throws Exception {
+    TxnsInSystemCompletionListener listener = mock(TxnsInSystemCompletionListener.class);
+    transactionManager.callBackOnResentTxnsInSystemCompletion(listener);
+    verify(resentTransactionSequencer).callBackOnResentTxnsInSystemCompletion(listener);
   }
 
   public void testRootCreatedEvent() {
@@ -265,7 +275,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     Map<ServerTransactionID, ServerTransaction> txns = new HashMap<ServerTransactionID, ServerTransaction>();
     txns.put(tx1.getServerTransactionID(), tx1);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid3);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid4);
@@ -278,7 +288,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      serializer, newRoots, txnType, new LinkedList(),
                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.put(tx2.getServerTransactionID(), tx2);
-    this.transactionManager.incomingTransactions(cid2, txns, false);
+    this.transactionManager.incomingTransactions(cid2, txns);
 
     this.transactionManager.acknowledgement(cid2, tid2, cid3);
     doStages(cid2, txns, true);
@@ -288,7 +298,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      serializer, newRoots, txnType, new LinkedList(),
                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.put(tx3.getServerTransactionID(), tx3);
-    this.transactionManager.incomingTransactions(cid3, txns, false);
+    this.transactionManager.incomingTransactions(cid3, txns);
 
     this.transactionManager.acknowledgement(cid3, tid3, cid4);
     this.transactionManager.acknowledgement(cid3, tid3, cid2);
@@ -342,7 +352,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     Map<ServerTransactionID, ServerTransaction> txns = new HashMap<ServerTransactionID, ServerTransaction>();
 
     txns.put(tx1.getServerTransactionID(), tx1);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid1);
     doStages(cid1, txns, true);
 
@@ -376,7 +386,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
     Callable addIncomingTxnRunnable = new Callable() {
       @Override
       public Object call() throws Exception {
-        transactionManager.incomingTransactions(clientID1, txns, false);
+        transactionManager.incomingTransactions(clientID1, txns);
+        transactionManager.transactionsRelayed(clientID1, txns.keySet());
         return true;
       }
     };
@@ -422,7 +433,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
     // Test with one waiter
     Map<ServerTransactionID, ServerTransaction> txns = new HashMap<ServerTransactionID, ServerTransaction>();
     txns.put(tx1.getServerTransactionID(), tx1);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
+    transactionManager.transactionsRelayed(cid1, txns.keySet());
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
     assertTrue(this.transactionManager.isWaiting(cid1, tid1));
     assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
@@ -441,8 +453,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      serializer, newRoots, txnType, new LinkedList(),
                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.put(tx2.getServerTransactionID(), tx2);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
-
+    this.transactionManager.incomingTransactions(cid1, txns);
+    transactionManager.transactionsRelayed(cid1, txns.keySet());
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid3);
     assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
@@ -465,7 +477,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      serializer, newRoots, txnType, new LinkedList(),
                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.put(tx3.getServerTransactionID(), tx3);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
+    transactionManager.transactionsRelayed(cid1, txns.keySet());
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid3);
     assertTrue(this.transactionAcknowledgeAction.clientID == null && this.transactionAcknowledgeAction.txID == null);
@@ -489,7 +502,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      serializer, newRoots, txnType, new LinkedList(),
                                                      DmiDescriptor.EMPTY_ARRAY, 1);
     txns.put(tx4.getServerTransactionID(), tx4);
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
+    transactionManager.transactionsRelayed(cid1, txns.keySet());
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     this.transactionManager.shutdownNode(cid1);
@@ -501,7 +515,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     // adding new transactions should throw an error
     boolean failed = false;
     try {
-      this.transactionManager.incomingTransactions(cid1, txns, false);
+      this.transactionManager.incomingTransactions(cid1, txns);
       failed = true;
     } catch (Throwable t) {
       // failed as expected.
@@ -539,7 +553,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
     txns.put(tx5.getServerTransactionID(), tx5);
     txns.put(tx6.getServerTransactionID(), tx6);
 
-    this.transactionManager.incomingTransactions(cid1, txns, false);
+    this.transactionManager.incomingTransactions(cid1, txns);
+    transactionManager.transactionsRelayed(cid1, txns.keySet());
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid5, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid6, cid2);
 
@@ -578,7 +593,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     // process stage
     if (!skipIncoming) {
-      this.transactionManager.incomingTransactions(cid1, txns, false);
+      this.transactionManager.incomingTransactions(cid1, txns);
+      transactionManager.transactionsRelayed(cid1, txns.keySet());
     }
 
     for (ServerTransaction tx : txns.values()) {

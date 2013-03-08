@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
+import com.tc.objectserver.tx.TransactionBatchContext;
 
 public interface ReplicatedObjectManager {
 
@@ -16,7 +17,7 @@ public interface ReplicatedObjectManager {
    */
   public void sync();
 
-  public boolean relayTransactions();
+  public void relayTransactions(final TransactionBatchContext transactionBatchContext);
 
   public void query(NodeID nodeID) throws GroupException;
   

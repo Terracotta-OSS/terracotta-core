@@ -164,7 +164,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
       ServerTransactionID id = new ServerTransactionID(new ClientID(i), new TransactionID(i));
       txnIDs.put(id, new TestServerTransaction(id, TxnBatchID.NULL_BATCH_ID));
     }
-    mgr.incomingTransactions(ServerID.NULL_ID, txnIDs, false);
+    mgr.incomingTransactions(ServerID.NULL_ID, txnIDs);
   }
 
   private void setServerActive(TestWGServerTransactionManager mgr, boolean active) {
@@ -241,7 +241,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
     private final AtomicLong numOfTransactions = new AtomicLong(0);
 
     @Override
-    public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, boolean relayed) {
+    public void incomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns) {
       if (isActive) this.numOfTransactions.addAndGet(txns.size());
     }
 

@@ -36,6 +36,7 @@ import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -64,6 +65,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final ServerTransactionManager     transactionManager;
   private final Sink                         objectsSyncRequestSink;
   private final Sink                         indexSyncRequestSink;
+  private final Sink                         transactionRelaySink;
   private final SequenceGenerator            sequenceGenerator;
   private final SequenceGenerator            indexSequenceGenerator;
   private final GCMonitor                    gcMonitor;
@@ -78,7 +80,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                      final ReplicatedTransactionManager txnManager, final ObjectManager objectManager,
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
-                                     final SequenceGenerator sequenceGenerator,
+                                     final Sink transactionRelaySink, final SequenceGenerator sequenceGenerator,
                                      final SequenceGenerator indexSequenceGenerator, final boolean isCleanDB,
                                      final MonitoredResource resource) {
     this.groupManager = groupManager;
@@ -88,6 +90,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.transactionManager = transactionManager;
     this.objectsSyncRequestSink = objectsSyncRequestSink;
     this.indexSyncRequestSink = indexSyncRequestSink;
+    this.transactionRelaySink = transactionRelaySink;
     this.sequenceGenerator = sequenceGenerator;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.resource = resource;
@@ -413,8 +416,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   @Override
-  public boolean relayTransactions() {
-    return this.passiveSyncStateManager.getL2Count() > 0;
+  public void relayTransactions(final TransactionBatchContext transactionBatchContext) {
+    if (passiveSyncStateManager.getL2Count() > 0) {
+      transactionRelaySink.add(transactionBatchContext);
+    } else {
+      transactionManager.transactionsRelayed(transactionBatchContext.getSourceNodeID(), transactionBatchContext.getTransactionIDs());
+    }
   }
 
   private static final SyncingPassiveValue ADDED = new SyncingPassiveValue();

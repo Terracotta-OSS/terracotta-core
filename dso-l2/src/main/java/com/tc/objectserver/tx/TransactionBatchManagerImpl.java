@@ -4,14 +4,10 @@
  */
 package com.tc.objectserver.tx;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Maps;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import com.tc.l2.ha.TransactionBatchListener;
-import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -51,21 +47,22 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private final Object                         lock         = new Object();
 
   private ServerTransactionManager             transactionManager;
-  private ReplicatedObjectManager              replicatedObjectMgr;
-  private Sink                                 txnRelaySink;
   private TransactionBatchReaderFactory        batchReaderFactory;
   private final TransactionFilter              filter;
   private ServerGlobalTransactionManager       gtxm;
   private DSOChannelManager                    dsoChannelManager;
   private final List<TransactionBatchListener> txnListeners = new CopyOnWriteArrayList<TransactionBatchListener>();
   private final Sink                           syncWriteTxnRecvdSink;
+  private final ResentTransactionSequencer     resentTransactionSequencer;
 
   public TransactionBatchManagerImpl(final SequenceValidator sequenceValidator, final MessageRecycler recycler,
-                                     final TransactionFilter txnFilter, final Sink syncWriteTxnRecvdSink) {
+                                     final TransactionFilter txnFilter, final Sink syncWriteTxnRecvdSink,
+                                     final ResentTransactionSequencer resentTransactionSequencer) {
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = recycler;
     this.filter = txnFilter;
     this.syncWriteTxnRecvdSink = syncWriteTxnRecvdSink;
+    this.resentTransactionSequencer = resentTransactionSequencer;
   }
 
   @Override
@@ -73,13 +70,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.transactionManager = oscc.getTransactionManager();
-    this.replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
     this.gtxm = oscc.getServerGlobalTransactionManager();
     this.dsoChannelManager = oscc.getChannelManager();
-    final Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
-    if (relayStage != null) {
-      this.txnRelaySink = relayStage.getSink();
-    }
   }
 
   @Override
@@ -92,7 +84,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
       // Transactions should maintain order.
       final ArrayList<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
-      final HashSet<ServerTransactionID> txnIDs = new HashSet(reader.getNumberForTxns());
+      final HashSet<ServerTransactionID> txnIDs = new HashSet<ServerTransactionID>(reader.getNumberForTxns());
       final NodeID nodeID = reader.getNodeID();
       final HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
       final HashSet<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
@@ -142,21 +134,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         for (final ServerTransaction txn : txns) {
           txn.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
         }
-        Map<ServerTransactionID, ServerTransaction> txnMap = Maps
-            .uniqueIndex(txns, new Function<ServerTransaction, ServerTransactionID>() {
-
-              @Override
-              public ServerTransactionID apply(ServerTransaction from) {
-                return from.getServerTransactionID();
-              }
-
-            });
-        if (this.replicatedObjectMgr.relayTransactions()) {
-          this.transactionManager.incomingTransactions(nodeID, txnMap, true);
-          this.txnRelaySink.add(batchContext);
-        } else {
-          this.transactionManager.incomingTransactions(nodeID, txnMap, false);
-        }
+        resentTransactionSequencer.addTransactions(batchContext);
       } catch (final Exception e) {
         logger.error("Error reading transaction batch. : ", e);
         logger.error("Closing channel " + nodeID + " due to previous errors !");

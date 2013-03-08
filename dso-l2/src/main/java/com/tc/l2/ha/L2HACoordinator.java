@@ -4,8 +4,6 @@
  */
 package com.tc.l2.ha;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
-
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.Sink;
@@ -84,6 +82,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
 
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
 
@@ -192,9 +192,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                                                   this.server.getTaskRunner()), 1,
                                                           MAX_STAGE_SIZE).getSink();
 
-    stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
+    Sink transactionRelaySink = stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
                              new TransactionRelayHandler(objectStateManager, this.sequenceGenerator, gtxm), 1,
-                             MAX_STAGE_SIZE);
+                             MAX_STAGE_SIZE).getSink();
     final Sink ackProcessingSink = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
                      new ServerTransactionAckHandler(), 1, MAX_STAGE_SIZE).getSink();
@@ -232,8 +232,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                           this.l2PassiveSyncStateManager, this.l2ObjectStateManager,
                                                           this.rTxnManager, objectManager, transactionManager,
                                                           objectsSyncRequestSink, indexSyncRequestSink,
-                                                          this.sequenceGenerator, this.indexSequenceGenerator,
-                                                          isCleanDB, resource);
+                                                          transactionRelaySink, this.sequenceGenerator,
+                                                          this.indexSequenceGenerator, isCleanDB, resource);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);

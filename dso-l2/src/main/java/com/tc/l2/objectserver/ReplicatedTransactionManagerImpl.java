@@ -157,7 +157,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   }
 
   private void addIncomingTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns) {
-    transactionManager.incomingTransactions(nodeID, txns, false);
+    transactionManager.incomingTransactions(nodeID, txns);
   }
 
   private static final class NullPassiveTransactionManager implements PassiveTransactionManager {

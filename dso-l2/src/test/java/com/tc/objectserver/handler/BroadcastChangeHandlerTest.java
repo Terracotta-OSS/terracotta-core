@@ -912,7 +912,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void incomingTransactions(final NodeID nodeID, final Map<ServerTransactionID, ServerTransaction> txns, final boolean relayed) {
+    public void incomingTransactions(final NodeID nodeID, final Map<ServerTransactionID, ServerTransaction> txns) {
       throw new ImplementMe();
     }
 

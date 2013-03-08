@@ -19,7 +19,6 @@ import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -97,6 +96,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final ObjectStatsRecorder                     objectStatsRecorder;
 
   private final MetaDataManager                         metaDataManager;
+  private final TransactionalObjectManager              txnObjectManager;
   private boolean isPaused = false;
 
   public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm,
@@ -107,12 +107,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
                                       final ChannelStats channelStats, final ServerTransactionManagerConfig config,
                                       final ObjectStatsRecorder objectStatsRecorder,
                                       final MetaDataManager metaDataManager,
-                                      final GarbageCollectionManager garbageCollectionManager) {
+                                      final ResentTransactionSequencer resentTransactionSequencer) {
     this.gtxm = gtxm;
     this.lockManager = lockManager;
     this.objectManager = objectManager;
     this.stateManager = stateManager;
-    this.resentTxnSequencer = new ResentTransactionSequencer(this, gtxm, txnObjectManager);
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
@@ -125,6 +124,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.broadcastStatsLoggingEnabled = config.isPrintBroadcastStatsEnabled();
     this.objectStatsRecorder = objectStatsRecorder;
     this.metaDataManager = metaDataManager;
+    this.txnObjectManager = txnObjectManager;
+    this.resentTxnSequencer = resentTransactionSequencer;
   }
 
   @Override
@@ -459,7 +460,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   @Override
-  public void incomingTransactions(final NodeID source, final Map<ServerTransactionID, ServerTransaction> txns, final boolean relayed) {
+  public void incomingTransactions(final NodeID source, final Map<ServerTransactionID, ServerTransaction> txns) {
     final boolean active = isActive();
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
 
@@ -482,17 +483,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     for (ServerTransaction txn : txns.values()) {
       final ServerTransactionID stxnID = txn.getServerTransactionID();
-      final TransactionID txnID = stxnID.getClientTransactionID();
-
-      if (active && !relayed) {
-        ci.relayTransactionComplete(txnID);
-      } else if (!active) {
+      if (!active) {
         this.gtxm.createGlobalTransactionDescIfNeeded(stxnID, txn.getGlobalTransactionID());
       }
-
     }
     fireIncomingTransactionsEvent(source, txns.keySet());
-    this.resentTxnSequencer.addTransactions(txns.values());
+    txnObjectManager.addTransactions(txns.values());
   }
 
   @Override
