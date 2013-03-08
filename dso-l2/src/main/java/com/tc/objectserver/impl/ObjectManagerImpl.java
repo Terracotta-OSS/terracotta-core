@@ -724,10 +724,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     processPendingLookups();
 
     return missing;
-//
-//    if (!notDeleted.isEmpty()) {
-//      lookupAndDelete(notDeleted);
-//    }
   }
   
   private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {

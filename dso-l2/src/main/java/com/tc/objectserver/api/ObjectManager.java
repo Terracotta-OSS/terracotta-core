@@ -113,8 +113,21 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    */
   public void notifyGCComplete(DGCResultContext dgcResultContext);
 
+  /**
+   * Checkout and delete objects.
+   *
+   * @param objectsToDelete set of objects to delete
+   * @return set of object ids that were not found.
+   */
   public Set<ObjectID> deleteObjects(Set<ObjectID> objectsToDelete);
 
+  /**
+   * Try to checkout and delete objects. Will simply skip (and return) any objects
+   * that fail to be checked out without blocking.
+   *
+   * @param objectsToDelete set of objects to delete
+   * @return objects that are either missing or were unable to be checked out.
+   */
   public Set<ObjectID> tryDeleteObjects(Set<ObjectID> objectsToDelete);
 
   public void setStatsListener(ObjectManagerStatsListener listener);
