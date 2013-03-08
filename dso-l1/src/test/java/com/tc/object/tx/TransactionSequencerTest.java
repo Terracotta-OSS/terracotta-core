@@ -32,7 +32,7 @@ public class TransactionSequencerTest extends TestCase {
 
   public TransactionSequencer txnSequencer;
   public boolean  folding = true;
-  private static final long   TIME_TO_RUN         = 5 * 60 * 1000;
+  private static final long   TIME_TO_RUN         = 1 * 60 * 1000;
   private static final int    MAX_PENDING_BATCHES = 5;
 
   @Override
