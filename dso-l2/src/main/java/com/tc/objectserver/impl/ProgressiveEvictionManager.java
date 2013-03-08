@@ -471,7 +471,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           logger.warn("resource usage at max");
           stop(usage);
       } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
-                 && usage.getUsedMemory() >= usage.getMaxMemory() - (96l * 1024 * 1024)) {
+                 && usage.getUsedMemory() >= usage.getMaxMemory() - (96l * 1024 * 1024)
+                 && ( System.nanoTime() - throttlePoll > TimeUnit.SECONDS.toNanos(2) )) {
+          logger.warn("resource usage at throttle");
           controlledThrottle(usage);
       }
 
@@ -537,7 +539,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         if (turnCount > 100000) {
           logger.warn("turn count:" + turnCount);
           stop(usage);
-        } else if ( nanoTime - throttlePoll > Math.pow(10, 1) ) {
+        } else if ( nanoTime - throttlePoll > TimeUnit.SECONDS.toNanos(10) ) {
           if ( this.throttle < 1 ) {
               controlledThrottle(usage);
           }
@@ -556,7 +558,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
      * in the future
      */
     private void resetEpocIfNeeded(long currentTime, long currentSize, long maxSize) {
-      if (size == 0 || currentSize < size - (maxSize * .10) || epoc + (5 * 60 * Math.pow(10, 9)) < currentTime) {
+      if (size == 0 || currentSize < size - (maxSize * .10) || epoc + (5 * 60 * TimeUnit.SECONDS.toNanos(1)) < currentTime) {
         resetEpoc(currentTime, currentSize);
       }
     }
@@ -567,9 +569,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         try {
             if (evictor.isLogging() && logger.isDebugEnabled()) {
-                logger.debug("Throttling size:" + ((currentSize - size)/(1024D*1024D)) + " time:" +  ((currentTime - epoc)/Math.pow(10, 9)));
+                logger.debug("Throttling size:" + ((currentSize - size)/(1024D*1024D)) + " time:" +  ((currentTime - epoc)/TimeUnit.SECONDS.toNanos(1)));
             }
-            return ((currentSize - size)/(1024D*1024D)) / ((currentTime - epoc)/Math.pow(10, 9));
+            return ((currentSize - size)/(1024D*1024D)) / ((currentTime - epoc)/TimeUnit.SECONDS.toNanos(1));
         } finally{
 //            resetEpoc(currentTime, currentSize);
         }
