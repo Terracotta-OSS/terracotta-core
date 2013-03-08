@@ -30,4 +30,9 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
                                             new ObjectStringSerializerImpl(), encoding, messageFactory, foldingConfig);
   }
 
+  
+    @Override
+  public boolean isFoldingSupported() {
+      return this.foldingConfig.isFoldingEnabled();
+  }
 }

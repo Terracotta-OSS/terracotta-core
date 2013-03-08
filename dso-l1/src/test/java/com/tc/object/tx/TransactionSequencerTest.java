@@ -31,6 +31,7 @@ import junit.framework.TestCase;
 public class TransactionSequencerTest extends TestCase {
 
   public TransactionSequencer txnSequencer;
+  public boolean  folding = true;
   private static final long   TIME_TO_RUN         = 5 * 60 * 1000;
   private static final int    MAX_PENDING_BATCHES = 5;
 
@@ -46,9 +47,19 @@ public class TransactionSequencerTest extends TestCase {
                                                  new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)),
                                                  new NullAbortableOperationManager());
   }
-
+  
   // checkout DEV-5872 to know why this test was written
-  public void testDeadLock() throws InterruptedException {
+  public void testDeadLockWithFolding() throws InterruptedException {
+      folding = true;
+      deadlockCheck();
+  }  
+  // checkout DEV-5872 to know why this test was written
+  public void testDeadLockWithNoFolding() throws InterruptedException {
+      folding = false;
+      deadlockCheck();
+  }  
+  // checkout DEV-5872 to know why this test was written
+  public void deadlockCheck() throws InterruptedException {
     Thread producer1 = new Thread(new Producer(this.txnSequencer), "Producer1");
     producer1.start();
     Thread producer2 = new Thread(new Producer(this.txnSequencer), "Producer2");
@@ -67,8 +78,16 @@ public class TransactionSequencerTest extends TestCase {
     producer1.join();
     consumer.join();
   }
-
+  public void testInterruptAddTransactionWithFolding() throws Exception {
+      folding = true;
+      interruptAddTransactionCheck();
+  }
   public void testInterruptAddTransaction() throws Exception {
+      folding = false;
+      interruptAddTransactionCheck();
+  }
+
+  public void interruptAddTransactionCheck() throws Exception {
     // DEV-5589: Allow interrupting adding to the transaction sequencer.
     for (int i = 0; i < MAX_PENDING_BATCHES; i++) {
       this.txnSequencer.throttleIfNecesary();
@@ -152,13 +171,21 @@ public class TransactionSequencerTest extends TestCase {
 
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {
     private long idSequence;
+    
 
+    public TestTransactionBatchFactory() {
+    }
+        
     @Override
     public ClientTransactionBatch nextBatch(GroupID groupID) {
       ClientTransactionBatch rv = new TestTransactionBatch(new TxnBatchID(++this.idSequence));
       return rv;
     }
 
+    @Override
+    public boolean isFoldingSupported() {
+        return folding;
+    }
   }
 
   private final class TestTransactionBatch implements ClientTransactionBatch {
@@ -189,12 +216,26 @@ public class TransactionSequencerTest extends TestCase {
                                                   TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
-      return new FoldedInfo(null, false);
+      return new FoldedInfo(txn.getTransactionID(), false);
     }
-
+    @Override
+    public synchronized TransactionBuffer addSimpleTransaction(ClientTransaction txn, SequenceID sid,
+                                                  TransactionID tid) {
+      txn.setSequenceID(sid);
+      txn.setTransactionID(tid);
+      TransactionBuffer buff = Mockito.mock(TransactionBuffer.class);
+      Mockito.doReturn(640000).when(buff).write(Mockito.any(ClientTransaction.class));
+      return buff;
+    }
+    
     @Override
     public TransactionBuffer removeTransaction(TransactionID txID) {
       return Mockito.mock(TransactionBuffer.class);
+    }
+
+    @Override
+    public boolean contains(TransactionID txID) {
+        return true;
     }
 
     @Override

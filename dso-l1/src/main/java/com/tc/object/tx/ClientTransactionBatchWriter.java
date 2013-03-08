@@ -60,7 +60,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private final GroupID                         groupID;
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
-  private final LinkedHashMap                   transactionData        = new LinkedHashMap();
+  private final LinkedHashMap                         transactionData        = new LinkedHashMap();
   private final Map                             foldingKeys            = new HashMap();
   private final ObjectStringSerializer          serializer;
   private final DNAEncodingInternal             encoding;
@@ -76,6 +76,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private int                                   numTxnsAfterFolding    = 0;
   private boolean                               containsSyncWriteTxn   = false;
   private boolean                               committed              = false;
+  private int                                   holders                = 0;
 
   public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
                                       final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
@@ -92,7 +93,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     this.foldingObjectLimit = foldingConfig.getObjectLimit();
   }
 
-  @Override
+    @Override
   public synchronized String toString() {
     return super.toString() + "[" + this.batchID + ", isEmpty=" + isEmpty() + ", numTxnsBeforeFolding= "
            + this.numTxnsBeforeFolding + " numTxnAfterfoldingTxn= " + this.numTxnsAfterFolding + " size="
@@ -100,7 +101,14 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public TxnBatchID getTransactionBatchID() {
+  public synchronized TxnBatchID getTransactionBatchID() {
+    try {
+      while ( holders > 0 ) {
+          this.wait();
+      }
+    } catch ( InterruptedException ie ) {
+        Thread.currentThread().interrupt();
+    }
     return this.batchID;
   }
 
@@ -137,10 +145,29 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
     return removed;
   }
+  
+    @Override
+  public synchronized boolean contains(final TransactionID txID) {
+      return this.transactionData.containsKey(txID);
+  }
+  
+  private TransactionBuffer getOrCreateBuffer(final ClientTransaction txn, final SequenceID sid,
+                                              final TransactionID tid) {
 
+    // if we are here, we are not folding
+    txn.setSequenceID(sid);
+    txn.setTransactionID(tid);
+
+    final TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding,
+                                                                tid);
+
+    this.transactionData.put(tid, txnBuffer);
+
+    return txnBuffer;
+  }
+  
   private TransactionBuffer getOrCreateBuffer(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                               final TransactionIDGenerator tidGenerator) {
-    if (this.foldingEnabled) {
       final boolean exceedsLimits = exceedsLimits(txn);
 
       // txns that exceed the lock/object limits, or those with roots, DMI, and/or notify/notifyAll() cannot be folded
@@ -240,7 +267,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
           }
         }
       }
-    }
 
     // if we are here, we are not folding
     final SequenceID sid = new SequenceID(sequenceGenerator.getNextSequence());
@@ -253,11 +279,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     final TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding,
                                                                 txn.getTransactionID());
 
-    if (this.foldingEnabled) {
       final FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn.getChangeBuffers().keySet()));
       ++this.numTxnsAfterFolding;
       registerKeyForOids(txn.getChangeBuffers().keySet(), key);
-    }
 
     this.transactionData.put(txn.getTransactionID(), txnBuffer);
 
@@ -326,6 +350,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   @Override
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                                 final TransactionIDGenerator tidGenerator) {
+      
     if (committed) { throw new AssertionError("Already committed"); }
 
     this.numTxnsBeforeFolding++;
@@ -342,6 +367,35 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
 
     return new FoldedInfo(txnBuffer.getFoldedTransactionID(), txnBuffer.getTxnCount() > 1);
+  }
+  
+
+  @Override
+  public synchronized TransactionBuffer addSimpleTransaction(final ClientTransaction txn, final SequenceID sid,
+                                                final TransactionID tid) {
+    holders += 1;  
+    
+    if (committed) { throw new AssertionError("Already committed"); }
+
+    this.numTxnsBeforeFolding++;
+
+    if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
+      this.containsSyncWriteTxn = true;
+    }
+
+    removeEmptyDeltaDna(txn);
+
+    final TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sid, tid);
+
+    txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
+    
+    return txnBuffer;
+  } 
+  
+  private synchronized void release() {
+      if ( --holders == 0 ) {
+          notify();
+      }
   }
 
   private void removeEmptyDeltaDna(final ClientTransaction txn) {
@@ -442,7 +496,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     return sb.append(" } ").toString();
   }
 
-  protected static class TransactionBufferImpl implements Recyclable, TransactionBuffer {
+  protected class TransactionBufferImpl implements Recyclable, TransactionBuffer {
 
     private static final int               UNINITIALIZED_LENGTH = -1;
 
@@ -529,21 +583,25 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       // Holding on the object references, this method could be called more than once for folded transactions.
       // By definition on the second and subsequent calls will have repeated object references in it, so put() to the
       // map here to not store dupes.
-      for (final Iterator i = txn.getReferencesOfObjectsInTxn().iterator(); i.hasNext();) {
-        this.references.put(i.next(), null);
-      }
+     try {
+          for (final Iterator i = txn.getReferencesOfObjectsInTxn().iterator(); i.hasNext();) {
+            this.references.put(i.next(), null);
+          }
 
-      final int start = this.output.getBytesWritten();
+          final int start = this.output.getBytesWritten();
 
-      if (this.txnCount == 0) {
-        writeFirst(txn);
-      } else {
-        appendChanges(txn);
-      }
+          if (this.txnCount == 0) {
+            writeFirst(txn);
+          } else {
+            appendChanges(txn);
+          }
 
-      this.txnCount++;
+          this.txnCount++;
 
-      return this.output.getBytesWritten() - start;
+          return this.output.getBytesWritten() - start;
+     } finally {
+         release();
+     }
     }
 
     private void appendChanges(final ClientTransaction txn) {

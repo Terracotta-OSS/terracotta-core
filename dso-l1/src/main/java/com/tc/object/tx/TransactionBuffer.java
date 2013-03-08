@@ -7,7 +7,7 @@ import com.tc.io.TCByteBufferOutputStream;
 
 import java.util.List;
 
-interface TransactionBuffer {
+public interface TransactionBuffer {
 
   public void writeTo(TCByteBufferOutputStream dest);
 
