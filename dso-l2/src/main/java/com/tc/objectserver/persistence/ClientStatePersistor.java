@@ -35,7 +35,7 @@ public class ClientStatePersistor {
     return clientIDSequence;
   }
 
-  public Set loadClientIDs() {
+  public Set<ChannelID> loadClientIDs() {
     return clients.keySet();
   }
 

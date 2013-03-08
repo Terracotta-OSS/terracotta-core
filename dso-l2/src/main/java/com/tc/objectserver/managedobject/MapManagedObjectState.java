@@ -40,14 +40,14 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     super(classID);
     this.factory = factory;
     this.id = id;
-    this.references = factory.getMap(id, true);
+    this.references = factory.getKeyValueStorage(id, true);
   }
 
   protected MapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     super(in);
     this.factory = factory;
     this.id = new ObjectID(in.readLong());
-    this.references = factory.getMap(id, false);
+    this.references = factory.getKeyValueStorage(id, false);
   }
 
   @Override
@@ -216,7 +216,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public void destroy() {
-    factory.destroyMap(id);
+    factory.destroyKeyValueStorage(id);
   }
 
   /*

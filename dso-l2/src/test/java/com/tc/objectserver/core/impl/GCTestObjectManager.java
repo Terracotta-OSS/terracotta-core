@@ -8,7 +8,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -115,11 +114,6 @@ public class GCTestObjectManager implements ObjectManager {
   @Override
   public void setGarbageCollector(GarbageCollector gc) {
     this.gcCollector = gc;
-  }
-
-  @Override
-  public void setStatsListener(ObjectManagerStatsListener listener) {
-    throw new ImplementMe();
   }
 
   @Override

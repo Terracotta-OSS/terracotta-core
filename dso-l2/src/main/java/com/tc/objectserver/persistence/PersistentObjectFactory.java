@@ -24,7 +24,7 @@ public class PersistentObjectFactory {
     defaultConfig = storageManagerFactory.wrapMapConfig(MAP_CONFIG);
   }
 
-  public synchronized KeyValueStorage<Object, Object> getMap(ObjectID objectID, final boolean create) {
+  public synchronized KeyValueStorage<Object, Object> getKeyValueStorage(ObjectID objectID, final boolean create) {
     KeyValueStorage<Object, Object> map = storageManager.getKeyValueStorage(objectID.toString(), Object.class, Object.class);
     if (map == null) {
       if (create) {
@@ -36,7 +36,7 @@ public class PersistentObjectFactory {
     return map;
   }
 
-  public synchronized void destroyMap(ObjectID oid) {
+  public synchronized void destroyKeyValueStorage(ObjectID oid) {
     storageManager.destroyKeyValueStorage(oid.toString());
   }
 }

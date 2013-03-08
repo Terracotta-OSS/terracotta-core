@@ -32,13 +32,13 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   SetManagedObjectState(long classID, ObjectID oid, PersistentObjectFactory objectFactory) {
     super(classID);
     this.oid = oid;
-    this.references = objectFactory.getMap(oid, true);
+    this.references = objectFactory.getKeyValueStorage(oid, true);
   }
 
   protected SetManagedObjectState(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
     super(in);
     this.oid = new ObjectID(in.readLong());
-    this.references = objectFactory.getMap(oid, false);
+    this.references = objectFactory.getKeyValueStorage(oid, false);
   }
 
   @Override

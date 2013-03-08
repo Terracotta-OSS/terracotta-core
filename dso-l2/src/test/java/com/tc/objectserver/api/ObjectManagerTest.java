@@ -113,7 +113,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   private void initObjectManager(final PersistentManagedObjectStore store) {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
-                                               this.persistenceTransactionProvider);
+        stats, this.persistenceTransactionProvider);
   }
 
   public void testShutdownAndSetGarbageCollector() throws Exception {
@@ -213,7 +213,6 @@ public class ObjectManagerTest extends TCTestCase {
   public void testReachableObjects() {
     this.config.paranoid = true;
     initObjectManager();
-    this.objectManager.setStatsListener(this.stats);
 
     // each object has 1000 distinct reachable objects
     createObjects(0, 1, createObjects(1000, 2000, new HashSet<ObjectID>()));
@@ -537,7 +536,6 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testNewObjectCounter() {
     initObjectManager();
-    this.objectManager.setStatsListener(this.stats);
     createObjects(666);
     assertEquals(666, this.stats.getTotalObjectsCreated());
     assertEquals(666, this.newObjectCounter.getValue());
@@ -652,7 +650,6 @@ public class ObjectManagerTest extends TCTestCase {
   public void testGetObjectReferencesFrom() {
     this.config.paranoid = true;
     initObjectManager();
-    this.objectManager.setStatsListener(this.stats);
 
     final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
     this.objectManager.setGarbageCollector(gc);

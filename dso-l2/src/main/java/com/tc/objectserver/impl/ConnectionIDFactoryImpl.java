@@ -17,17 +17,16 @@ import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
-  private final ClientStatePersistor clientStateStore;
-  private final MutableSequence      connectionIDSequence;
-  private String                     uid;
-  private final List                 listeners = new CopyOnWriteArrayList();
+  private final ClientStatePersistor              clientStateStore;
+  private final MutableSequence                   connectionIDSequence;
+  private String                                  uid;
+  private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<ConnectionIDFactoryListener>();
 
   public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
     this.clientStateStore = clientStateStore;
@@ -68,38 +67,35 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   private void fireCreationEvent(ConnectionID rv) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
-      ConnectionIDFactoryListener listener = (ConnectionIDFactoryListener) i.next();
+    for (ConnectionIDFactoryListener listener : listeners) {
       listener.connectionIDCreated(rv);
     }
   }
 
   private void fireDestroyedEvent(ConnectionID connectionID) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
-      ConnectionIDFactoryListener listener = (ConnectionIDFactoryListener) i.next();
+    for (ConnectionIDFactoryListener listener : listeners) {
       listener.connectionIDDestroyed(connectionID);
     }
   }
 
   @Override
-  public void init(String clusterID, long nextAvailChannelID, Set connections) {
+  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
     this.uid = clusterID;
     if (nextAvailChannelID >= 0) {
       this.connectionIDSequence.setNext(nextAvailChannelID);
     }
-    for (Iterator i = connections.iterator(); i.hasNext();) {
-      ConnectionID cid = (ConnectionID) i.next();
+    for (final ConnectionID cid : connections) {
       Assert.assertEquals(clusterID, cid.getServerID());
       this.clientStateStore.saveClientState(new ChannelID(cid.getChannelID()));
     }
   }
 
   @Override
-  public Set loadConnectionIDs() {
+  public Set<ConnectionID> loadConnectionIDs() {
     Assert.assertNotNull(uid);
-    Set connections = new HashSet();
-    for (Iterator i = clientStateStore.loadClientIDs().iterator(); i.hasNext();) {
-      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, ((ChannelID) i.next()).toLong(), uid));
+    Set<ConnectionID> connections = new HashSet<ConnectionID>();
+    for (final ChannelID channelID : clientStateStore.loadClientIDs()) {
+      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, (channelID).toLong(), uid));
     }
     return connections;
   }

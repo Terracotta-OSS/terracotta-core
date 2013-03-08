@@ -84,9 +84,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
   private final PendingList                                     pending         = new PendingList();
   private final AtomicBoolean                                   inShutdown      = new AtomicBoolean();
+  private final ObjectManagerStatsListener                      stats;
 
-  private GarbageCollector                                      collector       = new NullGarbageCollector();
-  private ObjectManagerStatsListener                            stats           = new NullObjectManagerStatsListener();
+  private volatile GarbageCollector                             collector       = new NullGarbageCollector();
 
   // A Lock that prevents checkouts when some critical operation is going on
   private final ReentrantReadWriteLock                          lock            = new ReentrantReadWriteLock();
@@ -98,18 +98,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
                            final PersistentManagedObjectStore objectStore,
-                           final TransactionProvider persistenceTransactionProvider) {
+                           final ObjectManagerStatsListener stats, final TransactionProvider persistenceTransactionProvider) {
+    this.stats = stats;
     Assert.assertNotNull(objectStore);
     this.config = config;
     this.stateManager = stateManager;
     this.objectStore = objectStore;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
-  }
-
-  @Override
-  public void setStatsListener(final ObjectManagerStatsListener statsListener) {
-    this.stats = statsListener;
   }
 
   @Override

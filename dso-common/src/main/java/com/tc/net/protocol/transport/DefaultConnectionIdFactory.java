@@ -26,12 +26,12 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   @Override
-  public Set loadConnectionIDs() {
+  public Set<ConnectionID> loadConnectionIDs() {
     return Collections.EMPTY_SET;
   }
 
   @Override
-  public void init(String clusterID, long nextAvailChannelID, Set connections) {
+  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
     throw new ImplementMe();
   }
 

@@ -15,10 +15,10 @@ public interface ConnectionIDFactory {
 
   public void restoreConnectionId(ConnectionID rv);
 
-  public Set loadConnectionIDs();
+  public Set<ConnectionID> loadConnectionIDs();
 
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener);
 
-  public void init(String clusterID, long nextAvailChannelID, Set connections);
+  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections);
 
 }

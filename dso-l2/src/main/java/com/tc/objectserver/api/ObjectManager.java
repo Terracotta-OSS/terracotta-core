@@ -130,8 +130,6 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    */
   public Set<ObjectID> tryDeleteObjects(Set<ObjectID> objectsToDelete);
 
-  public void setStatsListener(ObjectManagerStatsListener listener);
-
   public void start();
 
   public int getCheckedOutCount();

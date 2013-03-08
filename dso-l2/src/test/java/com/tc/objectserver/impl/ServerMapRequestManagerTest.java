@@ -231,7 +231,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     KeyValueStorage<Object, Object> references = new HeapKeyValueStorage<Object, Object>();
     references.put(portableKey1, portableValue1ObjID);
     PersistentObjectFactory persistentObjectFactory = mock(PersistentObjectFactory.class);
-    when(persistentObjectFactory.getMap(mapID, true)).thenReturn(references);
+    when(persistentObjectFactory.getKeyValueStorage(mapID, true)).thenReturn(references);
 
     final Sink respondToServerMapSink = mock(Sink.class);
     final TestSink managedObjectRequestSink = new TestSink();

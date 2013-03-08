@@ -10,7 +10,6 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -159,11 +158,6 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   @Override
   public void start() {
     startCalls.put(new Object());
-  }
-
-  @Override
-  public void setStatsListener(ObjectManagerStatsListener listener) {
-    throw new ImplementMe();
   }
 
   @Override

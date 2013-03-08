@@ -39,7 +39,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
-import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.DGCResultContext;
@@ -940,11 +939,6 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void releaseReadOnly(final ManagedObject object) {
       // do nothing, just a test
-    }
-
-    @Override
-    public void setStatsListener(final ObjectManagerStatsListener listener) {
-      throw new NotImplementedException(TestObjectManager.class);
     }
 
     @Override

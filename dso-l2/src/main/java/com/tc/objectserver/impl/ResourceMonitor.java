@@ -18,28 +18,27 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ResourceMonitor implements ReconnectionRejectedCallback {
 
-  private static final TCLogger logger        = TCLogging.getLogger(ResourceMonitor.class);
+  private static final TCLogger logger = TCLogging.getLogger(ResourceMonitor.class);
 
-  private final List<ResourceEventListener>            listeners     = new CopyOnWriteArrayList<ResourceEventListener>();
+  private final List<ResourceEventListener> listeners = new CopyOnWriteArrayList<ResourceEventListener>();
 
-  private final long            sleepInterval;
+  private final long sleepInterval;
 
-  private MemoryMonitor             monitor;
-  private final MonitoredResource   resource;
+  private MemoryMonitor monitor;
+  private final MonitoredResource resource;
 
-  private final ThreadGroup   threadGroup;
-  
+  private final ThreadGroup threadGroup;
+
   public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
   }
 
-
   public MonitoredResource getMonitoredResource() {
-      return resource;
+    return resource;
   }
-  
+
   public void registerForResourceEvents(ResourceEventListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
@@ -51,7 +50,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   }
 
   private synchronized void stopMonitorIfNecessary() {
-    if (listeners.isEmpty() ) {
+    if (listeners.isEmpty()) {
       stopMonitorThread();
     }
   }
@@ -85,8 +84,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   public class MemoryMonitor implements Runnable {
 
-    private volatile boolean       run = true;
-    private long                   sleepTime;
+    private volatile boolean run = true;
+    private long sleepTime;
 
     public MemoryMonitor(long sleepInterval) {
       this.sleepTime = sleepInterval;
@@ -103,8 +102,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       while (run) {
         try {
           final long thisCount = counter++;
-          
-          fireMemoryEvent(resource,thisCount);
+
+          fireMemoryEvent(resource, thisCount);
           adjust(resource);
           Thread.sleep(sleepTime);
         } catch (ShutdownError e) {
@@ -127,40 +126,40 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       sleepTime = sleepInterval - (remove);
     }
   }
-  
+
   public long getOffset() {
-      long used = resource.getUsed();
-      long reserved = resource.getReserved();
+    long used = resource.getUsed();
+    long reserved = resource.getReserved();
     logger.info("MEMCHECK used:" + used + " - " + reserved + ":reserved");
-      if ( used < reserved * .75 || used > reserved * 1.25 ) {
-          return reserved - used;
-      } else {
-          return 0;
-      }
+    if (used < reserved * .75 || used > reserved * 1.25) {
+      return reserved - used;
+    } else {
+      return 0;
+    }
   }
 
   @Override
   public synchronized void shutdown() {
     stopMonitorThread();
   }
-  
-  static class MemoryConsumer implements MemoryEventsListener {
-      private final MemoryEventsListener delegate;
-      private final boolean detailed;
-      
-      MemoryConsumer(MemoryEventsListener delegate, boolean detailed) {
-          this.delegate = delegate;
-          this.detailed = detailed;
-      }
 
-        @Override
-        public void memoryUsed(MemoryUsage usage) {
-            delegate.memoryUsed(usage);
-        }
-      
-      public boolean isDetailed() {
-          return detailed;
-      }
+  static class MemoryConsumer implements MemoryEventsListener {
+    private final MemoryEventsListener delegate;
+    private final boolean detailed;
+
+    MemoryConsumer(MemoryEventsListener delegate, boolean detailed) {
+      this.delegate = delegate;
+      this.detailed = detailed;
+    }
+
+    @Override
+    public void memoryUsed(MemoryUsage usage) {
+      delegate.memoryUsed(usage);
+    }
+
+    public boolean isDetailed() {
+      return detailed;
+    }
 
     @Override
     public int hashCode() {
@@ -169,13 +168,13 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       result = prime * result + ((delegate == null) ? 0 : delegate.hashCode());
       return result;
     }
-      
+
     @Override
     public boolean equals(Object o) {
-      if (o instanceof MemoryConsumer) { return ((MemoryConsumer) o).delegate == delegate; }
+      if (o instanceof MemoryConsumer) { return ((MemoryConsumer)o).delegate == delegate; }
       return false;
     }
-      
+
   }
 
 }
