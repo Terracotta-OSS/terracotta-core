@@ -24,8 +24,6 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.util.concurrent.NamedRunnable;
-import com.tc.util.concurrent.TaskRunner;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -33,6 +31,8 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.util.concurrent.NamedRunnable;
+import com.tc.util.concurrent.TaskRunner;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -167,13 +167,13 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.garbageCollectionManager = scc.getGarbageCollectionManager();
   }
 
-  public class CommitContext {
+  private class CommitContext {
     private final Transaction transaction = persistenceTransactionProvider.newTransaction();
     private final Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
     private final Collection<ServerTransactionID> stxIDs = new HashSet<ServerTransactionID>();
     private final Collection<ManagedObject> objectsToRelease = new ArrayList<ManagedObject>();
 
-    public boolean commit(Collection<ManagedObject> moreObjectsToRelease, boolean done) {
+    boolean commit(Collection<ManagedObject> moreObjectsToRelease, boolean done) {
       objectsToRelease.addAll(moreObjectsToRelease);
       if (done) {
         transaction.commit();
@@ -184,7 +184,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       }
     }
 
-    public boolean commit(Collection<ManagedObject> objectsToReleaseParam, Map<String, ObjectID> moreRoots,
+    boolean commit(Collection<ManagedObject> objectsToReleaseParam, Map<String, ObjectID> moreRoots,
                           ServerTransactionID stxID,
                           boolean done) {
       stxIDs.add(stxID);
