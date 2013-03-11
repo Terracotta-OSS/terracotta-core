@@ -319,7 +319,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
     } catch (final InterruptedException e) {
       synchronized (this) {
-        if (this.greediness.isFree()) {
+        boolean canAward = false;
+        try {
+          canAward = this.greediness.canAward(LockLevel.WRITE);
+        } catch (GarbageLockException e1) {
+          throw new AssertionError("GarbageLockException thrown while reacquiring locks after wait");
+        }
+        if (!canAward) {
           remote.interrupt(this.lock, thread);
         }
         moveWaiterToPending(waiter);
@@ -926,7 +932,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           try {
             AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
+            abortAndRemove(remote, node, thread);
             unparkFirstQueuedAcquire();
             throw e;
           }
@@ -937,11 +943,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw ex;
     } catch (final TCLockUpgradeNotSupportedError e) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw e;
     } finally {
@@ -989,7 +995,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           try {
             AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
+            abortAndRemove(remote, node, thread);
             unparkFirstQueuedAcquire();
             throw e;
           }
@@ -999,16 +1005,16 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
       }
     } catch (final RuntimeException ex) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw ex;
     } catch (final TCLockUpgradeNotSupportedError e) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw e;
     }
     // Arrive here only if interrupted
-    abortAndRemove(remote, node);
+    abortAndRemove(remote, node, thread);
     throw new InterruptedException();
   }
 
@@ -1040,10 +1046,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           remove(node);
           return true;
         } else if (result.isFailure() && timeout <= 0) {
-          abortAndRemove(remote, node);
+          abortAndRemove(remote, node, thread);
           return false;
         } else if (node.canDelegate() && timeout <= 0) {
-          abortAndRemove(remote, node);
+          abortAndRemove(remote, node, thread);
           return false;
         }
 
@@ -1052,7 +1058,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           try {
             AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
+            abortAndRemove(remote, node, thread);
             unparkFirstQueuedAcquire();
             throw e;
           }
@@ -1061,13 +1067,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           try {
             AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
-            abortAndRemove(remote, node);
+            abortAndRemove(remote, node, thread);
             unparkFirstQueuedAcquire();
             throw e;
           }
         }
         if (Thread.interrupted()) {
-          abortAndRemove(remote, node);
+          abortAndRemove(remote, node, thread);
           throw new InterruptedException();
         }
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
@@ -1083,20 +1089,26 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
       return result.isSuccess();
     } catch (final RuntimeException ex) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw ex;
     } catch (final TCLockUpgradeNotSupportedError e) {
-      abortAndRemove(remote, node);
+      abortAndRemove(remote, node, thread);
       unparkFirstQueuedAcquire();
       throw e;
     }
   }
 
-  private synchronized void abortAndRemove(final RemoteLockManager remote, PendingLockHold node) {
+  private synchronized void abortAndRemove(final RemoteLockManager remote, PendingLockHold node, final ThreadID thread) {
     node = (PendingLockHold) remove(node);
-    if (node != null && node.isAwarded()) {
-      remote.unlock(this.lock, node.getOwner(), ServerLockLevel.fromClientLockLevel(node.getLockLevel()));
+    if (node != null) {
+      if (node.isAwarded()) {
+
+        remote.unlock(this.lock, node.getOwner(), ServerLockLevel.fromClientLockLevel(node.getLockLevel()));
+      } else if (this.greediness.isFree() && !node.canDelegate()) {
+        // If the PendingLockHold was delegated to the L2. Tell L2 to remove the request
+        remote.interrupt(this.lock, thread);
+      }
     }
   }
 
@@ -1249,7 +1261,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } else {
       final Collection<ClientServerExchangeLockContext> contexts = getRecallCommitStateSnapshot(remote.getClientID());
 
-      final ClientGreediness postRecallCommitGreediness = this.greediness.recallCommitted();
+      final ClientGreediness postRecallCommitGreediness = getPostRecallCommitGreediness();
       for (final LockStateNode node : this) {
         if (node instanceof PendingLockHold) {
           if (postRecallCommitGreediness.isGreedy()) {
@@ -1263,14 +1275,24 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
       remote.recallCommit(this.lock, contexts, batch);
 
-      this.greediness = this.greediness.recallCommitted();
+      this.greediness = postRecallCommitGreediness;
 
       if (this.greediness.isGreedy()) {
         unparkFirstQueuedAcquire();
       }
-
       return this.greediness;
     }
+  }
+
+  private ClientGreediness getPostRecallCommitGreediness() {
+    return this.greediness.recallCommitted(hasWaiters());
+  }
+
+  private boolean hasWaiters() {
+    for (final LockStateNode s : this) {
+      if (s instanceof LockWaiter) { return true; }
+    }
+    return false;
   }
 
   private synchronized boolean canRecallNow() {
@@ -1362,7 +1384,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized Collection<ClientServerExchangeLockContext> getRecallCommitStateSnapshot(final ClientID client) {
-    final ClientGreediness postRecallGreediness = this.greediness.recallCommitted();
+    final ClientGreediness postRecallGreediness = getPostRecallCommitGreediness();
     if (postRecallGreediness.isGreedy()) {
       final List<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
       contexts.add(postRecallGreediness.toContext(this.lock, client));

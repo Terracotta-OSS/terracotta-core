@@ -12,10 +12,10 @@ import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockContext;
-import com.tc.object.locks.ServerLockLevel;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
@@ -39,8 +39,9 @@ import java.util.TimerTask;
 public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockContext> implements ServerLock,
     PrettyPrintable {
   private final static EnumSet<Type> SET_OF_TRY_PENDING_OR_WAITERS = EnumSet.of(Type.TRY_PENDING, Type.WAITER);
-  private final static EnumSet<Type> SET_OF_WAITERS                = EnumSet.of(Type.WAITER);
   private final static EnumSet<Type> SET_OF_HOLDERS                = EnumSet.of(Type.HOLDER, Type.GREEDY_HOLDER);
+  private final static EnumSet<Type> SET_OF_ALL_PENDING_OR_WAITERS = EnumSet.of(Type.PENDING, Type.TRY_PENDING,
+                                                                                Type.WAITER);
 
   protected final static TCLogger    logger                        = TCLogging.getLogger(AbstractServerLock.class);
   protected final LockID             lockID;
@@ -103,14 +104,16 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   @Override
   public void interrupt(ClientID cid, ThreadID tid, LockHelper helper) {
     // check if waiters are present
-    ServerLockContext context = remove(cid, tid, SET_OF_WAITERS);
+    ServerLockContext context = remove(cid, tid, SET_OF_ALL_PENDING_OR_WAITERS);
     if (context == null) {
-      logger.warn("Cannot interrupt: " + cid + "," + tid + " is not waiting.");
+      logger.warn("Cannot interrupt: " + cid + "," + tid + " is not in pending or waiting." + this.toString());
       return;
+    } else if (context.isWaiter()) {
+      moveWaiterToPending(context, helper);
+      processPendingRequests(helper);
+    } else if (context.isTryPending()) {
+      cancelTryLockOrWaitTimer(context, helper);
     }
-
-    moveWaiterToPending(context, helper);
-    processPendingRequests(helper);
   }
 
   @Override
