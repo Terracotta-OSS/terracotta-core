@@ -139,7 +139,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void reconnectionRejected() {
     for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
-      logger.info("reconnection rejected from L2, disconnecting from " + groupId);
+      logger.warn("reconnection rejected from server, disconnecting from " + groupId);
       disconnected(groupId);
     }
   }

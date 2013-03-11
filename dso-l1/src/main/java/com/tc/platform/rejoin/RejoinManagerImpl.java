@@ -108,7 +108,8 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
           channel.reopen();
           break;
         } catch (Throwable t) {
-          logger.warn("Got error while reopen channel, going to retry after 1 second channel: " + channel, t);
+          logger
+              .warn("Error in channel open, going to retry after 1 second channel: " + channel + " " + t.getMessage());
           try {
             TimeUnit.SECONDS.sleep(1L);
           } catch (InterruptedException e) {

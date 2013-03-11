@@ -10,7 +10,6 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.context.PauseContext;
@@ -23,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannelEventController {
 
-  private static final TCLogger        DSO_LOGGER = TCLogging.getLogger(ClientChannelEventController.class);
+  private static final TCLogger         LOGGER   = TCLogging.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
   private final Sink                   pauseSink;
@@ -76,20 +75,11 @@ public class ClientChannelEventController {
   private void requestRejoin(ChannelEvent event) {
     clientHandshakeManager.reconnectionRejected();
     if (rejoinManager.isRejoinEnabled()) {
-      logRejoinStatusMessages(event);
       pauseSink.add(new RejoinContext(channel.channel()));
     } else {
-      DSO_LOGGER
-          .fatal("Reconnection was rejected by the L2, but rejoin is not enabled. This client will never be able to join the cluster again.");
-      DSO_LOGGER.info("Rejoin request ignored as rejoin is NOT enabled");
+      LOGGER
+          .fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
     }
-  }
-
-  private static void logRejoinStatusMessages(final ChannelEvent event) {
-    String msg = (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) ? "Channel " + event.getChannel()
-                                                                              + " closed."
-        : "Reconnection rejected event fired, caused by " + event;
-    DSO_LOGGER.info(msg);
   }
 
   private static class ChannelEventListenerImpl implements ChannelEventListener {
@@ -104,12 +94,12 @@ public class ClientChannelEventController {
     public void notifyChannelEvent(ChannelEvent event) {
       final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
-      DSO_LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
+      LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
       ChannelID eventChannelId = event.getChannelID();
       ClientMessageChannel currentChannel = controller.channel.channel();
       if (eventChannelId != null && !currentChannel.getChannelID().equals(eventChannelId)) {
-        DSO_LOGGER.info("Ignoring channel event " + event.getType() + " for channel " + eventChannelId
+        LOGGER.info("Ignoring channel event " + event.getType() + " for channel " + eventChannelId
                         + " as currentChannel " + currentChannel.getChannelID());
         return;
       }

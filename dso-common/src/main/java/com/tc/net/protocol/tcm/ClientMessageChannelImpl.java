@@ -22,7 +22,6 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
-import com.tc.util.CallStackTrace;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -168,10 +167,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportDisconnected(final MessageTransport transport, final boolean forcedDisconnect) {
-    ChannelStatus status = getStatus();
-    logger.info("ClientMessageChannel notifyTransportDisconnected status " + status + " " + getChannelID().toLong()
-                + " " + transport.getConnectionId().getChannelID() + " forcedDisconnect " + forcedDisconnect
-                + CallStackTrace.getCallStack());
     this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
     logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
     super.notifyTransportDisconnected(transport, forcedDisconnect);
