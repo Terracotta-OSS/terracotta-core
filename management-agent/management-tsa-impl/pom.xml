@@ -65,6 +65,16 @@
       <version>1.9.2</version>
     </dependency>
     <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.jackson-mapper-asl</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.jackson-jaxrs</artifactId>
+      <version>1.9.2</version>
+    </dependency>
+    <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>management-ehcache-impl</artifactId>
       <version>${ehcache.management.version}</version>
@@ -79,9 +89,9 @@
       <artifactId>slf4j-log4j12</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
-      <version>3.0.0.v201112011016</version>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.servlet-api</artifactId>
+      <version>3.0.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
