@@ -258,7 +258,7 @@ public class TestBaseUtil {
       String line = null;
       while ((line = reader.readLine()) != null) {
         Matcher m = ARTIFACT_PATTERN.matcher(line);
-        if (m.matches() && "compile".equals(m.group(5))) {
+        if (m.matches() && ("compile".equals(m.group(5)) || "runtime".equals(m.group(5)))) {
           String jarFile = constructMavenLocalFile(m.group(1), m.group(2), m.group(3), m.group(4));
           jarList.add(jarFile);
         }
@@ -287,4 +287,39 @@ public class TestBaseUtil {
     }
   }
 
+  /**
+   * <p>
+   * return list of dependencies of given artifact coordinates either ee or os this method will first look for devmode
+   * depenendencies list from resource if not found, it will use the provided class to look up the jar
+   * </p>
+   * <p>
+   * Currently, only Ehcache and toolkit runtime jars are possible to load this way
+   * </p>
+   */
+  private static List<String> getDevmodeAwareDependenciesOf(String groupId, String opensourceArtifactId,
+                                                           String enterpriseArtifactId,
+                                                            Class<?> c) {
+    URL devmodeResource = TestBaseUtil.class.getResource("/META-INF/devmode/" + groupId + "/" + enterpriseArtifactId
+                                                         + "/dependencies.txt");
+    if (devmodeResource == null) {
+      devmodeResource = TestBaseUtil.class.getResource("/META-INF/devmode/" + groupId + "/" + opensourceArtifactId
+                                                       + "/dependencies.txt");
+    }
+    List<String> deps = new ArrayList<String>();
+    if (devmodeResource != null) {
+      deps = jarsFromMavenDependenciesList(devmodeResource);
+    } else {
+      deps.add(jarFor(c));
+    }
+    return deps;
+  }
+
+  public static List<String> getEhcacheDependencies(Class<?> someEhcacheClass) {
+    return getDevmodeAwareDependenciesOf("net.sf.ehcache", "ehcache", "ehcache-ee", someEhcacheClass);
+  }
+
+  public static List<String> getToolkitRuntimeDependencies(Class<?> someToolkitClass) {
+    return getDevmodeAwareDependenciesOf("org.terracotta", "terracotta-toolkit-runtime",
+                                         "terracotta-toolkit-runtime-ee", someToolkitClass);
+  }
 }
