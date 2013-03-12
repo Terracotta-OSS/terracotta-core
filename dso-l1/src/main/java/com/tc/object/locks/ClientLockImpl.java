@@ -816,8 +816,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private boolean noLocksHeld(LockHold unlockHold, ThreadID thread) {
     synchronized (this) {
-      if (this.greediness == ClientGreediness.WRITE_RECALL_FOR_READ_IN_PROGRESS
-          || this.greediness == ClientGreediness.RECALLED_WRITE_FOR_READ) { return false; }
+      if ((this.greediness == ClientGreediness.WRITE_RECALL_FOR_READ_IN_PROGRESS || this.greediness == ClientGreediness.RECALLED_WRITE_FOR_READ)
+          && getPostRecallCommitGreediness().isGreedy()) { return false; }
 
       for (final LockStateNode s : this) {
         if (s == unlockHold || s.getOwner().equals(thread)) {
