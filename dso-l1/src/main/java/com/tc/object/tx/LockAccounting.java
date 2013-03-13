@@ -4,8 +4,6 @@
  */
 package com.tc.object.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
@@ -22,6 +20,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class LockAccounting implements ClearableCallback {
@@ -42,8 +41,8 @@ public class LockAccounting implements ClearableCallback {
 
   @Override
   public synchronized void cleanup() {
-    for (TxnRemovedListener listner : listeners) {
-      listner.allTxnCompleted();
+    for (TxnRemovedListener listener : listeners) {
+      listener.release();
     }
     listeners.clear();
     tx2Locks.clear();
@@ -154,9 +153,10 @@ public class LockAccounting implements ClearableCallback {
 
   public void waitAllCurrentTxnCompleted() throws AbortedOperationException {
     TxnRemovedListener listener;
-    Latch latch = new Latch();
+    CountDownLatch latch = null;
     Set currentTxnSet = null;
     synchronized (this) {
+      latch = new CountDownLatch(tx2Locks.size());
       currentTxnSet = new HashSet(tx2Locks.keySet());
       listener = new TxnRemovedListener(currentTxnSet, latch);
       listeners.add(listener);
@@ -167,12 +167,14 @@ public class LockAccounting implements ClearableCallback {
       // out of this wait and throw a TCNotRunningException for upper layers to handle
       do {
         if (shutdown) { throw new TCNotRunningException(); }
-      } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
+      } while (!latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS));
     } catch (InterruptedException e) {
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
       throw new TCRuntimeException(e);
     } finally {
-      listeners.remove(listener);
+        synchronized (this) {
+            listeners.remove(listener);
+        }
     }
   }
 
@@ -198,25 +200,43 @@ public class LockAccounting implements ClearableCallback {
     return rv;
   }
 
-  private static class TxnRemovedListener {
-    private final Set<TransactionIDWrapper> txnSet;
-    private final Latch                     latch;
+  private class TxnRemovedListener {
+    private final Set<TransactionIDWrapper>         txnSet;
+    private final CountDownLatch                     latch;
+    private boolean released                    = false;
 
-    TxnRemovedListener(Set<TransactionIDWrapper> txnSet, Latch latch) {
+    TxnRemovedListener(Set<TransactionIDWrapper> txnSet, CountDownLatch latch) {
+      if ( !Thread.holdsLock(LockAccounting.this) ) {
+          throw new AssertionError();
+      }
       this.txnSet = txnSet;
       this.latch = latch;
-      if (txnSet.size() == 0) {
-        allTxnCompleted();
-      }
     }
 
     void txnRemoved(TransactionIDWrapper txnID) {
-      this.txnSet.remove(txnID);
-      if (txnSet.size() == 0) allTxnCompleted();
+//  locked several frames up
+      if ( !Thread.holdsLock(LockAccounting.this) ) {
+          throw new AssertionError();
+      }
+      if ( this.txnSet.remove(txnID) ) {
+        this.latch.countDown();
+      } else {
+        if ( !released ) {
+            throw new AssertionError();
+        }
+      }
     }
-
-    void allTxnCompleted() {
-      this.latch.release();
+    
+    void release() {
+//  locked several frames up
+      if ( !Thread.holdsLock(LockAccounting.this) ) {
+          throw new AssertionError();
+      }
+      txnSet.clear();
+        while ( this.latch.getCount() > 0 ) {
+            latch.countDown();
+        }
+        released = true;
     }
 
   }

@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -49,6 +48,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -255,17 +255,17 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   private void waitForTxnsToComplete() {
-    final Latch latch = new Latch();
+    final CountDownLatch latch = new CountDownLatch(1);
     logger.info("Waiting for txns to complete");
     callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
       @Override
       public void onCompletion() {
         logger.info("No more txns in the system.");
-        latch.release();
+        latch.countDown();
       }
     });
     try {
-      latch.acquire();
+      latch.await();
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }

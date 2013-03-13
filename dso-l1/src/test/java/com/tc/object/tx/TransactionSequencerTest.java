@@ -13,7 +13,6 @@ import com.tc.net.GroupID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.stats.counter.CounterImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.util.CallableWaiter;
@@ -31,6 +30,7 @@ import junit.framework.TestCase;
 public class TransactionSequencerTest extends TestCase {
 
   public TransactionSequencer txnSequencer;
+  public boolean  folding = true;
   private static final long   TIME_TO_RUN         = 1 * 60 * 1000;
   private static final int    MAX_PENDING_BATCHES = 5;
 
@@ -41,14 +41,23 @@ public class TransactionSequencerTest extends TestCase {
     this.txnSequencer = new TransactionSequencer(GroupID.NULL_ID, new TransactionIDGenerator(),
                                                  new TestTransactionBatchFactory(),
                                                  new TestLockAccounting(new NullAbortableOperationManager()),
-                                                 new CounterImpl(),
                                                  new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)),
                                                  new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)),
                                                  new NullAbortableOperationManager());
   }
-
+  
   // checkout DEV-5872 to know why this test was written
-  public void testDeadLock() throws InterruptedException {
+  public void testDeadLockWithFolding() throws InterruptedException {
+      folding = true;
+      deadlockCheck();
+  }  
+  // checkout DEV-5872 to know why this test was written
+  public void testDeadLockWithNoFolding() throws InterruptedException {
+      folding = false;
+      deadlockCheck();
+  }  
+  // checkout DEV-5872 to know why this test was written
+  public void deadlockCheck() throws InterruptedException {
     Thread producer1 = new Thread(new Producer(this.txnSequencer), "Producer1");
     producer1.start();
     Thread producer2 = new Thread(new Producer(this.txnSequencer), "Producer2");
@@ -67,10 +76,19 @@ public class TransactionSequencerTest extends TestCase {
     producer1.join();
     consumer.join();
   }
-
+  public void testInterruptAddTransactionWithFolding() throws Exception {
+      folding = true;
+      interruptAddTransactionCheck();
+  }
   public void testInterruptAddTransaction() throws Exception {
+      folding = false;
+      interruptAddTransactionCheck();
+  }
+
+  public void interruptAddTransactionCheck() throws Exception {
     // DEV-5589: Allow interrupting adding to the transaction sequencer.
-    for (int i = 0; i < MAX_PENDING_BATCHES; i++) {
+      //  stuff the pending batches to the max
+    for (int i = 0; i <= MAX_PENDING_BATCHES; i++) {
       this.txnSequencer.throttleIfNecesary();
       this.txnSequencer.addTransaction(new TestClientTransaction());
     }
@@ -82,10 +100,8 @@ public class TransactionSequencerTest extends TestCase {
         try {
           txnSequencer.throttleIfNecesary();
           txnSequencer.addTransaction(new TestClientTransaction());
-          System.out.println("Transaction added successfully.");
         } catch (Exception e) {
           System.out.println("Got an exception adding to txnSequencer: " + e.getMessage());
-          e.printStackTrace();
           failed.set(true);
         }
         if (!interrupted()) {
@@ -152,18 +168,27 @@ public class TransactionSequencerTest extends TestCase {
 
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {
     private long idSequence;
+    
 
+    public TestTransactionBatchFactory() {
+    }
+        
     @Override
     public ClientTransactionBatch nextBatch(GroupID groupID) {
       ClientTransactionBatch rv = new TestTransactionBatch(new TxnBatchID(++this.idSequence));
       return rv;
     }
 
+    @Override
+    public boolean isFoldingSupported() {
+        return folding;
+    }
   }
 
   private final class TestTransactionBatch implements ClientTransactionBatch {
 
     public final TxnBatchID batchID;
+    private int transactions = 0;
 
     public TestTransactionBatch(TxnBatchID batchID) {
       this.batchID = batchID;
@@ -176,7 +201,7 @@ public class TransactionSequencerTest extends TestCase {
 
     @Override
     public synchronized int numberOfTxnsBeforeFolding() {
-      return 0;
+      return transactions;
     }
 
     @Override
@@ -189,12 +214,32 @@ public class TransactionSequencerTest extends TestCase {
                                                   TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
-      return new FoldedInfo(null, false);
+      transactions += 1;
+      return new FoldedInfo(createTransactionBuffer());
     }
-
+    
+    private TransactionBuffer createTransactionBuffer() {
+      TransactionBuffer buffer = Mockito.mock(TransactionBuffer.class);
+      Mockito.when(buffer.getTxnCount()).thenReturn(1);
+      Mockito.when(buffer.getFoldedTransactionID()).thenReturn(Mockito.mock(TransactionID.class));
+      Mockito.doReturn(640000).when(buffer).write(Mockito.any(ClientTransaction.class));
+      return buffer;
+   }
+    
+    @Override
+    public synchronized TransactionBuffer addSimpleTransaction(ClientTransaction txn) {
+      transactions += 1;
+      return createTransactionBuffer();
+    }
+    
     @Override
     public TransactionBuffer removeTransaction(TransactionID txID) {
       return Mockito.mock(TransactionBuffer.class);
+    }
+
+    @Override
+    public boolean contains(TransactionID txID) {
+        return true;
     }
 
     @Override
@@ -241,6 +286,13 @@ public class TransactionSequencerTest extends TestCase {
     public int byteSize() {
       return 640000;
     }
+
+    @Override
+    public String toString() {
+        return "TestTransactionBatch{" + "batchID=" + batchID + ", transactions=" + transactions + '}';
+    }
+    
+    
 
   }
 

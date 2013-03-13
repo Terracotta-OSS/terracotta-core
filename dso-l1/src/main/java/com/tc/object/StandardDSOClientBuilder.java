@@ -224,8 +224,6 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                  final TransactionIDGenerator transactionIDGenerator,
                                                                  final SessionManager sessionManager,
                                                                  final DSOClientMessageChannel dsoChannel,
-                                                                 final Counter outstandingBatchesCounter,
-                                                                 final Counter pendingBatchesSize,
                                                                  final SampledRateCounter transactionSizeCounter,
                                                                  final SampledRateCounter transactionsPerBatchCounter,
                                                                  final AbortableOperationManager abortableOperationManager,
@@ -245,8 +243,6 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                             transactionIDGenerator,
                                             sessionManager,
                                             dsoChannel,
-                                            outstandingBatchesCounter,
-                                            pendingBatchesSize,
                                             transactionSizeCounter,
                                             transactionsPerBatchCounter,
                                             TCPropertiesImpl.getProperties()

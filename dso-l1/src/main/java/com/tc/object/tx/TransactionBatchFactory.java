@@ -9,5 +9,7 @@ import com.tc.net.GroupID;
 public interface TransactionBatchFactory {
   
   public ClientTransactionBatch nextBatch(GroupID groupID);
+  
+  public boolean isFoldingSupported();
 
 }

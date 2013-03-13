@@ -144,8 +144,6 @@ public interface DSOClientBuilder {
                                                           final TransactionIDGenerator transactionIDGenerator,
                                                           final SessionManager sessionManager,
                                                           final DSOClientMessageChannel dsoChannel,
-                                                          final Counter outstandingBatchesCounter,
-                                                          final Counter pendingBatchesSize,
                                                           final SampledRateCounter transactionSizeCounter,
                                                           final SampledRateCounter transactionPerBatchCounter,
                                                           final AbortableOperationManager abortableOperationManager,

@@ -9,11 +9,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.util.concurrent.Runners;
 import org.mockito.Mockito;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.bytes.TCByteBuffer;
@@ -49,6 +44,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -58,13 +59,12 @@ public class RemoteTransactionManagerTest extends TestCase {
 
   private RemoteTransactionManagerImpl manager;
   private TestTransactionBatchFactory  batchFactory;
-  private SynchronizedInt              number;
-  private SynchronizedRef              error;
-  private LinkedQueue                  batchSendQueue;
+  private AtomicInteger                number;
+  private AtomicReference              error;
+  private LinkedBlockingQueue                        batchSendQueue;
   private TransactionBatchAccounting   batchAccounting;
   private CounterManager               counterManager;
   private SampledRateCounter           transactionsPerBatchCounter, transactionSizeCounter;
-  private Counter                      outstandingBatchCounter, pendingBatchesSize;
 
   private final TCThreadGroup          threadGroup =
       new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(RemoteTransactionManagerTest.class)));
@@ -72,26 +72,23 @@ public class RemoteTransactionManagerTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
-    this.batchFactory = new TestTransactionBatchFactory();
+    this.batchFactory = new TestTransactionBatchFactory(false);
     this.counterManager = new CounterManagerImpl();
     this.transactionSizeCounter = (SampledRateCounter) this.counterManager
         .createCounter(new SampledRateCounterConfig(1, 900, true));
     this.transactionsPerBatchCounter = (SampledRateCounter) this.counterManager
         .createCounter(new SampledRateCounterConfig(1, 900, true));
-    this.outstandingBatchCounter = this.counterManager.createCounter(new SimpleCounterConfig(0));
-    this.pendingBatchesSize = this.counterManager.createCounter(new SimpleCounterConfig(0));
 
     this.manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, this.batchFactory,
                                                     new TransactionIDGenerator(), new NullSessionManager(),
-                                                    new MockChannel(), this.outstandingBatchCounter,
-                                                    this.pendingBatchesSize, this.transactionSizeCounter,
+                                                    new MockChannel(), this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, 0,
                                                     new NullAbortableOperationManager(),
                                                     taskRunner);
     this.batchAccounting = this.manager.getBatchAccounting();
-    this.number = new SynchronizedInt(0);
-    this.error = new SynchronizedRef(null);
-    this.batchSendQueue = new LinkedQueue();
+    this.number = new AtomicInteger(0);
+    this.error = new AtomicReference(null);
+    this.batchSendQueue = new LinkedBlockingQueue();
   }
 
   @Override
@@ -114,8 +111,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     final int ackOnExitTimeout = 10;
     this.manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, this.batchFactory,
                                                     new TransactionIDGenerator(), new NullSessionManager(),
-                                                    new MockChannel(), this.outstandingBatchCounter,
-                                                    this.pendingBatchesSize, this.transactionSizeCounter,
+                                                    new MockChannel(), this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
                                                     new NullAbortableOperationManager(),
                                                     taskRunner);
@@ -152,8 +148,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     final int ackOnExitTimeout = 0;
     this.manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, this.batchFactory,
                                                     new TransactionIDGenerator(), new NullSessionManager(),
-                                                    new MockChannel(), this.outstandingBatchCounter,
-                                                    this.pendingBatchesSize, this.transactionSizeCounter,
+                                                    new MockChannel(), this.transactionSizeCounter,
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000,
                                                     new NullAbortableOperationManager(),
                                                     taskRunner);
@@ -237,11 +232,11 @@ public class RemoteTransactionManagerTest extends TestCase {
     CyclicBarrier barrier = new CyclicBarrier(2);
 
     callCommitOnThread(ctx, barrier);
-    barrier.barrier();
+    barrier.await();
     ThreadUtil.reallySleep(500);
-    TestTransactionBatch batch = (TestTransactionBatch) this.batchFactory.newBatchQueue.poll(1);
+    TestTransactionBatch batch = (TestTransactionBatch) this.batchFactory.newBatchQueue.poll();
     assertNotNull(batch);
-    assertSame(batch, this.batchSendQueue.poll(1));
+    assertSame(batch, this.batchSendQueue.poll());
     assertTrue(this.batchSendQueue.isEmpty());
 
     // fill the current batch with a bunch of transactions
@@ -250,13 +245,13 @@ public class RemoteTransactionManagerTest extends TestCase {
       ClientTransaction ctx1 = makeTransaction();
       barrier = new CyclicBarrier(2);
       callCommitOnThread(ctx1, barrier);
-      barrier.barrier();
+      barrier.await();
       ThreadUtil.reallySleep(500);
     }
 
     List batches = new ArrayList();
     TestTransactionBatch batch1;
-    while ((batch1 = (TestTransactionBatch) this.batchSendQueue.poll(3000)) != null) {
+    while ((batch1 = (TestTransactionBatch) this.batchSendQueue.poll(3, TimeUnit.SECONDS)) != null) {
       System.err.println("Recd batch " + batch1);
       batches.add(batch1);
     }
@@ -269,14 +264,14 @@ public class RemoteTransactionManagerTest extends TestCase {
     this.manager.receivedBatchAcknowledgement(batch.batchID, GroupID.NULL_ID);
 
     // the batch ack should have sent another batch
-    batch = (TestTransactionBatch) this.batchSendQueue.poll(1);
+    batch = (TestTransactionBatch) this.batchSendQueue.poll(5, TimeUnit.SECONDS);
     assertNotNull(batch);
     assertTrue(this.batchSendQueue.isEmpty());
 
     ctx = makeTransaction();
     barrier = new CyclicBarrier(2);
     callCommitOnThread(ctx, barrier);
-    barrier.barrier();
+    barrier.await();
     ThreadUtil.reallySleep(500);
 
     // acknowledge the remaining batches so the current batch will get sent.
@@ -286,7 +281,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     }
     this.manager.receivedBatchAcknowledgement(batch.batchID, GroupID.NULL_ID);
 
-    batch = (TestTransactionBatch) this.batchSendQueue.poll(1);
+    batch = (TestTransactionBatch) this.batchSendQueue.poll(1, TimeUnit.MILLISECONDS);
     assertNotNull(batch);
     assertTrue(this.batchSendQueue.isEmpty());
   }
@@ -326,7 +321,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     // ACK batch 1; next batch (batch 3) will be sent.
     this.manager.receivedBatchAcknowledgement(((TestTransactionBatch) batches.get(0)).batchID, GroupID.NULL_ID);
-    while ((batchN = (TestTransactionBatch) this.batchSendQueue.poll(3000)) != null) {
+    while ((batchN = (TestTransactionBatch) this.batchSendQueue.poll(3, TimeUnit.SECONDS)) != null) {
       System.err.println("** Recd " + batchN);
       batches.add(batchN);
       getNextNewBatch();
@@ -366,7 +361,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       this.manager.receivedBatchAcknowledgement(batchN.batchID, GroupID.NULL_ID);
     }
 
-    while ((batchN = (TestTransactionBatch) this.batchSendQueue.poll(3000)) != null) {
+    while ((batchN = (TestTransactionBatch) this.batchSendQueue.poll(3,TimeUnit.SECONDS)) != null) {
       System.err.println("*** Recd " + batchN);
       batches.add(batchN);
       getNextNewBatch();
@@ -410,7 +405,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
   }
 
-  private void makeAndCommitTransactions(final Set created, final int count) throws InterruptedException {
+  private void makeAndCommitTransactions(final Set created, final int count) throws BrokenBarrierException,InterruptedException {
     CyclicBarrier commitBarrier = new CyclicBarrier(count + 1);
     for (int i = 0; i < count; i++) {
       ClientTransaction tx = makeTransaction();
@@ -418,12 +413,12 @@ public class RemoteTransactionManagerTest extends TestCase {
       callCommitOnThread(tx, commitBarrier);
     }
     // make sure all the threads have at least started...
-    commitBarrier.barrier();
+    commitBarrier.await();
     // sleep a little bit to make sure they get to the commit() call.
     ThreadUtil.reallySleep(1000);
   }
 
-  public void testBatching() throws InterruptedException {
+  public void testBatching() throws BrokenBarrierException, InterruptedException {
 
     System.err.println("Testing testBatching ...");
 
@@ -431,7 +426,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     TestTransactionBatch batchN;
     final Set batchTxs = new HashSet();
     final List batches = new ArrayList();
-
+    
     for (int i = 0; i < maxBatchesOutstanding; i++) {
       makeAndCommitTransactions(batchTxs, 1);
       batchN = (TestTransactionBatch) this.batchSendQueue.take();
@@ -456,8 +451,9 @@ public class RemoteTransactionManagerTest extends TestCase {
     }
     batchTxs.addAll(batch2Txs);
 
-    barrier.barrier();
-    assertFalse(barrier.broken());
+    barrier.await();
+    assertFalse(barrier.isBroken());
+
     ThreadUtil.reallySleep(2000);
     assertTrue(this.batchSendQueue.isEmpty());
 
@@ -501,9 +497,11 @@ public class RemoteTransactionManagerTest extends TestCase {
     assertTrue(drainQueueInto(batch3.addTxQueue, new LinkedList()).isEmpty());
   }
 
-  private Collection drainQueueInto(LinkedQueue queue, Collection dest) throws InterruptedException {
-    while (!queue.isEmpty()) {
-      dest.add(queue.take());
+  private Collection drainQueueInto(LinkedBlockingQueue queue, Collection dest) throws InterruptedException {
+      Object o = queue.poll();
+    while (o != null) {
+      dest.add(o);
+      o = queue.poll();
     }
     return dest;
   }
@@ -519,7 +517,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       @Override
       public void run() {
         try {
-          barrier.barrier();
+          barrier.await();
           RemoteTransactionManagerTest.this.manager.commit(txn);
         } catch (Throwable th) {
           th.printStackTrace();
@@ -532,7 +530,7 @@ public class RemoteTransactionManagerTest extends TestCase {
   }
 
   private ClientTransaction makeTransaction() {
-    int num = this.number.increment();
+    int num = this.number.incrementAndGet();
     LockID lid = new StringLockID("lock" + num);
     TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn = new ClientTransactionImpl();
@@ -545,8 +543,9 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     public final TxnBatchID  batchID;
 
-    public final LinkedQueue addTxQueue   = new LinkedQueue();
+    public final LinkedBlockingQueue addTxQueue   = new LinkedBlockingQueue();
     private final LinkedList transactions = new LinkedList();
+    private int holder = 0;
 
     public TestTransactionBatch(TxnBatchID batchID) {
       this.batchID = batchID;
@@ -583,14 +582,34 @@ public class RemoteTransactionManagerTest extends TestCase {
       } catch (InterruptedException e) {
         throw new TCRuntimeException(e);
       }
-      return new FoldedInfo(null, false);
+      TransactionBuffer buffer = Mockito.mock(TransactionBuffer.class);
+      Mockito.when(buffer.getTxnCount()).thenReturn(1);
+      Mockito.when(buffer.getFoldedTransactionID()).thenReturn(null);
+      return new FoldedInfo(buffer);
+    }
+
+        @Override
+    public TransactionBuffer addSimpleTransaction(ClientTransaction txn) {
+      try {
+        this.addTxQueue.put(txn);
+        this.transactions.add(txn);
+        return Mockito.mock(TransactionBuffer.class);
+      } catch (InterruptedException e) {
+        throw new TCRuntimeException(e);
+      }
     }
 
     @Override
     public TransactionBuffer removeTransaction(TransactionID txID) {
+      this.transactions.remove(txID);
       return Mockito.mock(TransactionBuffer.class);
     }
 
+    @Override
+    public boolean contains(TransactionID txID) {
+        return transactions.contains(txID);
+    }
+    
     @Override
     public synchronized Collection addTransactionIDsTo(Collection c) {
       for (Iterator i = this.transactions.iterator(); i.hasNext();) {
@@ -603,6 +622,11 @@ public class RemoteTransactionManagerTest extends TestCase {
     @Override
     public void send() {
       try {
+          synchronized (this) {
+              while (holder > 0) {
+                  wait();
+              }
+          }
         RemoteTransactionManagerTest.this.batchSendQueue.put(this);
       } catch (InterruptedException e) {
         throw new TCRuntimeException(e);
@@ -652,7 +676,12 @@ public class RemoteTransactionManagerTest extends TestCase {
 
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {
     private long             idSequence;
-    public final LinkedQueue newBatchQueue = new LinkedQueue();
+    private boolean          folding;
+    public final LinkedBlockingQueue newBatchQueue = new LinkedBlockingQueue();
+
+    public TestTransactionBatchFactory(boolean folding) {
+        this.folding = folding;
+    }
 
     @Override
     public ClientTransactionBatch nextBatch(GroupID groupID) {
@@ -665,6 +694,10 @@ public class RemoteTransactionManagerTest extends TestCase {
       return rv;
     }
 
+    @Override
+    public boolean isFoldingSupported() {
+        return folding;
+    }
   }
 
 }

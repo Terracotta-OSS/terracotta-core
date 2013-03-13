@@ -480,13 +480,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .createCounter(sampledRateCounterConfig);
     final SampledRateCounter transactionsPerBatchCounter = (SampledRateCounter) this.counterManager
         .createCounter(sampledRateCounterConfig);
-    final Counter outstandingBatchesCounter = this.counterManager.createCounter(new SimpleCounterConfig(0));
-    final Counter pendingBatchesSize = this.counterManager.createCounter(new SimpleCounterConfig(0));
 
     this.remoteTxnManager = this.dsoClientBuilder
         .createRemoteTransactionManager(this.channel.getClientIDProvider(), encoding,
                                         FoldingConfig.createFromProperties(tcProperties), new TransactionIDGenerator(),
-                                        sessionManager, this.channel, outstandingBatchesCounter, pendingBatchesSize,
+                                        sessionManager, this.channel, 
                                         transactionSizeCounter, transactionsPerBatchCounter, abortableOperationManager,
                                         taskRunner);
 
