@@ -4,7 +4,6 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
-
 import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.ToolkitFeatureType;
 import org.terracotta.toolkit.ToolkitFeatureTypeInternal;
@@ -43,6 +42,7 @@ import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
+import com.terracotta.toolkit.collections.ToolkitMapBlockingQueue;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitCacheImpl;
@@ -61,6 +61,7 @@ import com.terracotta.toolkit.factory.impl.ToolkitCacheFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitFactoryInitializationContextBuilder;
 import com.terracotta.toolkit.factory.impl.ToolkitListFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitLockFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitMapBlockingQueueFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitReadWriteLockFactoryImpl;
@@ -83,6 +84,7 @@ import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 public class TerracottaToolkit implements ToolkitInternal {
 
   public static final String                                      TOOLKIT_SERIALIZER_REGISTRATION_NAME = "TOOLKIT_SERIALIZER";
+  private static final int                                        QUEUE_THRESHOLD = 2000000;
   private final ToolkitObjectFactory<DestroyableToolkitList>      clusteredListFactory;
   private final ToolkitObjectFactory<ToolkitCacheImpl>            clusteredCacheFactory;
   private final ToolkitObjectFactory<DestroyableToolkitMap>       clusteredMapFactory;
@@ -92,6 +94,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ToolkitObjectFactory<ToolkitBarrier>              clusteredBarrierFactory;
   private final ToolkitObjectFactory<DestroyableToolkitNotifier>  clusteredNotifierFactory;
   private final ToolkitObjectFactory<ToolkitBlockingQueueImpl>    clusteredBlockingQueueFactory;
+  private final ToolkitObjectFactory<ToolkitMapBlockingQueue>     clusteredMapBlockingQueueFactory;
   private final ToolkitObjectFactory<ToolkitSortedSetImpl>        clusteredSortedSetFactory;
   private final ToolkitObjectFactory<ToolkitSetImpl>              clusteredSetFactory;
   private final ToolkitObjectFactory<ToolkitLockImpl>             lockFactory;
@@ -139,6 +142,8 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, context);
     clusteredStoreFactory = ToolkitStoreFactoryImpl.newToolkitStoreFactory(this, context);
     clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, context);
+    clusteredMapBlockingQueueFactory = new ToolkitMapBlockingQueueFactoryImpl(this);
+
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()
                                                                      .consistency(Consistency.STRONG).build());
@@ -236,8 +241,14 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public <E> ToolkitBlockingQueue<E> getBlockingQueue(String name, int capacity, Class<E> klazz) {
     if (capacity < 1) { throw new IllegalArgumentException("Capacity should be at least 1 - " + capacity); }
-    return clusteredBlockingQueueFactory.getOrCreate(name, new UnclusteredConfiguration()
-        .setInt(ToolkitBlockingQueueFactoryImpl.CAPACITY_FIELD_NAME, capacity));
+    if (capacity > QUEUE_THRESHOLD) {
+      // scales better for big queues, but has significantly lower throughput
+      return clusteredMapBlockingQueueFactory.getOrCreate(name, new UnclusteredConfiguration()
+          .setInt(ToolkitMapBlockingQueueFactoryImpl.CAPACITY_FIELD_NAME, capacity));
+    } else {
+      return clusteredBlockingQueueFactory.getOrCreate(name, new UnclusteredConfiguration()
+          .setInt(ToolkitBlockingQueueFactoryImpl.CAPACITY_FIELD_NAME, capacity));
+    }
   }
 
   @Override

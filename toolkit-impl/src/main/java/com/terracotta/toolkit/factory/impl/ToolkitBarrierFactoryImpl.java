@@ -28,7 +28,7 @@ public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBa
   private final ToolkitIDGeneratorImpl           barrierIdGenerator;
   private final WeakValueMap<ToolkitBarrierImpl> localCache;
   private final Lock                             lock;
-  private volatile Set<String>                   beforeRejoinBarriers = Collections.EMPTY_SET;
+  private volatile Set<String>                   beforeRejoinBarriers = Collections.emptySet();
 
   public ToolkitBarrierFactoryImpl(ToolkitStore clusteredMap, WeakValueMapManager manager,
                                    PlatformService platformService) {
@@ -58,7 +58,7 @@ public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBa
             barrier.rejoinCompleted();
           }
         }
-        beforeRejoinBarriers = Collections.EMPTY_SET;
+        beforeRejoinBarriers = Collections.emptySet();
       }
     });
   }
