@@ -6,6 +6,7 @@ package com.terracotta.toolkit.collections;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
@@ -240,8 +241,8 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     tcObject = t;
     gid = new GroupID(t.getObjectID().getGroupID());
     localResolveLock = tcObject.getResolveLock();
-    lock = ToolkitLockingApi
-        .createUnnamedReadWriteLock(ToolkitObjectType.LIST, tcObject.getObjectID(), platformService);
+    lock = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.LIST, tcObject.getObjectID(),
+                                                        platformService, ToolkitLockTypeInternal.WRITE);
   }
 
   @Override

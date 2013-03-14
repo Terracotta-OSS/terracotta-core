@@ -14,21 +14,24 @@ public final class UnnamedToolkitReadWriteLock implements ToolkitReadWriteLock {
   private final ToolkitLock writeLock;
   private final ToolkitLock readLock;
 
-  UnnamedToolkitReadWriteLock(PlatformService platformService, String lockId) {
-    this(new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.WRITE),
+  UnnamedToolkitReadWriteLock(PlatformService platformService, String lockId, ToolkitLockTypeInternal writeLockType) {
+    this(new UnnamedToolkitLock(platformService, lockId, writeLockType),
          new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
-  UnnamedToolkitReadWriteLock(PlatformService platformService, long lockId) {
-    this(new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.WRITE),
+  UnnamedToolkitReadWriteLock(PlatformService platformService, long lockId, ToolkitLockTypeInternal writeLockType) {
+    this(new UnnamedToolkitLock(platformService, lockId, writeLockType),
          new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
   private UnnamedToolkitReadWriteLock(ToolkitLock writeLock, ToolkitLock readLock) {
-    if (writeLock.getLockType() != ToolkitLockType.WRITE) { throw new AssertionError(
-                                                                                     "Write lock instance should have WRITE lock type"); }
-    if (readLock.getLockType() != ToolkitLockType.READ) { throw new AssertionError(
-                                                                                   "Read lock instance should have READ lock type"); }
+    if (writeLock.getLockType() != ToolkitLockType.WRITE) { throw new AssertionError("lockType "
+                                                                                     + writeLock.getLockType()
+                                                                                     + " not supported for "
+                                                                                     + ToolkitLockType.WRITE + " lock"); }
+    if (readLock.getLockType() != ToolkitLockType.READ) { throw new AssertionError("lockType " + readLock.getLockType()
+                                                                                   + " not supported for "
+                                                                                   + ToolkitLockType.READ + " lock"); }
     this.writeLock = writeLock;
     this.readLock = readLock;
   }

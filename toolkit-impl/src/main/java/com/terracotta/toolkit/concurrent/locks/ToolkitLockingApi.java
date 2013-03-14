@@ -36,19 +36,23 @@ public class ToolkitLockingApi {
 
   // RWLsocks created for toolkitLockedObjects
   public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(ToolkitObjectType type, ObjectID oid,
-                                                                       PlatformService service) {
-    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(type, String.valueOf(oid.toLong())));
+                                                                       PlatformService service,
+                                                                       ToolkitLockTypeInternal writeLockType) {
+    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(type, String.valueOf(oid.toLong())),
+                                           writeLockType);
   }
 
   // RWLsocks created for toolkitObject - used for ToolkitReadWriteLock
   public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(ToolkitObjectType toolkitObjectType,
-                                                                       String name, PlatformService service) {
-    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(toolkitObjectType, name));
+                                                                       String name, PlatformService service,
+                                                                       ToolkitLockTypeInternal writeLockType) {
+    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(toolkitObjectType, name), writeLockType);
   }
 
   // used for servermap keys
-  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(long longLockId, PlatformService service) {
-    return new UnnamedToolkitReadWriteLock(service, longLockId);
+  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(long longLockId, PlatformService service,
+                                                                       ToolkitLockTypeInternal writeLockType) {
+    return new UnnamedToolkitReadWriteLock(service, longLockId, writeLockType);
   }
 
   public static void lock(ToolkitLockDetail lockDetail, PlatformService service) {

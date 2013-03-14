@@ -552,7 +552,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       //
       throw new UnsupportedOperationException("fine grained lock not supported with null lock for key [" + key + "]");
     }
-    return ToolkitLockingApi.createUnnamedReadWriteLock(lockId, platformService);
+    return ToolkitLockingApi.createUnnamedReadWriteLock(lockId, platformService, lockType);
   }
 
   @Override

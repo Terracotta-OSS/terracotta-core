@@ -6,6 +6,7 @@ package com.terracotta.toolkit.collections.map;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
@@ -78,7 +79,8 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     tcObject = t;
     gid = new GroupID(t.getObjectID().getGroupID());
     localResolveLock = tcObject.getResolveLock();
-    lock = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.MAP, tcObject.getObjectID(), platformService);
+    lock = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.MAP, tcObject.getObjectID(), platformService,
+                                                        ToolkitLockTypeInternal.WRITE);
   }
 
   @Override

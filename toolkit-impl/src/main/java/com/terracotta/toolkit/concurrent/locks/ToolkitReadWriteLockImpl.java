@@ -6,6 +6,7 @@ package com.terracotta.toolkit.concurrent.locks;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.platform.PlatformService;
 
@@ -16,7 +17,7 @@ public class ToolkitReadWriteLockImpl implements ToolkitReadWriteLock {
   public ToolkitReadWriteLockImpl(PlatformService platformService, String name) {
     this.name = name;
     this.delegate = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.READ_WRITE_LOCK, name,
-                                                                 platformService);
+                                                                 platformService, ToolkitLockTypeInternal.WRITE);
   }
 
   @Override
