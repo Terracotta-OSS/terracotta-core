@@ -33,8 +33,8 @@
     <slf4j.version>1.6.6</slf4j.version>
     <offheap-store.version>1.1.0</offheap-store.version>
     <search.version>1.2.1-SNAPSHOT</search.version>
-    <security-core-version>1.1.0</security-core-version>
-    <security-keychain-version>1.1.0</security-keychain-version>
+    <security-version>1.2.0-SNAPSHOT</security-version>
+    <management-core-version>1.1.1-SNAPSHOT</management-core-version>
     <management.version>2.8.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.8</terracotta-license.version>
     <toolkit-api.version>2.1-SNAPSHOT</toolkit-api.version>
@@ -225,14 +225,24 @@
         <version>${offheap-store.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>management-core</artifactId>
+        <version>${management-core-version}</version>
+      </dependency>
+      <dependency>
     	<groupId>com.terracotta</groupId>
     	<artifactId>security-core</artifactId>
-    	<version>${security-core-version}</version>
+    	<version>${security-version}</version>
       </dependency>
       <dependency>
     	<groupId>com.terracotta</groupId>
     	<artifactId>security-keychain</artifactId>
-    	<version>${security-keychain-version}</version>
+    	<version>${security-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.terracotta</groupId>
+        <artifactId>security-REST</artifactId>
+        <version>${security-version}</version>
       </dependency>
       <dependency>
         <groupId>com.terracottatech</groupId>

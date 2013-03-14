@@ -20,7 +20,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>management-core</artifactId>
-      <version>${management-core.version}</version>
     </dependency>
   </dependencies>
 
