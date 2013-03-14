@@ -65,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -779,6 +780,38 @@ public class ObjectManagerTest extends TCTestCase {
     executorService.shutdown();
   }
 
+  public void testDeleteNewObject() throws Exception {
+    final ObjectID id = new ObjectID(1);
+    initObjectManager();
+    objectManager.createNewObjects(Collections.singleton(id));
+
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    Future<?> f = executorService.submit(new Runnable() {
+      @Override
+      public void run() {
+        objectManager.deleteObjects(Collections.singleton(id));
+      }
+    });
+
+    try {
+      f.get(2, TimeUnit.SECONDS);
+      fail();
+    } catch (TimeoutException e) {
+      // Expected, since the object is new, it'll block the delete.
+    }
+
+    ObjectIDSet oids = new ObjectIDSet(Collections.singleton(id));
+    TestResultsContext context = new TestResultsContext(oids, oids);
+    objectManager.lookupObjectsFor(new ClientID(1), context);
+    context.waitTillComplete();
+    Assert.assertNotNull(context.objects.get(id));
+
+    objectManager.release(context.objects.get(id));
+
+    f.get();
+  }
+
   private static class TestSerialziedEntryDNA implements DNA {
     private final ObjectID oid;
 
@@ -826,11 +859,6 @@ public class ObjectManagerTest extends TCTestCase {
       TestDNACursor cursor = new TestDNACursor();
       cursor.addPhysicalAction("value", new byte[1], false);
       return cursor;
-    }
-
-    @Override
-    public boolean isIgnoreMissing() {
-      return false;
     }
   }
 
@@ -927,11 +955,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     @Override
     public boolean isDelta() {
-      return false;
-    }
-
-    @Override
-    public boolean isIgnoreMissing() {
       return false;
     }
   }
@@ -1040,11 +1063,6 @@ public class ObjectManagerTest extends TCTestCase {
     public boolean isDelta() {
       return this.isDelta;
     }
-
-    @Override
-    public boolean isIgnoreMissing() {
-      return false;
-    }
   }
 
   public static class TestDateDNA implements DNA {
@@ -1137,11 +1155,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     @Override
     public boolean isDelta() {
-      return false;
-    }
-
-    @Override
-    public boolean isIgnoreMissing() {
       return false;
     }
   }

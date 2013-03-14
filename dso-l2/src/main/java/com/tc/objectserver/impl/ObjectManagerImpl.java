@@ -511,12 +511,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           if (!ref.isNew()) {
             i.remove();
             objectStore.removeAllObjectsByID(Collections.singleton(id));
+            removeReferenceAndDestroyIfNecessary(id);
           }
-          removeReferenceAndDestroyIfNecessary(id);
           unmarkReferenced(ref);
           makeUnBlocked(id);
         }
       }
+      processPendingLookups();
     }
     return missingObjects;
   }
@@ -536,8 +537,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       } else {
         // The object exists and is deletable, delete it.
         objectStore.removeAllObjectsByID(Collections.singleton(objectID));
+        removeReferenceAndDestroyIfNecessary(objectID);
       }
-      removeReferenceIfNecessary(ref);
       unmarkReferenced(ref);
       makeUnBlocked(objectID);
     }
@@ -714,12 +715,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   @Override
   public Set<ObjectID> deleteObjects(Set<ObjectID> toDelete) {
-    ObjectIDSet missing = removeAllObjectsByID(new ObjectIDSet(toDelete));
-
-    // Process pending, since we disabled process pending while GC pause was initiate.
-    processPendingLookups();
-
-    return missing;
+    return removeAllObjectsByID(new ObjectIDSet(toDelete));
   }
   
   private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {
