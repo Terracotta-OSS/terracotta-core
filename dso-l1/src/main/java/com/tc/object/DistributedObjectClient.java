@@ -207,7 +207,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -269,7 +268,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   private final UUID                                 uuid;
 
-  private final TaskRunner taskRunner;
+  private final TaskRunner                           taskRunner;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -1112,7 +1111,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   @Override
   public void reloadConfiguration() throws ConfigurationSetupException {
-    if (false) { throw new ConfigurationSetupException(); }
     throw new UnsupportedOperationException();
   }
 
@@ -1216,17 +1214,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     if (taskRunner != null) {
       logger.info("Shutting down TaskRunner");
-      taskRunner.shutdownNow();
-      boolean timedout = false;
-      try {
-        timedout = !taskRunner.awaitTermination(10, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } finally {
-        if (timedout) {
-          logger.warn("Not all TaskRunner threads gracefully finished execution");
-        }
-      }
+      taskRunner.shutdown();
     }
 
     CommonShutDownHook.shutdown();

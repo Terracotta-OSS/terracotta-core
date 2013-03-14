@@ -30,8 +30,8 @@ import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.Util;
-import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +41,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
@@ -74,7 +73,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final L1ServerMapLocalCacheManager                             globalLocalCacheManager;
   private ReInvalidateHandler                                            reInvalidateHandler;
 
-  private ScheduledFuture<?>                                             sendPendingRequestsTask;
+  private final Timer                                                    requestsTimer;
 
   private enum State {
     PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
@@ -93,6 +92,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager, taskRunner);
     this.abortableOperationManager = abortableOperationManager;
     this.taskRunner = taskRunner;
+    this.requestsTimer = taskRunner.newTimer("RemoteServerMapManager Request Scheduler");
   }
 
   @Override
@@ -284,14 +284,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   private void scheduleRequestForLater(final AbstractServerMapRequestContext context) {
     context.makePending();
-    if (!this.pendingSendTaskScheduled) {
-      sendPendingRequestsTask = this.taskRunner.schedule(new SendPendingRequestsTask(),
-          BATCH_LOOKUP_TIME_PERIOD, TimeUnit.MILLISECONDS);
-      this.pendingSendTaskScheduled = true;
+    if (!pendingSendTaskScheduled) {
+      requestsTimer.schedule(new SendPendingRequestsTask(), BATCH_LOOKUP_TIME_PERIOD, TimeUnit.MILLISECONDS);
+      pendingSendTaskScheduled = true;
     }
   }
 
-  private class SendPendingRequestsTask implements NamedRunnable {
+  private class SendPendingRequestsTask implements Runnable {
     @Override
     public void run() {
       try {
@@ -302,11 +301,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       } catch (PlatformRejoinException e) {
         logger.info("Ignoring " + e.getClass().getName() + " while trying to send pending requests");
       }
-    }
-
-    @Override
-    public String getName() {
-      return "RemoteServerMapManager-sendPendingRequestsTask";
     }
   }
 
@@ -564,12 +558,10 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   public void shutdown() {
     state = State.STOPPED;
     reInvalidateHandler.shutdown();
-    if (sendPendingRequestsTask != null) {
       synchronized (this) {
-        sendPendingRequestsTask.cancel(false);
+        requestsTimer.cancel();
         notifyAll();
       }
-    }
   }
 
   private boolean isStopped() {

@@ -7,14 +7,13 @@ import com.tc.object.ObjectID;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,31 +22,29 @@ public class ReInvalidateHandler {
   private final static long                  RE_INVALIDATE_TIMER_PERIOD = 1 * 1000;
 
   private final L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager;
-  private ConcurrentMapToObjectIDSet         prev                       = null;
+  private ConcurrentMapToObjectIDSet         prev;
   private ConcurrentMapToObjectIDSet         current                    = new ConcurrentMapToObjectIDSet();
-
-  private final ScheduledFuture<?>           expireSetTask;
-  private final ScheduledFuture<?>           reInvalidateTask;
+  private final Timer                        timer;
 
   public ReInvalidateHandler(final L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager,
                              final TaskRunner taskRunner) {
     this.l1ServerMapLocalCacheManager = l1ServerMapLocalCacheManager;
-    expireSetTask = taskRunner.scheduleWithFixedDelay(new ExpireSetTimerTask(),
+    this.timer = taskRunner.newTimer("Re-invalidation Timer");
+    this.timer.scheduleWithFixedDelay(new ExpireSetTimerTask(),
         EXPIRE_SET_TIMER_PERIOD, EXPIRE_SET_TIMER_PERIOD, TimeUnit.MILLISECONDS);
-    reInvalidateTask = taskRunner.scheduleWithFixedDelay(new ReInvalidateTimerTask(),
+    this.timer.scheduleWithFixedDelay(new ReInvalidateTimerTask(),
         RE_INVALIDATE_TIMER_PERIOD, RE_INVALIDATE_TIMER_PERIOD, TimeUnit.MILLISECONDS);
   }
 
   public void shutdown() {
-    expireSetTask.cancel(false);
-    reInvalidateTask.cancel(false);
+    timer.cancel();
   }
 
   public void add(ObjectID mapId, ObjectIDSet set) {
     current.add(mapId, set);
   }
 
-  private class ExpireSetTimerTask extends TimerTask {
+  private class ExpireSetTimerTask implements Runnable {
     @Override
     public void run() {
       synchronized (ReInvalidateHandler.this) {
@@ -57,7 +54,7 @@ public class ReInvalidateHandler {
     }
   }
 
-  private class ReInvalidateTimerTask extends TimerTask {
+  private class ReInvalidateTimerTask implements Runnable {
     @Override
     public void run() {
       final ConcurrentMapToObjectIDSet tempPrev;

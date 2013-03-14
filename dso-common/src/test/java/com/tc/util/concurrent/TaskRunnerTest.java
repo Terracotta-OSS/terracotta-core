@@ -22,56 +22,39 @@ import static org.junit.Assert.assertTrue;
  */
 public class TaskRunnerTest {
 
-  private static final String TASK_NAME = "test-task";
-  private static final String THREAD_NAME = "single-thread";
+  private static final String TIMER_NAME = "timer1";
 
   @Test
-  public void testShouldSetCustomNameAndRestoreAfterExecution() throws InterruptedException {
-    final ThreadFactory factory = new ThreadFactoryBuilder()
-        .setDaemon(true).setNameFormat(THREAD_NAME).build();
+  public void testShouldSetCustomNameAndRestoreAfterExecution() throws Exception {
+    final TaskRunner runner = Runners.newSingleThreadScheduledTaskRunner();
 
-    final TaskRunner runner = new ScheduledNamedTaskRunner(1, factory);
-    final CountDownLatch latch = new CountDownLatch(3);
-
-    // initial name
-    runner.execute(new Runnable() {
+    final CountDownLatch latch1 = new CountDownLatch(1);
+    final Timer timer1 = runner.newTimer(TIMER_NAME);
+    timer1.schedule(new Runnable() {
       @Override
       public void run() {
-        assertEquals(THREAD_NAME, Thread.currentThread().getName());
-        latch.countDown();
+        assertEquals(TIMER_NAME, Thread.currentThread().getName());
+        latch1.countDown();
       }
-    });
+    }, 0, TimeUnit.NANOSECONDS);
+    latch1.await(5, TimeUnit.SECONDS);
 
-    // inherited task name
-    runner.execute(new NamedRunnable() {
-      @Override
-      public String getName() {
-        return TASK_NAME;
-      }
-
+    final CountDownLatch latch2 = new CountDownLatch(1);
+    final Timer timer2 = runner.newTimer();
+    timer2.execute(new Runnable() {
       @Override
       public void run() {
-        assertEquals(TASK_NAME, Thread.currentThread().getName());
-        latch.countDown();
+        assertTrue(!TIMER_NAME.equals(Thread.currentThread().getName()));
+        latch2.countDown();
       }
     });
-
-    // back to initial name
-    runner.execute(new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(THREAD_NAME, Thread.currentThread().getName());
-        latch.countDown();
-      }
-    });
-
-    latch.await(5, TimeUnit.SECONDS);
+    latch2.await(5, TimeUnit.SECONDS);
   }
 
   @Test
   public void testShouldHandleUncaughtException() throws InterruptedException {
     final ThreadFactory factory = new ThreadFactoryBuilder()
-        .setDaemon(true).setNameFormat(THREAD_NAME).build();
+        .setDaemon(true).setNameFormat(TIMER_NAME).build();
     final TestTaskRunner runner = new TestTaskRunner(1, factory);
     final CountDownLatch latch = new CountDownLatch(1);
 
@@ -84,6 +67,28 @@ public class TaskRunnerTest {
     });
     latch.await(5, TimeUnit.SECONDS);
     assertTrue(runner.isExceptionOccured());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testShouldThrowISEIfNewTimerOnShutdown() {
+    final TaskRunner runner = Runners.newSingleThreadScheduledTaskRunner();
+    runner.shutdown();
+    runner.newTimer();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testShouldThrowISEIfScheduleOnCancelledTimer() {
+    final TaskRunner runner = Runners.newSingleThreadScheduledTaskRunner();
+    final Timer timer = runner.newTimer();
+    Runnable noopTask = new Runnable() {
+      @Override
+      public void run() {
+        // do nothing
+      }
+    };
+    timer.execute(noopTask);
+    timer.cancel();
+    timer.execute(noopTask);
   }
 
   private static class TestTaskRunner extends ScheduledNamedTaskRunner {

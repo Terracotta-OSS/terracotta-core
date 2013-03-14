@@ -29,8 +29,8 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.Util;
-import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.Collection;
 import java.util.Date;
@@ -41,7 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -87,8 +86,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private final Map<ObjectID, DNA>                 dnaCache                 = new HashMap<ObjectID, DNA>();
   private final Map<ObjectID, ObjectLookupState>   objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
 
-  private final TaskRunner                         taskRunner;
-
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
   private final LRUCache                           lru                      = new LRUCache();
@@ -106,9 +103,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private long                                     miss                     = 0;
   private final AbortableOperationManager          abortableOperationManager;
 
-  private final ScheduledFuture<?>                 cleanupUnusedDnaTask;
-  private ScheduledFuture<?>                       sendPendingRequestTask;
-  private ScheduledFuture<?>                       removedObjectTask;
+  private final Timer                              objectRequestTimer;
 
   public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger,
                                  final RequestRootMessageFactory rrmFactory,
@@ -123,8 +118,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
     this.abortableOperationManager = abortableOperationManager;
-    this.taskRunner = taskRunner;
-    this.cleanupUnusedDnaTask = this.taskRunner.scheduleWithFixedDelay(new CleanupUnusedDNATask(),
+    this.objectRequestTimer = taskRunner.newTimer("RemoteObjectManager Request Scheduler");
+    this.objectRequestTimer.scheduleWithFixedDelay(new CleanupUnusedDNATask(),
         CLEANUP_UNUSED_DNA_TIMER, CLEANUP_UNUSED_DNA_TIMER, TimeUnit.MILLISECONDS);
   }
 
@@ -159,19 +154,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   @Override
   public synchronized void shutdown() {
-    this.state = State.STOPPED;
-    cancellTasks();
-    this.notifyAll();
-  }
-
-  private void cancellTasks() {
-    cleanupUnusedDnaTask.cancel(false);
-    if (sendPendingRequestTask != null) {
-      sendPendingRequestTask.cancel(false);
-    }
-    if (removedObjectTask != null) {
-      removedObjectTask.cancel(false);
-    }
+    state = State.STOPPED;
+    objectRequestTimer.cancel();
+    notifyAll();
   }
 
   private boolean isStopped() {
@@ -397,7 +382,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     ctxt.makePending();
     if (!pendingSendTaskScheduled) {
       // one-shot delayed action
-      sendPendingRequestTask = taskRunner.schedule(new SendPendingRequestsTask(),
+      objectRequestTimer.schedule(new SendPendingRequestsTask(),
           BATCH_LOOKUP_TIME_PERIOD, TimeUnit.MILLISECONDS);
       pendingSendTaskScheduled = true;
     }
@@ -604,17 +589,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       logger.warn("Not removing object " + id + " as it is being looked up : " + objectLookupStates.get(id));
       return;
     }
-    this.dnaCache.remove(id);
-    this.removeObjects.add(id);
-    if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD
-        && this.removeTaskScheduled != RemovedObjectsSendState.SCHEDULED_NOW) {
-      removedObjectTask = taskRunner.schedule(new RemovedObjectTask(),
-          REMOVED_OBJECTS_SEND_NOW, TimeUnit.MILLISECONDS);
-      this.removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_NOW;
-    } else if (this.removeObjects.size() == 1 && this.removeTaskScheduled == RemovedObjectsSendState.NOT_SCHEDULED) {
-      removedObjectTask = taskRunner.schedule(new RemovedObjectTask(),
-          REMOVED_OBJECTS_SEND_TIMER, TimeUnit.MILLISECONDS);
-      this.removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_LATER;
+    dnaCache.remove(id);
+    removeObjects.add(id);
+    if (removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD
+        && removeTaskScheduled != RemovedObjectsSendState.SCHEDULED_NOW) {
+      objectRequestTimer.schedule(new RemovedObjectTask(), REMOVED_OBJECTS_SEND_NOW, TimeUnit.MILLISECONDS);
+      removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_NOW;
+    } else if (removeObjects.size() == 1 && removeTaskScheduled == RemovedObjectsSendState.NOT_SCHEDULED) {
+      objectRequestTimer.schedule(new RemovedObjectTask(), REMOVED_OBJECTS_SEND_TIMER, TimeUnit.MILLISECONDS);
+      removeTaskScheduled = RemovedObjectsSendState.SCHEDULED_LATER;
     }
   }
 
@@ -636,7 +619,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.lru.clearAllUnrequestedDNABatches();
   }
 
-  private class SendPendingRequestsTask implements NamedRunnable {
+  private class SendPendingRequestsTask implements Runnable {
     @Override
     public void run() {
       try {
@@ -647,14 +630,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       }
     }
-
-    @Override
-    public String getName() {
-      return "RemoteObjectManager-sendPendingRequestsTask";
-    }
   }
 
-  private class RemovedObjectTask implements NamedRunnable {
+  private class RemovedObjectTask implements Runnable {
     @Override
     public void run() {
       try {
@@ -665,14 +643,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
       }
     }
-
-    @Override
-    public String getName() {
-      return "RemoteObjectManager-sendRemovedObjectsTask";
-    }
   }
 
-  private class CleanupUnusedDNATask implements NamedRunnable {
+  private class CleanupUnusedDNATask implements Runnable {
     @Override
     public void run() {
       try {
@@ -681,13 +654,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName());
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
-        cleanupUnusedDnaTask.cancel(false);
       }
-    }
-
-    @Override
-    public String getName() {
-      return "RemoteObjectManager-cleanupUnusedDnaTask";
     }
   }
 

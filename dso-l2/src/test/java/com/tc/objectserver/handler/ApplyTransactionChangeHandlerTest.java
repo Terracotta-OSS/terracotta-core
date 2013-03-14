@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.util.concurrent.ScheduledNamedTaskRunner;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
@@ -41,6 +40,7 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TxnObjectGrouping;
 import com.tc.util.SequenceID;
+import com.tc.util.concurrent.Runners;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -75,7 +75,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
         mock(ServerGlobalTransactionManager.class),
-        persistenceTransactionProvider, new ScheduledNamedTaskRunner(1));
+        persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner());
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);

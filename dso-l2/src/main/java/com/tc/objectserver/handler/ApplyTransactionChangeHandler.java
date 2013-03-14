@@ -31,8 +31,8 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,11 +70,10 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
                                        final TaskRunner taskRunner) {
     this.instanceMonitor = instanceMonitor;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
-    taskRunner.scheduleAtFixedRate(new NamedRunnable() {
+    final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
+    timer.scheduleAtFixedRate(new Runnable() {
       @Override
       public void run() { lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark(); }
-      @Override
-      public String getName() { return "Apply Transaction Change Timer"; }
     }, 0, LWM_UPDATE_INTERVAL, TimeUnit.MILLISECONDS);
   }
 

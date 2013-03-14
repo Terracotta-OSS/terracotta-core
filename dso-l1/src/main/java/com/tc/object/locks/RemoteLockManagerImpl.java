@@ -13,8 +13,8 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
-import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -35,12 +35,12 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final ClientIDProvider               clientIdProvider;
 
   private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
-  private final TaskRunner                     taskRunner;
   private boolean                              shutdown;
 
   @Deprecated
   private final ClientLockStatManager          statManager;
 
+  private final Timer                          batchRecallTimer;
   private ScheduledFuture<?>                   batchRecallTask;
 
 
@@ -54,7 +54,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     this.group = group;
     this.clientIdProvider = clientIdProvider;
     this.statManager = statManager;
-    this.taskRunner = taskRunner;
+    this.batchRecallTimer = taskRunner.newTimer("Batch Recall Timer");
   }
 
   @Override
@@ -171,7 +171,8 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
       }
       // start a timer to send the request, if not already started
       if (batchRecallTask == null && !shutdown) {
-        batchRecallTask = taskRunner.schedule(new BatchRecallCommitsTask(), MAX_TIME_IN_QUEUE, TimeUnit.MILLISECONDS);
+        batchRecallTask = batchRecallTimer.schedule(new BatchRecallCommitsTask(),
+            MAX_TIME_IN_QUEUE, TimeUnit.MILLISECONDS);
       }
     }
   }
@@ -234,8 +235,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     }
   }
 
-  private class BatchRecallCommitsTask implements NamedRunnable {
-
+  private class BatchRecallCommitsTask implements Runnable {
     @Override
     public void run() {
       synchronized (queue) {
@@ -246,11 +246,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
         sendBatchedRequestsImmediately();
         batchRecallTask = null;
       }
-    }
-
-    @Override
-    public String getName() {
-      return "Batch Recall Task";
     }
   }
 }

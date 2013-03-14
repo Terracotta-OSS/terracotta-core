@@ -28,11 +28,11 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.util.concurrent.NamedRunnable;
-import com.tc.util.concurrent.TaskRunner;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -57,7 +57,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private final ServerTransactionFactory serverTransactionFactory;
   private final L2ObjectSyncAckManager   objectSyncAckManager;
 
-  private final TaskRunner taskRunner;
+  private final TaskRunner               taskRunner;
+  private Timer                          lwmUpdateTimer;
 
   public L2ObjectSyncHandler(final ServerTransactionFactory factory,
                              final L2ObjectSyncAckManager objectSyncAckManager,
@@ -109,10 +110,9 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   }
 
   private void startLWMUpdaterIfNecessary() {
-    if (!lwmUpdaterRunning) {
-      lwmUpdaterRunning = true;
-
-      taskRunner.scheduleAtFixedRate(new NamedRunnable() {
+    if (lwmUpdateTimer == null) {
+      lwmUpdateTimer = taskRunner.newTimer("LWM updater");
+      lwmUpdateTimer.scheduleAtFixedRate(new Runnable() {
         // thread-confined variable - does not require synchronization
         private GlobalTransactionID lastUpdate = GlobalTransactionID.NULL_ID;
         @Override
@@ -122,9 +122,6 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
             rTxnManager.clearTransactionsBelowLowWaterMark(currentLWM);
           }
         }
-
-        @Override
-        public String getName() { return "LWM updater"; }
       }, LWM_UPDATE_INTERVAL, LWM_UPDATE_INTERVAL, TimeUnit.MILLISECONDS);
     }
   }

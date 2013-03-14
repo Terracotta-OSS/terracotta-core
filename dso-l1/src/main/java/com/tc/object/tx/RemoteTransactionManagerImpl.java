@@ -22,7 +22,6 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -31,8 +30,8 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.Util;
-import com.tc.util.concurrent.NamedRunnable;
 import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,13 +44,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Sends off committed transactions
  */
-public class RemoteTransactionManagerImpl implements RemoteTransactionManager, PrettyPrintable {
+public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private static final long                              FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
@@ -81,14 +79,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   private final SessionManager                           sessionManager;
   private final TransactionSequencer                     sequencer;
   private final DSOClientMessageChannel                  channel;
-  private final RemoteTransactionManagerTask             remoteTxManagerRunnable;
 
   private final GroupID                                  groupID;
 
   private volatile boolean                               isShutdown                  = false;
   private final AbortableOperationManager                abortableOperationManager;
 
-  private final ScheduledFuture<?>                       remoteTxManagerTask;
+  private final Timer                                    flusherTimer;
+  private final RemoteTransactionManagerTask             remoteTxManagerRunnable;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -110,11 +108,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
                                               transactionSizeCounter, transactionsPerBatchCounter,
                                               abortableOperationManager);
     this.remoteTxManagerRunnable = new RemoteTransactionManagerTask();
-    this.remoteTxManagerTask = taskRunner.scheduleWithFixedDelay(this.remoteTxManagerRunnable,
+    this.flusherTimer = taskRunner.newTimer("RemoteTransactionManager Flusher");
+    this.flusherTimer.scheduleWithFixedDelay(this.remoteTxManagerRunnable,
         COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT, TimeUnit.MILLISECONDS);
     this.batchManager               = new BatchManager();
     this.abortableOperationManager = abortableOperationManager;
-   batchManager.start();
+    batchManager.start();
  }
 
   @Override
@@ -148,11 +147,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   @Override
   public void shutdown() {
-    this.lockAccounting.shutdown();
-    this.isShutdown = true;
-    this.remoteTxManagerTask.cancel(false);
+    lockAccounting.shutdown();
+    isShutdown = true;
+    flusherTimer.cancel();
     synchronized (lock) {
-      this.lock.notifyAll();
+      lock.notifyAll();
     }
   }
 
@@ -827,7 +826,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       }
    }
 
-  private class RemoteTransactionManagerTask implements NamedRunnable {
+  private class RemoteTransactionManagerTask implements Runnable {
 
     private volatile TransactionID currentLWM = TransactionID.NULL_ID;
 
@@ -855,7 +854,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         ctm.send();
       } catch (final TCNotRunningException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
-        remoteTxManagerTask.cancel(false);
       } catch (final PlatformRejoinException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring " + e.getClass().getSimpleName()
                                                       + " while sending Low water mark : ");
@@ -867,11 +865,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
     public void reset() {
       this.currentLWM = TransactionID.NULL_ID;
-    }
-
-    @Override
-    public String getName() {
-      return "RemoteTransactionManager-flusher";
     }
   }
 
