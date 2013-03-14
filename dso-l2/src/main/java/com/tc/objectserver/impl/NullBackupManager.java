@@ -2,6 +2,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.objectserver.api.BackupManager;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -27,6 +28,6 @@ public class NullBackupManager implements BackupManager {
 
   @Override
   public Map<String, BackupStatus> getBackupStatuses() {
-    return null;
+    return Collections.emptyMap();
   }
 }
