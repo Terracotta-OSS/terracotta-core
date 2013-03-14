@@ -860,6 +860,11 @@ public class ObjectManagerTest extends TCTestCase {
       cursor.addPhysicalAction("value", new byte[1], false);
       return cursor;
     }
+
+    @Override
+    public boolean isIgnoreMissing() {
+      return false;
+    }
   }
 
   private static class TestListSetDNA implements DNA {
@@ -955,6 +960,11 @@ public class ObjectManagerTest extends TCTestCase {
 
     @Override
     public boolean isDelta() {
+      return false;
+    }
+
+    @Override
+    public boolean isIgnoreMissing() {
       return false;
     }
   }
@@ -1063,6 +1073,11 @@ public class ObjectManagerTest extends TCTestCase {
     public boolean isDelta() {
       return this.isDelta;
     }
+
+    @Override
+    public boolean isIgnoreMissing() {
+      return false;
+    }
   }
 
   public static class TestDateDNA implements DNA {
@@ -1155,6 +1170,11 @@ public class ObjectManagerTest extends TCTestCase {
 
     @Override
     public boolean isDelta() {
+      return false;
+    }
+
+    @Override
+    public boolean isIgnoreMissing() {
       return false;
     }
   }
