@@ -125,8 +125,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     final Serializable value = InternalCacheConfigurationType.EVICTION_ENABLED.getValueIfExists(config);
     this.evictionEnabled = (value == null) ? false : (Boolean) value;
 
-    this.localCacheEnabled = (Boolean) InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
-        .getExistingValueOrException(config);
     this.maxCountInCluster = (Integer) InternalCacheConfigurationType.MAX_TOTAL_COUNT.getValueIfExistsOrDefault(config);
     this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getValueIfExistsOrDefault(config);
     this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getValueIfExistsOrDefault(config);
@@ -149,10 +147,13 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback) {
+  public void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback,
+                                   boolean localCacheEnabledParam) {
     if (localCacheStore == null) { throw new AssertionError("Local Cache Store cannot be null"); }
+    this.localCacheEnabled = localCacheEnabledParam;
     this.l1ServerMapLocalCacheStore = localCacheStore;
-    this.tcObjectServerMap.initialize(maxTTISeconds, maxTTLSeconds, maxCountInCluster, isEventual(), localCacheEnabled);
+    this.tcObjectServerMap.initialize(maxTTISeconds, maxTTLSeconds, maxCountInCluster, isEventual(),
+                                      localCacheEnabledParam);
     this.tcObjectServerMap.setupLocalStore(l1ServerMapLocalCacheStore, callback);
   }
 

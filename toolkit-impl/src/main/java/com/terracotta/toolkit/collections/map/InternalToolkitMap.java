@@ -50,7 +50,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void setConfigField(String name, Object value);
 
-  void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback);
+  void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback,
+                            boolean localCacheEnabled);
 
   void removeNoReturn(Object key);
 

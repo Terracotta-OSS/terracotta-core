@@ -187,8 +187,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void initializeLocalCache(List<InternalToolkitMap<K, V>> serverMapsParam) {
+    boolean localCacheEnabled = (Boolean)InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
+        .getValueIfExistsOrDefault(config);
     for (InternalToolkitMap<K, V> serverMap : serverMapsParam) {
-      serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback);
+      serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback, localCacheEnabled);
     }
   }
 
