@@ -68,6 +68,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   private final int                             foldingObjectLimit;
   private final int                             foldingLockLimit;
+  private final boolean                         foldingEnabled;
 
   private short                                 outstandingWriteCount  = 0;
   private int                                   bytesWritten           = 0;
@@ -89,6 +90,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
     this.foldingLockLimit = foldingConfig.getLockLimit();
     this.foldingObjectLimit = foldingConfig.getObjectLimit();
+    this.foldingEnabled = foldingConfig.isFoldingEnabled();
   }
 
     @Override
@@ -343,21 +345,28 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   @Override
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                                 final TransactionIDGenerator tidGenerator) {
-    if (committed) { throw new AssertionError("Already committed"); }
+    
+      TransactionBuffer txnBuffer = null;
+    if ( !foldingEnabled ) {
+        txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
+        txn.setTransactionID(tidGenerator.nextTransactionID());
+        txnBuffer = addSimpleTransaction(txn);
+    } else {
+        if (committed) { throw new AssertionError("Already committed"); }
 
-    this.numTxnsBeforeFolding++;
+        this.numTxnsBeforeFolding++;
 
-    if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
-      this.containsSyncWriteTxn = true;
+        if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
+          this.containsSyncWriteTxn = true;
+        }
+
+        removeEmptyDeltaDna(txn);
+
+        txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
+        txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
     }
-
-    removeEmptyDeltaDna(txn);
-
-    final TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
-
+    
     this.bytesWritten += txnBuffer.write(txn);
-    txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
-
     return new FoldedInfo(txnBuffer);
   }
   
