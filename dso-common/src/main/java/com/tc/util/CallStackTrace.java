@@ -9,7 +9,7 @@ import java.io.StringWriter;
 public class CallStackTrace {
 
   public static String getCallStack() {
-    boolean enabled = Boolean.getBoolean("ooo.logging.enabled");
+    boolean enabled = Boolean.getBoolean("stack.trace.enabled");
     if (enabled) {
       Throwable t = new Throwable();
       StringWriter sw = new StringWriter();
