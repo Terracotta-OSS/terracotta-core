@@ -121,7 +121,9 @@ public class LockAccounting implements ClearableCallback {
       for (Iterator i = lockIDs.iterator(); i.hasNext();) {
         LockID lid = (LockID) i.next();
         Set txIDs = getOrCreateSetFor(lid, lock2Txs);
-        if (!txIDs.remove(txIDWrapper)) throw new AssertionError("No lock=>transaction found for " + lid + ", " + txID);
+        if (!txIDs.remove(txIDWrapper)) {
+            throw new AssertionError("No lock=>transaction found for " + lid + ", " + txID);
+        }
         if (txIDs.isEmpty()) {
           lock2Txs.remove(lid);
           if (completedLockIDs == null) {
@@ -154,11 +156,9 @@ public class LockAccounting implements ClearableCallback {
   public void waitAllCurrentTxnCompleted() throws AbortedOperationException {
     TxnRemovedListener listener;
     CountDownLatch latch = null;
-    Set currentTxnSet = null;
     synchronized (this) {
       latch = new CountDownLatch(tx2Locks.size());
-      currentTxnSet = new HashSet(tx2Locks.keySet());
-      listener = new TxnRemovedListener(currentTxnSet, latch);
+      listener = new TxnRemovedListener(new HashSet(tx2Locks.keySet()), latch);
       listeners.add(listener);
     }
 
@@ -221,9 +221,7 @@ public class LockAccounting implements ClearableCallback {
       if ( this.txnSet.remove(txnID) ) {
         this.latch.countDown();
       } else {
-        if ( !released ) {
-            throw new AssertionError();
-        }
+//  not interested in this transaction
       }
     }
     
