@@ -50,7 +50,6 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private ReplicatedTransactionManager   rTxnManager;
   private StateSyncManager               stateSyncManager;
   private GroupManager                   groupManager;
-  private volatile boolean               lwmUpdaterRunning;
 
   private volatile GlobalTransactionID   currentLWM = GlobalTransactionID.NULL_ID;
 
