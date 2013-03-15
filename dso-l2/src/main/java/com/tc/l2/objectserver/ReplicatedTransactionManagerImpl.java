@@ -374,19 +374,6 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       gid2Changes.clear();
     }
 
-    public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowWaterMark) {
-      Map<GlobalTransactionID, IdentityHashMap> lowerThanLWM = gid2Changes.headMap(lowWaterMark);
-      for (Iterator i = lowerThanLWM.values().iterator(); i.hasNext();) {
-        IdentityHashMap pendingChangesForTxn = (IdentityHashMap) i.next();
-        for (Iterator j = pendingChangesForTxn.keySet().iterator(); j.hasNext();) {
-          PendingRecord pr = (PendingRecord) j.next();
-          LinkedList<PendingRecord> pendingChangesForOid = getPendingChangesListFor(pr.getChange().getObjectID());
-          pendingChangesForOid.remove(pr);
-        }
-        i.remove();
-      }
-    }
-
     public List getAnyPendingChangesForAndClear(ObjectID oid) {
       List pendingChangesForOid = removePendingChangesFor(oid);
       if (pendingChangesForOid != null) {
@@ -403,10 +390,6 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
     private IdentityHashMap getPendingChangesSetFor(GlobalTransactionID gid) {
       return gid2Changes.get(gid);
-    }
-
-    private LinkedList<PendingRecord> getPendingChangesListFor(ObjectID objectID) {
-      return oid2Changes.get(objectID);
     }
 
     private LinkedList<PendingRecord> removePendingChangesFor(ObjectID oid) {
