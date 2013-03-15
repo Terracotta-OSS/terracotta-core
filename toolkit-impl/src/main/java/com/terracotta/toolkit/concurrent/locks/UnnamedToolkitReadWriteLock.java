@@ -15,12 +15,16 @@ public final class UnnamedToolkitReadWriteLock implements ToolkitReadWriteLock {
   private final ToolkitLock readLock;
 
   UnnamedToolkitReadWriteLock(PlatformService platformService, String lockId, ToolkitLockTypeInternal writeLockType) {
-    this(new UnnamedToolkitLock(platformService, lockId, writeLockType),
+    this(new UnnamedToolkitLock(platformService, lockId,
+                                writeLockType == ToolkitLockTypeInternal.SYNCHRONOUS_WRITE ? ToolkitLockTypeInternal.SYNCHRONOUS_WRITE
+                                    : ToolkitLockTypeInternal.WRITE),
          new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
   UnnamedToolkitReadWriteLock(PlatformService platformService, long lockId, ToolkitLockTypeInternal writeLockType) {
-    this(new UnnamedToolkitLock(platformService, lockId, writeLockType),
+    this(new UnnamedToolkitLock(platformService, lockId,
+                                writeLockType == ToolkitLockTypeInternal.SYNCHRONOUS_WRITE ? ToolkitLockTypeInternal.SYNCHRONOUS_WRITE
+                                    : ToolkitLockTypeInternal.WRITE),
          new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
