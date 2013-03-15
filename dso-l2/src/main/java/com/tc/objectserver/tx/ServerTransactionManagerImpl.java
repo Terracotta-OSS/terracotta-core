@@ -465,12 +465,14 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
 
     boolean interrupted = false;
-    while (isPaused) {
-      logger.info("Waiting to pause transaction processing");
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        interrupted = true;
+    synchronized (this) {
+      while (isPaused) {
+        logger.info("Waiting to pause transaction processing");
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
       }
     }
 
