@@ -12,10 +12,17 @@ public class ServerMapEvictionBroadcastContext implements EventContext {
 
   private final ObjectID mapOid;
   private final Set      evictedKeys;
+  private final boolean  broadcastEvictions;
 
   public ServerMapEvictionBroadcastContext(final ObjectID mapOid, final Set evictedKeys) {
+    this(mapOid, evictedKeys, false);
+  }
+
+  public ServerMapEvictionBroadcastContext(final ObjectID mapOid, final Set evictedKeys,
+                                           final boolean broadcastEvictions) {
     this.mapOid = mapOid;
     this.evictedKeys = evictedKeys;
+    this.broadcastEvictions = broadcastEvictions;
   }
 
   public ObjectID getMapOid() {
@@ -24,5 +31,9 @@ public class ServerMapEvictionBroadcastContext implements EventContext {
 
   public Set getEvictedKeys() {
     return evictedKeys;
+  }
+
+  public boolean isBroadcastEvictions() {
+    return broadcastEvictions;
   }
 }

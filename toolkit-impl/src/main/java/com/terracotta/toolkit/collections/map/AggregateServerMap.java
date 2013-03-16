@@ -259,7 +259,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }
-    long sum = 0;
+    long sum;
     try {
       sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
     } catch (AbortedOperationException e) {
@@ -414,6 +414,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         this.listeners.add(listener);
       }
     }
+    // propagate broadcast evictions flag down to CDSM
+    if (listeners.size() == 1) {
+      for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+        serverMap.setBroadcastEvictions(true);
+      }
+    }
   }
 
   @Override
@@ -421,6 +427,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void removeListener(ToolkitCacheListener<K> listener) {
     synchronized (listeners) {
       this.listeners.remove(listener);
+    }
+    // propagate broadcast evictions flag down to CDSM
+    if (listeners.isEmpty()) {
+      for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+        serverMap.setBroadcastEvictions(false);
+      }
     }
   }
 

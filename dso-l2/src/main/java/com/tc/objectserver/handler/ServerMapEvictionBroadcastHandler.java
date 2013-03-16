@@ -15,7 +15,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,13 +29,8 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
                                                                .getInt(TCPropertiesConsts.L2_SERVERMAP_EVICTION_BROADCAST_MAXKEYS,
                                                                        10000);
 
-  private DSOChannelManager    channelManager;
-  private final SampledCounter broadcastCounter;
-  private ClientStateManager   clientStateManager;
-
-  public ServerMapEvictionBroadcastHandler(SampledCounter broadcastCounter) {
-    this.broadcastCounter = broadcastCounter;
-  }
+  private DSOChannelManager channelManager;
+  private ClientStateManager clientStateManager;
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -46,20 +40,20 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
                                + ServerMapEvictionBroadcastContext.class.getName() + ". Unknown context: "
                                + context.getClass().getName());
     }
-    final ServerMapEvictionBroadcastContext broadcastContext = (ServerMapEvictionBroadcastContext) context;
+    final ServerMapEvictionBroadcastContext broadcastContext = (ServerMapEvictionBroadcastContext)context;
     final MessageChannel[] channels = channelManager.getActiveChannels();
     int clientIndex = 0;
     for (MessageChannel channel : channels) {
       if (channel.isClosed()) {
         continue;
       }
-      if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
+      if (broadcastContext.isBroadcastEvictions()
+          && clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
         for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
-          final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
+          final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage)channel
               .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
           broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch, clientIndex++);
           broadcastMessage.send();
-          broadcastCounter.increment();
         }
       }
     }
@@ -69,11 +63,11 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
     int size = evictedKeys.size();
     if (size <= maxBatchSize) { return Collections.singletonList(evictedKeys); }
     List<Set> rv = new ArrayList();
-    Set currentBatch = new HashSet((int) (maxBatchSize * 1.5));
+    Set currentBatch = new HashSet((int)(maxBatchSize * 1.5));
     for (Object obj : evictedKeys) {
       if (currentBatch.size() >= maxBatchSize) {
         rv.add(currentBatch);
-        currentBatch = new HashSet((int) (maxBatchSize * 1.5));
+        currentBatch = new HashSet((int)(maxBatchSize * 1.5));
       }
       currentBatch.add(obj);
     }
@@ -85,7 +79,7 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
 
   @Override
   protected void initialize(final ConfigurationContext context) {
-    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    final ServerConfigurationContext scc = (ServerConfigurationContext)context;
     this.channelManager = scc.getChannelManager();
     clientStateManager = scc.getClientStateManager();
   }

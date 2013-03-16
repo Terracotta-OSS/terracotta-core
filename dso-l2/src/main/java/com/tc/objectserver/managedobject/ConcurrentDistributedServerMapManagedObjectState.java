@@ -47,6 +47,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public static final String    COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
   public static final String    COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
   public static final String    EVICTION_ENABLED_FIELDNAME     = "evictionEnabled";
+  public static final String    BROADCAST_EVICTIONS_FIELDNAME  = "broadcastEvictions";
 
   protected int                 dsoLockType;
 
@@ -70,6 +71,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        evictionEnabled;
+  private boolean        broadcastEvictions;
   private boolean        localCacheEnabled;
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
@@ -86,6 +88,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.compressionEnabled = in.readBoolean();
     this.copyOnReadEnabled = in.readBoolean();
     this.evictionEnabled = in.readBoolean();
+    this.broadcastEvictions = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
@@ -125,6 +128,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, this.compressionEnabled);
     writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, this.copyOnReadEnabled);
     writer.addPhysicalAction(EVICTION_ENABLED_FIELDNAME, this.evictionEnabled);
+    writer.addPhysicalAction(BROADCAST_EVICTIONS_FIELDNAME, this.broadcastEvictions);
   }
 
   @Override
@@ -181,6 +185,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       this.copyOnReadEnabled = (Boolean)action.getObject();
     } else if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
       this.evictionEnabled = (Boolean)action.getObject();
+    } else if (BROADCAST_EVICTIONS_FIELDNAME.equals(fieldName)) {
+      this.broadcastEvictions = (Boolean)action.getObject();
     } else {
       throw new AssertionError("unexpected field name: " + fieldName);
     }
@@ -195,6 +201,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         final boolean boolValue = (Boolean) params[1];
         if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
           this.evictionEnabled = boolValue;
+        } else if (BROADCAST_EVICTIONS_FIELDNAME.equals(fieldName)) {
+          broadcastEvictions = boolValue;
         }
         break;
       case SerializationUtil.INT_FIELD_CHANGED:
@@ -357,6 +365,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     out.writeBoolean(compressionEnabled);
     out.writeBoolean(copyOnReadEnabled);
     out.writeBoolean(evictionEnabled);
+    out.writeBoolean(broadcastEvictions);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -371,7 +380,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
            && this.maxTTLSeconds == mmo.maxTTLSeconds && this.invalidateOnChange == mmo.invalidateOnChange
            && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled
            && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled
-           && this.evictionEnabled == mmo.evictionEnabled;
+           && this.evictionEnabled == mmo.evictionEnabled && this.broadcastEvictions == mmo.broadcastEvictions;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
@@ -389,7 +398,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   public boolean isEvictionEnabled() {
-    return this.evictionEnabled;
+    return evictionEnabled;
+  }
+
+  public boolean isBroadcastEvictions() {
+    return broadcastEvictions;
   }
 
   @Override
@@ -495,6 +508,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     result = prime * result + (compressionEnabled ? 1231 : 1237);
     result = prime * result + (copyOnReadEnabled ? 1231 : 1237);
     result = prime * result + (evictionEnabled ? 1231 : 1237);
+    result = prime * result + (broadcastEvictions ? 1231 : 1237);
     return result;
   }
 

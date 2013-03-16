@@ -102,4 +102,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   boolean isEvictionEnabled();
 
   void setConfigFieldInternal(String fieldChanged, Object changedValue);
+
+  void setBroadcastEvictions(boolean broadcastEvictions);
+
+  boolean isBroadcastEvictions();
 }

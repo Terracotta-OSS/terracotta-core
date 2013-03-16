@@ -81,6 +81,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private volatile int                                                    maxTTLSeconds;
   private volatile int                                                    maxCountInCluster;
   private volatile boolean                                                evictionEnabled;
+  private volatile boolean                                                broadcastEvictions;
 
   // unclustered local fields
   protected volatile TCObjectServerMap<Long>                              tcObjectServerMap;
@@ -96,6 +97,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final ToolkitCacheMetaDataCallback                              metaDataCallback;
   private final AtomicReference<ToolkitMap<String, ToolkitAttributeType>> attributeSchema     = new AtomicReference<ToolkitMap<String, ToolkitAttributeType>>();
   private volatile ToolkitAttributeExtractor                              attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
+
+  public ServerMap(Configuration config, String name, boolean broadcastEvictions) {
+    this(config, name);
+    this.broadcastEvictions = broadcastEvictions;
+  }
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -1338,6 +1344,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
           ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
     }
+  }
+
+  @Override
+  public void setBroadcastEvictions(boolean broadcastEvictions) {
+    if (this.broadcastEvictions != broadcastEvictions) {
+      this.broadcastEvictions = broadcastEvictions;
+      platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
+          ServerMapApplicator.BROADCAST_EVICTIONS_FIELDNAME, this.broadcastEvictions });
+    }
+  }
+
+  public boolean isBroadcastEvictions() {
+    return broadcastEvictions;
   }
 
   private boolean isSearchable() {
