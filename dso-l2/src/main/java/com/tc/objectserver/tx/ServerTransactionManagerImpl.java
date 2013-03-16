@@ -460,19 +460,18 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   @Override
-  public void incomingTransactions(final NodeID source, final Map<ServerTransactionID, ServerTransaction> txns) {
+  public synchronized void incomingTransactions(final NodeID source,
+                                                final Map<ServerTransactionID, ServerTransaction> txns) {
     final boolean active = isActive();
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
 
     boolean interrupted = false;
-    synchronized (this) {
-      while (isPaused) {
-        logger.info("Waiting to pause transaction processing");
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          interrupted = true;
-        }
+    while (isPaused) {
+      logger.info("Waiting to pause transaction processing");
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
       }
     }
 
