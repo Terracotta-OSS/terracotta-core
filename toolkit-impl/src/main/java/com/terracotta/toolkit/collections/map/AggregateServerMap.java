@@ -187,7 +187,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void initializeLocalCache(List<InternalToolkitMap<K, V>> serverMapsParam) {
-    boolean localCacheEnabled = (Boolean)InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
+    boolean localCacheEnabled = (Boolean) InternalCacheConfigurationType.LOCAL_CACHE_ENABLED
         .getValueIfExistsOrDefault(config);
     for (InternalToolkitMap<K, V> serverMap : serverMapsParam) {
       serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback, localCacheEnabled);
@@ -416,8 +416,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
     // propagate broadcast evictions flag down to CDSM
     if (listeners.size() == 1) {
-      for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-        serverMap.setBroadcastEvictions(true);
+      ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
+      try {
+        for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+          serverMap.setBroadcastEvictions(true);
+        }
+      } finally {
+        ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
       }
     }
   }
@@ -430,8 +435,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
     // propagate broadcast evictions flag down to CDSM
     if (listeners.isEmpty()) {
-      for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-        serverMap.setBroadcastEvictions(false);
+      ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
+      try {
+        for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+          serverMap.setBroadcastEvictions(false);
+        }
+      } finally {
+        ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
       }
     }
   }
@@ -632,8 +642,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     for (Entry<K, V> entry : rv.entrySet()) {
-      V nonExpiredValue = getServerMapForKey(entry.getKey())
-          .checkAndGetNonExpiredValue(entry.getKey(), entry.getValue(), GetType.UNLOCKED, quiet);
+      V nonExpiredValue = getServerMapForKey(entry.getKey()).checkAndGetNonExpiredValue(entry.getKey(),
+                                                                                        entry.getValue(),
+                                                                                        GetType.UNLOCKED, quiet);
       entry.setValue(nonExpiredValue);
     }
     return rv;
@@ -644,9 +655,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       InternalToolkitMap<K, V> serverMap = getServerMapForKey(key);
       assertKeyLiteral(key);
       TCObject tcObject = serverMap.__tc_managed();
-      if (tcObject == null) {
-        throw new UnsupportedOperationException("unlockedGetAll is not supported in a non-shared ServerMap");
-      }
+      if (tcObject == null) { throw new UnsupportedOperationException(
+                                                                      "unlockedGetAll is not supported in a non-shared ServerMap"); }
       ObjectID mapId = tcObject.getObjectID();
       Set<K> keysForThisServerMap = mapIdToKeysMap.get(mapId);
       if (keysForThisServerMap == null) {
@@ -711,7 +721,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
           if (values == null) {
             values = distributeInStripes((Integer) newValue, this.serverMaps.length);
           }
-          newValue = ((Integer)changedValue) < 0 ? -1 : values[i];
+          newValue = ((Integer) changedValue) < 0 ? -1 : values[i];
         }
         serverMaps[i].setConfigField(fieldChanged, newValue);
       }
@@ -723,7 +733,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
           for (InternalToolkitMap<K, V> sm : stripe) {
             maxTotalCount += sm.getMaxCountInCluster();
           }
-          newValue = maxTotalCount < 0  ? -1 : maxTotalCount;
+          newValue = maxTotalCount < 0 ? -1 : maxTotalCount;
         }
         stripe.setConfigField(fieldChanged, newValue);
       }
@@ -735,9 +745,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private void validateField(final String fieldChanged) {
     final InternalCacheConfigurationType type = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
     Preconditions.checkArgument(InternalCacheConfigurationType.getConfigsFor(toolkitObjectType).contains(type),
-        "%s does not support configuration option '%s'", toolkitObjectType, fieldChanged);
-    Preconditions.checkArgument(type.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s",
-        fieldChanged);
+                                "%s does not support configuration option '%s'", toolkitObjectType, fieldChanged);
+    Preconditions
+        .checkArgument(type.isDynamicChangeAllowed(), "Dynamic change not allowed for field: %s", fieldChanged);
   }
 
   @Override
