@@ -7,17 +7,11 @@ import org.terracotta.toolkit.ToolkitRuntimeException;
 
 import com.terracotta.toolkit.express.loader.Util;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.net.URL;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -25,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
-  private static final String TOOLKIT_CONTENT_RESOURCE                                         = "/toolkit-content.txt";
   private static final String SPI_INIT                                                         = "com.terracotta.toolkit.express.SpiInit";
   public static final String  SECRET_PROVIDER                                                  = "com.terracotta.express.SecretProvider";
   public static final String  DSO_CONTEXT_IMPL                                                 = "com.tc.object.bytecode.hook.impl.DSOContextImpl";
@@ -213,49 +206,14 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     }
   }
 
-  private List<String> loadPrefixes() {
-    InputStream in = TerracottaInternalClientImpl.class.getResourceAsStream(TOOLKIT_CONTENT_RESOURCE);
-    if (in == null) throw new RuntimeException("Couldn't load resource entries file at: " + TOOLKIT_CONTENT_RESOURCE);
-    BufferedReader reader = null;
-    try {
-      List<String> entries = new ArrayList<String>();
-      reader = new BufferedReader(new InputStreamReader(in));
-      String line;
-      while ((line = reader.readLine()) != null) {
-        line = line.trim();
-        if (line.length() > 0) {
-          if (line.endsWith("/")) {
-            entries.add(line);
-          } else {
-            entries.add(line + "/");
-          }
-        }
-      }
-      Collections.sort(entries);
-      return entries;
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    } finally {
-      Util.closeQuietly(in);
-    }
-  }
-
   private ClusteredStateLoader createClusteredStateLoader(ClassLoader appLoader) {
-    List<String> prefixes = loadPrefixes();
-
-    // we don't need to use embedded ehcache classes if it's already on classpath
-    boolean useEmbeddedEhcache = isEmbeddedEhcacheRequired();
-    if (!useEmbeddedEhcache) {
-      for (Iterator<String> it = prefixes.iterator(); it.hasNext();) {
-        String prefix = it.next();
-        if (prefix.contains("ehcache/")) {
-          it.remove();
-        }
-      }
+    ClusteredStateLoader loader = null;
+    URL devmodeUrl = DevmodeClusteredStateLoader.devModeResource();
+    if (devmodeUrl != null) {
+      loader = new DevmodeClusteredStateLoader(devmodeUrl, appClassLoader, isEmbeddedEhcacheRequired());
+    } else {
+      loader = new ClusteredStateLoaderImpl(appClassLoader, isEmbeddedEhcacheRequired());
     }
-
-    ClusteredStateLoader loader = new ClusteredStateLoader(prefixes, appClassLoader, useEmbeddedEhcache);
-
     loader.addExtraClass(SpiInit.class.getName(), getClassBytes(SpiInit.class));
     loader.addExtraClass(StandaloneL1Boot.class.getName(), getClassBytes(StandaloneL1Boot.class));
     return loader;

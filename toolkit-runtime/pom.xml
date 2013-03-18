@@ -11,16 +11,15 @@
 
   <artifactId>terracotta-toolkit-runtime</artifactId>
   <name>terracotta-toolkit-runtime</name>
-  <packaging>bundle</packaging>
+  <packaging>${packagingType}</packaging>
   <description>Terracotta toolkit runtime</description>
 
   <properties>
-    <terracotta-l1.artifactId>terracotta-l1</terracotta-l1.artifactId>
     <archive>${project.build.directory}/${project.artifactId}-${project.version}.jar</archive>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <toolkitContentFilename>toolkit-content.txt</toolkitContentFilename>
-    <packagingTarget>classes</packagingTarget>
-    <skipToolkitPackaging>false</skipToolkitPackaging>
+    <skipToolkitPackaging>true</skipToolkitPackaging>
+    <packagingType>jar</packagingType>
   </properties>
 
   <dependencies>
@@ -49,7 +48,7 @@
     <!-- Stuff that goes into L1 -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>${terracotta-l1.artifactId}</artifactId>
+      <artifactId>terracotta-l1</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -61,7 +60,7 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>ehcache</artifactId>
@@ -72,16 +71,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-          </archive>
-        </configuration>
-      </plugin>     
-  
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -123,52 +112,12 @@
           </execution>           
         </executions>
       </plugin>
-      
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>   
-          <execution>
-            <id>shouldSkipAssembly</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <source>
-                def toolkitContentFile = new File(project.build.outputDirectory, project.properties['toolkitContentFilename'])
-                if (toolkitContentFile.exists()) {
-                  println("Setting skipInternalJars=true");
-                  project.properties.setProperty('skipInternalJars', 'true')
-                } else {
-                  project.properties.setProperty('skipInternalJars', 'false')
-                } 
-              </source>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>        
-           
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.3</version><!--$NO-MVN-MAN-VER$-->
-        <executions>
-          <execution>
-            <id>package-L1-and-TIMs</id>
-            <configuration>
-              <skipAssembly>${skipInternalJars}</skipAssembly>
-              <finalName>${packagingTarget}</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-              <descriptors>
-                <descriptor>${basedir}/src/main/assembly/jar.xml</descriptor>
-              </descriptors>
-            </configuration>          
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>        
+        <executions>       
           <execution>
             <id>package-sources</id>
             <configuration>
@@ -185,89 +134,6 @@
           </execution>                  
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <executions>         
-          <execution>
-            <id>process-toolkit-embeddedjars</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>parepareToolkitContent</goal>
-            </goals>
-            <configuration>
-              <skip>${skipToolkitPackaging}</skip>
-              <packagingDir>${project.build.outputDirectory}</packagingDir>
-              <privateClassSuffix>.class_terracotta</privateClassSuffix>
-              <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
-            </configuration>            
-          </execution>
-        </executions>
-      </plugin>      
- 
- 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.0-tc-patch</version>
-        <configuration>
-          <useBaseVersion>true</useBaseVersion>
-          <artifactSet>
-            <includes>
-              <include>org.terracotta.internal:toolkit-express-impl</include>
-              <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
-              <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
-              <include>org.terracotta.internal:build-data</include>
-            </includes>
-          </artifactSet>       
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
-                <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
-              </excludes>
-            </filter>      
-          </filters>    
-          <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-          <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
-          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
-        </configuration>
-        <executions>
-          <execution>
-            <id>shade-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>    
-
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>inject-correct-pom-to-jar</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <source>
-                def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
-                ant.jar(destfile: jarFile, update: "true") {
-                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
-                             fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
-                }
-              </source>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>      
-      
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -292,16 +158,286 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>       
-    <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.3.7</version>
-        <extensions>true</extensions>
-        <configuration>
-          <manifestLocation>${project.build.directory}</manifestLocation>
-          <instructions>
-            <Import-Package>
+      </plugin>               
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>skip-javadoc</id>
+      <activation>
+        <file>
+          <exists>${user.home}/.skipjavadoc</exists>
+        </file>
+      </activation>
+      <properties>
+        <skipJavadoc>true</skipJavadoc>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>devmode</id>      
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>true</value>
+        </property>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <devmodeResourcePath>${project.build.outputDirectory}/META-INF/devmode/${project.groupId}/${project.artifactId}</devmodeResourcePath>
+        <devmodeEmbeddedDependencies>${devmodeResourcePath}/embedded-dependencies.txt</devmodeEmbeddedDependencies>
+        <devmodeDependencies>${devmodeResourcePath}/dependencies.txt</devmodeDependencies>
+      </properties>
+      <build>
+        <plugins>
+          <!-- list dependencies of this jar that would otherwise be shaded in. Do not confuse these dependencies with embedded-dependencies that we hide from application classloader -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>list-dependencies</id>
+                <configuration>
+                  <outputFile>${devmodeDependencies}</outputFile>
+                  <includeScope>runtime</includeScope>
+                </configuration>                
+                <goals>
+                  <goal>list</goal>
+                </goals>
+                <phase>compile</phase>
+              </execution>
+            </executions>
+          </plugin>         
+          <!-- list embedded-dependencies for /L1, /ehcache and /TIMs resources --> 
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <version>1.0.8-SNAPSHOT</version>
+            <executions>         
+              <execution>
+                <id>list-toolkit-runtime</id> <!-- add toolkit runtime artifact itself into its list since dependency plugin doesn't do that -->
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>list-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>${project.groupId}:${project.artifactId}:${project.version}</param>
+                  </artifacts>
+                  <resolveTransitively>false</resolveTransitively>
+                  <listAsUrl>false</listAsUrl>
+                  <doNotResolve>true</doNotResolve>
+                  <outputFile>${devmodeDependencies}</outputFile>
+                  <appendFile>true</appendFile>
+                </configuration>
+              </execution>            
+              <execution>
+                <id>list-L1</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>list-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>org.terracotta:terracotta-l1:${project.version}</param>
+                  </artifacts>
+                  <comment>L1</comment>
+                  <outputFile>${devmodeEmbeddedDependencies}</outputFile>
+                  <appendFile>false</appendFile><!-- no append here so we could get a fresh file every run-->
+                </configuration>
+              </execution>
+              <execution>
+                <id>list-TIMs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>list-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>org.terracotta.internal:terracotta-toolkit-impl:${project.version}</param>
+                  </artifacts>
+                  <comment>TIMs</comment>
+                  <resolveTransitively>false</resolveTransitively>
+                  <outputFile>${devmodeEmbeddedDependencies}</outputFile>
+                  <appendFile>true</appendFile>
+                </configuration>
+              </execution>      
+              <execution>
+                <id>package-ehcache</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>list-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>net.sf.ehcache:ehcache:${ehcache.version}</param>
+                  </artifacts>
+                  <comment>ehcache</comment><!-- ehcache has to be listed last in the file -->
+                  <outputFile>${devmodeEmbeddedDependencies}</outputFile>
+                  <appendFile>true</appendFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin> 
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>fullmode</id>      
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>false</value>
+        </property>
+      </activation>
+      <properties>
+        <packagingTarget>classes</packagingTarget>
+        <skipToolkitPackaging>false</skipToolkitPackaging>
+        <packagingType>bundle</packagingType>      
+      </properties>
+      <build>
+        <plugins>    
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <archive>
+                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+              </archive>
+            </configuration>
+          </plugin>         
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <version>1.0.8-SNAPSHOT</version>
+            <executions>         
+              <execution>
+                <id>package-L1</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>org.terracotta:terracotta-l1:${project.version}</param>
+                  </artifacts>
+                  <outputDir>${project.build.outputDirectory}/L1</outputDir>
+                </configuration>
+              </execution>
+              <execution>
+                <id>package-TIMs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>org.terracotta.internal:terracotta-toolkit-impl:${project.version}</param>
+                  </artifacts>
+                  <resolveTransitively>false</resolveTransitively>
+                  <outputDir>${project.build.outputDirectory}/TIMs</outputDir>
+                </configuration>
+              </execution>      
+              <execution>
+                <id>package-ehcache</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>            
+                <configuration>
+                  <artifacts>
+                    <param>net.sf.ehcache:ehcache:${ehcache.version}</param>
+                  </artifacts>
+                  <outputDir>${project.build.outputDirectory}/ehcache</outputDir>
+                </configuration>
+              </execution>          
+              <execution>
+                <id>process-toolkit-embeddedjars</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>parepareToolkitContent</goal>
+                </goals>
+                <configuration>
+                  <skip>${skipToolkitPackaging}</skip>
+                  <packagingDir>${project.build.outputDirectory}</packagingDir>
+                  <privateClassSuffix>.class_terracotta</privateClassSuffix>
+                  <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
+                </configuration>            
+              </execution>
+            </executions>
+          </plugin>      
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.0-tc-patch</version>
+            <configuration>
+              <useBaseVersion>true</useBaseVersion>
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta.internal:toolkit-express-impl</include>
+                  <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
+                  <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
+                  <include>org.terracotta.internal:build-data</include>
+                </includes>
+              </artifactSet>       
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
+                    <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
+                  </excludes>
+                </filter>      
+              </filters>    
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
+              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+            </configuration>
+            <executions>
+              <execution>
+                <id>shade-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>    
+
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>inject-correct-pom-to-jar</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
+                ant.jar(destfile: jarFile, update: "true") {
+                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
+                             fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
+                }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>            
+          <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <version>2.3.7</version>
+            <extensions>true</extensions>
+            <configuration>
+              <manifestLocation>${project.build.directory}</manifestLocation>
+              <instructions>
+                <Import-Package>
             net.sf.ehcache;resolution:=optional,
             net.sf.ehcache.config;resolution:=optional,
             net.sf.ehcache.terracotta;resolution:=optional,
@@ -323,85 +459,19 @@
             javax.management.remote,
             javax.management.loading,
             javax.net.ssl,*</Import-Package>
-            <Export-Package>org.terracotta.toolkit.*;-split-package:=merge-last</Export-Package>
-            <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-            <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>           
-            <Include-Resource> {maven-resources}, {maven-dependencies}, target/classes </Include-Resource>
-          </instructions>
-          <excludeDependencies>*;scope=provided|runtime</excludeDependencies>
-        </configuration>        
-      </plugin>        
-    </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <id>skip-javadoc</id>
-      <activation>
-        <file>
-          <exists>${user.home}/.skipjavadoc</exists>
-        </file>
-      </activation>
-      <properties>
-        <skipJavadoc>true</skipJavadoc>
-      </properties>
-    </profile>
-    
-    <profile>
-      <id>devmode</id>      
-      <activation>
-        <file>
-          <exists>${user.home}/.devmode</exists>
-        </file>
-      </activation>      
-      <properties>
-        <skipToolkitPackaging>true</skipToolkitPackaging>
-        <packagingTarget>packaging</packagingTarget>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>create-devmode-class-file</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>
-                  <source>
-                    println "================== devmode ===================="
-                    def packagingDir = new File(project.build.directory, project.properties['packagingTarget'])
-                    def toolkitDevmodeClasspath = new File(project.build.outputDirectory, 'devmode-embedded-classpath.txt')
-                    toolkitDevmodeClasspath.withWriter{ out -&gt;
-                      packagingDir.eachFileRecurse  {
-                        if (it.name.endsWith('.jar')) {
-                          def jarFile = new java.util.zip.ZipFile(it)
-                          def classDirEntry = jarFile.getEntry("devmode-classdir.txt")
-                          if (classDirEntry != null) {
-                            out.println jarFile.getInputStream(classDirEntry).text
-                          } else {
-                            out.println(it)
-                          }
-                        }
-                      }
-                    }
-                    // create empty toolkit content file 
-                    new File(project.build.outputDirectory, project.properties['toolkitContentFilename']).withWriter { out -&gt;
-                      out.println("")
-                    }
-                  </source>
-                </configuration>
-              </execution>
-            </executions>              
-          </plugin>
+                <Export-Package>org.terracotta.toolkit.*;-split-package:=merge-last</Export-Package>
+                <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+                <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>           
+                <Include-Resource> {maven-resources}, {maven-dependencies}, target/classes </Include-Resource>
+              </instructions>
+              <excludeDependencies>*;scope=provided|runtime</excludeDependencies>
+            </configuration>        
+          </plugin>      
         </plugins>
       </build>
     </profile>
   </profiles>
-  
+
   <repositories>
     <repository>
       <id>terracotta-releases</id>
