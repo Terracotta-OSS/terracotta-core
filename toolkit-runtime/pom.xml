@@ -213,7 +213,6 @@
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
-            <version>1.0.8-SNAPSHOT</version>
             <executions>         
               <execution>
                 <id>list-toolkit-runtime</id> <!-- add toolkit runtime artifact itself into its list since dependency plugin doesn't do that -->

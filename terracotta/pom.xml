@@ -37,7 +37,7 @@
         <configuration>
           <rootPath>${basedir}/..</rootPath>
           <addClasspath>true</addClasspath>
-          <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
+          <excludeGroupIds>${excludeGroupIdsForClasspath}</excludeGroupIds>
           <manifestEntries>
             <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
             <Class-Path>resources/</Class-Path>
@@ -52,113 +52,105 @@
             <phase>compile</phase>
           </execution>
         </executions>
-      </plugin>
+      </plugin>   
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <id>unpack-sources</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <classifier>sources</classifier>
-              <outputDirectory>${project.build.directory}/sources</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2.1</version>
-        <executions>
-          <execution>
-            <id>assemble-sources</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${basedir}/src/assemble/sources.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>true</appendAssemblyId>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.0-tc-patch</version>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <useBaseVersion>true</useBaseVersion>
-          <artifactSet>
-            <includes>
-              <include>org.terracotta.internal:*</include>
-            </includes>
-          </artifactSet>       
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
-              </excludes>
-            </filter>		  
-          </filters>    
-          <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>           
-          <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-              <resource>MANIFEST.MF</resource>
-            </transformer>          
-            <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-              <resource>META-INF/MANIFEST.MF</resource>
-              <file>${project.build.directory}/MANIFEST.MF</file>
-            </transformer>          
-            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-              <resource>devmode-classdir.txt</resource>
-            </transformer>             
-          </transformers>            
+          <archive>
+            <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+          </archive>
         </configuration>
-        <executions>
-          <execution>
-            <id>shade-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>inject-correct-pom-to-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
+      </plugin> 
+    </plugins>      
+  </build>
+
+  <profiles>
+    <profile>
+      <id>devmode</id>      
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>true</value>
+        </property>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <excludeGroupIdsForClasspath></excludeGroupIdsForClasspath>
+      </properties>      
+    </profile>
+
+    <profile>
+      <id>fullmode</id>      
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>false</value>
+        </property>
+      </activation>
+      <properties>
+        <excludeGroupIdsForClasspath>org.terracotta.internal</excludeGroupIdsForClasspath>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.0-tc-patch</version>
             <configuration>
-              <source>
+              <useBaseVersion>true</useBaseVersion>
+              <createSourcesJar>true</createSourcesJar>
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta.internal:*</include>
+                  <include>org.terracotta.internal.enterprise:*</include>
+                </includes>
+              </artifactSet>       
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
+                  </excludes>
+                </filter>		  
+              </filters>    
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>          
+            </configuration>
+            <executions>
+              <execution>
+                <id>shade-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>inject-correct-pom-to-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
                 def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
                 ant.jar(destfile: jarFile, update: "true") {
                   zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
-              </source>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>       
-    </plugins>
-  </build>
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>        
+        </plugins>
+      </build>
+    </profile>
+  </profiles>    
 </project>
