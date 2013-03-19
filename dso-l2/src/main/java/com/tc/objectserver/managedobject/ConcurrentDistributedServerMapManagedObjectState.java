@@ -401,6 +401,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return evictionEnabled;
   }
 
+  @Override
   public boolean isBroadcastEvictions() {
     return broadcastEvictions;
   }
