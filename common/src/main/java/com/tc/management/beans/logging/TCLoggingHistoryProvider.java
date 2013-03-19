@@ -34,13 +34,18 @@ public class TCLoggingHistoryProvider {
     return Arrays.asList(notifications);
   }
 
+  /**
+   * Return all messages that have come since the provided timestamp
+   * 
+   * @param timestamp indicates time of last retrieved message
+   */
   public List<Notification> getLogNotificationsSince(long timestamp) {
     List<Notification> result = new ArrayList<Notification>();
 
     Notification[] notifications = new Notification[this.notificationsHistory.depth()];
     this.notificationsHistory.toArray(notifications);
     for (Notification notification : notifications) {
-      if (notification.getTimeStamp() >= timestamp) {
+      if (notification.getTimeStamp() > timestamp) {
         result.add(notification);
       }
     }
