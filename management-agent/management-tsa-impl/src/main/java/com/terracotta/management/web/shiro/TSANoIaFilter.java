@@ -4,7 +4,7 @@
  */
 package com.terracotta.management.web.shiro;
 
-import net.sf.ehcache.management.NoIaFilter;
+import org.terracotta.management.embedded.NoIaFilter;
 
 import com.terracotta.management.web.utils.TSAConfig;
 

@@ -11,11 +11,6 @@
     <relativePath>../../build-parent</relativePath>
   </parent>
 
-  <properties>
-    <management-core.version>1.1.1-SNAPSHOT</management-core.version>
-  </properties>
-
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
