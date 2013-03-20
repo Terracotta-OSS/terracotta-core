@@ -49,8 +49,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE;
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
     cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
 
     final ManagedObjectState state = applyValidation(className, cursor);
@@ -62,13 +60,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = ManagedObjectStateStaticConfig.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, Integer.valueOf(1), false);
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, Integer.valueOf(2), false);
     cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
-    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTI_FIELD, Integer.valueOf(3),
-                             false);
-    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTL_FIELD, Integer.valueOf(4),
-                             false);
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -112,8 +104,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
                              Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.BROADCAST_EVICTIONS_FIELDNAME, false, false);
 
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003), 0L, 0L, 0L, 0L });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004), 0L, 0L, 0L, 0L });
 
     final ManagedObjectState state = applyValidation(className, cursor);
 

@@ -145,22 +145,23 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
       return;
     }
 
-    boolean clearOrDestroyFound = false;
+    boolean receivedUnexpectedBroadcast = false;
     // Transactions could be folded, hence ignoring other changes.
     while (cursor.next(this.encoding)) {
       final LogicalAction action = cursor.getLogicalAction();
       final int method = action.getMethod();
       if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
         ((TCObjectServerMap) tcObjectExternal).clearLocalCache((TCServerMap) pojo);
-        clearOrDestroyFound = true;
       } else if (method == SerializationUtil.DESTROY) {
         ((DestroyApplicator) pojo).applyDestroy();
-        clearOrDestroyFound = true;
+      } else if (method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
+        ((TCObjectServerMap) tcObjectExternal).removeValueFromLocalCache(action.getParameters()[0]);
       } else {
         getLogger().warn("ServerMap received delta changes for methods other than CLEAR : " + method);
+        receivedUnexpectedBroadcast = true;
       }
     }
-    if (!clearOrDestroyFound) {
+    if (receivedUnexpectedBroadcast) {
       // Can't assert here as resent transactions on server crash can be broadcasted as it might skip apply at the
       // server.
       // Resent transactions might need to be broadcasted.

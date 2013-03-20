@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.object.ObjectID;
+
 public interface EvictableEntry {
 
   /**
@@ -11,7 +13,11 @@ public interface EvictableEntry {
    * entries can be evicted
    * 
    * @return when values is going to expire relative to "now", a negative number or zero indicates the value is expired.
+   * @param now
+   * @param ttiSeconds
+   * @param ttlSeconds
    */
-  public int expiresIn(int now, int ttiSeconds, int ttlSeconds);
+  public long expiresIn(long now, long ttiSeconds, long ttlSeconds);
 
+  public ObjectID getObjectID();
 }

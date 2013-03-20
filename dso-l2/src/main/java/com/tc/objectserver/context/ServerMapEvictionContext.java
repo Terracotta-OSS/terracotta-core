@@ -5,6 +5,7 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictionTrigger;
 
 import java.util.Map;
@@ -14,12 +15,12 @@ public class ServerMapEvictionContext implements EventContext {
   private final EvictionTrigger trigger;
   private final int      tti;
   private final int      ttl;
-  private final Map      samples;
+  private final Map<Object, EvictableEntry>      samples;
   private final String   className;
   private final String   cacheName;
 
   public ServerMapEvictionContext(final EvictionTrigger trigger, final int tti, final int ttl,
-                                  final Map samples, final String className, final String cacheName) {
+                                  final Map<Object, EvictableEntry> samples, final String className, final String cacheName) {
     this.trigger = trigger;
     this.tti = tti;
     this.ttl = ttl;
@@ -28,7 +29,7 @@ public class ServerMapEvictionContext implements EventContext {
     this.cacheName = cacheName;
   }
   
-   public ServerMapEvictionContext(final EvictionTrigger trigger, final Map samples, final String className, final String cacheName) {
+   public ServerMapEvictionContext(final EvictionTrigger trigger, final Map<Object, EvictableEntry> samples, final String className, final String cacheName) {
     this.trigger = trigger;
     this.tti = 0;
     this.ttl = 0;
@@ -52,7 +53,7 @@ public class ServerMapEvictionContext implements EventContext {
     return this.ttl;
   }
 
-  public Map<Object, ObjectID> getRandomSamples() {
+  public Map<Object, EvictableEntry> getRandomSamples() {
     return this.samples;
   }
 

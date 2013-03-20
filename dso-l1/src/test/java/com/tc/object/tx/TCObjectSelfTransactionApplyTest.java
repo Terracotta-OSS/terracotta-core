@@ -149,11 +149,6 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
     public boolean isDelta() {
       return true;
     }
-
-    @Override
-    public boolean isIgnoreMissing() {
-      return false;
-    }
   }
 
   private class MyTCObjectSelfStore implements TCObjectSelfStore {

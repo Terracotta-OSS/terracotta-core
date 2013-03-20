@@ -20,7 +20,7 @@ public interface ServerMapEvictionManager extends PostInit, PrettyPrintable {
   
   public void scheduleEvictionTrigger(EvictionTrigger trigger);
 
-  public void evict(ObjectID oid, Map<Object, ObjectID> samples, String className, String cacheName);
+  public void evict(ObjectID oid, Map<Object, EvictableEntry> samples, String className, String cacheName);
   
   public SampledCounter getExpirationStatistics();
   

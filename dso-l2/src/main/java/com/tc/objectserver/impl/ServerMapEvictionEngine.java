@@ -13,6 +13,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
@@ -145,7 +146,7 @@ public class ServerMapEvictionEngine {
         oid, Collections.unmodifiableSet(candidates.keySet()), broadcastEvictions));
   }
 
-  void evictFrom(final ObjectID oid, final Map candidates, final String className, final String cacheName) {
+  void evictFrom(final ObjectID oid, final Map<Object, EvictableEntry> candidates, final String className, final String cacheName) {
     if ( candidates.isEmpty() ) {
       notifyEvictionCompletedFor(oid);
       return;

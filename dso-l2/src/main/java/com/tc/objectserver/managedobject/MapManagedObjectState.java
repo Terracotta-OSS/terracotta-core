@@ -50,87 +50,97 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     this.references = factory.getKeyValueStorage(id, false);
   }
 
+  protected ObjectID getId() {
+    return id;
+  }
+
   @Override
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
-        final Object key = getKey(params);
-        final Object value = getValue(params);
-        Object old = references.get(key);
-        this.references.put(key, value);
-        if (key instanceof ObjectID) {
-          final ObjectID v = (ObjectID) key;
-          getListener().changed(objectID, null, v);
-          addBackReferenceForKey(applyInfo, v, objectID);
-        }
-        if (value instanceof ObjectID) {
-          final ObjectID v = (ObjectID) value;
-          getListener().changed(objectID, null, v);
-          addBackReferenceForValue(applyInfo, v, objectID);
-          addValue(applyInfo, v, old instanceof ObjectID);
-        }
-        if (old instanceof ObjectID) {
-          removedValueFromMap(objectID, applyInfo, (ObjectID) old);
-        }
+        applyPut(applyInfo, params);
         break;
       case SerializationUtil.REMOVE:
-        old = this.references.get(params[0]);
-        this.references.remove(params[0]);
-        if (old instanceof ObjectID) {
-          removedValueFromMap(objectID, applyInfo, (ObjectID) old);
-          removeKeyPresentForValue(applyInfo, (ObjectID) old);
-        }
+        applyRemove(applyInfo, params);
         break;
       case SerializationUtil.CLEAR:
       case SerializationUtil.DESTROY:
-        clearedMap(applyInfo, references.values());
-        this.references.clear();
+        applyClear(applyInfo);
         break;
-
       default:
         throw new AssertionError("Invalid action:" + method);
     }
-
   }
 
-  protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
-    // Overridden by subclasses
+  protected void addedReferences(ApplyTransactionInfo applyInfo, Object... objects) {
+    for (Object o : objects) {
+      addedReference(applyInfo, o);
+    }
   }
 
-  protected void removedValueFromMap(ObjectID mapID, ApplyTransactionInfo applyInfo, ObjectID objectID) {
-    // Overridden by subclasses
+  protected void addedReferences(ApplyTransactionInfo applyInfo, Collection<?> objects) {
+    for (Object o : objects) {
+      addedReference(applyInfo, o);
+    }
   }
 
-  protected void addValue(ApplyTransactionInfo applyInfo, Object value, boolean keyExists) {
-    // Overridden by subclasses
+  protected void addedReference(ApplyTransactionInfo applyInfo, Object o) {
+    if (o instanceof ObjectID) {
+      ObjectID oid = (ObjectID)o;
+      getListener().changed(getId(), null, oid);
+      applyInfo.addBackReference(oid, getId());
+    }
   }
 
-  protected void removeKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
-    // Override
+  protected void removedReferences(ApplyTransactionInfo applyInfo, Object... objects) {
+    for (Object object : objects) {
+      removedReference(applyInfo, object);
+    }
   }
 
-  protected void addBackReferenceForKey(final ApplyTransactionInfo includeIDs, final ObjectID key, final ObjectID map) {
-    includeIDs.addBackReference(key, map);
+  protected void removedReferences(ApplyTransactionInfo applyInfo, Collection<?> objects) {
+    for (Object object : objects) {
+      removedReference(applyInfo, object);
+    }
   }
 
-  protected void addBackReferenceForValue(final ApplyTransactionInfo includeIDs, final ObjectID value,
-                                          final ObjectID map) {
-    includeIDs.addBackReference(value, map);
+  protected void removedReference(ApplyTransactionInfo applyInfo, Object o) {
+    if (o instanceof ObjectID) {
+      applyInfo.deleteObject((ObjectID) o);
+    }
   }
 
-  protected Object getKey(final Object[] params) {
-    return params[0];
+  protected Object applyPut(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object value = params[1];
+    Object old = references.get(key);
+    references.put(key, value);
+
+    addedReferences(applyInfo, key, value);
+    removedReferences(applyInfo, old);
+
+    return old;
   }
 
-  protected Object getValue(final Object[] params) {
-    return params[1];
+  protected Object applyRemove(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object old = get(key);
+    references.remove(key);
+    removedReferences(applyInfo, key, old);
+    return old;
+  }
+
+  protected void applyClear(ApplyTransactionInfo applyInfo) {
+    removedReferences(applyInfo, references.keySet());
+    removedReferences(applyInfo, references.values());
+    this.references.clear();
   }
 
   @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     for (Object key : references.keySet()) {
-      final Object value = references.get(key);
+      final Object value = get(key);
       writer.addLogicalAction(SerializationUtil.PUT, new Object[] { key, value });
     }
   }
@@ -184,7 +194,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void basicWriteTo(final ObjectOutput out) throws IOException {
-    out.writeLong(id.toLong());
+    out.writeLong(getId().toLong());
   }
 
   // CollectionsPersistor will save retrieve data in references map.
@@ -216,7 +226,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public void destroy() {
-    factory.destroyKeyValueStorage(id);
+    factory.destroyKeyValueStorage(getId());
   }
 
   /*

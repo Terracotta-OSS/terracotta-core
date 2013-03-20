@@ -21,8 +21,6 @@ import com.tc.object.session.SessionID;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 public class GetValueServerMapResponseMessageImpl extends DSOMessageBase implements GetValueServerMapResponseMessage {
@@ -71,7 +69,12 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
       outStream.writeInt(r.getValues().size());
       for (Entry<Object, Object> entry : r.getValues().entrySet()) {
         encoder.encode(entry.getKey(), getOutputStream());
-        encoder.encode(entry.getValue(), getOutputStream());
+        ServerMapGetValueResponse.ResponseValue responseValue = (ServerMapGetValueResponse.ResponseValue) entry.getValue();
+        encoder.encode(responseValue.getData(), getOutputStream());
+        encoder.encode(responseValue.getCreationTime(), getOutputStream());
+        encoder.encode(responseValue.getLastAccessedTime(), getOutputStream());
+        encoder.encode(responseValue.getTimeToIdle(), getOutputStream());
+        encoder.encode(responseValue.getTimeToLive(), getOutputStream());
       }
     }
   }
@@ -92,11 +95,12 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
           try {
             final long responseId = getLongValue();
             final int numResponses = getIntValue();
-            final Map<Object, Object> values = new HashMap<Object, Object>();
+            ServerMapGetValueResponse response = new ServerMapGetValueResponse(new ServerMapRequestID(responseId));
             for (int i = 0; i < numResponses; i++) {
-              values.put(this.decoder.decode(inputStream), this.decoder.decode(inputStream));
+              response.put(decoder.decode(inputStream), decoder.decode(inputStream), (Long) decoder.decode(inputStream),
+                  (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
             }
-            this.responses.add(new ServerMapGetValueResponse(new ServerMapRequestID(responseId), values));
+            this.responses.add(response);
           } catch (final ClassNotFoundException e) {
             throw new AssertionError(e);
           }

@@ -8,12 +8,12 @@ import org.terracotta.toolkit.internal.cache.TimestampedValue;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.tc.object.LocalCacheAddCallBack;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfImpl;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manageable;
+import com.tc.object.servermap.ExpirableMapEntry;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
@@ -31,7 +31,7 @@ import java.io.ObjectOutput;
  * reference) of the de-serialized value.
  */
 public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externalizable, Manageable,
-    LocalCacheAddCallBack {
+    LocalCacheAddCallBack, ExpirableMapEntry {
 
   private static final ToolkitLock   UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK = ToolkitLockingApi
                                                                                    .createConcurrentTransactionLock("servermap-update-last-accessed-time-concurrent-lock",
@@ -273,26 +273,55 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   }
 
   public void updateLastAccessedTime(Object key, TCObjectServerMap tcObjectServerMap, int usedAtTime) {
-    // TODO: DEV-8099
-    // Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
-    // if (checkedOutObject == null) { return; }
 
     UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
     try {
       synchronized (getResolveLock()) {
-        registerTransactionListener(key, tcObjectServerMap);
-
         this.lastAccessedTime = usedAtTime;
-        this.logicalInvoke(SerializationUtil.IGNORABLE_FIELD_CHANGE, SerializationUtil.IGNORABLE_FIELD_CHANGE_SIGNATURE, new Object[] {
-            SerializedMapValueApplicator.LAST_ACCESS_TIME_FIELD_NAME, usedAtTime });
+        tcObjectServerMap.doLogicalSetLastAccessedTime(key, getObjectID(), usedAtTime);
       }
     } finally {
       UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.unlock();
     }
   }
 
-  private void registerTransactionListener(final Object key, final TCObjectServerMap tcObjectServerMap) {
-    // TODO: DEV-8099
+  @Override
+  public long getLastAccessedTime() {
+    return lastAccessedTime;
   }
 
+  @Override
+  public void setLastAccessedTime(final long lastAccessedTime) {
+    this.lastAccessedTime = (int) lastAccessedTime;
+  }
+
+  @Override
+  public long getCreationTime() {
+    return createTime;
+  }
+
+  @Override
+  public void setCreationTime(final long creationTime) {
+    this.createTime = (int) creationTime;
+  }
+
+  @Override
+  public long getTimeToIdle() {
+    return 0;
+  }
+
+  @Override
+  public void setTimeToIdle(final long timeToIdle) {
+    // Do nothing.
+  }
+
+  @Override
+  public long getTimeToLive() {
+    return 0;
+  }
+
+  @Override
+  public void setTimeToLive(final long timeToLive) {
+    // Do nothing.
+  }
 }

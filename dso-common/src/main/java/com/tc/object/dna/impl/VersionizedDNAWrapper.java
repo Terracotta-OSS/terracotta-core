@@ -34,11 +34,6 @@ public class VersionizedDNAWrapper<T extends DNA> implements DNAInternal {
   }
 
   @Override
-  public boolean isIgnoreMissing() {
-    return dna.isIgnoreMissing();
-  }
-
-  @Override
   public long getVersion() {
     return version;
   }

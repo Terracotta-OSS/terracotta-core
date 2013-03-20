@@ -502,11 +502,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public boolean isDelta() {
       return false;
     }
-
-    @Override
-    public boolean isIgnoreMissing() {
-      return false;
-    }
   }
 
   private static class TestMutualReferenceObjectFactory implements TCObjectFactory {

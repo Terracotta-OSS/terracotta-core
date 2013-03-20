@@ -7,6 +7,7 @@ import com.tc.object.dna.impl.ClassInstance;
 import com.tc.object.dna.impl.EnumInstance;
 import com.tc.object.dna.impl.UTF8ByteCompressedDataHolder;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
+import com.tc.objectserver.managedobject.CDSMValue;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -17,6 +18,10 @@ import java.util.Map;
  */
 public class LiteralSerializer extends Serializer<Object> {
   public static final LiteralSerializer INSTANCE = new LiteralSerializer();
+
+  private static final int LONG_SIZE = Long.SIZE / Byte.SIZE;
+  private static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
+  private static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
 
   private static enum Type {
     LONG {
@@ -31,7 +36,7 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof Long) {
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Long.SIZE / Byte.SIZE);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + LONG_SIZE);
           buffer.put((byte) ordinal()).putLong((Long)object).flip();
           return buffer;
         } else {
@@ -55,7 +60,7 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof Integer) {
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + INT_SIZE);
           buffer.put((byte) ordinal()).putInt((Integer)object).flip();
           return buffer;
         } else {
@@ -79,7 +84,7 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof Short) {
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Short.SIZE / Byte.SIZE);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + SHORT_SIZE);
           buffer.put((byte) ordinal()).putShort((Short)object).flip();
           return buffer;
         } else {
@@ -154,7 +159,7 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof ObjectID) {
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Long.SIZE / Byte.SIZE);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + LONG_SIZE);
           buffer.put((byte)ordinal()).putLong(((ObjectID)object).toLong()).flip();
           return buffer;
         } else {
@@ -181,7 +186,7 @@ public class LiteralSerializer extends Serializer<Object> {
       ByteBuffer serialize(final Object object) {
         if (object instanceof UTF8ByteDataHolder) {
           byte[] bytes = ((UTF8ByteDataHolder)object).getBytes();
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE + bytes.length);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + INT_SIZE + bytes.length);
           buffer.put((byte)ordinal()).putInt(bytes.length).put(bytes).flip();
           return buffer;
         } else {
@@ -209,7 +214,7 @@ public class LiteralSerializer extends Serializer<Object> {
         if (object instanceof UTF8ByteCompressedDataHolder) {
           UTF8ByteCompressedDataHolder holder = (UTF8ByteCompressedDataHolder)object;
           byte[] bytes = holder.getBytes();
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE + bytes.length + Integer.SIZE / Byte.SIZE * 3);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + INT_SIZE + bytes.length + INT_SIZE * 3);
           buffer.put((byte)ordinal()).putInt(bytes.length).put(bytes);
           buffer.putInt(holder.getUncompressedStringLength()).putInt(holder.getStringLength()).putInt(holder.getStringHash()).flip();
           return buffer;
@@ -242,7 +247,7 @@ public class LiteralSerializer extends Serializer<Object> {
           EnumInstance enumInstance = (EnumInstance) object;
           byte[] valueBytes = enumInstance.getEnumName().getBytes();
           byte[] classInstanceBytes = enumInstance.getClassInstance().getName().getBytes();
-          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE * 2 + classInstanceBytes.length + valueBytes.length);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + INT_SIZE * 2 + classInstanceBytes.length + valueBytes.length);
           buffer.put((byte)ordinal()).putInt(valueBytes.length).put(valueBytes).putInt(classInstanceBytes.length).put(classInstanceBytes).flip();
           return buffer;
         } else {
@@ -253,6 +258,46 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       Class<?> toClass() {
         return EnumInstance.class;
+      }
+    }, CDSMValue {
+      @Override
+      Object deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        ObjectID objectID = new ObjectID(buffer.getLong());
+        long creationTime = buffer.getLong();
+        long lastAccessedTime = buffer.getLong();
+        if (buffer.get() == 1) {
+          return new CDSMValue(objectID, creationTime, lastAccessedTime, buffer.getLong(), buffer.getLong());
+        } else {
+          return new CDSMValue(objectID, creationTime, lastAccessedTime, 0, 0);
+        }
+      }
+
+      @Override
+      ByteBuffer serialize(final Object object) {
+        if (object instanceof CDSMValue) {
+          CDSMValue cdsmValue = (CDSMValue) object;
+          ByteBuffer buffer = ByteBuffer.allocate(2 + LONG_SIZE * 5);
+          buffer.put((byte) ordinal());
+          buffer.putLong(cdsmValue.getObjectID().toLong()).putLong(cdsmValue.getCreationTime()).putLong(cdsmValue.getLastAccessedTime());
+          if (cdsmValue.getTimeToIdle() != 0 || cdsmValue.getTimeToLive() != 0) {
+            buffer.put((byte)1);
+            buffer.putLong(cdsmValue.getTimeToIdle()).putLong(cdsmValue.getTimeToLive());
+          } else {
+            buffer.put((byte)0);
+          }
+          buffer.flip();
+          return buffer;
+        } else {
+          throw new AssertionError();
+        }
+      }
+
+      @Override
+      Class<?> toClass() {
+        return CDSMValue.class;
       }
     };
 

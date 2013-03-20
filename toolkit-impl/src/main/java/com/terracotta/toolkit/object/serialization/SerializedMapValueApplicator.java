@@ -19,9 +19,6 @@ import java.io.Serializable;
 
 public class SerializedMapValueApplicator extends BaseApplicator {
 
-  protected static final String CREATE_TIME_FIELD_NAME      = "createTime";
-  protected static final String LAST_ACCESS_TIME_FIELD_NAME = "lastAccessedTime";
-
   public SerializedMapValueApplicator(final DNAEncoding encoding, TCLogger logger) {
     super(encoding, logger);
   }
@@ -32,8 +29,6 @@ public class SerializedMapValueApplicator extends BaseApplicator {
 
     SerializedMapValue<Serializable> se = (SerializedMapValue<Serializable>) pojo;
     writer.addEntireArray(se.internalGetValue());
-    writer.addPhysicalAction(CREATE_TIME_FIELD_NAME, se.internalGetCreateTime());
-    writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD_NAME, se.internalGetLastAccessedTime());
   }
 
   @Override
@@ -57,14 +52,7 @@ public class SerializedMapValueApplicator extends BaseApplicator {
       if (a.isEntireArray()) {
         se.internalSetValue((byte[]) a.getObject());
       } else {
-        // tco.setValue(a.getFieldName(), a.getObject());
-        if (CREATE_TIME_FIELD_NAME.equals(a.getFieldName())) {
-          se.internalSetCreateTime((Integer) a.getObject());
-        } else if (LAST_ACCESS_TIME_FIELD_NAME.equals(a.getFieldName())) {
-          se.internalSetLastAccessedTime((Integer) a.getObject());
-        } else {
-          throw new AssertionError("Unknown physical action: " + a);
-        }
+        throw new AssertionError("Unknown physical action: " + a);
       }
     }
   }

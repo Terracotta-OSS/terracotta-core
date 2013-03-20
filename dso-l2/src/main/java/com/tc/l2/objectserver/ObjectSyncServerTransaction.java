@@ -5,7 +5,6 @@
 package com.tc.l2.objectserver;
 
 import com.tc.net.NodeID;
-import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -24,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
@@ -109,11 +107,6 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   @Override
   public ObjectIDSet getNewObjectIDs() {
     return this.oids;
-  }
-
-  @Override
-  public Set<ObjectID> ignorableObjects() {
-    return Collections.EMPTY_SET;
   }
 
   @Override

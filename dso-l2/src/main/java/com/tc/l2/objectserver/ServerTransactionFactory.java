@@ -16,6 +16,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.tx.ServerEvictionTransactionImpl;
 import com.tc.objectserver.tx.ServerMapEvictionDNA;
 import com.tc.objectserver.tx.ServerMapEvictionMetaDataReader;
@@ -55,7 +56,7 @@ public class ServerTransactionFactory {
   }
 
   public ServerTransaction createServerMapEvictionTransactionFor(final NodeID localNodeID, final ObjectID oid,
-                                                                 final String className, final Map candidates,
+                                                                 final String className, final Map<Object, EvictableEntry> candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
     return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
@@ -68,11 +69,11 @@ public class ServerTransactionFactory {
                                              EMPTY_HIGH_WATER_MARK);
   }
 
-  private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map candidates) {
+  private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
     return new ServerMapEvictionMetaDataReader(oid, cacheName, candidates);
   }
 
-  private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final Map candidates,
+  private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final Map<Object, EvictableEntry> candidates,
                                             String cacheName) {
     return new ServerMapEvictionDNA(oid, className, candidates, cacheName);
   }

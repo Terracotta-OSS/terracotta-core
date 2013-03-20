@@ -34,6 +34,7 @@ import com.tc.objectserver.context.ServerMapRequestValueContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -136,7 +137,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             sendResponseForGetAllKeys(mapID, (ServerMapRequestAllKeysContext) request, cdsmState);
             break;
           case GET_VALUE_FOR_KEY:
-            ClientID clientID = ((ServerMapRequestValueContext) request).getClientID();
+            ClientID clientID = request.getClientID();
             ObjectIDSet objectIdsForKeys = gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request,
                                                                      cdsmState, results);
             Set<ObjectID> objectIdstoPrefetch = Collections.EMPTY_SET;
@@ -223,18 +224,21 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       results.put(clientID, responses);
     }
     for (final ServerMapGetValueRequest r : request.getValueRequests()) {
+      ServerMapGetValueResponse response = new ServerMapGetValueResponse(r.getRequestID());
       Set<Object> portableKeys = r.getKeys();
-      Map<Object, Object> portableValues = new HashMap<Object, Object>();
       for (Object portableKey : portableKeys) {
-        Object portableValue = cdsmState.getValueForKey(portableKey);
-        if (portableValue instanceof ObjectID) {
-          rv.add((ObjectID) portableValue);
+        CDSMValue wrappedValue = cdsmState.getValueForKey(portableKey);
+        if (wrappedValue == null) {
+          response.put(portableKey, ObjectID.NULL_ID);
+        } else {
+          if (wrappedValue.getObjectID() instanceof ObjectID) {
+            rv.add(wrappedValue.getObjectID());
+          }
+          response.put(portableKey, wrappedValue.getObjectID(), wrappedValue.getCreationTime(),
+              wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive());
         }
-        // Null Value is not supported in CDSM
-        portableValue = (portableValue == null ? ObjectID.NULL_ID : portableValue);
-        portableValues.put(portableKey, portableValue);
       }
-      responses.add(new ServerMapGetValueResponse(r.getRequestID(), portableValues));
+      responses.add(response);
     }
     return rv;
   }

@@ -47,7 +47,7 @@ public class SerializationUtil {
   public final static int         DESTROY                              = 32;
   public final static int         FIELD_CHANGED                        = 33;
   public final static int         INT_FIELD_CHANGED                    = 34;
-  public final static int         IGNORABLE_FIELD_CHANGE               = 35;
+  public final static int         SET_LAST_ACCESSED_TIME               = 35;
 
   public final static String      PUSH_SIGNATURE                       = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                        = "pop()java/lang/Object;";
@@ -131,7 +131,7 @@ public class SerializationUtil {
   public final static String      DESTROY_SIGNATURE                    = "destroy()V";
   public final static String      FIELD_CHANGED_SIGNATURE              = "fieldChanged()V";
   public final static String      INT_FIELD_CHANGED_SIGNATURE          = "intFieldChanged(Ljava/lang/String;I)V";
-  public final static String      IGNORABLE_FIELD_CHANGE_SIGNATURE     = "ignorableFieldChange()V";
+  public final static String      SET_LAST_ACCESSED_TIME_SIGNATURE     = "setLastAccessedTime(Ljava/lang/Object;Ljava/lang/Object;J)V";
 
   private final Map<String, Integer> mappings                             = new HashMap<String, Integer>();
 
@@ -179,7 +179,7 @@ public class SerializationUtil {
     mappings.put(DESTROY_SIGNATURE, DESTROY);
     mappings.put(FIELD_CHANGED_SIGNATURE, FIELD_CHANGED);
     mappings.put(INT_FIELD_CHANGED_SIGNATURE, INT_FIELD_CHANGED);
-    mappings.put(IGNORABLE_FIELD_CHANGE_SIGNATURE, IGNORABLE_FIELD_CHANGE);
+    mappings.put(SET_LAST_ACCESSED_TIME_SIGNATURE, SET_LAST_ACCESSED_TIME);
   }
 
   public String[] getSignatures() {

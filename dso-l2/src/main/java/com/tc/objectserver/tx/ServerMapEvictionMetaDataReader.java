@@ -10,6 +10,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.metadata.NVPairSerializer;
+import com.tc.objectserver.api.EvictableEntry;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.AbstractNVPair.EnumNVPair;
 import com.terracottatech.search.AbstractNVPair.IntNVPair;
@@ -31,10 +32,10 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
   private static final NVPairSerializer NVPAIR_SERIALIZER = new NVPairSerializer();
 
   private final String                  cacheName;
-  private final Map                     candidates;
+  private final Map<Object, EvictableEntry>                     candidates;
   private final ObjectID                oid;
 
-  public ServerMapEvictionMetaDataReader(ObjectID oid, String cacheName, Map candidates) {
+  public ServerMapEvictionMetaDataReader(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
     this.cacheName = cacheName;
     this.candidates = candidates;
     this.oid = oid;
@@ -168,8 +169,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
                      serializer);
       NVPAIR_SERIALIZER.serialize(new IntNVPair("", (numberOfNvPairs() - 3) / 2), out, serializer);
 
-      for (Object o : candidates.entrySet()) {
-        Entry e = (Entry) o;
+      for (Entry<Object, EvictableEntry> e : candidates.entrySet()) {
 
         String key;
         // XXX: assumes key/value types of UTF8ByteDataHolder/ObjectID!
@@ -180,7 +180,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
           key = e.getKey().toString();
         }
 
-        ObjectID value = (ObjectID) e.getValue();
+        ObjectID value = e.getValue().getObjectID();
 
         NVPAIR_SERIALIZER.serialize(new StringNVPair("", key), out, serializer);
         NVPAIR_SERIALIZER.serialize(new ValueIdNVPair("", new ValueID(value.toLong())), out, serializer);
@@ -214,8 +214,8 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
 
       private int                   count = 0;
       private final int             numberOfNvPairs;
-      private final Iterator<Entry> toRemove;
-      private Entry                 next;
+      private final Iterator<Entry<Object, EvictableEntry>> toRemove;
+      private Entry<Object, EvictableEntry>                 next;
 
       public RemoveMetaDataIterator(int numberOfNvPairs) {
         this.toRemove = candidates.entrySet().iterator();
@@ -257,7 +257,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
           return AbstractNVPair.createNVPair("", key);
         } else {
           // XXX: assumes ObjectID value!
-          ObjectID valueOid = (ObjectID) next.getValue();
+          ObjectID valueOid = next.getValue().getObjectID();
           NVPair nv = new AbstractNVPair.ValueIdNVPair("", new ValueID(valueOid.toLong()));
           if (toRemove.hasNext()) {
             next = toRemove.next();

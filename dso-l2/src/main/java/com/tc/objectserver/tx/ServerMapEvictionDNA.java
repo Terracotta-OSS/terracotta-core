@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.objectserver.api.EvictableEntry;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -21,11 +22,11 @@ import java.util.Map.Entry;
 public final class ServerMapEvictionDNA implements DNAInternal {
 
   private final ObjectID oid;
-  private final Map      evictionCandidates;
+  private final Map<Object, EvictableEntry>      evictionCandidates;
   private final String   className;
   private final String   cacheName;
 
-  public ServerMapEvictionDNA(final ObjectID oid, final String className, final Map candidates, String cacheName) {
+  public ServerMapEvictionDNA(final ObjectID oid, final String className, final Map<Object, EvictableEntry> candidates, String cacheName) {
     this.oid = oid;
     this.className = className;
     this.evictionCandidates = candidates;
@@ -73,11 +74,6 @@ public final class ServerMapEvictionDNA implements DNAInternal {
   }
 
   @Override
-  public boolean isIgnoreMissing() {
-    return false;
-  }
-
-  @Override
   public MetaDataReader getMetaDataReader() {
     return new ServerMapEvictionMetaDataReader(oid, cacheName, evictionCandidates);
   }
@@ -92,11 +88,11 @@ public final class ServerMapEvictionDNA implements DNAInternal {
     private static final LogicalAction evictionCompleted = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
                                                                              new Object[] {});
 
-    private final Iterator<Entry>      actions;
+    private final Iterator<Entry<Object, EvictableEntry>>      actions;
     private int                        actionsCount;
     private LogicalAction              currentAction;
 
-    public ServerMapEvictionDNACursor(final Map candidates) {
+    public ServerMapEvictionDNACursor(final Map<Object, EvictableEntry> candidates) {
       this.actions = candidates.entrySet().iterator();
       this.actionsCount = candidates.size() + 1; // plus one for evictionComplete action
     }
@@ -124,9 +120,9 @@ public final class ServerMapEvictionDNA implements DNAInternal {
     @Override
     public boolean next() {
       if (this.actions.hasNext()) {
-        final Entry e = this.actions.next();
+        final Entry<Object, EvictableEntry> e = this.actions.next();
         this.currentAction = new LogicalAction(SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
-            e.getValue() });
+            e.getValue().getObjectID() });
         actionsCount--;
         return true;
       } else if (actionsCount == 1) {

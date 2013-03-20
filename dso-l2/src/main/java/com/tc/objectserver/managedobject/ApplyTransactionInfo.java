@@ -24,7 +24,6 @@ public class ApplyTransactionInfo {
 
   private final Map<ObjectID, Node> nodes;
   private final Set<ObjectID>       parents;
-  private final Collection<ObjectID> ignoredObjects;
   private final ServerTransactionID stxnID;
   private final boolean             isActiveTxn;
   private Set<ObjectID>             ignoreBroadcasts   = Collections.EMPTY_SET;
@@ -39,17 +38,15 @@ public class ApplyTransactionInfo {
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false, Collections.EMPTY_SET);
+    this(true, ServerTransactionID.NULL_ID, false);
   }
 
-  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID, final boolean isSearchEnabled,
-                              final Collection<ObjectID> ignoredObjects) {
+  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID, final boolean isSearchEnabled) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.ignoredObjects = ignoredObjects;
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {
@@ -166,15 +163,18 @@ public class ApplyTransactionInfo {
     return invalidate;
   }
 
-  public boolean isObjectIgnored(ObjectID id) {
-    return ignoredObjects.contains(id);
-  }
-
   public void deleteObject(ObjectID old) {
     if (this.deleteObjects == TCCollections.EMPTY_SORTED_SET) {
       this.deleteObjects = new ObjectIDSet();
     }
     this.deleteObjects.add(old);
+  }
+
+  public void deleteObjects(Set<ObjectID> oids) {
+    if (this.deleteObjects == TCCollections.EMPTY_SORTED_SET) {
+      this.deleteObjects = new ObjectIDSet();
+    }
+    this.deleteObjects.addAll(oids);
   }
 
   public SortedSet<ObjectID> getObjectIDsToDelete() {

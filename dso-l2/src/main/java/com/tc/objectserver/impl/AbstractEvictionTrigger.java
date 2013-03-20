@@ -4,6 +4,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.context.ServerMapEvictionContext;
@@ -80,14 +81,14 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
 
     }
 
-    private Map<Object, ObjectID> processSample(final Map<Object, ObjectID> sample) {
+    private Map<Object, EvictableEntry> processSample(final Map<Object, EvictableEntry> sample) {
         evicting = !sample.isEmpty();
         count = sample.size();
         processed = true;
         return sample;
     }
 
-    protected ServerMapEvictionContext createEvictionContext(final String className, Map<Object, ObjectID> sample) {
+    protected ServerMapEvictionContext createEvictionContext(final String className, Map<Object,EvictableEntry> sample) {
         sample = processSample(sample);
         if ( sample.isEmpty() ) {
             return null;

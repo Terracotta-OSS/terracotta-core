@@ -75,4 +75,24 @@ public class CustomLifespanSerializedMapValue<T> extends SerializedMapValue<T> i
     customTti = in.readInt();
     customTtl = in.readInt();
   }
+
+  @Override
+  public long getTimeToIdle() {
+    return customTti;
+  }
+
+  @Override
+  public void setTimeToIdle(final long timeToIdle) {
+    this.customTti = (int) timeToIdle;
+  }
+
+  @Override
+  public long getTimeToLive() {
+    return customTtl;
+  }
+
+  @Override
+  public void setTimeToLive(final long timeToLive) {
+    this.customTtl = (int) timeToLive;
+  }
 }

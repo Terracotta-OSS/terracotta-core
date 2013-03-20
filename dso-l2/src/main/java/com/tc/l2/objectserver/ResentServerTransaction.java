@@ -4,7 +4,6 @@
 package com.tc.l2.objectserver;
 
 import com.tc.net.NodeID;
-import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -21,7 +20,6 @@ import com.tc.util.SequenceID;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ResentServerTransaction implements ServerTransaction {
 
@@ -99,11 +97,6 @@ public class ResentServerTransaction implements ServerTransaction {
   @Override
   public ObjectIDSet getNewObjectIDs() {
     return orgTxn.getNewObjectIDs();
-  }
-
-  @Override
-  public Set<ObjectID> ignorableObjects() {
-    return orgTxn.ignorableObjects();
   }
 
   @Override

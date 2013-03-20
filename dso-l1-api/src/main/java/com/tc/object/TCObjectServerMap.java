@@ -231,6 +231,13 @@ public interface TCObjectServerMap<L> extends TCObject {
   public Object getValueFromLocalCache(Object key);
 
   /**
+   * Remove the given key from local cache.
+   *
+   * @param key key to remove.
+   */
+  public void removeValueFromLocalCache(Object key);
+
+  /**
    * Add meta data to this server map
    */
   public void addMetaData(MetaDataDescriptor mdd);
@@ -251,7 +258,5 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   void recalculateLocalCacheSize(Object key);
 
-  void checkInObject(Object key, Object value);
-
-  Object checkOutObject(Object key, Object value);
+  void doLogicalSetLastAccessedTime(Object key, Object value, long lastAccessedTime);
 }

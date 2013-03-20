@@ -7,7 +7,6 @@ package com.tc.l2.objectserver;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.tc.net.NodeID;
-import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.MetaDataReader;
@@ -25,7 +24,6 @@ import com.tc.util.SequenceID;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PrunedServerTransaction implements ServerTransaction {
 
@@ -94,11 +92,6 @@ public class PrunedServerTransaction implements ServerTransaction {
   @Override
   public ObjectIDSet getNewObjectIDs() {
     return this.newOids;
-  }
-
-  @Override
-  public Set<ObjectID> ignorableObjects() {
-    return orgTxn.ignorableObjects();
   }
 
   @Override

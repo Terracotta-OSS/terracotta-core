@@ -8,10 +8,9 @@ import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
-import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.util.ObjectIDSet;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -117,9 +116,9 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
         
-        Map<Object, ObjectID> grabbed = ( !stop ) ?
+        Map<Object, EvictableEntry> grabbed = ( !stop ) ?
             map.getRandomSamples(samples, clients) :
-            Collections.<Object,ObjectID>emptyMap();
+            Collections.<Object,EvictableEntry>emptyMap();
 
         sampled = grabbed.size();
         
@@ -131,7 +130,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    protected ServerMapEvictionContext createEvictionContext(String className, Map<Object, ObjectID> sample) {
+    protected ServerMapEvictionContext createEvictionContext(String className, Map<Object, EvictableEntry> sample) {
         ServerMapEvictionContext cxt = super.createEvictionContext(className, sample);
         if ( cxt == null ) {
             return null;
@@ -164,16 +163,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         return expired * 1.0f / expired + excluded + alive;
     }
     
-  private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
+  private Map<Object, EvictableEntry> filter(final Map<Object, EvictableEntry> samples, final int ttiSeconds,
                     final int ttlSeconds) {
     final int now = (int) (System.currentTimeMillis() / 1000);
-    for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
+    for (final Iterator<Map.Entry<Object, EvictableEntry>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
         if ( stop ) {
  //  don't unset flag, may need it later
-            return Collections.<Object, ObjectID>emptyMap();
+            return Collections.emptyMap();
         }
-      final Map.Entry<Object, ObjectID> e = iterator.next();
-        int expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
+      final Map.Entry<Object, EvictableEntry> e = iterator.next();
+        long expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
         if ( expiresIn == 0 ) {
   //  didn't find the object, ignore this one
             iterator.remove();
@@ -189,7 +188,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
  //  know what we have already tested
  //  factor in a freshness value?
            iterator.remove();
-           passList.add(e.getValue());
+           passList.add(e.getValue().getObjectID());
         }
     }
     return samples;
@@ -201,32 +200,8 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
    * 
    * @return when values is going to expire relative to "now", a negative number or zero indicates the value is expired.
    */
-  protected int expiresIn(final int now, final Object value, final int ttiSeconds, final int ttlSeconds) {
-    if (!(value instanceof ObjectID)) {
-      // When tti/ttl == 0 here, then cache is set to eternal (by default or in config explicitly), so all entries can
-      // be evicted if maxInDisk size is reached.
-      return Integer.MIN_VALUE;
-    }
-    final ObjectID oid = (ObjectID) value;
-    final ManagedObject mo = this.mgr.getObjectByIDReadOnly(oid);
-    if (mo == null) { return 0; }
-    try {
-      final EvictableEntry ev = getEvictableEntryFrom(mo);
-      if (ev != null) {
-        return ev.expiresIn(now, ttiSeconds, ttlSeconds);
-      } else {
-        return 0;
-      }
-    } finally {
-      this.mgr.releaseReadOnly(mo);
-    }
-  }
-
-  private EvictableEntry getEvictableEntryFrom(final ManagedObject mo) {
-    final ManagedObjectState state = mo.getManagedObjectState();
-    if (state instanceof EvictableEntry) { return (EvictableEntry) state; }
-    // TODO:: Custom mode support
-    return null;
+  protected long expiresIn(final int now, final EvictableEntry value, final int ttiSeconds, final int ttlSeconds) {
+    return value.expiresIn(now, ttiSeconds, ttlSeconds);
   }
 
   static final class ExpiryKey implements Comparable {
@@ -285,14 +260,14 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     
     class PeriodicServerMapEvictionContext extends ServerMapEvictionContext {
         ServerMapEvictionContext root;
-        Map<Object, ObjectID> cached;
+        Map<Object, EvictableEntry> cached;
         
         public PeriodicServerMapEvictionContext(ServerMapEvictionContext root) {
             super(PeriodicEvictionTrigger.this,  root.getTTISeconds(), root.getTTLSeconds(), root.getRandomSamples(), root.getClassName(), root.getCacheName());
         }
 //  do this to move the filtering outside the scope of the ServerMap lock
         @Override
-        public Map<Object, ObjectID> getRandomSamples() {
+        public Map<Object, EvictableEntry> getRandomSamples() {
             if ( dumpLive ) {
                 return super.getRandomSamples();
             }

@@ -87,5 +87,4 @@ public interface DNA {
    */
   public DNACursor getCursor();
 
-  public boolean isIgnoreMissing();
 }

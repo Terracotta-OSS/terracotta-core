@@ -3,14 +3,17 @@
  */
 package com.tc.objectserver.impl;
 
+import org.apache.log4j.Logger;
+
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
+
 import java.util.Collections;
 import java.util.Map;
-import org.apache.log4j.Logger;
 
 /**
  * This trigger is invoked by a server map with the size of the map goes over 
@@ -71,7 +74,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     public ServerMapEvictionContext collectEvictionCandidates(final int maxParam, String className, final EvictableMap map, final ClientObjectReferenceSet clients) {
         // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int sample = boundsCheckSampleSize(size - maxParam);
-        Map samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,ObjectID>emptyMap();
+        Map<Object, EvictableEntry> samples = ( sample > 0 ) ? map.getRandomSamples(sample, clients) : Collections.<Object,EvictableEntry>emptyMap();
         // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
         try {
             return createEvictionContext(className, samples);

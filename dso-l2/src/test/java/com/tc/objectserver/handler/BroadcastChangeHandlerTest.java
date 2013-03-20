@@ -247,11 +247,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public boolean isResent() {
       return false;
     }
-
-    @Override
-    public Set<ObjectID> ignorableObjects() {
-      return Collections.EMPTY_SET;
-    }
   }
 
   private static class TestServerConfigurationContext implements ServerConfigurationContext {

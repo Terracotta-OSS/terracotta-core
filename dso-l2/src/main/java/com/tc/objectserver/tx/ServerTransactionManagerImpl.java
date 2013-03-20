@@ -352,12 +352,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final boolean active = isActive();
 
     for (DNA orgDNA : changes) {
-      if (applyInfo.isObjectIgnored(orgDNA.getObjectID())) {
-        // Just skip broadcasts for changes that are ignorable and missing objects.
-        Assert.assertTrue(orgDNA.isIgnoreMissing());
-        applyInfo.ignoreBroadcastFor(orgDNA.getObjectID());
-        continue;
-      }
       long version = orgDNA.getVersion();
       if (version == DNA.NULL_VERSION) {
         Assert.assertFalse(gtxID.isNull());

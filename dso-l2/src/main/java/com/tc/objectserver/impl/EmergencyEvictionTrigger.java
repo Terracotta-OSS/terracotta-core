@@ -4,6 +4,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
@@ -41,13 +42,13 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
         if ( get < 10 * (blowout)) {
             get = 10 * (blowout);
         }
-        Map<Object, ObjectID>  sampled = map.getRandomSamples(get,clients);
+        Map<Object, EvictableEntry>  sampled = map.getRandomSamples(get,clients);
         return createEvictionContext(className, filter(sampled));
     }
     /**
      * only take the early half, make this pluggable?
     */
-    private Map<Object, ObjectID> filter(Map<Object, ObjectID> sample) {
+    private Map<Object, EvictableEntry> filter(Map<Object, EvictableEntry> sample) {
         return sample;
 //        return filterByOid(sample);
     }

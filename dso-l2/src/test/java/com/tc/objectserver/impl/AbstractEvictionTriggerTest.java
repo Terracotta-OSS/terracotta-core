@@ -14,6 +14,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
@@ -164,7 +165,7 @@ public class AbstractEvictionTriggerTest {
     trigger = getTrigger();
     Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
     Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet)))
-        .thenReturn(Collections.<Object, ObjectID> emptyMap());
+        .thenReturn(Collections.<Object, EvictableEntry> emptyMap());
   }
 
   @After

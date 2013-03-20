@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
@@ -23,7 +24,6 @@ import com.tc.util.Events;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -110,7 +110,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
       dehydrateFields(objectID, writer);
-    super.dehydrate(objectID, writer, type);
+      for (Object o : references.keySet()) {
+        CDSMValue value = getValueForKey(o);
+        writer.addLogicalAction(SerializationUtil.PUT, new Object[] {o, value.getObjectID(), value.getCreationTime(),
+            value.getLastAccessedTime(), value.getTimeToIdle(), value.getTimeToLive()});
+      }
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
       dehydrateFields(objectID, writer);
@@ -150,7 +154,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
         //TODO: requires refactoring, we should call super.apply() instead
         if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
-            || method == SerializationUtil.DESTROY) {
+            || method == SerializationUtil.DESTROY || method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere
           broadcast = true;
         }
@@ -196,6 +200,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {
+      case SerializationUtil.SET_LAST_ACCESSED_TIME:
+        applySetLastAccessedTime(applyInfo, params);
+        break;
       case SerializationUtil.FIELD_CHANGED:
         final String fieldName = asString(params[0]);
         final boolean boolValue = (Boolean) params[1];
@@ -220,36 +227,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         }
         break;
       case SerializationUtil.REMOVE_IF_VALUE_EQUAL:
-        applyRemoveIfValueEqual(objectID, applyInfo, params);
+        applyRemoveIfValueEqual(applyInfo, params);
         break;
       case SerializationUtil.PUT_IF_ABSENT:
-        applyPutIfAbsent(objectID, applyInfo, params);
+        applyPutIfAbsent(applyInfo, params);
         break;
       case SerializationUtil.REPLACE_IF_VALUE_EQUAL:
-        applyReplaceIfValueEqual(objectID, applyInfo, params);
+        applyReplaceIfEqualWithExpiry(applyInfo, params);
         break;
       case SerializationUtil.REPLACE:
-        applyReplace(objectID, applyInfo, params);
+        applyReplace(applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
         evictionCompleted();
         break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
         break;
-      case SerializationUtil.DESTROY:
-        this.references.clear();
-        break;
       default:
         super.applyLogicalAction(objectID, applyInfo, method, params);
-    }
-
-    if (applyInfo.isActiveTxn()
-        && method == SerializationUtil.PUT
-        && this.targetMaxTotalCount >= 0 // do not trigger capacity eviction if totalMaxCount is negative
-        && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
-      if (startEviction()) {
-        applyInfo.initiateEvictionFor(objectID);
-      }
     }
   }
 
@@ -263,92 +258,111 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return str;
   }
 
-
   @Override
-  protected void removedValueFromMap(final ObjectID mapID, ApplyTransactionInfo applyInfo, ObjectID old) {
-    if (invalidateOnChange) {
-      applyInfo.invalidate(mapID, old);
-    }
-      applyInfo.deleteObject(old);
-  }
-
-  @Override
-  protected void addValue(ApplyTransactionInfo applyInfo, Object value, boolean keyExists) {
-    if (applyInfo.isSearchEnabled() && value instanceof ObjectID) applyInfo.recordValue((ObjectID) value, keyExists);
-  }
-
-  @Override
-  protected void removeKeyPresentForValue(ApplyTransactionInfo applyInfo, ObjectID value) {
-    if (applyInfo.isSearchEnabled()) applyInfo.removeKeyPresentForValue(value);
-  }
-
-  @Override
-  protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
-    // Does not need to be batched here since deletion batching will happen in the lower layers.
-    for (Object o : values) {
-      if (o instanceof ObjectID) {
-          applyInfo.deleteObject((ObjectID) o);
-        applyInfo.removeKeyPresentForValue((ObjectID) o);
-      }
-    }
-  }
-
-  private void applyRemoveIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, final Object[] params) {
-    final Object key = getKey(params);
-    final Object value = getValue(params);
-    final Object valueInMap = this.references.get(key);
-    if (value.equals(valueInMap)) {
-      this.references.remove(key);
-      if (valueInMap instanceof ObjectID) {
-        removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
-      }
-    }
-  }
-
-  private void applyReplaceIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
-    final Object key = params[0];
-    final Object current = params[1];
-    final Object newValue = params[2];
-    final Object valueInMap = this.references.get(key);
-    if (current.equals(valueInMap)) {
-      this.references.put(key, newValue);
-      if (valueInMap instanceof ObjectID) {
-        removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
-        addValue(applyInfo, newValue, true);
-      }
-    } else if (newValue instanceof ObjectID) {
-      // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
-      removedValueFromMap(mapID, applyInfo, (ObjectID) newValue);
-      addValue(applyInfo, newValue, false);
-    }
-  }
-
-  private void applyReplace(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
-    final Object key = params[0];
-    final Object newValue = params[1];
-    final Object valueInMap = this.references.get(key);
-    if (valueInMap != null) {
-      this.references.put(key, newValue);
-      addValue(applyInfo, newValue, true);
+  protected void addedReference(final ApplyTransactionInfo applyInfo, final Object o) {
+    if (o instanceof CDSMValue) {
+      super.addedReference(applyInfo, ((CDSMValue)o).getObjectID());
     } else {
-      addValue(applyInfo, newValue, false);
-    }
-    if (valueInMap instanceof ObjectID) {
-      removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
+      super.addedReference(applyInfo, o);
     }
   }
 
-  private void applyPutIfAbsent(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
-    final Object key = getKey(params);
-    final Object value = getValue(params);
-    final Object valueInMap = this.references.get(key);
-    if (valueInMap == null) {
-      this.references.put(key, value);
+  @Override
+  protected void removedReference(final ApplyTransactionInfo applyInfo, final Object o) {
+    Object ref = o;
+    if (o instanceof CDSMValue) {
+      ref = ((CDSMValue)o).getObjectID();
+    }
+    super.removedReference(applyInfo, ref);
+    if (invalidateOnChange && ref instanceof ObjectID) {
+      applyInfo.invalidate(getId(), (ObjectID) ref);
+    }
+  }
+
+  protected void addValue(ApplyTransactionInfo applyInfo, Object value, boolean keyExists) {
+    if (applyInfo.isSearchEnabled() && value instanceof ObjectID) applyInfo.recordValue((ObjectID)value, keyExists);
+  }
+
+  @Override
+  protected Object applyPut(final ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    CDSMValue value;
+    if (params.length == 6) {
+      value = new CDSMValue((ObjectID) params[1], (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
+    } else {
+      value = new CDSMValue((ObjectID) params[1], 0, 0, 0, 0);
+    }
+
+    CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
+    addValue(applyInfo, params[1], old != null);
+
+    if (applyInfo.isActiveTxn()
+        && this.targetMaxTotalCount >= 0 // do not trigger capacity eviction if totalMaxCount is negative
+        && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
+      if (startEviction()) {
+        applyInfo.initiateEvictionFor(getId());
+      }
+    }
+
+    return old;
+  }
+
+  private void applyPutIfAbsent(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object value = params[1];
+    if (!references.containsKey(key)) {
+      applyPut(applyInfo, params);
+    } else {
+      removedReferences(applyInfo, value);
       addValue(applyInfo, value, false);
-    } else if (value instanceof ObjectID) {
-      // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
-      removedValueFromMap(mapID, applyInfo, (ObjectID) value);
-      addValue(applyInfo, value, true);
+    }
+  }
+
+  private void applyReplace(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object value = params[1];
+    if (references.containsKey(key)) {
+      applyPut(applyInfo, params);
+    } else {
+      removedReferences(applyInfo, value);
+      addValue(applyInfo, value, false);
+    }
+  }
+
+  private void applyReplaceIfEqualWithExpiry(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object currentValue = params[1];
+    Object newValue = params[2];
+    CDSMValue old = getValueForKey(key);
+    if (old != null && old.getObjectID().equals(currentValue)) {
+      if (params.length == 7) {
+        applyPut(applyInfo, new Object[] { key, newValue, params[3], params[4], params[5], params[6]});
+      } else {
+        applyPut(applyInfo, new Object[]{ key, newValue });
+      }
+    } else {
+      removedReferences(applyInfo, newValue);
+    }
+  }
+
+  private void applyRemoveIfValueEqual(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object value = params[1];
+    CDSMValue valueInMap = getValueForKey(key);
+    if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
+      references.remove(key);
+      removedReferences(applyInfo, value);
+    }
+  }
+
+  private void applySetLastAccessedTime(ApplyTransactionInfo applyInfo, Object[] params) {
+    Object key = params[0];
+    Object value = params[1];
+    long lastAccessedTime = (Long) params[2];
+    CDSMValue wrappedValue = getValueForKey(key);
+    if (wrappedValue != null && value.equals(wrappedValue.getObjectID())) {
+      wrappedValue.setLastAccessedTime(lastAccessedTime);
+      references.put(key, wrappedValue);
     }
   }
 
@@ -368,8 +382,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     out.writeBoolean(broadcastEvictions);
   }
 
-  public Object getValueForKey(final Object portableKey) {
-    return this.references.get(portableKey);
+  public CDSMValue getValueForKey(final Object portableKey) {
+    return (CDSMValue) this.references.get(portableKey);
   }
 
   @Override
@@ -447,14 +461,23 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  public Map<Object, ObjectID> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
+  protected void addAllObjectReferencesTo(final Set refs) {
+    // CDSM doesn't support object keys.
+    for (Object o : references.values()) {
+      CDSMValue value = (CDSMValue) o;
+      refs.add(value.getObjectID());
+    }
+  }
+
+  @Override
+  public Map<Object, EvictableEntry> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
       if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
           throw new AssertionError(this.evictionStatus);
       } else {
  //     it's locked.  go for it
         this.evictionStatus = EvictionStatus.SAMPLED;
       }
-    final Map<Object, ObjectID> samples = new HashMap<Object, ObjectID>(count);
+    final Map<Object, EvictableEntry> samples = new HashMap<Object, EvictableEntry>(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
     final int size = getSize();
@@ -468,11 +491,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
           throw new AssertionError("key is not null");
       }
       if (r.nextInt(100) < chance) {
-        Object value = references.get(k);
-        if (value == null || serverMapEvictionClientObjectRefSet.contains(value)) {
+        CDSMValue value = getValueForKey(k);
+        if (value == null || serverMapEvictionClientObjectRefSet.contains(value.getObjectID())) {
           continue;
         }
-        samples.put(k, (ObjectID)value);
+        samples.put(k, value);
       } else {
         ignored.add(k);
       }
@@ -480,11 +503,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (samples.size() < count) {
       for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
         final Object k = i.next();
-        final Object v = references.get(k);
-        if (v == null || serverMapEvictionClientObjectRefSet.contains(v)) {
+        CDSMValue v = getValueForKey(k);
+        if (v == null || serverMapEvictionClientObjectRefSet.contains(v.getObjectID())) {
           continue;
         }
-        samples.put(k, (ObjectID)v);
+        samples.put(k, v);
       }
     }
     return samples;
@@ -500,7 +523,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final int prime = 31;
     int result = super.hashCode();
     result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
-//    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
     result = prime * result + (invalidateOnChange ? 1231 : 1237);
     result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;

@@ -4,7 +4,6 @@
  */
 package com.tc.object.change;
 
-import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.change.event.ArrayElementChangeEvent;
@@ -38,8 +37,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   private final Map                              arrayEvents;
   private final List                             literalValueChangedEvents;
   private final List<MetaDataDescriptorInternal> metaData;
-
-  private boolean                                ignoreMissing = true;
 
   public TCChangeBufferImpl(TCObject object) {
     this.tcObject = object;
@@ -98,7 +95,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
         ((DNAWriterInternal) writer).addMetaData(md);
       }
 
-      writer.setIgnoreMissing(ignoreMissing);
       return;
     }
 
@@ -116,14 +112,12 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   @Override
   public void literalValueChanged(Object newValue) {
-    ignoreMissing = false;
     literalValueChangedEvents.add(new LiteralChangeEvent(newValue));
   }
 
   @Override
   public void fieldChanged(String classname, String fieldname, Object newValue, int index) {
     Assert.eval(newValue != null);
-    ignoreMissing = false;
     if (index >= 0) {
       // We could add some form of threshold for array change events where instead of encoding the individual updates,
       // we could just send the data for the entire array (like we do when a managed array is brand new)
@@ -151,7 +145,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   @Override
   public void arrayChanged(int startPos, Object array, int newLength) {
-    ignoreMissing = false;
     // could use a better collection that maintain put order for repeated additions
     Integer key = Integer.valueOf(-startPos); // negative int is used for sub-arrays
     ArrayElementChangeEvent oldEvent = (ArrayElementChangeEvent) arrayEvents.remove(key);
@@ -171,10 +164,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     // TODO: It might be useful (if it doesn't take too much CPU) to collapse logical operations. For instance,
     // if a put() is followed by a remove() on the same key we don't need to send anything. Or if multiple put()s are
     // done, only the last one matters
-
-    if (method != SerializationUtil.IGNORABLE_FIELD_CHANGE) {
-      ignoreMissing = false;
-    }
     logicalEvents.add(new LogicalChangeEvent(method, parameters));
   }
 
