@@ -70,96 +70,6 @@
   </dependencies>
 
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <execution>
-            <id>unpack-sources</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeGroupIds>org.terracotta.toolkit</includeGroupIds>
-              <excludeArtifactIds/>
-              <classifier>sources</classifier>
-              <failOnMissingClassifierArtifact>true</failOnMissingClassifierArtifact>
-              <outputDirectory>${project.build.directory}/sources</outputDirectory>
-            </configuration>
-          </execution>       
-          <execution>
-            <id>copy-javadoc</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <skip>${skipJavadoc}</skip>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.terracotta.toolkit</groupId>
-                  <artifactId>terracotta-toolkit-api</artifactId>
-                  <version>${toolkit-api.version}</version>
-                  <classifier>javadoc</classifier>
-                  <outputDirectory>${project.build.directory}</outputDirectory>
-                  <destFileName>${project.artifactId}-${project.version}-javadoc.jar</destFileName>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>           
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version><!--$NO-MVN-MAN-VER$-->
-        <executions>       
-          <execution>
-            <id>package-sources</id>
-            <configuration>
-              <appendAssemblyId>true</appendAssemblyId>
-              <attach>true</attach>
-              <descriptors>
-                <descriptor>${basedir}/src/main/assembly/sources.xml</descriptor>
-              </descriptors>
-            </configuration>          
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>                  
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>attach-javadoc</id>
-            <phase>package</phase>
-            <goals>
-              <goal>attach-artifact</goal>
-            </goals>
-            <configuration>
-              <skipAttach>${skipJavadoc}</skipAttach>
-              <artifacts>
-                <!-- sources artifact attached by default -->
-                <artifact>
-                  <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar</file>
-                  <type>jar</type>
-                  <classifier>javadoc</classifier>
-                </artifact>                
-              </artifacts>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>               
-    </plugins>
     <pluginManagement>
       <plugins>
         <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
@@ -329,6 +239,58 @@
         <plugins>    
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.6</version>
+            <executions>      
+              <execution>
+                <id>copy-javadoc</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <skip>${skipJavadoc}</skip>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.terracotta.toolkit</groupId>
+                      <artifactId>terracotta-toolkit-api</artifactId>
+                      <version>${toolkit-api.version}</version>
+                      <classifier>javadoc</classifier>
+                      <outputDirectory>${project.build.directory}</outputDirectory>
+                      <destFileName>${project.artifactId}-${project.version}-javadoc.jar</destFileName>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>           
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>attach-javadoc</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <skipAttach>${skipJavadoc}</skipAttach>
+                  <artifacts>
+                    <!-- sources artifact attached by default -->
+                    <artifact>
+                      <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar</file>
+                      <type>jar</type>
+                      <classifier>javadoc</classifier>
+                    </artifact>                
+                  </artifacts>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>        
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
               <archive>
@@ -339,7 +301,6 @@
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
-            <version>1.0.8-SNAPSHOT</version>
             <executions>         
               <execution>
                 <id>package-L1</id>
@@ -403,6 +364,7 @@
             <version>2.0-tc-patch</version>
             <configuration>
               <useBaseVersion>true</useBaseVersion>
+              <createSourcesJar>true</createSourcesJar>
               <artifactSet>
                 <includes>
                   <include>org.terracotta.internal:toolkit-express-impl</include>
