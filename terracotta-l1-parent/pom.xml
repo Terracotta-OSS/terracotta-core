@@ -15,6 +15,30 @@
   <name>terracotta-l1-parent</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l1</artifactId>
+      <version>${project.version}</version>
+    </dependency>  
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common</artifactId>
+      <version>${project.version}</version>      
+      <exclusions>    
+        <exclusion>
+          <groupId>gf-3122</groupId>
+          <artifactId>gf.javax.servlet-api</artifactId>
+        </exclusion>        
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>        
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>         
+      </exclusions>      
+    </dependency>   
     <!--
         Version and scope for each dependency is declared in the
         dependencyManagement section of the parent POM.

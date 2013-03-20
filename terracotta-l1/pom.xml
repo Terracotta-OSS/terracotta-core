@@ -13,142 +13,89 @@
   <artifactId>terracotta-l1</artifactId>
   <packaging>jar</packaging>
   <name>terracotta-l1</name>
-  
+
   <properties>
     <skip.testjar>true</skip.testjar>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l1</artifactId>
-      <version>${project.version}</version>
-    </dependency>  
+    <!-- inherits from parent pom -->
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <rootPath>${basedir}/..</rootPath>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-            <phase>generate-resources</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <id>unpack-sources</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
+  <profiles>
+    <profile>
+      <id>fullmode</id>      
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>false</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.0-tc-patch</version>
             <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <classifier>sources</classifier>
-              <outputDirectory>${project.build.directory}/sources</outputDirectory>
+              <useBaseVersion>true</useBaseVersion>
+              <createSourcesJar>true</createSourcesJar>
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta.internal:dso-l1</include>
+                  <include>org.terracotta.internal:common</include>
+                  <include>org.terracotta.internal:build-data</include>
+                  <include>org.terracotta.internal:dso-common</include>
+                  <include>org.terracotta.internal:dso-l1-api</include>
+                  <include>org.terracotta.internal:dso-cluster-api</include>
+                  <include>org.terracotta.internal:management</include>
+                </includes>
+              </artifactSet>       
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
+                  </excludes>
+                </filter>		  
+              </filters>    
+              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>                      
             </configuration>
-          </execution>          
-        </executions>
-      </plugin>      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2.1</version>
-        <executions>
-          <execution>
-            <id>assemble-sources</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${basedir}/src/assemble/sources.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>true</appendAssemblyId>
-            </configuration>            
-          </execution>          
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.0-tc-patch</version>
-        <configuration>
-          <useBaseVersion>true</useBaseVersion>
-          <artifactSet>
-            <includes>
-              <include>org.terracotta.internal:*</include>
-            </includes>
-          </artifactSet>       
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
-              </excludes>
-            </filter>		  
-          </filters>    
-          <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
-          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>           
-          <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-              <resource>MANIFEST.MF</resource>
-            </transformer>          
-            <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-              <resource>META-INF/MANIFEST.MF</resource>
-              <file>${project.build.directory}/MANIFEST.MF</file>
-            </transformer>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-              <resource>devmode-classdir.txt</resource>
-            </transformer>            
-          </transformers>            
-        </configuration>
-        <executions>
-          <execution>
-            <id>shade-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>inject-correct-pom-to-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <source>
+            <executions>
+              <execution>
+                <id>shade-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>inject-correct-pom-to-jar</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
                 def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
                 ant.jar(destfile: jarFile, update: "true") {
                   zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
-              </source>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>        
-    </plugins>
-  </build>
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>        
+        </plugins>
+      </build>
+    </profile>
+  </profiles> 
 </project>
