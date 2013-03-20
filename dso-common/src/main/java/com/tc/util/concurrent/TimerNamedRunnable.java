@@ -5,8 +5,8 @@
 package com.tc.util.concurrent;
 
 /**
- * Convinient interface for custom named tasks.
- * {@link #toString()} could be used instead, but non-overridden {@link Object#toString()} looks ugly.
+ * Convenient interface for custom named tasks. {@link #toString()} could be used instead, but non-overridden
+ * {@link Object#toString()} looks ugly.
  */
 interface TimerNamedRunnable extends Runnable {
   String getName();
