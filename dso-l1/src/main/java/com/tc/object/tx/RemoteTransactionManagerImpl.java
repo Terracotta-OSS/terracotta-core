@@ -23,7 +23,6 @@ import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
@@ -45,6 +44,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Sends off committed transactions
@@ -71,6 +71,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final HashMap<LockID, List<LockFlushCallback>> lockFlushCallbacks          = new HashMap<LockID, List<LockFlushCallback>>();
 
   private final BatchManager                             batchManager;
+  private final AtomicBoolean                            sending                     = new AtomicBoolean();
   private TransactionBatchAccounting                     batchAccounting             = new TransactionBatchAccounting();
   private final LockAccounting                           lockAccounting;
   private final TCLogger                                 logger;
@@ -438,13 +439,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       return true;
   }
   
-  private volatile boolean sending = false;
-
   private void sendBatches(final boolean ignoreMax) {
-      if ( sending ) return;
-      sending = true;
-    sendBatches(ignoreMax, null);
-    sending = false;
+    if ( sending.compareAndSet(false, true) ) {
+        sendBatches(ignoreMax, null);
+        sending.set(false);
+    }
   }
 
   private void sendBatches(final boolean ignoreMax, final String message) {
@@ -536,6 +535,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             this.logger.warn(this.status + " : Received ACK for batch = " + txnBatchID);
             return;
           }
+          if ( this.logger.isDebugEnabled() ) {
+            this.logger.debug(batchManager.toString());
+          }
           batchManager.batchAcknowledged();
           sendBatches(false);
       } finally {
@@ -568,7 +570,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             if ( isStoppingOrStopped() && batchManager.isEmpty() ) {
                 stopIfStopping();
             }
-        }
+        } 
       } else {
         this.logger.fatal("No batch found for acknowledgement: " + txID + " The batch accounting is "
                           + this.batchAccounting);
@@ -694,14 +696,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       private Thread agent;
       private volatile boolean stopping = false;
       private boolean empty = true;
-      private int  outStandingBatches = 0;
-      private final Map   incompleteBatches = new HashMap();
+      private SequenceID  lastsid;
+//      private int  outStandingBatches = 0;
+      private final Map<TxnBatchID,ClientTransactionBatch>   incompleteBatches = new HashMap<TxnBatchID,ClientTransactionBatch> ();
 
-        public BatchManager() {
-        }
-        
         public synchronized void clear() {
-            outStandingBatches = 0;
+//            outStandingBatches = 0;
             incompleteBatches.clear();
         }
         
@@ -733,17 +733,18 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
               @Override
               public void run() {
-                  while (!sendList.isEmpty() || !isStoppingOrStopped()) {
+                  while (true) {
                       try {
                           ClientTransactionBatch next = sendList.poll(2, TimeUnit.SECONDS);
                           if ( next != null ) {
                               next.send();
-                          } else if ( stopping ) {
-                              setEmpty(sendList.isEmpty());
-                              return;
                           } else {
+                              sendBatches(stopping);
                               setEmpty(sendList.isEmpty());
-                          }
+                              if ( stopping && sendList.isEmpty() ) {
+                                  return;
+                              }
+                          } 
                       } catch ( InterruptedException ie ) {
 
                       }
@@ -764,7 +765,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       
       private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
-        if (ignoreMax || (outStandingBatches < MAX_OUTSTANDING_BATCHES)) {
+        if (ignoreMax || (incompleteBatches.size() < MAX_OUTSTANDING_BATCHES)) {
             ClientTransactionBatch batch = sequencer.getNextBatch();
             if ( batch != null ) {
                 if ( batch.numberOfTxnsBeforeFolding() == 0 ) {
@@ -772,8 +773,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                 }
                 TxnBatchID bid = batch.getTransactionBatchID();
                 batchAccounting.addBatch(bid,markBatchOutstanding(bid, batch));
-                setEmpty(false);
-                sendList.put(batch);
+                addToSendList(batch);
             }
             return batch;
         }
@@ -781,22 +781,38 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       
       private synchronized ClientTransactionBatch getBatch(TxnBatchID id) {
-          return (ClientTransactionBatch)incompleteBatches.get(id);
+          return incompleteBatches.get(id);
       }
       
       private synchronized void resendList(List<TxnBatchID> toSend) throws InterruptedException {
 //          sendList.clear();
+          lastsid = null;
           for (TxnBatchID id : toSend) {
-              final ClientTransactionBatch batch = (ClientTransactionBatch)incompleteBatches.get(id);
+              final ClientTransactionBatch batch = incompleteBatches.get(id);
               if (batch == null) {
                 throw new AssertionError("Unknown batch: " + id);
               }
               logger.debug("Resending outstanding batch: " + id + ", "
                   + batch.addTransactionIDsTo(new LinkedHashSet()));
-             setEmpty(false);
-             sendList.put(batch);
+             addToSendList(batch);
           }
-          
+      }
+      
+      private void addToSendList(ClientTransactionBatch batch) {
+          Collection<SequenceID> sids = batch.addTransactionSequenceIDsTo(new ArrayList<SequenceID>());
+          for ( SequenceID sid : sids ) {
+              if ( lastsid == null ) {
+                  lastsid = sid;
+              } else {
+                  if ( lastsid.next().equals(sid) ) {
+                      lastsid = sid;
+                  } else {
+                      throw new AssertionError("invalid sequence");
+                  }
+              }
+          }
+          setEmpty(false);
+          sendList.add(batch);
       }
       
       private Collection markBatchOutstanding(TxnBatchID bid, final ClientTransactionBatch batchToSend) {
@@ -804,16 +820,16 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
               // formatting
               throw new AssertionError("Batch has already been sent!");
             }
-          outStandingBatches++;
+//          outStandingBatches++;
           return batchToSend.addTransactionIDsTo(new HashSet());
       }
       
       private synchronized void batchAcknowledged() {
-        outStandingBatches--;
+//        outStandingBatches--;
       }
       
       private synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
-          return (ClientTransactionBatch)incompleteBatches.remove(id);
+          return incompleteBatches.remove(id);
       }
       
       private synchronized boolean isEmpty() {
@@ -823,6 +839,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             
       private synchronized int size() {
           return incompleteBatches.size();
+      }
+      
+      public synchronized String toString() {
+          return "incomplete:" + incompleteBatches.size();
       }
    }
 

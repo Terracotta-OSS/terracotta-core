@@ -345,8 +345,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   @Override
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                                 final TransactionIDGenerator tidGenerator) {
-    
-      TransactionBuffer txnBuffer = null;
+    holders += 1;  
+    TransactionBuffer txnBuffer = null;
     if ( !foldingEnabled ) {
         txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
         txn.setTransactionID(tidGenerator.nextTransactionID());

@@ -20,7 +20,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
   /**
    * Adds the collection of transaction ids in this batch to the given collection and returns it.
    */
-  public Collection addTransactionIDsTo(Collection c);
+  public Collection<TransactionID> addTransactionIDsTo(Collection<TransactionID> c);
 
   /**
    * Add the given transaction to this batch.
@@ -49,7 +49,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
 
   public SequenceID getMinTransactionSequence();
 
-  public Collection addTransactionSequenceIDsTo(Collection sequenceIDs);
+  public Collection<SequenceID> addTransactionSequenceIDsTo(Collection<SequenceID> sequenceIDs);
   
   // For testing
   public String dump();

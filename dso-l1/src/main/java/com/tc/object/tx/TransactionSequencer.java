@@ -13,7 +13,6 @@ import com.tc.object.ClearableCallback;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.AbortedOperationUtil;
 import com.tc.util.SequenceGenerator;

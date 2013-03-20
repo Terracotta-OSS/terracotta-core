@@ -18,8 +18,8 @@ import java.util.TreeMap;
 
 public class TransactionBatchAccounting {
 
-  private final SortedMap   batchesByTransaction = new TreeMap();
-  private final LinkedList batches              = new LinkedList();
+  private final SortedMap<TransactionID,BatchDescriptor>   batchesByTransaction = new TreeMap<TransactionID,BatchDescriptor>();
+  private final LinkedList<BatchDescriptor> batches              = new LinkedList<BatchDescriptor>();
   private boolean           stopped              = false;
   private TransactionID     highWaterMark        = TransactionID.NULL_ID;
 
@@ -36,8 +36,8 @@ public class TransactionBatchAccounting {
     if (stopped || transactionIDs.size() == 0) return;
     BatchDescriptor desc = new BatchDescriptor(batchID, transactionIDs);
     batches.add(desc);
-    for (Iterator i = transactionIDs.iterator(); i.hasNext();) {
-      TransactionID txID = (TransactionID) i.next();
+    for (Iterator<TransactionID> i = transactionIDs.iterator(); i.hasNext();) {
+      TransactionID txID = i.next();
       Object removed = batchesByTransaction.put(txID, desc);
       if (removed != null) { throw new AssertionError("TransactionID is already accounted for: " + txID + "=>"
                                                       + removed); }
@@ -48,17 +48,17 @@ public class TransactionBatchAccounting {
   }
 
   public synchronized Collection getTransactionIdsFor(TxnBatchID batchID) {
-    Iterator iter = batches.iterator();
+    Iterator<BatchDescriptor> iter = batches.iterator();
     while (iter.hasNext()) {
-      BatchDescriptor bd = (BatchDescriptor) iter.next();
+      BatchDescriptor bd = iter.next();
       if (bd.getId().equals(batchID)) { return new HashSet(bd.getTransactions()); }
     }
     return Collections.EMPTY_SET;
   }
 
   public synchronized TxnBatchID getBatchByTransactionID(TransactionID txID) {
-    BatchDescriptor desc = (BatchDescriptor) batchesByTransaction.get(txID);
-    return desc == null ? TxnBatchID.NULL_BATCH_ID : desc.batchID;
+    BatchDescriptor desc = batchesByTransaction.get(txID);
+    return desc == null ? TxnBatchID.NULL_BATCH_ID : desc.getId();
   }
 
   /**
@@ -69,26 +69,26 @@ public class TransactionBatchAccounting {
    * @return The input collection
    */
   public synchronized List addIncompleteBatchIDsTo(List c) {
-    for (Iterator i = batches.iterator(); i.hasNext();) {
-      BatchDescriptor desc = (BatchDescriptor) i.next();
+    for (Iterator<BatchDescriptor> i = batches.iterator(); i.hasNext();) {
+      BatchDescriptor desc = i.next();
       c.add(desc.batchID);
     }
     return c;
   }
 
   public synchronized TxnBatchID getMinIncompleteBatchID() {
-    return batches.isEmpty() ? TxnBatchID.NULL_BATCH_ID : ((BatchDescriptor) batches.getFirst()).batchID;
+    return batches.isEmpty() ? TxnBatchID.NULL_BATCH_ID : batches.getFirst().getId();
   }
 
   public synchronized TxnBatchID acknowledge(TransactionID txID) {
     if (stopped) return TxnBatchID.NULL_BATCH_ID;
     final TxnBatchID completed;
-    final BatchDescriptor desc = (BatchDescriptor) batchesByTransaction.remove(txID);
+    final BatchDescriptor desc = batchesByTransaction.remove(txID);
     if (desc == null) throw new AssertionError("Batch not found for " + txID);
     if (desc.acknowledge(txID) == 0) {
       // completedGlobalTransactionIDs.addAll(desc.globalTransactionIDs);
       batches.remove(desc);
-      completed = desc.batchID;
+      completed = desc.getId();
     } else {
       completed = TxnBatchID.NULL_BATCH_ID;
     }
@@ -107,7 +107,7 @@ public class TransactionBatchAccounting {
         return highWaterMark.next();
       }
     } else {
-      return (TransactionID) batchesByTransaction.firstKey();
+      return batchesByTransaction.firstKey();
     }
   }
 
