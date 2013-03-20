@@ -36,7 +36,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     dnaWriter = new TestDNAWriter();
     state.dehydrate(new ObjectID(1), dnaWriter, DNAType.L1_FAULT); // Only dehydrate the fields
-    Assert.assertEquals(10, dnaWriter.getActionCount()); // only the physical fields are dehydrated
+    Assert.assertEquals(11, dnaWriter.getActionCount()); // only the physical fields are dehydrated
 
     final TestDNACursor cursor3 = dnaWriter.getDNACursor();
     final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState)createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
@@ -86,6 +86,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
         false, false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME,
         false, false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.BROADCAST_EVICTIONS_FIELDNAME, false, false);
 
     for (int i = 0; i < 500; i++) {
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "key-" + i, new ObjectID(1000 + i) });
