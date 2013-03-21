@@ -92,7 +92,7 @@ class DevmodeClusteredStateLoader extends ClusteredStateLoader {
   @Override
   public Class<?> loadClass(String name) throws ClassNotFoundException {
     Class<?> rv = findLoadedClass(name);
-    if (rv != null) { return returnAndLog(rv, rv.getClassLoader().toString()); }
+    if (rv != null) { return rv; }
 
     byte[] extra = extraClasses.remove(name);
     if (extra != null) {
