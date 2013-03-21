@@ -857,7 +857,7 @@ public class ObjectManagerTest extends TCTestCase {
     @Override
     public DNACursor getCursor() {
       TestDNACursor cursor = new TestDNACursor();
-      cursor.addPhysicalAction("value", new byte[1], false);
+      cursor.addEntireArray(new byte[1]);
       return cursor;
     }
   }

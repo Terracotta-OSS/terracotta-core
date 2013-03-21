@@ -28,6 +28,7 @@ import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.terracottatech.search.NVPair;
@@ -199,7 +200,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
   private Map getCandidatesToEvict() {
     final Map c = new HashMap();
     for (int i = 0; i < 1000; i++) {
-      c.put(new UTF8ByteDataHolder("key-" + i), new ObjectID(i * 20));
+      c.put(new UTF8ByteDataHolder("key-" + i), new CDSMValue(new ObjectID(i * 20), 0,0,0,0));
     }
     return c;
   }
