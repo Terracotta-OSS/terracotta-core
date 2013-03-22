@@ -12,7 +12,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
@@ -72,16 +71,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
         final LogicalAction la = (LogicalAction) action;
         throw new AssertionError("Unknown logical action - " + la);
       }
-    }
-  }
-
-  private static String getString(Object param) {
-    if (param instanceof UTF8ByteDataHolder) {
-      return ((UTF8ByteDataHolder) param).asString();
-    } else if (param instanceof String) {
-      return (String) param;
-    } else {
-      throw new AssertionError("Not a string value: " + safeTypeName(param) + " - " + param);
     }
   }
 

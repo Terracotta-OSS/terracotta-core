@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.handler.CallbackDumpAdapter;
-import com.tc.handler.CallbackDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -231,12 +229,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
     return missingObjects;
-  }
-
-  private void dumpToLogger() {
-    CallbackDumpHandler dumpHandler = new CallbackDumpHandler();
-    dumpHandler.registerForDump(new CallbackDumpAdapter(this));
-    dumpHandler.dump();
   }
 
   private void log(String message) {
