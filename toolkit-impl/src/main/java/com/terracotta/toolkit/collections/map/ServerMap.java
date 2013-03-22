@@ -95,7 +95,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final String                                                    name;
   private final Consistency                                               consistency;
   private final ToolkitCacheMetaDataCallback                              metaDataCallback;
-  private final AtomicReference<ToolkitMap<String, ToolkitAttributeType>> attributeSchema     = new AtomicReference<ToolkitMap<String, ToolkitAttributeType>>();
+  private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                              attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
 
   public ServerMap(Configuration config, String name, boolean broadcastEvictions) {
@@ -1177,7 +1177,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     tcObjectServerMap.setLocalCacheEnabled(enabled);
   }
 
-  void setSearchAttributeTypes(ToolkitMap<String, ToolkitAttributeType> schema) {
+  void setSearchAttributeTypes(ToolkitMap<String, String> schema) {
     if (!this.attributeSchema.compareAndSet(null, schema) && schema != attributeSchema.get()) {
       LOGGER.warn(String.format("Ignoring attempt to reset search attribute schema on map %s", getName()));
     }
@@ -1355,6 +1355,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public boolean isBroadcastEvictions() {
     return broadcastEvictions;
   }
@@ -1375,6 +1376,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return createRemoveSearchMetaData(null);
   }
 
+  private static String getSearchAttributeType(String name, Object value) {
+    ToolkitAttributeType type = ToolkitAttributeType.typeFor(name, value);
+    // Correctly handle distinct types of enums
+    return ToolkitAttributeType.ENUM == type ? ((Enum) value).getDeclaringClass().getName() : type.name();
+  }
+
   private MetaData createPutSearchMetaData(K key, V value) {
     if (!isSearchable()) return null;
 
@@ -1382,8 +1389,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     md.add(SearchMetaData.KEY, key);
 
     try {
-      Map<String, ToolkitAttributeType> recordedTypes = new HashMap<String, ToolkitAttributeType>();
-      Map<String, ToolkitAttributeType> searchAttributeTypes = attributeSchema.get();
+      Map<String, String> recordedTypes = new HashMap<String, String>();
+      Map<String, String> searchAttributeTypes = attributeSchema.get();
       boolean updateTypes = searchAttributeTypes.isEmpty();
 
       Map<String, Object> attrs = attrExtractor.attributesFor(key, value);
@@ -1392,15 +1399,21 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         String attrName = attr.getKey();
         Object attrValue = attr.getValue();
 
+        String type;
         if (attrValue != null) {
           if (updateTypes) {
-            recordedTypes.put(attrName, ToolkitAttributeType.typeFor(attrName, attrValue));
+            type = getSearchAttributeType(attrName, attrValue);
+            recordedTypes.put(attrName, type);
           } else {
-            ToolkitAttributeType type = searchAttributeTypes.get(attrName);
-            if (type == null) {
-              recordedTypes.put(attrName, ToolkitAttributeType.typeFor(attrName, attrValue));
-            } else {
-              type.validateValue(attrName, attrValue);
+            type = searchAttributeTypes.get(attrName);
+            String resolvedType = getSearchAttributeType(attrName, attrValue);
+            if (type != null) {
+              if (!type.equals(resolvedType)) {
+                throw new SearchException(String.format("Expecting a %s value for attribute [%s] but was %s", type, attrName, resolvedType));
+              }
+            }
+            else {
+              recordedTypes.put(attrName, resolvedType);
             }
           }
 
@@ -1413,11 +1426,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         String lockId = getInstanceDsoLockName() + getAttrTypeMapLockName();
         try {
           beginLock(lockId, ToolkitLockTypeInternal.WRITE);
-          for (Entry<String, ToolkitAttributeType> e : recordedTypes.entrySet()) {
+          for (Entry<String, String> e : recordedTypes.entrySet()) {
             String attrName = e.getKey();
-            ToolkitAttributeType existing = searchAttributeTypes.get(attrName);
-            ToolkitAttributeType newType = e.getValue();
-            if (existing != null && existing != newType) {
+            String existing = searchAttributeTypes.get(attrName);
+            String newType = e.getValue();
+            if (existing != null && !existing.equals(newType)) {
               //
               throw new SearchException("Attempting to replace type mapping for attribute [" + attrName + "] from "
                                         + existing + " to " + newType);

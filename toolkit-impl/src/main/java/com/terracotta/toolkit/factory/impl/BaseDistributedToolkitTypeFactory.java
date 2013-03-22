@@ -4,10 +4,11 @@
 
 package com.terracotta.toolkit.factory.impl;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
-import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.google.common.base.Preconditions;
@@ -28,8 +29,6 @@ import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
 import java.util.Set;
-
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 /**
  * @author Eugene Shelestovich
@@ -64,8 +63,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
                                                       Configuration configuration, PlatformService platformService) {
     validateNewConfiguration(configuration);
     validateExistingClusterWideConfigs(stripeObjects, configuration);
-    ToolkitMap<String, ToolkitAttributeType> attrSchema = toolkit.getMap(name + '|' + SEARCH_ATTR_TYPES_MAP_SUFFIX,
-        String.class, ToolkitAttributeType.class);
+    ToolkitMap<String, String> attrSchema = toolkit.getMap(name + '|' + SEARCH_ATTR_TYPES_MAP_SUFFIX, String.class, String.class);
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
         searchBuilderFactory, lookup, name, stripeObjects,
         configuration, attrSchema, serverMapLocalStoreFactory,

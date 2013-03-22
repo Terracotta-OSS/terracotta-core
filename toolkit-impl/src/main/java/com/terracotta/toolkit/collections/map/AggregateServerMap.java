@@ -20,7 +20,6 @@ import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchQueryResultSet;
 import org.terracotta.toolkit.search.ToolkitSearchQuery;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
-import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
@@ -110,7 +109,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                                      clusterInfo;
   private final PlatformService                                            platformService;
-  private final ToolkitMap<String, ToolkitAttributeType>                   attrSchema;
+  private final ToolkitMap<String, String>                                 attrSchema;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
   private final ToolkitObjectType                                          toolkitObjectType;
   private final L1ServerMapLocalCacheStore<K, V>                           localCacheStore;
@@ -129,7 +128,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public AggregateServerMap(ToolkitObjectType type, SearchFactory searchBuilderFactory,
                             DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup, String name,
                             ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects, Configuration config,
-                            ToolkitMap<String, ToolkitAttributeType> attributeTypes,
+ ToolkitMap<String, String> attributeTypes,
                             ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     this.toolkitObjectType = type;
     this.searchBuilderFactory = searchBuilderFactory;
