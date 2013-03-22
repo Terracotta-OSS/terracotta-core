@@ -701,6 +701,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       private final Map<TxnBatchID,ClientTransactionBatch>   incompleteBatches = new HashMap<TxnBatchID,ClientTransactionBatch> ();
 
         public synchronized void clear() {
+          lastsid = null;
 //            outStandingBatches = 0;
             incompleteBatches.clear();
         }
