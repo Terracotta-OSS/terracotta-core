@@ -28,7 +28,7 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>toolkit-express-impl</artifactId>
@@ -84,7 +84,7 @@
                   <pluginExecutionFilter>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <versionRange>[2.6,)</versionRange>
+                    <versionRange>[2.1,)</versionRange>
                     <goals>
                       <goal>list</goal>
                     </goals>
@@ -115,7 +115,7 @@
     </profile>
 
     <profile>
-      <id>devmode</id>      
+      <id>devmode</id>
       <activation>
         <property>
           <name>devmode</name>
@@ -140,25 +140,25 @@
                 <configuration>
                   <outputFile>${devmodeDependencies}</outputFile>
                   <includeScope>runtime</includeScope>
-                </configuration>                
+                </configuration>
                 <goals>
                   <goal>list</goal>
                 </goals>
                 <phase>compile</phase>
               </execution>
             </executions>
-          </plugin>         
-          <!-- list embedded-dependencies for /L1, /ehcache and /TIMs resources --> 
+          </plugin>
+          <!-- list embedded-dependencies for /L1, /ehcache and /TIMs resources -->
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
-            <executions>         
+            <executions>
               <execution>
                 <id>list-toolkit-runtime</id> <!-- add toolkit runtime artifact itself into its list since dependency plugin doesn't do that -->
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>list-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>${project.groupId}:${project.artifactId}:${project.version}</param>
@@ -169,13 +169,13 @@
                   <outputFile>${devmodeDependencies}</outputFile>
                   <appendFile>true</appendFile>
                 </configuration>
-              </execution>            
+              </execution>
               <execution>
                 <id>list-L1</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>list-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>org.terracotta:terracotta-l1:${project.version}</param>
@@ -190,7 +190,7 @@
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>list-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>org.terracotta.internal:terracotta-toolkit-impl:${project.version}</param>
@@ -200,13 +200,13 @@
                   <outputFile>${devmodeEmbeddedDependencies}</outputFile>
                   <appendFile>true</appendFile>
                 </configuration>
-              </execution>      
+              </execution>
               <execution>
                 <id>package-ehcache</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>list-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>net.sf.ehcache:ehcache:${ehcache.version}</param>
@@ -217,13 +217,13 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin> 
+          </plugin>
         </plugins>
       </build>
     </profile>
 
     <profile>
-      <id>fullmode</id>      
+      <id>fullmode</id>
       <activation>
         <property>
           <name>devmode</name>
@@ -233,15 +233,15 @@
       <properties>
         <packagingTarget>classes</packagingTarget>
         <skipToolkitPackaging>false</skipToolkitPackaging>
-        <packagingType>bundle</packagingType>      
+        <packagingType>bundle</packagingType>
       </properties>
       <build>
-        <plugins>    
+        <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <version>2.6</version>
-            <executions>      
+            <executions>
               <execution>
                 <id>copy-javadoc</id>
                 <phase>prepare-package</phase>
@@ -261,7 +261,7 @@
                     </artifactItem>
                   </artifactItems>
                 </configuration>
-              </execution>           
+              </execution>
             </executions>
           </plugin>
           <plugin>
@@ -283,12 +283,12 @@
                       <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar</file>
                       <type>jar</type>
                       <classifier>javadoc</classifier>
-                    </artifact>                
+                    </artifact>
                   </artifacts>
                 </configuration>
               </execution>
             </executions>
-          </plugin>        
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
@@ -297,17 +297,17 @@
                 <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
               </archive>
             </configuration>
-          </plugin>         
+          </plugin>
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
-            <executions>         
+            <executions>
               <execution>
                 <id>package-L1</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>org.terracotta:terracotta-l1:${project.version}</param>
@@ -320,7 +320,7 @@
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>org.terracotta.internal:terracotta-toolkit-impl:${project.version}</param>
@@ -328,20 +328,20 @@
                   <resolveTransitively>false</resolveTransitively>
                   <outputDir>${project.build.outputDirectory}/TIMs</outputDir>
                 </configuration>
-              </execution>      
+              </execution>
               <execution>
                 <id>package-ehcache</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
-                </goals>            
+                </goals>
                 <configuration>
                   <artifacts>
                     <param>net.sf.ehcache:ehcache:${ehcache.version}</param>
                   </artifacts>
                   <outputDir>${project.build.outputDirectory}/ehcache</outputDir>
                 </configuration>
-              </execution>          
+              </execution>
               <execution>
                 <id>process-toolkit-embeddedjars</id>
                 <phase>prepare-package</phase>
@@ -353,10 +353,10 @@
                   <packagingDir>${project.build.outputDirectory}</packagingDir>
                   <privateClassSuffix>.class_terracotta</privateClassSuffix>
                   <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
-                </configuration>            
+                </configuration>
               </execution>
             </executions>
-          </plugin>      
+          </plugin>
 
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -372,7 +372,7 @@
                   <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
                   <include>org.terracotta.internal:build-data</include>
                 </includes>
-              </artifactSet>       
+              </artifactSet>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
@@ -380,8 +380,8 @@
                     <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
                     <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
                   </excludes>
-                </filter>      
-              </filters>    
+                </filter>
+              </filters>
               <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
               <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
               <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
@@ -395,7 +395,7 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>    
+          </plugin>
 
           <plugin>
             <groupId>org.codehaus.gmaven</groupId>
@@ -411,14 +411,14 @@
                   <source>
                 def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
                 ant.jar(destfile: jarFile, update: "true") {
-                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
+                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"),
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
                   </source>
                 </configuration>
               </execution>
             </executions>
-          </plugin>            
+          </plugin>
           <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
@@ -451,12 +451,12 @@
             javax.net.ssl,*</Import-Package>
                 <Export-Package>org.terracotta.toolkit.*;-split-package:=merge-last</Export-Package>
                 <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-                <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>           
+                <Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>
                 <Include-Resource> {maven-resources}, {maven-dependencies}, target/classes </Include-Resource>
               </instructions>
               <excludeDependencies>*;scope=provided|runtime</excludeDependencies>
-            </configuration>        
-          </plugin>      
+            </configuration>
+          </plugin>
         </plugins>
       </build>
     </profile>
