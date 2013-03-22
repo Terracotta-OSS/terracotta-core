@@ -14,6 +14,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 /**
@@ -29,14 +30,29 @@ public interface DiagnosticsResourceService {
   Collection<ThreadDumpEntity> clusterThreadDump(@Context UriInfo info);
 
   @GET
+  @Path("/threadDump")
+  @Produces("application/zip")
+  Response clusterThreadDumpZipped(@Context UriInfo info);
+
+  @GET
   @Path("/threadDump/servers")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<ThreadDumpEntity> serversThreadDump(@Context UriInfo info);
 
   @GET
+  @Path("/threadDump/servers")
+  @Produces("application/zip")
+  Response serversThreadDumpZipped(@Context UriInfo info);
+
+  @GET
   @Path("/threadDump/clients")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<ThreadDumpEntity> clientsThreadDump(@Context UriInfo info);
+
+  @GET
+  @Path("/threadDump/clients")
+  @Produces("application/zip")
+  Response clientsThreadDumpZipped(@Context UriInfo info);
 
   @POST
   @Path("/dgc")

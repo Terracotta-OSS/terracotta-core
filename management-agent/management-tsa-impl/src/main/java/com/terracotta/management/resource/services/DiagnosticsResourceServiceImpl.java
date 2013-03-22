@@ -15,13 +15,19 @@ import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.DiagnosticsService;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -41,6 +47,19 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
     this.requestValidator = ServiceLocator.locate(TSARequestValidator.class);
   }
 
+  private InputStream zipAndConvertToInputStream(Collection<ThreadDumpEntity> threadDumpEntities) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ZipOutputStream out = new ZipOutputStream(baos);
+
+    for (ThreadDumpEntity threadDumpEntity : threadDumpEntities) {
+      out.putNextEntry(new ZipEntry(threadDumpEntity.getSourceId().replace(':', '_') + ".txt"));
+      out.write(threadDumpEntity.getDump().getBytes(Charset.forName("UTF-8")));
+      out.closeEntry();
+    }
+    out.close();
+
+    return new ByteArrayInputStream(baos.toByteArray());
+  }
 
   @Override
   public Collection<ThreadDumpEntity> clusterThreadDump(UriInfo info) {
@@ -52,6 +71,18 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
       return diagnosticsService.getClusterThreadDump();
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
+    }
+  }
+
+  @Override
+  public Response clusterThreadDumpZipped(UriInfo info) {
+    Collection<ThreadDumpEntity> threadDumpEntities = clusterThreadDump(info);
+
+    try {
+      InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
+      return Response.ok().entity(inputStream).header("Content-Disposition", "attachment; filename=clusterThreadDump.zip").build();
+    } catch (IOException ioe) {
+      throw new ResourceRuntimeException("Failed to perform TSA diagnostics", ioe, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
@@ -72,6 +103,18 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
   }
 
   @Override
+  public Response serversThreadDumpZipped(UriInfo info) {
+    Collection<ThreadDumpEntity> threadDumpEntities = serversThreadDump(info);
+
+    try {
+      InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
+      return Response.ok().entity(inputStream).header("Content-Disposition", "attachment; filename=serversThreadDump.zip").build();
+    } catch (IOException ioe) {
+      throw new ResourceRuntimeException("Failed to perform TSA diagnostics", ioe, Response.Status.BAD_REQUEST.getStatusCode());
+    }
+  }
+
+  @Override
   public Collection<ThreadDumpEntity> clientsThreadDump(UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.clientsThreadDump: %s", info.getRequestUri()));
 
@@ -84,6 +127,18 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
       return diagnosticsService.getClientsThreadDump(clientIds);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
+    }
+  }
+
+  @Override
+  public Response clientsThreadDumpZipped(UriInfo info) {
+    Collection<ThreadDumpEntity> threadDumpEntities = clientsThreadDump(info);
+
+    try {
+      InputStream inputStream = zipAndConvertToInputStream(threadDumpEntities);
+      return Response.ok().entity(inputStream).header("Content-Disposition", "attachment; filename=clientsThreadDump.zip").build();
+    } catch (IOException ioe) {
+      throw new ResourceRuntimeException("Failed to perform TSA diagnostics", ioe, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 
