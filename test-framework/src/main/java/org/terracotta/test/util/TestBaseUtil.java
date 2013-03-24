@@ -6,6 +6,7 @@ import com.tc.config.test.schema.ConfigHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
+import com.tc.text.Banner;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -299,14 +300,17 @@ public class TestBaseUtil {
   private static List<String> getDevmodeAwareDependenciesOf(String groupId, String opensourceArtifactId,
                                                            String enterpriseArtifactId,
                                                             Class<?> c) {
+    String artifactId = enterpriseArtifactId;
     URL devmodeResource = TestBaseUtil.class.getResource("/META-INF/devmode/" + groupId + "/" + enterpriseArtifactId
                                                          + "/dependencies.txt");
     if (devmodeResource == null) {
+      artifactId = opensourceArtifactId;
       devmodeResource = TestBaseUtil.class.getResource("/META-INF/devmode/" + groupId + "/" + opensourceArtifactId
                                                        + "/dependencies.txt");
     }
     List<String> deps = new ArrayList<String>();
     if (devmodeResource != null) {
+      Banner.infoBanner("devmode jar is being used for " + artifactId);
       deps = jarsFromMavenDependenciesList(devmodeResource);
     } else {
       deps.add(jarFor(c));
