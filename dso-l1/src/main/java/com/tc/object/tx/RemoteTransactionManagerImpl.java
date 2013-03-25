@@ -692,7 +692,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   
   private class BatchManager {
       
-      private ArrayBlockingQueue<ClientTransactionBatch> sendList = new ArrayBlockingQueue<ClientTransactionBatch>(MAX_OUTSTANDING_BATCHES + 1);
+      private ArrayBlockingQueue<ClientTransactionBatch> sendList = new ArrayBlockingQueue<ClientTransactionBatch>(MAX_OUTSTANDING_BATCHES * 2);
       private Thread agent;
       private volatile boolean stopping = false;
       private boolean empty = true;
@@ -766,7 +766,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       
       private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
-        if (ignoreMax || (incompleteBatches.size() < MAX_OUTSTANDING_BATCHES)) {
+        if (ignoreMax || (incompleteBatches.size() < MAX_OUTSTANDING_BATCHES && sendList.remainingCapacity() > 0)) {
             ClientTransactionBatch batch = sequencer.getNextBatch();
             if ( batch != null ) {
                 if ( batch.numberOfTxnsBeforeFolding() == 0 ) {
@@ -808,7 +808,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                   if ( lastsid.next().equals(sid) ) {
                       lastsid = sid;
                   } else {
-                      throw new AssertionError("invalid sequence");
+                      throw new AssertionError("invalid sequence last:" + lastsid + " next:" + sid);
                   }
               }
           }
