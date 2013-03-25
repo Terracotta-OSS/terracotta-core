@@ -76,7 +76,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     ObjectID newOid = new ObjectID(2);
     when(keyValueStorage.get("key")).thenReturn(oldOid);
     mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "key", newOid });
-    verify(applyTransactionInfo).deleteObject(oldOid);
+    verify(keyValueStorage).put("key", newOid);
   }
 
   public void testRemoveMissingKey() throws Exception {
@@ -89,7 +89,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     ObjectID value = new ObjectID(1);
     when(keyValueStorage.get(key)).thenReturn(value);
     mapManagedObjectState.applyLogicalAction(value, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { key });
-    verify(applyTransactionInfo, times(2)).deleteObject(or(eq(value), eq(key)));
+    verify(keyValueStorage).remove(key);
   }
 
   public void testClear() throws Exception {
@@ -98,7 +98,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     when(keyValueStorage.keySet()).thenReturn(Collections.singleton((Object)key));
     when(keyValueStorage.values()).thenReturn(Collections.singleton((Object)value));
     mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR, new Object[0]);
-    verify(applyTransactionInfo, times(2)).deleteObject(or(eq(value), eq(key)));
+    verify(keyValueStorage).clear();
   }
 
   public void testDestroy() throws Exception {
