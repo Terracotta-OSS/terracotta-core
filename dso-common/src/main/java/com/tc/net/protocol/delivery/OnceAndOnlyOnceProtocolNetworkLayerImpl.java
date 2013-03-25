@@ -115,10 +115,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   @Override
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
-    if (debug) {
-      debugLog("receive -> " + msg.getHeader().toString());
-    }
-
     if (msg.isSend() || msg.isAck()) {
 
       if (!sessionId.equals(msg.getSessionId())) {
