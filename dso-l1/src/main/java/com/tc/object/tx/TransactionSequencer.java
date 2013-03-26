@@ -98,6 +98,10 @@ public class TransactionSequencer implements ClearableCallback {
     logger.info("Max Sleep time = " + MAX_SLEEP_TIME_BEFORE_HALT + " Slow down starts at = " + this.slowDownStartsAt
                 + " sleep time increments = " + this.sleepTimeIncrements);
   }
+  
+  int getMaxPendingSize() {
+      return MAX_PENDING_BATCHES;
+  }
 
   private void createNewBatch() {
     this.currentWritten = 0;

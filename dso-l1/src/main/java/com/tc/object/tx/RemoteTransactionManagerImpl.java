@@ -221,11 +221,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
   }
 
-  /**
-   * This is for testing only.
-   */
-  public int getMaxOutStandingBatches() {
+  int getMaxOutStandingBatches() {
     return MAX_OUTSTANDING_BATCHES;
+  }
+  
+  int getMaxQueuedBatches() {
+      return MAX_OUTSTANDING_BATCHES + sequencer.getMaxPendingSize();
   }
 
   @Override
@@ -440,7 +441,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
   
   private void sendBatches(final boolean ignoreMax) {
-    if ( sending.compareAndSet(false, true) ) {
+    if ( ignoreMax || sending.compareAndSet(false, true) ) {
         sendBatches(ignoreMax, null);
         sending.set(false);
     }
@@ -569,6 +570,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             batchManager.removeBatch(completed);
             if ( isStoppingOrStopped() && batchManager.isEmpty() ) {
                 stopIfStopping();
+            } else {
+                sendBatches(false);
             }
         } 
       } else {
@@ -691,18 +694,18 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
   
   private class BatchManager {
-      
-      private ArrayBlockingQueue<ClientTransactionBatch> sendList = new ArrayBlockingQueue<ClientTransactionBatch>(MAX_OUTSTANDING_BATCHES * 2);
+      /* make sure there is enough room for batches if max is ignored  */
+      private ArrayBlockingQueue<ClientTransactionBatch> sendList = new ArrayBlockingQueue<ClientTransactionBatch>(sequencer.getMaxPendingSize() + getMaxOutStandingBatches());
       private Thread agent;
       private volatile boolean stopping = false;
       private boolean empty = true;
       private SequenceID  lastsid;
-//      private int  outStandingBatches = 0;
+      private int  outStandingBatches = 0;
       private final Map<TxnBatchID,ClientTransactionBatch>   incompleteBatches = new HashMap<TxnBatchID,ClientTransactionBatch> ();
 
         public synchronized void clear() {
           lastsid = null;
-//            outStandingBatches = 0;
+            outStandingBatches = 0;
             incompleteBatches.clear();
         }
         
@@ -716,7 +719,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             }
         }
         
-        public synchronized void setEmpty(boolean empty) {
+        public synchronized boolean setEmpty(boolean empty) {
             try {
                 if ( this.empty != empty ) {
                     this.notify();
@@ -724,6 +727,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
             } finally {
                 this.empty = empty;
             }
+            return empty;
         }
       
       public final void start() {
@@ -739,13 +743,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                           ClientTransactionBatch next = sendList.poll(2, TimeUnit.SECONDS);
                           if ( next != null ) {
                               next.send();
+                          } else if (setEmpty(sendList.isEmpty()) && stopping) {
+                              return;
                           } else {
-                              sendBatches(stopping);
-                              setEmpty(sendList.isEmpty());
-                              if ( stopping && sendList.isEmpty() ) {
-                                  return;
-                              }
-                          } 
+                              sendBatches(false);
+                          }
                       } catch ( InterruptedException ie ) {
 
                       }
@@ -766,7 +768,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       }
       
       private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
-        if (ignoreMax || (incompleteBatches.size() < MAX_OUTSTANDING_BATCHES && sendList.remainingCapacity() > 0)) {
+        if (ignoreMax || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 10)) {
             ClientTransactionBatch batch = sequencer.getNextBatch();
             if ( batch != null ) {
                 if ( batch.numberOfTxnsBeforeFolding() == 0 ) {
@@ -821,12 +823,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
               // formatting
               throw new AssertionError("Batch has already been sent!");
             }
-//          outStandingBatches++;
+          outStandingBatches++;
           return batchToSend.addTransactionIDsTo(new HashSet());
       }
       
       private synchronized void batchAcknowledged() {
-//        outStandingBatches--;
+        outStandingBatches--;
       }
       
       private synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
