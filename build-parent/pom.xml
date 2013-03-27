@@ -325,6 +325,11 @@
         <artifactId>native-tool</artifactId>
         <version>1.0.2</version>
       </dependency>
+      <dependency>
+        <groupId>gf-3122</groupId>
+        <artifactId>gf.javax.servlet-api</artifactId>
+        <version>3.0.1</version>
+      </dependency>      
     </dependencies>
   </dependencyManagement>
 
