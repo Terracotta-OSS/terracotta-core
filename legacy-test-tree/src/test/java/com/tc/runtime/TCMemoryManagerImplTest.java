@@ -60,14 +60,14 @@ public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEv
   }
 
   private void hogMemory() {
-    for (int i = 1; i < 500000; i++) {
+    for (int i = 1; i < 200000; i++) {
       byte[] b = new byte[10240];
       v.add(b);
       if (i % 10000 == 0) {
         System.err.println("Created " + i + " byte arrays - currently in vector = " + v.size());
       }
       if (i % 50 == 0) {
-        ThreadUtil.reallySleep(1);
+        ThreadUtil.reallySleep(5);
       }
     }
   }
@@ -116,9 +116,11 @@ public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEv
 
   // Releases 10 % of the elements in the vector for 70 % used
   private void releaseSomeMemory(int used) {
+    System.out.println("Used " + used);
     if (used < usedThreshold) {
+      System.out.println("Not clearing anything.");
       return;
-    } else if (used > 90) {
+    } else if (used > usedCriticalThreshold) {
       v.clear();
       return;
     }
