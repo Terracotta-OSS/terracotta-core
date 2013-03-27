@@ -810,7 +810,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                   if ( lastsid.next().equals(sid) ) {
                       lastsid = sid;
                   } else {
-                      throw new AssertionError("invalid sequence last:" + lastsid + " next:" + sid);
+                      logger.warn("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
                   }
               }
           }
