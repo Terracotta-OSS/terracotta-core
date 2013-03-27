@@ -110,7 +110,7 @@ public abstract class TerracottaManagement {
   private static final String COMMA           = ",";
   private static final String COLON           = ":";
   private static final String EQUALS          = "=";
-  private static final String SLASH           = "/";
+  private static final String UNDERSCORE      = "_";
 
   private static final String NODE_PREFIX_KEY = "clients";
   private static final String NODE_PREFIX     = NODE_PREFIX_KEY + EQUALS + "Clients";
@@ -143,7 +143,7 @@ public abstract class TerracottaManagement {
   private static void addNodeInfo(final StringBuffer objName, final TCSocketAddress addr) {
     String remoteHost = addr.getAddress().getCanonicalHostName();
     int remotePort = addr.getPort();
-    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(remoteHost).append(SLASH)
+    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(remoteHost).append(UNDERSCORE)
         .append(remotePort);
   }
 

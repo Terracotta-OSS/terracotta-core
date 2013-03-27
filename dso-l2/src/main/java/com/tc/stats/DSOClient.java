@@ -198,7 +198,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   public ObjectName getTunneledBeanName(ObjectName on) {
     try {
-      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '/');
+      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '_');
       return new ObjectName(name);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException("Creating ObjectName", mone);
