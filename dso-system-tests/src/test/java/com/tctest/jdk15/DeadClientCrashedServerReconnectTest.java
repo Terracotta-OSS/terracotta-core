@@ -47,7 +47,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
   public DeadClientCrashedServerReconnectTest() {
     // Move this test to toolkit-ee-system-tests, no real need for it to be here. And it's broken.
-    timebombTest("2013-03-28");
+    timebombTest("2013-04-28");
     tcProps = TCPropertiesImpl.getProperties();
     tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
     System.out.println("L1 and L2 config match check disabled temporarily as we use proxy");
