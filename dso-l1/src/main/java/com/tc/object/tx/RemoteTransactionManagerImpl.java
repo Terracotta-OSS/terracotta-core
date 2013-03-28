@@ -807,13 +807,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
               if ( lastsid == null ) {
                   lastsid = sid;
               } else {
-                  if ( lastsid.next().equals(sid) ) {
-                      lastsid = sid;
-                  } else {
-                      if ( logger.isDebugEnabled() ) {
-                          logger.debug("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
-                      }
+                  if ( !lastsid.next().equals(sid) ) {
+                      logger.info("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
                   }
+                  lastsid = sid;
               }
           }
           setEmpty(false);
