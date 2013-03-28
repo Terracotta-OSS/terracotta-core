@@ -1,14 +1,11 @@
 package com.terracotta.management.test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
-
+import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 import org.slf4j.LoggerFactory;
@@ -22,19 +19,22 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
@@ -93,7 +93,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String jsonParser = TestBaseUtil.jarFor(JSONValue.class);
     String ehCache = TestBaseUtil.jarFor(CacheManager.class);
     String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
-    return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J);
+    String commonsIo = TestBaseUtil.jarFor(IOUtils.class);
+    return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
@@ -124,11 +125,38 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     protected abstract void doTsaTest() throws Throwable;
 
+    protected byte[] getTsaRawContent(String host, int port, String path, Map<String,String> headers) throws IOException {
+      return httpRawGet("http://" + host + ":" + port + path, headers);
+    }
+
     protected JSONArray getTsaJSONArrayContent(String host, int port, String path) throws IOException {
       String result = httpGet("http://" + host + ":" + port + path);
       System.out.println("Server ");
       System.out.println(result);
       return (JSONArray)JSONValue.parse(result);
+    }
+
+    protected byte[] httpRawGet(String urlString, Map<String,String> headers) throws IOException {
+      URL url = new URL(urlString);
+      URLConnection urlConnection = url.openConnection();
+
+      if (headers != null) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+          urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
+        }
+      }
+
+      InputStream inputStream = urlConnection.getInputStream();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      while (true) {
+        int read = inputStream.read();
+        if (read == -1) break;
+        baos.write(read);
+      }
+
+      baos.close();
+      return baos.toByteArray();
     }
 
     protected String httpGet(String urlString) throws IOException {
@@ -157,7 +185,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       return sb.toString();
     }
 
-    protected void httpPost(String urlString) throws IOException, MalformedURLException, ProtocolException {
+    protected void httpPost(String urlString) throws IOException {
       HttpURLConnection httpConnection = (HttpURLConnection) new URL(urlString).openConnection();
       try {
         httpConnection.setRequestMethod("POST");

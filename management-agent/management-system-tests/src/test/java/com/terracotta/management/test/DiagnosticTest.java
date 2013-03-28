@@ -7,13 +7,19 @@ import static org.junit.Assert.assertThat;
 
 import net.sf.ehcache.CacheManager;
 
+import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * DiagnosticTest
@@ -44,6 +50,8 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       try {
         testGroupThreadDump();
 
+        testZippedGroupThreadDump();
+
         testSingleServerThreadDump();
 
         testSingleClientThreadDump();
@@ -60,6 +68,33 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
         assertThat(contentArray.size(), is(MEMBER_COUNT + 1));
         JSONObject content = (JSONObject)contentArray.get(0);
         assertThat(content.containsKey("dump"), is(true));
+      }
+    }
+
+    private void testZippedGroupThreadDump() throws IOException {
+      for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
+        Map<String, String> headers = new HashMap<String, String>() {{
+          put("Accept", "application/zip");
+        }};
+        byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+            "/tc-management-api/agents/diagnostics/threadDump", headers);
+
+        ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
+
+        while (true) {
+          ZipEntry zipEntry = zipInputStream.getNextEntry();
+          if (zipEntry == null) break;
+
+          // if we can unzip the bytes, we assume that the thread dump is good
+          String stackTrace = IOUtils.toString(zipInputStream, "UTF-8");
+          System.out.println("--- unzipped stack trace:" + zipEntry.getName() + " ---");
+          System.out.println(stackTrace);
+          System.out.println("----------");
+
+          zipInputStream.closeEntry();
+        }
+
+        zipInputStream.close();
       }
     }
 
