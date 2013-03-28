@@ -350,12 +350,17 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     throw new ConfigurationSetupException(errMsg);
   }
 
-  private String getIpAddressOfServer(final String name) throws ConfigurationSetupException {
+  private static String getIpAddressOfServer(final String name) throws ConfigurationSetupException {
     InetAddress address;
     try {
       address = InetAddress.getByName(name);
       if (address.isLoopbackAddress()) {
-        address = InetAddress.getLocalHost();
+        try {
+          address = InetAddress.getLocalHost();
+        } catch (ArrayIndexOutOfBoundsException e) {
+          // DEV-9391. JDK + OS X Lion issue.
+          address = InetAddress.getByName(null);
+        }
       }
     } catch (UnknownHostException e) {
       throw new ConfigurationSetupException("Unknown Host Exception!!Could not resolve IpAddress for this hostName: '"
