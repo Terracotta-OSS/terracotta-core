@@ -58,7 +58,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
+    ClientGreediness recallCommitted() {
       return this;
     }
 
@@ -356,7 +356,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
+    ClientGreediness recallCommitted() {
       return FREE;
     }
 
@@ -429,7 +429,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
+    ClientGreediness recallCommitted() {
       return FREE;
     }
 
@@ -497,7 +497,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
+    ClientGreediness recallCommitted() {
       return FREE;
     }
 
@@ -565,7 +565,7 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
+    ClientGreediness recallCommitted() {
       return FREE;
     }
 
@@ -628,12 +628,8 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
-      if (hasWaiters) {
-        return FREE;
-      } else {
-        return GREEDY_READ;
-      }
+    ClientGreediness recallCommitted() {
+      return GREEDY_READ;
     }
 
     @Override
@@ -706,12 +702,8 @@ enum ClientGreediness {
     }
 
     @Override
-    ClientGreediness recallCommitted(boolean hasWaiters) {
-      if (hasWaiters) {
-        return FREE;
-      } else {
-        return GREEDY_READ;
-      }
+    ClientGreediness recallCommitted() {
+      return GREEDY_READ;
     }
 
     @Override
@@ -785,7 +777,7 @@ enum ClientGreediness {
     throw new AssertionError("recall in progress while in unexpected state (" + this + ")");
   }
 
-  ClientGreediness recallCommitted(boolean hasWaiters) {
+  ClientGreediness recallCommitted() {
     throw new AssertionError("recall committed while in unexpected state (" + this + ")");
   }
 
