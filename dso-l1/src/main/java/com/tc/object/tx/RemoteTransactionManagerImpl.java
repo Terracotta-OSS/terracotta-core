@@ -804,14 +804,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       private void addToSendList(ClientTransactionBatch batch) {
           Collection<SequenceID> sids = batch.addTransactionSequenceIDsTo(new ArrayList<SequenceID>());
           for ( SequenceID sid : sids ) {
-              if ( lastsid == null ) {
-                  lastsid = sid;
-              } else {
-                  if ( !lastsid.next().equals(sid) ) {
-                      logger.info("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
-                  }
-                  lastsid = sid;
+              if ( lastsid != null && !lastsid.next().equals(sid) ) {
+                  logger.info("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
               }
+              lastsid = sid;
           }
           setEmpty(false);
           sendList.add(batch);
