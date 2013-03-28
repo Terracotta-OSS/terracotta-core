@@ -168,8 +168,15 @@ public class ParameterSubstituter {
   }
 
   public static String getIpAddress() {
+    InetAddress address;
     try {
-      return InetAddress.getLocalHost().getHostAddress();
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (ArrayIndexOutOfBoundsException e) {
+        // EHC-861
+        address = InetAddress.getByName(null);
+      }
+      return address.getHostAddress();
     } catch (UnknownHostException uhe) {
       throw new RuntimeException(uhe);
     }
