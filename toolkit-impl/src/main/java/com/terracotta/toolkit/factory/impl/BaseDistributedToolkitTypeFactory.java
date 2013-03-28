@@ -29,6 +29,7 @@ import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * @author Eugene Shelestovich
@@ -56,18 +57,22 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   protected abstract Set<InternalCacheConfigurationType> getAllSupportedConfigs();
 
   @Override
-  public ToolkitCacheImpl<K, V> createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory,
+  public ToolkitCacheImpl<K, V> createDistributedType(final ToolkitInternal toolkit, ToolkitObjectFactory factory,
                                                       DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup,
-                                                      String name,
+                                                      final String name,
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
                                                       Configuration configuration, PlatformService platformService) {
     validateNewConfiguration(configuration);
     validateExistingClusterWideConfigs(stripeObjects, configuration);
-    ToolkitMap<String, String> attrSchema = toolkit.getMap(name + '|' + SEARCH_ATTR_TYPES_MAP_SUFFIX, String.class, String.class);
+    Callable<ToolkitMap<String, String>> schemaCreator = new Callable() {
+      @Override
+      public ToolkitMap<String, String> call() throws Exception {
+        return toolkit.getMap(name + '|' + SEARCH_ATTR_TYPES_MAP_SUFFIX, String.class, String.class);
+      }
+    };
+
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
-        searchBuilderFactory, lookup, name, stripeObjects,
-        configuration, attrSchema, serverMapLocalStoreFactory,
-        platformService);
+        searchBuilderFactory, lookup, name, stripeObjects, configuration, schemaCreator, serverMapLocalStoreFactory, platformService);
     return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);
   }
 

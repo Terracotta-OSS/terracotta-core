@@ -8,6 +8,7 @@ import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.collections.ToolkitMap;
@@ -73,7 +74,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>,
@@ -109,12 +112,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                                      clusterInfo;
   private final PlatformService                                            platformService;
-  private final ToolkitMap<String, String>                                 attrSchema;
+  private final Callable<ToolkitMap<String, String>>                       schemaCreator;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
   private final ToolkitObjectType                                          toolkitObjectType;
   private final L1ServerMapLocalCacheStore<K, V>                           localCacheStore;
   private final PinnedEntryFaultCallback                                   pinnedEntryFaultCallback;
   private volatile boolean                                                 lookupSuccessfulAfterRejoin;
+  private final AtomicReference<ToolkitMap<String, String>>                attrSchema                           = new AtomicReference<ToolkitMap<String, String>>();
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -128,7 +132,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public AggregateServerMap(ToolkitObjectType type, SearchFactory searchBuilderFactory,
                             DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup, String name,
                             ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects, Configuration config,
- ToolkitMap<String, String> attributeTypes,
+ Callable<ToolkitMap<String, String>> schemaCreator,
                             ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     this.toolkitObjectType = type;
     this.searchBuilderFactory = searchBuilderFactory;
@@ -145,7 +149,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     Preconditions.checkArgument(isValidType(type), "Type has to be one of %s but was %s", VALID_TYPES, type);
 
     this.name = name;
-    this.attrSchema = attributeTypes;
+    Preconditions.checkNotNull(schemaCreator);
+    this.schemaCreator = schemaCreator;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
 
     this.config = new UnclusteredConfiguration(config);
@@ -477,6 +482,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (InternalToolkitMap serverMap : serverMaps) {
       serverMap.destroy();
     }
+    if (attrSchema.get() != null) attrSchema.get().destroy();
   }
 
   @Override
@@ -871,9 +877,17 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
+    // This race is okay to have, the only reason for the conditional is to avoid calling call() below
+    if (attrSchema.get() == null) {
+      try {
+        attrSchema.compareAndSet(null, schemaCreator.call());
+      } catch (Exception e) {
+        throw new ToolkitRuntimeException(e);
+      }
+    }
     for (InternalToolkitMap serverMap : this.serverMaps) {
       serverMap.registerAttributeExtractor(attrExtractor);
-      ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema);
+      ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema.get());
     }
   }
 
