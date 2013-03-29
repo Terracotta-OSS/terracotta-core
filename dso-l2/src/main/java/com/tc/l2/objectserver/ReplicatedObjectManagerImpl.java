@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener, L2IndexStateListener {
@@ -74,7 +74,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final L2ObjectStateManager         l2ObjectStateManager;
   private final Offheap                      offheapConfig;
 
-  private final AtomicBoolean                synceStarted = new AtomicBoolean(false);
+  private final AtomicReference<NodeID>      syncedFrom = new AtomicReference<NodeID>();
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
                                      final L2PassiveSyncStateManager l2PassiveSyncStateManager,
@@ -370,7 +370,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
         @Override
         public void onCompletion() {
-          boolean syncAllowed = synceStarted.compareAndSet(false, true);
+          // Handle requests multiple list requests from the same instance of the active. This could happen when the active
+          // first starts up. This node joining could trigger one object list request while the active running the sync() method
+          // will trigger the other.
+          boolean syncAllowed = syncedFrom.compareAndSet(null, clusterMsg.messageFrom()) || syncedFrom.get().equals(clusterMsg.messageFrom());
           logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + " isCleanDB: "
                       + isCleanDB + " currentState " + clusterMsg.getCurrentState());
           try {
