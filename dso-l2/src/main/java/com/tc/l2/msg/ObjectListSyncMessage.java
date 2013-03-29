@@ -8,12 +8,9 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
-import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
 import java.io.IOException;
-import java.util.Set;
 
 public class ObjectListSyncMessage extends AbstractGroupMessage {
 
@@ -21,10 +18,10 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
   public static final int RESPONSE        = 1;
   public static final int FAILED_RESPONSE = 2;
 
-  private ObjectIDSet     oids;
+  private boolean         syncAllowed;
   private State           currentState;
   private boolean         isCleanDB;
-  private String          resourceType;
+  private boolean         offheapEnabled;
   private long            resourceSize;
 
   // To make serialization happy
@@ -36,12 +33,12 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, Set oids, boolean isCleanDB, final String resourceType, final long resourceSize) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, boolean isCleanDB, final boolean offheapEnabled, final long resourceSize) {
     super(type, messageID);
+    this.syncAllowed = syncAllowed;
     this.currentState = currentState;
-    this.oids = (ObjectIDSet) oids;
     this.isCleanDB = isCleanDB;
-    this.resourceType = resourceType;
+    this.offheapEnabled = offheapEnabled;
     this.resourceSize = resourceSize;
   }
 
@@ -59,9 +56,8 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
       case RESPONSE:
         isCleanDB = in.readBoolean();
         currentState = new State(in.readString());
-        oids = new ObjectIDSet();
-        oids.deserializeFrom(in);
-        resourceType = in.readString();
+        syncAllowed = in.readBoolean();
+        offheapEnabled = in.readBoolean();
         resourceSize = in.readLong();
         break;
       default:
@@ -79,19 +75,13 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
       case RESPONSE:
         out.writeBoolean(isCleanDB);
         out.writeString(this.currentState.getName());
-        Assert.assertNotNull(oids);
-        oids.serializeTo(out);
-        out.writeString(resourceType);
+        out.writeBoolean(syncAllowed);
+        out.writeBoolean(offheapEnabled);
         out.writeLong(resourceSize);
         break;
       default:
         throw new AssertionError("Unknown Message Type : " + getType());
     }
-  }
-
-  public Set getObjectIDs() {
-    Assert.assertNotNull(oids);
-    return oids;
   }
 
   public boolean isCleanDB() {
@@ -106,13 +96,24 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     return resourceSize;
   }
 
-  public String getResourceType() {
-    return resourceType;
+  public boolean isOffheapEnabled() {
+    return offheapEnabled;
+  }
+
+  public boolean isSyncAllowed() {
+    return syncAllowed;
   }
 
   @Override
   public String toString() {
-    return "ObjectListSyncMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + oids + "]";
+    return "ObjectListSyncMessage{" +
+           "type=" + getTypeString() +
+           ", syncAllowed=" + syncAllowed +
+           ", currentState=" + currentState +
+           ", isCleanDB=" + isCleanDB +
+           ", offheapEnabled=" + offheapEnabled +
+           ", resourceSize=" + resourceSize +
+           '}';
   }
 
   private String getTypeString() {

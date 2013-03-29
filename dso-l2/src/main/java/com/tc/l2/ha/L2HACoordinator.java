@@ -4,8 +4,6 @@
  */
 package com.tc.l2.ha;
 
-import org.terracotta.corestorage.monitoring.MonitoredResource;
-
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
@@ -77,6 +75,7 @@ import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
+import com.terracottatech.config.Offheap;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -122,7 +121,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
                          DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
-                         final ObjectIDSequence objectIDSequence, final MonitoredResource resource,
+                         final ObjectIDSequence objectIDSequence, final Offheap offheapConfig,
                          int electionTimInSecs) {
     this.consoleLogger = consoleLogger;
     this.server = server;
@@ -136,7 +135,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
-         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, resource, electionTimInSecs);
+         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, offheapConfig, electionTimInSecs);
   }
 
   private void init(final StageManager stageManager, final PersistentMapStore perstStateStore,
@@ -146,7 +145,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
-                    final ObjectIDSequence objectIDSequence, final MonitoredResource resource, int electionTimeInSecs) {
+                    final ObjectIDSequence objectIDSequence, final Offheap offheapConfig, int electionTimeInSecs) {
 
     registerForStateChangeEvents(indexHACoordinator);
 
@@ -230,10 +229,10 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
                                                           this.l2PassiveSyncStateManager, this.l2ObjectStateManager,
-                                                          this.rTxnManager, objectManager, transactionManager,
+                                                          objectManager, transactionManager,
                                                           objectsSyncRequestSink, indexSyncRequestSink,
                                                           transactionRelaySink, this.sequenceGenerator,
-                                                          this.indexSequenceGenerator, isCleanDB, resource);
+                                                          this.indexSequenceGenerator, isCleanDB, offheapConfig);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);

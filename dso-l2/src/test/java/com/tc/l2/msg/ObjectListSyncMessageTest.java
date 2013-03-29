@@ -4,21 +4,15 @@
  */
 package com.tc.l2.msg;
 
-import org.terracotta.corestorage.monitoring.MonitoredResource;
-
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.state.StateManager;
 import com.tc.object.ObjectID;
 import com.tc.util.ObjectIDSet;
 
-import java.util.Iterator;
 import java.util.Set;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ObjectListSyncMessageTest extends TestCase {
   private ObjectListSyncMessage objectListSyncMessage;
@@ -46,12 +40,7 @@ public class ObjectListSyncMessageTest extends TestCase {
     assertEquals(olsm.messageFrom(), olsm1.messageFrom());
 
     if (olsm.getType() == ObjectListSyncMessage.RESPONSE) {
-      assertEquals(olsm.getObjectIDs().size(), olsm1.getObjectIDs().size());
-
-      Iterator iter1 = olsm1.getObjectIDs().iterator();
-      for (Iterator iter = olsm.getObjectIDs().iterator(); iter.hasNext();) {
-        assertEquals(iter.next(), iter1.next());
-      }
+      assertEquals(olsm.isSyncAllowed(), olsm1.isSyncAllowed());
     } else {
       assertEquals(olsm.toString(), olsm1.toString());
     }
@@ -69,16 +58,13 @@ public class ObjectListSyncMessageTest extends TestCase {
   }
 
   public void testBasicSerialization() throws Exception {
-    ObjectListSyncMessage olsm = (ObjectListSyncMessage) ObjectListSyncMessageFactory
+    ObjectListSyncMessage olsm = ObjectListSyncMessageFactory
         .createObjectListSyncRequestMessage();
     ObjectListSyncMessage olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
 
-    MonitoredResource resource = mock(MonitoredResource.class);
-    when(resource.getType()).thenReturn(MonitoredResource.Type.OFFHEAP);
-    when(resource.getTotal()).thenReturn(1L);
-    olsm = (ObjectListSyncMessage) ObjectListSyncMessageFactory
-        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, oids, true, resource);
+    olsm = ObjectListSyncMessageFactory
+        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, true, true, true, 1L );
     olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
   }

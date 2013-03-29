@@ -4,27 +4,22 @@
  */
 package com.tc.l2.msg;
 
-import org.terracotta.corestorage.monitoring.MonitoredResource;
-
-import com.tc.net.groups.GroupMessage;
 import com.tc.util.State;
-
-import java.util.Set;
 
 public class ObjectListSyncMessageFactory {
 
-  public static GroupMessage createObjectListSyncRequestMessage() {
+  public static ObjectListSyncMessage createObjectListSyncRequestMessage() {
     return new ObjectListSyncMessage(ObjectListSyncMessage.REQUEST);
   }
 
-  public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
-                                                                 State currentState, Set knownIDs, boolean isCleanDB,
-                                                                 final MonitoredResource resource) {
+  public static ObjectListSyncMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
+                                                                 State currentState, boolean syncAllowed, boolean isCleanDB,
+                                                                 final boolean offheapEnabled, final long totalSize) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
-                                     knownIDs, isCleanDB, resource.getType().name(), resource.getTotal());
+        syncAllowed, isCleanDB, offheapEnabled, totalSize);
   }
 
-  public static GroupMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {
+  public static ObjectListSyncMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.FAILED_RESPONSE);
   }
 

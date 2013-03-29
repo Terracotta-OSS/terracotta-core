@@ -4,7 +4,6 @@
 package com.tc.objectserver.impl;
 
 import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
@@ -65,6 +64,7 @@ import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
+import com.terracottatech.config.Offheap;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,7 +149,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionFactory serverTransactionFactory,
                                       DGCSequenceProvider dgcSequenceProvider,
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
-                                      final MonitoredResource resource, int electionTimeInSecs);
+                                      final Offheap offheapConfig, int electionTimeInSecs);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   L2ConfigurationSetupManager configSetupManager,
