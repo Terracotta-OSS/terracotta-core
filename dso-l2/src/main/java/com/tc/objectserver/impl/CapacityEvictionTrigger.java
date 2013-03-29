@@ -32,7 +32,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private int size = 0;
     private ClientObjectReferenceSet clientSet;
     private boolean repeat = false;
-    private boolean waitOnly = false;
 
     public CapacityEvictionTrigger( ObjectID oid) {
         super(oid);
@@ -41,18 +40,17 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     @Override
     public boolean startEviction(EvictableMap map) {
   //  capacity eviction ignores underlying strategy b/c map.startEviction has already been called
-        if ( repeat && !map.isEvicting() ) {
-            if ( !map.startEviction() ) {
-                waitOnly = true;
-                return true;
-            }
+        boolean startedLocally = super.startEviction(map);
+        
+        if ( startedLocally ) {
+            throw new AssertionError("capacity eviction cannot be started locally");
         }
+        
         repeat = false;
         max = map.getMaxTotalCount();
         size = map.getSize();
     // ignore return value, capacity needs to make an independent decision on whether to run
     
-        super.startEviction(map);
         if ( max >= 0 && size > max ) {
             if ( !map.isEvicting() ) {
     // eviction state is set when capacity eviction is intiated outside the trigger
@@ -70,11 +68,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             
     @Override
     public ServerMapEvictionContext collectEvictionCandidates(final int maxParam, String className, final EvictableMap map, final ClientObjectReferenceSet clients) {
-        if ( waitOnly ) {
-            registerForUpdates(clients);
-            waitOnly = false;
-            return null;
-        }
         
         // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int sample = boundsCheckSampleSize(size - maxParam);
@@ -84,12 +77,10 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             return createEvictionContext(className, samples);
         } finally {
             int count = getCount();
-            if ( count < size - maxParam ) {
+            if ( count == 0 ) {
                 repeat = true;
-                if ( count == 0 ) {
-                    registerForUpdates(clients);
-                }
-            }
+                registerForUpdates(clients);
+            } 
         }
     } 
     

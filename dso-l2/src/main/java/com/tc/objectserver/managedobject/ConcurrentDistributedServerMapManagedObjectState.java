@@ -240,7 +240,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         break;
       case SerializationUtil.EVICTION_COMPLETED:
         evictionCompleted();
-        break;
+//  make sure we don't need more capacity eviction to get to target
+        startCapacityEvictionIfNeccessary(applyInfo);
+       break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
         break;
       default:
@@ -297,16 +299,20 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
     CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
     addValue(applyInfo, params[1], old != null);
-
+    startCapacityEvictionIfNeccessary(applyInfo);
+    return old;
+  }
+  
+  private boolean startCapacityEvictionIfNeccessary(final ApplyTransactionInfo applyInfo) {
     if (applyInfo.isActiveTxn()
         && this.targetMaxTotalCount >= 0 // do not trigger capacity eviction if totalMaxCount is negative
         && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
       if (startEviction()) {
         applyInfo.initiateEvictionFor(getId());
+        return true;
       }
     }
-
-    return old;
+    return false;
   }
 
   private void applyPutIfAbsent(ApplyTransactionInfo applyInfo, Object[] params) {
