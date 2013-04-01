@@ -16,7 +16,7 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
     RejoinCallback {
 
   protected final AbstractPrimaryToolkitObjectFactory factory;
-  private final DestroyApplicator                     destroyApplicator;
+  protected final DestroyApplicator                   destroyApplicator;
   private volatile boolean                            destroyed;
   private final AtomicBoolean                         rejoinInProgress = new AtomicBoolean(false);
 

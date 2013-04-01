@@ -8,11 +8,10 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
-import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.tc.util.Assert;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -26,20 +25,18 @@ import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
-    implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedClusteredObjectLookup<S> {
+implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedClusteredObjectLookup<S> {
 
   private final ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots;
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
-  private final WeakValueMap<T>                           localCache;
+  private final WeakValueMap<T>                           distributedTypes;
   private final PlatformService                           platformService;
   private final String                                    rootName;
-  private volatile Set<String>                            currentKeys = Collections.emptySet();
+  private Collection<T>                                   currentTypes = null;
 
   protected AggregateDistributedToolkitTypeRoot(String rootName, ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
                                                 DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
@@ -47,7 +44,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     this.rootName = rootName;
     this.roots = roots;
     this.distributedTypeFactory = factory;
-    this.localCache = weakValueMap;
+    this.distributedTypes = weakValueMap;
     this.platformService = platformService;
     this.platformService.addRejoinLifecycleListener(this);
   }
@@ -56,50 +53,49 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
-
-    final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
-    lock(type, name);
-    try {
-      final T distributedType = localCache.get(name);
+    synchronized (distributedTypes) {
+      T distributedType = distributedTypes.get(name);
       if (distributedType != null) {
         // validate and reuse existing distributed object
         distributedTypeFactory.validateExistingLocalInstanceConfig(distributedType, configuration);
-        return distributedType;
       } else {
+        final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
+        ToolkitObjectStripe<S>[] stripeObjects;
         final Configuration effectiveConfig;
-        ToolkitObjectStripe<S>[] stripeObjects = lookupStripeObjects(name);
-        if (stripeObjects != null) {
-          effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(stripeObjects, configuration);
-        } else {
-          // need to create stripe objects
-          // make sure config is complete
-          effectiveConfig = distributedTypeFactory.newConfigForCreationInCluster(configuration);
-          stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length);
-          injectStripeObjects(name, stripeObjects);
+        lock(type, name);
+        try {
+          stripeObjects = lookupStripeObjects(name);
+          if (stripeObjects != null) {
+            effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(stripeObjects, configuration);
+          } else {
+            // make sure config is complete
+            effectiveConfig = distributedTypeFactory.newConfigForCreationInCluster(configuration);
+            // need to create stripe objects
+            stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length);
+            injectStripeObjects(name, stripeObjects);
+          }
+        } finally {
+          unlock(type, name);
         }
-        // create new distributed object
-        final T newDistributedType = distributedTypeFactory.createDistributedType(
-            toolkit, factory, this, name, stripeObjects, effectiveConfig, platformService);
-        localCache.put(name, newDistributedType);
-        return newDistributedType;
+        // create new distributed object after ToolkitObjectStripe has been created/faulted-in
+        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, this, name, stripeObjects,
+                                                                       effectiveConfig, platformService);
+        T oldvalue = distributedTypes.put(name, distributedType);
+        Assert.assertNull("oldValue must be null here", oldvalue);
       }
-    } finally {
-      unlock(type, name);
-      try {
-        platformService.waitForAllCurrentTransactionsToComplete();
-      } catch (AbortedOperationException e) {
-        throw new ToolkitAbortableOperationException(e);
-      }
+      return distributedType;
     }
   }
 
   private void injectStripeObjects(final String name, final ToolkitObjectStripe<S>[] stripeObjects)
       throws AssertionError {
-    if (stripeObjects == null || stripeObjects.length != roots.length) {
-      throw new AssertionError("DistributedTypeFactory should create as many ClusteredObjectStripe's " +
-                               "as there are stripes - numStripes: " + roots.length + ", created: "
-                               + (stripeObjects == null ? "null" : stripeObjects.length));
-    }
+    if (stripeObjects == null || stripeObjects.length != roots.length) { throw new AssertionError(
+                                                                                                  "DistributedTypeFactory should create as many ClusteredObjectStripe's "
+                                                                                                      + "as there are stripes - numStripes: "
+                                                                                                      + roots.length
+                                                                                                      + ", created: "
+                                                                                                      + (stripeObjects == null ? "null"
+                                                                                                          : stripeObjects.length)); }
     for (int i = 0; i < roots.length; i++) {
       ToolkitTypeRoot<ToolkitObjectStripe<S>> root = roots[i];
       root.addClusteredObject(name, stripeObjects[i]);
@@ -142,7 +138,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   public void removeToolkitType(ToolkitObjectType toolkitObjectType, String name) {
     lock(toolkitObjectType, name);
     try {
-      localCache.remove(name);
+      distributedTypes.remove(name);
       for (ToolkitTypeRoot<ToolkitObjectStripe<S>> root : roots) {
         root.removeClusteredObject(name);
       }
@@ -152,11 +148,11 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   }
 
   private void lock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
   }
 
   private void unlock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
   }
 
   private void readLock(ToolkitObjectType toolkitObjectType, String name) {
@@ -169,7 +165,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
   @Override
   public void applyDestroy(String name) {
-    this.localCache.remove(name);
+    this.distributedTypes.remove(name);
   }
 
   /**
@@ -190,25 +186,27 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
   @Override
   public void onRejoinStart() {
-    currentKeys = new HashSet<String>(localCache.keySet());
-    for (String name : currentKeys) {
-      T wrapper = localCache.get(name);
-      if (wrapper != null) {
-        wrapper.rejoinStarted();
+    synchronized (distributedTypes) {
+      currentTypes = distributedTypes.values();
+      for (T wrapper : currentTypes) {
+        if (wrapper != null) {
+          wrapper.rejoinStarted();
+        }
       }
     }
   }
 
   @Override
   public void onRejoinComplete() {
-    lookupOrCreateRoots();
-    for (String name : currentKeys) {
-      T wrapper = localCache.get(name);
-      if (wrapper != null) {
-        wrapper.rejoinCompleted();
+    synchronized (distributedTypes) {
+      lookupOrCreateRoots();
+      for (T wrapper : currentTypes) {
+        if (wrapper != null) {
+          wrapper.rejoinCompleted();
+        }
       }
+      currentTypes = null;
     }
-    currentKeys = Collections.emptySet();
   }
 
   @Override

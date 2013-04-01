@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitListInternal> implements
-    ToolkitListInternal<E>,
-    RejoinAwareToolkitObject {
+    ToolkitListInternal<E>, RejoinAwareToolkitObject {
 
   private volatile ToolkitListInternal<E>                      list;
   private final String                                         name;
@@ -51,7 +50,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     if (!isDestroyed()) {
       ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.LIST, null);
       if (afterRejoin == null) {
-        applyDestroy();
+        destroyApplicator.applyDestroy();
       } else {
         this.list = afterRejoin;
       }

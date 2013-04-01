@@ -47,7 +47,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
     if (!isDestroyed()) {
       ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.NOTIFIER, null);
       if (afterRejoin == null) {
-        this.notifier = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitNotifier.class);
+        destroyApplicator.applyDestroy();
       } else {
         this.notifier = afterRejoin;
         if (listeners.size() > 0) {

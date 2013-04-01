@@ -8,11 +8,10 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
-import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.tc.util.Assert;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -24,9 +23,7 @@ import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject, S extends TCToolkitObject> implements
     AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, IsolatedClusteredObjectLookup<S> {
@@ -36,7 +33,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   private final WeakValueMap<T>                  isolatedTypes;
   private final PlatformService                  platformService;
   private final String                           rootName;
-  private volatile Set<String>                   currentKeys = Collections.EMPTY_SET;
+  private Collection<T>                          currentTypes = null;
 
   protected AggregateIsolatedToolkitTypeRoot(String rootName, ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
@@ -46,39 +43,35 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
     this.isolatedTypeFactory = isolatedTypeFactory;
     this.isolatedTypes = weakValueMap;
     this.platformService = platformService;
-    platformService.addRejoinLifecycleListener(this);
+    this.platformService.addRejoinLifecycleListener(this);
   }
 
   @Override
   public T getOrCreateToolkitType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
-
-    ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
-    lock(type, name);
-    try {
+    synchronized (isolatedTypes) {
       T isolatedType = isolatedTypes.get(name);
-      if (isolatedType != null) {
-        return isolatedType;
-      } else {
-        S clusteredObject = lookupClusteredObject(name);
-        if (clusteredObject == null) {
-          clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
-          getToolkitTypeRootForCreation(name).addClusteredObject(name, clusteredObject);
+      if (isolatedType == null) {
+        final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
+        S clusteredObject;
+        lock(type, name);
+        try {
+          clusteredObject = lookupClusteredObject(name);
+          if (clusteredObject == null) {
+            clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
+            getToolkitTypeRootForCreation(name).addClusteredObject(name, clusteredObject);
+          }
+        } finally {
+          unlock(type, name);
         }
+        // create new isolated object after ClusteredObject has been created/faulted-in
         isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, this, name, configuration,
                                                                      clusteredObject);
-        isolatedTypes.put(name, isolatedType);
-        return isolatedType;
+        T oldvalue = isolatedTypes.put(name, isolatedType);
+        Assert.assertNull("oldValue must be null here", oldvalue);
       }
-
-    } finally {
-      unlock(type, name);
-      try {
-        platformService.waitForAllCurrentTransactionsToComplete();
-      } catch (AbortedOperationException e) {
-        throw new ToolkitAbortableOperationException(e);
-      }
+      return isolatedType;
     }
   }
 
@@ -111,11 +104,11 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   }
 
   private void lock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
   }
 
   private void unlock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
   }
 
   private void readLock(ToolkitObjectType toolkitObjectType, String name) {
@@ -146,25 +139,27 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
 
   @Override
   public void onRejoinStart() {
-    currentKeys = new HashSet<String>(isolatedTypes.keySet());
-    for (String name : currentKeys) {
-      T wrapper = isolatedTypes.get(name);
-      if (wrapper != null) {
-        wrapper.rejoinStarted();
+    synchronized (isolatedTypes) {
+      currentTypes = isolatedTypes.values();
+      for (T wrapper : currentTypes) {
+        if (wrapper != null) {
+          wrapper.rejoinStarted();
+        }
       }
     }
   }
 
   @Override
   public void onRejoinComplete() {
-    lookupOrCreateRoots();
-    for (String name : currentKeys) {
-      T wrapper = isolatedTypes.get(name);
-      if (wrapper != null) {
-        wrapper.rejoinCompleted();
+    synchronized (isolatedTypes) {
+      lookupOrCreateRoots();
+      for (T wrapper : currentTypes) {
+        if (wrapper != null) {
+          wrapper.rejoinCompleted();
+        }
       }
+      currentTypes = null;
     }
-    currentKeys = Collections.EMPTY_SET;
   }
 
   @Override

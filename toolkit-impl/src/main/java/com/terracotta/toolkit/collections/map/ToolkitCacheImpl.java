@@ -64,7 +64,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
       this.activeDelegate = aggregateServerMap;
     } else {
-      applyDestroy();
+      destroyApplicator.applyDestroy();
     }
   }
 

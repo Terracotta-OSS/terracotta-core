@@ -167,7 +167,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public void beginLockInterruptibly(Object lockID, LockLevel level) throws InterruptedException,
       AbortedOperationException {
-
+    assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
       delegate.beginLockInterruptibly(lockID, level);

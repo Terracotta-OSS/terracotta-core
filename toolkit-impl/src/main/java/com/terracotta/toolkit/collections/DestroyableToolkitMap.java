@@ -51,7 +51,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     if (!isDestroyed()) {
       ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.MAP, null);
       if (afterRejoin == null) {
-        applyDestroy();
+        destroyApplicator.applyDestroy();
       } else {
         this.map = afterRejoin;
       }

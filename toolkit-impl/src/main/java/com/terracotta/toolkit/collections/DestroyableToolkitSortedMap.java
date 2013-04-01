@@ -54,7 +54,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
     if (!isDestroyed()) {
       ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name, ToolkitObjectType.SORTED_MAP, null);
       if (afterRejoin == null) {
-        applyDestroy();
+        destroyApplicator.applyDestroy();
       } else {
         this.map = afterRejoin;
       }

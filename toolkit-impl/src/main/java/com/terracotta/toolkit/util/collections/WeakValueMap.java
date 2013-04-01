@@ -5,8 +5,10 @@ package com.terracotta.toolkit.util.collections;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -30,6 +32,15 @@ public class WeakValueMap<V> {
     if (weakReference == null) { return null; }
 
     return weakReference.get();
+  }
+
+  public synchronized Collection<V> values() {
+    cleanupReferenceQueue();
+    Set<V> currentValues = new HashSet<V>();
+    for (NamedWeakReference<V> weakReference : internalMap.values()) {
+      currentValues.add(weakReference.get());
+    }
+    return currentValues;
   }
 
   public synchronized V put(String name, V value) {
