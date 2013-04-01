@@ -66,8 +66,10 @@ public class NonStopClusterInfo implements ClusterInfo {
               return e.getMessage();
             }
           };
-          for (ClusterListener listener : listeners) {
-            listener.onClusterEvent(nodeErrorEvent);
+          synchronized (NonStopClusterInfo.this) {
+            for (ClusterListener listener : listeners) {
+              listener.onClusterEvent(nodeErrorEvent);
+            }
           }
         }
       }
