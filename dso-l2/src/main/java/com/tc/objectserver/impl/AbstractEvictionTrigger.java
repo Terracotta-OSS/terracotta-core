@@ -10,6 +10,7 @@ import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -27,7 +28,8 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     private long endTime = 0;
     private int count;
     private int mapSize;
-
+    Logger  logger = Logger.getLogger(AbstractEvictionTrigger.class);
+    
     public AbstractEvictionTrigger(final ObjectID oid) {
         this.oid = oid;
     }
@@ -71,7 +73,10 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         startTime = System.currentTimeMillis();
         mapEvicting = map.isEvicting();
         mapSize = map.getSize();
-        if (!map.isEvicting() && mapSize > 0 ) {
+        if ( !mapEvicting && logger.isDebugEnabled() ) {
+            logger.debug(map);
+        }
+        if (mapEvicting && mapSize > 0 ) {
             return map.startEviction();
         } else {
             return false;
@@ -126,14 +131,6 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     @Override
     public boolean isValid() {
         return !started;
-    }
-
-    @Override
-    public boolean resubmit() {
-        evicting = false;
-        count = 0;
-        processed = false;
-        return false;
     }
 
     @Override

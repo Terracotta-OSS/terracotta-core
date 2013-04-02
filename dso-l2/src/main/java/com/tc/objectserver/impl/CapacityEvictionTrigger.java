@@ -121,14 +121,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         }
         return super.isValid();
     }
-    
-    @Override
-    public boolean resubmit() {
-        if ( super.resubmit() ) {
-            return true;
-        }
-        return repeat;
-    }
 
     @Override
     public void completeEviction(EvictableMap map) {
