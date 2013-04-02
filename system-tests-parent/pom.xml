@@ -49,13 +49,12 @@
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${tc.linked-child-process.version}/linked-child-process-${tc.linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
-    <derby.logSwitchInterval>10240000</derby.logSwitchInterval>
     <jrockit-jvm-arguments/>
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>128m</surefire.max-memory>
     <surefire.additional-jvm-args/>
     <devmode>false</devmode>
-    <surefire.argLine>-server -Xms${surefire.min-memory} -Xmx${surefire.max-memory} ${surefire.additional-jvm-args} ${jrockit-jvm-arguments} -Dtc.base-dir=${tc.base-dir} ${tc.config} -Dtc.dso.globalmode=${tc.dso.globalmode} -Dtc.tests.info.property-files=${tc.tests.info.property-files} -Dcom.tc.properties=${tc.system.tests.properties} -Dcom.tc.l2.derbydb.derby.storage.logSwitchInterval=${derby.logSwitchInterval} -Dcom.sun.management.jmxremote ${ee.license} -Dcom.tc.test.toolkit.devmode=${devmode}</surefire.argLine>
+    <surefire.argLine>-server -Xms${surefire.min-memory} -Xmx${surefire.max-memory} ${surefire.additional-jvm-args} ${jrockit-jvm-arguments} -Dtc.base-dir=${tc.base-dir} ${tc.config} -Dtc.dso.globalmode=${tc.dso.globalmode} -Dtc.tests.info.property-files=${tc.tests.info.property-files} -Dcom.tc.properties=${tc.system.tests.properties} -Dcom.sun.management.jmxremote ${ee.license} -Dcom.tc.test.toolkit.devmode=${devmode}</surefire.argLine>
     <skipTests>true</skipTests>
 
     <!--
