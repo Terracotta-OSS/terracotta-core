@@ -154,8 +154,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     final long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
       if (ignoreIfOlderDNA) {
-        logger.info("Ignoring apply of an old DNA for " + getClassname() + " id = " + this.id + " current version = "
-                    + this.version + " dna_version = " + dna_version);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Ignoring apply of an old DNA for " + getClassname() + " id = " + this.id + " current version = "
+                      + this.version + " dna_version = " + dna_version);
+        }
         return;
       } else {
         throw new AssertionError("Recd a DNA with version less than or equal to the current version : " + this.version
