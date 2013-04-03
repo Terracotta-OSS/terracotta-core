@@ -647,7 +647,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
           } catch (CancelledKeyException cke) {
             logger.info("selection key cancelled key@" + key.hashCode());
-          } catch (Throwable e) {
+          } catch (Exception e) { // DEV-9369. Do not reconnect on fatal errors.
             logger.info("Unhandled exception occured on connection layer", e);
             TCConnectionImpl conn = (TCConnectionImpl) key.attachment();
             // TCConnectionManager will take care of closing and cleaning up resources
