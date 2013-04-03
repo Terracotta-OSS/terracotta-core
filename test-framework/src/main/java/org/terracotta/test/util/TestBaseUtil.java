@@ -1,6 +1,8 @@
 package org.terracotta.test.util;
 
 import org.apache.commons.io.IOUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.properties.TCPropertiesConsts;
@@ -39,8 +41,11 @@ import java.util.regex.Pattern;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class TestBaseUtil {
+  private static final String  MAVEN_LOCAL_REPO = getMavenLocalRepo();
   private static final Pattern ARTIFACT_PATTERN = Pattern.compile("^\\s*([^:]+):([^:]+):([^:]+):([^:]+):(.+)$");
 
   public static void removeDuplicateJvmArgs(List<String> jvmArgs) {
@@ -273,11 +278,8 @@ public class TestBaseUtil {
   }
 
   private static String constructMavenLocalFile(String groupId, String artifactId, String type, String version) {
-    String base = System.getProperty("localMavenRepository");
-    if (base == null) {
-      base = System.getProperty("user.home") + "/.m2/repository";
-    }
-    File artifact = new File(base, groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
+    File artifact = new File(MAVEN_LOCAL_REPO, groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/"
+                                               + artifactId
                                    + "-" + version + "." + type);
     if (!artifact.exists()) { throw new AssertionError("Can't find Maven artifact: " + groupId + ":" + artifactId + ":"
                                                        + type + ":" + version); }
@@ -286,6 +288,31 @@ public class TestBaseUtil {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static String getMavenLocalRepo() {
+    String base = System.getProperty("localMavenRepository");
+    if (base == null) {
+      base = System.getProperty("user.home") + "/.m2/repository";
+    }
+    File settingsXml = new File(System.getProperty("user.home"), "/.m2/settings.xml");
+    if (settingsXml.exists()) {
+      // check if people have moved local repo
+      try {
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document doc = db.parse(settingsXml);
+      doc.getDocumentElement().normalize();
+      NodeList nodeList = doc.getElementsByTagName("localRepository");
+      if (nodeList.getLength() > 0) {
+        base = nodeList.item(0).getNodeValue();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    return base;
   }
 
   /**
