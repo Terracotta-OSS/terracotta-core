@@ -76,7 +76,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         if ( !mapEvicting && logger.isDebugEnabled() ) {
             logger.debug(map);
         }
-        if (mapEvicting && mapSize > 0 ) {
+        if ( !mapEvicting && mapSize > 0 ) {
             return map.startEviction();
         } else {
             return false;

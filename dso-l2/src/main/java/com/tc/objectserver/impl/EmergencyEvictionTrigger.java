@@ -27,7 +27,6 @@ import java.util.Map;
 public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     
     private final int blowout;
-    private int sampleCount;
     private int sizeCount;
 
     public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
@@ -69,10 +68,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
   // return sample;
   // }
 
-    public int getSampleCount() {
-        return sampleCount;
-    }
-
     @Override
     public String getName() {
         return "Emergency";
@@ -80,6 +75,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     
     @Override
     public String toString() {
-        return "EmergencyEvictionTrigger{blowout=" + blowout + ", sample=" + sampleCount + ", size=" + sizeCount + ", parent=" + super.toString() + '}';
+        return "EmergencyEvictionTrigger{blowout=" + blowout + ", size=" + sizeCount + ", parent=" + super.toString() + '}';
     }
 }
