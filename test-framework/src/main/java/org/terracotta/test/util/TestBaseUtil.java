@@ -194,6 +194,14 @@ public class TestBaseUtil {
     testConfig.addTcProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
   }
 
+  public static void enableOOOLogging(TestConfig testConfig) {
+    testConfig.getClientConfig().addExtraClientJvmArg("-Dooo.logging.enabled=true");
+  }
+
+  public static void enableCallStackTrace(TestConfig testConfig) {
+    testConfig.getClientConfig().addExtraClientJvmArg("-Dstack.trace.enabled=true");
+  }
+
   public static String getThreadDump() {
     final String newline = System.getProperty("line.separator", "\n");
     StringBuffer rv = new StringBuffer();
