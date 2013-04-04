@@ -238,7 +238,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                                              Map<Object, Object> rv) throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
-      while (true) {
+      while (!allRequestsDone(contextsToWaitFor, rv)) {
         if (isStopped()) { throw new TCNotRunningException(); }
         if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
@@ -247,27 +247,30 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
           checkIfAbortedAndRemoveContexts(contextsToWaitFor);
           isInterrupted = true;
         }
-        for (Iterator<AbstractServerMapRequestContext> iterator = contextsToWaitFor.iterator(); iterator.hasNext();) {
-          AbstractServerMapRequestContext context = iterator.next();
-          if (context.isMissing()) {
-            removeRequestContext(context);
-            iterator.remove();
-            throw new TCObjectNotFoundException(context.getMapID().toString());
-          }
-          Map<Object, Object> result = context.getResult();
-          if (result != null) {
-            removeRequestContext(context);
-            iterator.remove();
-            synchronized (rv) {
-              rv.putAll(result);
-            }
-          }
-        }
-        if (contextsToWaitFor.isEmpty()) { return; }
       }
     } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
     }
+  }
+
+  private boolean allRequestsDone(Set<AbstractServerMapRequestContext> contextsToWaitFor, Map<Object, Object> rv) {
+    for (Iterator<AbstractServerMapRequestContext> iterator = contextsToWaitFor.iterator(); iterator.hasNext();) {
+      AbstractServerMapRequestContext context = iterator.next();
+      if (context.isMissing()) {
+        removeRequestContext(context);
+        iterator.remove();
+        throw new TCObjectNotFoundException(context.getMapID().toString());
+      }
+      Map<Object, Object> result = context.getResult();
+      if (result != null) {
+        removeRequestContext(context);
+        iterator.remove();
+        synchronized (rv) {
+          rv.putAll(result);
+        }
+      }
+    }
+    return contextsToWaitFor.isEmpty();
   }
 
   private void sendRequest(final AbstractServerMapRequestContext context) {
