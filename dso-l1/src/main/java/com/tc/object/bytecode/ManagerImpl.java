@@ -8,12 +8,8 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.client.AbstractClientFactory;
-import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterImpl;
-import com.tc.exception.ExceptionWrapper;
-import com.tc.exception.ExceptionWrapperImpl;
-import com.tc.exception.TCNotRunningException;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
@@ -64,10 +60,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
-import com.tc.text.ConsoleParagraphFormatter;
-import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
-import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.UUID;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -95,7 +88,6 @@ public class ManagerImpl implements Manager {
   private final Thread                                shutdownAction;
   private final DsoClusterInternal                    dsoCluster;
   private final LockIdFactory                         lockIdFactory;
-  private final ClientMode                            clientMode;
   private final TCSecurityManager                     securityManager;
   private ClientObjectManager                         objectManager;
   private ClientShutdownManager                       shutdownManager;
@@ -116,6 +108,7 @@ public class ManagerImpl implements Manager {
   private final PlatformServiceImpl                   platformService;
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
+
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -160,7 +153,6 @@ public class ManagerImpl implements Manager {
     this.classProvider = new SingleLoaderClassProvider(loader == null ? getClass().getClassLoader() : loader);
 
     this.lockIdFactory = new LockIdFactory(this);
-    this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
     this.platformService = new PlatformServiceImpl(this, isExpressRejoinMode);
   }
 
@@ -252,7 +244,6 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.classProvider,
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
                                                           ManagerImpl.this.dsoCluster,
-                                                          ManagerImpl.this.clientMode,
                                                           ManagerImpl.this.securityManager,
                                                           ManagerImpl.this.abortableOperationManager,
                                                           ManagerImpl.this.rejoinManager, uuid);
@@ -865,54 +856,6 @@ public class ManagerImpl implements Manager {
     return this.lockManager.isLockedByCurrentThread(level);
   }
 
-  @Override
-  public void monitorEnter(final LockID lock, final LockLevel level) throws AbortedOperationException {
-    lock(lock, level);
-  }
-
-  /*
-   * We catch IMSE exception here as it can be thrown when an unlock is clustered but the acquiring lock wasn't. This
-   * can happen when a user follows the unsupported lock-share-unlock pattern.
-   */
-  @Override
-  @FindbugsSuppressWarnings("IMSE_DONT_CATCH_IMSE")
-  public void monitorExit(final LockID lock, final LockLevel level) {
-    try {
-      unlock(lock, level);
-    } catch (final TCNotRunningException e) {
-      logger.info("Ignoring " + e.getClass().getName() + " in unlock(lockID=" + lock + ", level=" + level + ")");
-    } catch (final IllegalMonitorStateException e) {
-      final ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
-      final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-      logger.fatal(wrapper.wrap(formatter.format(UNLOCK_SHARE_LOCK_ERROR)), e);
-      System.exit(-1);
-    } catch (final Throwable t) {
-      if (clientMode.isExpressRejoinClient()) {
-        logger
-            .info("Ignoring " + t.getClass().getName() + " in unlock(lockID=" + lock + ", level=" + level + "). " + t);
-        logger.info("Shutting down this Express Client");
-        try {
-          stop();
-        } catch (final Throwable e) {
-          logger.info("Ignoring " + e);
-        }
-      } else {
-        final ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
-        final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-        logger.fatal(wrapper.wrap(formatter.format(IMMINENT_INFINITE_LOOP_ERROR)), t);
-        System.exit(-1);
-      }
-    }
-  }
-
-  private static final String UNLOCK_SHARE_LOCK_ERROR      = "An attempt was just made to unlock a clustered lock that was not locked.  "
-                                                             + "This was attempted on exit from a Java synchronized block.  This is highly likely to be due to the calling code locking on an "
-                                                             + "object, adding it to the clustered heap, and then attempting to unlock it.  The client JVM will now be terminated to prevent "
-                                                             + "the calling thread from entering an infinite loop.";
-
-  private static final String IMMINENT_INFINITE_LOOP_ERROR = "An exception/error was just thrown from an application thread while attempting "
-                                                             + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
-                                                             + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 
   @Override
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {

@@ -223,50 +223,6 @@ public class ManagerUtil {
     mgr.lock(lock, level);
   }
 
-  /**
-   * Begin lock
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void beginLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
-    beginLock(lockID, level);
-  }
-
-  /**
-   * Begins a lock without associating any transaction context.
-   */
-  // @Deprecated
-  // protected static void beginLockWithoutTxn(final String lockID, final LockLevel level) {
-  // beginLock(lockID, level);
-  // }
-
-  /**
-   * Begin lock
-   *
-   * @param lockID Lock identifier
-   * @param type Lock type
-   * @param contextInfo
-   */
-  // @Deprecated
-  // protected static void beginLock(final String lockID, final LockLevel level, final String contextInfo) {
-  // beginLock(lockID, level);
-  // }
-
-  /**
-   * Try to begin lock
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @return True if lock was successful
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static boolean tryBeginLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
-    return tryBeginLock(lockID, level);
-  }
 
   protected static boolean tryBeginLock(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
@@ -281,20 +237,6 @@ public class ManagerUtil {
     return mgr.tryLock(lock, level, unit.toMillis(time));
   }
 
-  /**
-   * Try to begin lock within a specific timespan
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @param timeoutInNanos Timeout in nanoseconds
-   * @return True if lock was successful
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static boolean tryBeginLock0(final String lockID, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException, AbortedOperationException {
-    return tryBeginLock(lockID, level, timeoutInNanos, TimeUnit.NANOSECONDS);
-  }
 
   /**
    * Commit volatile lock
@@ -310,16 +252,6 @@ public class ManagerUtil {
     mgr.unlock(lock, level);
   }
 
-  /**
-   * Commit lock
-   *
-   * @param lockID Lock name
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void commitLock0(final String lockID, final LockLevel level) throws AbortedOperationException {
-    commitLock(lockID, level);
-  }
 
   protected static void pinLock0(final String lockID) {
     Manager mgr = getManager();
@@ -602,55 +534,7 @@ public class ManagerUtil {
     objectWait(obj, millis);
   }
 
-  /**
-   * Enter synchronized monitor
-   *
-   * @param obj Object
-   * @param level Lock type
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void monitorEnter0(final Object obj, final LockLevel level) throws AbortedOperationException {
-    beginLock(obj, level);
-  }
 
-  /**
-   * Enter synchronized monitor
-   *
-   * @param obj Object
-   * @param type Lock type
-   * @param contextInfo Configuration text of the lock
-   */
-  // @Deprecated
-  // protected static void monitorEnter(final Object obj, final LockLevel level, final String contextInfo) {
-  // monitorEnter(obj, level);
-  // }
-
-  /**
-   * Exit synchronized monitor
-   *
-   * @param obj Object
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void monitorExit0(final Object obj, final LockLevel level) throws AbortedOperationException {
-    commitLock(obj, level);
-  }
-
-  @Deprecated
-  protected static void instrumentationMonitorEnter(final Object obj, final LockLevel level)
-      throws AbortedOperationException {
-    Manager mgr = getManager();
-    LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.monitorEnter(lock, level);
-  }
-
-  @Deprecated
-  protected static void instrumentationMonitorExit(final Object obj, final LockLevel level) {
-    Manager mgr = getManager();
-    LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.monitorExit(lock, level);
-  }
 
   /**
    * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}, e.g., Class, Integer,
@@ -675,41 +559,6 @@ public class ManagerUtil {
     return mgr.isLocked(lock, level);
   }
 
-  @Deprecated
-  protected static boolean tryMonitorEnter0(final Object obj, final LockLevel level) throws AbortedOperationException {
-    return tryBeginLock(obj, level);
-  }
-
-  /**
-   * Try to enter monitor for specified object
-   *
-   * @param obj The object monitor
-   * @param timeoutInNanos Timeout in nanoseconds
-   * @param level The lock level
-   * @return True if entered
-   * @throws AbortedOperationException
-   * @throws NullPointerException If obj is null
-   */
-  @Deprecated
-  protected static boolean tryMonitorEnter0(final Object obj, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException, AbortedOperationException {
-    return tryBeginLock(obj, level, timeoutInNanos, TimeUnit.NANOSECONDS);
-  }
-
-  /**
-   * Enter synchronized monitor (interruptibly).
-   *
-   * @param obj The object monitor
-   * @param level The lock level
-   * @throws NullPointerException If obj is null
-   * @throws InterruptedException If interrupted while entering or waiting
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void monitorEnterInterruptibly0(final Object obj, final LockLevel level)
-      throws InterruptedException, AbortedOperationException {
-    beginLockInterruptibly(obj, level);
-  }
 
   /**
    * Acquire lock (interruptibly).
@@ -851,56 +700,6 @@ public class ManagerUtil {
     mgr.unlock(lock, level);
   }
 
-  /**
-   * Begin lock
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void beginLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
-    beginLock(lockID, level);
-  }
-
-  /**
-   * Try to begin lock
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @return True if lock was successful
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static boolean tryBeginLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
-    return tryBeginLock(lockID, level);
-  }
-
-  /**
-   * Try to begin lock within a specific timespan
-   *
-   * @param lockID Lock identifier
-   * @param level Lock type
-   * @param timeoutInNanos Timeout in nanoseconds
-   * @return True if lock was successful
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static boolean tryBeginLock0(final long lockID, final LockLevel level, final long timeoutInNanos)
-      throws InterruptedException, AbortedOperationException {
-    return tryBeginLock(lockID, level, timeoutInNanos, TimeUnit.NANOSECONDS);
-  }
-
-  /**
-   * Commit lock
-   *
-   * @param lockID Lock name
-   * @throws AbortedOperationException
-   */
-  @Deprecated
-  protected static void commitLock0(final long lockID, final LockLevel level) throws AbortedOperationException {
-    commitLock(lockID, level);
-  }
 
   protected static void pinLock0(final long lockID) {
     Manager mgr = getManager();

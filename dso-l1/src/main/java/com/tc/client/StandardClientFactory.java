@@ -25,11 +25,11 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final ClassProvider classProvider,
                                               final PreparedComponentsFromL2Connection connectionComponents,
                                               final Manager manager, final DsoClusterInternal dsoCluster,
-                                              final ClientMode clientMode, final TCSecurityManager securityManager,
+                                              final TCSecurityManager securityManager,
                                               final AbortableOperationManager abortableOperationManager,
                                               final RejoinManagerInternal rejoinManager, UUID uuid) {
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
-                                       clientMode, securityManager, abortableOperationManager, rejoinManager, uuid);
+                                       securityManager, abortableOperationManager, rejoinManager, uuid);
   }
 
   @Override

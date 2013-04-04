@@ -349,16 +349,6 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void monitorEnter(LockID lock, LockLevel level) {
-    //
-  }
-
-  @Override
-  public void monitorExit(LockID lock, LockLevel level) {
-    //
-  }
-
-  @Override
   public String getUUID() {
     return null;
   }

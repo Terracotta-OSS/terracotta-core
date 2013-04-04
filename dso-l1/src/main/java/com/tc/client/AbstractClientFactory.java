@@ -31,7 +31,7 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        ClassProvider classProvider,
                                                        PreparedComponentsFromL2Connection connectionComponents,
                                                        Manager manager, DsoClusterInternal dsoCluster,
-                                                       ClientMode clientMode, TCSecurityManager securityManager,
+                                                       TCSecurityManager securityManager,
                                                        AbortableOperationManager abortableOperationManager,
                                                        RejoinManagerInternal rejoinManager, UUID uuid);
 

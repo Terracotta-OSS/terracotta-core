@@ -15,7 +15,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockID;
-import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.TerracottaLocking;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -335,26 +334,6 @@ public interface Manager extends TerracottaLocking {
    */
   public MBeanServer getMBeanServer();
 
-  /**
-   * Used by instrumented code to perform a clustered <code>monitorenter</code>.
-   * 
-   * @throws AbortedOperationException
-   */
-  public void monitorEnter(LockID lock, LockLevel level) throws AbortedOperationException;
-
-  /**
-   * Used by instrumented code to perform a clustered <code>monitorexit</code>.
-   * <p>
-   * Implementations of this method should <em>prevent propagation of all
-   * <code>Throwable</code> instances</em>. Instead <code>Throwable</code> instances are logged and the client VM is
-   * then terminated. If you don't want this behavior then don't call this method.
-   * <p>
-   * This behavior is there to ensure that exceptions thrown during transaction commit or clustered unlocking do not
-   * cause the thread to enter an infinite loop.
-   * 
-   * @see <a href="http://jira.terracotta.org/jira/browse/DEV-113">DEV-113</a>
-   */
-  public void monitorExit(LockID lock, LockLevel level);
 
   /**
    * Used by BulkLoad to wait for all current transactions completed
