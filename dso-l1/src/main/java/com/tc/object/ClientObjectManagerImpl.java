@@ -663,7 +663,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // a pre-init TCObject, then hydrating the object
       if (retrieveNeeded) {
         boolean createInProgressSet = false;
-        boolean exception = false;
         try {
           final DNA dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
               : (parentContext == null ? this.remoteObjectManager.retrieve(id) : this.remoteObjectManager
@@ -685,26 +684,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
             obj.hydrate(dna, false, newWeakObjectReference(id, pojo));
           }
         } catch (AbortedOperationException t) {
-          exception = true;
-          if (!quiet) {
-            logger.warn("Exception retrieving object " + id, t);
-          }
+          lookupDone(id, createInProgressSet);
           throw t;
         } catch (final Throwable t) {
-          exception = true;
           if (!quiet) {
             logger.warn("Exception retrieving object " + id, t);
           }
+          lookupDone(id, createInProgressSet);
+          this.remoteObjectManager.removed(id);
           // remove the object creating in progress from the list.
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
-        } finally {
-          if (exception) {
-            // remove the object creating in progress from the list.
-            lookupDone(id, createInProgressSet);
-            this.remoteObjectManager.removed(id);
-          }
         }
         basicAddLocal(obj, true);
       }
