@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.control;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
