@@ -282,9 +282,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         setTransaction(tx);
       }
     }
-    if (aborted) {
-      throw new AbortedOperationException();
-    }
+    // If aborted and transaction is not empty then
+    // throw AbortedOperationException
+    if (aborted && tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
   }
 
   private void createTxAndInitContext() {

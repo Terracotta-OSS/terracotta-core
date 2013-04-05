@@ -48,7 +48,11 @@ public class NonStopLockImpl implements ToolkitLock {
         // since the toolkit is not initialized yet. This could never have been locked.
         throw new IllegalMonitorStateException();
       }
-      localDelegate.unlock();
+      try {
+        localDelegate.unlock();
+      } catch (ToolkitAbortableOperationException e) {
+        throw new NonStopException("unlock done but transaction Commit failed!");
+      }
     }
   }
 
