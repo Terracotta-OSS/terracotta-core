@@ -57,7 +57,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
       if (t instanceof ToolkitInstantiationException) {
         throw (ToolkitInstantiationException) t;
       } else {
-        throw new ToolkitInstantiationException("There were some problem in creating toolkit", t);
+        throw new ToolkitInstantiationException(t);
       }
     }
   }

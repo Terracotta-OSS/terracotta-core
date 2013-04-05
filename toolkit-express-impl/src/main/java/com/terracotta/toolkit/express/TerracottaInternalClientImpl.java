@@ -9,6 +9,7 @@ import com.terracotta.toolkit.express.loader.Util;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashSet;
@@ -88,12 +89,15 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     try {
       Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
       Method method = dsoContextClass.getMethod("init");
+
       method.invoke(dsoContext);
 
       Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
       contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
       isInitialized = true;
       join(tunneledMBeanDomains);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e.getCause());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
