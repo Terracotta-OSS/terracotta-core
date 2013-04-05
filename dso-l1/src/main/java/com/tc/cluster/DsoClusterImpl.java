@@ -307,17 +307,18 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   public void fireNodeJoined(final ClientID nodeId) {
     if (topology.containsDsoNode(nodeId)) { return; }
 
-    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRegisterDsoNode(nodeId));
+    DsoNodeInternal node = topology.getAndRegisterDsoNode(nodeId);
+    final DsoClusterEvent event = new DsoClusterEventImpl(node);
+    if (node != null) {
+      retrieveMetaDataForDsoNode(node);
+    }
     for (DsoClusterListener listener : listeners) {
-      fireNodeJoinedInternal(topology.getInternalNode(nodeId), event, listener);
+      fireNodeJoinedInternal(node, event, listener);
     }
   }
 
   private void fireNodeJoinedInternal(final DsoNodeInternal node, final DsoClusterEvent event,
                                       final DsoClusterListener listener) {
-    if (node != null) {
-      retrieveMetaDataForDsoNode(node);
-    }
     fireEvent(DsoClusterEventType.NODE_JOIN, event, listener);
   }
 
