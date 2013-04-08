@@ -631,7 +631,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       for (L2Info l2Info : l2Infos) {
         final String prefix = secure ? "https://" : "http://";
-        urls.add(prefix + l2Info.securityHostname() + ":" + l2Info.tsaGroupPort());
+        urls.add(prefix + l2Info.host() + ":" + l2Info.tsaGroupPort());
       }
       return urls;
     } catch (Exception e) {
