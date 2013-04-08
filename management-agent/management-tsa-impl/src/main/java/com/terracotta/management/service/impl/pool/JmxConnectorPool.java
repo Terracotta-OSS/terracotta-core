@@ -55,16 +55,20 @@ public class JmxConnectorPool {
       }
     }
 
-    jmxConnectorHolder.getLock().lock();
-    JMXConnector jmxConnector = jmxConnectorHolder.getJmxConnector();
     try {
+      jmxConnectorHolder.getLock().lock();
+      JMXConnector jmxConnector = jmxConnectorHolder.getJmxConnector();
       jmxConnector.getMBeanServerConnection().getMBeanCount();
+      return new PooledJMXConnector(jmxConnector, this, url);
     } catch (IOException ioe) {
       // dead connection, killing it and retrying...
-      connectorsMap.remove(url);
+      if (!jmxConnectorHolder.isBroken()) {
+        connectorsMap.remove(url);
+        jmxConnectorHolder.setBroken(true);
+        jmxConnectorHolder.getLock().unlock();
+      }
       return getConnector(url, env);
     }
-    return new PooledJMXConnector(jmxConnector, this, url);
   }
 
   protected Map<String, Object> createJmxConnectorEnv(String host, int port) {
@@ -96,6 +100,7 @@ public class JmxConnectorPool {
 
     private final Lock lock = new ReentrantLock();
     private final JMXConnector jmxConnector;
+    private volatile boolean broken;
 
     private JMXConnectorHolder(JMXConnector jmxConnector) {
       this.jmxConnector = jmxConnector;
@@ -105,8 +110,19 @@ public class JmxConnectorPool {
       return lock;
     }
 
-    public JMXConnector getJmxConnector() {
+    public JMXConnector getJmxConnector() throws IOException {
+      if (broken) {
+        throw new IOException("broken JMX connector");
+      }
       return jmxConnector;
+    }
+
+    private boolean isBroken() {
+      return broken;
+    }
+
+    private void setBroken(boolean broken) {
+      this.broken = broken;
     }
   }
 
