@@ -60,6 +60,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.zip.ZipInputStream;
 
 import javax.management.Attribute;
@@ -278,10 +282,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
           Long clientId = (Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
           clientEntity.getAttributes().put("ClientID", "" + clientId.longValue());
-  
+
           clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(l1InfoObjectName, "Version"));
           clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(l1InfoObjectName, "BuildID"));
-  
+
           clientEntities.add(clientEntity);
         } catch (Exception e) {
           /* client must have disconnected */
@@ -865,7 +869,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                   backupEntity.setSourceId(member.name());
                   backupEntity.setName(name);
                   backupEntity.setStatus(backups.get(name));
-      
+
                   backupEntities.add(backupEntity);
                 }
               } catch (Exception e) {
@@ -912,23 +916,23 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
-            
+
             if ("ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState())) {
               try {
                 tcServerInfoMBean.backup(backupName);
-    
+
                 BackupEntity backupEntity = new BackupEntity();
                 backupEntity.setSourceId(member.name());
                 backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-    
+
                 String runningBackup = tcServerInfoMBean.getRunningBackup();
                 backupEntity.setName(runningBackup);
-    
+
                 if (runningBackup != null) {
                   String backupStatus = tcServerInfoMBean.getBackupStatus(runningBackup);
                   backupEntity.setStatus(backupStatus);
                 }
-                
+
                 backupEntities.add(backupEntity);
               } catch (Exception e) {
                 BackupEntity backupEntity = new BackupEntity();
@@ -1022,65 +1026,101 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+
+      ExecutorService pool = Executors.newFixedThreadPool(10);
+      Map<String,Future<Collection<OperatorEventEntity>>> futures = new HashMap<String,Future<Collection<OperatorEventEntity>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
           if (serverNames != null && !serverNames.contains(member.name())) {
             continue;
           }
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
-
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            DSOMBean dsoMBean = JMX.newMBeanProxy(mBeanServerConnection,
-                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
-
-            List<TerracottaOperatorEvent> operatorEvents;
-            if (sinceWhen == null) {
-              operatorEvents = dsoMBean.getOperatorEvents();
-            } else {
-              operatorEvents = dsoMBean.getOperatorEvents(sinceWhen);
-            }
-
-            for (TerracottaOperatorEvent operatorEvent : operatorEvents) {
-              if (operatorEvent.isRead() && read) {
-                // filter out read events
-                continue;
-              }
-
-              OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
-              operatorEventEntity.setSourceId(member.name());
-              operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-              operatorEventEntity.setMessage(operatorEvent.getEventMessage());
-              operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
-              operatorEventEntity.setCollapseString(operatorEvent.getCollapseString());
-              operatorEventEntity.setEventSubsystem(operatorEvent.getEventSubsystemAsString());
-              operatorEventEntity.setEventType(operatorEvent.getEventTypeAsString());
-              operatorEventEntity.setRead(operatorEvent.isRead());
-
-              operatorEventEntities.add(operatorEventEntity);
-            }
-          } catch (Exception e) {
-            OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
-            operatorEventEntity.setSourceId(member.name());
-            operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-            operatorEventEntity.setMessage(e.getMessage());
-
-            operatorEventEntities.add(operatorEventEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          Future handlerFuture = pool.submit(new Handler(sinceWhen, read, operatorEventEntities, member));
+          futures.put(member.host()+"_"+member.jmxPort(),handlerFuture);
         }
+      }
+
+      for (Map.Entry<String, Future<Collection<OperatorEventEntity>>> entry : futures.entrySet()) {
+        operatorEventEntities.addAll(entry.getValue().get());
       }
 
       return operatorEventEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting operator events", e);
     }
+  }
+
+
+  class Handler implements Callable {
+
+    private Long sinceWhen;
+    private boolean read;
+    private Collection<OperatorEventEntity> operatorEventEntities;
+    private L2Info member;
+
+    public Handler(Long sinceWhen, boolean read, Collection<OperatorEventEntity> operatorEventEntities, L2Info member) {
+      this.sinceWhen = sinceWhen;
+      this.read = read;
+      this.operatorEventEntities = operatorEventEntities;
+      this.member = member;
+
+    }
+
+    @Override
+    public Collection<OperatorEventEntity> call() throws Exception {
+      return getOperatorEventsByMember(sinceWhen, read, member);
+    }
+  }
+
+  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, boolean read, L2Info member) {
+    Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
+    int jmxPort = member.jmxPort();
+    String jmxHost = member.host();
+
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      DSOMBean dsoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+              new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+
+      List<TerracottaOperatorEvent> operatorEvents;
+      if (sinceWhen == null) {
+        operatorEvents = dsoMBean.getOperatorEvents();
+      } else {
+        operatorEvents = dsoMBean.getOperatorEvents(sinceWhen);
+      }
+
+      for (TerracottaOperatorEvent operatorEvent : operatorEvents) {
+        if (operatorEvent.isRead() && read) {
+          // filter out read events
+          continue;
+        }
+
+        OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
+        operatorEventEntity.setSourceId(member.name());
+        operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+        operatorEventEntity.setMessage(operatorEvent.getEventMessage());
+        operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
+        operatorEventEntity.setCollapseString(operatorEvent.getCollapseString());
+        operatorEventEntity.setEventSubsystem(operatorEvent.getEventSubsystemAsString());
+        operatorEventEntity.setEventType(operatorEvent.getEventTypeAsString());
+        operatorEventEntity.setRead(operatorEvent.isRead());
+
+        operatorEventEntities.add(operatorEventEntity);
+      }
+    } catch (Exception e) {
+      OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
+      operatorEventEntity.setSourceId(member.name());
+      operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      operatorEventEntity.setMessage(e.getMessage());
+
+      operatorEventEntities.add(operatorEventEntity);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+    return operatorEventEntities;
   }
 
   @Override
