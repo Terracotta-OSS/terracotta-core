@@ -127,6 +127,7 @@ public class TsaAgentServiceImpl implements AgentService {
     AgentEntity e = new AgentEntity();
     e.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
     e.setAgencyOf(AGENCY);
+    e.setVersion(this.getClass().getPackage().getImplementationVersion());
     e.getRootRepresentables().put("urls", createL2Urls());
     return e;
   }
