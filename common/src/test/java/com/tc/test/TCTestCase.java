@@ -238,7 +238,6 @@ public class TCTestCase extends TestCase {
   }
 
   protected void tcTestCaseSetup() throws Exception {
-    printOutCurrentJavaProcesses();
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
         System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
