@@ -9,6 +9,8 @@ import net.sf.ehcache.config.PinningConfiguration;
 import net.sf.ehcache.config.PinningConfiguration.Store;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFullException;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreListener;
@@ -17,40 +19,49 @@ import java.util.List;
 
 public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> {
 
-  private final InternalEhcache localStoreCache;
+  private final InternalEhcache                localStoreCache;
+  private final EhcacheSMLocalStoreUTF8Encoder encoder;
 
   public OnlineEhcacheSMLocalStore(InternalEhcache localStoreCache) {
     this.localStoreCache = localStoreCache;
+    // enable Encoding only when Offheap is enabled.
+    this.encoder = new EhcacheSMLocalStoreUTF8Encoder(localStoreCache.getCacheConfiguration().isOverflowToOffHeap());
   }
 
   @Override
   public boolean addListener(ServerMapLocalStoreListener<Object, Object> listener) {
     return localStoreCache.getCacheEventNotificationService()
-        .registerListener(new EhcacheSMLocalStoreListenerAdapter(listener));
+        .registerListener(new EhcacheSMLocalStoreListenerAdapter(listener, encoder));
   }
 
   @Override
   public boolean removeListener(ServerMapLocalStoreListener<Object, Object> listener) {
     return localStoreCache.getCacheEventNotificationService()
-        .unregisterListener(new EhcacheSMLocalStoreListenerAdapter(listener));
+        .unregisterListener(new EhcacheSMLocalStoreListenerAdapter(listener, encoder));
   }
 
   @Override
   public Object get(Object key) {
-    Element element = localStoreCache.get(key);
+    Element element = localStoreCache.get(encode(key));
     return element == null ? null : element.getObjectValue();
   }
 
   @Override
   public List<Object> getKeys() {
-    return localStoreCache.getKeys();
+    return Lists.transform(localStoreCache.getKeys(), new Function<Object, Object>() {
+      @Override
+      public Object apply(Object key) {
+        return decode(key);
+      }
+    });
   }
 
   @Override
   public Object put(Object key, Object value) throws ServerMapLocalStoreFullException {
     try {
-      Element element = localStoreCache.get(key);
-      localStoreCache.put(new Element(key, value));
+      Object encodedKey = encode(key);
+      Element element = localStoreCache.get(encodedKey);
+      localStoreCache.put(new Element(encodedKey, value));
       return element == null ? null : element.getObjectValue();
     } catch (CacheException e) {
       handleCacheException(e);
@@ -60,15 +71,16 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
 
   @Override
   public Object remove(Object key) {
-    Element element = localStoreCache.removeAndReturnElement(key);
+    Element element = localStoreCache.removeAndReturnElement(encode(key));
     return element == null ? null : element.getObjectValue();
   }
 
   @Override
   public Object remove(Object key, Object value) {
-    Element element = localStoreCache.get(key);
+    Object encodedKey = encode(key);
+    Element element = localStoreCache.get(encodedKey);
     if (element == null || !value.equals(element.getObjectValue())) { return null; }
-    boolean removed = localStoreCache.remove(key);
+    boolean removed = localStoreCache.remove(encodedKey);
     if (removed) { return element.getObjectValue(); }
     return null;
   }
@@ -145,13 +157,13 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
 
   @Override
   public boolean containsKeyOnHeap(Object key) {
-    return localStoreCache.isElementInMemory(key);
+    return localStoreCache.isElementInMemory(encode(key));
   }
 
   @Override
   public boolean containsKeyOffHeap(Object key) {
     // Offheap has everything in the local cache, so we just need to verify that the key is anywhere in the cache
-    return localStoreCache.isKeyInCache(key);
+    return localStoreCache.isKeyInCache(encode(key));
   }
 
   @Override
@@ -166,7 +178,7 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
 
   @Override
   public void recalculateSize(Object key) {
-    localStoreCache.recalculateSize(key);
+    localStoreCache.recalculateSize(encode(key));
   }
 
   @Override
@@ -177,6 +189,14 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
     } else {
       return pinningConfiguration.getStore() == Store.LOCALMEMORY;
     }
+  }
+
+  public Object encode(Object key) {
+    return encoder.encodeKey(key);
+  }
+
+  public Object decode(Object key) {
+    return encoder.decodeKey(key);
   }
 
 }

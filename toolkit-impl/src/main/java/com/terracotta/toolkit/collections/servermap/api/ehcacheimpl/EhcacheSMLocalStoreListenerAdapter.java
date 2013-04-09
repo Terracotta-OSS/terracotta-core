@@ -13,14 +13,17 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreListe
 public class EhcacheSMLocalStoreListenerAdapter implements CacheEventListener {
 
   private final ServerMapLocalStoreListener serverMapListener;
+  private final EhcacheSMLocalStoreUTF8Encoder  encoder;
 
-  public EhcacheSMLocalStoreListenerAdapter(ServerMapLocalStoreListener serverMapListener) {
+  public EhcacheSMLocalStoreListenerAdapter(ServerMapLocalStoreListener serverMapListener,
+                                            EhcacheSMLocalStoreUTF8Encoder encoder) {
     this.serverMapListener = serverMapListener;
+    this.encoder = encoder;
   }
 
   @Override
   public void notifyElementEvicted(Ehcache cache, Element element) {
-    serverMapListener.notifyElementEvicted(element.getObjectKey(), element.getObjectValue());
+    serverMapListener.notifyElementEvicted(encoder.decodeKey(element.getObjectKey()), element.getObjectValue());
   }
 
   @Override
