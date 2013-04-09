@@ -104,11 +104,6 @@
   <profiles>
     <profile>
       <id>skip-javadoc</id>
-      <activation>
-        <file>
-          <exists>${user.home}/.skipjavadoc</exists>
-        </file>
-      </activation>
       <properties>
         <skipJavadoc>true</skipJavadoc>
       </properties>
