@@ -26,23 +26,13 @@ public class MonitoringServiceImpl implements MonitoringService {
   }
 
   @Override
-  public Set<String> getAllClientIds() throws ServiceExecutionException {
-    return tsaManagementClientService.getAllClientIds();
+  public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException {
+    return tsaManagementClientService.getClientStatistics(clientIds, attributes);
   }
 
   @Override
-  public Set<String> getAllServerNames() throws ServiceExecutionException {
-    return tsaManagementClientService.getAllServerNames();
-  }
-
-  @Override
-  public StatisticsEntity getClientStatistics(String clientId, Set<String> attributes) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientStatistics(clientId, attributes);
-  }
-
-  @Override
-  public StatisticsEntity getServerStatistics(String serverName, Set<String> attributes) throws ServiceExecutionException {
-    return tsaManagementClientService.getServerStatistics(serverName, attributes);
+  public Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException {
+    return tsaManagementClientService.getServerStatistics(serverNames, attributes);
   }
 
   @Override

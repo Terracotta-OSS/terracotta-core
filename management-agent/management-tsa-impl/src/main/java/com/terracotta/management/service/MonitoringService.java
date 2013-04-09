@@ -18,40 +18,24 @@ import java.util.Set;
 public interface MonitoringService {
 
   /**
-   * Get a set of all known client IDs currently connected.
-   *
-   * @return a set of all known client IDs currently connected.
-   * @throws ServiceExecutionException
-   */
-  Set<String> getAllClientIds() throws ServiceExecutionException;
-
-  /**
-   * Get a set of all known server names currently connected.
-   *
-   * @return a set of all known server names currently connected.
-   * @throws ServiceExecutionException
-   */
-  Set<String> getAllServerNames() throws ServiceExecutionException;
-
-  /**
    * Get the statistics of the specified client.
    *
-   * @param clientId the client ID.
+   * @param clientIds A set of client IDs, null meaning all of them.
    * @param attributes the attributes to include in the response, all know ones will be returned if null.
-   * @return a {@link StatisticsEntity} object representing the client statistics.
+   * @return a collection of {@link StatisticsEntity} objects.
    * @throws ServiceExecutionException
    */
-  StatisticsEntity getClientStatistics(String clientId, Set<String> attributes) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException;
 
   /**
    * Get the statistics of the specified server.
    *
-   * @param serverName the server name.
+   * @param serverNames A set of server names, null meaning all of them.
    * @param attributes the attributes to include in the response, all know ones will be returned if null.
-   * @return a {@link StatisticsEntity} object representing the server statistics.
+   * @return a collection of {@link StatisticsEntity} objects.
    * @throws ServiceExecutionException
    */
-  StatisticsEntity getServerStatistics(String serverName, Set<String> attributes) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException;
 
   /**
    * Get the DGC statistics.

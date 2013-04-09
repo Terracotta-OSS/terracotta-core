@@ -51,23 +51,12 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
     try {
       String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("names");
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
-      if (serverNames == null) {
-        serverNames = monitoringService.getAllServerNames();
-      }
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       List<String> attrs = qParams.get(ATTR_QUERY_KEY);
       Set<String> tsaAttrs = attrs == null || attrs.isEmpty() ? null : new HashSet<String>(attrs);
 
-      Collection<StatisticsEntity> statistics = new ArrayList<StatisticsEntity>();
-      for (String serverName : serverNames) {
-        StatisticsEntity entity = monitoringService.getServerStatistics(serverName, tsaAttrs);
-        if (entity != null) {
-          statistics.add(entity);
-        }
-      }
-
-      return statistics;
+      return monitoringService.getServerStatistics(serverNames, tsaAttrs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -98,23 +87,12 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
     try {
       String ids = info.getPathSegments().get(2).getMatrixParameters().getFirst("ids");
       Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
-      if (clientIds == null) {
-        clientIds = monitoringService.getAllClientIds();
-      }
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       List<String> attrs = qParams.get(ATTR_QUERY_KEY);
       Set<String> tsaAttrs = attrs == null || attrs.isEmpty() ? null : new HashSet<String>(attrs);
 
-      Collection<StatisticsEntity> statistics = new ArrayList<StatisticsEntity>();
-      for (String clientId : clientIds) {
-        StatisticsEntity entity = monitoringService.getClientStatistics(clientId, tsaAttrs);
-        if (entity != null) {
-          statistics.add(entity);
-        }
-      }
-
-      return statistics;
+      return monitoringService.getClientStatistics(clientIds, tsaAttrs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

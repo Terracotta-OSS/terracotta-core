@@ -37,13 +37,9 @@ public interface TsaManagementClientService {
 
   Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException;
 
-  StatisticsEntity getClientStatistics(String clientId, Set<String> attributes) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException;
 
-  StatisticsEntity getServerStatistics(String serverName, Set<String> attributes) throws ServiceExecutionException;
-
-  Set<String> getAllClientIds() throws ServiceExecutionException;
-
-  Set<String> getAllServerNames() throws ServiceExecutionException;
+  Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException;
 
   boolean runDgc(Set<String> serverNames) throws ServiceExecutionException;
 
