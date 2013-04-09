@@ -287,8 +287,7 @@ public class TestBaseUtil {
 
   private static String constructMavenLocalFile(String groupId, String artifactId, String type, String version) {
     File artifact = new File(MAVEN_LOCAL_REPO, groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/"
-                                               + artifactId
-                                   + "-" + version + "." + type);
+                                               + artifactId + "-" + version + "." + type);
     if (!artifact.exists()) { throw new AssertionError("Can't find Maven artifact: " + groupId + ":" + artifactId + ":"
                                                        + type + ":" + version); }
     try {
@@ -300,27 +299,26 @@ public class TestBaseUtil {
 
   private static String getMavenLocalRepo() {
     String base = System.getProperty("localMavenRepository");
-    if (base == null) {
-      base = System.getProperty("user.home") + "/.m2/repository";
-    }
-    File settingsXml = new File(System.getProperty("user.home"), "/.m2/settings.xml");
-    if (settingsXml.exists()) {
-      // check if people have moved local repo
-      try {
-      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      DocumentBuilder db = dbf.newDocumentBuilder();
-      Document doc = db.parse(settingsXml);
-      doc.getDocumentElement().normalize();
-      NodeList nodeList = doc.getElementsByTagName("localRepository");
-      if (nodeList.getLength() > 0) {
-        base = nodeList.item(0).getNodeValue();
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+    try {
+      if (base == null) {
+        base = new File(System.getProperty("user.home"), "/.m2/repository").getCanonicalPath();
       }
+      File settingsXml = new File(System.getProperty("user.home"), "/.m2/settings.xml");
+      if (settingsXml.exists()) {
+        // check if people have moved local repo
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(settingsXml);
+        doc.getDocumentElement().normalize();
+        NodeList nodeList = doc.getElementsByTagName("localRepository");
+        if (nodeList.getLength() > 0) {
+          base = nodeList.item(0).getNodeValue();
+        }
+      }
+      return base;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-
-    return base;
   }
 
   /**
@@ -333,8 +331,7 @@ public class TestBaseUtil {
    * </p>
    */
   private static List<String> getDevmodeAwareDependenciesOf(String groupId, String opensourceArtifactId,
-                                                           String enterpriseArtifactId,
-                                                            Class<?> c) {
+                                                            String enterpriseArtifactId, Class<?> c) {
     String artifactId = enterpriseArtifactId;
     URL devmodeResource = TestBaseUtil.class.getResource("/META-INF/devmode/" + groupId + "/" + enterpriseArtifactId
                                                          + "/dependencies.txt");
