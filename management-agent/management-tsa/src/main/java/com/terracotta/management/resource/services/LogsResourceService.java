@@ -8,6 +8,7 @@ import com.terracotta.management.resource.LogEntity;
 import java.util.Collection;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -28,6 +29,7 @@ public interface LogsResourceService {
   Collection<LogEntity> getLogs(@Context UriInfo info);
 
   @GET
+  @Path("/archive")
   @Produces("application/zip")
   Response getLogsZipped(@Context UriInfo info);
 

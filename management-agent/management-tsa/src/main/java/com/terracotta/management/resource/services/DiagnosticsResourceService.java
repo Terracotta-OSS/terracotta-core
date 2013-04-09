@@ -30,7 +30,7 @@ public interface DiagnosticsResourceService {
   Collection<ThreadDumpEntity> clusterThreadDump(@Context UriInfo info);
 
   @GET
-  @Path("/threadDump")
+  @Path("/threadDumpArchive")
   @Produces("application/zip")
   Response clusterThreadDumpZipped(@Context UriInfo info);
 
