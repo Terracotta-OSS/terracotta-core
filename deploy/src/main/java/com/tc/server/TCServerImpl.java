@@ -262,7 +262,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         }
 
         out[i] = new L2Info(name, host, config.jmxPort().getIntValue(), config.tsaPort().getIntValue(),
-            config.tsaGroupPort().getIntValue(), getSecurityHostname());
+            config.tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), getSecurityHostname());
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
