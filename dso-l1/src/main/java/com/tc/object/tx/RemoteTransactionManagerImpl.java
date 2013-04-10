@@ -110,12 +110,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                                               abortableOperationManager);
     this.remoteTxManagerRunnable = new RemoteTransactionManagerTask();
     this.flusherTimer = taskRunner.newTimer("RemoteTransactionManager Flusher");
-    this.flusherTimer.scheduleWithFixedDelay(this.remoteTxManagerRunnable,
-        COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT, TimeUnit.MILLISECONDS);
-    this.batchManager               = new BatchManager();
+    this.flusherTimer.scheduleWithFixedDelay(this.remoteTxManagerRunnable, COMPLETED_ACK_FLUSH_TIMEOUT,
+                                             COMPLETED_ACK_FLUSH_TIMEOUT, TimeUnit.MILLISECONDS);
+    this.batchManager = new BatchManager();
     this.abortableOperationManager = abortableOperationManager;
     batchManager.start();
- }
+  }
 
   @Override
   public void cleanup() {
@@ -159,36 +159,36 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   @Override
   public void pause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
-      this.remoteTxManagerRunnable.reset();
-      if (isStoppingOrStopped()) { return; }
-      synchronized (this.lock) {
-          if (this.status == PAUSED) { throw new AssertionError("Attempt to pause while already paused state."); }
-          this.status = PAUSED;
-      }
-      try {
-          batchManager.stop();
-      } catch ( InterruptedException ie ) {
-          Thread.currentThread().interrupt();
-      }
+    this.remoteTxManagerRunnable.reset();
+    if (isStoppingOrStopped()) { return; }
+    synchronized (this.lock) {
+      if (this.status == PAUSED) { throw new AssertionError("Attempt to pause while already paused state."); }
+      this.status = PAUSED;
+    }
+    try {
+      batchManager.stop();
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override
   public void unpause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
-      if (isStoppingOrStopped()) { return; }
-      
-  synchronized (this.lock) {      
-      if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
-  }
-  
-  batchManager.start();
-  resendOutstanding();
+    if (isStoppingOrStopped()) { return; }
 
-  synchronized (this.lock) {      
+    synchronized (this.lock) {
+      if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
+    }
+
+    batchManager.start();
+    resendOutstanding();
+
+    synchronized (this.lock) {
       if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
       this.status = RUNNING;
       this.lock.notifyAll();
-  }
+    }
   }
 
   @Override
@@ -224,9 +224,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   int getMaxOutStandingBatches() {
     return MAX_OUTSTANDING_BATCHES;
   }
-  
+
   int getMaxQueuedBatches() {
-      return MAX_OUTSTANDING_BATCHES + sequencer.getMaxPendingSize();
+    return MAX_OUTSTANDING_BATCHES + sequencer.getMaxPendingSize();
   }
 
   @Override
@@ -240,52 +240,51 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     final long start = System.currentTimeMillis();
     this.logger.debug("stop() is called on " + System.identityHashCode(this));
     synchronized (this.lock) {
-      if ( this.status == RUNNING ) {
-          this.status = STOP_INITIATED;
+      if (this.status == RUNNING) {
+        this.status = STOP_INITIATED;
       }
     }
-    
-      sendBatches(true, "stop()");
 
-      final long pollInteval = (this.ackOnExitTimeout > 0) ? (this.ackOnExitTimeout / 10) : (30 * 1000);
-      final long t0 = System.currentTimeMillis();
-      if (!batchManager.isEmpty()) {
-        try {
-          int incompleteBatchesCount = 0;
-          final LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLoggerType.COUNT_BASED);
-          State currentState = STOP_INITIATED;
-          
-              while ((currentState != STOPPED)
-                     && ((this.ackOnExitTimeout <= 0) || (t0 + this.ackOnExitTimeout) > System.currentTimeMillis())) {
-            if (incompleteBatchesCount != batchManager.size()) {
-                  lossyLogger.info("stop(): incompleteBatches.size() = "
-                                   + (incompleteBatchesCount = batchManager.size()));
-                }
-                synchronized(this.lock) {
-                    this.lock.wait(pollInteval);
-                    currentState = this.status;
-                }
-              }
-        } catch (final InterruptedException e) {
-          this.logger.warn("stop(): Interrupted " + e);
-          Thread.currentThread().interrupt();
+    sendBatches(true, "stop()");
+
+    final long pollInteval = (this.ackOnExitTimeout > 0) ? (this.ackOnExitTimeout / 10) : (30 * 1000);
+    final long t0 = System.currentTimeMillis();
+    if (!batchManager.isEmpty()) {
+      try {
+        int incompleteBatchesCount = 0;
+        final LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLoggerType.COUNT_BASED);
+        State currentState = STOP_INITIATED;
+
+        while ((currentState != STOPPED)
+               && ((this.ackOnExitTimeout <= 0) || (t0 + this.ackOnExitTimeout) > System.currentTimeMillis())) {
+          if (incompleteBatchesCount != batchManager.size()) {
+            lossyLogger.info("stop(): incompleteBatches.size() = " + (incompleteBatchesCount = batchManager.size()));
+          }
+          synchronized (this.lock) {
+            this.lock.wait(pollInteval);
+            currentState = this.status;
+          }
         }
-          synchronized(this.lock) {
+      } catch (final InterruptedException e) {
+        this.logger.warn("stop(): Interrupted " + e);
+        Thread.currentThread().interrupt();
+      }
+      synchronized (this.lock) {
         if (this.status != STOPPED) {
           this.logger.error("stop() : There are still UNACKed Transactions! incompleteBatches.size() = "
                             + this.batchManager.size());
         }
-          }
       }
-      
-      stopIfStopping();
-      try {
-          batchManager.stop();
-      } catch ( InterruptedException ie ) {
-          Thread.currentThread().interrupt();
-      }
-      
-     this.logger.info("stop(): took " + (System.currentTimeMillis() - start) + " millis to complete");
+    }
+
+    stopIfStopping();
+    try {
+      batchManager.stop();
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+
+    this.logger.info("stop(): took " + (System.currentTimeMillis() - start) + " millis to complete");
   }
 
   @Override
@@ -411,141 +410,136 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
     sendBatches(!isRunning(true));
   }
-  
+
   private void stopIfStopping() {
-      synchronized ( this.lock ) {
-      if ( this.status == STOP_INITIATED ) {
+    synchronized (this.lock) {
+      if (this.status == STOP_INITIATED) {
         this.logger.debug("Received ACK for the last Transaction. Moving to STOPPED state.");
         this.status = STOPPED;
       }
-      }
+    }
   }
-  
+
   private boolean isRunning(boolean abortable) {
-      if ( isStoppingOrStopped() ) {
-           logger.debug("commit() : Stop initiated.");
-          return false;
-      } else {
-        try {
-          if ( abortable ) {
-              waitUntilRunningAbortable();
-          } else {
-              waitUntilRunning();
-          }
-        } catch (AbortedOperationException e) {
-          logger
-              .debug("Ignoring Aborted Operation Exception since the transaction is already written to the sequencer.");
+    if (isStoppingOrStopped()) {
+      logger.debug("commit() : Stop initiated.");
+      return false;
+    } else {
+      try {
+        if (abortable) {
+          waitUntilRunningAbortable();
+        } else {
+          waitUntilRunning();
         }
+      } catch (AbortedOperationException e) {
+        logger.debug("Ignoring Aborted Operation Exception since the transaction is already written to the sequencer.");
       }
-      return true;
+    }
+    return true;
   }
-  
+
   private void sendBatches(final boolean ignoreMax) {
-    if ( ignoreMax || sending.compareAndSet(false, true) ) {
-        sendBatches(ignoreMax, null);
-        sending.set(false);
+    if (ignoreMax || sending.compareAndSet(false, true)) {
+      sendBatches(ignoreMax, null);
+      sending.set(false);
     }
   }
 
   private void sendBatches(final boolean ignoreMax, final String message) {
-      boolean isInterrupted = false;
+    boolean isInterrupted = false;
+    try {
+
       try {
-          
-        try {
-          ClientTransactionBatch batch = batchManager.sendNextBatch(ignoreMax);
-          while ( batch != null ) {        
-              if (message != null && logger.isDebugEnabled() ) {
-                this.logger.debug(message + " : Sending batch containing " + batch.numberOfTxnsBeforeFolding() + " txns");
-              }
-              batch = batchManager.sendNextBatch(ignoreMax);
+        ClientTransactionBatch batch = batchManager.sendNextBatch(ignoreMax);
+        while (batch != null) {
+          if (message != null && logger.isDebugEnabled()) {
+            this.logger.debug(message + " : Sending batch containing " + batch.numberOfTxnsBeforeFolding() + " txns");
           }
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
+          batch = batchManager.sendNextBatch(ignoreMax);
         }
-      } finally {
-          Util.selfInterruptIfNeeded(isInterrupted);
+      } catch (final InterruptedException e) {
+        isInterrupted = true;
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
   }
 
   void resendOutstanding() {
-       boolean isInterrupted = false;
-      try {
-          final List toSend =  batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
-          if (toSend.isEmpty()) {
-            sendBatches(false, " resendOutstanding()");
-          } else {
-            try {
-                batchManager.resendList(toSend);
-            } catch (final InterruptedException e) {
-              isInterrupted = true;
-            }
-          }
-          batchManager.waitForEmpty();
-      } finally {
-          Util.selfInterruptIfNeeded(isInterrupted);
+    boolean isInterrupted = false;
+    try {
+      final List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
+      if (toSend.isEmpty()) {
+        sendBatches(false, " resendOutstanding()");
+      } else {
+        try {
+          batchManager.resendList(toSend);
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
       }
+      batchManager.waitForEmpty();
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
   }
 
   List getTransactionSequenceIDs() {
-      final ArrayList sequenceIDs = new ArrayList();
-      final List toSend =  batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
-      if ( !toSend.isEmpty() ) {
-          for (Object obj : toSend) {
-            final TxnBatchID id = (TxnBatchID) obj;
-            final ClientTransactionBatch batch = (ClientTransactionBatch) batchManager.getBatch(id);
-            if (batch == null) {
-              throw new AssertionError("Unknown batch: " + id);
-            }
-            batch.addTransactionSequenceIDsTo(sequenceIDs);
-          }
+    final ArrayList sequenceIDs = new ArrayList();
+    final List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
+    if (!toSend.isEmpty()) {
+      for (Object obj : toSend) {
+        final TxnBatchID id = (TxnBatchID) obj;
+        final ClientTransactionBatch batch = batchManager.getBatch(id);
+        if (batch == null) { throw new AssertionError("Unknown batch: " + id); }
+        batch.addTransactionSequenceIDsTo(sequenceIDs);
       }
-      // Add Last next
-      final SequenceID currentBatchMinSeq = this.sequencer.getNextSequenceID();
-      Assert.assertFalse(SequenceID.NULL_ID.equals(currentBatchMinSeq));
-      sequenceIDs.add(currentBatchMinSeq);
-      return sequenceIDs;
+    }
+    // Add Last next
+    final SequenceID currentBatchMinSeq = this.sequencer.getNextSequenceID();
+    Assert.assertFalse(SequenceID.NULL_ID.equals(currentBatchMinSeq));
+    sequenceIDs.add(currentBatchMinSeq);
+    return sequenceIDs;
   }
 
   List getResentTransactionIDs() {
-      final ArrayList txIDs = new ArrayList();
-      final List toSend =  batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
-      if ( !toSend.isEmpty() ) {
-          for (Object obj : toSend) {
-            final TxnBatchID id = (TxnBatchID) obj;
-            final ClientTransactionBatch batch = (ClientTransactionBatch) batchManager.getBatch(id);
-            if (batch == null) {
-              throw new AssertionError("Unknown batch: " + id);
-            }
-            batch.addTransactionIDsTo(txIDs);
-          }
+    final ArrayList txIDs = new ArrayList();
+    final List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
+    if (!toSend.isEmpty()) {
+      for (Object obj : toSend) {
+        final TxnBatchID id = (TxnBatchID) obj;
+        final ClientTransactionBatch batch = batchManager.getBatch(id);
+        if (batch == null) { throw new AssertionError("Unknown batch: " + id); }
+        batch.addTransactionIDsTo(txIDs);
       }
-      return txIDs;
+    }
+    return txIDs;
   }
 
   private boolean isStoppingOrStopped() {
-      synchronized ( this.lock ) {
-    return this.status == STOP_INITIATED || this.status == STOPPED;
-      }
+    synchronized (this.lock) {
+      return this.status == STOP_INITIATED || this.status == STOPPED;
+    }
   }
 
   // XXX:: Currently server always sends NULL BatchID
   @Override
   public void receivedBatchAcknowledgement(final TxnBatchID txnBatchID, final NodeID remoteNode) {
-      try {
-          if ( !isRunning(false) ) {
-            this.logger.warn(this.status + " : Received ACK for batch = " + txnBatchID);
-            return;
-          }
-          if ( this.logger.isDebugEnabled() ) {
-            this.logger.debug(batchManager.toString());
-          }
-          batchManager.batchAcknowledged();
-          sendBatches(false);
-      } finally {
-          synchronized ( this.lock) {
-            lock.notifyAll();
-          }
+    try {
+      if (!isRunning(false)) {
+        this.logger.warn(this.status + " : Received ACK for batch = " + txnBatchID);
+        return;
       }
+      if (this.logger.isDebugEnabled()) {
+        this.logger.debug(batchManager.toString());
+      }
+      batchManager.batchAcknowledged();
+      sendBatches(false);
+    } finally {
+      synchronized (this.lock) {
+        lock.notifyAll();
+      }
+    }
   }
 
   @Override
@@ -553,39 +547,39 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                                                    final NodeID remoteNode) {
     TransactionBuffer tb = null;
     Map callbacks;
-      if (!this.sessionManager.isCurrentSession(remoteNode, sessionID)) {
-        this.logger.warn("Ignoring Transaction ACK for " + txID + " from previous session = " + sessionID);
-        return tb;
-      }
+    if (!this.sessionManager.isCurrentSession(remoteNode, sessionID)) {
+      this.logger.warn("Ignoring Transaction ACK for " + txID + " from previous session = " + sessionID);
+      return tb;
+    }
 
-      final Set completedLocks = this.lockAccounting.acknowledge(txID);
+    final Set completedLocks = this.lockAccounting.acknowledge(txID);
 
-      final TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
-      if (!container.isNull()) {
-        final ClientTransactionBatch containingBatch = (ClientTransactionBatch) batchManager.getBatch(container);
-        tb = containingBatch.removeTransaction(txID);
-        callBackTxnCompleteListeners(tb.getFoldedTransactionID(), tb.getTransactionCompleteListeners());
-        final TxnBatchID completed = this.batchAccounting.acknowledge(txID);
-        if (!completed.isNull() ) {
-            batchManager.removeBatch(completed);
-            if ( isStoppingOrStopped() && batchManager.isEmpty() ) {
-                stopIfStopping();
-            } else {
-                sendBatches(false);
-            }
-        } 
-      } else {
-        this.logger.fatal("No batch found for acknowledgement: " + txID + " The batch accounting is "
-                          + this.batchAccounting);
-        throw new AssertionError("No batch found for acknowledgement: " + txID);
+    final TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
+    if (!container.isNull()) {
+      final ClientTransactionBatch containingBatch = batchManager.getBatch(container);
+      tb = containingBatch.removeTransaction(txID);
+      callBackTxnCompleteListeners(tb.getFoldedTransactionID(), tb.getTransactionCompleteListeners());
+      final TxnBatchID completed = this.batchAccounting.acknowledge(txID);
+      if (!completed.isNull()) {
+        batchManager.removeBatch(completed);
+        if (isStoppingOrStopped() && batchManager.isEmpty()) {
+          stopIfStopping();
+        } else {
+          sendBatches(false);
+        }
       }
-      
-      synchronized (this.lock) {
-          this.lock.notifyAll();          
-      }
-      callbacks = getLockFlushCallbacks(completedLocks);
+    } else {
+      this.logger.fatal("No batch found for acknowledgement: " + txID + " The batch accounting is "
+                        + this.batchAccounting);
+      throw new AssertionError("No batch found for acknowledgement: " + txID);
+    }
 
-      fireLockFlushCallbacks(callbacks);
+    synchronized (this.lock) {
+      this.lock.notifyAll();
+    }
+    callbacks = getLockFlushCallbacks(completedLocks);
+
+    fireLockFlushCallbacks(callbacks);
     return tb;
   }
 
@@ -603,8 +597,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   private TransactionID getCompletedTransactionIDLowWaterMark() {
-      waitUntilRunning();
-      return this.batchAccounting.getLowWaterMark();
+    waitUntilRunning();
+    return this.batchAccounting.getLowWaterMark();
   }
 
   /*
@@ -643,22 +637,20 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     synchronized (this.lock) {
-    try {
-      if ( this.status == STOPPED || this.status == STOP_INITIATED ) {
-          return;
-      }
-      while (this.status != RUNNING) {
-        if (isShutdown) { throw new TCNotRunningException(); }
-        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
-        try {
-          this.lock.wait();
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
+      try {
+        if (this.status == STOPPED || this.status == STOP_INITIATED) { return; }
+        while (this.status != RUNNING) {
+          if (isShutdown) { throw new TCNotRunningException(); }
+          if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
+          try {
+            this.lock.wait();
+          } catch (final InterruptedException e) {
+            isInterrupted = true;
+          }
         }
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
       }
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
-    }
     }
   }
 
@@ -670,19 +662,19 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private void waitUntilRunningAbortable() throws AbortedOperationException {
     boolean isInterrupted = false;
     synchronized (this.lock) {
-    try {
-      while (this.status != RUNNING) {
-        if (isShutdown) { throw new TCNotRunningException(); }
-        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
-        try {
-          this.lock.wait();
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
+      try {
+        while (this.status != RUNNING) {
+          if (isShutdown) { throw new TCNotRunningException(); }
+          if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
+          try {
+            this.lock.wait();
+          } catch (final InterruptedException e) {
+            isInterrupted = true;
+          }
         }
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
       }
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
-    }
     }
   }
 
@@ -692,157 +684,154 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   TransactionBatchAccounting getBatchAccounting() {
     return this.batchAccounting;
   }
-  
+
   private class BatchManager {
-      /* make sure there is enough room for batches if max is ignored  */
-      private ArrayBlockingQueue<ClientTransactionBatch> sendList = new ArrayBlockingQueue<ClientTransactionBatch>(sequencer.getMaxPendingSize() + getMaxOutStandingBatches());
-      private Thread agent;
-      private volatile boolean stopping = false;
-      private boolean empty = true;
-      private SequenceID  lastsid;
-      private int  outStandingBatches = 0;
-      private final Map<TxnBatchID,ClientTransactionBatch>   incompleteBatches = new HashMap<TxnBatchID,ClientTransactionBatch> ();
+    /* make sure there is enough room for batches if max is ignored */
+    private final ArrayBlockingQueue<ClientTransactionBatch> sendList           = new ArrayBlockingQueue<ClientTransactionBatch>(
+                                                                                                                                 sequencer
+                                                                                                                                     .getMaxPendingSize()
+                                                                                                                                     + getMaxOutStandingBatches());
+    private Thread                                           agent;
+    private volatile boolean                                 stopping           = false;
+    private boolean                                          empty              = true;
+    private SequenceID                                       lastsid;
+    private int                                              outStandingBatches = 0;
+    private final Map<TxnBatchID, ClientTransactionBatch>    incompleteBatches  = new HashMap<TxnBatchID, ClientTransactionBatch>();
 
-        public synchronized void clear() {
-          lastsid = null;
-            outStandingBatches = 0;
-            incompleteBatches.clear();
+    public synchronized void clear() {
+      lastsid = null;
+      outStandingBatches = 0;
+      incompleteBatches.clear();
+    }
+
+    public synchronized void waitForEmpty() {
+      while (!empty) {
+        try {
+          this.wait();
+        } catch (InterruptedException ie) {
+
         }
-        
-        public synchronized void waitForEmpty() {
-            while ( !empty ) {
-                try {
-                    this.wait();
-                } catch ( InterruptedException ie ) {
-                    
-                }
-            }
+      }
+    }
+
+    public synchronized boolean setEmpty(boolean empty) {
+      try {
+        if (this.empty != empty) {
+          this.notify();
         }
-        
-        public synchronized boolean setEmpty(boolean empty) {
+      } finally {
+        this.empty = empty;
+      }
+      return empty;
+    }
+
+    public final void start() {
+      if (agent != null) { throw new AssertionError(); }
+      agent = new Thread(new Runnable() {
+
+        @Override
+        public void run() {
+          while (true) {
             try {
-                if ( this.empty != empty ) {
-                    this.notify();
-                }
-            } finally {
-                this.empty = empty;
-            }
-            return empty;
-        }
-      
-      public final void start() {
-         if ( agent != null ) {
-             throw new AssertionError();
-         }
-        agent = new Thread(new Runnable() {
+              ClientTransactionBatch next = sendList.poll(2, TimeUnit.SECONDS);
+              if (next != null) {
+                next.send();
+              } else if (setEmpty(sendList.isEmpty()) && stopping) {
+                return;
+              } else {
+                sendBatches(false);
+              }
+            } catch (InterruptedException ie) {
 
-              @Override
-              public void run() {
-                  while (true) {
-                      try {
-                          ClientTransactionBatch next = sendList.poll(2, TimeUnit.SECONDS);
-                          if ( next != null ) {
-                              next.send();
-                          } else if (setEmpty(sendList.isEmpty()) && stopping) {
-                              return;
-                          } else {
-                              sendBatches(false);
-                          }
-                      } catch ( InterruptedException ie ) {
-
-                      }
-                  }
-              }
-          },"Batch dispatch thread");
-        agent.setDaemon(true);
-        agent.start();
-      }
-      
-      public void stop() throws InterruptedException {
-          if ( agent != null ) {
-              stopping = true;
-              agent.join();
-              stopping = false;
-          }
-          agent = null;
-      }
-      
-      private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
-        if (ignoreMax || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 10)) {
-            ClientTransactionBatch batch = sequencer.getNextBatch();
-            if ( batch != null ) {
-                if ( batch.numberOfTxnsBeforeFolding() == 0 ) {
-                    throw new AssertionError("no transactions");
-                }
-                TxnBatchID bid = batch.getTransactionBatchID();
-                batchAccounting.addBatch(bid,markBatchOutstanding(bid, batch));
-                addToSendList(batch);
             }
-            return batch;
+          }
         }
-        return null;
+      }, "Batch dispatch thread");
+      agent.setDaemon(true);
+      agent.start();
+    }
+
+    public void stop() throws InterruptedException {
+      if (agent != null) {
+        stopping = true;
+        agent.join();
+        stopping = false;
       }
-      
-      private synchronized ClientTransactionBatch getBatch(TxnBatchID id) {
-          return incompleteBatches.get(id);
+      agent = null;
+    }
+
+    private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
+      if (ignoreMax
+          || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 10)) {
+        ClientTransactionBatch batch = sequencer.getNextBatch();
+        if (batch != null) {
+          if (batch.numberOfTxnsBeforeFolding() == 0) { throw new AssertionError("no transactions"); }
+          TxnBatchID bid = batch.getTransactionBatchID();
+          batchAccounting.addBatch(bid, markBatchOutstanding(bid, batch));
+          addToSendList(batch);
+        }
+        return batch;
       }
-      
-      private synchronized void resendList(List<TxnBatchID> toSend) throws InterruptedException {
-//          sendList.clear();
-          lastsid = null;
-          for (TxnBatchID id : toSend) {
-              final ClientTransactionBatch batch = incompleteBatches.get(id);
-              if (batch == null) {
-                throw new AssertionError("Unknown batch: " + id);
-              }
-              logger.debug("Resending outstanding batch: " + id + ", "
-                  + batch.addTransactionIDsTo(new LinkedHashSet()));
-             addToSendList(batch);
-          }
+      return null;
+    }
+
+    private synchronized ClientTransactionBatch getBatch(TxnBatchID id) {
+      return incompleteBatches.get(id);
+    }
+
+    private synchronized void resendList(List<TxnBatchID> toSend) throws InterruptedException {
+      // sendList.clear();
+      lastsid = null;
+      for (TxnBatchID id : toSend) {
+        final ClientTransactionBatch batch = incompleteBatches.get(id);
+        if (batch == null) { throw new AssertionError("Unknown batch: " + id); }
+        logger.debug("Resending outstanding batch: " + id + ", " + batch.addTransactionIDsTo(new LinkedHashSet()));
+        addToSendList(batch);
       }
-      
-      private void addToSendList(ClientTransactionBatch batch) {
-          Collection<SequenceID> sids = batch.addTransactionSequenceIDsTo(new ArrayList<SequenceID>());
-          for ( SequenceID sid : sids ) {
-              if ( lastsid != null && !lastsid.next().equals(sid) ) {
-                  logger.info("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
-              }
-              lastsid = sid;
-          }
-          setEmpty(false);
-          sendList.add(batch);
+    }
+
+    private void addToSendList(ClientTransactionBatch batch) {
+      Collection<SequenceID> sids = batch.addTransactionSequenceIDsTo(new ArrayList<SequenceID>());
+      for (SequenceID sid : sids) {
+        if (lastsid != null && !lastsid.next().equals(sid)) {
+          logger.info("skipping some sequence ids.  This must be resend last:" + lastsid + " next:" + sid);
+        }
+        lastsid = sid;
       }
-      
-      private Collection markBatchOutstanding(TxnBatchID bid, final ClientTransactionBatch batchToSend) {
-            if (incompleteBatches.put(bid, batchToSend) != null) {
-              // formatting
-              throw new AssertionError("Batch has already been sent!");
-            }
-          outStandingBatches++;
-          return batchToSend.addTransactionIDsTo(new HashSet());
+      setEmpty(false);
+      sendList.add(batch);
+    }
+
+    private Collection markBatchOutstanding(TxnBatchID bid, final ClientTransactionBatch batchToSend) {
+      if (incompleteBatches.put(bid, batchToSend) != null) {
+        // formatting
+        throw new AssertionError("Batch has already been sent!");
       }
-      
-      private synchronized void batchAcknowledged() {
-        outStandingBatches--;
-      }
-      
-      private synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
-          return incompleteBatches.remove(id);
-      }
-      
-      private synchronized boolean isEmpty() {
-          return incompleteBatches.isEmpty();
-      }
-      
-            
-      private synchronized int size() {
-          return incompleteBatches.size();
-      }
-      
-      public synchronized String toString() {
-          return "incomplete:" + incompleteBatches.size();
-      }
-   }
+      outStandingBatches++;
+      return batchToSend.addTransactionIDsTo(new HashSet());
+    }
+
+    private synchronized void batchAcknowledged() {
+      outStandingBatches--;
+    }
+
+    private synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
+      return incompleteBatches.remove(id);
+    }
+
+    private synchronized boolean isEmpty() {
+      return incompleteBatches.isEmpty();
+    }
+
+    private synchronized int size() {
+      return incompleteBatches.size();
+    }
+
+    @Override
+    public synchronized String toString() {
+      return "incomplete:" + incompleteBatches.size();
+    }
+  }
 
   private class RemoteTransactionManagerTask implements Runnable {
 
