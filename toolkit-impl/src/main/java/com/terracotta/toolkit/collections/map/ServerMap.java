@@ -64,39 +64,39 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V>, NotClearable {
-  private static final TCLogger                                           LOGGER              = TCLogging
-                                                                                                  .getLogger(ServerMap.class);
-  private static final Object[]                                           NO_ARGS             = new Object[0];
-  private final ToolkitLock                                               expireConcurrentLock;
-  private final ToolkitLock                                               eventualConcurrentLock;
+  private static final TCLogger                                 LOGGER              = TCLogging
+                                                                                        .getLogger(ServerMap.class);
+  private static final Object[]                                 NO_ARGS             = new Object[0];
+  private final ToolkitLock                                     expireConcurrentLock;
+  private final ToolkitLock                                     eventualConcurrentLock;
 
-  private final boolean                                                   debugExpiration;
+  private final boolean                                         debugExpiration;
 
   // clustered fields
-  private final ToolkitLockTypeInternal                                   lockType;
-  private volatile boolean                                                localCacheEnabled;
-  private volatile boolean                                                compressionEnabled;
-  private volatile boolean                                                copyOnReadEnabled;
-  private volatile int                                                    maxTTISeconds;
-  private volatile int                                                    maxTTLSeconds;
-  private volatile int                                                    maxCountInCluster;
-  private volatile boolean                                                evictionEnabled;
-  private volatile boolean                                                broadcastEvictions;
+  private final ToolkitLockTypeInternal                         lockType;
+  private volatile boolean                                      localCacheEnabled;
+  private volatile boolean                                      compressionEnabled;
+  private volatile boolean                                      copyOnReadEnabled;
+  private volatile int                                          maxTTISeconds;
+  private volatile int                                          maxTTLSeconds;
+  private volatile int                                          maxCountInCluster;
+  private volatile boolean                                      evictionEnabled;
+  private volatile boolean                                      broadcastEvictions;
 
   // unclustered local fields
-  protected volatile TCObjectServerMap<Long>                              tcObjectServerMap;
-  protected volatile L1ServerMapLocalCacheStore                           l1ServerMapLocalCacheStore;
-  protected volatile LongLockStrategy                                     lockStrategy;
-  private volatile String                                                 instanceDsoLockName = null;
-  private volatile CopyOnWriteArraySet<ToolkitCacheListener<K>>           listeners;
-  private volatile Collection<V>                                          values              = null;
-  private volatile TimeSource                                             timeSource;
+  protected volatile TCObjectServerMap<Long>                    tcObjectServerMap;
+  protected volatile L1ServerMapLocalCacheStore                 l1ServerMapLocalCacheStore;
+  protected volatile LongLockStrategy                           lockStrategy;
+  private volatile String                                       instanceDsoLockName = null;
+  private volatile CopyOnWriteArraySet<ToolkitCacheListener<K>> listeners;
+  private volatile Collection<V>                                values              = null;
+  private volatile TimeSource                                   timeSource;
 
-  private final String                                                    name;
-  private final Consistency                                               consistency;
-  private final ToolkitCacheMetaDataCallback                              metaDataCallback;
+  private final String                                          name;
+  private final Consistency                                     consistency;
+  private final ToolkitCacheMetaDataCallback                    metaDataCallback;
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
-  private volatile ToolkitAttributeExtractor                              attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
+  private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
 
   public ServerMap(Configuration config, String name, boolean broadcastEvictions) {
     this(config, name);
@@ -361,6 +361,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                                                                    l1ServerMapLocalCacheStore, key, local);
       }
       return deserialized;
+    } catch (RejoinException e) {
+      throw e;
+    } catch (ToolkitAbortableOperationException e) {
+      throw e;
     } catch (Exception e) {
       // TODO: handle differently?
       throw new RuntimeException(e);
@@ -1408,11 +1412,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
             type = searchAttributeTypes.get(attrName);
             String resolvedType = getSearchAttributeType(attrName, attrValue);
             if (type != null) {
-              if (!type.equals(resolvedType)) {
-                throw new SearchException(String.format("Expecting a %s value for attribute [%s] but was %s", type, attrName, resolvedType));
-              }
-            }
-            else {
+              if (!type.equals(resolvedType)) { throw new SearchException(
+                                                                          String
+                                                                              .format("Expecting a %s value for attribute [%s] but was %s",
+                                                                                      type, attrName, resolvedType)); }
+            } else {
               recordedTypes.put(attrName, resolvedType);
             }
           }

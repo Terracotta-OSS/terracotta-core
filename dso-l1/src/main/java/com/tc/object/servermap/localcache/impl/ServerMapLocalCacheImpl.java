@@ -523,8 +523,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     Object key = getMappingUnlocked(objectId);
     if (key == null) { return false; }
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key + " wasPinned: "
-                   + localStore.isPinned());
+      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key + " wasPinned: " + localStore.isPinned());
     }
 
     ReentrantReadWriteLock lock = getLock(key);
@@ -730,7 +729,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private AbstractLocalCacheStoreValue putKeyValueMapping(Object key, AbstractLocalCacheStoreValue value,
-                                                         MapOperationType mapOperation) {
+                                                          MapOperationType mapOperation) {
     AbstractLocalCacheStoreValue old;
     if (mapOperation.isMutateOperation()) {
       // put a pinned entry for mutate ops, unpinned on txn complete
@@ -907,6 +906,34 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   @Override
   public int hashCode() {
     return super.hashCode();
+  }
+
+  @Override
+  public void transactionAbortedCallback(Object key, AbstractLocalCacheStoreValue value,
+                                         L1ServerMapLocalStoreTransactionCompletionListener listener) {
+    ReentrantReadWriteLock lock = getLock(key);
+    lock.writeLock().lock();
+    try {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("XXX txnAbortedCallback " + key + " " + value);
+      }
+      final ObjectID objectId = value.getValueObjectId();
+      oidsForWhichTxnAreInProgress.remove(objectId);
+      if (keyToListeners.get(key) == listener) {
+        keyToListeners.remove(key);
+      } else {
+        return;
+      }
+      Object valueFetched = pendingTransactionEntries.get(key);
+      if (value.equals(valueFetched)) {
+        // remove meta mappings, but don't remove lockIdMappings
+        removeMetaMapping(key, value, false, false);
+        pendingTransactionEntries.remove(key, value);
+      }
+
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
 }

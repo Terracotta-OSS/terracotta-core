@@ -6,10 +6,12 @@ package com.terracotta.toolkit.object.serialization;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.platform.PlatformService;
 import com.tc.util.runtime.Vm;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
 
 import java.io.ByteArrayInputStream;
@@ -37,26 +39,29 @@ import java.util.concurrent.ThreadFactory;
 public class ObjectStreamClassMapping {
   // package protected used in tests
   static final String                             SERIALIZER_ADD_MAPPING_THREAD = "Serializer Add Mapping Thread";
-  private static final TCLogger                   LOGGER       = TCLogging.getLogger(ObjectStreamClassMapping.class);
+  private static final TCLogger                   LOGGER                        = TCLogging
+                                                                                    .getLogger(ObjectStreamClassMapping.class);
   private static final Field                      SUPER_DESC;
   private static final Method                     IS_SERIALIZABLE;
-  private static final String                     CHARSET      = "ISO-8859-1";
-  private static final String                     NEXT_MAPPING = "nextMapping";
-  private static final String                     LOCK_ID      = "lock-for-" + NEXT_MAPPING;
+  private static final String                     CHARSET                       = "ISO-8859-1";
+  private static final String                     NEXT_MAPPING                  = "nextMapping";
+  private static final String                     LOCK_ID                       = "lock-for-" + NEXT_MAPPING;
   private final SerializerMap                     serializerMap;
   private final ReferenceQueue<ObjectStreamClass> oscSoftQueue;
   private final Map<Integer, CachedOscReference>  localCache;
   private final ToolkitLockImpl                   lock;
-  private static final ExecutorService            executor     = Executors.newSingleThreadExecutor(new ThreadFactory() {
+  private static final ExecutorService            executor                      = Executors
+                                                                                    .newSingleThreadExecutor(new ThreadFactory() {
 
-                                                                 @Override
-                                                                 public Thread newThread(Runnable runnable) {
-                                                                   Thread t = new Thread(runnable,
-                                                                                         SERIALIZER_ADD_MAPPING_THREAD);
-                                                                   t.setDaemon(true);
-                                                                   return t;
-                                                                 }
-                                                               });
+                                                                                      @Override
+                                                                                      public Thread newThread(Runnable runnable) {
+                                                                                        Thread t = new Thread(runnable,
+                                                                                                              SERIALIZER_ADD_MAPPING_THREAD);
+                                                                                        t.setDaemon(true);
+                                                                                        return t;
+                                                                                      }
+                                                                                    });
+  private final AbortableOperationManager         abortableOperationManager;
 
   static {
     Field superDesc = null;
@@ -100,6 +105,7 @@ public class ObjectStreamClassMapping {
         executor.shutdown();
       }
     });
+    this.abortableOperationManager = platformService.getAbortableOperationManager();
 
   }
 
@@ -158,7 +164,11 @@ public class ObjectStreamClassMapping {
     } catch (RejectedExecutionException e) {
       throw new ToolkitRuntimeException(e);
     } catch (InterruptedException e) {
-      throw new ToolkitRuntimeException(e);
+      if (abortableOperationManager.isAborted()) {
+        throw new ToolkitAbortableOperationException();
+      } else {
+        throw new ToolkitRuntimeException(e);
+      }
     } catch (ExecutionException e) {
       throw new ToolkitRuntimeException(e);
     }

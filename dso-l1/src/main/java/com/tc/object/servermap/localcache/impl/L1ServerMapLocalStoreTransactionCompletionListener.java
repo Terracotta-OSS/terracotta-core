@@ -58,4 +58,9 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   public static enum TransactionCompleteOperation {
     UNPIN_ENTRY, UNPIN_AND_REMOVE_ENTRY;
   }
+
+  @Override
+  public void transactionAborted(TransactionID txnID) {
+    serverMapLocalCache.transactionAbortedCallback(key, value, this);
+  }
 }

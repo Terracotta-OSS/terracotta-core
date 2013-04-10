@@ -282,9 +282,20 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         setTransaction(tx);
       }
     }
-    // If aborted and transaction is not empty then
-    // throw AbortedOperationException
-    if (aborted && tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+    if (aborted) {
+      notifyTransactionAborted(tx);
+      // If aborted and transaction is not empty then
+      // throw AbortedOperationException
+      if (tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+    }
+  }
+
+  private void notifyTransactionAborted(ClientTransaction tx) {
+    List<TransactionCompleteListener> listeners = tx.getTransactionCompleteListeners();
+    TransactionID tid = tx.getTransactionID();
+    for (TransactionCompleteListener listener : listeners) {
+      listener.transactionAborted(tid);
+    }
   }
 
   private void createTxAndInitContext() {
