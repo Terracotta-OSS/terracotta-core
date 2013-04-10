@@ -352,9 +352,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   public void batchReceived(final TxnBatchID batchId, final Set<TransactionID> syncTxnSet, final NodeID nid) {
     // This batch id was received by the server
     // so notify the locks waiting for this transaction
-    this.lockAccounting.transactionRecvdByServer(syncTxnSet);
 
     synchronized (this.lock) {
+      this.lockAccounting.transactionRecvdByServer(syncTxnSet);
       this.lock.notifyAll();
     }
   }
@@ -552,8 +552,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       return tb;
     }
 
-    final Set completedLocks = this.lockAccounting.acknowledge(txID);
-
     final TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
     if (!container.isNull()) {
       final ClientTransactionBatch containingBatch = batchManager.getBatch(container);
@@ -575,9 +573,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
 
     synchronized (this.lock) {
+      final Set completedLocks = this.lockAccounting.acknowledge(txID);
+      callbacks = getLockFlushCallbacks(completedLocks);
       this.lock.notifyAll();
     }
-    callbacks = getLockFlushCallbacks(completedLocks);
 
     fireLockFlushCallbacks(callbacks);
     return tb;
