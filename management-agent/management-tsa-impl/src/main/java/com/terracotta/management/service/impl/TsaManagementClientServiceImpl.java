@@ -605,7 +605,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       for (L2Info l2Info : l2Infos) {
         final String prefix = secure ? "https://" : "http://";
-        urls.add(prefix + l2Info.host() + ":" + l2Info.tsaGroupPort());
+        String host = l2Info.tsaGroupBind();
+        // if the TSA group port is bound to all addresses, use the host
+        if ("0.0.0.0".equals(host) || "::".equals(host)) {
+          host = l2Info.host();
+        }
+        urls.add(prefix + host + ":" + l2Info.tsaGroupPort());
       }
       return urls;
     } catch (Exception e) {
