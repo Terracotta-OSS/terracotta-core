@@ -721,8 +721,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
     final SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
@@ -818,7 +816,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Stage objectRequestStage = stageManager
         .createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
-            new ManagedObjectRequestHandler(globalObjectFaultCounter, globalObjectFlushCounter),
+            new ManagedObjectRequestHandler(globalObjectFaultCounter),
             tcProperties.getInt(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS,
                 stageWorkerThreadCount), 1, maxStageSize);
     final Stage respondToObjectRequestStage = stageManager
@@ -1015,8 +1013,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     backupManager = serverBuilder.createBackupManager(persistor, indexHACoordinator, configSetupManager.commonl2Config()
           .serverDbBackupPath(), stageManager, restartable, transactionManager);
 
-    final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
-                                                                              globalObjectFaultCounter,
+    final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter, objMgrStats,
                                                                               broadcastCounter,
                                                                               globalLockRecallCounter,

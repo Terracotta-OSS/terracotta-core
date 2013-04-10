@@ -144,18 +144,13 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public long getObjectFlushRate() {
-    return getStats().getObjectFlushRate();
-  }
-
-  @Override
   public long getTransactionRate() {
     return getStats().getTransactionRate();
   }
 
   @Override
-  public long getObjectFaultRate() {
-    return getStats().getObjectFaultRate();
+  public long getReadOperationRate() {
+    return getStats().getReadOperationRate();
   }
 
   @Override

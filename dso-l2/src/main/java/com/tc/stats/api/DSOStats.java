@@ -10,9 +10,7 @@ public interface DSOStats {
 
   long getTransactionRate();
 
-  long getObjectFaultRate();
-
-  long getObjectFlushRate();
+  long getReadOperationRate();
 
   long getEvictionRate();
 

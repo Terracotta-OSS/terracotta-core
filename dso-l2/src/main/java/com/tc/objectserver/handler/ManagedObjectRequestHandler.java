@@ -37,15 +37,13 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   private ChannelStats          channelStats;
 
   private final Counter         globalObjectRequestCounter;
-  private final Counter         globalObjectFlushCounter;
   private final AtomicLong      repeatLookups = new AtomicLong();
   private ObjectRequestManager  objectRequestManager;
 
   private static final TCLogger logger        = TCLogging.getLogger(ManagedObjectRequestHandler.class);
 
-  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter) {
+  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter) {
     this.globalObjectRequestCounter = globalObjectRequestCounter;
-    this.globalObjectFlushCounter = globalObjectFlushCounter;
   }
 
   @Override
@@ -81,7 +79,6 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
     final int numObjectsRemoved = removedIDs.size();
     if (numObjectsRemoved != 0) {
-      this.globalObjectFlushCounter.increment(numObjectsRemoved);
       this.channelStats.notifyObjectRemove(channel, numObjectsRemoved);
     }
 

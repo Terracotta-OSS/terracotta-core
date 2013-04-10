@@ -23,7 +23,6 @@ public class DSOStatsImpl implements DSOStats {
 
   private final DSOGlobalServerStats serverStats;
   private final SampledCounter       faultRate;
-  private final SampledCounter       flushRate;
   private final SampledCounter       txnRate;
   private final SampledCounter       globalLockRecallRate;
   private final SampledRateCounter   transactionSizeRate;
@@ -31,8 +30,7 @@ public class DSOStatsImpl implements DSOStats {
 
   public DSOStatsImpl(ServerManagementContext context) {
     this.serverStats = context.getServerStats();
-    this.faultRate = serverStats.getObjectFaultCounter();
-    this.flushRate = serverStats.getObjectFlushCounter();
+    this.faultRate = serverStats.getReadOperationRateCounter();
     this.txnRate = serverStats.getTransactionCounter();
     this.globalLockRecallRate = serverStats.getGlobalLockRecallCounter();
     this.transactionSizeRate = serverStats.getTransactionSizeCounter();
@@ -40,13 +38,8 @@ public class DSOStatsImpl implements DSOStats {
   }
 
   @Override
-  public long getObjectFaultRate() {
+  public long getReadOperationRate() {
     return faultRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getObjectFlushRate() {
-    return flushRate.getMostRecentSample().getCounterValue();
   }
 
   @Override

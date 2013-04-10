@@ -33,7 +33,6 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     Counter channelRemCounter = new CounterImpl(69L);
 
     Counter requestCounter = new CounterImpl(0L);
-    Counter removeCounter = new CounterImpl(0L);
 
     TestChannelStats channelStats = new TestChannelStats(channelReqCounter, channelRemCounter);
 
@@ -52,7 +51,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     context.addStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new MockStage("yo"));
     context.channelStats = channelStats;
 
-    ManagedObjectRequestHandler handler = new ManagedObjectRequestHandler(requestCounter, removeCounter);
+    ManagedObjectRequestHandler handler = new ManagedObjectRequestHandler(requestCounter);
     handler.initializeContext(context);
 
     TestRequestManagedObjectMessage msg = new TestRequestManagedObjectMessage();
@@ -63,12 +62,10 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     msg.setRemoved(removed);
 
     assertEquals(0, requestCounter.getValue());
-    assertEquals(0, removeCounter.getValue());
     assertEquals(666, channelReqCounter.getValue());
     assertEquals(69, channelRemCounter.getValue());
     handler.handleEvent(msg);
     assertEquals(1, requestCounter.getValue());
-    assertEquals(31, removeCounter.getValue());
     assertEquals(667, channelReqCounter.getValue());
     assertEquals(100, channelRemCounter.getValue());
   }

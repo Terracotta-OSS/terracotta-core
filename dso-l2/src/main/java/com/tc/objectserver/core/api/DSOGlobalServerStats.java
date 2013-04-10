@@ -11,9 +11,7 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
 public interface DSOGlobalServerStats {
 
-  SampledCounter getObjectFlushCounter();
-
-  SampledCounter getObjectFaultCounter();
+  SampledCounter getReadOperationRateCounter();
 
   SampledCounter getTransactionCounter();
 
