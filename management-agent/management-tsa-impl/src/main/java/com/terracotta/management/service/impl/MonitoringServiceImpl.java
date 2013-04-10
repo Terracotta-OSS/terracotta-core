@@ -27,12 +27,12 @@ public class MonitoringServiceImpl implements MonitoringService {
 
   @Override
   public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientStatistics(clientIds, attributes);
+    return tsaManagementClientService.getClientsStatistics(clientIds, attributes);
   }
 
   @Override
   public Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException {
-    return tsaManagementClientService.getServerStatistics(serverNames, attributes);
+    return tsaManagementClientService.getServersStatistics(serverNames, attributes);
   }
 
   @Override

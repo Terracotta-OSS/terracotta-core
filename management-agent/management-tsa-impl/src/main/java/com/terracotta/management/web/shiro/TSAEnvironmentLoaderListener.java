@@ -63,6 +63,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.servlet.ServletContext;
@@ -76,6 +78,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
   private static final Logger LOG = LoggerFactory.getLogger(TSAEnvironmentLoaderListener.class);
 
   private volatile JmxConnectorPool jmxConnectorPool;
+  private volatile ExecutorService executorService;
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
@@ -112,7 +115,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       } else {
         jmxConnectorPool = new JmxConnectorPool("service:jmx:jmxmp://{0}:{1}");
       }
-      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled);
+      executorService = Executors.newCachedThreadPool();
+      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService);
 
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
@@ -196,7 +200,12 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {
-    jmxConnectorPool.shutdown();
+    if (jmxConnectorPool != null) {
+      jmxConnectorPool.shutdown();
+    }
+    if (executorService != null) {
+      executorService.shutdown();
+    }
 
     super.contextDestroyed(sce);
   }

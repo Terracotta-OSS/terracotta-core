@@ -24,7 +24,7 @@ public class BackupServiceImpl implements BackupService {
 
   @Override
   public Collection<BackupEntity> getBackupStatus() throws ServiceExecutionException {
-    return tsaManagementClientService.getBackupStatus();
+    return tsaManagementClientService.getBackupsStatus();
   }
 
   @Override

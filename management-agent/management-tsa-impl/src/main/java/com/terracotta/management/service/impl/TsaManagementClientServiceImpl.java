@@ -62,7 +62,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipInputStream;
 
@@ -103,17 +102,19 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   private final JmxConnectorPool jmxConnectorPool;
   private final boolean secure;
+  private final ExecutorService executorService;
 
-  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure) {
+  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure, ExecutorService executorService) {
     this.jmxConnectorPool = jmxConnectorPool;
     this.secure = secure;
+    this.executorService = executorService;
   }
 
   @Override
   public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
+      final MBeanServerConnection mBeanServerConnection;
 
       // find the server where L1 Info MBeans are registered
       if (localServerContainsL1MBeans()) {
@@ -127,36 +128,30 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
-      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+      List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      for (ObjectName clientObjectName : clientObjectNames) {
-        String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+      for (final ObjectName clientObjectName : clientObjectNames) {
+        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
 
-        try {
-          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
-          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
-
-          byte[] bytes = l1InfoMBean.takeCompressedThreadDump(10000L);
-          ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
-          threadDumpEntity.setNodeType(NodeType.CLIENT);
-          threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          threadDumpEntity.setSourceId(clientId);
-          threadDumpEntities.add(threadDumpEntity);
-        } catch (Exception e) {
-          ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
-          threadDumpEntity.setNodeType(NodeType.CLIENT);
-          threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          threadDumpEntity.setSourceId(clientId);
-          threadDumpEntity.setDump("Unavailable");
-          threadDumpEntities.add(threadDumpEntity);
-        }
+        Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+          @Override
+          public ThreadDumpEntity call() throws Exception {
+            return clientThreadDump(mBeanServerConnection, clientObjectName, clientId);
+          }
+        });
+        futures.add(future);
       }
 
+      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+      for (Future<ThreadDumpEntity> future : futures) {
+        ThreadDumpEntity threadDumpEntity = future.get();
+        threadDumpEntities.add(threadDumpEntity);
+      }
       return threadDumpEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting client stack traces", e);
@@ -165,14 +160,36 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
+  private ThreadDumpEntity clientThreadDump(MBeanServerConnection mBeanServerConnection, ObjectName clientObjectName, String clientId) {
+    try {
+      ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
+      L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
+
+      byte[] bytes = l1InfoMBean.takeCompressedThreadDump(10000L);
+      ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
+      threadDumpEntity.setNodeType(NodeType.CLIENT);
+      threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      threadDumpEntity.setSourceId(clientId);
+
+      return threadDumpEntity;
+    } catch (Exception e) {
+      ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
+      threadDumpEntity.setNodeType(NodeType.CLIENT);
+      threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      threadDumpEntity.setSourceId(clientId);
+      threadDumpEntity.setDump("Unavailable");
+
+      return threadDumpEntity;
+    }
+  }
+
   @Override
   public Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException {
-    Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
-
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+      List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
@@ -181,39 +198,56 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             continue;
           }
 
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
-                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
-            ThreadDumpEntity threadDumpEntity = threadDump(tcServerInfoMBean);
-
-            threadDumpEntity.setSourceId(member.name());
-            threadDumpEntity.setNodeType(NodeType.SERVER);
-            threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-            threadDumpEntities.add(threadDumpEntity);
-          } catch (Exception e) {
-            ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
-            threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-            threadDumpEntity.setSourceId(member.name());
-            threadDumpEntity.setNodeType(NodeType.SERVER);
-            threadDumpEntity.setDump("Unavailable");
-            threadDumpEntities.add(threadDumpEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+            @Override
+            public ThreadDumpEntity call() throws Exception {
+              return serverTheadDump(sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+      for (Future<ThreadDumpEntity> future : futures) {
+        ThreadDumpEntity result = future.get();
+        threadDumpEntities.add(result);
+      }
       return threadDumpEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting remote servers thread dump", e);
+    }
+  }
+
+  private ThreadDumpEntity serverTheadDump(String sourceId, int jmxPort, String jmxHost) {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+      ThreadDumpEntity threadDumpEntity = threadDump(tcServerInfoMBean);
+
+      threadDumpEntity.setSourceId(sourceId);
+      threadDumpEntity.setNodeType(NodeType.SERVER);
+      threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      return threadDumpEntity;
+    } catch (Exception e) {
+      ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
+      threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      threadDumpEntity.setSourceId(sourceId);
+      threadDumpEntity.setNodeType(NodeType.SERVER);
+      threadDumpEntity.setDump("Unavailable");
+
+      return threadDumpEntity;
+    } finally {
+      closeConnector(jmxConnector);
     }
   }
 
@@ -254,7 +288,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Collection<ClientEntity> getClientEntities() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
+      final MBeanServerConnection mBeanServerConnection;
 
       // find the server where L1 Info MBeans are registered
       if (localServerContainsL1MBeans()) {
@@ -268,35 +302,51 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
-      Collection<ClientEntity> clientEntities = new HashSet<ClientEntity>();
+      List<Future<ClientEntity>> futures = new ArrayList<Future<ClientEntity>>();
 
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      for (ObjectName clientObjectName : clientObjectNames) {
-        ClientEntity clientEntity = new ClientEntity();
-        clientEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-        try {
-          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
-
-          clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
-          Long clientId = (Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
-          clientEntity.getAttributes().put("ClientID", "" + clientId);
-
-          clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(l1InfoObjectName, "Version"));
-          clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(l1InfoObjectName, "BuildID"));
-
-          clientEntities.add(clientEntity);
-        } catch (Exception e) {
-          /* client must have disconnected */
-        }
+      for (final ObjectName clientObjectName : clientObjectNames) {
+        Future<ClientEntity> future = executorService.submit(new Callable<ClientEntity>() {
+          @Override
+          public ClientEntity call() throws Exception {
+            return getClientEntity(mBeanServerConnection, clientObjectName);
+          }
+        });
+        futures.add(future);
       }
 
+      Collection<ClientEntity> clientEntities = new ArrayList<ClientEntity>();
+      for (Future<ClientEntity> future : futures) {
+        ClientEntity clientEntity = future.get();
+        if (clientEntity != null) { clientEntities.add(clientEntity); }
+      }
       return clientEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     } finally {
       closeConnector(jmxConnector);
+    }
+  }
+
+  private ClientEntity getClientEntity(MBeanServerConnection mBeanServerConnection, ObjectName clientObjectName) {
+    ClientEntity clientEntity = new ClientEntity();
+    clientEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+    try {
+      ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
+
+      clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
+      Long clientId = (Long)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+      clientEntity.getAttributes().put("ClientID", "" + clientId);
+
+      clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(l1InfoObjectName, "Version"));
+      clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(l1InfoObjectName, "BuildID"));
+
+      return clientEntity;
+    } catch (Exception e) {
+      /* client must have disconnected */
+      return null;
     }
   }
 
@@ -344,15 +394,14 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributesToShow) throws ServiceExecutionException {
-    String[] mbeanAttributeNames = CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES;
-    if (attributesToShow != null) {
-      mbeanAttributeNames = new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
-    }
+  public Collection<StatisticsEntity> getClientsStatistics(Set<String> clientIds, Set<String> attributesToShow) throws ServiceExecutionException {
+    final String[] mbeanAttributeNames = (attributesToShow == null) ?
+        CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES :
+        new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
 
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
+      final MBeanServerConnection mBeanServerConnection;
 
       // find the server where L1 Info MBeans are registered
       if (localServerContainsL1MBeans()) {
@@ -369,58 +418,73 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(
           new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      Collection<StatisticsEntity> statisticsEntities = new ArrayList<StatisticsEntity>();
+      List<Future<StatisticsEntity>> futures = new ArrayList<Future<StatisticsEntity>>();
 
       for (ObjectName clientObjectName : clientObjectNames) {
-        String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
 
-        try {
-          StatisticsEntity statisticsEntity = new StatisticsEntity();
-          statisticsEntity.setSourceId(clientId);
-          statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-          AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId),
-              mbeanAttributeNames);
-          for (Object attributeObj : attributes) {
-            Attribute attribute = (Attribute)attributeObj;
-            statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
+        Future<StatisticsEntity> future = executorService.submit(new Callable<StatisticsEntity>() {
+          @Override
+          public StatisticsEntity call() throws Exception {
+            return getClientStatistics(mbeanAttributeNames, mBeanServerConnection, clientId);
           }
-          statisticsEntities.add(statisticsEntity);
-        } catch (Exception e) {
-          StatisticsEntity statisticsEntity = new StatisticsEntity();
-          statisticsEntity.setSourceId(clientId);
-          statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-          statisticsEntity.getStatistics().put("Error", e.getMessage());
-
-          statisticsEntities.add(statisticsEntity);
-        } finally {
-          closeConnector(jmxConnector);
-        }
+        });
+        futures.add(future);
       }
 
+      Collection<StatisticsEntity> statisticsEntities = new ArrayList<StatisticsEntity>();
+      for (Future<StatisticsEntity> future : futures) {
+        StatisticsEntity statisticsEntity = future.get();
+        statisticsEntities.add(statisticsEntity);
+      }
       return statisticsEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+  }
+
+  private StatisticsEntity getClientStatistics(String[] mbeanAttributeNames, MBeanServerConnection mBeanServerConnection, String clientId) {
+    try {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(clientId);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId),
+          mbeanAttributeNames);
+      for (Object attributeObj : attributes) {
+        Attribute attribute = (Attribute)attributeObj;
+        statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
+      }
+      return statisticsEntity;
+    } catch (Exception e) {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(clientId);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      statisticsEntity.getStatistics().put("Error", e.getMessage());
+
+      return statisticsEntity;
     }
   }
 
   @Override
-  public Collection<StatisticsEntity> getServerStatistics(Set<String> serverNames, Set<String> attributesToShow) throws ServiceExecutionException {
-    String[] mbeanAttributeNames = SERVER_STATS_MBEAN_ATTRIBUTE_NAMES;
-    if (attributesToShow != null) {
-      mbeanAttributeNames = new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
-    }
+  public Collection<StatisticsEntity> getServersStatistics(Set<String> serverNames, Set<String> attributesToShow) throws ServiceExecutionException {
+    final String[] mbeanAttributeNames = (attributesToShow == null) ?
+        SERVER_STATS_MBEAN_ATTRIBUTE_NAMES :
+        new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
 
     try {
-      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
 
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      List<Future<StatisticsEntity>> futures = new ArrayList<Future<StatisticsEntity>>();
 
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
@@ -429,41 +493,56 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             continue;
           }
 
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-          MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-          try {
-            StatisticsEntity statisticsEntity = new StatisticsEntity();
-            statisticsEntity.setSourceId(member.name());
-            statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-            AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"),
-                mbeanAttributeNames);
-            for (Object attributeObj : attributes) {
-              Attribute attribute = (Attribute)attributeObj;
-              statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
+          Future<StatisticsEntity> future = executorService.submit(new Callable<StatisticsEntity>() {
+            @Override
+            public StatisticsEntity call() throws Exception {
+              return getServerStatistics(mbeanAttributeNames, sourceId, jmxPort, jmxHost);
             }
-
-            result.add(statisticsEntity);
-          } catch (Exception e) {
-            StatisticsEntity statisticsEntity = new StatisticsEntity();
-            statisticsEntity.setSourceId(member.name());
-            statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-            statisticsEntity.getStatistics().put("Error", e.getMessage());
-            result.add(statisticsEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
+      for (Future<StatisticsEntity> future : futures) {
+        StatisticsEntity statisticsEntity = future.get();
+        result.add(statisticsEntity);
+      }
       return result;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  private StatisticsEntity getServerStatistics(String[] mbeanAttributeNames, String sourceId, int jmxPort, String jmxHost) throws IOException, InterruptedException, MalformedObjectNameException {JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+    MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+    try {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(sourceId);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"),
+          mbeanAttributeNames);
+      for (Object attributeObj : attributes) {
+        Attribute attribute = (Attribute)attributeObj;
+        statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
+      }
+
+      return statisticsEntity;
+    } catch (Exception e) {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(sourceId);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      statisticsEntity.getStatistics().put("Error", e.getMessage());
+      return statisticsEntity;
+    } finally {
+      closeConnector(jmxConnector);
     }
   }
 
@@ -513,25 +592,14 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  private void closeConnector(JMXConnector jmxConnector) {
-    if (jmxConnector != null) {
-      try {
-        jmxConnector.close();
-      } catch (IOException ioe) {
-        LOG.warn("error closing JMX connection", ioe);
-      }
-    }
-  }
-
   @Override
   public Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames, int maxDgcStatsEntries) throws ServiceExecutionException {
     try {
-      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
-
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+      List<Future<Collection<StatisticsEntity>>> futures = new ArrayList<Future<Collection<StatisticsEntity>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
@@ -539,59 +607,77 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             continue;
           }
 
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            GCStats[] attributes = (GCStats[])mBeanServerConnection.getAttribute(
-                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
-
-            for (GCStats gcStat : attributes) {
-              if (result.size() >= 100) {
-                return result;
-              }
-
-              StatisticsEntity statisticsEntity = new StatisticsEntity();
-              statisticsEntity.setSourceId(member.name());
-              statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-              statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
-              statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
-              statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
-              statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
-              statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
-              statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
-              statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());
-              statisticsEntity.getStatistics().put("PausedStageTime", gcStat.getPausedStageTime());
-              statisticsEntity.getStatistics().put("StartTime", gcStat.getStartTime());
-              statisticsEntity.getStatistics().put("Status", gcStat.getStatus());
-              statisticsEntity.getStatistics().put("Type", gcStat.getType());
-
-              result.add(statisticsEntity);
+          Future<Collection<StatisticsEntity>> future = executorService.submit(new Callable<Collection<StatisticsEntity>>() {
+            @Override
+            public Collection<StatisticsEntity> call() throws Exception {
+              return getSingleDgcStatistics(sourceId, jmxPort, jmxHost);
             }
-
-          } catch (Exception e) {
-            StatisticsEntity statisticsEntity = new StatisticsEntity();
-            statisticsEntity.setSourceId(member.name());
-            statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-            statisticsEntity.getStatistics().put("Error", e.getMessage());
-
-            result.add(statisticsEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
+      for (Future<Collection<StatisticsEntity>> future : futures) {
+        Collection<StatisticsEntity> statisticsEntities = future.get();
+        if (result.size() < 100) {
+          result.addAll(statisticsEntities);
+        }
+      }
       return result;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
+  }
+
+  private Collection<StatisticsEntity> getSingleDgcStatistics(String sourceId, int jmxPort, String jmxHost) {
+    Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
+
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      GCStats[] attributes = (GCStats[])mBeanServerConnection.getAttribute(
+          new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
+
+      for (GCStats gcStat : attributes) {
+        StatisticsEntity statisticsEntity = new StatisticsEntity();
+        statisticsEntity.setSourceId(sourceId);
+        statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+        statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
+        statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
+        statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
+        statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
+        statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
+        statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
+        statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());
+        statisticsEntity.getStatistics().put("PausedStageTime", gcStat.getPausedStageTime());
+        statisticsEntity.getStatistics().put("StartTime", gcStat.getStartTime());
+        statisticsEntity.getStatistics().put("Status", gcStat.getStatus());
+        statisticsEntity.getStatistics().put("Type", gcStat.getType());
+
+        result.add(statisticsEntity);
+      }
+
+    } catch (Exception e) {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(sourceId);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      statisticsEntity.getStatistics().put("Error", e.getMessage());
+
+      result.add(statisticsEntity);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+
+    return result;
   }
 
   @Override
@@ -708,13 +794,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   @Override
   public Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException {
-    Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
-
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+      List<Future<ConfigEntity>> futures = new ArrayList<Future<ConfigEntity>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
@@ -722,40 +807,60 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             continue;
           }
 
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
-                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
-
-            ConfigEntity configEntity = new ConfigEntity();
-            configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-            configEntity.setSourceId(member.name());
-
-            configEntity.getAttributes().put("tcProperties", tcServerInfoMBean.getTCProperties());
-            configEntity.getAttributes().put("config", tcServerInfoMBean.getConfig());
-            configEntity.getAttributes().put("environment", tcServerInfoMBean.getEnvironment());
-            configEntity.getAttributes().put("processArguments", tcServerInfoMBean.getProcessArguments());
-
-            configEntities.add(configEntity);
-          } catch (Exception e) {
-            ConfigEntity configEntity = new ConfigEntity();
-            configEntity.setSourceId(member.name());
-            configEntities.add(configEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          Future<ConfigEntity> future = executorService.submit(new Callable<ConfigEntity>() {
+            @Override
+            public ConfigEntity call() throws Exception {
+              return getServerConfig(sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
+      for (Future<ConfigEntity> future : futures) {
+        ConfigEntity configEntity = future.get();
+        configEntities.add(configEntity);
+      }
       return configEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers config", e);
+    }
+  }
+
+  private ConfigEntity getServerConfig(String sourceId, int jmxPort, String jmxHost) {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+      ConfigEntity configEntity = new ConfigEntity();
+      configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      configEntity.setSourceId(sourceId);
+
+      configEntity.getAttributes().put("tcProperties", tcServerInfoMBean.getTCProperties());
+      configEntity.getAttributes().put("config", tcServerInfoMBean.getConfig());
+      configEntity.getAttributes().put("environment", tcServerInfoMBean.getEnvironment());
+      configEntity.getAttributes().put("processArguments", tcServerInfoMBean.getProcessArguments());
+
+      return configEntity;
+    } catch (Exception e) {
+      ConfigEntity configEntity = new ConfigEntity();
+      configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      configEntity.setSourceId(sourceId);
+
+      configEntity.getAttributes().put("Error", e.getMessage());
+
+      return configEntity;
+    } finally {
+      closeConnector(jmxConnector);
     }
   }
 
@@ -763,7 +868,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
+      final MBeanServerConnection mBeanServerConnection;
 
       // find the server where L1 Info MBeans are registered
       if (localServerContainsL1MBeans()) {
@@ -777,38 +882,30 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
-      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
+      List<Future<ConfigEntity>> futures = new ArrayList<Future<ConfigEntity>>();
 
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      for (ObjectName clientObjectName : clientObjectNames) {
-        String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+      for (final ObjectName clientObjectName : clientObjectNames) {
+        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
 
-        try {
-          ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
-          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
-
-          ConfigEntity configEntity = new ConfigEntity();
-          configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          configEntity.setSourceId(clientId);
-
-          configEntity.getAttributes().put("tcProperties", l1InfoMBean.getTCProperties());
-          configEntity.getAttributes().put("config", l1InfoMBean.getConfig());
-          configEntity.getAttributes().put("environment", l1InfoMBean.getEnvironment());
-          configEntity.getAttributes().put("processArguments", l1InfoMBean.getProcessArguments());
-
-          configEntities.add(configEntity);
-        } catch (Exception e) {
-          ConfigEntity configEntity = new ConfigEntity();
-          configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          configEntity.setSourceId(clientId);
-          configEntities.add(configEntity);
-        }
+        Future<ConfigEntity> future = executorService.submit(new Callable<ConfigEntity>() {
+          @Override
+          public ConfigEntity call() throws Exception {
+            return getClientConfig(mBeanServerConnection, clientObjectName, clientId);
+          }
+        });
+        futures.add(future);
       }
 
+      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
+      for (Future<ConfigEntity> future : futures) {
+        ConfigEntity configEntity = future.get();
+        configEntities.add(configEntity);
+      }
       return configEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting clients config", e);
@@ -817,57 +914,105 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
+  private ConfigEntity getClientConfig(MBeanServerConnection mBeanServerConnection, ObjectName clientObjectName, String clientId) {
+    try {
+      ObjectName l1InfoObjectName = (ObjectName)mBeanServerConnection.getAttribute(clientObjectName, "L1InfoBeanName");
+      L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, l1InfoObjectName, L1InfoMBean.class);
+
+      ConfigEntity configEntity = new ConfigEntity();
+      configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      configEntity.setSourceId(clientId);
+
+      configEntity.getAttributes().put("tcProperties", l1InfoMBean.getTCProperties());
+      configEntity.getAttributes().put("config", l1InfoMBean.getConfig());
+      configEntity.getAttributes().put("environment", l1InfoMBean.getEnvironment());
+      configEntity.getAttributes().put("processArguments", l1InfoMBean.getProcessArguments());
+
+      return configEntity;
+    } catch (Exception e) {
+      ConfigEntity configEntity = new ConfigEntity();
+      configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      configEntity.setSourceId(clientId);
+
+      configEntity.getAttributes().put("Error", e.getMessage());
+
+      return configEntity;
+    }
+  }
+
   @Override
-  public Collection<BackupEntity> getBackupStatus() throws ServiceExecutionException {
-    Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
+  public Collection<BackupEntity> getBackupsStatus() throws ServiceExecutionException {
 
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+      List<Future<Collection<BackupEntity>>> futures = new ArrayList<Future<Collection<BackupEntity>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
-                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
-
-            if ("ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState())) {
-              try {
-                Map<String, String> backups = tcServerInfoMBean.getBackupStatuses();
-                for (String name : backups.keySet()) {
-                  BackupEntity backupEntity = new BackupEntity();
-                  backupEntity.setSourceId(member.name());
-                  backupEntity.setName(name);
-                  backupEntity.setStatus(backups.get(name));
-
-                  backupEntities.add(backupEntity);
-                }
-              } catch (Exception e) {
-                BackupEntity backupEntity = new BackupEntity();
-                backupEntity.setSourceId(member.name());
-                backupEntity.setError(e.getMessage());
-                backupEntities.add(backupEntity);
-              }
+          Future<Collection<BackupEntity>> future = executorService.submit(new Callable<Collection<BackupEntity>>() {
+            @Override
+            public Collection<BackupEntity> call() throws Exception {
+              return getBackupStatus(sourceId, jmxPort, jmxHost);
             }
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
+      for (Future<Collection<BackupEntity>> future : futures) {
+        Collection<BackupEntity> entities = future.get();
+        backupEntities.addAll(entities);
+      }
       return backupEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers backup status", e);
     }
+  }
+
+  private Collection<BackupEntity> getBackupStatus(String sourceId, int jmxPort, String jmxHost) throws IOException, InterruptedException, MalformedObjectNameException {
+    Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
+
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+      if ("ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState())) {
+        try {
+          Map<String, String> backups = tcServerInfoMBean.getBackupStatuses();
+          for (String name : backups.keySet()) {
+            BackupEntity backupEntity = new BackupEntity();
+            backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            backupEntity.setSourceId(sourceId);
+            backupEntity.setName(name);
+            backupEntity.setStatus(backups.get(name));
+
+            backupEntities.add(backupEntity);
+          }
+        } catch (Exception e) {
+          BackupEntity backupEntity = new BackupEntity();
+          backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+          backupEntity.setSourceId(sourceId);
+          backupEntity.setError(e.getMessage());
+          backupEntities.add(backupEntity);
+        }
+      }
+    } finally {
+      closeConnector(jmxConnector);
+    }
+
+    return backupEntities;
   }
 
   @Override
@@ -936,125 +1081,125 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<LogEntity> getLogs(Set<String> serverNames, Long sinceWhen) throws ServiceExecutionException {
-    Collection<LogEntity> logEntities = new ArrayList<LogEntity>();
-
+  public Collection<LogEntity> getLogs(Set<String> serverNames, final Long sinceWhen) throws ServiceExecutionException {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+      List<Future<Collection<LogEntity>>> futures = new ArrayList<Future<Collection<LogEntity>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
           if (serverNames != null && !serverNames.contains(member.name())) {
             continue;
           }
-          int jmxPort = member.jmxPort();
-          String jmxHost = member.host();
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
 
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-
-            TCLoggingBroadcasterMBean tcLoggingBroadcaster = JMX.newMBeanProxy(mBeanServerConnection,
-                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Logger"), TCLoggingBroadcasterMBean.class);
-
-            List<Notification> logNotifications;
-            if (sinceWhen == null) {
-              logNotifications = tcLoggingBroadcaster.getLogNotifications();
-            } else {
-              logNotifications = tcLoggingBroadcaster.getLogNotificationsSince(sinceWhen);
+          Future<Collection<LogEntity>> future = executorService.submit(new Callable<Collection<LogEntity>>() {
+            @Override
+            public Collection<LogEntity> call() throws Exception {
+              return getNodeLogs(sinceWhen, sourceId, jmxPort, jmxHost);
             }
-
-            for (Notification logNotification : logNotifications) {
-              LogEntity logEntity = new LogEntity();
-              logEntity.setSourceId(member.name());
-              logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-              logEntity.setMessage(logNotification.getMessage());
-              logEntity.setTimestamp(logNotification.getTimeStamp());
-
-              logEntities.add(logEntity);
-            }
-          } catch (Exception e) {
-            LogEntity logEntity = new LogEntity();
-            logEntity.setSourceId(member.name());
-            logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-            logEntity.setMessage(e.getMessage());
-
-            logEntities.add(logEntity);
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          });
+          futures.add(future);
         }
       }
 
+      Collection<LogEntity> logEntities = new ArrayList<LogEntity>();
+      for (Future<Collection<LogEntity>> future : futures) {
+        Collection<LogEntity> entities = future.get();
+        logEntities.addAll(entities);
+      }
       return logEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers logs", e);
     }
   }
 
-  @Override
-  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, boolean read) throws ServiceExecutionException {
-    Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
+  private Collection<LogEntity> getNodeLogs(Long sinceWhen, String sourceId, int jmxPort, String jmxHost) {
+    Collection<LogEntity> logEntities = new ArrayList<LogEntity>();
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
+      TCLoggingBroadcasterMBean tcLoggingBroadcaster = JMX.newMBeanProxy(mBeanServerConnection,
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Logger"), TCLoggingBroadcasterMBean.class);
+
+      List<Notification> logNotifications;
+      if (sinceWhen == null) {
+        logNotifications = tcLoggingBroadcaster.getLogNotifications();
+      } else {
+        logNotifications = tcLoggingBroadcaster.getLogNotificationsSince(sinceWhen);
+      }
+
+      for (Notification logNotification : logNotifications) {
+        LogEntity logEntity = new LogEntity();
+        logEntity.setSourceId(sourceId);
+        logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+        logEntity.setMessage(logNotification.getMessage());
+        logEntity.setTimestamp(logNotification.getTimeStamp());
+
+        logEntities.add(logEntity);
+      }
+    } catch (Exception e) {
+      LogEntity logEntity = new LogEntity();
+      logEntity.setSourceId(sourceId);
+      logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      logEntity.setMessage(e.getMessage());
+
+      logEntities.add(logEntity);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+    return logEntities;
+  }
+
+  @Override
+  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final boolean read) throws ServiceExecutionException {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
-
-      ExecutorService pool = Executors.newFixedThreadPool(10);
-      Map<String,Future<Collection<OperatorEventEntity>>> futures = new HashMap<String,Future<Collection<OperatorEventEntity>>>();
+      List<Future<Collection<OperatorEventEntity>>> futures = new ArrayList<Future<Collection<OperatorEventEntity>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
-        for (L2Info member : members) {
+        for (final L2Info member : members) {
           if (serverNames != null && !serverNames.contains(member.name())) {
             continue;
           }
-          Future handlerFuture = pool.submit(new Handler(sinceWhen, read, operatorEventEntities, member));
-          futures.put(member.host()+"_"+member.jmxPort(),handlerFuture);
+
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
+
+          Future<Collection<OperatorEventEntity>> future = executorService.submit(new Callable<Collection<OperatorEventEntity>>() {
+            @Override
+            public Collection<OperatorEventEntity> call() throws Exception {
+              return getOperatorEventsByMember(sinceWhen, read, sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
         }
       }
 
-      for (Map.Entry<String, Future<Collection<OperatorEventEntity>>> entry : futures.entrySet()) {
-        operatorEventEntities.addAll(entry.getValue().get());
+      Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
+      for (Future<Collection<OperatorEventEntity>> future : futures) {
+        Collection<OperatorEventEntity> entities = future.get();
+        operatorEventEntities.addAll(entities);
       }
-
       return operatorEventEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting operator events", e);
     }
   }
 
-
-  class Handler implements Callable {
-
-    private Long sinceWhen;
-    private boolean read;
-    private Collection<OperatorEventEntity> operatorEventEntities;
-    private L2Info member;
-
-    public Handler(Long sinceWhen, boolean read, Collection<OperatorEventEntity> operatorEventEntities, L2Info member) {
-      this.sinceWhen = sinceWhen;
-      this.read = read;
-      this.operatorEventEntities = operatorEventEntities;
-      this.member = member;
-
-    }
-
-    @Override
-    public Collection<OperatorEventEntity> call() throws Exception {
-      return getOperatorEventsByMember(sinceWhen, read, member);
-    }
-  }
-
-  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, boolean read, L2Info member) {
+  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, boolean read, String sourceId, int jmxPort, String jmxHost) {
     Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
-    int jmxPort = member.jmxPort();
-    String jmxHost = member.host();
 
     JMXConnector jmxConnector = null;
     try {
@@ -1078,7 +1223,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
 
         OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
-        operatorEventEntity.setSourceId(member.name());
+        operatorEventEntity.setSourceId(sourceId);
         operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
         operatorEventEntity.setMessage(operatorEvent.getEventMessage());
         operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
@@ -1091,7 +1236,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
     } catch (Exception e) {
       OperatorEventEntity operatorEventEntity = new OperatorEventEntity();
-      operatorEventEntity.setSourceId(member.name());
+      operatorEventEntity.setSourceId(sourceId);
       operatorEventEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
       operatorEventEntity.setMessage(e.getMessage());
 
@@ -1145,49 +1290,69 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   @Override
   public Map<String, Integer> getUnreadOperatorEventCount() throws ServiceExecutionException {
-    Map<String, Integer> result = new HashMap<String, Integer>();
-    
-    for (EventType severity : EventType.values()) {
-      result.put(severity.name(), 0);
-    }
-
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
+      List<Future<Map<String, Integer>>> futures = new ArrayList<Future<Map<String, Integer>>>();
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         for (L2Info member : serverGroupInfo.members()) {
-          JMXConnector jmxConnector = null;
-          try {
-            jmxConnector = jmxConnectorPool.getConnector(member.host(), member.jmxPort());
-          }
-          catch(Exception e) {
-            //that's ok to catch the exception here, it means the member of the  array is not up
-            // and can not give us any Operator Events
-            break;
-          }
-          try {
-            DSOMBean dsoMBean = JMX.newMBeanProxy(jmxConnector.getMBeanServerConnection(),
-                new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
 
-            Map<String, Integer> serverResult = dsoMBean.getUnreadOperatorEventCount();
-            for(String key : serverResult.keySet()) {
-              Integer value = result.get(key);
-              Integer serverValue = serverResult.get(key);
-              
-              value = value.intValue() + serverValue.intValue();
-              result.put(key, value);
+
+          Future<Map<String, Integer>> future = executorService.submit(new Callable<Map<String, Integer>>() {
+            @Override
+            public Map<String, Integer> call() throws Exception {
+              return getNodeUnreadOperatorEventCount(jmxPort, jmxHost);
             }
-          } finally {
-            closeConnector(jmxConnector);
-          }
+          });
+          futures.add(future);
+        }
+      }
+
+      Map<String, Integer> result = new HashMap<String, Integer>();
+      for (EventType severity : EventType.values()) {
+        result.put(severity.name(), 0);
+      }
+
+      for (Future<Map<String, Integer>> future : futures) {
+        Map<String, Integer> serverResult = future.get();
+        for(String key : serverResult.keySet()) {
+          Integer value = result.get(key);
+          Integer serverValue = serverResult.get(key);
+
+          value = value + serverValue;
+          result.put(key, value);
         }
       }
 
       return result;
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting unread operator event count", e);
+    }
+  }
+
+  private Map<String, Integer> getNodeUnreadOperatorEventCount(int jmxPort, String jmxHost) throws IOException, MalformedObjectNameException {
+    JMXConnector jmxConnector;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+    }
+    catch (Exception e) {
+      //that's ok to catch the exception here, it means the member of the array is not up
+      // and can not give us any Operator Event
+      return Collections.emptyMap();
+    }
+    try {
+      DSOMBean dsoMBean = JMX.newMBeanProxy(jmxConnector.getMBeanServerConnection(),
+          new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+
+      return dsoMBean.getUnreadOperatorEventCount();
+    } catch (Exception e) {
+      return Collections.emptyMap();
+    } finally {
+      closeConnector(jmxConnector);
     }
   }
 
@@ -1496,15 +1661,20 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     return !dsoClientObjectNames.isEmpty();
   }
 
-  private boolean isLocalNodeActive() throws MalformedObjectNameException, InstanceNotFoundException, ReflectionException,
-      AttributeNotFoundException, MBeanException, IOException {
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    return serverIsActive(mBeanServer);
-  }
-
   private boolean serverIsActive(MBeanServerConnection mBeanServerConnection) throws MalformedObjectNameException,
       InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
     Object state = mBeanServerConnection.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "State");
     return "ACTIVE-COORDINATOR".equals(state);
   }
+
+  private void closeConnector(JMXConnector jmxConnector) {
+    if (jmxConnector != null) {
+      try {
+        jmxConnector.close();
+      } catch (IOException ioe) {
+        LOG.warn("error closing JMX connection", ioe);
+      }
+    }
+  }
+
 }
