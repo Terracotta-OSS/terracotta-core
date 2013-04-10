@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.logging.TCLogger;
@@ -24,9 +25,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 
 public class ObjectStreamClassMapping {
+  // package protected used in tests
+  static final String                             SERIALIZER_ADD_MAPPING_THREAD = "Serializer Add Mapping Thread";
   private static final TCLogger                   LOGGER       = TCLogging.getLogger(ObjectStreamClassMapping.class);
   private static final Field                      SUPER_DESC;
   private static final Method                     IS_SERIALIZABLE;
@@ -37,6 +47,16 @@ public class ObjectStreamClassMapping {
   private final ReferenceQueue<ObjectStreamClass> oscSoftQueue;
   private final Map<Integer, CachedOscReference>  localCache;
   private final ToolkitLockImpl                   lock;
+  private static final ExecutorService            executor     = Executors.newSingleThreadExecutor(new ThreadFactory() {
+
+                                                                 @Override
+                                                                 public Thread newThread(Runnable runnable) {
+                                                                   Thread t = new Thread(runnable,
+                                                                                         SERIALIZER_ADD_MAPPING_THREAD);
+                                                                   t.setDaemon(true);
+                                                                   return t;
+                                                                 }
+                                                               });
 
   static {
     Field superDesc = null;
@@ -74,6 +94,12 @@ public class ObjectStreamClassMapping {
     this.oscSoftQueue = new ReferenceQueue<ObjectStreamClass>();
     this.localCache = new ConcurrentHashMap<Integer, CachedOscReference>();
     this.lock = new ToolkitLockImpl(platformService, LOCK_ID, ToolkitLockTypeInternal.WRITE);
+    platformService.registerBeforeShutdownHook(new Runnable() {
+      @Override
+      public void run() {
+        executor.shutdown();
+      }
+    });
 
   }
 
@@ -105,19 +131,36 @@ public class ObjectStreamClassMapping {
   // This will be slow, we can optimize it in two ways :
   // 1. Have a local cache CHM of hashCode of ObjectStreamClass -> List<CO> where CO = kclass and mapping
   // 2. Modify our serializerMap to have complex object as keys rather than only String as keys.
-  public int getMappingFor(ObjectStreamClass desc) throws IOException {
-    desc = prune(desc);
-    SerializableDataKey key = new SerializableDataKey(desc);
+  public int getMappingFor(ObjectStreamClass descParam) throws IOException {
+    final ObjectStreamClass desc = prune(descParam);
+    final SerializableDataKey key = new SerializableDataKey(desc);
+
     Integer value = (Integer) serializerMap.localGet(key.getStringForm());
     if (value != null) { return value.intValue(); }
-    lock.lock();
+    // Add Mapping in a new Thread in order to not break the user transaction.
+
     try {
-      value = (Integer) serializerMap.localGet(key.getStringForm());
-      if (value != null) { return value.intValue(); }
-      value = addMapping(desc, key);
-      return value.intValue();
-    } finally {
-      lock.unlock();
+      Future<Integer> future = executor.submit(new Callable<Integer>() {
+        @Override
+        public Integer call() throws Exception {
+          lock.lock();
+          try {
+            Integer rv = (Integer) serializerMap.localGet(key.getStringForm());
+            if (rv != null) { return rv; }
+            rv = addMapping(desc, key);
+            return rv;
+          } finally {
+            lock.unlock();
+          }
+        }
+      });
+      return future.get();
+    } catch (RejectedExecutionException e) {
+      throw new ToolkitRuntimeException(e);
+    } catch (InterruptedException e) {
+      throw new ToolkitRuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new ToolkitRuntimeException(e);
     }
   }
 
