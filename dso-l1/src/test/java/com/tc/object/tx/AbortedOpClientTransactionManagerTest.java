@@ -4,31 +4,27 @@
  */
 package com.tc.object.tx;
 
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
-import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TestClientObjectManager;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -61,7 +57,6 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
   public void test() throws Exception {
     clientTxnMgr.begin(new StringLockID("test1"), LockLevel.WRITE);
-
     abortableOperationManager.begin();
 
     try {
@@ -75,7 +70,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
       boolean expected = false;
       try {
-      clientTxnMgr.commit(new StringLockID("test2"), LockLevel.WRITE);
+        clientTxnMgr.commit(new StringLockID("test2"), LockLevel.WRITE);
       } catch (AbortedOperationException e) {
         expected = true;
       }
@@ -89,12 +84,16 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
     // change 2
     clientTxnFactory.clientTransactions.get(1).addNotify(null);
 
-
-    Assert.assertTrue(clientTxnFactory.clientTransactions.get(0).logicalInvoked);
-    Assert.assertFalse(clientTxnFactory.clientTransactions.get(0).notified);
-    Assert.assertFalse(clientTxnFactory.clientTransactions.get(1).logicalInvoked);
-    Assert.assertTrue(clientTxnFactory.clientTransactions.get(1).notified);
-
+    Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.times(1))
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+    Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.never())
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+    
+    Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.never())
+        .addNotify((Notify) Matchers
+                                                                                               .anyObject());
+    Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.times(1)).addNotify((Notify) Matchers
+                                                                                               .anyObject());
     // change2
     clientTxnMgr.commit(new StringLockID("test1"), LockLevel.WRITE);
 
@@ -102,7 +101,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
   }
 
   private static class TestClientTransactionFactory implements ClientTransactionFactory {
-    private final List<TestClientTransaction> clientTransactions = new ArrayList<TestClientTransaction>();
+    private final List<ClientTransaction> clientTransactions = new ArrayList<ClientTransaction>();
 
     @Override
     public ClientTransaction newNullInstance(LockID id, TxnType type) {
@@ -111,171 +110,12 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
     @Override
     public ClientTransaction newInstance() {
-      TestClientTransaction clientTransaction = new TestClientTransaction();
+      ClientTransaction clientTransaction = Mockito.mock(ClientTransaction.class);
+      Mockito.when(clientTransaction.hasChangesOrNotifies()).thenReturn(true);
+
       clientTransactions.add(clientTransaction);
       return clientTransaction;
     }
   }
 
-  private static class TestClientTransaction implements ClientTransaction {
-    private boolean logicalInvoked = false;
-    private boolean notified       = false;
-
-    @Override
-    public void setTransactionContext(TransactionContext transactionContext) {
-      //
-    }
-
-    @Override
-    public Map getChangeBuffers() {
-      return null;
-    }
-
-    @Override
-    public Map getNewRoots() {
-      return null;
-    }
-
-    @Override
-    public LockID getLockID() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public List getAllLockIDs() {
-      return null;
-    }
-
-    @Override
-    public void setTransactionID(TransactionID tid) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public TransactionID getTransactionID() {
-      return null;
-    }
-
-    @Override
-    public void createObject(TCObject source) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void createRoot(String name, ObjectID rootID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void arrayChanged(TCObject source, int startPos, Object array, int length) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
-      logicalInvoked = true;
-    }
-
-    @Override
-    public boolean hasChangesOrNotifies() {
-      return notified || logicalInvoked;
-    }
-
-    @Override
-    public boolean isNull() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public TxnType getLockType() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public TxnType getEffectiveType() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void addNotify(Notify notify) {
-      notified = true;
-    }
-
-    @Override
-    public void setSequenceID(SequenceID sequenceID) {
-      throw new ImplementMe();
-
-    }
-
-    @Override
-    public SequenceID getSequenceID() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public boolean isConcurrent() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void setAlreadyCommitted() {
-      //
-    }
-
-    @Override
-    public boolean hasChanges() {
-      return logicalInvoked;
-    }
-
-    @Override
-    public int getNotifiesCount() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public Collection getReferencesOfObjectsInTxn() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void addDmiDescriptor(DmiDescriptor dd) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public List getDmiDescriptors() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public List getNotifies() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void addTransactionCompleteListener(TransactionCompleteListener l) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public List getTransactionCompleteListeners() {
-      throw new ImplementMe();
-    }
-
-  }
 }
