@@ -15,7 +15,7 @@ class EhcacheSMLocalStoreUTF8Encoder {
   public Object encodeKey(Object key) {
 
     if (useEncoding && key instanceof String) {
-      return new UTF8ByteDataHolder(((String) key).getBytes());
+      return new UTF8ByteDataHolder((String) key);
     } else {
       return key;
     }
