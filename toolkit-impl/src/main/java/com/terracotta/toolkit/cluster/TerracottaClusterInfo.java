@@ -9,10 +9,12 @@ import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterTopology;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.platform.PlatformService;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
@@ -37,17 +39,31 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   @Override
   public void addClusterListener(ClusterListener listener) {
-    dsoCluster.addClusterListener(new ClusterListenerWrapper(listener));
+    try {
+      dsoCluster.addClusterListener(new ClusterListenerWrapper(listener));
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   @Override
   public void removeClusterListener(ClusterListener listener) {
-    dsoCluster.removeClusterListener(new ClusterListenerWrapper(listener));
+    try {
+      dsoCluster.removeClusterListener(new ClusterListenerWrapper(listener));
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+
   }
 
   @Override
   public Set<ClusterNode> getNodes() {
-    return getNodes(dsoCluster.getClusterTopology());
+    try {
+      return getNodes(dsoCluster.getClusterTopology());
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+
   }
 
   public Set<ClusterNode> getNodes(DsoClusterTopology dsoClusterTopology) {
@@ -63,17 +79,31 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   @Override
   public ClusterNode getCurrentNode() {
-    return new TerracottaNode(dsoCluster.getCurrentNode());
+    try {
+      return new TerracottaNode(dsoCluster.getCurrentNode());
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   @Override
   public boolean areOperationsEnabled() {
-    return dsoCluster.areOperationsEnabled();
+    try {
+      return dsoCluster.areOperationsEnabled();
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+
   }
 
   public <K> Map<K, Set<ClusterNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys) {
     Map<K, Set<ClusterNode>> translation = new HashMap<K, Set<ClusterNode>>();
-    Map<K, Set<DsoNode>> result = ((DsoClusterInternal) dsoCluster).getNodesWithKeys(map, keys);
+    Map<K, Set<DsoNode>> result;
+    try {
+      result = ((DsoClusterInternal) dsoCluster).getNodesWithKeys(map, keys);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
     Map<DsoNode, ClusterNode> nodes = new HashMap<DsoNode, ClusterNode>();
     for (Entry<K, Set<DsoNode>> entry : result.entrySet()) {
       Set<ClusterNode> clusterNodes = new HashSet<ClusterNode>();
