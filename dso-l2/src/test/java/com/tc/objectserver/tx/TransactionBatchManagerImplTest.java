@@ -4,113 +4,88 @@
  */
 package com.tc.objectserver.tx;
 
+import org.mockito.InOrder;
+
+import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
+import com.tc.net.ClientID;
+import com.tc.object.msg.CommitTransactionMessage;
+import com.tc.object.msg.MessageRecycler;
+import com.tc.object.net.DSOChannelManager;
+import com.tc.object.tx.ServerTransactionID;
+import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
+import com.tc.object.tx.TxnType;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.ObjectIDSet;
+import com.tc.util.SequenceID;
+import com.tc.util.SequenceValidator;
+
+import java.io.IOException;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class TransactionBatchManagerImplTest extends TCTestCase {
 
-  public TransactionBatchManagerImplTest() {
-    super();
+  private TransactionBatchManagerImpl mgr;
+  private TransactionFilter filter;
+  private Sink syncWriteSink;
+  private ResentTransactionSequencer resentTransactionSequencer;
+  private TransactionBatchReader batchReader;
+  private ServerTransactionManager serverTransactionManager;
+  private ServerGlobalTransactionManager serverGlobalTransactionManager;
+  private DSOChannelManager dsoChannelManager;
+  private CommitTransactionMessage ctm;
+
+
+  protected void setUp() throws Exception {
+    filter = mock(TransactionFilter.class);
+    syncWriteSink = mock(Sink.class);
+    resentTransactionSequencer = spy(new ResentTransactionSequencer());
+    mgr = new TransactionBatchManagerImpl(mock(SequenceValidator.class), mock(MessageRecycler.class), filter, syncWriteSink,
+        resentTransactionSequencer);
+    serverTransactionManager = mock(ServerTransactionManager.class);
+    serverGlobalTransactionManager = mock(ServerGlobalTransactionManager.class);
+    dsoChannelManager = mock(DSOChannelManager.class);
+    ctm = mock(CommitTransactionMessage.class);
+    batchReader = mock(TransactionBatchReader.class);
+    TransactionBatchReaderFactory transactionBatchReaderFactory = when(mock(TransactionBatchReaderFactory.class).newTransactionBatchReader(any(CommitTransactionMessage.class))).thenReturn(batchReader).getMock();
+    ServerConfigurationContext serverConfigurationContext = mock(ServerConfigurationContext.class);
+    when(serverConfigurationContext.getTransactionBatchReaderFactory()).thenReturn(transactionBatchReaderFactory);
+    when(serverConfigurationContext.getTransactionManager()).thenReturn(serverTransactionManager);
+    when(serverConfigurationContext.getServerGlobalTransactionManager()).thenReturn(serverGlobalTransactionManager);
+    when(serverConfigurationContext.getChannelManager()).thenReturn(dsoChannelManager);
+    mgr.initializeContext(serverConfigurationContext);
   }
 
-  // private TransactionBatchManagerImpl mgr;
-  //
-  // protected void setUp() throws Exception {
-  // super.setUp();
-  // this.mgr = new TransactionBatchManagerImpl();
-  // }
-
-  public void tests() throws Exception {
-    // ChannelID channelID1 = new ChannelID(1);
-    // TransactionID txID1 = new TransactionID(1);
-    // TxnBatchID batchID1 = new TxnBatchID(1);
-    //
-    // int count = 10;
-    //
-    // List batchDescriptors = new LinkedList();
-    // for (int i = 1; i <= 2; i++) {
-    // batchDescriptors.add(new BatchDescriptor(new ChannelID(i), new TxnBatchID(1), count));
-    // batchDescriptors.add(new BatchDescriptor(new ChannelID(i), new TxnBatchID(2), count));
-    // }
-    //
-    // // make sure that you can't call batchComponentComplete unless define batch has been called for that
-    // // batch already.
-    // try {
-    // mgr.batchComponentComplete(channelID1, batchID1, txID1);
-    // fail("Expected a NoSuchBatchException");
-    // } catch (NoSuchBatchException e) {
-    // // expected
-    // }
-    //
-    // // define batches
-    // for (Iterator i = batchDescriptors.iterator(); i.hasNext();) {
-    // defineBatchFor((BatchDescriptor) i.next());
-    // }
-    //
-    // // make sure that you can't define the same batch more than once
-    // for (Iterator i = batchDescriptors.iterator(); i.hasNext();) {
-    // try {
-    // defineBatchFor((BatchDescriptor) i.next());
-    // fail("Expected a BatchDefinedException");
-    // } catch (BatchDefinedException e) {
-    // // expected
-    // }
-    // }
-    //
-    // // call batchComponentComplete() until all the components are complete
-    // for (Iterator i = batchDescriptors.iterator(); i.hasNext();) {
-    // BatchDescriptor desc = (BatchDescriptor) i.next();
-    // for (int j = 1; j <= desc.count; j++) {
-    // boolean isComplete = j == desc.count;
-    // assertEquals(isComplete, mgr.batchComponentComplete(desc.channelID, desc.batchID, new TransactionID(j)));
-    // }
-    // }
-    //
-    // // XXX: This is a bit of a weird way to test this.
-    // // Now that the batches have been completed, you should be able to define them again
-    // for (Iterator i = batchDescriptors.iterator(); i.hasNext();) {
-    // defineBatchFor((BatchDescriptor) i.next());
-    // }
-    //
-    // // now kill a client
-    // BatchDescriptor desc = (BatchDescriptor) batchDescriptors.get(0);
-    // mgr.shutdownClient(desc.channelID);
-    // for (Iterator batchDesIter = batchDescriptors.iterator(); batchDesIter.hasNext();) {
-    // BatchDescriptor bd = (BatchDescriptor) batchDesIter.next();
-    // if (bd.channelID.equals(desc.channelID)) {
-    // for (int i = 1; i <= desc.count; i++) {
-    // // batchComponentComplete should never return true...
-    // assertFalse(mgr.batchComponentComplete(desc.channelID, desc.batchID, new TransactionID(i)));
-    // }
-    // }
-    // }
-    //
-    // // now calling batchComponentComplete on an undefined batch if the client has been killed should throw and
-    // exception
-    // for (int i = 1; i <= desc.count; i++) {
-    // try {
-    // mgr.batchComponentComplete(desc.channelID, desc.batchID, new TransactionID(i));
-    // fail("Expected a NoSuchBatchException");
-    // } catch (NoSuchBatchException e) {
-    // // expected
-    // }
-    // }
-    //
+  public void testSyncWriteReceived() throws Exception {
+    batch(true);
+    mgr.addTransactionBatch(ctm);
+    InOrder inOrder = inOrder(filter, syncWriteSink);
+    inOrder.verify(filter).addTransactionBatch(any(IncomingTransactionBatchContext.class));
+    inOrder.verify(syncWriteSink).add(any(EventContext.class));
   }
-  //
-  // private void defineBatchFor(BatchDescriptor desc) throws Exception {
-  // mgr.defineBatch(desc.channelID, desc.batchID, desc.count);
-  // }
-  //
-  // private final class BatchDescriptor {
-  // public final ChannelID channelID;
-  // public final TxnBatchID batchID;
-  // public final int count;
-  //
-  // private BatchDescriptor(ChannelID channelID, TxnBatchID batchID, int count) {
-  // this.channelID = channelID;
-  // this.batchID = batchID;
-  // this.count = count;
-  // }
-  // }
 
+  private void batch(boolean sync) throws IOException {
+    ServerTransaction txn = txn(1, sync);
+    when(batchReader.containsSyncWriteTransaction()).thenReturn(sync);
+    when(batchReader.getBatchID()).thenReturn(new TxnBatchID(1));
+    when(batchReader.getNextTransaction()).thenReturn(txn).thenReturn(null);
+  }
+
+  private ServerTransaction txn(long id, boolean syncWrite) {
+    ServerTransaction serverTransaction = mock(ServerTransaction.class);
+    when(serverTransaction.getTransactionID()).thenReturn(new TransactionID(id));
+    when(serverTransaction.getServerTransactionID()).thenReturn(new ServerTransactionID(new ClientID(1), new TransactionID(id)));
+    when(serverTransaction.getClientSequenceID()).thenReturn(new SequenceID(id));
+    when(serverTransaction.getTransactionType()).thenReturn(syncWrite ? TxnType.SYNC_WRITE : TxnType.NORMAL);
+    when(serverTransaction.getNewObjectIDs()).thenReturn(new ObjectIDSet());
+    return serverTransaction;
+  }
 }

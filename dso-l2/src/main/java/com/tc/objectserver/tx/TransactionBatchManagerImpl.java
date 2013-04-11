@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TransactionBatchManagerImpl implements TransactionBatchManager, PostInit, PrettyPrintable {
@@ -83,11 +84,11 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       ServerTransaction txn;
 
       // Transactions should maintain order.
-      final ArrayList<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
-      final HashSet<ServerTransactionID> txnIDs = new HashSet<ServerTransactionID>(reader.getNumberForTxns());
+      final List<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
+      final Set<ServerTransactionID> txnIDs = new HashSet<ServerTransactionID>(reader.getNumberForTxns());
       final NodeID nodeID = reader.getNodeID();
-      final HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
-      final HashSet<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
+      final Set<ObjectID> newObjectIDs = new HashSet<ObjectID>();
+      final Set<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
 
       while ((txn = reader.getNextTransaction()) != null) {
         this.sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
@@ -99,6 +100,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         }
       }
 
+      this.filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, txnIDs, reader, txns, newObjectIDs));
+
       if (reader.containsSyncWriteTransaction()) {
         this.syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(),
                                                                                (ClientID) ctm.getSourceNodeID(),
@@ -107,8 +110,6 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
       defineBatch(nodeID, txns.size());
       this.messageRecycler.addMessage(ctm, txnIDs);
-
-      this.filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, txnIDs, reader, txns, newObjectIDs));
     } catch (final Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       final MessageChannel c = ctm.getChannel();

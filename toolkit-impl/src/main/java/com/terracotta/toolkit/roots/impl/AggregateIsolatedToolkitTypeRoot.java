@@ -51,6 +51,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
     synchronized (isolatedTypes) {
+      boolean created = false;
       T isolatedType = isolatedTypes.get(name);
       if (isolatedType == null) {
         final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
@@ -61,6 +62,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
           if (clusteredObject == null) {
             clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
             getToolkitTypeRootForCreation(name).addClusteredObject(name, clusteredObject);
+            created = true;
           }
         } finally {
           unlock(type, name);
@@ -70,6 +72,10 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
                                                                      clusteredObject);
         T oldvalue = isolatedTypes.put(name, isolatedType);
         Assert.assertNull("oldValue must be null here", oldvalue);
+
+        if (created) {
+          toolkit.waitUntilAllTransactionsComplete();
+        }
       }
       return isolatedType;
     }

@@ -54,6 +54,7 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
                                   Configuration configuration) {
     if (name == null) { throw new NullPointerException("'name' cannot be null"); }
     synchronized (distributedTypes) {
+      boolean created = false;
       T distributedType = distributedTypes.get(name);
       if (distributedType != null) {
         // validate and reuse existing distributed object
@@ -73,6 +74,7 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
             // need to create stripe objects
             stripeObjects = distributedTypeFactory.createStripeObjects(name, effectiveConfig, roots.length);
             injectStripeObjects(name, stripeObjects);
+            created = true;
           }
         } finally {
           unlock(type, name);
@@ -82,6 +84,10 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
                                                                        effectiveConfig, platformService);
         T oldvalue = distributedTypes.put(name, distributedType);
         Assert.assertNull("oldValue must be null here", oldvalue);
+
+        if (created) {
+          toolkit.waitUntilAllTransactionsComplete();
+        }
       }
       return distributedType;
     }
