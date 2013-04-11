@@ -4,6 +4,12 @@
  */
 package com.tc.objectserver.tx;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 import org.mockito.InOrder;
 
 import com.tc.async.api.EventContext;
@@ -25,12 +31,6 @@ import com.tc.util.SequenceValidator;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 public class TransactionBatchManagerImplTest extends TCTestCase {
 
   private TransactionBatchManagerImpl mgr;
@@ -44,6 +44,7 @@ public class TransactionBatchManagerImplTest extends TCTestCase {
   private CommitTransactionMessage ctm;
 
 
+  @Override
   protected void setUp() throws Exception {
     filter = mock(TransactionFilter.class);
     syncWriteSink = mock(Sink.class);
