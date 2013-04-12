@@ -142,7 +142,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, context);
     clusteredStoreFactory = ToolkitStoreFactoryImpl.newToolkitStoreFactory(this, context);
     clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, context);
-    clusteredMapBlockingQueueFactory = new ToolkitMapBlockingQueueFactoryImpl(this);
+    clusteredMapBlockingQueueFactory = new ToolkitMapBlockingQueueFactoryImpl(this, context);
 
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()

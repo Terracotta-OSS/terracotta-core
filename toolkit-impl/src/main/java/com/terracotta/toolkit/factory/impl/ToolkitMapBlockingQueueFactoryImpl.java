@@ -13,7 +13,12 @@ import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.collections.ToolkitMapBlockingQueue;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
+import com.terracotta.toolkit.util.collections.WeakValueMap;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Shelestovich
@@ -25,22 +30,53 @@ public class ToolkitMapBlockingQueueFactoryImpl implements ToolkitObjectFactory<
   private static final String STORE_POSTFIX = "_store";
 
   private final ToolkitInternal toolkit;
+  private final WeakValueMap<ToolkitMapBlockingQueue> localCache;
+  private final Lock localLock;
 
-  public ToolkitMapBlockingQueueFactoryImpl(ToolkitInternal toolkit) {
+  public ToolkitMapBlockingQueueFactoryImpl(final ToolkitInternal toolkit,
+                                            final ToolkitFactoryInitializationContext context) {
     this.toolkit = toolkit;
+    this.localCache = context.getWeakValueMapManager().createWeakValueMap();
+    this.localLock = new ReentrantLock();
   }
 
   @Override
   public ToolkitMapBlockingQueue getOrCreate(String name, Configuration config) {
-    final ToolkitReadWriteLock lock = toolkit.getReadWriteLock(name + LOCK_POSTFIX);
+    final int capacity = config.getInt(CAPACITY_FIELD_NAME);
+    ToolkitMapBlockingQueue queue = null;
+    localLock.lock();
+    try {
+      queue = localCache.get(name);
+      if (queue == null) {
+        queue = createQueue(name, capacity);
+      } else {
+        if (queue.isDestroyed()) {
+          queue = createQueue(name, capacity);
+        } else if (queue.getCapacity() != capacity) {
+          throw new IllegalArgumentException("ToolkitBlockingQueue already exists for name '"
+                                             + name + "' with different capacity requested: "
+                                             + capacity + ", existing: " + queue.getCapacity());
+        }
+      }
+    } finally {
+      localLock.unlock();
+    }
+    return queue;
+  }
+
+  private ToolkitMapBlockingQueue createQueue(final String name, final int capacity) {
     final Configuration storeConfig = new ToolkitStoreConfigBuilder()
         .consistency(ToolkitConfigFields.Consistency.STRONG)
         .concurrency(2)
         .localCacheEnabled(true)
         .maxCountLocalHeap(10000)
         .build();
+
+    final ToolkitReadWriteLock lock = toolkit.getReadWriteLock(name + LOCK_POSTFIX);
     final ToolkitStore<String, Object> backedStore = toolkit.getStore(name + STORE_POSTFIX, storeConfig, null);
-    return new ToolkitMapBlockingQueue(name, config.getInt(CAPACITY_FIELD_NAME), backedStore, lock);
+    final ToolkitMapBlockingQueue queue = new ToolkitMapBlockingQueue(name, capacity, backedStore, lock);
+    localCache.put(name, queue);
+    return queue;
   }
 
   @Override
