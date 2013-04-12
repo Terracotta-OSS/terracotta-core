@@ -23,7 +23,8 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface OperatorEventsResourceService {
 
-  public final static String ATTR_QUERY_KEY = "sinceWhen";
+  public final static String ATTR_QUERY_KEY__SINCE_WHEN = "sinceWhen";
+  public final static String ATTR_QUERY_KEY__EVENT_TYPES = "eventTypes";
   public final static String ATTR_FILTER_KEY = "filterOutRead";
 
   @GET

@@ -1159,7 +1159,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final boolean read) throws ServiceExecutionException {
+  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableTypes, final boolean read) throws ServiceExecutionException {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
@@ -1180,7 +1180,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           Future<Collection<OperatorEventEntity>> future = executorService.submit(new Callable<Collection<OperatorEventEntity>>() {
             @Override
             public Collection<OperatorEventEntity> call() throws Exception {
-              return getOperatorEventsByMember(sinceWhen, read, sourceId, jmxPort, jmxHost);
+              return getOperatorEventsByMember(sinceWhen, acceptableTypes, read, sourceId, jmxPort, jmxHost);
             }
           });
           futures.add(future);
@@ -1198,7 +1198,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, boolean read, String sourceId, int jmxPort, String jmxHost) {
+  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, Set<String> acceptableTypes, boolean read, String sourceId, int jmxPort, String jmxHost) {
     Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
 
     JMXConnector jmxConnector = null;
@@ -1220,6 +1220,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         if (operatorEvent.isRead() && read) {
           // filter out read events
           continue;
+        }
+        if (acceptableTypes != null) {
+          // filter out event types
+          if (!acceptableTypes.contains(operatorEvent.getEventTypeAsString())) {
+            continue;
+          }
         }
 
         OperatorEventEntity operatorEventEntity = new OperatorEventEntity();

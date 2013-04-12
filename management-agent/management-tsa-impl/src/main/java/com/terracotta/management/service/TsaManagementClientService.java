@@ -64,7 +64,7 @@ public interface TsaManagementClientService {
 
   Collection<LogEntity> getLogs(Set<String> serverNames, Long sinceWhen) throws ServiceExecutionException;
 
-  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, boolean read) throws ServiceExecutionException;
+  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, Set<String> acceptableTypes, boolean read) throws ServiceExecutionException;
 
   boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
 
