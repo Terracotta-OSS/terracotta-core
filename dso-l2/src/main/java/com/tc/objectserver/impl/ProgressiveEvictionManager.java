@@ -52,6 +52,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author mscott
@@ -401,6 +402,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private long               epoc        = System.currentTimeMillis();
     private long               size        = 0;
     private boolean            isEmergency = false;
+    private AtomicInteger      emergencyCount = new AtomicInteger();
     private float              throttle    = 0f;
     private long               throttlePoll = 0L;
     private boolean            isStopped   = false;
@@ -441,6 +443,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             if (!threshold.isAboveThreshold(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD)) {
               stopEmergency(usage);
             } else if (currentRun.isDone()) {
+              try {
+                  emergencyCount.addAndGet((int)((AggregateSampleRateCounter)currentRun.get()).getNumeratorValue());
+              } catch ( InterruptedException ie ) {
+                  
+              } catch ( ExecutionException ee ) {
+                  
+              }
               triggerEmergency(usage);
             }
             // wait for generational eviction to do this.
@@ -485,10 +494,18 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     private void stopEmergency(DetailedMemoryUsage usage) {
-      isEmergency = false;
       currentRun.cancel(false);
-      log("Emergency Eviction Stopped - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory())  + "/"
-          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()));
+      int counted = 0;
+      try {
+          counted = emergencyCount.addAndGet((int)((AggregateSampleRateCounter)currentRun.get()).getNumeratorValue());
+      } catch ( InterruptedException ie ) {
+
+      } catch ( ExecutionException ee ) {
+
+      }
+      isEmergency = false;
+      log("Resource Eviction Stopped - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory())  + "/"
+          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " evicted count:" + counted);
       turnCount = 1;
       if (isStopped || throttle > 0f) {
         clear(usage);
@@ -525,8 +542,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     private void triggerEmergency(DetailedMemoryUsage usage) {
-      log("Emergency Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
-          + (usage.getReservedMemory() * 100 / usage.getMaxMemory()) + " turns:" + turnCount);
+      if ( !isEmergency ) {
+          log("Resource Eviction Triggered - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory()) + "/"
+            + (usage.getReservedMemory() * 100 / usage.getMaxMemory()));
+          emergencyCount.set(0);
+      }
       if ( evictor.isLogging() && logger.isDebugEnabled() ) {
           logger.debug("Emergency triggered with usage " + usage);
       }
