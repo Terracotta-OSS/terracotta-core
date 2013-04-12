@@ -9,10 +9,13 @@ import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitStore;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.ToolkitMapBlockingQueue;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
@@ -32,12 +35,14 @@ public class ToolkitMapBlockingQueueFactoryImpl implements ToolkitObjectFactory<
   private final ToolkitInternal toolkit;
   private final WeakValueMap<ToolkitMapBlockingQueue> localCache;
   private final Lock localLock;
+  private final PlatformService platformService;
 
   public ToolkitMapBlockingQueueFactoryImpl(final ToolkitInternal toolkit,
                                             final ToolkitFactoryInitializationContext context) {
     this.toolkit = toolkit;
-    this.localCache = context.getWeakValueMapManager().createWeakValueMap();
-    this.localLock = new ReentrantLock();
+    localCache = context.getWeakValueMapManager().createWeakValueMap();
+    platformService = context.getPlatformService();
+    localLock = new ReentrantLock();
   }
 
   @Override
@@ -72,7 +77,8 @@ public class ToolkitMapBlockingQueueFactoryImpl implements ToolkitObjectFactory<
         .maxCountLocalHeap(10000)
         .build();
 
-    final ToolkitReadWriteLock lock = toolkit.getReadWriteLock(name + LOCK_POSTFIX);
+    final ToolkitReadWriteLock lock = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.BLOCKING_QUEUE,
+        name + LOCK_POSTFIX, platformService, ToolkitLockTypeInternal.WRITE);
     final ToolkitStore<String, Object> backedStore = toolkit.getStore(name + STORE_POSTFIX, storeConfig, null);
     final ToolkitMapBlockingQueue queue = new ToolkitMapBlockingQueue(name, capacity, backedStore, lock);
     localCache.put(name, queue);
