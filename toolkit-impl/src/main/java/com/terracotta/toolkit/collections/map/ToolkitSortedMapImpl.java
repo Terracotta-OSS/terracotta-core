@@ -351,7 +351,7 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
-          return new ToolkitValueCollection(localMap.values());
+          return new ToolkitValueCollection(localMap);
         }
       } finally {
         lock.readLock().unlock();

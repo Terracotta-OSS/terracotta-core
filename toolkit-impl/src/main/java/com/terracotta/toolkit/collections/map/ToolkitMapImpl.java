@@ -339,7 +339,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        return new ToolkitValueCollection(keyValueHolder.values());
+        return new ToolkitValueCollection(keyValueHolder.getMap());
       }
     } finally {
       lock.readLock().unlock();
@@ -431,6 +431,9 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
       this.keyToValue = map;
     }
 
+    public Map<K, V> getMap() {
+      return keyToValue;
+    }
     public void clear() {
       keyToIds.clear();
       keyToValue.clear();
@@ -671,10 +674,12 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
   }
 
   class ToolkitValueCollection implements Collection<V> {
-    private final Collection<V> values;
+    private final Collection<V>   values;
+    private final Map<K, V>     localMap;
 
-    public ToolkitValueCollection(Collection<V> values) {
-      this.values = values;
+    public ToolkitValueCollection(Map<K, V> localMap) {
+      this.values = localMap.values();
+      this.localMap = localMap;
     }
 
     @Override
@@ -754,7 +759,23 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean remove(Object o) {
-      return values.remove(o);
+      lock.writeLock().lock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          if (!values.contains(o)) { return false; }
+          Set s = new ToolkitKeySet(localMap.keySet());
+          for (Iterator iter = s.iterator(); iter.hasNext();) {
+            if (o.equals(localMap.get(iter.next()))) {
+              iter.remove();
+              return true;
+            }
+          }
+          return false;
+        }
+      } finally {
+        lock.writeLock().unlock();
+      }
     }
 
     @Override
@@ -778,17 +799,61 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      throw new UnsupportedOperationException();
+      lock.writeLock().lock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          boolean change = false;
+          Set s = new ToolkitKeySet(localMap.keySet());
+            for (Iterator iter = s.iterator(); iter.hasNext();) {
+            if (c.contains(localMap.get(iter.next()))) {
+                iter.remove();
+                change = true;
+            }
+          }
+          return change;
+        }
+      } finally {
+        lock.writeLock().unlock();
+      }
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-      throw new UnsupportedOperationException();
+      lock.writeLock().lock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          boolean change = false;
+          Set s = new ToolkitKeySet(localMap.keySet());
+          for (Iterator iter = s.iterator(); iter.hasNext();) {
+            if (!c.contains(localMap.get(iter.next()))) {
+              iter.remove();
+              change = true;
+            }
+          }
+          return change;
+        }
+      } finally {
+        lock.writeLock().unlock();
+      }
     }
 
     @Override
     public void clear() {
-      ToolkitMapImpl.this.clear();
+      lock.writeLock().lock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          Set s = new ToolkitKeySet(localMap.keySet());
+          for (Iterator iter = s.iterator(); iter.hasNext();) {
+            iter.next();
+            iter.remove();
+          }
+        }
+      } finally {
+        lock.writeLock().unlock();
+      }
     }
 
   }
