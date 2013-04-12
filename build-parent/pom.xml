@@ -63,7 +63,6 @@
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${linked-child-process.version}/linked-child-process-${linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
-    <devmode>false</devmode>
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
@@ -81,7 +80,6 @@
       -Dcom.tc.properties=${tc.system.tests.properties}
       -Dtc.install-root.ignore-checks=true
       -Dcom.sun.management.jmxremote 
-      -Dcom.tc.test.toolkit.devmode=${devmode}
       ${surefire.additional-jvm-args}</surefire.argLine>   
   </properties>
 
@@ -798,47 +796,6 @@
             </executions>
           </plugin>         
         </plugins>          
-      </build>
-    </profile>
-    
-    <profile>
-      <id>devmode</id>
-      <activation>
-        <file>
-          <exists>${user.home}/.devmode</exists>
-        </file>
-      </activation>
-      <properties>
-        <devmode>true</devmode>
-      </properties>      
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-            <version>${gmaven-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>generate-devmode-classpath</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>
-                  <source>
-                    println "================== devmode ===================="
-                    def classesDir = new File(project.build.outputDirectory)
-                    classesDir.mkdirs()
-                    def targetFile = new File(classesDir, "devmode-classdir.txt")
-                    targetFile.withWriter { out -&gt;
-                      out.println classesDir
-                    }
-                  </source>
-                </configuration>
-              </execution>
-            </executions>            
-          </plugin>
-        </plugins>
       </build>
     </profile>
   </profiles>
