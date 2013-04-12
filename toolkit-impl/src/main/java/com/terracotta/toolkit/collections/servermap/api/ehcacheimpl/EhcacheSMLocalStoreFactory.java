@@ -36,8 +36,7 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
   private synchronized InternalEhcache getOrCreateEhcacheLocalCache(ServerMapLocalStoreConfig config) {
     InternalEhcache ehcache;
     CacheManager cacheManager = getOrCreateCacheManager(config);
-    final String localCacheName = "local_shadow_cache_for_" + cacheManager.getName() + "_"
-                                  + config.getLocalStoreName();
+    final String localCacheName = "local_shadow_cache_for_" + cacheManager.getName() + "_" + config.getLocalStoreName();
     ehcache = (InternalEhcache) cacheManager.getEhcache(localCacheName);
     if (ehcache == null) {
       ehcache = createCache(localCacheName, config);
@@ -90,11 +89,6 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
       cacheConfig.pinning(new PinningConfiguration().store(PinningConfiguration.Store.LOCALMEMORY));
     }
 
-    if (config.isOverflowToOffheap()) {
-      return new InternalClassLoaderAwareCache(new Cache(cacheConfig),
-                                               ServerMapLocalStoreFactory.class.getClassLoader());
-    } else {
-      return new Cache(cacheConfig);
-    }
+    return new InternalClassLoaderAwareCache(new Cache(cacheConfig), ServerMapLocalStoreFactory.class.getClassLoader());
   }
 }
