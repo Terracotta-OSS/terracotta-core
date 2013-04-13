@@ -35,9 +35,8 @@ import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Conversion;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -96,11 +95,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
   private final static Future<SampledRateCounter> completedFuture                     = new Future<SampledRateCounter>() {
 
-                                                                                        private final SampledRateCounter zeroStats = new SampledRateCounterImpl(
-                                                                                                                                                                new SampledRateCounterConfig(
-                                                                                                                                                                                             5,
-                                                                                                                                                                                             100,
-                                                                                                                                                                                             false));
+                                                                                        private final AggregateSampleRateCounter zeroStats = new AggregateSampleRateCounter();
 
                                                                                         @Override
                                                                                         public boolean cancel(boolean bln) {
@@ -424,6 +419,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           if (max != 0) {
             log("Percent usage:" + (usage.getUsedMemory() * 100 / max) + " reserved:" + (reserve * 100 / max)
                 + " poll time:" + (current - last) + " msec.");
+            try {
+                log("Resource usage: used memory - " + Conversion.memoryBytesAsSize(usage.getUsedMemory()));
+                log("Resource usage: reserve memory - " + Conversion.memoryBytesAsSize(reserve));
+                log("Resource usage: max memory - " + Conversion.memoryBytesAsSize(max));
+            } catch ( Conversion.MetricsFormatException me ) {
+                logger.warn("bad usage info", me);
+            } catch ( NumberFormatException number ) {
+                logger.warn("bad usage info", number);
+            }
             tick = System.currentTimeMillis();
             long count = pulse.getAndReset();
             if ( count > 0 ) {
