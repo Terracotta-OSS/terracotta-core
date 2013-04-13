@@ -100,6 +100,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         }
       }
 
+      defineBatch(nodeID, txns.size());
+
       this.filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, txnIDs, reader, txns, newObjectIDs));
 
       if (reader.containsSyncWriteTransaction()) {
@@ -108,7 +110,6 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
                                                                                syncWriteTxns));
       }
 
-      defineBatch(nodeID, txns.size());
       this.messageRecycler.addMessage(ctm, txnIDs);
     } catch (final Exception e) {
       logger.error("Error reading transaction batch. : ", e);
