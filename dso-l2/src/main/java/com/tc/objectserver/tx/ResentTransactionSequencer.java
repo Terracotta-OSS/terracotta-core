@@ -4,9 +4,12 @@
  */
 package com.tc.objectserver.tx;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
+import com.tc.l2.objectserver.ResentServerTransaction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -27,8 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * The whole purpose of this class is to reorder "resent" transactions so that they are broadcasted in the exact same
@@ -79,15 +80,17 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
 
   public void addTransactions(TransactionBatchContext batchContext) {
     boolean addPendingCallbacks = false;
-    TransactionBatchRecord record = new TransactionBatchRecord(batchContext);
+    TransactionBatchRecord record;
     synchronized (this) {
       State lstate = this.state;
       switch (lstate) {
         case PASS_THRU_PASSIVE:
         case PASS_THRU_ACTIVE:
+          record = new TransactionBatchRecord(batchContext, false);
           record.process();
           break;
         case INCOMING_RESENT:
+          record = new TransactionBatchRecord(batchContext, true);
           addToPending(record);
           addPendingCallbacks = processResent();
           break;
@@ -283,9 +286,11 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   private class TransactionBatchRecord {
     private final Set<ServerTransactionID> serverTransactionIDs = new HashSet<ServerTransactionID>();
     private final TransactionBatchContext batchContext;
+    private final boolean                  isResent;
 
-    TransactionBatchRecord(TransactionBatchContext batchContext) {
+    TransactionBatchRecord(TransactionBatchContext batchContext, boolean isResent) {
       this.batchContext = batchContext;
+      this.isResent = isResent;
       serverTransactionIDs.addAll(batchContext.getTransactionIDs());
     }
 
@@ -296,7 +301,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     void process() {
       Map<ServerTransactionID, ServerTransaction> transactions = new LinkedHashMap<ServerTransactionID, ServerTransaction>(batchContext.getTransactions().size());
       for (ServerTransaction txn : batchContext.getTransactions()) {
-        transactions.put(txn.getServerTransactionID(), txn);
+        transactions.put(txn.getServerTransactionID(), isResent ? new ResentServerTransaction(txn) : txn);
       }
       transactionManager.incomingTransactions(batchContext.getSourceNodeID(), transactions);
       replicatedObjectManager.relayTransactions(batchContext);
