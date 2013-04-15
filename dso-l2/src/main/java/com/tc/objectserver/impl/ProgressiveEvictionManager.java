@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -386,6 +387,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           evictionGrp.uncaughtException(Thread.currentThread(), exp);
         } catch (InterruptedException it) {
           logger.warn("eviction run", it);
+        } catch ( CancellationException cancelled ) {
+          logger.warn("eviction run", cancelled);
         }
       }
     });
@@ -450,9 +453,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
               try {
                   emergencyCount.addAndGet((int)((AggregateSampleRateCounter)currentRun.get()).getNumeratorValue());
               } catch ( InterruptedException ie ) {
-                  
+                  logger.warn(ie);
               } catch ( ExecutionException ee ) {
-                  
+                  logger.warn(ee);
+              } catch ( CancellationException cancelled)  {
+                  //  nothing run so don't add any
               }
               triggerEmergency(usage);
             }
@@ -503,9 +508,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       try {
           counted = emergencyCount.addAndGet((int)((AggregateSampleRateCounter)currentRun.get()).getNumeratorValue());
       } catch ( InterruptedException ie ) {
-
+          logger.warn(ie);
+          counted = emergencyCount.get();
       } catch ( ExecutionException ee ) {
-
+          logger.warn(ee);
+          counted = emergencyCount.get();
+      } catch ( CancellationException cancelled)  {
+          //  nothing run so don't add any
+          counted = emergencyCount.get();
       }
       isEmergency = false;
       log("Resource Eviction Stopped - " + (usage.getUsedMemory() * 100 / usage.getMaxMemory())  + "/"
