@@ -6,12 +6,12 @@ package com.tc.util.runtime;
 
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
-import com.tc.test.TestConfigObject;
 import com.tc.text.Banner;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
@@ -48,19 +48,6 @@ public class ThreadDump {
   }
 
   static PID getPID() {
-    return getPIDUsingFallback();
-
-    // try {
-    // return new PID(GetPid.getInstance().getPid(), "not available");
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    //
-    // // Use fallback mechanism
-    // return getPIDUsingFallback();
-    // }
-  }
-
-  static PID getPIDUsingFallback() {
     String vmName = ManagementFactory.getRuntimeMXBean().getName();
     int index = vmName.indexOf('@');
 
@@ -77,12 +64,7 @@ public class ThreadDump {
     for (int i = 0; i < iterations; i++) {
       for (PID pid : pids) {
         System.err.println("Requesting dump for PID " + pid.getPid());
-
-        if (Os.isWindows()) {
-          doWindowsDump(pid);
-        } else {
-          doUnixDump(pid);
-        }
+        doDump(pid);
         if (multiple) {
           // delay a bit to help prevent overlapped output
           ThreadUtil.reallySleep(50);
@@ -114,114 +96,75 @@ public class ThreadDump {
     dumpThreadsMany(iterations, delay, findAllJavaPIDs());
   }
 
-  private static void doUnixDump(PID pid) {
-    doSignal(new String[] { "-QUIT" }, pid);
-  }
-
-  private static void doWindowsDump(PID pid) {
-    if (Vm.dataModel() == 64) {
-      // SendSignal.exe doesn't work for 64 bit windows
-      // Display thread dump of PID on the console of this process
-      if (Vm.isHotSpot() || Vm.isOpenJdk()) {
-        doJstack(pid);
-      } else if (Vm.isJRockit()) {
-        doJrcmd(pid);
-      } else {
-        Banner.warnBanner("No support for this VM");
-      }
+  private static void doDump(PID pid) {
+    if (Vm.isJRockit()) {
+      doJrcmd(pid);
     } else {
-      doSignal(new String[] {}, pid);
+      doJstack(pid);
     }
   }
 
-  // private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
-  // IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-  // final Class ibmDumpClass = Class.forName("com.ibm.jvm.Dump");
-  // final Method ibmDumpMethod = ibmDumpClass.getDeclaredMethod("JavaDump", new Class[] {});
-  // ibmDumpMethod.invoke(null, new Object[] {});
-  // }
-
   private static void doJrcmd(PID pid) {
-    String jrcmd = getProgram("jrcmd.exe");
-
-    try {
-      Result result = Exec.execute(new String[] { jrcmd, String.valueOf(pid.getPid()), "print_threads" }, TIMEOUT);
-      System.err.println(result.getStdout() + result.getStderr());
-    } catch (Exception e) {
-      e.printStackTrace();
+    File jrcmd = getProgram("jrcmd");
+    if (jrcmd.isFile()) {
+      try {
+        Result result = Exec.execute(new String[] { jrcmd.getAbsolutePath(), String.valueOf(pid.getPid()), "print_threads" }, TIMEOUT);
+        System.err.println(result.getStdout() + result.getStderr());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      Banner.warnBanner("jrcmd not found");
     }
   }
 
   private static void doJstack(PID pid) {
-    String jstack = getProgram("jstack.exe");
-
-    try {
-      Result result = Exec.execute(new String[] { jstack, "-l", String.valueOf(pid.getPid()) }, TIMEOUT);
-      System.err.println(result.getStdout() + result.getStderr());
-    } catch (Exception e) {
-      e.printStackTrace();
+    File jstack = getProgram("jstack");
+    if (jstack.isFile()) {
+      try {
+        Result result = Exec.execute(new String[] { jstack.getAbsolutePath(), "-l", String.valueOf(pid.getPid()) }, TIMEOUT);
+        System.err.println(result.getStdout() + result.getStderr());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      Banner.warnBanner("jstack not found");
     }
   }
 
-  private static String getProgram(String prog) {
+  private static File getProgram(String prog) {
     File javaHome = new File(System.getProperty("java.home"));
     if (javaHome.getName().equals("jre")) {
       javaHome = javaHome.getParentFile();
     }
 
-    return new File(new File(javaHome, "bin"), prog).getAbsolutePath();
-  }
-
-  private static void doSignal(String[] args, PID pid) {
-    File program = SignalProgram.PROGRAM;
-
-    try {
-      String[] cmd = new String[1 + args.length + 1];
-      cmd[0] = program.getAbsolutePath();
-      System.arraycopy(args, 0, cmd, 1, args.length);
-
-      cmd[cmd.length - 1] = String.valueOf(pid.getPid());
-
-      Result result = Exec.execute(cmd, TIMEOUT);
-
-      System.err.print(result.getStderr());
-      System.err.flush();
-      System.out.print(result.getStdout());
-      System.out.flush();
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (Os.isWindows()) {
+      return new File(new File(javaHome, "bin"), prog + ".exe");
+    } else {
+      return new File(new File(javaHome, "bin"), prog);
     }
   }
 
   static Set<PID> findAllJavaPIDs() {
-    if (Os.isWindows()) {
-      return windowsFindAllJavaPIDs();
-    } else {
-      return unixFindAllJavaPIDs();
-    }
-  }
-
-  private static Set<PID> unixFindAllJavaPIDs() {
     Set<PID> pids = new HashSet<PID>();
 
+    File jpsCmd = getProgram("jps");
+    if (!jpsCmd.isFile()) {
+      Banner.warnBanner("jps not found");
+      return Collections.emptySet();
+    }
+    
     Result result;
     try {
-      // XXX: We could support better filtering on solaris eventually using either /usr/ucb/ps and/or pargs
-      // XXX: For now though we end up thread dumping all VMs (like we did before)
-      String cmdArg = Os.isSolaris() ? "comm" : "command";
-      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg }, TIMEOUT);
+      result = Exec.execute(new String[] { jpsCmd.getAbsolutePath(), "-lmv"}, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
+    Pattern pattern = Pattern.compile("^(\\d+)\\s+(.*)$");
+    String stdout = result.getStdout();
+    BufferedReader reader = new BufferedReader(new StringReader(stdout));
     try {
-      Pattern pattern = Pattern.compile("^(\\d+)\\s+(\\S+)\\s+(\\S+)(.*)$");
-
-      String stdout = result.getStdout();
-      BufferedReader reader = new BufferedReader(new StringReader(stdout));
-      reader.readLine(); // skip header line
-
-      String user = System.getProperty("user.name");
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
@@ -234,85 +177,15 @@ public class ThreadDump {
         }
 
         String pid = matcher.group(1);
-        String uid = matcher.group(2);
-        String cmd = matcher.group(3);
-        String args = matcher.group(4);
+        String cmd = matcher.group(2);
 
-        if (uid.equals(user) && cmd.endsWith("java")) {
-          if (skip(args)) {
-            continue;
-          }
-
-          boolean added = pids.add(new PID(Integer.parseInt(pid), line));
-          if (!added) {
+        if (!skip(cmd)) {
+          if (!pids.add(new PID(Integer.parseInt(pid), line))) {
             Banner.warnBanner("Found duplicate PID? " + line);
           }
         }
       }
-
-    } catch (Exception e) {
-      throw new RuntimeException(result.toString(), e);
-    }
-
-    return pids;
-  }
-
-  private static Set<PID> windowsFindAllJavaPIDs() {
-    Set<PID> pids = new HashSet<PID>();
-
-    Result result;
-    try {
-      result = Exec.execute(new String[] { "wmic", "process", "where", "name like 'java.exe'", "get",
-          "ProcessID,Commandline", "/format:list" }, TIMEOUT);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      String output = result.getStdout() + result.getStderr();
-      BufferedReader reader = new BufferedReader(new StringReader(output));
-
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (!line.startsWith("CommandLine=")) {
-          continue;
-        }
-
-        final String cmd = line.replaceFirst(Pattern.quote("CommandLine="), "");
-
-        if (skip(cmd)) {
-          continue;
-        }
-
-        // process should be included, find the PID line
-        String pidLine;
-        while (true) {
-          pidLine = reader.readLine();
-          if (pidLine == null) {
-            Banner.warnBanner("Unexpected EOF looking for PID");
-            return pids;
-          }
-          if (pidLine.trim().length() == 0) {
-            continue;
-          }
-
-          if (pidLine.startsWith("ProcessId=")) {
-            break;
-          } else {
-            Banner.warnBanner("Unexpected line looking for PID: " + pidLine);
-            continue;
-          }
-        }
-
-        String pid = pidLine.replaceFirst(Pattern.quote("ProcessId="), "");
-
-        boolean added = pids.add(new PID(Integer.parseInt(pid), cmd));
-        if (!added) {
-          Banner.warnBanner("Found duplicate PID? " + pidLine);
-        }
-      }
-
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new RuntimeException(result.toString(), e);
     }
 
@@ -359,43 +232,6 @@ public class ThreadDump {
     @Override
     public int hashCode() {
       return this.pid;
-    }
-  }
-
-  private static class SignalProgram {
-    static final File PROGRAM;
-
-    static {
-      PROGRAM = getSignalProgram();
-    }
-
-    private static File getSignalProgram() {
-      File rv = null;
-
-      if (Os.isWindows()) {
-        try {
-          rv = new File(TestConfigObject.getInstance().executableSearchPath(), "SendSignal.EXE");
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      } else {
-        File binKill = new File("/bin/kill");
-        File usrBinKill = new File("/usr/bin/kill");
-
-        if (binKill.exists()) {
-          rv = binKill;
-        } else if (usrBinKill.exists()) {
-          rv = usrBinKill;
-        }
-      }
-
-      if (rv != null) {
-        if (rv.exists() && rv.isFile()) { return rv; }
-        System.err.println("Cannot find signal program: " + rv.getAbsolutePath());
-        System.err.flush();
-      }
-
-      throw new RuntimeException("Cannot find signal program");
     }
   }
 }

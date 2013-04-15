@@ -5,7 +5,6 @@
 package com.tc.test;
 
 import org.apache.commons.lang.StringUtils;
-import org.terracotta.NativeToolHandler;
 
 import com.tc.config.Directories;
 import com.tc.lcp.LinkedJavaProcess;
@@ -343,24 +342,6 @@ public class TestConfigObject {
 
   public int appServerId() {
     return appServerInfo.getId();
-  }
-
-  public String executableSearchPath() {
-    NativeToolHandler toolHandler = new NativeToolHandler();
-
-    String nativeLibDirPath = toolHandler.getToolLocation().getAbsolutePath();
-    if (nativeLibDirPath == null) return null;
-
-    if (nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_32) || nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_64)) {
-      int lastSeparator = nativeLibDirPath.lastIndexOf(File.separator);
-      String vmType = System.getProperty("sun.arch.data.model");
-      if (vmType.equals("32")) {
-        nativeLibDirPath = nativeLibDirPath.substring(0, lastSeparator) + File.separator + NATIVE_LIB_LINUX_32;
-      } else if (vmType.equals("64")) {
-        nativeLibDirPath = nativeLibDirPath.substring(0, lastSeparator) + File.separator + NATIVE_LIB_LINUX_64;
-      }
-    }
-    return nativeLibDirPath;
   }
 
   public File cacheDir() {

@@ -368,11 +368,6 @@
         <artifactId>junit</artifactId>
         <version>4.8.1</version>
       </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>native-tool</artifactId>
-        <version>1.0.2</version>
-      </dependency>      
     </dependencies>
   </dependencyManagement>
 
@@ -386,21 +381,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>linked-child-process</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>native-tool</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-io</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.ant</groupId>
-          <artifactId>ant</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
