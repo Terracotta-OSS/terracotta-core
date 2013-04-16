@@ -261,4 +261,9 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   public NodesWithKeysMessage newNodesWithKeysMessage(final NodeID nodeID) {
     return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
   }
+
+  public NodesWithKeysMessage newRegisterCacheListenerMessage(final NodeID nodeID) {
+    return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
+  }
+
 }

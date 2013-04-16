@@ -8,6 +8,7 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
 
+import com.google.common.eventbus.EventBus;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -31,6 +32,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
+import com.tc.objectserver.interest.InterestPublisher;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -73,9 +75,11 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
+    final InterestPublisher interestPublisher = new InterestPublisher(new EventBus("testBus"));
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
         mock(ServerGlobalTransactionManager.class),
-        persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner());
+        persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner(),
+        interestPublisher);
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);

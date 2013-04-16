@@ -135,6 +135,7 @@ import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessageImpl;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
+import com.tc.object.msg.RegisterCacheListenerMessageImpl;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -945,6 +946,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 GetAllKeysServerMapRequestMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
+    messageTypeClassMapping.put(TCMessageType.REGISTER_CACHE_LISTENER_MESSAGE,
+                                RegisterCacheListenerMessageImpl.class);
     return messageTypeClassMapping;
   }
 

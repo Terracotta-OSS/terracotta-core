@@ -11,6 +11,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.objectserver.api.Destroyable;
+import com.tc.objectserver.interest.ModificationType;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -126,6 +127,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     Object old = get(key);
     references.remove(key);
     removedReferences(applyInfo, key, old);
+    if (old instanceof CDSMValue) {
+      final ObjectID objectId = ((CDSMValue)old).getObjectID();
+      applyInfo.getModificationRecorder().recordOperation(ModificationType.REMOVE, key, objectId);
+    }
     return old;
   }
 

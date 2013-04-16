@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
+import com.tc.objectserver.interest.ModificationType;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
@@ -289,17 +290,21 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   protected Object applyPut(final ApplyTransactionInfo applyInfo, Object[] params) {
-    Object key = params[0];
-    CDSMValue value;
+    final Object key = params[0];
+    final ObjectID oid = (ObjectID)params[1];
+    final CDSMValue value;
     if (params.length == 6) {
-      value = new CDSMValue((ObjectID) params[1], (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
+      value = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
     } else {
-      value = new CDSMValue((ObjectID) params[1], 0, 0, 0, 0);
+      value = new CDSMValue(oid, 0, 0, 0, 0);
     }
 
-    CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
+    final CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
     addValue(applyInfo, params[1], old != null);
     startCapacityEvictionIfNeccessary(applyInfo);
+    // collect PUT modifications for futher broadcasting
+    //TODO: should we distinct between PUT and UPDATE ?
+    applyInfo.getModificationRecorder().recordOperation(ModificationType.PUT, key, oid);
     return old;
   }
   
@@ -360,6 +365,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
+      applyInfo.getModificationRecorder().recordOperation(ModificationType.REMOVE, key, (ObjectID)value);
     }
   }
 

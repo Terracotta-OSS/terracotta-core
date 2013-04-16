@@ -60,6 +60,8 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
           final Object array = pa.getObject();
           if (array instanceof byte[]) {
             this.value = (byte[]) array;
+            // collect [oid, value] pair for futher broadcasting
+            includeIDs.getModificationRecorder().recordOperationValue(objectID, value);
           } else {
             final String type = safeTypeName(array);
             logger.error("received array of type " + type + " -- ignoring it");

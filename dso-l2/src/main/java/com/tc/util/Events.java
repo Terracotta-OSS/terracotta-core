@@ -30,7 +30,7 @@ public final class Events {
   /**
    * Immutable event, can be cached.
    */
-  public static enum OperationCountIncrementEvent {
+  public enum OperationCountIncrementEvent {
     INSTANCE
   }
 

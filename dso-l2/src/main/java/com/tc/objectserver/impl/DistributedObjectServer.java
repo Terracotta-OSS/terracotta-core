@@ -129,6 +129,7 @@ import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessageImpl;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
+import com.tc.object.msg.RegisterCacheListenerMessageImpl;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -183,6 +184,7 @@ import com.tc.objectserver.handler.JMXEventsHandler;
 import com.tc.objectserver.handler.LowWaterMarkCallbackHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.RegisterCacheListenerHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RequestObjectIDBatchHandler;
 import com.tc.objectserver.handler.RequestRootHandler;
@@ -200,6 +202,7 @@ import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handler.TransactionLowWaterMarkHandler;
 import com.tc.objectserver.handler.ValidateObjectsHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import com.tc.objectserver.interest.InterestPublisher;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -775,11 +778,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
         maxStageSize);
 
+    // cache interest related objects
+    final EventBus interestBus = new EventBus("interestBus");
+    final InterestPublisher interestPublisher = new InterestPublisher(interestBus);
+
     // Lookup stage should never be blocked trying to add to apply stage
     int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor
-                                 .getPersistenceTransactionProvider(), taskRunner), applyStageThreads, 1, -1);
+                                 .getPersistenceTransactionProvider(), taskRunner, interestPublisher), applyStageThreads, 1, -1);
 
     txnStageCoordinator.lookUpSinks();
 
@@ -903,15 +910,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Stage clientLockStatisticsRespondStage = stageManager
         .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_RESPOND_STAGE,
-                     new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
+            new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
-                                                                new ServerClusterMetaDataHandler(), 1, maxStageSize);
+        new ServerClusterMetaDataHandler(), 1, maxStageSize);
+
+    final InClusterInterestBroadcaster evictionBroadcastManager =
+        new InClusterInterestBroadcaster(channelManager);
+    interestBus.register(evictionBroadcastManager);
+
+    final Stage registerCacheListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_CACHE_LISTENER_STAGE,
+        new RegisterCacheListenerHandler(evictionBroadcastManager), 1, maxStageSize);
 
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
         transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
         clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
-        searchQueryRequestStage);
+        searchQueryRequestStage, registerCacheListenerStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
@@ -1121,7 +1135,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    final Stage transactionAck, final Stage clientHandshake, final Stage txnLwmStage,
                                    final Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
                                    final Stage clientLockStatisticsRespondStage, final Stage clusterMetaDataStage,
-                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage) {
+                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage,
+                                   final Stage registerCacheListenerStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -1156,7 +1171,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    serverMapRequestStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
                                    hydrateSink);
-
+    messageRouter.routeMessageType(TCMessageType.REGISTER_CACHE_LISTENER_MESSAGE, registerCacheListenerStage.getSink(),
+                                   hydrateSink);
   }
 
   private HashMap<TCMessageType, Class> getMessageTypeClassMappings() {
@@ -1226,6 +1242,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
+    messageTypeClassMapping.put(TCMessageType.REGISTER_CACHE_LISTENER_MESSAGE,
+                                RegisterCacheListenerMessageImpl.class);
     return messageTypeClassMapping;
   }
 

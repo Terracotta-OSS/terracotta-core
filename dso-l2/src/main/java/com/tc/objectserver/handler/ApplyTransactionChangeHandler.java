@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.handler;
 
+import com.google.common.collect.Lists;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
@@ -24,6 +25,10 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.interest.Interest;
+import com.tc.objectserver.interest.InterestPublisher;
+import com.tc.objectserver.interest.Modification;
+import com.tc.objectserver.interest.ModificationToInterest;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -38,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -63,13 +69,16 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private final ThreadLocal<CommitContext> localCommitContext = new ThreadLocal<CommitContext>();
   private GarbageCollectionManager garbageCollectionManager;
+  private final InterestPublisher interestPublisher;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
                                        final GlobalTransactionManager gtxm,
                                        final TransactionProvider persistenceTransactionProvider,
-                                       final TaskRunner taskRunner) {
+                                       final TaskRunner taskRunner,
+                                       final InterestPublisher interestPublisher) {
     this.instanceMonitor = instanceMonitor;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
+    this.interestPublisher = interestPublisher;
     final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
     timer.scheduleAtFixedRate(new Runnable() {
       @Override
@@ -96,6 +105,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete());
       txnObjectMgr.applyTransactionComplete(applyInfo);
+      publishModifications(applyInfo);
     } else {
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
@@ -124,6 +134,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     commit(atc, applyInfo);
+  }
+
+  private void publishModifications(final ApplyTransactionInfo applyInfo) {
+    final List<Modification> modifications = applyInfo.getModificationRecorder().getModifications();
+    final List<Interest> interests = Lists.transform(modifications, ModificationToInterest.FUNCTION);
+    interestPublisher.post(interests);
   }
 
   private void begin() {
