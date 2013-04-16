@@ -138,7 +138,6 @@ import com.tc.object.msg.SearchQueryRequestMessageImpl;
 import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
-import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -660,7 +659,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
 
-    final ChannelStatsImpl channelStats = new ChannelStatsImpl(this.sampledCounterManager, channelManager);
+    final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
+    ManagedObjectStateFactory.getInstance().getOperationEventBus().register(channelStats);
     channelManager.addEventListener(channelStats);
 
     final CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
@@ -1091,8 +1091,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     @Subscribe
-    public void recordOperationCountIncrementEvent(final Events.OperationCountIncrementEvent event) {
-      this.counter.increment();
+    public void writeOperationCountEvent(final Events.WriteOperationCountChangeEvent event) {
+      this.counter.increment(event.getDelta());
     }
   }
 

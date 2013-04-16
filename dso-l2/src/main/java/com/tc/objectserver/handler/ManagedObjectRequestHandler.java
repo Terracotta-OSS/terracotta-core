@@ -74,13 +74,10 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     final int numObjectsRequested = requestedIDs.size();
     if (numObjectsRequested != 0) {
       this.globalObjectRequestCounter.increment(numObjectsRequested);
-      this.channelStats.notifyObjectRequest(channel, numObjectsRequested);
+      this.channelStats.notifyReadOperations(channel, numObjectsRequested);
     }
 
     final int numObjectsRemoved = removedIDs.size();
-    if (numObjectsRemoved != 0) {
-      this.channelStats.notifyObjectRemove(channel, numObjectsRemoved);
-    }
 
     if (numObjectsRequested > 0 || numObjectsRemoved > 0) {
       long t = System.currentTimeMillis();

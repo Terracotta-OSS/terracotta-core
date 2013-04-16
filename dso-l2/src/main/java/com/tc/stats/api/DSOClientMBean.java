@@ -39,9 +39,9 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   long getTransactionRate();
 
-  long getObjectFaultRate();
+  long getReadRate();
 
-  long getObjectFlushRate();
+  long getWriteRate();
 
   long getPendingTransactionsCount();
 

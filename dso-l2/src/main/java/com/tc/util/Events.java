@@ -4,6 +4,8 @@
 
 package com.tc.util;
 
+import com.tc.net.NodeID;
+
 /**
  * Static utility methods to access event instances.
  *
@@ -16,33 +18,32 @@ public final class Events {
   /**
    * Constructs an event what notifies subscribers about new map mutation operation.
    */
-  public static OperationCountIncrementEvent operationCountIncrementEvent() {
-    return OperationCountIncrementEvent.INSTANCE;
+  public static WriteOperationCountChangeEvent writeOperationCountIncrementEvent(NodeID source) {
+    return writeOperationCountChangeEvent(source, 1);
   }
 
   /**
    * Constructs an event what notifies subscribers about new map mutation operations.
    */
-  public static OperationCountChangeEvent operationCountChangeEvent(int delta) {
-    return new OperationCountChangeEvent(delta);
+  public static WriteOperationCountChangeEvent writeOperationCountChangeEvent(NodeID source, int delta) {
+    return new WriteOperationCountChangeEvent(source, delta);
   }
 
-  /**
-   * Immutable event, can be cached.
-   */
-  public static enum OperationCountIncrementEvent {
-    INSTANCE
-  }
-
-  public static final class OperationCountChangeEvent {
+  public static final class WriteOperationCountChangeEvent {
+    private final NodeID source;
     private final int delta;
 
-    OperationCountChangeEvent(final int delta) {
+    WriteOperationCountChangeEvent(final NodeID source, final int delta) {
+      this.source = source;
       this.delta = delta;
     }
 
     public int getDelta() {
       return delta;
+    }
+
+    public NodeID getSource() {
+      return source;
     }
   }
 }

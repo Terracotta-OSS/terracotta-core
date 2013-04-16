@@ -99,12 +99,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     }
 
     @Override
-    public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-      this.channelRemCounter.increment(numObjectsRemoved);
-    }
-
-    @Override
-    public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+    public void notifyReadOperations(MessageChannel channel, int numObjectsRequested) {
       this.channelReqCounter.increment(numObjectsRequested);
     }
 

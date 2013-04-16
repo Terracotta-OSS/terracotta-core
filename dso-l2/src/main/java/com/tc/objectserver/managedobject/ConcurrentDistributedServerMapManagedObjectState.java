@@ -139,13 +139,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
       throws IOException {
     boolean broadcast = false;
+    int eventCount = 0;
     while (cursor.next()) {
       final Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
         applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
       } else { // LogicalAction
         // notify subscribers about the mutation operation
-        getOperationEventBus().post(Events.operationCountIncrementEvent());
+        eventCount++;
 
         final LogicalAction logicalAction = (LogicalAction)action;
         final int method = logicalAction.getMethod();
@@ -159,6 +160,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
           broadcast = true;
         }
       }
+    }
+    if (eventCount != 0) {
+      getOperationEventBus().post(Events.writeOperationCountChangeEvent(applyInfo.getServerTransactionID().getSourceID(), eventCount));
     }
     if (!broadcast) {
       applyInfo.ignoreBroadcastFor(objectID);

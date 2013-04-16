@@ -145,7 +145,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
               objectIdstoPrefetch = clientStateManager.addReferences(clientID, objectIdsForKeys);
               MessageChannel channel = getActiveChannel(clientID);
               if (channel != null) {
-                this.channelStats.notifyObjectRequest(channel, objectIdstoPrefetch.size());
+                this.channelStats.notifyReadOperations(channel, objectIdstoPrefetch.size());
               }
             }
 

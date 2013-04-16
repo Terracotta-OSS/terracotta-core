@@ -55,8 +55,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private TerracottaOperatorEventsMBean        l1OperatorEventsBean;
   private final MessageChannel                 channel;
   private final SampledCounter                 txnRate;
-  private final SampledCounter                 flushRate;
-  private final SampledCounter                 faultRate;
+  private final SampledCounter                 writeRate;
+  private final SampledCounter                 readRate;
   private final Counter                        pendingTransactions;
   private final AtomicLong                     sequenceNumber          = new AtomicLong(0L);
   private final SampledCumulativeCounter       serverMapGetSizeRequestsCounter;
@@ -87,8 +87,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.clientID = clientID;
     this.stateManager = stateManager;
     this.txnRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.TXN_RATE);
-    this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
-    this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
+    this.writeRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.WRITE_RATE);
+    this.readRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.READ_RATE);
     this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
     this.serverMapGetSizeRequestsCounter = (SampledCumulativeCounter) channelStats
         .getCounter(channel, ChannelStats.SERVER_MAP_GET_SIZE_REQUESTS);
@@ -261,13 +261,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   @Override
-  public long getObjectFaultRate() {
-    return faultRate.getMostRecentSample().getCounterValue();
+  public long getReadRate() {
+    return readRate.getMostRecentSample().getCounterValue();
   }
 
   @Override
-  public long getObjectFlushRate() {
-    return flushRate.getMostRecentSample().getCounterValue();
+  public long getWriteRate() {
+    return writeRate.getMostRecentSample().getCounterValue();
   }
 
   @Override

@@ -245,8 +245,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     private int count;
 
     @Subscribe
-    public void recordOperationCountIncrementEvent(Events.OperationCountIncrementEvent event) {
-      this.count++;
+    public void writeOperationCountEvent(Events.WriteOperationCountChangeEvent event) {
+      this.count += event.getDelta();
     }
   }
 

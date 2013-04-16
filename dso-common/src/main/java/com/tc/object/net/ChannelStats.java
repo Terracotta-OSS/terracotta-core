@@ -10,8 +10,8 @@ import com.tc.stats.counter.Counter;
 
 public interface ChannelStats {
 
-  public static final String OBJECT_REQUEST_RATE           = "objectRequestRate";
-  public static final String OBJECT_FLUSH_RATE             = "objectFlushRate";
+  public static final String READ_RATE                     = "readRate";
+  public static final String WRITE_RATE                    = "writeRate";
   public static final String TXN_RATE                      = "transactionRate";
   public static final String PENDING_TRANSACTIONS          = "pendingTransactions";
   public static final String SERVER_MAP_GET_VALUE_REQUESTS = "serverMapGetValueRequests";
@@ -21,9 +21,7 @@ public interface ChannelStats {
 
   public void notifyTransaction(NodeID nodeID, int numTxns);
 
-  public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved);
-
-  public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested);
+  void notifyReadOperations(MessageChannel channel, int numObjectsRequested);
 
   public void notifyTransactionBroadcastedTo(NodeID nodeID);
 
