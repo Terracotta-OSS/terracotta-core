@@ -83,8 +83,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback,
-    PortableObjectProvider, Evictable, PrettyPrintable {
+public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
+    Evictable, PrettyPrintable {
 
   private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
@@ -105,20 +105,20 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private static final int                      COMMIT_SIZE                  = 100;
 
-  private volatile State                                 state                        = RUNNING;
-  private final ConcurrentMap<Object, TCObject>       pojoToManaged                = new MapMaker()
+  private volatile State                        state                        = RUNNING;
+  private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
 
   private final ClassProvider                   classProvider;
   private final RemoteObjectManager             remoteObjectManager;
-  private final Traverser                             traverser;
-  private final TraverseTest                          traverseTest;
+  private final Traverser                       traverser;
+  private final TraverseTest                    traverseTest;
   private final DSOClientConfigHelper           clientConfiguration;
   private final TCClassFactory                  clazzFactory;
   private final ObjectIDProvider                idProvider;
   private final TCObjectFactory                 factory;
-  private final ObjectStore                           objectStore;
+  private final ObjectStore                     objectStore;
 
   private ClientTransactionManager              clientTxManager;
 
@@ -129,11 +129,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Portability                     portability;
   private final DSOClientMessageChannel         channel;
   private final ToggleableReferenceManager      referenceManager;
-  private final ReferenceQueue                        referenceQueue               = new ReferenceQueue();
+  private final ReferenceQueue                  referenceQueue               = new ReferenceQueue();
 
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-  private final Map<ObjectID, ObjectLatchState>       objectLatchStateMap          = new HashMap();
+  private final Map<ObjectID, ObjectLatchState> objectLatchStateMap          = new HashMap();
   private final ThreadLocal<LocalLookupContext> localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
@@ -147,24 +147,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
-                                 final ClientIDProvider provider,
-                                 final ClassProvider classProvider, final TCClassFactory classFactory,
-                                 final TCObjectFactory objectFactory, final Portability portability,
-                                 final DSOClientMessageChannel channel,
+                                 final ClientIDProvider provider, final ClassProvider classProvider,
+                                 final TCClassFactory classFactory, final TCObjectFactory objectFactory,
+                                 final Portability portability, final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager,
                                  TCObjectSelfStore tcObjectSelfStore,
                                  AbortableOperationManager abortableOperationManager) {
-    this(remoteObjectManager, clientConfiguration, idProvider, provider, classProvider, classFactory,
-         objectFactory, portability, channel, referenceManager, tcObjectSelfStore,
-         new RootsHolder(new GroupID[] { new GroupID(0) }), abortableOperationManager);
+    this(remoteObjectManager, clientConfiguration, idProvider, provider, classProvider, classFactory, objectFactory,
+         portability, channel, referenceManager, tcObjectSelfStore, new RootsHolder(new GroupID[] { new GroupID(0) }),
+         abortableOperationManager);
   }
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
-                                 final ClientIDProvider provider,
-                                 final ClassProvider classProvider, final TCClassFactory classFactory,
-                                 final TCObjectFactory objectFactory, final Portability portability,
-                                 final DSOClientMessageChannel channel,
+                                 final ClientIDProvider provider, final ClassProvider classProvider,
+                                 final TCClassFactory classFactory, final TCObjectFactory objectFactory,
+                                 final Portability portability, final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager,
                                  TCObjectSelfStore tcObjectSelfStore, RootsHolder holder,
                                  AbortableOperationManager abortableOperationManager) {
@@ -284,22 +282,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void waitUntilRunningAbortable() throws AbortedOperationException {
     boolean isInterrupted = false;
-    if ( this.state == RUNNING ) { return; }
+    if (this.state == RUNNING) { return; }
     synchronized (this) {
-    try {
-      while (this.state != RUNNING) {
-        if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
-        if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-          isInterrupted = true;
+      try {
+        while (this.state != RUNNING) {
+          if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
+          if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
+          try {
+            wait();
+          } catch (final InterruptedException e) {
+            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
+            isInterrupted = true;
+          }
         }
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
       }
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
-    }
     }
   }
 
@@ -508,7 +506,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
-   *
+   * 
    * @param id Object identifier
    * @throws AbortedOperationException
    */
@@ -610,6 +608,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return lookup(id, null, false, true);
   }
+
   private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
       throws AbortedOperationException, ClassNotFoundException {
     TCObject obj = null;
@@ -1050,22 +1049,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 
     isNew = retrieveNeeded || (rootID.isNull() && create);
-      if (retrieveNeeded) {
-        rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
-      }
+    if (retrieveNeeded) {
+      rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
+    }
 
-      if (rootID.isNull() && create) {
-        Assert.assertNotNull(rootPojo);
-        // TODO:: Optimize this, do lazy instantiation
-        TCObject root = null;
-        if (isLiteralPojo(rootPojo)) {
-          root = basicCreate(rootPojo, gid);
-        } else {
-          root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
-                                gid);
-        }
-        rootID = root.getObjectID();
-        this.clientTxManager.createRoot(rootName, rootID);
+    if (rootID.isNull() && create) {
+      Assert.assertNotNull(rootPojo);
+      // TODO:: Optimize this, do lazy instantiation
+      TCObject root = null;
+      if (isLiteralPojo(rootPojo)) {
+        root = basicCreate(rootPojo, gid);
+      } else {
+        root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
+                              gid);
+      }
+      rootID = root.getObjectID();
+      this.clientTxManager.createRoot(rootName, rootID);
     }
     synchronized (this) {
       if (isNew && !rootID.isNull()) {
@@ -1074,8 +1073,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (lookupInProgress) {
         markRootLookupNotInProgress(rootName, gid);
         notifyAll();
-        }
       }
+    }
 
     try {
       return lookupObject(rootID, null, noDepth, false);
@@ -1115,30 +1114,30 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private synchronized void basicAddLocal(final TCObject obj, final boolean fromLookup) {
-      final ObjectID id = obj.getObjectID();
-      if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: Object of class "
-                                                    + obj.getClass() + " [Identity Hashcode : 0x"
-                                                    + Integer.toHexString(System.identityHashCode(obj)) + "] "); }
-      this.objectStore.add(obj);
+    final ObjectID id = obj.getObjectID();
+    if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: Object of class "
+                                                  + obj.getClass() + " [Identity Hashcode : 0x"
+                                                  + Integer.toHexString(System.identityHashCode(obj)) + "] "); }
+    this.objectStore.add(obj);
 
-      final Object pojo = obj.getPeerObject();
+    final Object pojo = obj.getPeerObject();
 
-      if (pojo != null) {
-        if (pojo instanceof Manageable) {
-          final Manageable m = (Manageable) pojo;
-          if (m.__tc_managed() == null) {
-            m.__tc_managed(obj);
-          } else {
-            Assert.assertTrue(m.__tc_managed() == obj);
-          }
+    if (pojo != null) {
+      if (pojo instanceof Manageable) {
+        final Manageable m = (Manageable) pojo;
+        if (m.__tc_managed() == null) {
+          m.__tc_managed(obj);
         } else {
-          if (!isLiteralPojo(pojo)) {
-            this.pojoToManaged.put(pojo, obj);
-          }
+          Assert.assertTrue(m.__tc_managed() == obj);
+        }
+      } else {
+        if (!isLiteralPojo(pojo)) {
+          this.pojoToManaged.put(pojo, obj);
         }
       }
-      lookupDone(id, fromLookup);
-      notifyAll();
+    }
+    lookupDone(id, fromLookup);
+    notifyAll();
   }
 
   private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action,
@@ -1265,11 +1264,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
     reserveObjectIds(pojos.size(), gid);
 
-      final List tcObjects = new ArrayList(pojos.size());
-      for (final Iterator i = pojos.iterator(); i.hasNext();) {
-        tcObjects.add(basicCreateIfNecessary(i.next(), gid));
-      }
-      return tcObjects;
+    final List tcObjects = new ArrayList(pojos.size());
+    for (final Iterator i = pojos.iterator(); i.hasNext();) {
+      tcObjects.add(basicCreateIfNecessary(i.next(), gid));
+    }
+    return tcObjects;
   }
 
   private void reserveObjectIds(final int size, final GroupID gid) {
