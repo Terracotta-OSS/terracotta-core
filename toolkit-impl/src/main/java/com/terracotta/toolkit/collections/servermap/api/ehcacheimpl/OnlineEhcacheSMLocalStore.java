@@ -9,12 +9,11 @@ import net.sf.ehcache.config.PinningConfiguration;
 import net.sf.ehcache.config.PinningConfiguration.Store;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFullException;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> {
@@ -48,12 +47,12 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
 
   @Override
   public List<Object> getKeys() {
-    return Lists.transform(localStoreCache.getKeys(), new Function<Object, Object>() {
-      @Override
-      public Object apply(Object key) {
-        return decode(key);
-      }
-    });
+    List encodedKeys = this.localStoreCache.getKeys();
+    List rv = new ArrayList(encodedKeys.size());
+    for (Object key : this.localStoreCache.getKeys()) {
+      rv.add(decode(key));
+    }
+    return rv;
   }
 
   @Override
