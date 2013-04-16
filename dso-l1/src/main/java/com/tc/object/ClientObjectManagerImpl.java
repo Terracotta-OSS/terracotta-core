@@ -1265,10 +1265,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
     reserveObjectIds(pojos.size(), gid);
 
-      if ( this.state != RUNNING ) {
-          waitUntilRunningAbortable();
-      }
-      
       final List tcObjects = new ArrayList(pojos.size());
       for (final Iterator i = pojos.iterator(); i.hasNext();) {
         tcObjects.add(basicCreateIfNecessary(i.next(), gid));
