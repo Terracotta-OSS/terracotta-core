@@ -27,12 +27,7 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
 
   @Override
   public Collection<ThreadDumpEntity> getClusterThreadDump() throws ServiceExecutionException {
-    Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
-
-    threadDumpEntities.addAll(tsaManagementClientService.serversThreadDump(null));
-    threadDumpEntities.addAll(tsaManagementClientService.clientsThreadDump(null));
-
-    return threadDumpEntities;
+    return tsaManagementClientService.clusterThreadDump();
   }
 
   @Override

@@ -111,6 +111,83 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
+  public Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException {
+    List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
+
+          Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+            @Override
+            public ThreadDumpEntity call() throws Exception {
+              return serverTheadDump(sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
+        }
+      }
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting remote servers thread dump", e);
+    }
+
+    JMXConnector jmxConnector = null;
+    try {
+      final MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsL1MBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingL1MBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          return Collections.emptyList();
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+
+      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+      for (final ObjectName clientObjectName : clientObjectNames) {
+        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+
+        Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+          @Override
+          public ThreadDumpEntity call() throws Exception {
+            return clientThreadDump(mBeanServerConnection, clientObjectName, clientId);
+          }
+        });
+        futures.add(future);
+      }
+
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting client stack traces", e);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+
+    try {
+      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+      for (Future<ThreadDumpEntity> future : futures) {
+        ThreadDumpEntity threadDumpEntity = future.get();
+        threadDumpEntities.add(threadDumpEntity);
+      }
+      return threadDumpEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting cluster thread dump", e);
+    }
+  }
+
+  @Override
   public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
