@@ -116,12 +116,12 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
   private String getTerracottaUrlFromSubName(String subName) throws ToolkitInstantiationException {
     StringBuilder tcUrl = new StringBuilder();
 
-    // toolkitUrl is of form: 'toolkit:terracotta://server:port'
+    // toolkitUrl is of form: 'toolkit:terracotta://server:tsa-port'
     if (subName == null || !subName.startsWith("//")) {
       //
       throw new ToolkitInstantiationException(
                                               "'subName' in toolkitUrl for toolkit type 'terracotta' should start with '//', "
-                                                  + "and should be of form: 'toolkit:terracotta://server:port' - "
+                                                  + "and should be of form: 'toolkit:terracotta://server:tsa-port' - "
                                                   + subName);
     }
     String terracottaUrl = subName.substring(2);
@@ -129,7 +129,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
     if (terracottaUrl == null || terracottaUrl.equals("")) {
       //
       throw new ToolkitInstantiationException(
-                                              "toolkitUrl should be of form: 'toolkit:terracotta://server:port', server:port not specified after 'toolkit:terracotta://' in toolkitUrl - "
+                                              "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', server:port not specified after 'toolkit:terracotta://' in toolkitUrl - "
                                                   + subName);
     }
     // ignore last comma, if any
@@ -143,13 +143,13 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
       if (tokens.length != 2) {
         //
         throw new ToolkitInstantiationException(
-                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:port', invalid server:port specified - '"
+                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified - '"
                                                     + serverPortToken + "'");
       }
       if (!isValidInteger(tokens[1])) {
         //
         throw new ToolkitInstantiationException(
-                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:port', invalid server:port specified in token - '"
+                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified in token - '"
                                                     + serverPortToken + "', 'port' is not a valid integer - "
                                                     + tokens[1]);
       }
