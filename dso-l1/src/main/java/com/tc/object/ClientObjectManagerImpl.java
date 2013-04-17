@@ -1058,7 +1058,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // TODO:: Optimize this, do lazy instantiation
       TCObject root = null;
       if (isLiteralPojo(rootPojo)) {
-        root = basicCreate(rootPojo, gid);
+        throw new UnsupportedOperationException("Literal Roots are Not supported");
       } else {
         root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
                               gid);
@@ -1081,11 +1081,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     } catch (AbortedOperationException e) {
       throw new TCRuntimeException(e);
     }
-  }
-
-  private TCObject basicCreate(final Object rootPojo, GroupID gid) {
-    reserveObjectIds(1, gid);
-    return basicCreateIfNecessary(rootPojo, gid);
   }
 
   private TCObject basicLookupByID(final ObjectID id) {
