@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Eventual Mapping
  * <ul>
- * <li>key -> (value, valuoid)</li>
+ * <li>key -> (value, valueoid)</li>
  * <li>valueoid -> key</li>
  * </ul>
  * <p/>

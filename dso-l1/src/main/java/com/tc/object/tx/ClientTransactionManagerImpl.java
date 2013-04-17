@@ -284,8 +284,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
     if (aborted) {
       notifyTransactionAborted(tx);
-      // If aborted and transaction is not empty then
-      // throw AbortedOperationException
+      // If aborted and transaction is not empty then throw AbortedOperationException
       if (tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
     }
   }
