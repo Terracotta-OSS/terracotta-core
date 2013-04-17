@@ -93,8 +93,8 @@ public class PipeSocket extends Socket {
   }
 
   public void closeRead() throws IOException {
-    inputPipe.source().close();
     inputPipe.sink().close();
+    inputPipe.source().close();
   }
 
   public void closeWrite() throws IOException {
