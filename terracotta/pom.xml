@@ -70,7 +70,8 @@
       <id>devmode</id>      
       <activation>
         <property>
-          <name>!fullmode</name>
+          <name>devmode</name>
+          <value>true</value>
         </property>
       </activation>
       <properties>
@@ -103,8 +104,13 @@
 
     <profile>
       <id>fullmode</id>
+      <activation>
+        <property>
+          <name>devmode</name>
+          <value>false</value>
+        </property>
+      </activation>      
       <properties>
-        <fullmode>true</fullmode>
         <excludeGroupIdsForClasspath>org.terracotta.internal</excludeGroupIdsForClasspath>
       </properties>
       <build>
