@@ -215,6 +215,7 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.OffheapStatsImpl;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
+import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
@@ -351,6 +352,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private IndexHACoordinator                     indexHACoordinator;
   private MetaDataManager                        metaDataManager;
   private SearchRequestManager                   searchRequestManager;
+
+  private EvictionTransactionPersistor           evictionTransactionPersistor;
 
   private final CallbackDumpHandler              dumpHandler      = new CallbackDumpHandler();
 
@@ -544,6 +547,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     MutableSequence gidSequence;
     TransactionPersistor transactionPersistor = this.persistor.getTransactionPersistor();
+    this.evictionTransactionPersistor = persistor.getEvictionTransactionPersistor();
+
     gidSequence = this.persistor.getGlobalTransactionIDSequence();
 
     final GlobalTransactionIDBatchRequestHandler gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
@@ -851,7 +856,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
                                                            objectStore, clientObjectReferenceSet,
                                                            serverTransactionFactory, threadGroup, resourceManager,
-                                                           sampledCounterManager);
+                                                           sampledCounterManager, evictionTransactionPersistor);
 
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));

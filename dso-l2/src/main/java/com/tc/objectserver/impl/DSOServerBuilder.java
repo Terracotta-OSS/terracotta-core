@@ -49,6 +49,8 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.EvictionTransactionPersistor;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;

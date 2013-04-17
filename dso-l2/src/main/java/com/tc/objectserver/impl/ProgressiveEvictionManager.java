@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.async.api.ConfigurationContext;
@@ -139,12 +140,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   public ProgressiveEvictionManager(final ObjectManager mgr,final MonitoredResource monitored, final PersistentManagedObjectStore store,
                                     final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
-                                    final CounterManager counterManager) {
+                                    final CounterManager counterManager,
+                                    final EvictionTransactionPersistor evictionTransactionPersistor) {
     this.objectManager = mgr;
     this.store = store;
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
-    this.evictor = new ServerMapEvictionEngine(mgr, trans);
+    this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor);
     // assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
     this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
 
