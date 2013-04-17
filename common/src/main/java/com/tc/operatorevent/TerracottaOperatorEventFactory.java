@@ -22,37 +22,11 @@ public class TerracottaOperatorEventFactory {
                                                                 arguments), "");
   }
 
-  public static TerracottaOperatorEvent createLongGCAndRecommendationOperatorEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getLongGCAndOffheapRecommendationMessage(), arguments), "");
-  }
-
   public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage, int critcalThreshold) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER,
                                            MessageFormat.format(TerracottaOperatorEventResources
                                                .getHighMemoryUsageMessage(), new Object[] { memoryUsage,
                                                critcalThreshold }), "");
-  }
-
-  public static TerracottaOperatorEvent createOffHeapMemoryUsageEvent(String allocated, String maxSize,
-                                                                      int percentageUsed) {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.MEMORY_MANAGER,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getOffHeapMemoryUsageMessage(), new Object[] { allocated, maxSize,
-                                               percentageUsed }), "");
-  }
-
-  public static TerracottaOperatorEvent createOffHeapMemoryEvictionEvent() {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER,
-                                           TerracottaOperatorEventResources.getOffHeapMemoryEvictionMessage(), "");
-  }
-
-  public static TerracottaOperatorEvent createOffHeapObjectCachedEvent(int objectCachedPercentage) {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.MEMORY_MANAGER,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                                                    .getOffHeapObjectCachedMessage(),
-                                                                new Object[] { objectCachedPercentage }), "");
   }
 
   /**
@@ -153,12 +127,15 @@ public class TerracottaOperatorEventFactory {
 
   public static TerracottaOperatorEvent createDirtyDBEvent() {
     String restart;
+    EventType type;
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_AUTODELETE)) {
+      type = EventType.INFO;
       restart = "enabled";
     } else {
+      type = EventType.ERROR;
       restart = "disabled";
     }
-    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY,
+    return new TerracottaOperatorEventImpl(type, EventSubsystem.CLUSTER_TOPOLOGY,
                                            MessageFormat.format(TerracottaOperatorEventResources.getDirtyDBMessage(),
                                                                 new Object[] { restart }), "");
   }
@@ -188,7 +165,7 @@ public class TerracottaOperatorEventFactory {
    * Cluster state events
    */
   public static TerracottaOperatorEvent createActiveServerWithOldDataBaseEvent(String serverName) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.SYSTEM_SETUP,
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.SYSTEM_SETUP,
                                            MessageFormat.format(TerracottaOperatorEventResources
                                                .getActiveStartedWithOldDBMessage(), new Object[] { serverName }),
                                            "old db");
