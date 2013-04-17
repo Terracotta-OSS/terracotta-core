@@ -89,6 +89,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
+  @Override
   public void notifyReadOperations(MessageChannel channel, int numObjectsRequested) {
     getCounter(channel, ChannelStats.READ_RATE).increment(numObjectsRequested);
   }

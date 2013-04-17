@@ -81,11 +81,9 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
   private static class TestChannelStats implements ChannelStats {
 
     private final Counter channelReqCounter;
-    private final Counter channelRemCounter;
 
     public TestChannelStats(Counter channelReqCounter, Counter channelRemCounter) {
       this.channelReqCounter = channelReqCounter;
-      this.channelRemCounter = channelRemCounter;
     }
 
     @Override
