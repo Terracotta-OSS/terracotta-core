@@ -70,25 +70,41 @@
       <id>devmode</id>      
       <activation>
         <property>
-          <name>devmode</name>
-          <value>true</value>
+          <name>!fullmode</name>
         </property>
-        <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
         <excludeGroupIdsForClasspath></excludeGroupIdsForClasspath>
-      </properties>      
+        <devmodeResourcePath>${project.build.outputDirectory}/META-INF/devmode/${project.groupId}/${project.artifactId}</devmodeResourcePath>
+        <devmodeDependencies>${devmodeResourcePath}/dependencies.txt</devmodeDependencies>        
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>list-dependencies</id>
+                <configuration>
+                  <outputFile>${devmodeDependencies}</outputFile>
+                  <includeScope>runtime</includeScope>
+                </configuration>
+                <goals>
+                  <goal>list</goal>
+                </goals>
+                <phase>compile</phase>
+              </execution>
+            </executions>
+          </plugin>        
+        </plugins>
+      </build>    
     </profile>
 
     <profile>
-      <id>fullmode</id>      
-      <activation>
-        <property>
-          <name>devmode</name>
-          <value>false</value>
-        </property>
-      </activation>
+      <id>fullmode</id>
       <properties>
+        <fullmode>true</fullmode>
         <excludeGroupIdsForClasspath>org.terracotta.internal</excludeGroupIdsForClasspath>
       </properties>
       <build>
