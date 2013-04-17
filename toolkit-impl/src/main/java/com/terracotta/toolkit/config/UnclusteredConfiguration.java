@@ -41,6 +41,6 @@ public class UnclusteredConfiguration extends AbstractConfiguration {
 
   @Override
   public String toString() {
-    return "UnclusteredConfiguration [" + this.map + "]";
+    return "Configuration [" + this.map + "]";
   }
 }
