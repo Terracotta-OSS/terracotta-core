@@ -212,10 +212,10 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
+import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import com.tc.objectserver.persistence.OffheapStatsImpl;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
-import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
@@ -621,8 +621,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                    persistor.getPersistenceTransactionProvider()),
         1, -1);
 
-    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink()
-    );
+    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(), restartable);
     toInit.add(this.garbageCollectionManager);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
