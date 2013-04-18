@@ -35,7 +35,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   }
 
   public void initialize(final String cName, String idxId, final String fName, final byte[] fileData, long sID,
-                         boolean tcFile, boolean last, int idxPerCache) {
+                         boolean tcFile, boolean last, int idxPercache) {
     this.cacheName = cName;
     indexId = idxId;
     this.fileName = fName;
@@ -44,7 +44,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     this.sequenceID = sID;
     this.isTCFile = tcFile;
     this.isLast = last;
-    this.idxPerCache = idxPerCache;
+    this.idxPerCache = idxPercache;
   }
 
   @Override

@@ -12,6 +12,7 @@ public class NullEvictionTransactionPersistorImpl implements EvictionTransaction
   public NullEvictionTransactionPersistorImpl() {
   }
 
+  @Override
   public TransactionBatchContext getTransactionBatch(ServerTransactionID serverTransactionID) {
     return null;
   }
@@ -21,13 +22,16 @@ public class NullEvictionTransactionPersistorImpl implements EvictionTransaction
 
   }
 
+  @Override
   public void removeTransaction(ServerTransactionID serverTransactionID) {
   }
 
+  @Override
   public Collection<TransactionBatchContext> getAllTransactionBatches() {
     return new HashSet<TransactionBatchContext>();
   }
 
+  @Override
   public void removeAllTransactions() {
 
   }

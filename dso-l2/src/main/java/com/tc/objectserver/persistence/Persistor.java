@@ -151,7 +151,8 @@ public class Persistor implements PrettyPrintable {
     }
   }
 
-  protected EvictionTransactionPersistor createEvictionTransactionPersistor(StorageManager storageManager, PersistenceTransactionProvider persistenceTransactionProvider) {
+  protected EvictionTransactionPersistor createEvictionTransactionPersistor(StorageManager storageMgr,
+                                                                            PersistenceTransactionProvider perTxnProvider) {
     return new NullEvictionTransactionPersistorImpl();
   }
 
