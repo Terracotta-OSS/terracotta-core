@@ -9,6 +9,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
 import com.tc.platform.PlatformService;
+import com.tc.util.Assert;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 import java.util.concurrent.TimeUnit;
@@ -29,9 +30,9 @@ public class ToolkitLockingApi {
   }
 
   // locks created for name based toolkitObjectTypes
-  public static UnnamedToolkitLock createUnnamedLocked(ToolkitObjectType toolkitObjectType, String stringLockId,
+  public static UnnamedToolkitLock createUnnamedLocked(ToolkitObjectType toolkitObjectType, String lockName,
                                                        ToolkitLockTypeInternal lockType, PlatformService service) {
-    return new UnnamedToolkitLock(service, generateStringLockId(toolkitObjectType, stringLockId), lockType);
+    return new UnnamedToolkitLock(service, generateStringLockId(toolkitObjectType, lockName), lockType);
   }
 
   // RWLsocks created for toolkitLockedObjects
@@ -49,7 +50,7 @@ public class ToolkitLockingApi {
     return new UnnamedToolkitReadWriteLock(service, generateStringLockId(toolkitObjectType, name), writeLockType);
   }
 
-  // used for servermap keys
+  // used for ServerMap keys
   public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(long longLockId, PlatformService service,
                                                                        ToolkitLockTypeInternal writeLockType) {
     return new UnnamedToolkitReadWriteLock(service, longLockId, writeLockType);
@@ -140,20 +141,45 @@ public class ToolkitLockingApi {
     }
   }
 
-  public static void lock(long longLockId, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doBeginLock(longLockId, lockType, service);
+  private static void assertLockIdType(Object lockId) {
+    boolean condition = (lockId instanceof String) || (lockId instanceof Long);
+    Assert.assertTrue("lockId should be String OR Long but " + lockId.getClass().getName(), condition);
   }
 
-  public static void unlock(long longLockId, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doCommitLock(longLockId, lockType, service);
+  public static void lock(Object lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
+    assertLockIdType(lockId);
+    if (lockId instanceof String) {
+      lock((String) lockId, lockType, service);
+    }
+    if (lockId instanceof Long) {
+      lock((Long) lockId, lockType, service);
+    }
   }
 
-  public static void lock(String stringLockName, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doBeginLock(generateStringLockId(stringLockName), lockType, service);
+  public static void unlock(Object lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
+    assertLockIdType(lockId);
+    if (lockId instanceof String) {
+      unlock((String) lockId, lockType, service);
+    }
+    if (lockId instanceof Long) {
+      unlock((Long) lockId, lockType, service);
+    }
+  }
+  
+  private static void lock(Long lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
+    doBeginLock(lockId, lockType, service);
   }
 
-  public static void unlock(String stringLockName, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doCommitLock(generateStringLockId(stringLockName), lockType, service);
+  private static void unlock(Long lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
+    doCommitLock(lockId, lockType, service);
+  }
+
+  private static void lock(String lockName, ToolkitLockTypeInternal lockType, PlatformService service) {
+    doBeginLock(generateStringLockId(lockName), lockType, service);
+  }
+
+  private static void unlock(String lockName, ToolkitLockTypeInternal lockType, PlatformService service) {
+    doCommitLock(generateStringLockId(lockName), lockType, service);
   }
 
   public static void lock(ToolkitObjectType toolkitObjectType, String toolkitObjectName,
@@ -182,8 +208,8 @@ public class ToolkitLockingApi {
     }
   }
 
-  private static String generateStringLockId(String stringLockName) {
-    return STRING_LOCK_ID_PREFIX + DELIMITER + stringLockName;
+  private static String generateStringLockId(String lockName) {
+    return STRING_LOCK_ID_PREFIX + DELIMITER + lockName;
   }
 
   private static String generateStringLockId(ToolkitObjectType toolkitObjectType, String toolkitObjectName) {

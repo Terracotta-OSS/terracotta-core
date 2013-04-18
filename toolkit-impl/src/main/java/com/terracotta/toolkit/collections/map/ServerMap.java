@@ -38,7 +38,6 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
-import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.meta.Extractor;
@@ -210,22 +209,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return this.instanceDsoLockName;
   }
 
-  private void commitLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    try {
-      platformService.commitLock(lockId, LockingUtils.translate(type));
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
-  }
-
-  private void beginLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    try {
-      platformService.beginLock(lockId, LockingUtils.translate(type));
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
-  }
-
   private V doGet(Object key, GetType getType, boolean quiet) {
     if (!LiteralValues.isLiteralInstance(key)) {
       // Returning null as we cannot key passed needs to be portable else if the key is not Literal
@@ -264,7 +247,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         break;
       case UNLOCKED:
         // use unlocked api to fetch values
-        serializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
+        Object value = doLogicalGetValueUnlocked(key);
+        serializedMapValue = asSerializedMapValue(value);
         break;
       case UNSAFE:
         // use only local cache to look up value
@@ -293,13 +277,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private V getNonExpiredValue(Object key, SerializedMapValue serializedMapValue, GetType getType, boolean quiet) {
     if (serializedMapValue == null) { return null; }
-
+    serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
     if (isUnsafeGet(getType)) {
-      serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
       // don't touch tc layer when doing unsafe reads
       return deserialize(key, serializedMapValue, true);
     }
-    serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
     return deserialize(key, serializedMapValue);
   }
 
@@ -546,12 +528,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return key;
   }
 
-  private void beginLock(String lockID, final ToolkitLockTypeInternal type) {
-    ToolkitLockingApi.lock(lockID, type, platformService);
+  private void beginLock(Object lockId, final ToolkitLockTypeInternal type) {
+    ToolkitLockingApi.lock(lockId, type, platformService);
   }
 
-  private void commitLock(String lockID, final ToolkitLockTypeInternal type) {
-    ToolkitLockingApi.unlock(lockID, type, platformService);
+  private void commitLock(Object lockId, final ToolkitLockTypeInternal type) {
+    ToolkitLockingApi.unlock(lockId, type, platformService);
   }
 
   @Override
@@ -668,13 +650,9 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (isExplicitlyLocked()) {
         throw newEventualExplicitLockedError();
       } else {
-
         // Do this outside the lock
         // NOTE - pass to extractor original value, not serialized version
-        MetaData metaData = createPutSearchMetaData(key, value);
-        if (metaData != null) {
-          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
-        }
+        MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
 
         eventualConcurrentLock.lock();
         try {
@@ -707,12 +685,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     throttleIfNecessary();
-    MetaData md = createPutSearchMetaData(key, value);
-    if (md != null) {
-      md.set(SearchMetaData.COMMAND, SearchCommand.PUT);
-
-    }
-    doLogicalPutUnlocked(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, md);
+    MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
+    doLogicalPutUnlocked(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
   }
 
   @Override
@@ -724,10 +698,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (isExplicitlyLocked()) {
         throw newEventualExplicitLockedError();
       } else {
-        MetaData metaData = createPutSearchMetaData(key, value);
-        if (metaData != null) {
-          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
-        }
+        MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
         eventualConcurrentLock.lock();
         try {
           doLogicalPutUnlocked(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
@@ -933,10 +904,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
       if (old != null) {
-        MetaData metaData = createPutSearchMetaData(key, value);
-        if (metaData != null) {
-          metaData.set(SearchMetaData.COMMAND, SearchCommand.REPLACE);
-        }
+        createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
         eventualConcurrentLock.lock();
         SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
                                                                             ToolkitConfigFields.NO_MAX_TTI_SECONDS,
@@ -980,8 +948,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
       final V old = deserialize(key, oldSerializedMapValue);
 
-      MetaData metaData = createPutSearchMetaData(key, newValue);
-      if (metaData != null) metaData.set(SearchMetaData.COMMAND, SearchCommand.REPLACE);
+      createMetaDataAndSetCommand(key, newValue, SearchCommand.REPLACE);
 
       if (old != null && old.equals(oldValue)) {
         eventualConcurrentLock.lock();
@@ -1383,6 +1350,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     ToolkitAttributeType type = ToolkitAttributeType.typeFor(name, value);
     // Correctly handle distinct types of enums
     return ToolkitAttributeType.ENUM == type ? ((Enum) value).getDeclaringClass().getName() : type.name();
+  }
+
+  private MetaData createMetaDataAndSetCommand(K key, V value, SearchCommand command) {
+    MetaData metaData = createPutSearchMetaData(key, value);
+    if (metaData != null) {
+      metaData.set(SearchMetaData.COMMAND, command);
+    }
+    return metaData;
   }
 
   private MetaData createPutSearchMetaData(K key, V value) {
