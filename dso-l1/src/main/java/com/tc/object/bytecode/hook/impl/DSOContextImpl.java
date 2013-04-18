@@ -119,7 +119,7 @@ public class DSOContextImpl implements DSOContext {
     this.configSpec = configSpec;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
-    logger.info("DSOContext created with expressRejoinClient=" + expressRejoinClient);
+    logger.info("context created with expressRejoinClient=" + expressRejoinClient);
   }
 
   private void resolveClasses() {
