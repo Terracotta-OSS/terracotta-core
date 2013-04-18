@@ -27,6 +27,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public TransactionID                acked;
   public TxnBatchID                   batchAcked;
   public ClientTransaction            transaction;
+  public long                         txnCounter;
 
   @Override
   public void cleanup() {
@@ -40,6 +41,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.txID = txn.getTransactionID();
     this.newRoots = txn.getNewRoots();
     this.transaction = txn;
+    txnCounter++;
   }
 
   public ClientTransaction getTransaction() {
@@ -119,5 +121,9 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
+  }
+
+  public long getTxnCount() {
+    return txnCounter;
   }
 }

@@ -13,6 +13,7 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -50,6 +51,22 @@ public class RejoinAwarePlatformService implements PlatformService {
     this.delegate = delegate;
     this.rejoinState = new RejoinStateListener();
     delegate.addRejoinLifecycleListener(rejoinState);
+  }
+
+
+  @Override
+  public Object getRecentLockId() {
+    return delegate.getRecentLockId();
+  }
+
+  @Override
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    delegate.beginAtomicTransaction(lock, level);
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    delegate.commitAtomicTransaction(lock, level);
   }
 
   private void assertRejoinNotInProgress() {
@@ -127,8 +144,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   protected void assertNotLockedBeforeRejoin() {
-    if (isLockedBeforeRejoin()) { throw new RejoinException(
-                                                            "Lock is not usable anymore after rejoin has occured,Operation failed"); }
+    if (isLockedBeforeRejoin()) { throw new RejoinException("Lock is not valid after rejoin"); }
   }
 
   @Override

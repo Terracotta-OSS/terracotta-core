@@ -42,6 +42,22 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
+  public Object getRecentLockId() {
+    // return manager.getRecentLockId();
+    return null;
+  }
+
+  @Override
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    manager.beginAtomicTransaction(lock, level);
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    manager.commitAtomicTransaction(lock, level);
+  }
+
+  @Override
   public boolean isRejoinEnabled() {
     return rejoinEnabled;
   }
@@ -93,16 +109,10 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException,
+  public void beginLockInterruptibly(Object lockID, LockLevel level) throws InterruptedException,
       AbortedOperationException {
-    LockID lock = manager.generateLockIdentifier(obj);
-    manager.lockInterruptibly(lock, level);
-  }
-
-  @Override
-  public void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
-    manager.unlock(lock, level);
+    manager.lockInterruptibly(lock, level);
   }
 
   @Override
@@ -116,6 +126,12 @@ public class PlatformServiceImpl implements PlatformService {
       throws InterruptedException, AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     return manager.tryLock(lock, level, timeUnit.toMillis(timeout));
+  }
+
+  @Override
+  public void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
+    LockID lock = manager.generateLockIdentifier(lockID);
+    manager.unlock(lock, level);
   }
 
   @Override

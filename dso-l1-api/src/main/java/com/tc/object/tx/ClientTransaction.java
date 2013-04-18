@@ -240,4 +240,12 @@ public interface ClientTransaction {
    */
   public List getTransactionCompleteListeners();
 
+  public boolean isAtomic();
+
+  public void setAtomic(boolean atomic);
+
+  public void addOnCommitCallable(OnCommitCallable callable);
+
+  public List<OnCommitCallable> getOnCommitCallables();
+
 }

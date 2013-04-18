@@ -56,11 +56,11 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
   }
 
   public void test() throws Exception {
-    clientTxnMgr.begin(new StringLockID("test1"), LockLevel.WRITE);
+    clientTxnMgr.begin(new StringLockID("test1"), LockLevel.WRITE, false);
     abortableOperationManager.begin();
 
     try {
-      clientTxnMgr.begin(new StringLockID("test2"), LockLevel.WRITE);
+      clientTxnMgr.begin(new StringLockID("test2"), LockLevel.WRITE, false);
 
       // change1
       clientTxnFactory.clientTransactions.get(0).logicalInvoke(null, -1, null, null);
@@ -70,7 +70,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
       boolean expected = false;
       try {
-        clientTxnMgr.commit(new StringLockID("test2"), LockLevel.WRITE);
+        clientTxnMgr.commit(new StringLockID("test2"), LockLevel.WRITE, false, null);
       } catch (AbortedOperationException e) {
         expected = true;
       }
@@ -95,7 +95,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
     Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.times(1)).addNotify((Notify) Matchers
                                                                                                .anyObject());
     // change2
-    clientTxnMgr.commit(new StringLockID("test1"), LockLevel.WRITE);
+    clientTxnMgr.commit(new StringLockID("test1"), LockLevel.WRITE, false, null);
 
     Assert.assertEquals(clientTxnFactory.clientTransactions.get(1), rmtTxnMgr.getTransaction());
   }

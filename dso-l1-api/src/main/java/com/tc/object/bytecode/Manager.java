@@ -15,6 +15,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.TerracottaLocking;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -234,22 +235,6 @@ public interface Manager extends TerracottaLocking {
   public boolean isLiteralAutolock(final Object o);
 
   /**
-   * Check whether an object is shared
-   * 
-   * @param obj Instance
-   * @return True if shared
-   */
-  public boolean isDsoMonitored(Object obj);
-
-  /**
-   * Check whether dso MonitorExist is required
-   * 
-   * @return True if required
-   * @throws AbortedOperationException
-   */
-  public boolean isDsoMonitorEntered(Object obj) throws AbortedOperationException;
-
-  /**
    * Retrieve the customer change applicator that was registered for a particular class.
    * 
    * @param clazz The class for which the custom change application has to be returned
@@ -334,7 +319,6 @@ public interface Manager extends TerracottaLocking {
    */
   public MBeanServer getMBeanServer();
 
-
   /**
    * Used by BulkLoad to wait for all current transactions completed
    * 
@@ -402,4 +386,8 @@ public interface Manager extends TerracottaLocking {
   PlatformService getPlatformService();
 
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
+
+  void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException;
+
+  void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException;
 }

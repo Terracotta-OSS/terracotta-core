@@ -31,6 +31,7 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.impl.ServerMapLocalCacheImpl.ValueOIDKeyTuple;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.OnCommitCallable;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionContext;
 import com.tc.object.tx.TransactionID;
@@ -973,6 +974,28 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     public void setTransactionID(TransactionID tid) {
       throw new ImplementMe();
 
+    }
+
+    @Override
+    public boolean isAtomic() {
+      return false;
+    }
+
+    @Override
+    public void setAtomic(boolean atomic) {
+      throw new ImplementMe();
+
+    }
+
+    @Override
+    public void addOnCommitCallable(OnCommitCallable callable) {
+      throw new ImplementMe();
+
+    }
+
+    @Override
+    public List<OnCommitCallable> getOnCommitCallables() {
+      return Collections.EMPTY_LIST;
     }
 
   }

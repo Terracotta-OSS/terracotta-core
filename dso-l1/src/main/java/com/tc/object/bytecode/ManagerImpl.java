@@ -44,7 +44,9 @@ import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
+import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.OnCommitCallable;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -109,7 +111,6 @@ public class ManagerImpl implements Manager {
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
 
-
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
     this(true, null, null, null, null, config, connectionComponents, true, null, false, securityManager);
@@ -128,8 +129,8 @@ public class ManagerImpl implements Manager {
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
-                     final boolean shutdownActionRequired, final ClassLoader loader,
-                     final boolean isExpressRejoinMode, final TCSecurityManager securityManager) {
+                     final boolean shutdownActionRequired, final ClassLoader loader, final boolean isExpressRejoinMode,
+                     final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
     this.portability = config == null ? null : config.getPortability();
@@ -443,27 +444,6 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean isDsoMonitorEntered(final Object o) throws AbortedOperationException {
-    if (this.objectManager.isCreationInProgress()) { return false; }
-
-    final LockID lock = generateLockIdentifier(o);
-    final boolean dsoMonitorEntered = this.lockManager.isLockedByCurrentThread(lock, null)
-                                      || this.txManager.isLockOnTopStack(lock);
-
-    if (isManaged(o) && !dsoMonitorEntered) {
-      logger
-          .info("An unlock is being attempted on an Object of class "
-                + o.getClass().getName()
-                + " [Identity Hashcode : 0x"
-                + Integer.toHexString(System.identityHashCode(o))
-                + "] "
-                + " which is a shared object, however there is no associated clustered lock held by the current thread. This usually means that the object became shared within a synchronized block/method.");
-    }
-
-    return dsoMonitorEntered;
-  }
-
-  @Override
   public TCObject lookupOrCreate(final Object obj) {
     if (obj instanceof Manageable) {
       TCObject tco = ((Manageable) obj).__tc_managed();
@@ -562,18 +542,6 @@ public class ManagerImpl implements Manager {
       return tcobj != null && tcobj.isShared();
     }
     return this.objectManager.isManaged(obj);
-  }
-
-  @Override
-  public boolean isDsoMonitored(final Object obj) {
-    if (this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled()) { return false; }
-
-    final TCObject tcobj = lookupExistingOrNull(obj);
-    if (tcobj != null) {
-      return tcobj.isShared();
-    } else {
-      return isLiteralAutolock(obj);
-    }
   }
 
   @Override
@@ -724,7 +692,7 @@ public class ManagerImpl implements Manager {
   public void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lock(lock, level);
-      this.txManager.begin(lock, level);
+      this.txManager.begin(lock, level, false);
     }
   }
 
@@ -733,7 +701,7 @@ public class ManagerImpl implements Manager {
       AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lockInterruptibly(lock, level);
-      this.txManager.begin(lock, level);
+      this.txManager.begin(lock, level, false);
     }
   }
 
@@ -761,7 +729,7 @@ public class ManagerImpl implements Manager {
   public boolean tryLock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
-        this.txManager.begin(lock, level);
+        this.txManager.begin(lock, level, false);
         return true;
       } else {
         return false;
@@ -776,7 +744,7 @@ public class ManagerImpl implements Manager {
       AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeout)) {
-        this.txManager.begin(lock, level);
+        this.txManager.begin(lock, level, false);
         return true;
       } else {
         return false;
@@ -789,19 +757,18 @@ public class ManagerImpl implements Manager {
   @Override
   public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
-      try {
-        this.txManager.commit(lock, level);
-      } finally {
-        this.lockManager.unlock(lock, level);
-      }
+      // LockManager Unlock callback will be called on commit of current transaction by txnManager.
+      this.txManager.commit(lock, level, false, getUnlockCallback(lock, level));
     }
   }
 
   @Override
   public void wait(final LockID lock, final Object waitObject) throws InterruptedException, AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
+      if (isCurrentTransactionAtomic()) { throw new UnsupportedOperationException(
+                                                                                  "Wait is not supported under an atomic transaction"); }
       try {
-        this.txManager.commit(lock, LockLevel.WRITE);
+        this.txManager.commit(lock, LockLevel.WRITE, false, null);
       } catch (final UnlockedSharedObjectException e) {
         throw new IllegalMonitorStateException();
       }
@@ -809,7 +776,7 @@ public class ManagerImpl implements Manager {
         this.lockManager.wait(lock, waitObject);
       } finally {
         // XXX this is questionable
-        this.txManager.begin(lock, LockLevel.WRITE);
+        this.txManager.begin(lock, LockLevel.WRITE, false);
       }
     } else {
       waitObject.wait();
@@ -820,8 +787,10 @@ public class ManagerImpl implements Manager {
   public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException,
       AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
+      if (isCurrentTransactionAtomic()) { throw new UnsupportedOperationException(
+                                                                                  "Wait is not supported under an atomic transaction"); }
       try {
-        this.txManager.commit(lock, LockLevel.WRITE);
+        this.txManager.commit(lock, LockLevel.WRITE, false, null);
       } catch (final UnlockedSharedObjectException e) {
         throw new IllegalMonitorStateException();
       }
@@ -829,7 +798,7 @@ public class ManagerImpl implements Manager {
         this.lockManager.wait(lock, waitObject, timeout);
       } finally {
         // XXX this is questionable
-        this.txManager.begin(lock, LockLevel.WRITE);
+        this.txManager.begin(lock, LockLevel.WRITE, false);
       }
     } else {
       waitObject.wait(timeout);
@@ -855,7 +824,6 @@ public class ManagerImpl implements Manager {
   public boolean isLockedByCurrentThread(final LockLevel level) {
     return this.lockManager.isLockedByCurrentThread(level);
   }
-
 
   @Override
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
@@ -923,8 +891,10 @@ public class ManagerImpl implements Manager {
 
   @Override
   public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException {
+    if (isCurrentTransactionAtomic()) { throw new UnsupportedOperationException(
+                                                                                "Wait is not supported under an atomic transaction"); }
     try {
-      this.txManager.commit(lock, LockLevel.WRITE);
+      this.txManager.commit(lock, LockLevel.WRITE, false, null);
     } catch (final UnlockedSharedObjectException e) {
       throw new IllegalMonitorStateException();
     }
@@ -932,7 +902,7 @@ public class ManagerImpl implements Manager {
       this.lockManager.wait(lock, null, timeout);
     } finally {
       // XXX this is questionable
-      this.txManager.begin(lock, LockLevel.WRITE);
+      this.txManager.begin(lock, LockLevel.WRITE, false);
     }
   }
 
@@ -980,4 +950,34 @@ public class ManagerImpl implements Manager {
   public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
   }
+
+  @Override
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    this.lockManager.lock(lock, level);
+    this.txManager.begin(lock, level, true);
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    try {
+      this.txManager.commit(lock, level, true, null);
+    } finally {
+      lockManager.unlock(lock, level);
+    }
+  }
+
+  public OnCommitCallable getUnlockCallback(final LockID lock, final LockLevel level) {
+    return new OnCommitCallable() {
+      @Override
+      public void call() throws AbortedOperationException {
+        lockManager.unlock(lock, level);
+      }
+    };
+  }
+
+  private boolean isCurrentTransactionAtomic() {
+    ClientTransaction transaction = txManager.getCurrentTransaction();
+    return transaction != null && txManager.getCurrentTransaction().isAtomic();
+  }
+
 }

@@ -4,9 +4,11 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
+
 import org.terracotta.toolkit.ToolkitFeature;
 import org.terracotta.toolkit.ToolkitFeatureType;
 import org.terracotta.toolkit.ToolkitFeatureTypeInternal;
+import org.terracotta.toolkit.atomic.ToolkitTransactionController;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCache;
@@ -37,6 +39,7 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.atomic.ToolkitTransactionFeatureImpl;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
@@ -106,6 +109,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   protected final PlatformService                                 platformService;
   private final ClusterInfo                                       clusterInfoInstance;
   protected final boolean                                         isNonStop;
+  private final ToolkitTransactionController                      transactionController;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider,
                            boolean isNonStop) {
@@ -155,6 +159,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager, platformService);
 
     clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, context);
+    transactionController = new ToolkitTransactionFeatureImpl(platformService);
   }
 
   private SerializationStrategy createSerializationStrategy() {
@@ -343,6 +348,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public <T extends ToolkitFeature> T getFeature(ToolkitFeatureTypeInternal<T> type) {
     Preconditions.checkNotNull(type);
+    if (type == ToolkitFeatureTypeInternal.TRANSACTION) { return (T) transactionController; }
     if (type == ToolkitFeatureTypeInternal.LICENSE) { return (T) NoopLicenseFeature.SINGLETON; }
     return ToolkitInstanceProxy.newFeatureNotSupportedProxy(type.getFeatureClass());
   }
