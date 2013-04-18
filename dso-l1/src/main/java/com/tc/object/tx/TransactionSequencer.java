@@ -20,6 +20,7 @@ import com.tc.util.SequenceID;
 import com.tc.util.Util;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TransactionSequencer implements ClearableCallback {
 
@@ -48,7 +49,7 @@ public class TransactionSequencer implements ClearableCallback {
   private final LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
 
   private ClientTransactionBatch                            currentBatch;
-  private int                                               currentWritten = 0;
+  private AtomicInteger                                     currentWritten = new AtomicInteger();
 
   private final int                                         slowDownStartsAt;
   private final double                                      sleepTimeIncrements;
@@ -104,7 +105,7 @@ public class TransactionSequencer implements ClearableCallback {
   }
 
   private void createNewBatch() {
-    this.currentWritten = 0;
+    this.currentWritten.set(0);
     this.currentBatch = this.batchFactory.nextBatch(this.groupID);
   }
 
@@ -161,7 +162,7 @@ public class TransactionSequencer implements ClearableCallback {
     
     try {
         synchronized (this) {
-            if ( this.currentWritten > MAX_BYTE_SIZE_FOR_BATCH ) {
+            if ( this.currentWritten.get() > MAX_BYTE_SIZE_FOR_BATCH ) {
                 if ( this.currentBatch.numberOfTxnsBeforeFolding() == 0 ) {
                     throw new AssertionError("no transaction in batch " + this.currentWritten + " " + this.currentBatch);
                 }
@@ -181,7 +182,8 @@ public class TransactionSequencer implements ClearableCallback {
                  FoldedInfo fold = this.currentBatch.addTransaction(txn, sequence, transactionIDGenerator);
                  this.lockAccounting.add(fold.getFoldedTransactionID(), txn.getAllLockIDs());
                  numTransactionsDelta = 0;
-                 this.currentWritten = this.currentBatch.byteSize();
+                 this.currentWritten.set(this.currentBatch.byteSize());
+                 written = this.currentBatch.byteSize() - written;
 //  if the transaction is folded, it's already written.  return the transaction id
                  return fold.getFoldedTransactionID();
             } else {
@@ -194,13 +196,9 @@ public class TransactionSequencer implements ClearableCallback {
             }
        }
         
-        written = buffer.write(txn);
+       written = buffer.write(txn);
         
-        synchronized (this) {
-          if ( this.currentBatch.contains(txn.getTransactionID()) ) {
-            this.currentWritten += written;
-          }
-        }
+       this.currentWritten.addAndGet(written);
         
         return txn.getTransactionID();
     } finally {    
