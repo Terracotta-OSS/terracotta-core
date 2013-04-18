@@ -1,5 +1,11 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.Serializer;
+import org.terracotta.corestorage.StorageManager;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInput;
@@ -15,12 +21,18 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.impl.ServerMapEvictionTransactionBatchContext;
-import com.tc.objectserver.tx.*;
-import org.terracotta.corestorage.*;
+import com.tc.objectserver.tx.ActiveServerTransactionFactory;
+import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.TransactionBatchContext;
+import com.tc.objectserver.tx.TransactionBatchReader;
+import com.tc.objectserver.tx.TransactionBatchReaderImpl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPersistorImpl {
   private static final TCLogger logger                          = TCLogging.getLogger(EvictionTransactionPersistorImpl.class);
@@ -51,7 +63,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
 
   @Override
   public void removeTransaction(ServerTransactionID serverTransactionID) {
-    logger.info("Asked to remove serverTransactionID = " + serverTransactionID);
     if (evictionTransactionStorage.containsKey(serverTransactionID)) {
       logger.info("Removing server transaction id = " + serverTransactionID);
       evictionTransactionStorage.remove(serverTransactionID);
