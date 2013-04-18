@@ -44,4 +44,8 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
     //
   }
 
+  public int getNumberOfIndexesPerCache() {
+    return 0;
+  }
+
 }

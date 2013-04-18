@@ -16,4 +16,6 @@ public interface IndexHACoordinator extends IndexManager, StateChangeListener {
 
   public void applyTempJournalsAndSwitch() throws IOException;
 
+  public int getNumberOfIndexesPerCache();
+
 }

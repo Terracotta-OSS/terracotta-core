@@ -16,9 +16,9 @@ public class IndexSyncMessageFactory {
 
   public static IndexSyncMessage createIndexSyncMessage(String cacheName, String indexId, String fileName,
                                                         byte[] fileData, long sequenceID, boolean isTCFile,
-                                                        boolean isLast) {
+                                                        boolean isLast, int idxPerCache) {
     IndexSyncMessage msg = new IndexSyncMessage(IndexSyncMessage.INDEX_SYNC_TYPE);
-    msg.initialize(cacheName, indexId, fileName, fileData, sequenceID, isTCFile, isLast);
+    msg.initialize(cacheName, indexId, fileName, fileData, sequenceID, isTCFile, isLast, idxPerCache);
     return msg;
   }
 

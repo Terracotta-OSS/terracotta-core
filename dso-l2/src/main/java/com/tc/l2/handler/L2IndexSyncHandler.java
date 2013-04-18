@@ -71,6 +71,14 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
   }
 
   private void doSyncIndex(final IndexSyncMessage syncMsg) {
+    if (syncMsg.getIdxPerCache() != indexHACoordinator.getNumberOfIndexesPerCache()) {
+      logger.error("Cannot perform Index Sync because search configs are different." +
+          " This node's indexes per cache are " + indexHACoordinator.getNumberOfIndexesPerCache() +
+          ", but for the sync message sending node,  " + syncMsg.messageFrom() + " they are " + syncMsg.getIdxPerCache() +
+      ". The server will now exit. " +
+          "Please ensure that the number of indexes per cache is the same for all servers defined in the configuration.");
+      throw new RuntimeException();
+    }
     byte[] data = syncMsg.getData();
     this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getIndexId(), syncMsg.getFileName(), data,
                                            syncMsg.isTCFile(), syncMsg.isLast());
