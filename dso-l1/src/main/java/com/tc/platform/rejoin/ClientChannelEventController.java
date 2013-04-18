@@ -96,6 +96,7 @@ public class ClientChannelEventController {
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
       LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
+      if (controller.clientHandshakeManager.isShutdown()) { return; }
       ChannelID eventChannelId = event.getChannelID();
       ClientMessageChannel currentChannel = controller.channel.channel();
       if (eventChannelId != null && !currentChannel.getChannelID().equals(eventChannelId)) {
