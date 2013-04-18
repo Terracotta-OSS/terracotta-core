@@ -10,6 +10,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -42,32 +43,26 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
             get = 10 * (blowout);
         }
         Map<Object, EvictableEntry>  sampled = map.getRandomSamples(get,clients);
-        return createEvictionContext(className, filter(sampled));
+        return createEvictionContext(className, filter(sampled, map.isEvictionEnabled(), map.getTTISeconds(), map.getTTLSeconds()));
     }
-    /**
-     * only take the early half, make this pluggable?
-    */
-    private Map<Object, EvictableEntry> filter(Map<Object, EvictableEntry> sample) {
-        return sample;
-//        return filterByOid(sample);
-    }
-
-  // private Map<Object, ObjectID> filterByOid(Map<Object, ObjectID> sample) {
-  // TreeMap<ObjectID,Object> rev = new TreeMap<ObjectID, Object>();
-  // for ( Map.Entry<Object,ObjectID> entry : sample.entrySet() ) {
-  // rev.put(entry.getValue(),entry.getKey());
-  // }
-  // int nz = sample.size()/2;
-  // int count = 0;
-  // sample.clear();
-  // for (Entry<ObjectID, Object> ag : rev.entrySet()) {
-  // if (count++>nz) {
-  // sample.put(ag.getValue(),ag.getKey());
-  // }
-  // }
-  // return sample;
-  // }
-
+    
+    private Map<Object, EvictableEntry> filter(final Map<Object, EvictableEntry> samples, boolean evictionEnabled, final int ttiSeconds,
+                        final int ttlSeconds) {
+ //  eviction is enabled, go ahead and evict it all
+        if ( evictionEnabled ) {
+            return samples;
+        }
+// no eviction, just expire, we only got here with eviction disabled and tti/ttl set.
+        final int now = (int) (System.currentTimeMillis() / 1000);
+        final Iterator<Map.Entry<Object, EvictableEntry>> iterator = samples.entrySet().iterator();
+        while (iterator.hasNext()) {
+            if ( iterator.next().getValue().expiresIn(now, ttiSeconds, ttlSeconds) >= 0 ) {
+                iterator.remove();
+            }
+        }
+        return samples;
+    }  
+  
     @Override
     public String getName() {
         return "Emergency";
