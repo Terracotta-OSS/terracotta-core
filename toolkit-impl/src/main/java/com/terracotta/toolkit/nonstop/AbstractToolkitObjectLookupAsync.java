@@ -11,7 +11,7 @@ import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 public abstract class AbstractToolkitObjectLookupAsync<T extends ToolkitObject> implements ToolkitObjectLookup<T> {
   private volatile T                      initializedObject;
-  private volatile Exception              exceptionDuringInitialization;
+  private volatile RuntimeException       exceptionDuringInitialization;
   private final AbortableOperationManager abortableOperationManager;
 
   public AbstractToolkitObjectLookupAsync(AbortableOperationManager abortableOperationManager) {
@@ -51,10 +51,10 @@ public abstract class AbstractToolkitObjectLookupAsync<T extends ToolkitObject> 
     return initializedObject;
   }
 
-  public boolean initialize() throws Exception {
+  public boolean initialize() {
     try {
       this.initializedObject = lookupObject();
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       this.exceptionDuringInitialization = e;
       throw e;
     } finally {

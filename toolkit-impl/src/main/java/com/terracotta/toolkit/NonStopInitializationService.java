@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit;
 
+import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 import org.terracotta.toolkit.object.ToolkitObject;
@@ -52,20 +53,24 @@ public class NonStopInitializationService<T extends ToolkitObject> {
 
 
   public void initialize(final AbstractToolkitObjectLookupAsync<T> toolkitObjectLookup,
-                       NonStopConfiguration nonStopConfiguration) {
-    // Create a separate Thread for creating toolkit object
-    Callable<Boolean> callable = new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return toolkitObjectLookup.initialize();
-      }
-    };
+                         NonStopConfiguration nonStopConfiguration) {
+    if (nonStopConfiguration.isEnabled()) {
+      // Create a separate Thread for creating toolkit object
+      Callable<Boolean> callable = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return toolkitObjectLookup.initialize();
+        }
+      };
 
-    // Submit the Thread for execution
-    Future<Boolean> future = threadPool.submit(callable);
+      // Submit the Thread for execution
+      Future<Boolean> future = threadPool.submit(callable);
 
-    // wait for initialization to complete (until operations are enabled)
-    waitForInitialization(future, nonStopConfiguration.getTimeoutMillis());
+      // wait for initialization to complete (until operations are enabled)
+      waitForInitialization(future, nonStopConfiguration.getTimeoutMillis());
+    } else {
+      toolkitObjectLookup.initialize();
+    }
   }
 
 
@@ -88,7 +93,12 @@ public class NonStopInitializationService<T extends ToolkitObject> {
         } catch (InterruptedException e) {
           interrupted = true;
         } catch (ExecutionException e) {
-          throw new NonStopToolkitInstantiationException(e.getCause());
+          if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException) e.getCause();
+          } else {
+            // This wont happen because the associated Callable never throws a CheckedException
+            throw new ToolkitRuntimeException(e.getCause());
+          }
         } catch (TimeoutException e) {
           // Retry if operations are enabled
         }
