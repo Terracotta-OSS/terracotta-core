@@ -14,6 +14,7 @@ import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
+import com.tc.object.msg.InterestListenerMessageFactory;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -78,4 +79,6 @@ public interface DSOClientMessageChannel {
   public JMXMessage getJMXMessage();
 
   public GroupID[] getGroupIDs();
+
+  InterestListenerMessageFactory getInterestListenerMessageFactory();
 }

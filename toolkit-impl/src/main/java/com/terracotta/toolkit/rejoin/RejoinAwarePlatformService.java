@@ -11,6 +11,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockLevel;
@@ -89,6 +91,11 @@ public class RejoinAwarePlatformService implements PlatformService {
     }
     return false;
 
+  }
+
+  @Override
+  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    delegate.registerL1CacheListener(destination, listenTo);
   }
 
   @Override

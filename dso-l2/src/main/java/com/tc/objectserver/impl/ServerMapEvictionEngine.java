@@ -129,13 +129,11 @@ public class ServerMapEvictionEngine {
   }
   
   private void broadcastEvictedEntries(final ObjectID oid, final Map candidates) {
-    boolean broadcastEvictions = false; // do not broadcast keys by default
     final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
     if (mo != null) {
       final ManagedObjectState state = mo.getManagedObjectState();
       try {
         final EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-        broadcastEvictions = ev.isBroadcastEvictions();
       } finally {
         this.objectManager.releaseReadOnly(mo);
       }
@@ -143,7 +141,7 @@ public class ServerMapEvictionEngine {
 
     // maybe we can batch up the broadcasts
     this.evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(
-        oid, Collections.unmodifiableSet(candidates.keySet()), broadcastEvictions));
+        oid, Collections.unmodifiableSet(candidates.keySet())));
   }
 
   void evictFrom(final ObjectID oid, final Map<Object, EvictableEntry> candidates, final String className, final String cacheName) {

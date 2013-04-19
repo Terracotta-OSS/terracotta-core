@@ -8,6 +8,8 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockLevel;
@@ -106,4 +108,6 @@ public interface PlatformService {
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 
   public boolean isLockedBeforeRejoin();
+
+  void registerL1CacheListener(InterestDestination destination, Set<InterestType> listenTo);
 }

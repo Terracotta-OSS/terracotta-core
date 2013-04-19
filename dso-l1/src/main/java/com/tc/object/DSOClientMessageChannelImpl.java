@@ -21,6 +21,7 @@ import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
+import com.tc.object.msg.InterestListenerMessageFactory;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
@@ -34,6 +35,7 @@ import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
+import com.tc.object.msg.RegisterInterestListenerMessage;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
@@ -42,6 +44,7 @@ import com.tc.object.msg.SearchQueryRequestMessage;
 import com.tc.object.msg.SearchRequestMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
+import com.tc.object.msg.UnregisterInterestListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.TCTimeoutException;
 
@@ -53,7 +56,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
     CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, ServerMapMessageFactory,
     KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory, LockStatisticsReponseMessageFactory,
-    SearchRequestMessageFactory, NodesWithKeysMessageFactory {
+    SearchRequestMessageFactory, NodesWithKeysMessageFactory, InterestListenerMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
@@ -123,6 +126,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   @Override
   public ServerMapMessageFactory getServerMapMessageFactory() {
+    return this;
+  }
+
+  @Override
+  public InterestListenerMessageFactory getInterestListenerMessageFactory() {
     return this;
   }
 
@@ -262,8 +270,16 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
   }
 
-  public NodesWithKeysMessage newRegisterCacheListenerMessage(final NodeID nodeID) {
-    return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
+  @Override
+  public RegisterInterestListenerMessage newRegisterInterestListenerMessage(final NodeID nodeID) {
+    return (RegisterInterestListenerMessage)this.channel
+        .createMessage(TCMessageType.REGISTER_INTEREST_LISTENER_MESSAGE);
+  }
+
+  @Override
+  public UnregisterInterestListenerMessage newUnregisterInterestListenerMessage(final NodeID nodeID) {
+    return (UnregisterInterestListenerMessage)this.channel
+        .createMessage(TCMessageType.UNREGISTER_INTEREST_LISTENER_MESSAGE);
   }
 
 }

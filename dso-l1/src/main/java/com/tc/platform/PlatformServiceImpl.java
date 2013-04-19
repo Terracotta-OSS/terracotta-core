@@ -9,6 +9,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
@@ -254,4 +256,8 @@ public class PlatformServiceImpl implements PlatformService {
     return false;
   }
 
+  @Override
+  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    manager.registerL1CacheListener(destination, listenTo);
+  }
 }

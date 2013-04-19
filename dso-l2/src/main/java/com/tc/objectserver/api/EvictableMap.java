@@ -28,6 +28,4 @@ public interface EvictableMap {
   String getCacheName();
 
   boolean isEvictionEnabled();
-
-  boolean isBroadcastEvictions();
 }

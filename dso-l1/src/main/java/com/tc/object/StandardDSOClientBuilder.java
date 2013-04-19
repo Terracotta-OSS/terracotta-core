@@ -73,7 +73,6 @@ import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.ToggleableReferenceManager;
@@ -314,7 +313,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final L1ServerMapLocalCacheManager globalLocalCacheManager,
                                                              final AbortableOperationManager abortableOperationManager,
                                                              final TaskRunner taskRunner) {
-    final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
+    final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
     return new RemoteServerMapManagerImpl(defaultGroups[0], logger, dsoChannel.getServerMapMessageFactory(),
@@ -339,5 +338,13 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public RemoteResourceManager createRemoteResourceManager(final DSOClientMessageChannel dsoChannel,
                                                            AbortableOperationManager abortableOperationManager) {
     return new RemoteResourceManagerImpl(abortableOperationManager);
+  }
+
+  @Override
+  public ServerInterestListenerManager createServerInterestListenerManager(final DSOClientMessageChannel dsoChannel) {
+    final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
+    Assert.assertNotNull(defaultGroups);
+    Assert.assertEquals(1, defaultGroups.length);
+    return new ServerInterestListenerManagerImpl(dsoChannel.getInterestListenerMessageFactory(), defaultGroups[0]);
   }
 }

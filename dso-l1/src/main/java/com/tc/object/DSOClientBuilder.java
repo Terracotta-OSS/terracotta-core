@@ -40,6 +40,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.InterestListenerMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -180,4 +181,5 @@ public interface DSOClientBuilder {
   RemoteResourceManager createRemoteResourceManager(DSOClientMessageChannel dsoChannel,
                                                     AbortableOperationManager abortableOperationManager);
 
+  ServerInterestListenerManager createServerInterestListenerManager(DSOClientMessageChannel dsoChannel);
 }

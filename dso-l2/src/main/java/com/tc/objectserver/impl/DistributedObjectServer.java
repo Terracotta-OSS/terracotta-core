@@ -107,6 +107,8 @@ import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
+import com.tc.object.msg.EvictionInterestMessageImpl;
+import com.tc.object.msg.ExpirationInterestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessageImpl;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessageImpl;
@@ -129,7 +131,7 @@ import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessageImpl;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
-import com.tc.object.msg.RegisterCacheListenerMessageImpl;
+import com.tc.object.msg.RegisterInterestListenerMessage;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -139,6 +141,7 @@ import com.tc.object.msg.SearchQueryRequestMessageImpl;
 import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
+import com.tc.object.msg.UnregisterInterestListenerMessage;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
@@ -184,7 +187,7 @@ import com.tc.objectserver.handler.JMXEventsHandler;
 import com.tc.objectserver.handler.LowWaterMarkCallbackHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.RegisterCacheListenerHandler;
+import com.tc.objectserver.handler.RegisterInterestListenerHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RequestObjectIDBatchHandler;
 import com.tc.objectserver.handler.RequestRootHandler;
@@ -915,17 +918,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
-    final InClusterInterestBroadcaster evictionBroadcastManager =
-        new InClusterInterestBroadcaster(channelManager);
+    final InClusterInterestNotifier evictionBroadcastManager =
+        new InClusterInterestNotifier(channelManager);
     interestBus.register(evictionBroadcastManager);
 
-    final Stage registerCacheListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_CACHE_LISTENER_STAGE,
-        new RegisterCacheListenerHandler(evictionBroadcastManager), 1, maxStageSize);
+    final Stage registerInterestListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_INTEREST_LISTENER_STAGE,
+        new RegisterInterestListenerHandler(evictionBroadcastManager), 1, maxStageSize);
 
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
         transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
         clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
-        searchQueryRequestStage, registerCacheListenerStage);
+        searchQueryRequestStage, registerInterestListenerStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
@@ -1136,7 +1139,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    final Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
                                    final Stage clientLockStatisticsRespondStage, final Stage clusterMetaDataStage,
                                    final Stage serverMapRequestStage, final Stage searchQueryRequestStage,
-                                   final Stage registerCacheListenerStage) {
+                                   final Stage registerInterestListenerStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -1171,7 +1174,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    serverMapRequestStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
                                    hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.REGISTER_CACHE_LISTENER_MESSAGE, registerCacheListenerStage.getSink(),
+    messageRouter.routeMessageType(TCMessageType.REGISTER_INTEREST_LISTENER_MESSAGE, registerInterestListenerStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.UNREGISTER_INTEREST_LISTENER_MESSAGE, registerInterestListenerStage.getSink(),
                                    hydrateSink);
   }
 
@@ -1242,8 +1247,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
-    messageTypeClassMapping.put(TCMessageType.REGISTER_CACHE_LISTENER_MESSAGE,
-                                RegisterCacheListenerMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REGISTER_INTEREST_LISTENER_MESSAGE, RegisterInterestListenerMessage.class);
+    messageTypeClassMapping.put(TCMessageType.UNREGISTER_INTEREST_LISTENER_MESSAGE, UnregisterInterestListenerMessage.class);
+    messageTypeClassMapping.put(TCMessageType.EVICTION_INTEREST_MESSAGE, EvictionInterestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.EXPIRATION_INTEREST_MESSAGE, ExpirationInterestMessageImpl.class);
     return messageTypeClassMapping;
   }
 

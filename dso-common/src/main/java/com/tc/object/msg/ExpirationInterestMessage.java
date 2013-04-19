@@ -5,5 +5,9 @@ import com.tc.net.protocol.tcm.TCMessage;
 /**
  * @author Eugene Shelestovich
  */
-public interface RegisterCacheListenerMessage extends TCMessage {
+public interface ExpirationInterestMessage extends TCMessage {
+
+  Object getKey();
+
+  void setKey(Object key);
 }

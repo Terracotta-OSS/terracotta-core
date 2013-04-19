@@ -11,6 +11,8 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.GroupID;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -402,4 +404,6 @@ public interface Manager extends TerracottaLocking {
   PlatformService getPlatformService();
 
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
+
+  void registerL1CacheListener(InterestDestination destination, Set<InterestType> listenTo);
 }

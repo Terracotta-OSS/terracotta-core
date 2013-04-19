@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -30,6 +28,8 @@ import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
@@ -37,7 +37,6 @@ import com.tc.object.TCObjectServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.platform.PlatformService;
-import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
@@ -67,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,9 +78,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ToolkitCacheListener<K>, ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>,
-    SearchableEntity {
+    ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity, InterestDestination {
   private static final TCLogger                                            LOGGER                               = TCLogging
                                                                                                                     .getLogger(AggregateServerMap.class);
   private static final int                                                 KB                                   = 1024;
@@ -174,10 +175,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       }
     }
     initializeLocalCache(list);
-    for (InternalToolkitMap<K, V> sm : list) {
-      sm.addCacheListener(this);
-    }
-    this.serverMaps = list.toArray(new ServerMap[0]);
+    this.serverMaps = list.toArray(new ServerMap[list.size()]);
     for (ToolkitObjectStripe stripeObject : stripeObjects) {
       stripeObject.addConfigChangeListener(this);
     }
@@ -389,28 +387,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void onEviction(K key) {
-    for (ToolkitCacheListener<K> listener : listeners) {
-      try {
-        listener.onEviction(key);
-      } catch (Throwable t) {
-        // Catch throwable here since the eviction listener will ultimately call user code.
-        // That way we do not cause an unhandled exception to be thrown in a stage thread, bringing
-        // down the L1.
-        LOGGER.error("Eviction listener threw an exception.", t);
-      }
-    }
-  }
-
-  @Override
-  public void onExpiration(K key) {
-    for (ToolkitCacheListener<K> listener : listeners) {
-      listener.onExpiration(key);
-    }
-  }
-
-  @Override
-  @FindbugsSuppressWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
   public void addListener(ToolkitCacheListener<K> listener) {
     // synchronize not to have duplicate listeners
     synchronized (listeners) {
@@ -418,36 +394,16 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         this.listeners.add(listener);
       }
     }
-    // propagate broadcast evictions flag down to CDSM
-    if (listeners.size() == 1) {
-      ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
-      try {
-        for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-          serverMap.setBroadcastEvictions(true);
-        }
-      } finally {
-        ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
-      }
-    }
+    platformService.registerL1CacheListener(this, EnumSet.of(InterestType.EVICT, InterestType.EXPIRE));
+    LOGGER.info("A new listener has been registered. Cache: " + getName());
   }
 
   @Override
-  @FindbugsSuppressWarnings
   public void removeListener(ToolkitCacheListener<K> listener) {
     synchronized (listeners) {
       this.listeners.remove(listener);
     }
-    // propagate broadcast evictions flag down to CDSM
-    if (listeners.isEmpty()) {
-      ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
-      try {
-        for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-          serverMap.setBroadcastEvictions(false);
-        }
-      } finally {
-        ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
-      }
-    }
+    //platformService.unregister
   }
 
   @Override
@@ -846,6 +802,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public Iterator<InternalToolkitMap<K, V>> iterator() {
     return new AggregateServerMapIterator<InternalToolkitMap<K, V>>(this.serverMaps);
+  }
+
+  @Override
+  public String getDestinationName() {
+    return getName();
   }
 
   private static class AggregateServerMapIterator<E> implements Iterator<E> {

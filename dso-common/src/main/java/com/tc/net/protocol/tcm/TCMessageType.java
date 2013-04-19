@@ -81,7 +81,10 @@ public final class TCMessageType {
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
   public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
-  public static final int           TYPE_REGISTER_CACHE_LISTENER_MESSAGE              = 72;
+  public static final int           TYPE_REGISTER_INTEREST_LISTENER_MESSAGE           = 72;
+  public static final int           TYPE_UNREGISTER_INTEREST_LISTENER_MESSAGE         = 73;
+  public static final int           TYPE_EVICTION_INTEREST_MESSAGE                    = 74;
+  public static final int           TYPE_EXPIRATION_INTEREST_MESSAGE                  = 75;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
@@ -140,7 +143,10 @@ public final class TCMessageType {
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
   public static final TCMessageType RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE           = new TCMessageType();
-  public static final TCMessageType REGISTER_CACHE_LISTENER_MESSAGE                   = new TCMessageType();
+  public static final TCMessageType REGISTER_INTEREST_LISTENER_MESSAGE                = new TCMessageType();
+  public static final TCMessageType UNREGISTER_INTEREST_LISTENER_MESSAGE              = new TCMessageType();
+  public static final TCMessageType EVICTION_INTEREST_MESSAGE                         = new TCMessageType();
+  public static final TCMessageType EXPIRATION_INTEREST_MESSAGE                       = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return typeMap.get(i);

@@ -24,6 +24,7 @@ import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.InterestType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -56,6 +57,7 @@ import com.terracottatech.search.SearchMetaData;
 import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -81,7 +83,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private volatile int                                          maxTTLSeconds;
   private volatile int                                          maxCountInCluster;
   private volatile boolean                                      evictionEnabled;
-  private volatile boolean                                      broadcastEvictions;
 
   // unclustered local fields
   protected volatile TCObjectServerMap<Long>                    tcObjectServerMap;
@@ -97,11 +98,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final ToolkitCacheMetaDataCallback                    metaDataCallback;
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
-
-  public ServerMap(Configuration config, String name, boolean broadcastEvictions) {
-    this(config, name);
-    this.broadcastEvictions = broadcastEvictions;
-  }
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -1037,13 +1033,24 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void notifyElementEvicted(K key) {
     for (ToolkitCacheListener<K> listener : listeners) {
-      listener.onEviction(key);
+      try {
+        listener.onEviction(key);
+      } catch (Throwable t) {
+        // Catch throwable here since the eviction listener will ultimately call user code.
+        // That way we do not cause an unhandled exception to be thrown in a stage thread, bringing
+        // down the L1.
+        LOGGER.error("Eviction listener threw an exception.", t);
+      }
     }
   }
 
   private void notifyElementExpired(K key) {
     for (ToolkitCacheListener<K> listener : listeners) {
-      listener.onExpiration(key);
+      try {
+        listener.onExpiration(key);
+      } catch (Throwable t) {
+        LOGGER.error("Expiration listener threw an exception.", t);
+      }
     }
   }
 
@@ -1239,6 +1246,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void removeCacheListener(ToolkitCacheListener<K> listener) {
     listeners.remove(listener);
+    //platformService.unregister
   }
 
   @Override
@@ -1348,20 +1356,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
           ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
     }
-  }
-
-  @Override
-  public void setBroadcastEvictions(boolean broadcastEvictions) {
-    if (this.broadcastEvictions != broadcastEvictions) {
-      this.broadcastEvictions = broadcastEvictions;
-      platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
-          ServerMapApplicator.BROADCAST_EVICTIONS_FIELDNAME, this.broadcastEvictions });
-    }
-  }
-
-  @Override
-  public boolean isBroadcastEvictions() {
-    return broadcastEvictions;
   }
 
   private boolean isSearchable() {

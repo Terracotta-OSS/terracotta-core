@@ -47,8 +47,7 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler {
       if (channel.isClosed()) {
         continue;
       }
-      if (broadcastContext.isBroadcastEvictions()
-          && clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
+      if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
         for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
           final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage)channel
               .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);

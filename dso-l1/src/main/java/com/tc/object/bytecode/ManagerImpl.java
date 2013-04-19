@@ -23,11 +23,14 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
+import com.tc.object.InterestDestination;
+import com.tc.object.InterestType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
+import com.tc.object.ServerInterestListenerManager;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -108,6 +111,7 @@ public class ManagerImpl implements Manager {
   private final PlatformServiceImpl                   platformService;
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
+  private ServerInterestListenerManager               serverInterestListenerManager;
 
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
@@ -257,6 +261,7 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.lockManager = ManagerImpl.this.dso.getLockManager();
         ManagerImpl.this.searchRequestManager = ManagerImpl.this.dso.getSearchRequestManager();
         ManagerImpl.this.methodCallManager = ManagerImpl.this.dso.getDmiManager();
+        ManagerImpl.this.serverInterestListenerManager = ManagerImpl.this.dso.getServerInterestListenerManager();
 
         ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
                                                                      ManagerImpl.this.dso,
@@ -979,5 +984,10 @@ public class ManagerImpl implements Manager {
   @Override
   public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
+  }
+
+  @Override
+  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    serverInterestListenerManager.registerL1CacheListener(destination, listenTo);
   }
 }
