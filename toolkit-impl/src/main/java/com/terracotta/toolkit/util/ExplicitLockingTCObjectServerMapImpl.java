@@ -347,26 +347,31 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
 
   @Override
   public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
+    assertLockStateBeforeRejoin();
     return delegate.getValueUnlocked(map, key);
   }
 
   @Override
   public Map getAllValuesUnlocked(Map mapIdToKeysMap) throws AbortedOperationException {
+    assertLockStateBeforeRejoin();
     return delegate.getAllValuesUnlocked(mapIdToKeysMap);
   }
 
   @Override
   public Set keySet(TCServerMap map) throws AbortedOperationException {
+    assertLockStateBeforeRejoin();
     return delegate.keySet(map);
   }
 
   @Override
   public Object getValue(TCServerMap map, Object lockID, Object key) throws AbortedOperationException {
+    assertLockStateBeforeRejoin();
     return delegate.getValue(map, lockID, key);
   }
 
   @Override
   public long getAllSize(TCServerMap[] maps) throws AbortedOperationException {
+    assertLockStateBeforeRejoin();
     return delegate.getAllSize(maps);
   }
 
@@ -475,4 +480,5 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     assertLockStateBeforeRejoin();
     delegate.doLogicalSetLastAccessedTime(key, value, lastAccessedTime);
   }
+
 }
