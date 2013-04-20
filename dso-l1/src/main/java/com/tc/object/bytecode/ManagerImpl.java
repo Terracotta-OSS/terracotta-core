@@ -579,8 +579,6 @@ public class ManagerImpl implements Manager {
   private class ShutdownAction implements Runnable {
     @Override
     public void run() {
-      // XXX: we should just call stop(), but for the 1.5 (chex) release, I'm reverting the behavior
-      // stop();
       logger.info("Running L1 VM shutdown hook");
       shutdown(true, false);
     }
@@ -752,6 +750,35 @@ public class ManagerImpl implements Manager {
     } else {
       return true;
     }
+  }
+
+  @Override
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    this.lockManager.lock(lock, level);
+    this.txManager.begin(lock, level, true);
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    try {
+      this.txManager.commit(lock, level, true, null);
+    } finally {
+      lockManager.unlock(lock, level);
+    }
+  }
+
+  private boolean isCurrentTransactionAtomic() {
+    ClientTransaction transaction = txManager.getCurrentTransaction();
+    return transaction != null && txManager.getCurrentTransaction().isAtomic();
+  }
+
+  private OnCommitCallable getUnlockCallback(final LockID lock, final LockLevel level) {
+    return new OnCommitCallable() {
+      @Override
+      public void call() throws AbortedOperationException {
+        lockManager.unlock(lock, level);
+      }
+    };
   }
 
   @Override
@@ -949,35 +976,6 @@ public class ManagerImpl implements Manager {
   @Override
   public void throttlePutIfNecessary(final ObjectID object) throws AbortedOperationException {
     dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
-  }
-
-  @Override
-  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
-    this.lockManager.lock(lock, level);
-    this.txManager.begin(lock, level, true);
-  }
-
-  @Override
-  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
-    try {
-      this.txManager.commit(lock, level, true, null);
-    } finally {
-      lockManager.unlock(lock, level);
-    }
-  }
-
-  public OnCommitCallable getUnlockCallback(final LockID lock, final LockLevel level) {
-    return new OnCommitCallable() {
-      @Override
-      public void call() throws AbortedOperationException {
-        lockManager.unlock(lock, level);
-      }
-    };
-  }
-
-  private boolean isCurrentTransactionAtomic() {
-    ClientTransaction transaction = txManager.getCurrentTransaction();
-    return transaction != null && txManager.getCurrentTransaction().isAtomic();
   }
 
 }
