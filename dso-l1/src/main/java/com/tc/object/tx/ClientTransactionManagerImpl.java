@@ -272,26 +272,27 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       return;
     }
 
-    final ClientTransaction tx = getTransaction();
-    if (atomic && !tx.isAtomic()) { throw new IllegalStateException(
-                                                                    "Trying to commit a transaction atomically when current transaction is not atomic"); }
+    try {
+      final ClientTransaction tx = getTransaction();
+      if (atomic && !tx.isAtomic()) { throw new IllegalStateException(
+                                                                      "Trying to commit a transaction atomically when current transaction is not atomic"); }
 
-    if (!atomic && tx.isAtomic()) {
-      // add the txnCommitCallable and return If not an atomic commit and current txn is atomic
-      tx.addOnCommitCallable(getOnCommitCallableForAtomicTxn(lock, onCommitCallable));
-      return;
-    } else {
-      // commit and call oncommitcallback inline
-      try {
+      if (!atomic && tx.isAtomic()) {
+        // add the txnCommitCallable and return If not an atomic commit and current txn is atomic
+        tx.addOnCommitCallable(getOnCommitCallableForAtomicTxn(lock, onCommitCallable));
+        return;
+      } else {
+        // commit and call OnCommitCallable callback inline which call lockManager.unlock
         commit(lock, tx);
-      } finally {
-        // this unlocks the lock associated with the transaction..
-        if (onCommitCallable != null) {
-          onCommitCallable.call();
-        }
+      }
+    } finally {
+      // this unlocks the lock associated with the transaction..
+      if (onCommitCallable != null) {
+        onCommitCallable.call();
       }
     }
   }
+
 
   private OnCommitCallable getOnCommitCallableForAtomicTxn(final LockID lock, final OnCommitCallable delegate) {
     return new OnCommitCallable() {
