@@ -200,6 +200,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       return;
     }
     this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg.getGCInfo()));
+    getGCMonitor().garbageCollectorCycleCompleted(gcMsg.getGCInfo(), TCCollections.EMPTY_OBJECT_ID_SET);
   }
 
   private void handleClusterObjectMessage(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
