@@ -112,6 +112,6 @@ public interface PlatformService {
 
   void commitAtomicTransaction(LockID lockID, LockLevel level) throws AbortedOperationException;
 
-  Object getRecentLockId();
+  boolean isExplicitlyLocked();
 
 }

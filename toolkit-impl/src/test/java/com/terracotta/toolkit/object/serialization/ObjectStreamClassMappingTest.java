@@ -113,17 +113,17 @@ public class ObjectStreamClassMappingTest {
     }
 
     @Override
+    public boolean isExplicitlyLocked() {
+      throw new ImplementMe();
+    }
+
+    @Override
     public void beginAtomicTransaction(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
     @Override
     public void commitAtomicTransaction(LockID lock, LockLevel level) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public Object getRecentLockId() {
       throw new ImplementMe();
     }
 

@@ -166,9 +166,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public void __tc_managed(TCObject t) {
     super.__tc_managed(t);
     if (!(t instanceof TCObjectServerMap)) { throw new AssertionError("Wrong tc object created for ServerMap - " + t); }
-    // as cache won't go through RejoinAwarePlatformService, we make this proxy to
-    // check that any operation that we do on cache, is not being done under a lock which was taken before rejoin:
-    // dev-9033
+    // TODO: ServerMap should talk to PlatformService
+    // DEV-9033 ServerMap doesn't talk to PlatformService, we need this wrapper to handle lock + rejoin scenario
     this.tcObjectServerMap = new ExplicitLockingTCObjectServerMapImpl((TCObjectServerMap) t, platformService);
     this.lockStrategy = new LongLockStrategy<K>(getInstanceDsoLockName());
   }
@@ -181,7 +180,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public boolean isEventual() {
-    return this.consistency == Consistency.EVENTUAL;
+    // if explicitly locked then consider as strong
+    return this.consistency == Consistency.EVENTUAL && !platformService.isExplicitlyLocked();
   }
 
   @Override
@@ -625,16 +625,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (null != value) { throw new AssertionError(); }
   }
 
-  private boolean isExplicitlyLocked() {
-    // TODO: fix this
-    return false;
-  }
-
-  private UnsupportedOperationException newEventualExplicitLockedError() {
-    // TODO: fix this with isExplictitlyLocked()
-    return new UnsupportedOperationException("Eventual with explicit locking not supported yet");
-  }
-
   @Override
   public V put(final K key, final V value) {
     return put(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
@@ -647,13 +637,9 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     throttleIfNecessary();
 
     if (isEventual()) {
-      if (isExplicitlyLocked()) {
-        throw newEventualExplicitLockedError();
-      } else {
         // Do this outside the lock
         // NOTE - pass to extractor original value, not serialized version
         MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
-
         eventualConcurrentLock.lock();
         try {
           V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
@@ -662,14 +648,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         } finally {
           eventualConcurrentLock.unlock();
         }
-      }
     } else {
-      MetaData metaData = createPutSearchMetaData(key, value);
-
-      if (metaData != null) {
-        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
-      }
-
+      MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
       final Long lockID = generateLockIdForKey(key);
       beginLock(lockID, this.lockType);
       try {
@@ -695,9 +675,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     throttleIfNecessary();
 
     if (isEventual()) {
-      if (isExplicitlyLocked()) {
-        throw newEventualExplicitLockedError();
-      } else {
         MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
         eventualConcurrentLock.lock();
         try {
@@ -705,13 +682,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         } finally {
           eventualConcurrentLock.unlock();
         }
-      }
     } else {
-      MetaData metaData = createPutSearchMetaData(key, value);
-      if (metaData != null) {
-        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
-      }
-
+      MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
       final Long lockID = generateLockIdForKey(key);
       beginLock(lockID, this.lockType);
       try {
@@ -741,9 +713,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private V internalPutIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
 
     if (isEventual()) {
-      if (isExplicitlyLocked()) {
-        throw newEventualExplicitLockedError();
-      } else {
         K portableKey = (K) assertKeyLiteral(key);
         MetaData metaData = createPutSearchMetaData(portableKey, value);
 
@@ -763,7 +732,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         } finally {
           eventualConcurrentLock.unlock();
         }
-      }
     } else {
 
       MetaData metaData = createPutSearchMetaData(key, value);

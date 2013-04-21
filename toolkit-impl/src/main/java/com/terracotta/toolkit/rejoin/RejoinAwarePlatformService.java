@@ -27,25 +27,23 @@ import com.tc.util.VicariousThreadLocal;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RejoinAwarePlatformService implements PlatformService {
   // private static final TCLogger LOGGER = TCLogging
   // .getLogger(RejoinAwarePlatformService.class);
-  private final PlatformService                                  delegate;
-  private final RejoinStateListener                              rejoinState;
-  private static final ThreadLocal<Map<Object, RejoinLockState>> lockIdToCount = new VicariousThreadLocal<Map<Object, RejoinLockState>>() {
-                                                                                 @Override
-                                                                                 protected HashMap<Object, RejoinLockState> initialValue() {
-                                                                                   return new HashMap<Object, RejoinLockState>();
-                                                                                 }
-                                                                               };
+  private final PlatformService          delegate;
+  private final RejoinStateListener      rejoinState;
+  private static final ThreadLocal<Long> currentRejoinCount = new VicariousThreadLocal<Long>() {
+                                                              @Override
+                                                              protected Long initialValue() {
+                                                                return new Long(0);
+                                                              }
+                                                            };
 
   public RejoinAwarePlatformService(PlatformService delegate) {
     this.delegate = delegate;
@@ -53,10 +51,9 @@ public class RejoinAwarePlatformService implements PlatformService {
     delegate.addRejoinLifecycleListener(rejoinState);
   }
 
-
   @Override
-  public Object getRecentLockId() {
-    return delegate.getRecentLockId();
+  public boolean isExplicitlyLocked() {
+    return delegate.isExplicitlyLocked();
   }
 
   @Override
@@ -73,39 +70,16 @@ public class RejoinAwarePlatformService implements PlatformService {
     rejoinState.assertRejoinNotInProgress();
   }
 
-  private void addContext(Object lockId) {
-    Map<Object, RejoinLockState> localMap = lockIdToCount.get();
-    RejoinLockState lockState = localMap.get(lockId);
-    if (lockState != null) {
-      lockState.incrementLockCount();
-    } else {
-      localMap.put(lockId, new RejoinLockState(rejoinState.getRejoinCount(), 1));
-    }
-  }
-
-  private void removeContext(Object lockId) {
-    Map<Object, RejoinLockState> localMap = lockIdToCount.get();
-    RejoinLockState lockState = localMap.get(lockId);
-    if (lockState != null) {
-      lockState.decrementLockCount();
-      if (lockState.getLockCount() == 0) {
-        localMap.remove(lockId);
-      }
-    } else {
-      throw new IllegalMonitorStateException("lock.unlock done more times than lock.lock");
+  private void resetRejoinCountIfNecessary() {
+    if (!isExplicitlyLocked()) {
+      currentRejoinCount.set(rejoinState.getRejoinCount());
     }
   }
 
   @Override
   public boolean isLockedBeforeRejoin() {
-    // check whether lock was taken before rejoin
-    Map<Object, RejoinLockState> localMap = lockIdToCount.get();
-    if (localMap.size() > 0) {
-      RejoinLockState lockState = localMap.entrySet().iterator().next().getValue();
-      if (lockState.getRejoinCount() < rejoinState.getRejoinCount()) { return true; }
-    }
-    return false;
-
+    // already taken a lock && rejoin count has changed
+    return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != rejoinState.getRejoinCount());
   }
 
   @Override
@@ -173,8 +147,8 @@ public class RejoinAwarePlatformService implements PlatformService {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
+      resetRejoinCountIfNecessary();
       delegate.beginLock(lockID, level);
-      addContext(lockID);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -186,26 +160,10 @@ public class RejoinAwarePlatformService implements PlatformService {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
+      resetRejoinCountIfNecessary();
       delegate.beginLockInterruptibly(lockID, level);
-      addContext(lockID);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
-    }
-  }
-
-  @Override
-  public void commitLock(Object lockID, LockLevel level) throws AbortedOperationException {
-    // do not assert and throw rejoin ex when rejoin is in progress.
-    try {
-      delegate.commitLock(lockID, level);
-    } catch (PlatformRejoinException e) {
-      if (isLockedBeforeRejoin()) { throw new RejoinException(e); }
-      throw new IllegalMonitorStateException();
-    } catch (IllegalMonitorStateException e) {
-      if (isLockedBeforeRejoin()) { throw new RejoinException(e); }
-      throw e;
-    } finally {
-      removeContext(lockID);
     }
   }
 
@@ -214,11 +172,8 @@ public class RejoinAwarePlatformService implements PlatformService {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
-      boolean granted = delegate.tryBeginLock(lockID, level);
-      if (granted) {
-        addContext(lockID);
-      }
-      return granted;
+      resetRejoinCountIfNecessary();
+      return delegate.tryBeginLock(lockID, level);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -230,13 +185,29 @@ public class RejoinAwarePlatformService implements PlatformService {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
-      boolean granted = delegate.tryBeginLock(lockID, level, timeout, timeUnit);
-      if (granted) {
-        addContext(lockID);
-      }
-      return granted;
+      resetRejoinCountIfNecessary();
+      return delegate.tryBeginLock(lockID, level, timeout, timeUnit);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
+    }
+  }
+
+  @Override
+  public void commitLock(Object lockID, LockLevel level) throws AbortedOperationException {
+    // do not assert and throw rejoin exception when rejoin is in progress
+    // copy current isLockedBeforeRejoin state because that will change after delegate.commitLock()
+    boolean isLockedBeforeRejoin = isLockedBeforeRejoin();
+    try {
+      delegate.commitLock(lockID, level);
+    } catch (PlatformRejoinException e) {
+      // we can see PlatformRejoinException during rejoin even when we did not lock before rejoin but called unlock so
+      // we should convert it to IllegalMonitorStateException
+      if (isLockedBeforeRejoin) { throw new RejoinException(e); }
+      throw new IllegalMonitorStateException();
+    } catch (IllegalMonitorStateException e) {
+      // if we get IllegalMonitorStateException then we should convert it to RejoinException if locked before rejoin
+      if (isLockedBeforeRejoin) { throw new RejoinException(e); }
+      throw e;
     }
   }
 
@@ -510,7 +481,7 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   private static class RejoinStateListener implements RejoinLifecycleListener {
     private final AtomicBoolean rejoinInProgress = new AtomicBoolean(false);
-    private final AtomicInteger rejoinCount      = new AtomicInteger();
+    private final AtomicLong    rejoinCount      = new AtomicLong();
 
     @Override
     public void onRejoinStart() {
@@ -527,37 +498,10 @@ public class RejoinAwarePlatformService implements PlatformService {
       if (rejoinInProgress.get()) throw new RejoinException("Rejoin is in progress");
     }
 
-    public int getRejoinCount() {
+    public long getRejoinCount() {
       return rejoinCount.get();
     }
 
-  }
-
-  private static class RejoinLockState {
-    private final int rejoinCount;
-    private int       lockCount;
-
-    public RejoinLockState(int rejoinCount, int lockCount) {
-      super();
-      this.rejoinCount = rejoinCount;
-      this.lockCount = lockCount;
-    }
-
-    public int getRejoinCount() {
-      return rejoinCount;
-    }
-
-    public int getLockCount() {
-      return lockCount;
-    }
-
-    public void incrementLockCount() {
-      this.lockCount++;
-    }
-
-    public void decrementLockCount() {
-      this.lockCount--;
-    }
   }
 
 }
