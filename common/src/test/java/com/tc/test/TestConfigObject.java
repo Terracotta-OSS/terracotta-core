@@ -94,7 +94,6 @@ public class TestConfigObject {
 
   private final Properties        properties;
   private final AppServerInfo     appServerInfo;
-  private String                  extraClassPathForAppServer;
   private boolean                 springTest                       = false;
 
   private TestConfigObject() throws IOException {
@@ -140,13 +139,6 @@ public class TestConfigObject {
 
     properties.putAll(System.getProperties());
     appServerInfo = createAppServerInfo();
-    extraClassPathForAppServer = linkedChildProcessPath();
-
-    // if Emma is enabled, add it to app server classpath
-    String emmaLib = properties.getProperty(EMMA_LIB);
-    if (emmaLib != null) {
-      extraClassPathForAppServer += File.pathSeparator + emmaLib;
-    }
 
     logger.info("Loaded test configuration from " + loadedFrom.toString());
   }
@@ -360,14 +352,6 @@ public class TestConfigObject {
     File installDir = new File(cacheDir(), "appservers");
     if (!installDir.exists()) installDir.mkdirs();
     return installDir;
-  }
-
-  public String extraClassPathForAppServer() {
-    return extraClassPathForAppServer;
-  }
-
-  public void addToAppServerClassPath(String cp) {
-    extraClassPathForAppServer += File.pathSeparator + cp;
   }
 
   public String linkedChildProcessPath() {
