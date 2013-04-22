@@ -192,7 +192,7 @@ public class ClientTransactionManagerTest extends TestCase {
       doSomeChange();
       Assert.assertTrue(clientTxnMgr.getCurrentTransaction().isAtomic());
       clientTxnMgr.commit(new StringLockID("lock"), LockLevel.CONCURRENT, false, commitCallable);
-      Mockito.verify(commitCallable, Mockito.times(1)).call();
+      Mockito.verify(commitCallable, Mockito.times(2)).call();
 
     } finally {
       clientTxnMgr.commit(new StringLockID("lock"), LockLevel.WRITE, true, commitCallable);

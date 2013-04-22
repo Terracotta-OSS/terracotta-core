@@ -51,7 +51,7 @@ public class ThreadTransactionContext {
     return null;
   }
 
-  public ClientTransaction popCurrentTransaction(LockID id) {
+  public void popLockContext(LockID id) {
     int len = transactionStack.size();
     boolean found = false;
     TransactionContext tc = null;
@@ -70,7 +70,10 @@ public class ThreadTransactionContext {
       }
       transactionStack.remove(i);
     }
+  }
 
+  public ClientTransaction popCurrentTransaction(LockID id) {
+    popLockContext(id);
     ClientTransaction ctx = currentTransaction;
     currentTransaction = null;
     return ctx;
@@ -94,4 +97,5 @@ public class ThreadTransactionContext {
     if (transactionStack.isEmpty()) return null;
     return (TransactionContext) transactionStack.peek();
   }
+
 }

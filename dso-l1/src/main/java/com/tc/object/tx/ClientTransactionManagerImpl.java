@@ -265,23 +265,23 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
     final TxnType transactionType = getTxnTypeFromLockLevel(level);
     if (transactionType == null) {
-      // since no transaction associated with this lock type call commit callable.
-      if (onCommitCallable != null) {
-        onCommitCallable.call();
-      }
+      call(onCommitCallable);
       return;
     }
 
     final ClientTransaction tx = getTransaction();
     if (atomic && !tx.isAtomic()) {
-      if (onCommitCallable != null) {
-        onCommitCallable.call();
-      }
+      call(onCommitCallable);
       throw new IllegalStateException(
                                       "Trying to commit a transaction atomically when current transaction is not atomic");
     }
 
     if (!atomic && tx.isAtomic()) {
+      if (transactionType.isConcurrent()) {
+        popLockContext(lock);
+        call(onCommitCallable);
+        return;
+      }
       // add the txnCommitCallable and return If not an atomic commit and current txn is atomic
       tx.addOnCommitCallable(getOnCommitCallableForAtomicTxn(lock, onCommitCallable));
       return;
@@ -290,11 +290,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         // commit and call OnCommitCallable callback inline which call lockManager.unlock
         commit(lock, tx);
       } finally {
-        // this unlocks the lock associated with the transaction..
-        if (onCommitCallable != null) {
-          onCommitCallable.call();
-        }
+        call(onCommitCallable);
       }
+    }
+  }
+
+  private void call(final OnCommitCallable onCommitCallable) throws AbortedOperationException {
+    if (onCommitCallable != null) {
+      onCommitCallable.call();
     }
   }
 
@@ -305,9 +308,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       @Override
       public void call() throws AbortedOperationException {
         popTransaction(lock);
-        if (delegate != null) {
-          delegate.call();
-        }
+        ClientTransactionManagerImpl.this.call(delegate);
       }
     };
   }
@@ -329,6 +330,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private ClientTransaction popTransaction(final LockID lockID) {
     final ThreadTransactionContext ttc = getThreadTransactionContext();
     return ttc.popCurrentTransaction(lockID);
+  }
+
+  private void popLockContext(final LockID lockID) {
+    final ThreadTransactionContext ttc = getThreadTransactionContext();
+    ttc.popLockContext(lockID);
   }
 
   private TransactionContext peekContext() {
