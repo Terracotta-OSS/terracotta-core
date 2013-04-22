@@ -99,6 +99,14 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
+    } else if (context instanceof SearchDestroyContext) {
+      try {
+        final SearchDestroyContext searchDestroyContext = (SearchDestroyContext)context;
+        this.indexManager.deleteIndex(searchDestroyContext.getCacheName(), searchDestroyContext.getMetaDataProcessingContext());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

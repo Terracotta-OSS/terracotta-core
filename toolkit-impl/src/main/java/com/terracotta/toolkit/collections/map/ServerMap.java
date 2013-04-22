@@ -1194,6 +1194,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public void cleanupOnDestroy() {
+    MetaData destroyMetadata = createClearSearchMetaData();
+    if (destroyMetadata != null) {
+      destroyMetadata.set(SearchMetaData.COMMAND, SearchCommand.DESTROY);
+      addMetaData(destroyMetadata);
+    }
     disposeLocally();
   }
 
