@@ -189,7 +189,7 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
       List<Byte> byteList = new LinkedList<Byte>();
       ByteBuffer backingByteBuffer;
       for(TCByteBuffer tcb : tcByteBuffers) {
-        backingByteBuffer = tcb.getNioBuffer();
+        backingByteBuffer = tcb.getNioBuffer().duplicate();
         while (backingByteBuffer.hasRemaining()) {
           byteList.add(backingByteBuffer.get());
         }
