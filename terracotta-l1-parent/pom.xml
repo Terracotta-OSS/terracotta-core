@@ -117,9 +117,5 @@
       <groupId>com.terracottatech</groupId>
       <artifactId>search</artifactId>
     </dependency>
-    <dependency>
-      <groupId>trove</groupId>
-      <artifactId>trove</artifactId>
-    </dependency>
   </dependencies>
 </project>

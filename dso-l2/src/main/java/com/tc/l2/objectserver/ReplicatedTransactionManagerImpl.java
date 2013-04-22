@@ -22,7 +22,6 @@ import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.dna.impl.TCLinkable;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.MessageRecycler;
@@ -95,7 +94,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   }
 
   @Override
-  public synchronized void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, Recyclable message) {
+  public synchronized void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns,
+                                                    Recyclable message) {
     delegate.addCommittedTransactions(nodeID, txns, message);
   }
 
@@ -163,7 +163,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   private static final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
     @Override
-    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, Recyclable message) {
+    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns,
+                                         Recyclable message) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
       logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + nodeID);
     }
@@ -184,7 +185,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
 
     @Override
-    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, Recyclable message) {
+    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns,
+                                         Recyclable message) {
       recycler.addMessage(message, txns.keySet());
       addIncomingTransactions(nodeID, txns);
     }
@@ -215,15 +217,18 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     // NOTE::XXX:: Messages are not Recylced in Passive Uninitialized state because of complicated pruning
     // code. Messages may have to live longer than Txn acks.
     @Override
-    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, Recyclable message) {
+    public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns,
+                                         Recyclable message) {
       LinkedHashMap<ServerTransactionID, ServerTransaction> prunedTransactionsMap = pruneTransactions(txns.values());
       addIncomingTransactions(nodeID, prunedTransactionsMap);
     }
 
     @Override
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-      // We don't want to do this anymore. The only way to get relayed metadata in current impl is to keep committed txns in pending account
-      // until they are needed - which shouldn't be a long time, i.e. until all the maps have been synced over with object sync
+      // We don't want to do this anymore. The only way to get relayed metadata in current impl is to keep committed
+      // txns in pending account
+      // until they are needed - which shouldn't be a long time, i.e. until all the maps have been synced over with
+      // object sync
       // pca.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
       gtxm.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
     }
@@ -416,10 +421,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   }
 
-  private static final class PendingRecord implements TCLinkable {
-
-    private TCLinkable                prev;
-    private TCLinkable                next;
+  private static final class PendingRecord {
 
     private final DNA                 dna;
     private final GlobalTransactionID gid;
@@ -435,26 +437,6 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
     public GlobalTransactionID getGlobalTransactionID() {
       return this.gid;
-    }
-
-    @Override
-    public TCLinkable getNext() {
-      return next;
-    }
-
-    @Override
-    public TCLinkable getPrevious() {
-      return prev;
-    }
-
-    @Override
-    public void setNext(TCLinkable n) {
-      this.next = n;
-    }
-
-    @Override
-    public void setPrevious(TCLinkable p) {
-      this.prev = p;
     }
 
     @Override

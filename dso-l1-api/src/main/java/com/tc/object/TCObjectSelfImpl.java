@@ -10,8 +10,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.util.ToggleableStrongReference;
 
-import gnu.trove.TLinkable;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -348,29 +346,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
 
   @Override
   public void unresolveReference(String arg0) {
-    throw new UnsupportedOperationException();
-  }
-
-  // ====================================================
-  // Not used anymore - needs cleanup
-  // ====================================================
-  @Override
-  public TLinkable getNext() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public TLinkable getPrevious() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setNext(TLinkable arg0) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setPrevious(TLinkable arg0) {
     throw new UnsupportedOperationException();
   }
 

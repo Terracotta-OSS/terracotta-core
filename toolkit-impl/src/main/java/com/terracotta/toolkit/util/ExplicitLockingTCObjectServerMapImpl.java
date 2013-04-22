@@ -18,8 +18,6 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.platform.PlatformService;
 
-import gnu.trove.TLinkable;
-
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Set;
@@ -263,26 +261,6 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   @Override
   public boolean isCacheManaged() {
     return delegate.isCacheManaged();
-  }
-
-  @Override
-  public TLinkable getNext() {
-    return delegate.getNext();
-  }
-
-  @Override
-  public TLinkable getPrevious() {
-    return delegate.getPrevious();
-  }
-
-  @Override
-  public void setNext(TLinkable arg0) {
-    delegate.setNext(arg0);
-  }
-
-  @Override
-  public void setPrevious(TLinkable arg0) {
-    delegate.setPrevious(arg0);
   }
 
   @Override
