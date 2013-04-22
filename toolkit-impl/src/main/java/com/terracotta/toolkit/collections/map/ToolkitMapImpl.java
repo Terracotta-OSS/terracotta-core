@@ -71,7 +71,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     boolean isLiteral = LiteralValues.isLiteralInstance(o);
     if (isLiteral) { return (K) o; }
 
-    return ((SerializedClusterObject<K>) o).getValue(strategy, false, false);
+    return ((SerializedClusterObject<K>) o).getValue(serStrategy, false, false);
   }
 
   @Override

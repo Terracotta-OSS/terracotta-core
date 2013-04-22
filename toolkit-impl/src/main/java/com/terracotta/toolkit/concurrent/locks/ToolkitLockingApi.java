@@ -51,9 +51,12 @@ public class ToolkitLockingApi {
   }
 
   // used for ServerMap keys
-  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(long longLockId, PlatformService service,
+  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(Object lockId, PlatformService service,
                                                                        ToolkitLockTypeInternal writeLockType) {
-    return new UnnamedToolkitReadWriteLock(service, longLockId, writeLockType);
+    assertLockIdType(lockId);
+    if (lockId instanceof Long) { return new UnnamedToolkitReadWriteLock(service, (Long) lockId, writeLockType); }
+    if (lockId instanceof String) { return new UnnamedToolkitReadWriteLock(service, (String) lockId, writeLockType); }
+    return null;
   }
 
   public static void lock(ToolkitLockDetail lockDetail, PlatformService service) {
