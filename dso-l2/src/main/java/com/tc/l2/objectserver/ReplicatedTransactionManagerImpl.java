@@ -4,6 +4,10 @@
  */
 package com.tc.l2.objectserver;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.OrderedSink;
@@ -35,15 +39,11 @@ import com.tc.util.ObjectIDSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionManager, GroupMessageListener {
 
@@ -160,6 +160,11 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     transactionManager.incomingTransactions(nodeID, txns);
   }
 
+  @Override
+  public int pendingTransactions() {
+    return delegate.pendingTransactions();
+  }
+
   private static final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
     @Override
@@ -180,6 +185,10 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       logger.warn("Ignoring LowWaterMark recd. while in ACTIVE state : " + lowGlobalTransactionIDWatermark);
     }
 
+    @Override
+    public int pendingTransactions() {
+      return 0;
+    }
   }
 
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
@@ -206,6 +215,11 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     @Override
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
       gtxm.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
+    }
+
+    @Override
+    public int pendingTransactions() {
+      return transactionManager.getTotalPendingTransactionsCount();
     }
   }
 
@@ -358,67 +372,41 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         return txn;
       }
     }
+
+    @Override
+    public int pendingTransactions() {
+      return transactionManager.getTotalPendingTransactionsCount() + pca.size();
+    }
   }
 
   private static final class PendingChangesAccount {
 
-    Map<ObjectID, LinkedList<PendingRecord>>      oid2Changes = new HashMap<ObjectID, LinkedList<PendingRecord>>();
-    TreeMap<GlobalTransactionID, IdentityHashMap> gid2Changes = new TreeMap<GlobalTransactionID, IdentityHashMap>();
+    private final ListMultimap<ObjectID, PendingRecord> oid2Changes = LinkedListMultimap.create();
+    private final Multimap<GlobalTransactionID, PendingRecord> gid2Changes = HashMultimap.create();
 
-    public void addToPending(ServerTransaction st, DNA dna) {
+    void addToPending(ServerTransaction st, DNA dna) {
       PendingRecord pr = new PendingRecord(dna, st.getGlobalTransactionID());
       ObjectID oid = dna.getObjectID();
-      LinkedList<PendingRecord> pendingChangesForOid = getOrCreatePendingChangesListFor(oid);
-      pendingChangesForOid.addLast(pr);
-      IdentityHashMap pendingChangesForTxn = getOrCreatePendingChangesSetFor(st.getGlobalTransactionID());
-      pendingChangesForTxn.put(pr, pr);
+      oid2Changes.put(oid, pr);
+      gid2Changes.put(st.getGlobalTransactionID(), pr);
     }
 
-    public void clear() {
+    void clear() {
       oid2Changes.clear();
       gid2Changes.clear();
     }
 
-    public List getAnyPendingChangesForAndClear(ObjectID oid) {
-      List pendingChangesForOid = removePendingChangesFor(oid);
-      if (pendingChangesForOid != null) {
-        for (Iterator i = pendingChangesForOid.iterator(); i.hasNext();) {
-          PendingRecord pr = (PendingRecord) i.next();
-          IdentityHashMap pendingChangesForTxn = getPendingChangesSetFor(pr.getGlobalTransactionID());
-          pendingChangesForTxn.remove(pr);
-        }
-        return pendingChangesForOid;
-      } else {
-        return Collections.EMPTY_LIST;
+    List<PendingRecord> getAnyPendingChangesForAndClear(ObjectID oid) {
+      List<PendingRecord> pendingChangesForOid = oid2Changes.removeAll(oid);
+      for (PendingRecord pr : pendingChangesForOid) {
+        gid2Changes.remove(pr.getGlobalTransactionID(), pr);
       }
+      return pendingChangesForOid;
     }
 
-    private IdentityHashMap getPendingChangesSetFor(GlobalTransactionID gid) {
-      return gid2Changes.get(gid);
+    int size() {
+      return gid2Changes.keySet().size();
     }
-
-    private LinkedList<PendingRecord> removePendingChangesFor(ObjectID oid) {
-      return oid2Changes.remove(oid);
-    }
-
-    private IdentityHashMap getOrCreatePendingChangesSetFor(GlobalTransactionID gid) {
-      IdentityHashMap m = gid2Changes.get(gid);
-      if (m == null) {
-        m = new IdentityHashMap();
-        gid2Changes.put(gid, m);
-      }
-      return m;
-    }
-
-    private LinkedList<PendingRecord> getOrCreatePendingChangesListFor(ObjectID oid) {
-      LinkedList l = oid2Changes.get(oid);
-      if (l == null) {
-        l = new LinkedList<ObjectID>();
-        oid2Changes.put(oid, l);
-      }
-      return l;
-    }
-
   }
 
   private static final class PendingRecord {

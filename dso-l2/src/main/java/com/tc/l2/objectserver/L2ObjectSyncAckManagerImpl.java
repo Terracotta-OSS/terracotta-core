@@ -3,9 +3,11 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.async.api.Sink;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ServerSyncTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
+import com.tc.net.groups.GroupException;
+import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.MessageID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
@@ -18,12 +20,12 @@ import java.util.concurrent.ConcurrentMap;
 
 public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListener implements L2ObjectSyncAckManager {
   private final ConcurrentMap<ServerTransactionID, MessageID> txnsToAckMsgID = new ConcurrentHashMap<ServerTransactionID, MessageID>();
-  private final Sink                                          sendSink;
+  private final GroupManager                                  groupManager;
   private final ServerTransactionManager                      transactionManager;
 
-  public L2ObjectSyncAckManagerImpl(final Sink sendSink, final ServerTransactionManager transactionManager) {
-    this.sendSink = sendSink;
+  public L2ObjectSyncAckManagerImpl(final ServerTransactionManager transactionManager, final GroupManager groupManager) {
     this.transactionManager = transactionManager;
+    this.groupManager = groupManager;
     transactionManager.addTransactionListener(this);
   }
 
@@ -57,7 +59,12 @@ public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListene
       ServerSyncTxnAckMessage ackMsg = ServerTxnAckMessageFactory.createServerSyncTxnAckMessage(stxID.getSourceID(),
                                                                                                 msgID, Collections
                                                                                                     .singleton(stxID));
-      sendSink.add(ackMsg);
+      try {
+        groupManager.sendTo(stxID.getSourceID(), ackMsg);
+      } catch (GroupException e) {
+        groupManager.zapNode(stxID.getSourceID(), L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
+            "Failed to send object sync ack to active " + stxID.getSourceID() + ".");
+      }
     }
   }
 
