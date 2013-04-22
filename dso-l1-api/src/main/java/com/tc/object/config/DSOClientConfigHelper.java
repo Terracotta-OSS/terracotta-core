@@ -12,9 +12,9 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 
 /**
- * Knows how to interpret the DSO client config and tell you things like whether a class is portable. This interface
- * extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from the
- * perspective of generating a configuration file.
+ * Knows how to interpret the terracotta client config and tell you things like whether a class is portable. This
+ * interface extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from
+ * the perspective of generating a configuration file.
  */
 public interface DSOClientConfigHelper extends DSOMBeanConfig {
   String[] processArguments();

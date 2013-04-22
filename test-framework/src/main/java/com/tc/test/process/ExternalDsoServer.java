@@ -207,7 +207,7 @@ public class ExternalDsoServer {
 
   @Override
   public String toString() {
-    return "DSO server; serverport:" + tsaPort + "; adminPort:" + jmxPort;
+    return "TSA server; serverport:" + tsaPort + "; adminPort:" + jmxPort;
   }
 
   public int getServerPort() {

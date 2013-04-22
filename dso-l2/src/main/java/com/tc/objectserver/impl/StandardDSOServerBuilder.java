@@ -104,7 +104,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                   final TCSecurityManager securityManager) {
     this.logger = logger;
     this.securityManager = securityManager;
-    this.logger.info("Standard DSO Server created");
+    this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
     this.thisGroupID = this.haConfig.getThisGroupID();
   }

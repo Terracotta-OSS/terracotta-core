@@ -336,7 +336,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   /**
    * Since ObjectNames can have arbitrary attribute pairs, we need to match against a wildcard pattern that we expect.
    * Each tunneled client bean is uniquely identified by its node attribute, which is constructed from the remote host
-   * and port of the DSO client.
+   * and port of the terracotta client.
    */
   private boolean matchesClientBeanName(ObjectName clientBeanName, ObjectName beanName) {
     try {

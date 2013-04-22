@@ -21,7 +21,7 @@ import java.util.List;
 import junit.framework.Assert;
 
 /**
- * This class will start a DSO client out of process
+ * This class will start a terracotta client out of process
  * 
  * @author hhuynh
  */
@@ -97,9 +97,10 @@ public class ExternalDsoClient {
       process.destroy();
     }
     if (isRunning()) {
-      System.err.println(" WARNING: Dso client " + toString() + " process is still running after calling destroy()");
+      System.err.println(" WARNING: Terrracotta client " + toString()
+                         + " process is still running after calling destroy()");
     }
-    System.err.println("DSO client " + toString() + " stopped");
+    System.err.println("Terracotta client " + toString() + " stopped");
     IOUtils.closeQuietly(logOutputStream);
   }
 
@@ -130,7 +131,7 @@ public class ExternalDsoClient {
 
   @Override
   public String toString() {
-    return "DSO client " + (clientName != null ? clientName : clientClass.getName());
+    return "Terracotta client " + (clientName != null ? clientName : clientClass.getName());
   }
 
   public List getJvmArgs() {

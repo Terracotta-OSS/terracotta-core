@@ -583,7 +583,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionPolicy, commWorkerThreadCount,
                                                                new HealthCheckerConfigImpl(tcProperties
-                                                                   .getPropertiesFor("l2.healthcheck.l1"), "DSO Server"),
+                                                                   .getPropertiesFor("l2.healthcheck.l1"), "TSA Server"),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.EMPTY_MAP,

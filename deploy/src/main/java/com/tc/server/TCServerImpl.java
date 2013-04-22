@@ -381,13 +381,13 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public int getTSAListenPort() {
     if (this.dsoServer != null) { return this.dsoServer.getListenPort(); }
-    throw new IllegalStateException("DSO Server not running");
+    throw new IllegalStateException("TSA Server not running");
   }
 
   @Override
   public int getTSAGroupPort() {
     if (this.dsoServer != null) { return this.dsoServer.getGroupPort(); }
-    throw new IllegalStateException("DSO Server not running");
+    throw new IllegalStateException("TSA Server not running");
   }
 
   public DistributedObjectServer getDSOServer() {
@@ -467,7 +467,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       try {
         this.dsoServer.quickStop();
       } catch (Exception e) {
-        logger.error("Error shutting down DSO server", e);
+        logger.error("Error shutting down TSA server", e);
       } finally {
         this.dsoServer = null;
       }

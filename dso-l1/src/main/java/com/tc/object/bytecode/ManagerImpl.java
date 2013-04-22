@@ -146,7 +146,7 @@ public class ManagerImpl implements Manager {
 
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
-      // Register a shutdown hook for the DSO client
+      // Register a shutdown hook for the terracotta client
       Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     } else {
       this.shutdownAction = null;
