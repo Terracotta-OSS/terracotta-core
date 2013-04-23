@@ -211,27 +211,30 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private ClientTransaction getTransaction(final Object context) throws UnlockedSharedObjectException {
     final ClientTransaction tx = getTransactionOrNull();
     if (tx == null) {
-
-      final String type = context == null ? null : context.getClass().getName();
-      final String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n"
-                              + "All access to shared objects must be within the scope of one or more\n"
-                              + "shared locks defined in your Terracotta configuration.";
-      String details = "";
-      if (type != null) {
-        details += "Shared Object Type: " + type;
-      }
-      details += "\n\nThe cause may be one or more of the following:\n"
-                 + " * Terracotta locking was not configured for the shared code.\n"
-                 + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
-                 + " * The class doing the locking must be included for instrumentation.\n"
-                 + " * The object was first locked, then shared.\n\n"
-                 + "For more information on how to solve this issue, see:\n"
-                 + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
-
-      throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
-          .getClientID().toLong(), details);
+      handleUnlockedObjectException(context);
     }
     return tx;
+  }
+
+  private void handleUnlockedObjectException(final Object context) {
+    final String type = context == null ? null : context.getClass().getName();
+    final String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n"
+                            + "All access to shared objects must be within the scope of one or more\n"
+                            + "shared locks defined in your Terracotta configuration.";
+    String details = "";
+    if (type != null) {
+      details += "Shared Object Type: " + type;
+    }
+    details += "\n\nThe cause may be one or more of the following:\n"
+               + " * Terracotta locking was not configured for the shared code.\n"
+               + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
+               + " * The class doing the locking must be included for instrumentation.\n"
+               + " * The object was first locked, then shared.\n\n"
+               + "For more information on how to solve this issue, see:\n"
+               + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
+
+    throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
+        .getClientID().toLong(), details);
   }
 
   @Override
@@ -269,7 +272,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       return;
     }
 
-    final ClientTransaction tx = getTransaction();
+    final ClientTransaction tx = getTransactionOrNull();
+    if (tx == null) {
+      call(onCommitCallable);
+      handleUnlockedObjectException(null);
+    }
     if (atomic && !tx.isAtomic()) {
       call(onCommitCallable);
       throw new IllegalStateException(
