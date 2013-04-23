@@ -75,7 +75,7 @@
         </property>
       </activation>
       <properties>
-        <excludeGroupIdsForClasspath></excludeGroupIdsForClasspath>
+        <excludeGroupIdsForClasspath/>
         <devmodeResourcePath>${project.build.outputDirectory}/META-INF/devmode/${project.groupId}/${project.artifactId}</devmodeResourcePath>
         <devmodeDependencies>${devmodeResourcePath}/dependencies.txt</devmodeDependencies>        
       </properties>
