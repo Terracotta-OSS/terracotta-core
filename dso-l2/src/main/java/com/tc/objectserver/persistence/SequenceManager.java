@@ -52,44 +52,48 @@ public class SequenceManager {
 
   private static class Sequence implements MutableSequence {
 
+    private String uuid;
+    private long next;
+
     private final KeyValueStorage<String, Long> sequenceMap;
-    private final String uuid;
+    private final KeyValueStorage<String, String> uuidMap;
     private final String name;
 
     Sequence(KeyValueStorage<String, Long> sequenceMap, KeyValueStorage<String, String> uuidMap, String name, long initialValue) {
       this.name = name;
       this.sequenceMap = sequenceMap;
-      Long current = sequenceMap.get(name);
-      if (current == null) {
-        uuid = UUID.getUUID().toString();
-        current = initialValue;
-        sequenceMap.put(name, current);
-        uuidMap.put(name, uuid);
-      } else {
-        uuid = uuidMap.get(name);
-        if (uuid == null) {
-          throw new IllegalStateException("Sequence '" + name + "' has no uuid!");
-        }
-      }
+      this.uuidMap = uuidMap;
+      this.next = initialValue;
     }
 
     @Override
-    public String getUID() {
+    public synchronized String getUID() {
+      if (uuid == null) {
+        // not cached, try to get it
+        uuid = uuidMap.get(name);
+        if (uuid == null) {
+          // still not there, must not be set.
+          uuid = UUID.getUUID().toString();
+          uuidMap.put(name, uuid);
+        }
+      }
       return uuid;
     }
 
     @Override
     public synchronized long nextBatch(long batchSize) {
-      Long r = sequenceMap.get(name);
-      sequenceMap.put(name, r + batchSize);
+      long r = next;
+      next += batchSize;
+      sequenceMap.put(name, next);
       return r;
     }
 
     @Override
     public synchronized void setNext(long next) {
-      if (next < sequenceMap.get(name)) {
-        throw new AssertionError("next=" + next + " current=" + sequenceMap.get(name));
+      if (next < this.next) {
+        throw new AssertionError("next=" + next + " current=" + this.next);
       }
+      this.next = next;
       sequenceMap.put(name, next);
     }
 
@@ -100,7 +104,7 @@ public class SequenceManager {
 
     @Override
     public synchronized long current() {
-      return sequenceMap.get(name);
+      return next;
     }
   }
 }
