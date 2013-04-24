@@ -70,16 +70,20 @@ public class RejoinAwarePlatformService implements PlatformService {
     rejoinState.assertRejoinNotInProgress();
   }
 
+  @Override
+  public boolean isLockedBeforeRejoin() {
+    // already taken a lock && rejoin count has changed
+    return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != rejoinState.getRejoinCount());
+  }
+
   private void resetRejoinCountIfNecessary() {
     if (!isExplicitlyLocked()) {
       currentRejoinCount.set(rejoinState.getRejoinCount());
     }
   }
 
-  @Override
-  public boolean isLockedBeforeRejoin() {
-    // already taken a lock && rejoin count has changed
-    return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != rejoinState.getRejoinCount());
+  private void assertNotLockedBeforeRejoin() {
+    if (isLockedBeforeRejoin()) { throw new RejoinException("Lock is not valid after rejoin"); }
   }
 
   @Override
@@ -115,10 +119,6 @@ public class RejoinAwarePlatformService implements PlatformService {
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
-  }
-
-  protected void assertNotLockedBeforeRejoin() {
-    if (isLockedBeforeRejoin()) { throw new RejoinException("Lock is not valid after rejoin"); }
   }
 
   @Override

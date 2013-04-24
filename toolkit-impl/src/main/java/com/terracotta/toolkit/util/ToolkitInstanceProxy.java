@@ -52,7 +52,6 @@ public abstract class ToolkitInstanceProxy {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // TODO: throw explicit public exception type
         throw new RejoinException("The toolkit instance with name '" + name + "' (instance of " + clazz.getName()
                                   + ") is not usable at the moment as rejoin is in progress");
       }
