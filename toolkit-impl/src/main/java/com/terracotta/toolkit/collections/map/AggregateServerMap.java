@@ -394,8 +394,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         this.listeners.add(listener);
       }
     }
-    platformService.registerL1CacheListener(this, EnumSet.of(InterestType.EVICT, InterestType.EXPIRE));
-    LOGGER.info("A new listener has been registered. Cache: " + getName());
+    //TODO: replace with EVICT and EXPIRE
+    platformService.registerL1CacheListener(this, EnumSet.of(InterestType.PUT));
+    LOGGER.info("New listener has been registered for cache: " + getName());
   }
 
   @Override
@@ -807,6 +808,31 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public String getDestinationName() {
     return getName();
+  }
+
+  @Override
+  public void handleInterest(final InterestType type, final Object key) {
+    for (final ToolkitCacheListener listener : listeners) {
+      try {
+        switch (type) {
+          case PUT:
+            break;
+          case REMOVE:
+            break;
+          case EVICT:
+            listener.onEviction(key);
+            break;
+          case EXPIRE:
+            listener.onExpiration(key);
+            break;
+        }
+      } catch (Throwable t) {
+        // Catch throwable here since the eviction listener will ultimately call user code.
+        // That way we do not cause an unhandled exception to be thrown in a stage thread, bringing
+        // down the L1.
+        LOGGER.error("Cache listener threw an exception.", t);
+      }
+    }
   }
 
   private static class AggregateServerMapIterator<E> implements Iterator<E> {

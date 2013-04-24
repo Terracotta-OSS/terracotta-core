@@ -27,7 +27,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.interest.Interest;
 import com.tc.objectserver.interest.InterestPublisher;
-import com.tc.objectserver.interest.Modification;
+import com.tc.objectserver.interest.ModificationRecorder;
 import com.tc.objectserver.interest.ModificationToInterest;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
@@ -137,8 +137,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   }
 
   private void publishModifications(final ApplyTransactionInfo applyInfo) {
-    final List<Modification> modifications = applyInfo.getModificationRecorder().getModifications();
-    final List<Interest> interests = Lists.transform(modifications, ModificationToInterest.FUNCTION);
+    final ModificationRecorder recorder = applyInfo.getModificationRecorder();
+    final List<Interest> interests = Lists.transform(recorder.getModifications(), ModificationToInterest.FUNCTION);
     interestPublisher.post(interests);
   }
 

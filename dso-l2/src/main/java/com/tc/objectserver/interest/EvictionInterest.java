@@ -4,14 +4,22 @@
 
 package com.tc.objectserver.interest;
 
+import com.tc.object.InterestType;
+
 /**
  * @author Eugene Shelestovich
  */
-public class EvictionInterest implements Interest {
+public class EvictionInterest extends CacheInterest {
   private final Object key;
 
-  public EvictionInterest(final Object key) {
+  public EvictionInterest(final Object key, final String cacheName) {
+    super(cacheName);
     this.key = key;
+  }
+
+  @Override
+  public InterestType getType() {
+    return InterestType.EVICT;
   }
 
   public Object getKey() {
@@ -22,6 +30,7 @@ public class EvictionInterest implements Interest {
   public String toString() {
     return "EvictionInterest{" +
            "key=" + key +
+           ", cacheName='" + cacheName + '\'' +
            '}';
   }
 }

@@ -35,12 +35,12 @@ public class RegisterInterestListenerHandler extends AbstractEventHandler {
       final ClientID clientId = (ClientID)nodeId;
       if (context instanceof RegisterInterestListenerMessage) {
         final RegisterInterestListenerMessage msg = (RegisterInterestListenerMessage)context;
-        interestNotifier.subscribe(clientId, msg.getDestinationName(), msg.getInterestTypes());
-        LOG.info("A new interest listener registration message from client [" + nodeId + "] has been received: " + context);
-        LOG.info("Destination: " + msg.getDestinationName() + ", interest: " + msg.getInterestTypes());
+        interestNotifier.register(clientId, msg.getDestination(), msg.getInterestTypes());
+        LOG.info("Interest listener registration message from client [" + nodeId + "] has been received: " + context);
+        LOG.info("Destination: " + msg.getDestination() + ", interest: " + msg.getInterestTypes());
       } else if (context instanceof UnregisterInterestListenerMessage) {
         final UnregisterInterestListenerMessage msg = (UnregisterInterestListenerMessage)context;
-        interestNotifier.unsubscribe(clientId);
+        interestNotifier.unregister(clientId, msg.getDestination());
       } else {
         Assert.fail("Unknown event type " + context.getClass().getName());
       }

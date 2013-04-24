@@ -19,16 +19,17 @@ public class ModificationRecorderTest {
 
   @Test
   public void testShouldResolveKeyToValuePairsOnGet() {
+    final String cacheName = "test-cache";
     final ModificationRecorder recorder = new ModificationRecorder();
     final ObjectID objectId1 = new ObjectID(1001);
-    recorder.recordOperation(ModificationType.PUT, 1, objectId1);
+    recorder.recordOperation(ModificationType.PUT, 1, objectId1, cacheName);
     final ObjectID objectId2 = new ObjectID(1002);
-    recorder.recordOperation(ModificationType.REMOVE, 1, objectId2);
+    recorder.recordOperation(ModificationType.REMOVE, 1, objectId2, cacheName);
     recorder.recordOperationValue(objectId2, new byte[] { 12 });
     recorder.recordOperationValue(objectId1, new byte[] { 11 });
 
     final ObjectID objectId3 = new ObjectID(1003);
-    recorder.recordOperation(ModificationType.PUT, 2, objectId3);
+    recorder.recordOperation(ModificationType.PUT, 2, objectId3, cacheName);
     recorder.recordOperationValue(objectId3, new byte[] { 13 });
 
     final List<Modification> modifications = recorder.getModifications();

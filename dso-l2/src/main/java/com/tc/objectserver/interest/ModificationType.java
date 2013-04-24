@@ -8,9 +8,7 @@ package com.tc.objectserver.interest;
  * @author Eugene Shelestovich
  */
 public enum ModificationType {
-  //TODO: CLEAR ?
   PUT,
-  UPDATE,
   REMOVE,
   EVICT,
   EXPIRE

@@ -12,15 +12,5 @@ import com.google.common.eventbus.Subscribe;
 public interface InterestListener {
 
   @Subscribe
-  void onPut(PutInterest interest);
-
-  @Subscribe
-  void onRemove(RemoveInterest interest);
-
-  @Subscribe
-  void onEviction(EvictionInterest interest);
-
-  @Subscribe
-  void onExpiration(ExpirationInterest interest);
-
+  void onInterest(Interest interest);
 }

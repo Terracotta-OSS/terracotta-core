@@ -141,7 +141,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       if (action instanceof PhysicalAction) {
         applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
       } else { // LogicalAction
-        // notify subscribers about the mutation operation
         getOperationEventBus().post(Events.operationCountIncrementEvent());
 
         final LogicalAction logicalAction = (LogicalAction)action;
@@ -232,6 +231,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         applyReplace(applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
+        applyInfo.getModificationRecorder().evictionFired();
         evictionCompleted();
 //  make sure we don't need more capacity eviction to get to target
         startCapacityEvictionIfNeccessary(applyInfo);
@@ -294,9 +294,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
     addValue(applyInfo, params[1], old != null);
     startCapacityEvictionIfNeccessary(applyInfo);
-    //TODO: should we distinct between PUT and UPDATE ?
     // collect PUT modifications for futher broadcasting
-    applyInfo.getModificationRecorder().recordOperation(ModificationType.PUT, key, oid);
+    applyInfo.getModificationRecorder().recordOperation(ModificationType.PUT, key, oid, cacheName);
     return old;
   }
   
@@ -357,8 +356,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
-      applyInfo.getModificationRecorder().recordOperation(ModificationType.REMOVE, key, (ObjectID)value);
+      applyInfo.getModificationRecorder().recordOperation(ModificationType.REMOVE, key, (ObjectID)value, cacheName);
     }
+  }
+
+  @Override
+  protected Object applyRemove(final ApplyTransactionInfo applyInfo, final Object[] params) {
+    final Object key = params[0];
+    final Object old = super.applyRemove(applyInfo, params);
+    if (old instanceof CDSMValue) {
+      final ObjectID objectId = ((CDSMValue)old).getObjectID();
+      applyInfo.getModificationRecorder().recordOperation(ModificationType.REMOVE, key, objectId, cacheName);
+    }
+    return old;
   }
 
   private void applySetLastAccessedTime(ApplyTransactionInfo applyInfo, Object[] params) {

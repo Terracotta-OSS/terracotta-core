@@ -107,8 +107,7 @@ import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
-import com.tc.object.msg.EvictionInterestMessageImpl;
-import com.tc.object.msg.ExpirationInterestMessageImpl;
+import com.tc.object.msg.ServerInterestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessageImpl;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessageImpl;
@@ -918,8 +917,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
-    final InClusterInterestNotifier evictionBroadcastManager =
-        new InClusterInterestNotifier(channelManager);
+    final InClusterInterestNotifier evictionBroadcastManager = new InClusterInterestNotifier(channelManager);
     interestBus.register(evictionBroadcastManager);
 
     final Stage registerInterestListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_INTEREST_LISTENER_STAGE,
@@ -1249,8 +1247,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_INTEREST_LISTENER_MESSAGE, RegisterInterestListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_INTEREST_LISTENER_MESSAGE, UnregisterInterestListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.EVICTION_INTEREST_MESSAGE, EvictionInterestMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.EXPIRATION_INTEREST_MESSAGE, ExpirationInterestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SERVER_INTEREST_MESSAGE, ServerInterestMessageImpl.class);
     return messageTypeClassMapping;
   }
 

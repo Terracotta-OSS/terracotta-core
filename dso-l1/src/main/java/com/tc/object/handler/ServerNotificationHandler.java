@@ -2,11 +2,8 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.object.ServerInterestListenerManager;
-import com.tc.object.msg.EvictionInterestMessage;
-import com.tc.object.msg.ExpirationInterestMessage;
-import com.tc.util.Assert;
+import com.tc.object.msg.ServerInterestMessage;
 
 /**
  * @author Eugene Shelestovich
@@ -20,13 +17,12 @@ public class ServerNotificationHandler extends AbstractEventHandler {
   }
 
   @Override
-  public void handleEvent(final EventContext context) throws EventHandlerException {
-    if (context instanceof EvictionInterestMessage) {
-
-    } else if (context instanceof ExpirationInterestMessage) {
-
+  public void handleEvent(final EventContext context) {
+    if (context instanceof ServerInterestMessage) {
+      final ServerInterestMessage message = (ServerInterestMessage)context;
+      manager.dispatchInterest(message);
     } else {
-      Assert.fail("Unknown event type " + context.getClass().getName());
+      throw new AssertionError("Unknown event type: " + context.getClass().getName());
     }
   }
 }

@@ -4,16 +4,24 @@
 
 package com.tc.objectserver.interest;
 
+import com.tc.object.InterestType;
+
 /**
  * @author Eugene Shelestovich
  */
-public class PutInterest implements Interest {
+public class PutInterest extends CacheInterest {
   private final Object key;
   private final byte[] value;
 
-  public PutInterest(final Object key, final byte[] value) {
+  public PutInterest(final Object key, final byte[] value, final String cacheName) {
+    super(cacheName);
     this.key = key;
     this.value = value;
+  }
+
+  @Override
+  public InterestType getType() {
+    return InterestType.PUT;
   }
 
   public Object getKey() {
@@ -29,6 +37,7 @@ public class PutInterest implements Interest {
     return "PutInterest{" +
            "key=" + key +
            ", value=" + value +
+           ", cacheName=" + cacheName +
            '}';
   }
 }

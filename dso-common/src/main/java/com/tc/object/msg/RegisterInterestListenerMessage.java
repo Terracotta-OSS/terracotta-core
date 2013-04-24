@@ -23,7 +23,7 @@ public class RegisterInterestListenerMessage extends DSOMessageBase {
   private static final byte DESTINATION_NAME_ID = 0;
   private static final byte INTEREST_TYPE_ID = 1;
 
-  private String destinationName;
+  private String destination;
   private Set<InterestType> interestTypes = EnumSet.noneOf(InterestType.class);
 
   public RegisterInterestListenerMessage(final SessionID sessionID, final MessageMonitor monitor,
@@ -39,7 +39,7 @@ public class RegisterInterestListenerMessage extends DSOMessageBase {
   }
 
   protected void dehydrateValues() {
-    putNVPair(DESTINATION_NAME_ID, destinationName);
+    putNVPair(DESTINATION_NAME_ID, destination);
     for (InterestType interestType : interestTypes) {
       putNVPair(INTEREST_TYPE_ID, interestType.toInt());
     }
@@ -48,7 +48,7 @@ public class RegisterInterestListenerMessage extends DSOMessageBase {
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case DESTINATION_NAME_ID:
-        destinationName = getStringValue();
+        destination = getStringValue();
         return true;
       case INTEREST_TYPE_ID:
         interestTypes.add(InterestType.fromInt(getIntValue()));
@@ -58,12 +58,12 @@ public class RegisterInterestListenerMessage extends DSOMessageBase {
     }
   }
 
-  public String getDestinationName() {
-    return destinationName;
+  public String getDestination() {
+    return destination;
   }
 
-  public void setDestinationName(final String destinationName) {
-    this.destinationName = destinationName;
+  public void setDestination(final String destination) {
+    this.destination = destination;
   }
 
   public void setInterestTypes(final Set<InterestType> interestTypes) {

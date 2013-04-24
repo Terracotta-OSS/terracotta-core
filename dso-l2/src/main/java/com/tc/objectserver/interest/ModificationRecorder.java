@@ -19,13 +19,23 @@ public final class ModificationRecorder {
   private final List<Modification> modifications = new ArrayList<Modification>();
   private final Map<ObjectID, byte[]> oidToValueMap = new HashMap<ObjectID, byte[]>();
 
-  public void recordOperation(final ModificationType type, final Object key, final ObjectID objectId) {
-    final Modification modification = new Modification(type, key, objectId);
+  public void recordOperation(final ModificationType type, final Object key, final ObjectID objectId,
+                              final String cacheName) {
+    final Modification modification = new Modification(type, key, objectId, cacheName);
     modifications.add(modification);
   }
 
   public void recordOperationValue(final ObjectID objectId, final byte[] value) {
     oidToValueMap.put(objectId, value);
+  }
+
+  // transforms removals into evictions or expirations
+  public void evictionFired() {
+    for (Modification modification : modifications) {
+      if (modification.getType() == ModificationType.REMOVE) {
+        modification.setType(ModificationType.EVICT);
+      }
+    }
   }
 
   public List<Modification> getModifications() {

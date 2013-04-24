@@ -4,14 +4,22 @@
 
 package com.tc.objectserver.interest;
 
+import com.tc.object.InterestType;
+
 /**
  * @author Eugene Shelestovich
  */
-public class RemoveInterest implements Interest {
+public class RemoveInterest extends CacheInterest {
   private final Object key;
 
-  public RemoveInterest(final Object key) {
+  public RemoveInterest(final Object key, final String cacheName) {
+    super(cacheName);
     this.key = key;
+  }
+
+  @Override
+  public InterestType getType() {
+    return InterestType.REMOVE;
   }
 
   public Object getKey() {
@@ -22,6 +30,7 @@ public class RemoveInterest implements Interest {
   public String toString() {
     return "RemoveInterest{" +
            "key=" + key +
+           ", cacheName=" + cacheName +
            '}';
   }
 }

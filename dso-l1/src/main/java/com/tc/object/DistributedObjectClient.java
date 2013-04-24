@@ -111,8 +111,7 @@ import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
-import com.tc.object.msg.EvictionInterestMessageImpl;
-import com.tc.object.msg.ExpirationInterestMessageImpl;
+import com.tc.object.msg.ServerInterestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessageImpl;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessageImpl;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessageImpl;
@@ -713,6 +712,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                      new ReceiveInvalidationHandler(remoteServerMapManager), 1, TCPropertiesImpl.getProperties()
                          .getInt(TCPropertiesConsts.L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY));
 
+    serverInterestListenerManager = dsoClientBuilder.createServerInterestListenerManager(channel);
+    final Stage serverInterestStage = stageManager.createStage(ClientConfigurationContext.SERVER_INTEREST_STAGE,
+        new ServerNotificationHandler(serverInterestListenerManager), 1, maxSize);
+
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
     clientHandshakeCallbacks.add(this.objectManager);
@@ -743,18 +746,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                          this.clientHandshakeManager,
                                                                          this.clusterMetaDataManager,
                                                                          this.rejoinManager);
+    // DO NOT create any stages after this call
     stageManager.startAll(cc, Collections.EMPTY_LIST);
-
-    serverInterestListenerManager = dsoClientBuilder.createServerInterestListenerManager(channel);
-    final Stage serverNotificationStage = stageManager.createStage(ClientConfigurationContext.SERVER_NOTIFICATION_STAGE,
-        new ServerNotificationHandler(serverInterestListenerManager), 1, maxSize);
 
     initChannelMessageRouter(messageRouter, hydrateStage, lockResponse, lockStatisticsEnableDisableStage,
                              receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
                              batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
                              clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage,
                              receiveServerMapEvictionBroadcastStage, receiveSearchQueryStage, receiveInvalidationStage,
-                             resourceManagerStage, serverNotificationStage);
+                             resourceManagerStage, serverInterestStage);
 
     openChannelOrExit(serverHost, serverPort, maxConnectRetries);
     waitForHandshake();
@@ -957,8 +957,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_INTEREST_LISTENER_MESSAGE, RegisterInterestListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_INTEREST_LISTENER_MESSAGE, UnregisterInterestListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.EVICTION_INTEREST_MESSAGE, EvictionInterestMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.EXPIRATION_INTEREST_MESSAGE, ExpirationInterestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SERVER_INTEREST_MESSAGE, ServerInterestMessageImpl.class);
     return messageTypeClassMapping;
   }
 
@@ -970,7 +969,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                         Stage clusterMetaDataStage, Stage syncWriteBatchRecvdHandler,
                                         Stage receiveServerMapStage, Stage receiveServerMapEvictionBroadcastStage,
                                         Stage receiveSearchQueryStage, Stage receiveInvalidationStage,
-                                        Stage resourceManagerStage, Stage serverNotificationStage) {
+                                        Stage resourceManagerStage, Stage serverInterestStage) {
     final Sink hydrateSink = hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
@@ -987,7 +986,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     messageRouter.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
                                    oidRequestResponse.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionResponse.getSink(),
-                                   hydrateSink);
+        hydrateSink);
     messageRouter
         .routeMessageType(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, batchTxnAckStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
@@ -1022,8 +1021,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                    resourceManagerStage.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.EVICTION_INTEREST_MESSAGE, serverNotificationStage.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.EXPIRATION_INTEREST_MESSAGE, serverNotificationStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SERVER_INTEREST_MESSAGE, serverInterestStage.getSink(), hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
   }
 

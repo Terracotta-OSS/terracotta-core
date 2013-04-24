@@ -15,6 +15,8 @@ import java.io.IOException;
  */
 public class UnregisterInterestListenerMessage extends DSOMessageBase {
 
+  private String destination;
+
   public UnregisterInterestListenerMessage(final SessionID sessionID, final MessageMonitor monitor,
                                            final TCByteBufferOutputStream out, final MessageChannel channel,
                                            final TCMessageType type) {
@@ -34,4 +36,11 @@ public class UnregisterInterestListenerMessage extends DSOMessageBase {
     return true;
   }
 
+  public String getDestination() {
+    return destination;
+  }
+
+  public void setDestination(final String destination) {
+    this.destination = destination;
+  }
 }

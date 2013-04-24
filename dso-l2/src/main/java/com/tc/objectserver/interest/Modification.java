@@ -9,25 +9,31 @@ import com.tc.object.ObjectID;
 /**
  * @author Eugene Shelestovich
  */
-public class Modification {
-  private final ModificationType type;
+class Modification {
   private final Object key;
   private final ObjectID objectId;
+  private final String cacheName;
+  private ModificationType type;
   private byte[] value;
 
-  Modification(final ModificationType type, final Object key, final ObjectID objectId) {
-    this(type, key, objectId, null);
+  Modification(final ModificationType type, final Object key, final ObjectID objectId, final String cacheName) {
+    this(type, key, objectId, null, cacheName);
   }
 
-  Modification(final ModificationType type, final Object key, final ObjectID objectId, final byte[] value) {
+  Modification(final ModificationType type, final Object key, final ObjectID objectId, final byte[] value, final String cacheName) {
     this.type = type;
     this.key = key;
     this.objectId = objectId;
     this.value = value;
+    this.cacheName = cacheName;
   }
 
   ModificationType getType() {
     return type;
+  }
+
+  void setType(final ModificationType type) {
+    this.type = type;
   }
 
   Object getKey() {
@@ -44,5 +50,9 @@ public class Modification {
 
   void setValue(final byte[] value) {
     this.value = value;
+  }
+
+  String getCacheName() {
+    return cacheName;
   }
 }

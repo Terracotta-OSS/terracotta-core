@@ -36,7 +36,7 @@ public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandl
       }
       TCServerMap serverMap = (TCServerMap) tco.getPeerObject();
       for (Object key : msg.getEvictedKeys()) {
-        serverMap.evictedInServer((msg.getClientIndex() == 0), key);
+        //serverMap.evictedInServer((msg.getClientIndex() == 0), key);
       }
     } else {
       throw new AssertionError("Unknown message type received from server - " + context.getClass().getName());

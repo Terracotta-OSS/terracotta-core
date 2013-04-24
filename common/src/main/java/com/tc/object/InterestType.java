@@ -5,10 +5,9 @@ package com.tc.object;
  */
 public enum InterestType {
   PUT(0),
-  UPDATE(1),
-  REMOVE(2),
-  EVICT(3),
-  EXPIRE(4);
+  REMOVE(1),
+  EVICT(2),
+  EXPIRE(3);
 
   private final int id;
 
@@ -21,12 +20,10 @@ public enum InterestType {
       case 0:
         return PUT;
       case 1:
-        return UPDATE;
-      case 2:
         return REMOVE;
-      case 3:
+      case 2:
         return EVICT;
-      case 4:
+      case 3:
         return EXPIRE;
       default:
         throw new IllegalArgumentException("Unknown interest type: " + value);
