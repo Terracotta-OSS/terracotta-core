@@ -63,7 +63,11 @@ public class SequenceManager {
       this.name = name;
       this.sequenceMap = sequenceMap;
       this.uuidMap = uuidMap;
-      this.next = initialValue;
+      if (sequenceMap.get(name) != null) {
+        this.next = sequenceMap.get(name);
+      } else {
+        this.next = initialValue;
+      }
     }
 
     @Override
