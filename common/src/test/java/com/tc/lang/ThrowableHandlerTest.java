@@ -8,6 +8,9 @@ import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogging;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import junit.framework.TestCase;
 
 public class ThrowableHandlerTest extends TestCase {
@@ -30,6 +33,25 @@ public class ThrowableHandlerTest extends TestCase {
       throwableHandler.handleThrowable(Thread.currentThread(), e);
       assertTrue(invokedCallback);
     }
+  }
+
+  public void testImmediatelyExitOnOOME() {
+    final AtomicInteger exitCode =  new AtomicInteger(-1);
+    final ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(ThrowableHandlerTest.class)) {
+      @Override
+      protected void exit(int status) {
+        exitCode.set(status);
+      }
+    };
+
+    throwableHandler.handlePossibleOOME(new OutOfMemoryError());
+    assertEquals(ServerExitStatus.EXITCODE_FATAL_ERROR, exitCode.get());
+    exitCode.set(-1);
+    throwableHandler.handlePossibleOOME(new RuntimeException(new OutOfMemoryError()));
+    assertEquals(ServerExitStatus.EXITCODE_FATAL_ERROR, exitCode.get());
+    exitCode.set(-1);
+    throwableHandler.handlePossibleOOME(new RuntimeException());
+    assertEquals(-1, exitCode.get());
   }
 
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {
