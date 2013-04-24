@@ -5,6 +5,7 @@
 package com.tc.objectserver.interest;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.impl.SamplingType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,8 +30,25 @@ public final class ModificationRecorder {
     oidToValueMap.put(objectId, value);
   }
 
-  // transforms removals into evictions or expirations
-  public void evictionFired() {
+  /**
+   * Transforms removals into evictions or expirations.
+   */
+  public void reconsiderRemovals(final SamplingType samplingType) {
+    for (Modification modification : modifications) {
+      if (modification.getType() == ModificationType.REMOVE) {
+        switch (samplingType) {
+          case FOR_EVICTION:
+            modification.setType(ModificationType.EVICT);
+            break;
+          case FOR_EXPIRATION:
+            modification.setType(ModificationType.EXPIRE);
+            break;
+        }
+      }
+    }
+  }
+
+  public void markExpiration() {
     for (Modification modification : modifications) {
       if (modification.getType() == ModificationType.REMOVE) {
         modification.setType(ModificationType.EVICT);

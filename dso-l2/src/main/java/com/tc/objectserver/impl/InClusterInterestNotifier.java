@@ -71,15 +71,33 @@ public class InClusterInterestNotifier implements InterestListener {
       // TODO create a SEDA stage to send asynchronously in parallel ?
       msg.send();
     } catch (NoSuchChannelException e) {
-      //TODO Ignoring for now. Perhaps the client should be removed from the registry.
-      LOG.warn("Cannot find channel for client: " + clientId, e);
+      LOG.warn("Cannot find channel for client: " + clientId
+               + ". The client will no longer receive server notifications.");
+      unregisterClient(clientId);
     }
   }
 
+  /**
+   * Registration is relatively rare operation comparing to notification.
+   * So we can loop thru the registry instead of maintaining a reversed data structure.
+   */
   public final void register(final ClientID clientId, final String destination, final Set<InterestType> interests) {
     lock.writeLock().lock();
     try {
-      doAdd(clientId, destination, interests);
+      for (InterestType interest : interests) {
+        Map<ClientID, Set<String>> clientToDestMap = registry.get(interest);
+        if (clientToDestMap == null) {
+          clientToDestMap = new HashMap<ClientID, Set<String>>();
+          registry.put(interest, clientToDestMap);
+        }
+
+        Set<String> destinations = clientToDestMap.get(clientId);
+        if (destinations == null) {
+          destinations = new HashSet<String>();
+          clientToDestMap.put(clientId, destinations);
+        }
+        destinations.add(destination);
+      }
     } finally {
       lock.writeLock().unlock();
     }
@@ -88,39 +106,25 @@ public class InClusterInterestNotifier implements InterestListener {
   public final void unregister(final ClientID clientId, final String destination) {
     lock.writeLock().lock();
     try {
-      doRemove(clientId, destination);
+      for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
+        final Set<String> destinations = clientToDestMap.get(clientId);
+        if (destinations != null) {
+          destinations.remove(destination);
+        }
+      }
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  /**
-   * Registration is relatively rare operation comparing to notification.
-   * So we can loop thru the registry instead of maintaining a reversed data structure.
-   */
-  private void doAdd(final ClientID clientId, final String destination, final Set<InterestType> interests) {
-    for (InterestType interest : interests) {
-      Map<ClientID, Set<String>> clientToDestMap = registry.get(interest);
-      if (clientToDestMap == null) {
-        clientToDestMap = new HashMap<ClientID, Set<String>>();
-        registry.put(interest, clientToDestMap);
+  private void unregisterClient(final ClientID clientId) {
+    lock.writeLock().lock();
+    try {
+      for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
+        clientToDestMap.remove(clientId);
       }
-
-      Set<String> destinations = clientToDestMap.get(clientId);
-      if (destinations == null) {
-        destinations = new HashSet<String>();
-        clientToDestMap.put(clientId, destinations);
-      }
-      destinations.add(destination);
-    }
-  }
-
-  private void doRemove(final ClientID clientId, final String destination) {
-    for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
-      final Set<String> destinations = clientToDestMap.get(clientId);
-      if (destinations != null) {
-        destinations.remove(destination);
-      }
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 }

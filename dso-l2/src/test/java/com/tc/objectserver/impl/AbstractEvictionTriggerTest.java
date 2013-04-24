@@ -60,7 +60,8 @@ public class AbstractEvictionTriggerTest {
       @Override
       public ServerMapEvictionContext collectEvictionCandidates(int targetMax, String className, EvictableMap map,
                                                             ClientObjectReferenceSet clients) {
-        return createEvictionContext(className, map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
+        return createEvictionContext(className, map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet,
+            SamplingType.FOR_EVICTION));
       }
     };
   }
@@ -119,7 +120,7 @@ public class AbstractEvictionTriggerTest {
           description.appendText("< " + maxLocal);
         }
 
-      }), Matchers.eq(cs));
+      }), Matchers.eq(cs), SamplingType.FOR_EVICTION);
       Mockito.verify(map).evictionCompleted();
     }
   }
@@ -164,7 +165,7 @@ public class AbstractEvictionTriggerTest {
     evm = getEvictableMap();
     trigger = getTrigger();
     Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
-    Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet)))
+    Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet), SamplingType.FOR_EVICTION))
         .thenReturn(Collections.<Object, EvictableEntry> emptyMap());
   }
 

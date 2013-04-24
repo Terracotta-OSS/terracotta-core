@@ -41,7 +41,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
         if ( get < 10 * (blowout)) {
             get = 10 * (blowout);
         }
-        Map<Object, EvictableEntry>  sampled = map.getRandomSamples(get,clients);
+        Map<Object, EvictableEntry>  sampled = map.getRandomSamples(get,clients, SamplingType.FOR_EVICTION);
         return createEvictionContext(className, filter(sampled));
     }
     /**

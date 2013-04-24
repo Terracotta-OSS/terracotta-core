@@ -15,6 +15,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.impl.SamplingType;
 import com.tc.objectserver.interest.ModificationType;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
@@ -63,6 +64,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   // This is a transient field tracking the status of the eviction for this CDSM
   private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+  private SamplingType samplingType = SamplingType.FOR_EVICTION;
   private Iterator<Object> evictionIterator = null;
 
   private boolean        invalidateOnChange;
@@ -231,7 +233,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         applyReplace(applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
-        applyInfo.getModificationRecorder().evictionFired();
+        applyInfo.getModificationRecorder().reconsiderRemovals(samplingType);
         evictionCompleted();
 //  make sure we don't need more capacity eviction to get to target
         startCapacityEvictionIfNeccessary(applyInfo);
@@ -480,13 +482,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  public Map<Object, EvictableEntry> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-      if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
-          throw new AssertionError(this.evictionStatus);
-      } else {
- //     it's locked.  go for it
-        this.evictionStatus = EvictionStatus.SAMPLED;
-      }
+  public Map<Object, EvictableEntry> getRandomSamples(final int count,
+                                                      final ClientObjectReferenceSet clientObjectRefSet,
+                                                      final SamplingType samplingType) {
+    this.samplingType = samplingType;
+    if (this.evictionStatus == EvictionStatus.NOT_INITIATED) {
+      throw new AssertionError(this.evictionStatus);
+    } else {
+      // it's locked. go for it
+      this.evictionStatus = EvictionStatus.SAMPLED;
+    }
     final Map<Object, EvictableEntry> samples = new HashMap<Object, EvictableEntry>(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
@@ -497,12 +502,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         evictionIterator = references.keySet().iterator();
       }
       final Object k = evictionIterator.next();
-      if ( k == null ) {
-          throw new AssertionError("key is not null");
+      if (k == null) {
+        throw new AssertionError("key is not null");
       }
       if (r.nextInt(100) < chance) {
         CDSMValue value = getValueForKey(k);
-        if (value == null || serverMapEvictionClientObjectRefSet.contains(value.getObjectID())) {
+        if (value == null || clientObjectRefSet.contains(value.getObjectID())) {
           continue;
         }
         samples.put(k, value);
@@ -511,10 +516,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       }
     }
     if (samples.size() < count) {
-      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
+      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext(); ) {
         final Object k = i.next();
         CDSMValue v = getValueForKey(k);
-        if (v == null || serverMapEvictionClientObjectRefSet.contains(v.getObjectID())) {
+        if (v == null || clientObjectRefSet.contains(v.getObjectID())) {
           continue;
         }
         samples.put(k, v);

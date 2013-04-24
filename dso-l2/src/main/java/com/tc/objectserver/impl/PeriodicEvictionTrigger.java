@@ -117,7 +117,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         int samples = calculateSampleCount(max, map);
         
         Map<Object, EvictableEntry> grabbed = ( !stop ) ?
-            map.getRandomSamples(samples, clients) :
+            map.getRandomSamples(samples, clients, SamplingType.FOR_EVICTION) :
             Collections.<Object,EvictableEntry>emptyMap();
 
         sampled = grabbed.size();
