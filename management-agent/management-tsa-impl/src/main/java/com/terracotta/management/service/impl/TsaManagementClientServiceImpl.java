@@ -150,25 +150,27 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         jmxConnector = findServerContainingL1MBeans();
         if (jmxConnector == null) {
           // there is no connected client
-          return Collections.emptyList();
+          mBeanServerConnection = null;
+        } else {
+          mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      if (mBeanServerConnection != null) {
+        ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
-      for (final ObjectName clientObjectName : clientObjectNames) {
-        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        for (final ObjectName clientObjectName : clientObjectNames) {
+          final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
 
-        Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
-          @Override
-          public ThreadDumpEntity call() throws Exception {
-            return clientThreadDump(mBeanServerConnection, clientObjectName, clientId);
-          }
-        });
-        futures.add(future);
+          Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+            @Override
+            public ThreadDumpEntity call() throws Exception {
+              return clientThreadDump(mBeanServerConnection, clientObjectName, clientId);
+            }
+          });
+          futures.add(future);
+        }
       }
-
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting client stack traces", e);
     } finally {
