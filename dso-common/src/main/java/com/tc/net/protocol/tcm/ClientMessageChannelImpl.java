@@ -92,11 +92,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
                                                 username, pw);
       ((MessageTransport) this.sendLayer).initConnectionID(cid);
       final NetworkStackID id = this.sendLayer.open();
-      channelOpened();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));
       this.cidProvider.setChannelID(this.channelID);
       this.channelSessionID = this.sessionProvider.getSessionID(getRemoteNodeID());
+      channelOpened();
       return id;
     }
   }

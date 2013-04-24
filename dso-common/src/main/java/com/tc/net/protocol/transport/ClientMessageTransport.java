@@ -101,7 +101,9 @@ public class ClientMessageTransport extends MessageTransportBase {
   @Override
   public void reset() {
     synchronized (this.isOpen) {
+      logger.info("Resetting connection " + connectionId);
       this.isOpen.set(false);
+      this.connectionEstablisher.reset();
       this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
     }
   }
