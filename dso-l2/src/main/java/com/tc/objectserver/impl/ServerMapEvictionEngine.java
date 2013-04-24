@@ -28,6 +28,8 @@ import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchManager;
+import com.tc.objectserver.tx.ServerTransactionManagerImpl;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
@@ -37,6 +39,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -78,13 +81,16 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
   private EvictionTransactionPersistor        evictionTransactionPersistor;
+  private ServerTransactionManagerImpl        serverTransactionManager;
 
   public ServerMapEvictionEngine(final ObjectManager objectManager,
                                  final ServerTransactionFactory serverTransactionFactory,
-                                 final EvictionTransactionPersistor evictionTransactionPersistor) {
+                                 final EvictionTransactionPersistor evictionTransactionPersistor,
+                                 final ServerTransactionManagerImpl serverTransactionManager) {
     this.objectManager = objectManager;
     this.serverTransactionFactory = serverTransactionFactory;
     this.evictionTransactionPersistor = evictionTransactionPersistor;
+    this.serverTransactionManager = serverTransactionManager;
   }
 
   public void initializeContext(final ConfigurationContext context) {
@@ -106,10 +112,23 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
     logger.info("Recovering any in-flight eviction transactions from the previous session.");
     Collection<TransactionBatchContext> transactionBatchContexts = evictionTransactionPersistor.getAllTransactionBatches();
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
     if (transactionBatchContexts.size() > 0) {
-      logger.info("Found incomplete transactions from previous session, recovering them.");
+      serverTransactionManager.addTransactionListener(this);
+      logger.info("Found " + evictionTransactionPersistor.getAllTransactionBatches().size() + " incomplete transactions from previous session, recovering them.");
       for(TransactionBatchContext transactionBatchContext : transactionBatchContexts) {
         transactionBatchManager.processTransactions(transactionBatchContext);
+      }
+      serverTransactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+        @Override
+        public void onCompletion() {
+          countDownLatch.countDown();
+        }
+      });
+      try {
+        countDownLatch.await();
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
       evictionTransactionPersistor.removeAllTransactions();
       logger.info("Recovered all former in-flight eviction transactions. Starting normal evictor operation.");
@@ -117,9 +136,8 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
       logger.info("No in-flight eviction transactions found from previous session. Starting normal evictor operation.");
     }
     if (evictionTransactionPersistor.getAllTransactionBatches().size() > 0) {
-      logger.warn("Not all recovered in-flight transactions were deleted from persistent storage. This could lead to data corruption in future restarts.");
+      logger.warn("Not all recovered in-flight transactions were deleted from persistent storage. This could lead to data corruption in future restarts. Number of txns remaining = " + evictionTransactionPersistor.getAllTransactionBatches().size() );
     }
-
   }
 
   boolean isLogging() {
