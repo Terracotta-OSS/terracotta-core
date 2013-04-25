@@ -43,7 +43,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
   private final PersistenceTransactionProvider persistenceTransactionProvider;
 
   public EvictionTransactionPersistorImpl(StorageManager storageManager, PersistenceTransactionProvider persistenceTransactionProvider) {
-    super();
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.evictionTransactionStorage = storageManager.getKeyValueStorage(EVICTION_TRANSACTION, ServerTransactionID.class, TransactionBatchContext.class);
   }
@@ -80,7 +79,37 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
   }
 
 
-  private static class ServerTransactionIDSerializer extends Serializer<ServerTransactionID> {
+  private static void fromByteBufferToTCByteBuffer(TCByteBuffer dest, ByteBuffer buf) {
+    while (buf.hasRemaining()) {
+      dest.put(buf.get());
+    }
+    dest.flip();
+  }
+
+  private static Byte[] toByteArray(TCByteBuffer[] tcByteBuffers) {
+    List<Byte> byteList = new LinkedList<Byte>();
+    ByteBuffer backingByteBuffer;
+    for (TCByteBuffer tcb : tcByteBuffers) {
+      backingByteBuffer = tcb.getNioBuffer().duplicate();
+      while (backingByteBuffer.hasRemaining()) {
+        byteList.add(backingByteBuffer.get());
+      }
+    }
+    Byte[] ret = new Byte[byteList.size()];
+    byteList.toArray(ret);
+    return ret;
+  }
+
+  private abstract static class AbstractSerializer<T> extends Serializer<T> {
+
+    @Override
+    public boolean equals(T left, ByteBuffer right) throws IOException {
+      return left.equals(recover(right));
+    }
+
+  }
+
+  private static class ServerTransactionIDSerializer extends AbstractSerializer<ServerTransactionID> {
 
     static final ServerTransactionIDSerializer INSTANCE = new ServerTransactionIDSerializer();
 
@@ -95,13 +124,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
       ServerID serverID = new ServerID();
       serverID.deserializeFrom(tcByteBufferInput);
       return new ServerTransactionID(serverID, new TransactionID(transactionID));
-    }
-
-    private void fromByteBufferToTCByteBuffer(TCByteBuffer dest, ByteBuffer buf) {
-      while(buf.hasRemaining()) {
-        dest.put(buf.get());
-      }
-      dest.flip();
     }
 
     @Override
@@ -125,28 +147,10 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
       return buffer;
     }
 
-    @Override
-    public boolean equals(ServerTransactionID left, ByteBuffer right) throws IOException {
-      return left.equals(recover(right));
-    }
-
-    private Byte[] toByteArray(TCByteBuffer[] tcByteBuffers) {
-      List<Byte> byteList = new LinkedList<Byte>();
-      ByteBuffer backingByteBuffer;
-      for(TCByteBuffer tcb : tcByteBuffers) {
-        backingByteBuffer = tcb.getNioBuffer();
-        while (backingByteBuffer.hasRemaining()) {
-          byteList.add(backingByteBuffer.get());
-        }
-      }
-      Byte[] ret = new Byte[byteList.size()];
-      byteList.toArray(ret);
-      return ret;
-    }
   }
 
 
-  private static class TransactionBatchContextSerializer extends Serializer<TransactionBatchContext> {
+  private static class TransactionBatchContextSerializer extends AbstractSerializer<TransactionBatchContext> {
 
     static final TransactionBatchContextSerializer INSTANCE = new TransactionBatchContextSerializer();
     @Override
@@ -178,27 +182,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
       return batchContext;
     }
 
-    private void fromByteBufferToTCByteBuffer(TCByteBuffer dest, ByteBuffer buf) {
-      while(buf.hasRemaining()) {
-        dest.put(buf.get());
-      }
-      dest.flip();
-    }
-
-    private Byte[] toByteArray(TCByteBuffer[] tcByteBuffers) {
-      List<Byte> byteList = new LinkedList<Byte>();
-      ByteBuffer backingByteBuffer;
-      for(TCByteBuffer tcb : tcByteBuffers) {
-        backingByteBuffer = tcb.getNioBuffer().duplicate();
-        while (backingByteBuffer.hasRemaining()) {
-          byteList.add(backingByteBuffer.get());
-        }
-      }
-      Byte[] ret = new Byte[byteList.size()];
-      byteList.toArray(ret);
-      return ret;
-    }
-
     @Override
     public ByteBuffer transform(TransactionBatchContext transactionBatchContext) throws IOException {
 
@@ -228,11 +211,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
 
       encodedOSSPlusTxnBatchContext.flip();
       return encodedOSSPlusTxnBatchContext;
-    }
-
-    @Override
-    public boolean equals(TransactionBatchContext left, ByteBuffer right) throws IOException {
-      return left.equals(recover(right));
     }
   }
 
