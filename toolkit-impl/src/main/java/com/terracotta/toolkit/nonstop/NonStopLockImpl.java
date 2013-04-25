@@ -58,22 +58,24 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public void lock() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod("lock");
+    String methodName = "lock";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       toolkitObjectLookup.getInitializedObject().lock();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException("lock timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
+
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         toolkitObjectLookup.getInitializedObject().lock();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("lock timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("lock timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -84,25 +86,25 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public void lockInterruptibly() throws InterruptedException {
+    String methodName = "lockInterruptibly";
     NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup
-        .getNonStopConfigurationForMethod("lockInterruptibly");
+        .getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       toolkitObjectLookup.getInitializedObject().lockInterruptibly();
     } else {
 
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "lockInterruptibly timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         toolkitObjectLookup.getInitializedObject().lockInterruptibly();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("lockInterruptibly timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("lockInterruptibly timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -113,23 +115,23 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public boolean tryLock() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod("tryLock");
+    String methodName = "tryLock";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().tryLock();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "tryLock timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().tryLock();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("tryLock timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("tryLock timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -140,23 +142,23 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod("tryLock");
+    String methodName = "tryLock";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().tryLock(time, unit);
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "tryLock timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().tryLock(time, unit);
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("tryLock timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("tryLock timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -167,23 +169,23 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public String getName() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod("getName");
+    String methodName = "getName";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().getName();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "getName timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().getName();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("getName timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("getName timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -194,24 +196,23 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public Condition newCondition() throws UnsupportedOperationException {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup
-        .getNonStopConfigurationForMethod("newCondition");
+    String methodName = "newCondition";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().newCondition();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "newCondition timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().newCondition();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("newCondition timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("newCondition timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -222,24 +223,24 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public Condition getCondition() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup
-        .getNonStopConfigurationForMethod("getCondition");
+    String methodName = "getCondition";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().getCondition();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "getCondition timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
+
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().getCondition();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("getCondition timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("getCondition timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -250,25 +251,24 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public ToolkitLockType getLockType() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup
-        .getNonStopConfigurationForMethod("getLockType");
+    String methodName = "getLockType";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().getLockType();
     } else {
-
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "getLockType timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
+
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().getLockType();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("getLockType timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("getLockType timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
@@ -279,29 +279,37 @@ public class NonStopLockImpl implements ToolkitLock {
 
   @Override
   public boolean isHeldByCurrentThread() {
-    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup
-        .getNonStopConfigurationForMethod("isHeldByCurrentThread");
+    String methodName = "isHeldByCurrentThread";
+    NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(methodName);
 
     if (!nonStopConfiguration.isEnabled()) {
       return toolkitObjectLookup.getInitializedObject().isHeldByCurrentThread();
     } else {
       if (nonStopConfiguration.isImmediateTimeoutEnabled()
-          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw new NonStopException(
-                                                                                                       "isHeldByCurrentThread timed out"); }
+          && !context.getNonStopClusterListener().areOperationsEnabled()) { throw getNonStopException(methodName); }
+
       boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
       try {
         context.getNonStopClusterListener().waitUntilOperationsEnabled();
         return toolkitObjectLookup.getInitializedObject().isHeldByCurrentThread();
       } catch (ToolkitAbortableOperationException e) {
-        throw new NonStopException("isHeldByCurrentThread timed out");
+        throw getNonStopException(methodName);
       } catch (RejoinException e) {
         // TODO: Review this.. Is this the right place to handle this...
-        throw new NonStopException("isHeldByCurrentThread timed out");
+        throw getNonStopException(methodName);
       } finally {
         if (started) {
           context.getNonStopManager().finish();
         }
       }
+    }
+  }
+
+  private NonStopException getNonStopException(String methodName) {
+    if (context.getNonStopClusterListener().isNodeError()) {
+      return new NonStopException(context.getNonStopClusterListener().getNodeErrorMessage());
+    } else {
+      return new NonStopException(methodName + " timed out");
     }
   }
 }

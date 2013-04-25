@@ -90,10 +90,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   @Override
   public void cleanup() {
-    for (Entry<L1ServerMapLocalCacheStore, ServerMapLocalCache> entry : localStores.entrySet()) {
-      ServerMapLocalCache localCache = entry.getValue();
-      localCache.cleanLocalState();
-    }
+    // Clean-up of local cache is done by AggreagateServerMap on Rejoin Completed
+
     lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
     tcObjectSelfStore.cleanup();
     // all sinks will be cleaned-up as a part of stageManager.cleanAll() from ClientHandshakeManagerImpl.reset()

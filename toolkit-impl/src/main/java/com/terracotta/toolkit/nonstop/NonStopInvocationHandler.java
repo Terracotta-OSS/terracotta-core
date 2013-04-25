@@ -5,9 +5,13 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopException;
+import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
@@ -16,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class NonStopInvocationHandler<T extends ToolkitObject> implements InvocationHandler {
+  private static final TCLogger            LOGGER = TCLogging.getLogger(NonStopInvocationHandler.class);
   private final NonStopContext             context;
   private final NonStopConfigurationLookup nonStopConfigurationLookup;
   private final ToolkitObjectLookup<T>     toolkitObjectLookup;
@@ -32,31 +37,59 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
     NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfigurationForMethod(method
         .getName());
 
-    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args,
-                                                                 toolkitObjectLookup.getInitializedObject()); }
+    if (!nonStopConfiguration.isEnabled()) {
+      return invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
+    }
 
-    if (LocalMethodUtil.isLocal(nonStopConfigurationLookup.getObjectType(), method.getName())) { return invokeLocalMethod(method,
-                                                                                                                          args); }
+    if (LocalMethodUtil.isLocal(nonStopConfigurationLookup.getObjectType(), method.getName())) {
+      return invokeLocalMethod(method, args);
+    }
 
-    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { return invokeMethod(method,
-                                                                                                                                               args,
-                                                                                                                                               resolveTimeoutBehavior(nonStopConfiguration)); }
+    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) {
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
+    }
+    
     boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
     try {
       context.getNonStopClusterListener().waitUntilOperationsEnabled();
       Object returnValue = invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
       return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
+    } catch (NonStopToolkitInstantiationException e) {
+      LOGGER.error(nonStopConfigurationLookup.getObjectType().name() + " instantiation failed.", e);
+      return handleNonStopToolkitInstantiationException(method, args, nonStopConfiguration, e);
     } catch (ToolkitAbortableOperationException e) {
-      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
     } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
-      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
     } finally {
       if (started) {
         context.getNonStopManager().finish();
       }
     }
   }
+
+  private Object handleNonStopToolkitInstantiationException(Method method, Object[] args,
+        NonStopConfiguration nonStopConfiguration, NonStopToolkitInstantiationException e) throws Throwable {
+    try {
+      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+    } catch (NonStopException nse) {
+        throw new NonStopException(e.getMessage(), e);
+    }
+  }
+
+  private Object handleNonStopBehavior(Method method, Object[] args, NonStopConfiguration nonStopConfiguration) throws Throwable {
+    try {
+      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+    } catch (NonStopException e) {
+      if(context.getNonStopClusterListener().isNodeError()) {
+        throw new NonStopException(context.getNonStopClusterListener().getNodeErrorMessage());
+      } else {
+        throw e;
+      }
+    }
+  }
+  
 
   private Object invokeLocalMethod(Method method, Object[] args) throws Throwable {
     Object localDelegate = toolkitObjectLookup.getInitializedObjectOrNull();
