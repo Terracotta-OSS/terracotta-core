@@ -37,7 +37,7 @@ public class SubTypeWrapperSortedMap<K, V> extends SubTypeWrapperMap<K, V> imple
   @Override
   public SortedMap<K, V> tailMap(K fromKey) {
     assertStatus();
-    return new SubTypeWrapperSortedMap<K, V>(sortedMap.headMap(fromKey), status, superTypeName, toolkitObjectType);
+    return new SubTypeWrapperSortedMap<K, V>(sortedMap.tailMap(fromKey), status, superTypeName, toolkitObjectType);
   }
 
   @Override
