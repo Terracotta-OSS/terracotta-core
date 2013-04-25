@@ -8,13 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
-import com.tc.management.TerracottaMBean;
-import com.tc.object.locks.LockID;
-import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.stats.api.DSOMBean;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
@@ -331,14 +326,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected List<String> getExtraJars() {
-    List<String> jars = new ArrayList<String>();
-    jars.add(TestBaseUtil.jarFor(TerracottaMBean.class));
-    jars.add(TestBaseUtil.jarFor(DSOMBean.class));
-    jars.add(TestBaseUtil.jarFor(MBeanServerInvocationProxy.class));
-    jars.add(TestBaseUtil.jarFor(OffheapStats.class));
-    jars.add(TestBaseUtil.jarFor(LockID.class));
-    jars.add(TestBaseUtil.jarFor(com.tc.object.locks.ServerLockContext.State.class));
-    return jars;
+    return Collections.emptyList();
   }
 
   protected void configureTCLogging(String className, LogLevel LogLevel) {
