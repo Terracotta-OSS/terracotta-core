@@ -132,7 +132,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     harness = harnessFactory.createServerHarness(channelFactory, transport, new MessageTransportListener[] { this });
     harness.finalizeStack();
     Object previous = harnesses.put(id, harness);
-    if (previous != null) { throw new AssertionError("previous is " + previous); }
+    if (previous != null) { throw new AssertionError("previous is " + previous + "connectionID:" + id + "new is"
+                                                     + harness); }
   }
 
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {

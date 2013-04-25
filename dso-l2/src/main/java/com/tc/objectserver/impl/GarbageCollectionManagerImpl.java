@@ -21,15 +21,17 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
   private final GarbageCollectionManager    activeGCManager;
   private volatile GarbageCollectionManager delegate = new PassiveGarbageCollectionManager();
 
-  public GarbageCollectionManagerImpl(final Sink garbageCollectSink) {
-    activeGCManager = new ActiveGarbageCollectionManager(garbageCollectSink);
+  public GarbageCollectionManagerImpl(final Sink garbageCollectSink, final boolean restartable) {
+    activeGCManager = new ActiveGarbageCollectionManager(garbageCollectSink, restartable);
   }
 
   @Override
   public void l2StateChanged(StateChangedEvent sce) {
     if (sce.movedToActive()) {
       delegate = activeGCManager;
-      scheduleInlineCleanupIfNecessary();
+      if (StateManager.START_STATE.equals(sce.getOldState())) {
+        scheduleInlineCleanupIfNecessary();
+      }
     } else {
       delegate.l2StateChanged(sce);
     }

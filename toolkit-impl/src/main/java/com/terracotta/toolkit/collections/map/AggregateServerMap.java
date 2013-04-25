@@ -394,9 +394,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         this.listeners.add(listener);
       }
     }
-    //TODO: replace with EVICT and EXPIRE
-    platformService.registerL1CacheListener(this, EnumSet.of(InterestType.PUT));
-    LOGGER.info("New listener has been registered for cache: " + getName());
+    final EnumSet<InterestType> types = EnumSet.of(InterestType.EVICT, InterestType.EXPIRE);
+    platformService.registerInterestListener(this, types);
+    LOGGER.info("Interest listener has been registered for cache: "
+                + getName() + ". Notification types: " + types);
   }
 
   @Override
@@ -815,10 +816,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (final ToolkitCacheListener listener : listeners) {
       try {
         switch (type) {
-          case PUT:
-            break;
-          case REMOVE:
-            break;
           case EVICT:
             listener.onEviction(key);
             break;

@@ -44,15 +44,12 @@ public class InClusterInterestNotifier implements InterestListener {
     lock.readLock().lock();
     try {
       final Map<ClientID, Set<String>> clientToDestMap = registry.get(interest.getType());
-      if (clientToDestMap == null) {
-        LOG.warn("No subscribers found for server event: " + interest);
-        return;
-      }
-
-      for (Map.Entry<ClientID, Set<String>> entry : clientToDestMap.entrySet()) {
-        final Set<String> destinations = entry.getValue();
-        if (destinations.contains(interest.getCacheName())) {
-          sendNotification(entry.getKey(), interest);
+      if (clientToDestMap != null) {
+        for (Map.Entry<ClientID, Set<String>> entry : clientToDestMap.entrySet()) {
+          final Set<String> destinations = entry.getValue();
+          if (destinations.contains(interest.getCacheName())) {
+            sendNotification(entry.getKey(), interest);
+          }
         }
       }
     } finally {
@@ -68,7 +65,7 @@ public class InClusterInterestNotifier implements InterestListener {
       msg.setCacheName(interest.getCacheName());
       msg.setInterestType(interest.getType());
       msg.setKey(interest.getKey());
-      // TODO create a SEDA stage to send asynchronously in parallel ?
+      // TODO create a SEDA stage to send asynchronously ?
       msg.send();
     } catch (NoSuchChannelException e) {
       LOG.warn("Cannot find channel for client: " + clientId

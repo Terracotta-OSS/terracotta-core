@@ -14,6 +14,7 @@ import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -50,6 +51,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
   private GroupManager                   groupManager;
   private ServerTransactionManager       serverTxnMgr;
+  private ReplicatedTransactionManager   replicatedTransactionManager;
 
   public L2ObjectSyncSendHandler(final L2ObjectStateManager objectStateManager, final ServerTransactionFactory factory) {
     this.objectStateManager = objectStateManager;
@@ -102,7 +104,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
   // A Simple way to throttle Active from Passive when the number of pending txns reaches the threshold
   private synchronized void throttleOnTxnAck() {
-    int totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
+    int totalPendingTxns = replicatedTransactionManager.pendingTransactions();
     final int factor = totalPendingTxns / TOTAL_PENDING_TRANSACTIONS_THRESHOLD;
     if (factor < 1) {
       // No Throttling
@@ -122,7 +124,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
         } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
-        totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
+        totalPendingTxns = replicatedTransactionManager.pendingTransactions();
         maxSecsToSleep--;
       }
     }
@@ -143,7 +145,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       } catch (final InterruptedException e) {
         throw new AssertionError(e);
       }
-      totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
+      totalPendingTxns = replicatedTransactionManager.pendingTransactions();
     } while (maxLimit < totalPendingTxns);
     logger.info("Starting Transaction Acks as limit reached : limit = " + maxLimit + " total Pending txns = "
                 + totalPendingTxns);
@@ -176,6 +178,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     this.serverTxnMgr = oscc.getTransactionManager();
     final L2Coordinator l2Coordinator = oscc.getL2Coordinator();
     this.groupManager = l2Coordinator.getGroupManager();
+    replicatedTransactionManager = l2Coordinator.getReplicatedTransactionManager();
   }
 
   private static class SyncLogger {

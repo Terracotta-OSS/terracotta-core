@@ -11,8 +11,8 @@ import java.util.Collection;
 /**
  * Provides access to the topology of the cluster, viewed from the current node.
  * <p>
- * This only takes DSO client nodes into account, DSO server nodes are not included in this topology view.
- *
+ * This only takes terracotta client nodes into account, TSA server nodes are not included in this topology view.
+ * 
  * @since 3.0.0
  */
 public interface DsoClusterTopology {

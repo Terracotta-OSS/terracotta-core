@@ -358,4 +358,8 @@ public class TestBaseUtil {
     return getDevmodeAwareDependenciesOf("org.terracotta", "terracotta-toolkit-runtime",
                                          "terracotta-toolkit-runtime-ee", someToolkitClass);
   }
+
+  public static List<String> getTerracottaCoreDependencies(Class<?> someTCCoreClass) {
+    return getDevmodeAwareDependenciesOf("org.terracotta", "terracotta", "terracotta-ee", someTCCoreClass);
+  }
 }

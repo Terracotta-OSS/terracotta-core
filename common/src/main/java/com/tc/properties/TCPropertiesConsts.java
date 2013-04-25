@@ -863,9 +863,11 @@ public interface TCPropertiesConsts {
   public static final String SEARCH_LUCENE_MAX_BUFFER                                       = "search.lucene.max.buffer";
   public static final String SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES                              = "search.lucene.max.boolean.clauses";
   public static final String SEARCH_LUCENE_MERGE_FACTOR                                     = "search.lucene.mergefactor";
+  public static final String SEARCH_LUCENE_MAX_MERGE_THREADS                                = "search.lucene.maxMergeThreads";
   public static final String SEARCH_LUCENE_MAX_BUFFERED_DOCS                                = "search.lucene.maxBufferedDocs";
   public static final String SEARCH_LUCENE_MAX_MERGE_DOCS                                   = "search.lucene.maxMergeDocs";
   public static final String SEARCH_LUCENE_INDEXES_PER_CACHE                                = "search.lucene.indexes.per.cache";
+  public static final String SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION                        = "search.lucene.disableStoredFieldCompression";
 
   public static final String APP_GROUPS_DEBUG                                               = "appgroups.debug";
 

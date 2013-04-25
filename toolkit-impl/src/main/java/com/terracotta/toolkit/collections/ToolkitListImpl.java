@@ -61,7 +61,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     boolean isLiteral = LiteralValues.isLiteralInstance(o);
     if (isLiteral) { return (E) o; }
 
-    return ((SerializedClusterObject<E>) o).getValue(strategy, false, false);
+    return ((SerializedClusterObject<E>) o).getValue(serStrategy, false, false);
   }
 
   @Override

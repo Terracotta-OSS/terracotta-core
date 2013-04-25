@@ -9,9 +9,9 @@ import java.util.Set;
  */
 public interface ServerInterestListenerManager {
 
-  void registerL1CacheListener(InterestDestination destination, Set<InterestType> listenTo);
+  void registerInterestListener(InterestDestination destination, Set<InterestType> listenTo);
 
-  void unregisterL1CacheListener(InterestDestination destination);
+  void unregisterInterestListener(InterestDestination destination);
 
   void dispatchInterest(ServerInterestMessage message);
 }

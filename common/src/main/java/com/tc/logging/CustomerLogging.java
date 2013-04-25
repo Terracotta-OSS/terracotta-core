@@ -11,9 +11,8 @@ public class CustomerLogging {
   // Logger names. You'll want to keep these unique unless you really want to cross streams
   private static final String GENERIC_CUSTOMER_LOGGER             = "general";
 
-  private static final String DSO_CUSTOMER_GENERIC_LOGGER         = "dso";
-  private static final String DSO_INSTRUMENTATON_LOGGER           = "dso.instrumentation";
-  private static final String DSO_RUNTIME_LOGGER                  = "dso.runtime";
+  private static final String DSO_CUSTOMER_GENERIC_LOGGER = "tsa";
+  private static final String DSO_RUNTIME_LOGGER          = "tsa.runtime";
 
   private CustomerLogging() {
     // no need to instaniate me
@@ -25,10 +24,6 @@ public class CustomerLogging {
 
   public static TCLogger getGenericCustomerLogger() {
     return TCLogging.getCustomerLogger(GENERIC_CUSTOMER_LOGGER);
-  }
-
-  public static TCLogger getDSOInstrumentationLogger() {
-    return TCLogging.getCustomerLogger(DSO_INSTRUMENTATON_LOGGER);
   }
 
   public static TCLogger getDSOGenericLogger() {

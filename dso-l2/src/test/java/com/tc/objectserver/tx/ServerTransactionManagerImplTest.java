@@ -630,12 +630,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
 
     @Override
-    public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+    public void notifyReadOperations(MessageChannel channel, int numObjectsRequested) {
       throw new ImplementMe();
     }
 

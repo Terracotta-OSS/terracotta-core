@@ -57,6 +57,14 @@ public class AggregateSampleRateCounter extends SampledCounterImpl implements Sa
         return this.denominator == 0 ? 0 : (this.numerator / this.denominator);
     }
     
+    public synchronized long getNumeratorValue() {
+        return this.numerator;
+    }
+     
+    public synchronized long getDenominatorValue() {
+        return this.denominator;
+    }
+    
     public long getCount() {
         return super.getValue();
     }

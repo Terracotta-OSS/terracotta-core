@@ -111,6 +111,85 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
+  public Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException {
+    List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
+
+          Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+            @Override
+            public ThreadDumpEntity call() throws Exception {
+              return serverTheadDump(sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
+        }
+      }
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting remote servers thread dump", e);
+    }
+
+    JMXConnector jmxConnector = null;
+    try {
+      final MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsL1MBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingL1MBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          mBeanServerConnection = null;
+        } else {
+          mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+        }
+      }
+
+      if (mBeanServerConnection != null) {
+        ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+        for (final ObjectName clientObjectName : clientObjectNames) {
+          final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+
+          Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
+            @Override
+            public ThreadDumpEntity call() throws Exception {
+              return clientThreadDump(mBeanServerConnection, clientObjectName, clientId);
+            }
+          });
+          futures.add(future);
+        }
+      }
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting client stack traces", e);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+
+    try {
+      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+      for (Future<ThreadDumpEntity> future : futures) {
+        ThreadDumpEntity threadDumpEntity = future.get();
+        threadDumpEntities.add(threadDumpEntity);
+      }
+      return threadDumpEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting cluster thread dump", e);
+    }
+  }
+
+  @Override
   public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
@@ -1159,7 +1238,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final boolean read) throws ServiceExecutionException {
+  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableTypes, final boolean read) throws ServiceExecutionException {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
@@ -1180,7 +1259,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           Future<Collection<OperatorEventEntity>> future = executorService.submit(new Callable<Collection<OperatorEventEntity>>() {
             @Override
             public Collection<OperatorEventEntity> call() throws Exception {
-              return getOperatorEventsByMember(sinceWhen, read, sourceId, jmxPort, jmxHost);
+              return getOperatorEventsByMember(sinceWhen, acceptableTypes, read, sourceId, jmxPort, jmxHost);
             }
           });
           futures.add(future);
@@ -1198,7 +1277,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, boolean read, String sourceId, int jmxPort, String jmxHost) {
+  private Collection<OperatorEventEntity> getOperatorEventsByMember(Long sinceWhen, Set<String> acceptableTypes, boolean read, String sourceId, int jmxPort, String jmxHost) {
     Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
 
     JMXConnector jmxConnector = null;
@@ -1220,6 +1299,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         if (operatorEvent.isRead() && read) {
           // filter out read events
           continue;
+        }
+        if (acceptableTypes != null) {
+          // filter out event types
+          if (!acceptableTypes.contains(operatorEvent.getEventTypeAsString())) {
+            continue;
+          }
         }
 
         OperatorEventEntity operatorEventEntity = new OperatorEventEntity();

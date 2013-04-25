@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
@@ -183,16 +184,6 @@ public class NullManager implements Manager {
   @Override
   public TCProperties getTCProperties() {
     return NullTCProperties.INSTANCE;
-  }
-
-  @Override
-  public boolean isDsoMonitored(Object obj) {
-    return false;
-  }
-
-  @Override
-  public boolean isDsoMonitorEntered(Object obj) {
-    return false;
   }
 
   @Override
@@ -471,8 +462,19 @@ public class NullManager implements Manager {
     //
   }
 
+
   @Override
-  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    //
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) {
+    //
+  }
+
+  @Override
+  public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
     //
   }
 }

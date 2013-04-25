@@ -197,4 +197,24 @@ public class TestClientTransaction implements ClientTransaction {
     return txnListener;
   }
 
+  @Override
+  public boolean isAtomic() {
+    return false;
+  }
+
+  @Override
+  public void setAtomic(boolean atomic) {
+    //
+  }
+
+  @Override
+  public void addOnCommitCallable(OnCommitCallable callable) {
+    //
+  }
+
+  @Override
+  public List<OnCommitCallable> getOnCommitCallables() {
+    return Collections.EMPTY_LIST;
+  }
+
 }

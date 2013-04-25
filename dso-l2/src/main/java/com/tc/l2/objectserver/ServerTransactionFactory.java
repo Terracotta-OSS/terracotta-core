@@ -59,14 +59,25 @@ public class ServerTransactionFactory {
                                                                  final String className, final Map<Object, EvictableEntry> candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
-    return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
-                                     NULL_LOCK_ID, localNodeID,
-                                     Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
-                                                                                             candidates, cacheName)),
-                                     serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
-                                     NULL_DMI_DESCRIPTOR,
-                                     new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
-                                             EMPTY_HIGH_WATER_MARK);
+
+    return createServerMapEvictionTransactionFor(getNextServerTransactionID(localNodeID), oid,
+        className, candidates, serializer,
+        cacheName);
+
+  }
+
+  public ServerTransaction createServerMapEvictionTransactionFor(final ServerTransactionID serverTransactionID, final ObjectID oid,
+                                                                 final String className, final Map<Object, EvictableEntry> candidates,
+                                                                 final ObjectStringSerializer serializer,
+                                                                 final String cacheName) {
+    return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(), SequenceID.NULL_ID,
+        NULL_LOCK_ID, serverTransactionID.getSourceID(),
+        Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
+            candidates, cacheName)),
+        serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
+        NULL_DMI_DESCRIPTOR,
+        new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
+        EMPTY_HIGH_WATER_MARK);
   }
 
   private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {

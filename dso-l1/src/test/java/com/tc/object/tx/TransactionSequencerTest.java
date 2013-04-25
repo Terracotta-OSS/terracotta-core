@@ -3,6 +3,7 @@
  */
 package com.tc.object.tx;
 
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.abortable.AbortableOperationManager;
@@ -222,7 +223,7 @@ public class TransactionSequencerTest extends TestCase {
       TransactionBuffer buffer = Mockito.mock(TransactionBuffer.class);
       Mockito.when(buffer.getTxnCount()).thenReturn(1);
       Mockito.when(buffer.getFoldedTransactionID()).thenReturn(Mockito.mock(TransactionID.class));
-      Mockito.doReturn(640000).when(buffer).write(Mockito.any(ClientTransaction.class));
+      Mockito.doReturn(640000).when(buffer).write(Matchers.any(ClientTransaction.class));
       return buffer;
    }
     

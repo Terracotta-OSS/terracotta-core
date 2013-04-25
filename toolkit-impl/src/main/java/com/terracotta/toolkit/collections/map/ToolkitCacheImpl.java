@@ -8,7 +8,6 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -39,7 +38,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private final ToolkitSubtypeStatusImpl      status;
   private volatile OnGCCallable               onGCCallable;
 
-  public ToolkitCacheImpl(ToolkitObjectFactory factory, ToolkitInternal toolkit, String name,
+  public ToolkitCacheImpl(ToolkitObjectFactory factory, String name,
                           AggregateServerMap<K, V> delegate) {
     super(factory);
     this.name = name;

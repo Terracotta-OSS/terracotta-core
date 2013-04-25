@@ -41,7 +41,6 @@ import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStats;
-import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.BackupManager;
@@ -105,7 +104,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                   final TCSecurityManager securityManager) {
     this.logger = logger;
     this.securityManager = securityManager;
-    this.logger.info("Standard DSO Server created");
+    this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
     this.thisGroupID = this.haConfig.getThisGroupID();
   }

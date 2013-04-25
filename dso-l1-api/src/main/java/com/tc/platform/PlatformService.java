@@ -12,6 +12,7 @@ import com.tc.object.InterestDestination;
 import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -107,7 +108,13 @@ public interface PlatformService {
 
   void throttlePutIfNecessary(ObjectID object) throws AbortedOperationException;
 
-  public boolean isLockedBeforeRejoin();
+  boolean isLockedBeforeRejoin();
 
-  void registerL1CacheListener(InterestDestination destination, Set<InterestType> listenTo);
+  void beginAtomicTransaction(LockID lockID, LockLevel level) throws AbortedOperationException;
+
+  void commitAtomicTransaction(LockID lockID, LockLevel level) throws AbortedOperationException;
+
+  boolean isExplicitlyLocked();
+
+  void registerInterestListener(InterestDestination destination, Set<InterestType> listenTo);
 }

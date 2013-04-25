@@ -51,10 +51,11 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
       Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
 
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
-      String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY);
+      String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY__SINCE_WHEN);
+      String eventTypes = qParams.getFirst(ATTR_QUERY_KEY__EVENT_TYPES);
       boolean filterOutRead = qParams.getFirst(ATTR_FILTER_KEY) == null || Boolean.parseBoolean(qParams.getFirst(ATTR_FILTER_KEY));
 
-      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, filterOutRead);
+      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, filterOutRead);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA operator events", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

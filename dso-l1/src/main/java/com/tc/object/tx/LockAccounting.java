@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ClearableCallback;
@@ -33,6 +34,7 @@ public class LockAccounting implements ClearableCallback {
   private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap();
   private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap();
   private volatile boolean                               shutdown                       = false;
+  private volatile boolean                               rejoinInProgress               = false;
   private final AbortableOperationManager                abortableOperationManager;
 
   public LockAccounting(AbortableOperationManager abortableOperationManager) {
@@ -41,6 +43,7 @@ public class LockAccounting implements ClearableCallback {
 
   @Override
   public synchronized void cleanup() {
+    rejoinInProgress = true;
     for (TxnRemovedListener listener : listeners) {
       listener.release();
     }
@@ -48,6 +51,7 @@ public class LockAccounting implements ClearableCallback {
     tx2Locks.clear();
     lock2Txs.clear();
     tid2wrap.clear();
+    rejoinInProgress = false;
   }
 
   public synchronized Object dump() {
@@ -167,6 +171,7 @@ public class LockAccounting implements ClearableCallback {
       // out of this wait and throw a TCNotRunningException for upper layers to handle
       do {
         if (shutdown) { throw new TCNotRunningException(); }
+        if (rejoinInProgress) { throw new PlatformRejoinException(); }
       } while (!latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS));
     } catch (InterruptedException e) {
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
@@ -203,7 +208,7 @@ public class LockAccounting implements ClearableCallback {
   private class TxnRemovedListener {
     private final Set<TransactionIDWrapper>         txnSet;
     private final CountDownLatch                     latch;
-    private boolean released                    = false;
+    // private boolean released = false;
 
     TxnRemovedListener(Set<TransactionIDWrapper> txnSet, CountDownLatch latch) {
       if ( !Thread.holdsLock(LockAccounting.this) ) {
@@ -234,7 +239,7 @@ public class LockAccounting implements ClearableCallback {
         while ( this.latch.getCount() > 0 ) {
             latch.countDown();
         }
-        released = true;
+      // released = true;
     }
 
   }

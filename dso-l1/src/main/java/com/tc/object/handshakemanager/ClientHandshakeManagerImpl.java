@@ -97,6 +97,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     shutdownCallbacks();
   }
 
+  @Override
+  public boolean isShutdown() {
+    return isShutdown;
+  }
+
   private boolean checkShutdown() {
     if (isShutdown) {
       this.logger.warn("Drop handshaking due to client shutting down...");

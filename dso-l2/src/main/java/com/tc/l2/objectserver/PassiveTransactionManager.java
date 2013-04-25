@@ -16,6 +16,8 @@ import java.util.Set;
 
 public interface PassiveTransactionManager {
 
+  int pendingTransactions();
+
   public void addCommittedTransactions(NodeID nodeID, Map<ServerTransactionID, ServerTransaction> txns, Recyclable message);
 
   public void addObjectSyncTransaction(ServerTransaction txn, final Set<ObjectID> deletedObjects);

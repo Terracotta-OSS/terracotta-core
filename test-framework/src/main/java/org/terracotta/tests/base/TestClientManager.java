@@ -169,9 +169,8 @@ public class TestClientManager {
 
   private String addExtraJarsToClassPath(String classPath) {
     for (String extraJar : testBase.getExtraJars()) {
-      classPath = testBase.addToClasspath(extraJar, classPath);
+      classPath = testBase.addToClasspath(classPath, extraJar);
     }
-
     return classPath;
   }
 

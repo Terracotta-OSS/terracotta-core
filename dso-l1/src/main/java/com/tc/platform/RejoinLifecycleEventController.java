@@ -34,11 +34,10 @@ public class RejoinLifecycleEventController {
     }
     // reset all subsystems
     clientHandshakeManager.reset();
-
   }
 
   private void onRejoinComplete() {
-    // all subsystems must be already unpaused
+    // all subsystems must be already un-paused
     // notify upper listeners
     for (RejoinLifecycleListener listener : upperLayerListeners) {
       listener.onRejoinComplete();

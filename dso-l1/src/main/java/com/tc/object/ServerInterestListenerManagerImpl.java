@@ -6,6 +6,7 @@ import com.tc.net.GroupID;
 import com.tc.object.msg.InterestListenerMessageFactory;
 import com.tc.object.msg.RegisterInterestListenerMessage;
 import com.tc.object.msg.ServerInterestMessage;
+import com.tc.object.msg.UnregisterInterestListenerMessage;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,21 +44,27 @@ public class ServerInterestListenerManagerImpl implements ServerInterestListener
   }
 
   @Override
-  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
-    sendMessage(destination.getDestinationName(), stripeId, listenTo);
+  public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    sendRegistrationMessage(destination.getDestinationName(), stripeId, listenTo);
     namedDestinations.putIfAbsent(destination.getDestinationName(), destination);
   }
 
   @Override
-  public void unregisterL1CacheListener(final InterestDestination destination) {
-    //sendMessage(destination.getDestinationName(), stripeId, listenTo);
+  public void unregisterInterestListener(final InterestDestination destination) {
+    sendUnregistrationMessage(destination.getDestinationName(), stripeId);
     namedDestinations.remove(destination.getDestinationName());
   }
 
-  protected void sendMessage(final String destinationName, GroupID stripeId, final Set<InterestType> listenTo) {
+  protected void sendRegistrationMessage(final String destinationName, GroupID stripeId, final Set<InterestType> listenTo) {
     final RegisterInterestListenerMessage msg = messageFactory.newRegisterInterestListenerMessage(stripeId);
     msg.setDestination(destinationName);
     msg.setInterestTypes(listenTo);
+    msg.send();
+  }
+
+  protected void sendUnregistrationMessage(final String destinationName, GroupID stripeId) {
+    final UnregisterInterestListenerMessage msg = messageFactory.newUnregisterInterestListenerMessage(stripeId);
+    msg.setDestination(destinationName);
     msg.send();
   }
 }

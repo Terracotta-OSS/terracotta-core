@@ -52,7 +52,6 @@ public abstract class ToolkitInstanceProxy {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // TODO: throw explicit public exception type
         throw new RejoinException("The toolkit instance with name '" + name + "' (instance of " + clazz.getName()
                                   + ") is not usable at the moment as rejoin is in progress");
       }
@@ -68,15 +67,25 @@ public abstract class ToolkitInstanceProxy {
                                                             final ToolkitObjectLookup toolkitObjectLookup) {
     NonStopConfigurationLookup nonStopConfigurationLookup = new NonStopConfigurationLookup(context, toolkitObjectType,
                                                                                            name);
-    if (toolkitObjectType == ToolkitObjectType.LOCK) { return (T) new NonStopLockImpl(context,
-                                                                                      nonStopConfigurationLookup,
-                                                                                      toolkitObjectLookup); }
+
     InvocationHandler handler = new NonStopInvocationHandler<T>(context, nonStopConfigurationLookup,
                                                                 toolkitObjectLookup);
 
     T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
     return proxy;
   }
+
+
+  public static <T extends ToolkitObject> T newNonStopProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
+                                                            final NonStopContext context, final Class<T> clazz,
+                                                            final ToolkitObjectLookup toolkitObjectLookup) {
+    InvocationHandler handler = new NonStopInvocationHandler<T>(context, nonStopConfigurationLookup,
+                                                                toolkitObjectLookup);
+
+    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    return proxy;
+  }
+
 
   public static <T> T newNonStopSubTypeProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
                                              final NonStopContext context, final T delegate, final Class<T> clazz) {

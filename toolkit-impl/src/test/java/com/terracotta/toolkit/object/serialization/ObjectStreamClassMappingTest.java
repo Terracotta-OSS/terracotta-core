@@ -15,6 +15,7 @@ import com.tc.object.InterestDestination;
 import com.tc.object.InterestType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -102,7 +103,7 @@ public class ObjectStreamClassMappingTest {
 
   }
 
-  // Asserts that the write lock is taken from the Serializer thread.
+  // Asserts that the write lock is taken from the Serializer thread
   private static class ThreadCheckerPlatformService implements PlatformService {
 
     private void checkThreadAccess(LockLevel level) {
@@ -111,6 +112,21 @@ public class ObjectStreamClassMappingTest {
                                                                                                                                          "Serializer should not take a write lock in any thread other than "
                                                                                                                                              + ObjectStreamClassMapping.SERIALIZER_ADD_MAPPING_THREAD); }
       }
+    }
+
+    @Override
+    public boolean isExplicitlyLocked() {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public void beginAtomicTransaction(LockID lock, LockLevel level) {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public void commitAtomicTransaction(LockID lock, LockLevel level) {
+      throw new ImplementMe();
     }
 
     @Override
@@ -312,7 +328,7 @@ public class ObjectStreamClassMappingTest {
     }
 
     @Override
-    public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
       //
     }
 

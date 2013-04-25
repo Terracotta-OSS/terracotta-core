@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -63,7 +64,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public void begin(LockID lock, LockLevel lockType) {
+  public void begin(LockID lock, LockLevel lockType, boolean atomic) {
     // System.err.println(this + ".begin(" + lock + ")");
 
     this.begins.add(new Begin(lock, lockType));
@@ -147,10 +148,13 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public void commit(LockID lock, LockLevel level) throws UnlockedSharedObjectException {
+  public void commit(LockID lock, LockLevel level, boolean atomic, OnCommitCallable callable)
+      throws UnlockedSharedObjectException,
+      AbortedOperationException {
     if (logger.isDebugEnabled()) {
       logger.debug("commit(" + lock + ")");
     }
+    callable.call();
     this.commitCount++;
   }
 
@@ -237,4 +241,5 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
 
   }
+
 }

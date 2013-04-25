@@ -13,8 +13,6 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 
-import gnu.trove.TLinkable;
-
 import java.lang.ref.WeakReference;
 
 /**
@@ -29,29 +27,6 @@ public class NullTCObject implements TCObject {
   // Used by bytecode stuff so won't show up in compiler
   public static TCObject getNullTCObject() {
     return INSTANCE;
-  }
-
-  @Override
-  public void setNext(final TLinkable link) {
-    // do nothing
-  }
-
-  @Override
-  public void setPrevious(final TLinkable link) {
-    // do nothing);
-
-  }
-
-  @Override
-  public TLinkable getNext() {
-    // do nothing
-    return null;
-  }
-
-  @Override
-  public TLinkable getPrevious() {
-    // do nothing
-    return null;
   }
 
   @Override

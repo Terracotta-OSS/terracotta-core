@@ -6,6 +6,9 @@ package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -141,7 +144,6 @@ import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterInterestListenerMessage;
-import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -218,6 +220,7 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
+import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import com.tc.objectserver.persistence.OffheapStatsImpl;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
@@ -294,9 +297,6 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -357,6 +357,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private IndexHACoordinator                     indexHACoordinator;
   private MetaDataManager                        metaDataManager;
   private SearchRequestManager                   searchRequestManager;
+
+  private EvictionTransactionPersistor           evictionTransactionPersistor;
 
   private final CallbackDumpHandler              dumpHandler      = new CallbackDumpHandler();
 
@@ -424,8 +426,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
 
-    this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
-    this.threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
+    threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
+    threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, new CallbackOnExitHandler() {
       @Override
       public void callbackOnExit(final CallbackOnExitState state) {
@@ -550,6 +552,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     MutableSequence gidSequence;
     TransactionPersistor transactionPersistor = this.persistor.getTransactionPersistor();
+    this.evictionTransactionPersistor = persistor.getEvictionTransactionPersistor();
+
     gidSequence = this.persistor.getGlobalTransactionIDSequence();
 
     final GlobalTransactionIDBatchRequestHandler gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
@@ -584,7 +588,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionPolicy, commWorkerThreadCount,
                                                                new HealthCheckerConfigImpl(tcProperties
-                                                                   .getPropertiesFor("l2.healthcheck.l1"), "DSO Server"),
+                                                                   .getPropertiesFor("l2.healthcheck.l1"), "TSA Server"),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.EMPTY_MAP,
@@ -622,8 +626,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                    persistor.getPersistenceTransactionProvider()),
         1, -1);
 
-    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink()
-    );
+    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(), restartable);
     toInit.add(this.garbageCollectionManager);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
@@ -665,7 +668,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
 
-    final ChannelStatsImpl channelStats = new ChannelStatsImpl(this.sampledCounterManager, channelManager);
+    final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
+    ManagedObjectStateFactory.getInstance().getOperationEventBus().register(channelStats);
     channelManager.addEventListener(channelStats);
 
     final CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
@@ -860,7 +864,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
                                                            objectStore, clientObjectReferenceSet,
                                                            serverTransactionFactory, threadGroup, resourceManager,
-                                                           sampledCounterManager);
+                                                           sampledCounterManager, evictionTransactionPersistor, this.transactionManager);
 
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
@@ -1106,8 +1110,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     @Subscribe
-    public void recordOperationCountIncrementEvent(final Events.OperationCountIncrementEvent event) {
-      this.counter.increment();
+    public void writeOperationCountEvent(final Events.WriteOperationCountChangeEvent event) {
+      this.counter.increment(event.getDelta());
     }
   }
 

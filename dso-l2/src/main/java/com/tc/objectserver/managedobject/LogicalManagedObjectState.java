@@ -35,6 +35,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
   @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
       throws IOException {
+    int eventCount = 0;
     while (cursor.next()) {
       final Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
@@ -42,13 +43,16 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
         applyPhysicalAction(physicalAction, objectID, applyInfo);
       } else { // LogicalAction
         // notify subscribers about the mutation operation
-        getOperationEventBus().post(Events.operationCountIncrementEvent());
+        eventCount++;
 
         final LogicalAction logicalAction = (LogicalAction)action;
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
         applyLogicalAction(objectID, applyInfo, method, params);
       }
+    }
+    if (eventCount != 0) {
+      getOperationEventBus().post(Events.writeOperationCountChangeEvent(applyInfo.getServerTransactionID().getSourceID(), eventCount));
     }
   }
 

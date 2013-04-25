@@ -3,17 +3,26 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.invalidation.Invalidations;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
+import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.util.ObjectIDSet;
+import java.util.Collection;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This trigger is fired by the periodic TTI/TTL eviction scheduler as well as resource
@@ -47,6 +56,72 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private final ObjectManager  mgr;
     private final ObjectIDSet exclusionList;
     private final ObjectIDSet passList = new ObjectIDSet();
+    
+    private static final ClientObjectReferenceSet noReference = new ClientObjectReferenceSet(new ClientStateManager() {
+
+        @Override
+        public boolean startupNode(NodeID nodeID) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void shutdownNode(NodeID deadNode) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void addReference(NodeID nodeID, ObjectID objectID) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean hasReference(NodeID nodeID, ObjectID objectID) {
+            return false;
+        }
+
+        @Override
+        public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references, NodeID clientID, Set<ObjectID> objectIDs, Invalidations invalidationsForClient) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
+            return Collections.<ObjectID>emptySet();
+        }
+
+        @Override
+        public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public int getReferenceCount(NodeID nodeID) {
+            return 0;
+        }
+
+        @Override
+        public Set<NodeID> getConnectedClientIDs() {
+            return Collections.<NodeID>emptySet();
+        }
+
+        @Override
+        public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+        }
+
+        @Override
+        public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+        }
+    });
     
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid) {
         this(mgr,oid,new ObjectIDSet(), true);
@@ -113,19 +188,21 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map,
+                                                              ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
-        
+
+        final SamplingType samplingType = (dumpLive) ? SamplingType.FOR_EVICTION : SamplingType.FOR_EXPIRATION;
         Map<Object, EvictableEntry> grabbed = ( !stop ) ?
-            map.getRandomSamples(samples, clients, SamplingType.FOR_EVICTION) :
+            map.getRandomSamples(samples, (dumpLive) ? clients : noReference, samplingType) :
             Collections.<Object,EvictableEntry>emptyMap();
 
         sampled = grabbed.size();
-        
+
         if ( dumpLive ) {
             overflow += grabbed.size();
         }
-        
+
         return createEvictionContext(className, grabbed);
     }
 
@@ -147,7 +224,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             sampled = 100;
         }
         
-        if ( max > 0 && count - max > 0 ) {
+        if ( ev.isEvictionEnabled() && max > 0 && count - max > 0 ) {
             sampled = count - max;
             dumpLive = true;
         }
@@ -166,7 +243,8 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
   private Map<Object, EvictableEntry> filter(final Map<Object, EvictableEntry> samples, final int ttiSeconds,
                     final int ttlSeconds) {
     final int now = (int) (System.currentTimeMillis() / 1000);
-    for (final Iterator<Map.Entry<Object, EvictableEntry>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
+    final Iterator<Map.Entry<Object, EvictableEntry>> iterator = samples.entrySet().iterator();
+    while ( iterator.hasNext() ) {
         if ( stop ) {
  //  don't unset flag, may need it later
             return Collections.emptyMap();
@@ -177,7 +255,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
   //  didn't find the object, ignore this one
             iterator.remove();
             missing += 1;
-        } else if ( exclusionList != null && exclusionList.contains(e.getValue()) ) {
+        } else if ( exclusionList != null && exclusionList.contains(e.getValue().getObjectID()) ) {
             iterator.remove();
             excluded += 1;
         } else if ( expiresIn < 0 ) {

@@ -26,10 +26,13 @@ import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.util.VicariousThreadLocal;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -37,10 +40,51 @@ public class PlatformServiceImpl implements PlatformService {
   private final Manager                           manager;
   private volatile RejoinLifecycleEventController rejoinEventsController;
   private final boolean                           rejoinEnabled;
+  private static final int                               BASE_COUNT  = 1;
+  private static final ThreadLocal<Map<Object, Integer>> lockIdToCount = new VicariousThreadLocal<Map<Object, Integer>>() {
+                                                                         @Override
+                                                                         protected Map<Object, Integer> initialValue() {
+                                                                           return new HashMap<Object, Integer>();
+                                                                         }
+                                                                       };
 
   public PlatformServiceImpl(Manager manager, boolean rejoinEnabled) {
     this.manager = manager;
     this.rejoinEnabled = rejoinEnabled;
+  }
+
+  private void addContext(Object lockId) {
+    Map<Object, Integer> threadLocal = lockIdToCount.get();
+    Integer count = threadLocal.get(lockId);
+    Integer lockCount = count != null ? new Integer(count.intValue() + BASE_COUNT) : new Integer(BASE_COUNT);
+    threadLocal.put(lockId, lockCount);
+  }
+
+  private void removeContext(Object lockId) {
+    Map<Object, Integer> threadLocal = lockIdToCount.get();
+    Integer count = threadLocal.get(lockId);
+    if(count != null) {
+      if (count.intValue() == BASE_COUNT) {
+        threadLocal.remove(lockId);
+      } else {
+        threadLocal.put(lockId, new Integer(count.intValue() - BASE_COUNT));
+      }
+    }
+  }
+
+  @Override
+  public boolean isExplicitlyLocked() {
+    return !lockIdToCount.get().isEmpty();
+  }
+
+  @Override
+  public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    manager.beginAtomicTransaction(lock, level);
+  }
+
+  @Override
+  public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    manager.commitAtomicTransaction(lock, level);
   }
 
   @Override
@@ -92,32 +136,46 @@ public class PlatformServiceImpl implements PlatformService {
   public void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     manager.lock(lock, level);
+    addContext(lockID);
   }
 
   @Override
-  public void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException,
+  public void beginLockInterruptibly(Object lockID, LockLevel level) throws InterruptedException,
       AbortedOperationException {
-    LockID lock = manager.generateLockIdentifier(obj);
-    manager.lockInterruptibly(lock, level);
-  }
-
-  @Override
-  public void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
-    manager.unlock(lock, level);
+    manager.lockInterruptibly(lock, level);
+    addContext(lockID);
   }
 
   @Override
   public boolean tryBeginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
-    return manager.tryLock(lock, level);
+    boolean granted = manager.tryLock(lock, level);
+    if (granted) {
+      addContext(lockID);
+    }
+    return granted;
   }
 
   @Override
   public boolean tryBeginLock(final Object lockID, final LockLevel level, final long timeout, TimeUnit timeUnit)
       throws InterruptedException, AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
-    return manager.tryLock(lock, level, timeUnit.toMillis(timeout));
+    boolean granted = manager.tryLock(lock, level, timeUnit.toMillis(timeout));
+    if (granted) {
+      addContext(lockID);
+    }
+    return granted;
+  }
+
+  @Override
+  public void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
+    LockID lock = manager.generateLockIdentifier(lockID);
+    try {
+      manager.unlock(lock, level);
+    } finally {
+      removeContext(lockID);
+    }
   }
 
   @Override
@@ -257,7 +315,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void registerL1CacheListener(final InterestDestination destination, final Set<InterestType> listenTo) {
-    manager.registerL1CacheListener(destination, listenTo);
+  public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
+    manager.registerInterestListener(destination, listenTo);
   }
 }

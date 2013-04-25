@@ -29,6 +29,8 @@ import java.util.Set;
  */
 public interface TsaManagementClientService {
 
+  Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException;
+
   Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException;
 
   Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException;
@@ -64,7 +66,7 @@ public interface TsaManagementClientService {
 
   Collection<LogEntity> getLogs(Set<String> serverNames, Long sinceWhen) throws ServiceExecutionException;
 
-  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, boolean read) throws ServiceExecutionException;
+  Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, Long sinceWhen, Set<String> acceptableTypes, boolean read) throws ServiceExecutionException;
 
   boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException;
 

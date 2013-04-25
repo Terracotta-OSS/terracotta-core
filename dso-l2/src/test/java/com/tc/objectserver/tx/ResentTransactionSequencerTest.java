@@ -3,11 +3,20 @@
  */
 package com.tc.objectserver.tx;
 
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
+import com.tc.l2.objectserver.ResentServerTransaction;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -18,16 +27,10 @@ import com.tc.test.TCTestCase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ResentTransactionSequencerTest extends TCTestCase {
 
@@ -106,23 +109,82 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     sequencer.transactionManagerStarted(clientIDs(0, 1));
 
     // Add a batch that isn't resent, should be processed last
-    TransactionBatchContext batch3 = transactionBatch(0, 3, 4);
-    TransactionBatchContext batch4 = transactionBatch(1, 3, 4);
+    TransactionBatchContext batch3 = transactionBatch(0, 4, 5);
+    TransactionBatchContext batch4 = transactionBatch(1, 4, 5);
     sequencer.addTransactions(batch3);
     sequencer.addTransactions(batch4);
 
     sequencer.addTransactions(batch2);
     sequencer.addTransactions(batch1);
 
+    ArgumentCaptor<Map> c = ArgumentCaptor.<Map> forClass(Map.class);
+    ArgumentCaptor<NodeID> n = ArgumentCaptor.<NodeID> forClass(NodeID.class);
+
     InOrder inOrder = inOrder(replicatedObjectManager, transactionManager);
-    inOrder.verify(transactionManager).incomingTransactions(batch1.getSourceNodeID(), transactionMap(batch1));
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
     inOrder.verify(replicatedObjectManager).relayTransactions(batch1);
-    inOrder.verify(transactionManager).incomingTransactions(batch2.getSourceNodeID(), transactionMap(batch2));
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
     inOrder.verify(replicatedObjectManager).relayTransactions(batch2);
-    inOrder.verify(transactionManager).incomingTransactions(batch3.getSourceNodeID(), transactionMap(batch3));
+
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
     inOrder.verify(replicatedObjectManager).relayTransactions(batch3);
-    inOrder.verify(transactionManager).incomingTransactions(batch4.getSourceNodeID(), transactionMap(batch4));
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
     inOrder.verify(replicatedObjectManager).relayTransactions(batch4);
+
+    verifyBatches(true, c, batch1, batch2, batch3, batch4);
+  }
+
+  public void testResentTxnWrapping() throws Exception {
+    TransactionBatchContext batch1 = transactionBatch(0, 1, 2);
+    TransactionBatchContext batch2 = transactionBatch(1, 2, 3);
+
+    sequencer.goToActiveMode();
+    sequencer.addResentServerTransactionIDs(batch2.getTransactionIDs());
+    sequencer.addResentServerTransactionIDs(batch1.getTransactionIDs());
+    sequencer.transactionManagerStarted(clientIDs(0, 1));
+
+    sequencer.addTransactions(batch2);
+    sequencer.addTransactions(batch1);
+
+    // Add non-resent batches (pass through mode)
+    TransactionBatchContext batch3 = transactionBatch(0, 4, 5);
+    TransactionBatchContext batch4 = transactionBatch(1, 4, 5);
+    sequencer.addTransactions(batch3);
+    sequencer.addTransactions(batch4);
+
+    ArgumentCaptor<Map> c = ArgumentCaptor.<Map> forClass(Map.class);
+    ArgumentCaptor<NodeID> n = ArgumentCaptor.<NodeID> forClass(NodeID.class);
+
+    InOrder inOrder = inOrder(replicatedObjectManager, transactionManager);
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
+    inOrder.verify(replicatedObjectManager).relayTransactions(batch1);
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
+    inOrder.verify(replicatedObjectManager).relayTransactions(batch2);
+
+    verifyBatches(true, c, batch1, batch2);
+
+    // reset arg captor
+    c = ArgumentCaptor.<Map> forClass(Map.class);
+
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
+    inOrder.verify(replicatedObjectManager).relayTransactions(batch3);
+    inOrder.verify(transactionManager).incomingTransactions(n.capture(), c.capture());
+    inOrder.verify(replicatedObjectManager).relayTransactions(batch4);
+
+    verifyBatches(false, c, batch3, batch4);
+  }
+
+  private void verifyBatches(boolean isResent, ArgumentCaptor<Map> captor, TransactionBatchContext... batch) {
+    List<Map> actual = captor.getAllValues();
+    Iterator<Map> itr = actual.iterator();
+    for (TransactionBatchContext tb : batch) {
+      Map am = itr.next();
+      for (ServerTransactionID tid : tb.getTransactionIDs()) {
+        ServerTransaction actualTxn = (ServerTransaction) am.get(tid);
+        assertNotNull(tid.toString(), actualTxn);
+        assertEquals(tid.toString(), isResent, actualTxn instanceof ResentServerTransaction);
+      }
+    }
   }
 
   private static Set<ClientID> clientIDs(long... clientIds) {
@@ -158,11 +220,4 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     return context;
   }
 
-  private Map<ServerTransactionID, ServerTransaction> transactionMap(TransactionBatchContext transactionBatchContext) {
-    Map<ServerTransactionID, ServerTransaction> map = new LinkedHashMap<ServerTransactionID, ServerTransaction>();
-    for (ServerTransaction txn : transactionBatchContext.getTransactions()) {
-      map.put(txn.getServerTransactionID(), txn);
-    }
-    return map;
-  }
 }

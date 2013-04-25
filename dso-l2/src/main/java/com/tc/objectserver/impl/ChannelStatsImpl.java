@@ -1,17 +1,23 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object.net;
+package com.tc.objectserver.impl;
 
+import com.google.common.eventbus.Subscribe;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ServerMapRequestType;
+import com.tc.object.net.ChannelStats;
+import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.object.net.NoSuchChannelException;
 import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.BoundedCounterConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
+import com.tc.util.Events;
 
 /**
  * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
@@ -20,8 +26,8 @@ import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
 
   private static final StatsConfig[] STATS_CONFIG = new StatsConfig[] {
-      new StatsConfig(OBJECT_REQUEST_RATE, new SampledCounterConfig(1, 300, true, 0L)),
-      new StatsConfig(OBJECT_FLUSH_RATE, new SampledCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(READ_RATE, new SampledCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(WRITE_RATE, new SampledCounterConfig(1, 300, true, 0L)),
       new StatsConfig(TXN_RATE, new SampledCounterConfig(1, 300, true, 0L)),
       new StatsConfig(PENDING_TRANSACTIONS, new BoundedCounterConfig(0L, 0L, Long.MAX_VALUE)),
       new StatsConfig(SERVER_MAP_GET_SIZE_REQUESTS, new SampledCumulativeCounterConfig(1, 300, true, 0L)),
@@ -73,14 +79,19 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     }
   }
 
-  @Override
-  public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-    getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE).increment(numObjectsRemoved);
+  @Subscribe
+  public void writeOperationEvent(Events.WriteOperationCountChangeEvent event) {
+    try {
+      MessageChannel channel = channelManager.getActiveChannel(event.getSource());
+      getCounter(channel, WRITE_RATE).increment(event.getDelta());
+    } catch (NoSuchChannelException e) {
+      //
+    }
   }
 
   @Override
-  public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
-    getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE).increment(numObjectsRequested);
+  public void notifyReadOperations(MessageChannel channel, int numObjectsRequested) {
+    getCounter(channel, ChannelStats.READ_RATE).increment(numObjectsRequested);
   }
 
   @Override

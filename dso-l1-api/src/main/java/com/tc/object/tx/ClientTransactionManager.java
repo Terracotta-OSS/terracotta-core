@@ -30,18 +30,23 @@ public interface ClientTransactionManager extends ClearableCallback {
    * 
    * @param lock Lock name
    * @param lockLevel Lock level
-   * @return If begun
+   * @param atomic whether to commit the atomic transaction
    */
-  public void begin(LockID lock, LockLevel lockLevel);
+  public void begin(LockID lock, LockLevel lockLevel, boolean atomic);
 
   /**
    * Commit a thread local current transaction
    * 
+   * @param callable
    * @param lockName Lock name
+   * @param atomic whether to commit the atomic transaction
+   * @param callable to call after the current transaction is committed
    * @throws UnlockedSharedObjectException If a shared object is being accessed from outside a shared transaction
    * @throws AbortedOperationException
    */
-  public void commit(LockID lock, LockLevel lockLevel) throws UnlockedSharedObjectException, AbortedOperationException;
+  public void commit(LockID lock, LockLevel lockLevel, boolean atomic, OnCommitCallable callable)
+      throws UnlockedSharedObjectException,
+      AbortedOperationException;
 
   /**
    * When transactions come in from the L2 we use this method to apply them. We will have to get a bit fancier because

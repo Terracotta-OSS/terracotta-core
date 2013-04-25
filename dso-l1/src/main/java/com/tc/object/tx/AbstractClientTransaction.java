@@ -20,11 +20,13 @@ import java.util.List;
  */
 abstract class AbstractClientTransaction implements ClientTransaction {
 
-  private TransactionID      txID  = TransactionID.NULL_ID;
-  private SequenceID         seqID = SequenceID.NULL_ID;
-  private TransactionContext transactionContext;
-  private boolean            alreadyCommittedFlag;
-  private List               txnCompleteListener;
+  private TransactionID          txID   = TransactionID.NULL_ID;
+  private SequenceID             seqID  = SequenceID.NULL_ID;
+  private TransactionContext     transactionContext;
+  private boolean                alreadyCommittedFlag;
+  private List                   txnCompleteListener;
+  private boolean                atomic = false;
+  private List<OnCommitCallable> onCommitCallableQueue;
 
   @Override
   public void setSequenceID(SequenceID sequenceID) {
@@ -166,6 +168,30 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   @Override
   public List getTransactionCompleteListeners() {
     return (txnCompleteListener == null ? Collections.EMPTY_LIST : txnCompleteListener);
+  }
+
+  @Override
+  public boolean isAtomic() {
+    return atomic;
+  }
+
+  @Override
+  public void setAtomic(boolean atomic) {
+    this.atomic = atomic;
+  }
+
+  @Override
+  public void addOnCommitCallable(OnCommitCallable callable) {
+    if (onCommitCallableQueue == null) {
+      onCommitCallableQueue = new ArrayList<OnCommitCallable>();
+    }
+    onCommitCallableQueue.add(callable);
+  }
+
+  @Override
+  public List<OnCommitCallable> getOnCommitCallables() {
+    return (this.onCommitCallableQueue == null) ? (List<OnCommitCallable>) Collections.EMPTY_LIST
+        : this.onCommitCallableQueue;
   }
 
   abstract protected void basicCreate(TCObject object);

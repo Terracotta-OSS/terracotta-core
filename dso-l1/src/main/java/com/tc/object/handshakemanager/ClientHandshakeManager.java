@@ -26,4 +26,6 @@ public interface ClientHandshakeManager {
   public void reset();
 
   public void shutdown();
+
+  public boolean isShutdown();
 }

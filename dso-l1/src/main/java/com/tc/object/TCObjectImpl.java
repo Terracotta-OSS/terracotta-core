@@ -16,8 +16,6 @@ import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.Util;
 
-import gnu.trove.TLinkable;
-
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -117,8 +115,6 @@ public abstract class TCObjectImpl implements TCObject {
       }
     }
   }
-
-
 
   private synchronized void setFlag(final int offset, final boolean value) {
     this.flags = Conversion.setFlag(this.flags, offset, value);
@@ -353,26 +349,6 @@ public abstract class TCObjectImpl implements TCObject {
   public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     markAccessed();
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
-  }
-
-  @Override
-  public void setNext(final TLinkable link) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setPrevious(final TLinkable link) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public TLinkable getNext() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public TLinkable getPrevious() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

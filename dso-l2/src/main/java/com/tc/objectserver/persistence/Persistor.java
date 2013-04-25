@@ -36,6 +36,8 @@ public class Persistor implements PrettyPrintable {
   private SequenceManager sequenceManager;
   private final ObjectIDSetMaintainer objectIDSetMaintainer;
 
+  private EvictionTransactionPersistor evictionTransactionPersistor;
+
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
     try {
@@ -81,8 +83,8 @@ public class Persistor implements PrettyPrintable {
     managedObjectPersistor = new ManagedObjectPersistor(storageManager, sequenceManager, objectIDSetMaintainer);
 
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
-
     started = true;
+    evictionTransactionPersistor = createEvictionTransactionPersistor(storageManager, getPersistenceTransactionProvider());
   }
 
   protected TransactionPersistor createTransactionPersistor(StorageManager storageManagerParam) {
@@ -147,6 +149,16 @@ public class Persistor implements PrettyPrintable {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
+  }
+
+  protected EvictionTransactionPersistor createEvictionTransactionPersistor(StorageManager storageMgr,
+                                                                            PersistenceTransactionProvider perTxnProvider) {
+    return new NullEvictionTransactionPersistorImpl();
+  }
+
+  public EvictionTransactionPersistor getEvictionTransactionPersistor() {
+    checkStarted();
+    return this.evictionTransactionPersistor;
   }
 
   @Override

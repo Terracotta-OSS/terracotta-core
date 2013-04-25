@@ -335,7 +335,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
         clientMap.put(clientName, client);
         sendNotification(CLIENT_ATTACHED, clientName);
       } catch (Exception e) {
-        logger.error("Unable to register DSO client MBean", e);
+        logger.error("Unable to register terracotta client MBean", e);
       }
     }
   }

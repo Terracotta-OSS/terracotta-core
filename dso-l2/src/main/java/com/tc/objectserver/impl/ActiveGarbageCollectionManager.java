@@ -48,13 +48,15 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
   private long                           lastDeleteLogTime      = System.nanoTime();
   private long                           deletedObjectCount     = 0;
   private final Sink                     garbageCollectSink;
+  private final boolean                  restartable;
 
   private ServerTransactionManager       transactionManager;
   private ObjectManager                  objectManager;
   private GarbageCollector               garbageCollector;
 
-  public ActiveGarbageCollectionManager(final Sink garbageCollectSink) {
+  public ActiveGarbageCollectionManager(final Sink garbageCollectSink, final boolean restartable) {
     this.garbageCollectSink = garbageCollectSink;
+    this.restartable = restartable;
   }
 
   @Override
@@ -137,7 +139,7 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
 
   @Override
   public void scheduleInlineCleanupIfNecessary() {
-    if (INLINE_DGC_ENABLED && !garbageCollector.isPeriodicEnabled()) {
+    if (INLINE_DGC_ENABLED && !garbageCollector.isPeriodicEnabled() && restartable) {
       // This delay is here as a failsafe in case there's some aspect of startup we missed. This can be increased in
       // order to not collide with other stuff in that case.
       final long delay = 1000 * TCPropertiesImpl.getProperties()

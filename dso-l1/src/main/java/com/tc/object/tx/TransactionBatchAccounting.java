@@ -4,8 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.dna.impl.TCLinkable;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,10 +16,10 @@ import java.util.TreeMap;
 
 public class TransactionBatchAccounting {
 
-  private final SortedMap<TransactionID,BatchDescriptor>   batchesByTransaction = new TreeMap<TransactionID,BatchDescriptor>();
-  private final LinkedList<BatchDescriptor> batches              = new LinkedList<BatchDescriptor>();
-  private boolean           stopped              = false;
-  private TransactionID     highWaterMark        = TransactionID.NULL_ID;
+  private final SortedMap<TransactionID, BatchDescriptor> batchesByTransaction = new TreeMap<TransactionID, BatchDescriptor>();
+  private final LinkedList<BatchDescriptor>               batches              = new LinkedList<BatchDescriptor>();
+  private boolean                                         stopped              = false;
+  private TransactionID                                   highWaterMark        = TransactionID.NULL_ID;
 
   public Object dump() {
     return this.toString();
@@ -69,8 +67,7 @@ public class TransactionBatchAccounting {
    * @return The input collection
    */
   public synchronized List addIncompleteBatchIDsTo(List c) {
-    for (Iterator<BatchDescriptor> i = batches.iterator(); i.hasNext();) {
-      BatchDescriptor desc = i.next();
+    for (BatchDescriptor desc : batches) {
       c.add(desc.batchID);
     }
     return c;
@@ -116,12 +113,9 @@ public class TransactionBatchAccounting {
     batchesByTransaction.clear();
   }
 
-  private static final class BatchDescriptor implements TCLinkable {
+  private static final class BatchDescriptor {
     private final TxnBatchID batchID;
     private final Set        transactionIDs = new HashSet();
-
-    private TCLinkable       next;
-    private TCLinkable       previous;
 
     public BatchDescriptor(TxnBatchID batchID, Collection txIDs) {
       this.batchID = batchID;
@@ -136,26 +130,6 @@ public class TransactionBatchAccounting {
     public int acknowledge(TransactionID txID) {
       transactionIDs.remove(txID);
       return transactionIDs.size();
-    }
-
-    @Override
-    public TCLinkable getNext() {
-      return next;
-    }
-
-    @Override
-    public TCLinkable getPrevious() {
-      return previous;
-    }
-
-    @Override
-    public void setNext(TCLinkable linkable) {
-      next = linkable;
-    }
-
-    @Override
-    public void setPrevious(TCLinkable linkable) {
-      previous = linkable;
     }
 
     public Collection getTransactions() {

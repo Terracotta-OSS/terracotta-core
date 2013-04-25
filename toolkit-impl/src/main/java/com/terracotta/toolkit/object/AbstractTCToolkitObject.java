@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class AbstractTCToolkitObject implements TCToolkitObject {
 
   protected final SerializedClusterObjectFactory serializedClusterObjectFactory;
-  protected final SerializationStrategy          strategy;
+  protected final SerializationStrategy          serStrategy;
 
   protected volatile GroupID                     gid;
   protected volatile TCObject                    tcObject;
@@ -39,8 +39,8 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
       //
       throw new AssertionError("No SerializationStrategy registered in L1");
     }
-    this.strategy = registeredSerializer;
-    this.serializedClusterObjectFactory = new SerializedClusterObjectFactoryImpl(platformService, strategy);
+    this.serStrategy = registeredSerializer;
+    this.serializedClusterObjectFactory = new SerializedClusterObjectFactoryImpl(platformService, serStrategy);
     this.applyDestroyCallbacks = new CopyOnWriteArrayList<DestroyApplicator>();
   }
 

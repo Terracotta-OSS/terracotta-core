@@ -35,22 +35,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ClientConnectionEstablisher {
 
-  private static final TCLogger           LOGGER                = TCLogging
-                                                                    .getLogger(ClientConnectionEstablisher.class);
+  private static final TCLogger             LOGGER                = TCLogging
+                                                                      .getLogger(ClientConnectionEstablisher.class);
 
-  private static final long               CONNECT_RETRY_INTERVAL;
-  private static final long               MIN_RETRY_INTERVAL    = 10;
-  public static final String              RECONNECT_THREAD_NAME = "ConnectionEstablisher";
+  private static final long                 CONNECT_RETRY_INTERVAL;
+  private static final long                 MIN_RETRY_INTERVAL    = 10;
+  public static final String                RECONNECT_THREAD_NAME = "ConnectionEstablisher";
 
-  private final String                    desc;
-  private final int                       maxReconnectTries;
-  private final int                       timeout;
-  private final ConnectionAddressProvider connAddressProvider;
-  private final TCConnectionManager       connManager;
-  private final AtomicBoolean             asyncReconnecting     = new AtomicBoolean(false);
-  private final AtomicBoolean             allowReconnects       = new AtomicBoolean(true);
+  private final String                      desc;
+  private final int                         maxReconnectTries;
+  private final int                         timeout;
+  private final ConnectionAddressProvider   connAddressProvider;
+  private final TCConnectionManager         connManager;
+  private final AtomicBoolean               asyncReconnecting     = new AtomicBoolean(false);
+  private final AtomicBoolean               allowReconnects       = new AtomicBoolean(true);
 
-  private final AsyncReconnect            connectionEstablisher;
+  private volatile AsyncReconnect           connectionEstablisher;
 
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
@@ -83,6 +83,10 @@ public class ClientConnectionEstablisher {
       this.desc = "" + maxReconnectTries;
     }
 
+  }
+
+  public void reset() {
+    this.connectionEstablisher = new AsyncReconnect(this);
   }
 
   /**

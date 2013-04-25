@@ -138,12 +138,13 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
       throws IOException {
     boolean broadcast = false;
+    int eventCount = 0;
     while (cursor.next()) {
       final Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
         applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
       } else { // LogicalAction
-        getOperationEventBus().post(Events.operationCountIncrementEvent());
+        eventCount++;
 
         final LogicalAction logicalAction = (LogicalAction)action;
         final int method = logicalAction.getMethod();
@@ -157,6 +158,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
           broadcast = true;
         }
       }
+    }
+    if (eventCount != 0) {
+      getOperationEventBus().post(Events.writeOperationCountChangeEvent(applyInfo.getServerTransactionID().getSourceID(), eventCount));
     }
     if (!broadcast) {
       applyInfo.ignoreBroadcastFor(objectID);
@@ -303,6 +307,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   
   private boolean startCapacityEvictionIfNeccessary(final ApplyTransactionInfo applyInfo) {
     if (applyInfo.isActiveTxn()
+        && this.evictionEnabled  //  do not trigger if eviction is disabled
         && this.targetMaxTotalCount >= 0 // do not trigger capacity eviction if totalMaxCount is negative
         && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
       if (startEviction()) {
@@ -455,7 +460,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public boolean startEviction() {
     // do not start eviction if it is turned off
-    if (!this.evictionEnabled || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
+    if ( ( !this.evictionEnabled && this.maxTTISeconds == 0 && this.maxTTLSeconds == 0 ) 
+        || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
         return false;
     }
     this.evictionStatus = EvictionStatus.INITIATED;

@@ -194,7 +194,7 @@ public class ServerClientHandshakeManager {
 
   // Should be called from within the sync block
   private void start() {
-    this.logger.info("Starting DSO services...");
+    this.logger.info("Starting TSA services...");
     this.lockManager.start();
     final Set cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     this.transactionManager.start(cids);

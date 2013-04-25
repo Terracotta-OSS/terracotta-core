@@ -10,11 +10,11 @@ import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.feature.EnabledToolkitFeature;
 
-public class NonStopImpl extends EnabledToolkitFeature implements NonStopFeature {
+public class NonStopFeatureImpl extends EnabledToolkitFeature implements NonStopFeature {
   private final NonStopToolkitImpl nonStopToolkitImpl;
   private final AbortableOperationManager abortableOperationManager;
 
-  public NonStopImpl(NonStopToolkitImpl nonStopToolkitImpl, AbortableOperationManager abortableOperationManager) {
+  public NonStopFeatureImpl(NonStopToolkitImpl nonStopToolkitImpl, AbortableOperationManager abortableOperationManager) {
     this.nonStopToolkitImpl = nonStopToolkitImpl;
     this.abortableOperationManager = abortableOperationManager;
   }

@@ -69,4 +69,10 @@ public abstract class AbstractNetworkStackHarness implements NetworkStackHarness
   protected abstract void createIntermediateLayers();
 
   protected abstract void connectStack();
+
+  @Override
+  public String toString() {
+    return "AbstractNetworkStackHarness[ transport:" + transport + "channel" + channel + ",isclientStack:"
+           + isClientStack + "]";
+  }
 }

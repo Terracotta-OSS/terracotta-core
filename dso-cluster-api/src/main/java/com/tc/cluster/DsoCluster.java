@@ -11,19 +11,16 @@ import com.tcclient.cluster.DsoNode;
  * The {@code DsoCluster} interface provides access to Terracotta DSO cluster events and meta data.
  * <p>
  * When Terracotta DSO is active, an instance of this interface will be injected into a field of an instrumented class
- * when that field is annotated with the {@link InjectedDsoInstance} annotation or when it's included in the {@code
- * injected-instances} section of the Terracotta XML configuration. Field injection will always replace any values that
- * were already assigned to those fields and prevent any other assignments from replacing the value. The injection
- * happens before any constructor logic.
+ * when that field is annotated with the {@link InjectedDsoInstance} annotation or when it's included in the
+ * {@code injected-instances} section of the Terracotta XML configuration. Field injection will always replace any
+ * values that were already assigned to those fields and prevent any other assignments from replacing the value. The
+ * injection happens before any constructor logic.
  * <p>
- * To allow cluster events and meta data to be tested without Terracotta DSO being active, the
- * SimulatedDsoCluster class can be used.
- * <p>
- * Note that only DSO client nodes are taken into account for the cluster events and meta data, information about DSO
- * server nodes is not available.
+ * Note that only terracotta client nodes are taken into account for the cluster events and meta data, information about
+ * TSA server nodes is not available.
  * <p>
  * See {@link DsoClusterListener} for more information about the events themselves.
- *
+ * 
  * @since 3.0.0
  */
 public interface DsoCluster {

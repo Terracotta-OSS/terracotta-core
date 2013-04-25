@@ -75,7 +75,7 @@ public class PreparedComponentsFromL2Connection {
     L2Data[][] l2DataByGroup = this.config.l2Config().getL2DataByGroup();
     // set GroupID assigned by L2
     // notes: this.config.l2config() has called ActiveCoordinatorHelper.generateGroupNames(), so that to have a right
-    // Groupname to work with.
+    // group name to work with.
     for (L2Data[] group : l2DataByGroup) {
       for (L2Data l2 : group) {
         l2.setGroupId(getGroupID(l2.getGroupName()));

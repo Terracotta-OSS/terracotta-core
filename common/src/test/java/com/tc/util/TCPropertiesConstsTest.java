@@ -67,8 +67,10 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.SEARCH_USE_COMMIT_THREAD);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MERGE_FACTOR);
-    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
+    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_MERGE_DOCS);
+    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION);
+    exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES);
 
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);

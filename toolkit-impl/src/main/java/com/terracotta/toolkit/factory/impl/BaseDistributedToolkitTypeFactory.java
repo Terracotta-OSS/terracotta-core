@@ -73,7 +73,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
 
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
         searchBuilderFactory, lookup, name, stripeObjects, configuration, schemaCreator, serverMapLocalStoreFactory, platformService);
-    return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);
+    return new ToolkitCacheImpl<K, V>(factory, name, aggregateServerMap);
   }
 
   @Override

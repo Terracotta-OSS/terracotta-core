@@ -45,7 +45,7 @@ public class ObjectStreamClassMapping {
   private static final Method                     IS_SERIALIZABLE;
   private static final String                     CHARSET                       = "ISO-8859-1";
   private static final String                     NEXT_MAPPING                  = "nextMapping";
-  private static final String                     LOCK_ID                       = "lock-for-" + NEXT_MAPPING;
+  private static final String                     LOCK_NAME                     = "lock-for-" + NEXT_MAPPING;
   private final SerializerMap                     serializerMap;
   private final ReferenceQueue<ObjectStreamClass> oscSoftQueue;
   private final Map<Integer, CachedOscReference>  localCache;
@@ -98,7 +98,7 @@ public class ObjectStreamClassMapping {
     this.serializerMap = serializerMap;
     this.oscSoftQueue = new ReferenceQueue<ObjectStreamClass>();
     this.localCache = new ConcurrentHashMap<Integer, CachedOscReference>();
-    this.lock = new ToolkitLockImpl(platformService, LOCK_ID, ToolkitLockTypeInternal.WRITE);
+    this.lock = new ToolkitLockImpl(platformService, LOCK_NAME, ToolkitLockTypeInternal.WRITE);
     platformService.registerBeforeShutdownHook(new Runnable() {
       @Override
       public void run() {

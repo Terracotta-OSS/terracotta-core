@@ -109,7 +109,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void begin(final LockID lock, final LockLevel lockLevel) {
+  public void begin(final LockID lock, final LockLevel lockLevel, boolean atomic) {
     logBegin0(lock, lockLevel);
 
     if (isTransactionLoggingDisabled() || this.clientObjectManager.isCreationInProgress()) { return; }
@@ -129,12 +129,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
     final ClientTransaction currentTransaction = getTransactionOrNull();
 
+    if (atomic && currentTransaction != null && currentTransaction.isAtomic()) { throw new UnsupportedOperationException(
+                                                                                                                         "Nested Atomic Transactons are not supported"); }
     pushTxContext(currentTransaction, lock, transactionType);
 
     if (currentTransaction == null) {
       createTxAndInitContext();
     } else {
       currentTransaction.setTransactionContext(peekContext());
+    }
+    if (atomic) {
+      getCurrentTransaction().setAtomic(true);
     }
   }
 
@@ -206,27 +211,30 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private ClientTransaction getTransaction(final Object context) throws UnlockedSharedObjectException {
     final ClientTransaction tx = getTransactionOrNull();
     if (tx == null) {
-
-      final String type = context == null ? null : context.getClass().getName();
-      final String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n"
-                              + "All access to shared objects must be within the scope of one or more\n"
-                              + "shared locks defined in your Terracotta configuration.";
-      String details = "";
-      if (type != null) {
-        details += "Shared Object Type: " + type;
-      }
-      details += "\n\nThe cause may be one or more of the following:\n"
-                 + " * Terracotta locking was not configured for the shared code.\n"
-                 + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
-                 + " * The class doing the locking must be included for instrumentation.\n"
-                 + " * The object was first locked, then shared.\n\n"
-                 + "For more information on how to solve this issue, see:\n"
-                 + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
-
-      throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
-          .getClientID().toLong(), details);
+      handleUnlockedObjectException(context);
     }
     return tx;
+  }
+
+  private void handleUnlockedObjectException(final Object context) {
+    final String type = context == null ? null : context.getClass().getName();
+    final String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n"
+                            + "All access to shared objects must be within the scope of one or more\n"
+                            + "shared locks defined in your Terracotta configuration.";
+    String details = "";
+    if (type != null) {
+      details += "Shared Object Type: " + type;
+    }
+    details += "\n\nThe cause may be one or more of the following:\n"
+               + " * Terracotta locking was not configured for the shared code.\n"
+               + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
+               + " * The class doing the locking must be included for instrumentation.\n"
+               + " * The object was first locked, then shared.\n\n"
+               + "For more information on how to solve this issue, see:\n"
+               + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
+
+    throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
+        .getClientID().toLong(), details);
   }
 
   @Override
@@ -253,41 +261,63 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
    * @throws AbortedOperationException
    */
   @Override
-  public void commit(final LockID lock, final LockLevel level) throws UnlockedSharedObjectException,
-      AbortedOperationException {
+  public void commit(final LockID lock, final LockLevel level, boolean atomic, OnCommitCallable onCommitCallable)
+      throws UnlockedSharedObjectException, AbortedOperationException {
     logCommit0();
     if (isTransactionLoggingDisabled() || this.clientObjectManager.isCreationInProgress()) { return; }
 
     final TxnType transactionType = getTxnTypeFromLockLevel(level);
-    if (transactionType == null) { return; }
-
-    final ClientTransaction tx = getTransaction();
-    boolean hasCommitted = false;
-    boolean aborted = false;
-    try {
-      hasCommitted = commit(lock, tx, false);
-    } catch (AbortedOperationException e) {
-      aborted = true;
+    if (transactionType == null) {
+      call(onCommitCallable);
+      return;
     }
 
-    popTransaction(lock);
+    final ClientTransaction tx = getTransactionOrNull();
+    if (tx == null) {
+      call(onCommitCallable);
+      handleUnlockedObjectException(null);
+    }
+    if (atomic && !tx.isAtomic()) {
+      call(onCommitCallable);
+      throw new IllegalStateException(
+                                      "Trying to commit a transaction atomically when current transaction is not atomic");
+    }
 
-    if (peekContext() != null) {
-      if (hasCommitted || aborted) {
-        createTxAndInitContext();
-      } else {
-        // If the current transaction has not committed, we will reuse the current transaction
-        // so that the current changes will have a chance to commit at the next commit point.
-        tx.setTransactionContext(peekContext());
-        setTransaction(tx);
+    if (!atomic && tx.isAtomic()) {
+      if (transactionType.isConcurrent()) {
+        popLockContext(lock);
+        call(onCommitCallable);
+        return;
+      }
+      // add the txnCommitCallable and return If not an atomic commit and current txn is atomic
+      tx.addOnCommitCallable(getOnCommitCallableForAtomicTxn(lock, onCommitCallable));
+      return;
+    } else {
+      try {
+        // commit and call OnCommitCallable callback inline which call lockManager.unlock
+        commit(lock, tx);
+      } finally {
+        call(onCommitCallable);
       }
     }
-    if (aborted) {
-      notifyTransactionAborted(tx);
-      // If aborted and transaction is not empty then
-      // throw AbortedOperationException
-      if (tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+  }
+
+  private void call(final OnCommitCallable onCommitCallable) throws AbortedOperationException {
+    if (onCommitCallable != null) {
+      onCommitCallable.call();
     }
+  }
+
+
+  private OnCommitCallable getOnCommitCallableForAtomicTxn(final LockID lock, final OnCommitCallable delegate) {
+    return new OnCommitCallable() {
+
+      @Override
+      public void call() throws AbortedOperationException {
+        popTransaction(lock);
+        ClientTransactionManagerImpl.this.call(delegate);
+      }
+    };
   }
 
   private void notifyTransactionAborted(ClientTransaction tx) {
@@ -307,6 +337,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private ClientTransaction popTransaction(final LockID lockID) {
     final ThreadTransactionContext ttc = getThreadTransactionContext();
     return ttc.popCurrentTransaction(lockID);
+  }
+
+  private void popLockContext(final LockID lockID) {
+    final ThreadTransactionContext ttc = getThreadTransactionContext();
+    ttc.popLockContext(lockID);
   }
 
   private TransactionContext peekContext() {
@@ -332,14 +367,16 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
-  private boolean commit(final LockID lockID, final ClientTransaction currentTransaction, final boolean isWaitContext)
-      throws AbortedOperationException {
+  private void commit(final LockID lock, final ClientTransaction tx) throws AbortedOperationException {
+
+    boolean hasCommitted = false;
+    boolean aborted = false;
     try {
       // Check here that If operation was already aborted.
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-      return commitInternal(lockID, currentTransaction, isWaitContext);
+      hasCommitted = commitInternal(lock, tx);
     } catch (AbortedOperationException t) {
-      throw t;
+      aborted = true;
     } catch (final Throwable t) {
       Banner.errorBanner("Terracotta client shutting down due to error " + t);
       logger.error(t);
@@ -348,10 +385,38 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       if (t instanceof RuntimeException) { throw (RuntimeException) t; }
       throw new RuntimeException(t);
     }
+
+    popTransaction(lock);
+    for (OnCommitCallable callable : tx.getOnCommitCallables()) {
+      try {
+        callable.call();
+      } catch (AbortedOperationException e) {
+        // We need to call all the onCommitCallables even If we get aborted otherwise some locks will remain stuck.
+        aborted = true;
+      }
+    }
+
+    if (peekContext() != null) {
+      if (hasCommitted || aborted) {
+        createTxAndInitContext();
+      } else {
+        // If the current transaction has not committed, we will reuse the current transaction
+        // so that the current changes will have a chance to commit at the next commit point.
+        tx.setTransactionContext(peekContext());
+        setTransaction(tx);
+      }
+    }
+    if (aborted) {
+      notifyTransactionAborted(tx);
+      // If aborted and transaction is not empty then
+      // throw AbortedOperationException
+      if (tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+    }
+
   }
 
-  private boolean commitInternal(final LockID lockID, final ClientTransaction currentTransaction,
-                                 final boolean isWaitContext) throws AbortedOperationException {
+  private boolean commitInternal(final LockID lockID, final ClientTransaction currentTransaction)
+      throws AbortedOperationException {
     Assert.assertNotNull("transaction", currentTransaction);
 
     try {
@@ -426,7 +491,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges, final Map newRoots) {
+  public void apply(final TxnType txType, final List<LockID> lockIDs, final Collection objectChanges, final Map newRoots) {
     try {
       disableTransactionLogging();
       basicApply(objectChanges, newRoots, false);

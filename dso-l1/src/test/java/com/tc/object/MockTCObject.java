@@ -9,8 +9,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 
-import gnu.trove.TLinkable;
-
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
@@ -192,26 +190,6 @@ public class MockTCObject implements TCObject {
   @Override
   public Object getResolveLock() {
     return this.resolveLock;
-  }
-
-  @Override
-  public void setNext(final TLinkable link) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public void setPrevious(final TLinkable link) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public TLinkable getNext() {
-    return null;
-  }
-
-  @Override
-  public TLinkable getPrevious() {
-    return null;
   }
 
   @Override

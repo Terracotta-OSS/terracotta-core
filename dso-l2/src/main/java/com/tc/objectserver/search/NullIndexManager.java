@@ -5,8 +5,8 @@ package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
-import com.terracottatech.search.IndexFile;
 import com.terracottatech.search.IndexException;
+import com.terracottatech.search.IndexFile;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.SearchResult;
 import com.terracottatech.search.SyncSnapshot;
@@ -106,5 +106,10 @@ public class NullIndexManager implements IndexManager {
   @Override
   public InputStream getIndexFile(String cacheName, String indexId, String fileName) {
     throw new AssertionError();
+  }
+
+  @Override
+  public void deleteIndex(final String indexName, final MetaDataProcessingContext processingContext) throws IndexException {
+    //
   }
 }

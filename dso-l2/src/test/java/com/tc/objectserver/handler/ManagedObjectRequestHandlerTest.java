@@ -30,11 +30,10 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
   public void testObjectRequestCounter() {
     Counter channelReqCounter = new CounterImpl(666L);
-    Counter channelRemCounter = new CounterImpl(69L);
 
     Counter requestCounter = new CounterImpl(0L);
 
-    TestChannelStats channelStats = new TestChannelStats(channelReqCounter, channelRemCounter);
+    TestChannelStats channelStats = new TestChannelStats(channelReqCounter);
 
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
@@ -63,11 +62,9 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
     assertEquals(0, requestCounter.getValue());
     assertEquals(666, channelReqCounter.getValue());
-    assertEquals(69, channelRemCounter.getValue());
     handler.handleEvent(msg);
     assertEquals(1, requestCounter.getValue());
     assertEquals(667, channelReqCounter.getValue());
-    assertEquals(100, channelRemCounter.getValue());
   }
 
   private ObjectIDSet makeRemovedSet(int num) {
@@ -81,11 +78,9 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
   private static class TestChannelStats implements ChannelStats {
 
     private final Counter channelReqCounter;
-    private final Counter channelRemCounter;
 
-    public TestChannelStats(Counter channelReqCounter, Counter channelRemCounter) {
+    public TestChannelStats(Counter channelReqCounter) {
       this.channelReqCounter = channelReqCounter;
-      this.channelRemCounter = channelRemCounter;
     }
 
     @Override
@@ -99,12 +94,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     }
 
     @Override
-    public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-      this.channelRemCounter.increment(numObjectsRemoved);
-    }
-
-    @Override
-    public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
+    public void notifyReadOperations(MessageChannel channel, int numObjectsRequested) {
       this.channelReqCounter.increment(numObjectsRequested);
     }
 

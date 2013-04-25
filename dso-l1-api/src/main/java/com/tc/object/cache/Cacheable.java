@@ -5,12 +5,10 @@ package com.tc.object.cache;
 
 import com.tc.object.ObjectID;
 
-import gnu.trove.TLinkable;
-
 /**
  * Interface for objects that can be stored in the cache
  */
-public interface Cacheable extends TLinkable {
+public interface Cacheable {
 
   /**
    * Get object identifier

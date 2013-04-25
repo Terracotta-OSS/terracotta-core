@@ -174,13 +174,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
-    final Sink objectsSyncSendSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
+    stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
                                                               new L2ObjectSyncSendHandler(objectStateManager,
                                                                                           serverTransactionFactory), 1,
                                                               MAX_STAGE_SIZE).getSink();
 
-    final L2ObjectSyncAckManager objectSyncAckManager = new L2ObjectSyncAckManagerImpl(objectsSyncSendSink,
-                                                                                       transactionManager);
+    final L2ObjectSyncAckManager objectSyncAckManager = new L2ObjectSyncAckManagerImpl(transactionManager, groupManager);
     final Sink objectsSyncRequestSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
                                                                  new L2ObjectSyncRequestHandler(this.sequenceGenerator,
                                                                                                 objectStateManager), 1,

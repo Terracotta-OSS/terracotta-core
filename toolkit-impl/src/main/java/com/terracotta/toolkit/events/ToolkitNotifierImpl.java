@@ -32,7 +32,7 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   private final ExecutorService                                                notifierService;
 
   public ToolkitNotifierImpl() {
-    this.currentNodeIdStringForm = strategy.serializeToString(new TerracottaNode(platformService.getCurrentNode()));
+    this.currentNodeIdStringForm = serStrategy.serializeToString(new TerracottaNode(platformService.getCurrentNode()));
     this.notifierService = platformService
         .lookupRegisteredObjectByName(ToolkitNotifierFactoryImpl.TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
                                       ExecutorService.class);
@@ -65,7 +65,7 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
 
   private void unlockedNotifyListeners(T msg) {
     String stringMsg = null;
-    stringMsg = strategy.serializeToString(msg);
+    stringMsg = serStrategy.serializeToString(msg);
     platformService.logicalInvoke(this, SerializationUtil.CLUSTERED_NOTIFIER_SIGNATURE, new Object[] { stringMsg,
         currentNodeIdStringForm });
   }
@@ -78,7 +78,7 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
       notifierService.execute(new Runnable() {
         @Override
         public void run() {
-          ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(strategy, remoteNodeID, remoteMsg);
+          ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(serStrategy, remoteNodeID, remoteMsg);
           for (ToolkitNotificationListener<T> listener : listeners) {
             try {
               listener.onNotification(event);

@@ -60,7 +60,7 @@ public class DmiManagerImpl implements DmiManager {
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
 
-    objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT);
+    objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT, false);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
       final ObjectID dmiCallId = objMgr.lookupOrCreate(dmc).getObjectID();
@@ -70,7 +70,7 @@ public class DmiManagerImpl implements DmiManager {
       return true;
     } finally {
       try {
-        objMgr.getTransactionManager().commit(lock, LockLevel.CONCURRENT);
+        objMgr.getTransactionManager().commit(lock, LockLevel.CONCURRENT, false, null);
       } catch (UnlockedSharedObjectException e) {
         throw new TCRuntimeException(e);
       } catch (AbortedOperationException e) {

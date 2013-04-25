@@ -48,14 +48,6 @@ public final class ModificationRecorder {
     }
   }
 
-  public void markExpiration() {
-    for (Modification modification : modifications) {
-      if (modification.getType() == ModificationType.REMOVE) {
-        modification.setType(ModificationType.EVICT);
-      }
-    }
-  }
-
   public List<Modification> getModifications() {
     for (final Modification modification : modifications) {
       final byte[] value = oidToValueMap.get(modification.getObjectId());

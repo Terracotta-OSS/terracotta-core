@@ -240,7 +240,11 @@ public abstract class AbstractTestBase extends TCTestCase {
       BufferedReader reader = new BufferedReader(fr);
       String st = "";
       while ((st = reader.readLine()) != null) {
-        if (st.contains("[PASS: " + clientName + "]")) return;
+        if (st.contains("[PASS: " + clientName + "]")) {
+          reader.close();
+          fr.close();
+          return;
+        }
       }
       throw new AssertionError("Client " + clientName + " did not pass");
     } catch (Exception e) {
