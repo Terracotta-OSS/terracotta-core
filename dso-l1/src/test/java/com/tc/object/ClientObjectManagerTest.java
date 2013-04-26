@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.abortable.NullAbortableOperationManager;
@@ -40,6 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -164,7 +164,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       public DNA retrieve(final ObjectID id) {
         try {
 
-          ClientObjectManagerTest.this.mutualRefBarrier.barrier();
+          ClientObjectManagerTest.this.mutualRefBarrier.await();
         } catch (final BrokenBarrierException e) {
           throw new AssertionError(e);
         } catch (final InterruptedException e) {
@@ -373,7 +373,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.remoteObjectManager.retrieveRootIDResults.put(this.objectID);
 
     // make sure both lookups are complete.
-    barrier.barrier();
+    barrier.await();
 
     assertTrue(lookup1.success() && lookup2.success());
 
@@ -424,8 +424,10 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
         this.exception = t;
       } finally {
         try {
-          this.barrier.barrier();
+          this.barrier.await();
         } catch (final InterruptedException e) {
+          e.printStackTrace();
+        } catch (final BrokenBarrierException e) {
           e.printStackTrace();
         }
       }
