@@ -53,7 +53,7 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
     if (pathSegments.size() > 1 && pathSegments.get(1).getPath().equals("info")) {
       if (ids != null) {
         try {
-          Set<String> nodes = tsaManagementClientService.getL1Nodes();
+          Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
           String[] idsArray = ids.split("\\,");
           for (String id : idsArray) {
             if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
@@ -79,7 +79,7 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
         }
 
         try {
-          Set<String> nodes = tsaManagementClientService.getL1Nodes();
+          Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
           if (!nodes.contains(ids) && !AgentEntity.EMBEDDED_AGENT_ID.equals(ids)) {
             throw new ResourceRuntimeException(
                 String.format("Agent ID must be in '%s'.", nodes),

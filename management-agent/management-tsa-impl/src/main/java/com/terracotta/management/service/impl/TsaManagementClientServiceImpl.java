@@ -784,7 +784,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Set<String> getL1Nodes() throws ServiceExecutionException {
+  public Map<String, Map<String, String>> getL1Nodes() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       MBeanServerConnection mBeanServerConnection;
@@ -796,16 +796,22 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         jmxConnector = findServerContainingEhcacheMBeans();
         if (jmxConnector == null) {
           // there is no connected client
-          return Collections.emptySet();
+          return Collections.emptyMap();
         }
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
-      Set<String> nodes = new HashSet<String>();
+      Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
       for (ObjectName objectName : objectNames) {
+        String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
+        String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
         String node = objectName.getKeyProperty("node");
-        nodes.add(node);
+
+        Map<String, String> props = new HashMap<String, String>();
+        props.put("Version", version);
+        props.put("Agency", agency);
+        nodes.put(node, props);
       }
       return nodes;
     } catch (Exception e) {

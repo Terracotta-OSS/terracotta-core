@@ -27,14 +27,13 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Ludovic Orban
  */
 public class JmxRepositoryService implements EntityResourceFactory, CacheManagerService, CacheService, AgentService {
-
-  private static final String AGENCY = "Ehcache";
 
   private final TsaManagementClientService tsaManagementClientService;
   private final JmxEhcacheRequestValidator requestValidator;
@@ -179,7 +178,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> idSet) throws ServiceExecutionException {
     Collection<AgentMetadataEntity> result = new ArrayList<AgentMetadataEntity>();
 
-    Set<String> nodes = tsaManagementClientService.getL1Nodes();
+    Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
     if (idSet.isEmpty()) {
       idSet = nodes;
     }
@@ -212,19 +211,21 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<AgentEntity> getAgents(Set<String> idSet) throws ServiceExecutionException {
     Collection<AgentEntity> result = new ArrayList<AgentEntity>();
 
-    Set<String> nodes = tsaManagementClientService.getL1Nodes();
+    Map<String, Map<String, String>> nodes = tsaManagementClientService.getL1Nodes();
     if (idSet.isEmpty()) {
-      idSet = nodes;
+      idSet = nodes.keySet();
     }
 
     for (String id : idSet) {
-      if (!nodes.contains(id)) {
+      if (!nodes.keySet().contains(id)) {
         throw new ServiceExecutionException("Unknown agent ID : " + id);
       }
+      Map<String, String> props = nodes.get(id);
 
       AgentEntity e = new AgentEntity();
       e.setAgentId(id);
-      e.setAgencyOf(AGENCY);
+      e.setAgencyOf(props.get("Agency"));
+      e.setVersion(props.get("Version"));
       result.add(e);
     }
 

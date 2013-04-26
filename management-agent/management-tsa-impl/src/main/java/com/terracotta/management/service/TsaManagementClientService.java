@@ -49,7 +49,7 @@ public interface TsaManagementClientService {
 
   Collection<String> getL2Urls() throws ServiceExecutionException;
 
-  Set<String> getL1Nodes() throws ServiceExecutionException;
+  Map<String, Map<String, String>> getL1Nodes() throws ServiceExecutionException;
 
   boolean isEnterpriseEdition() throws ServiceExecutionException;
 
