@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
@@ -17,6 +15,8 @@ import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import junit.framework.TestCase;
 
@@ -98,11 +98,14 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
 
   protected void basicReadWriteEqual(final byte type, final ManagedObjectState state) throws Exception {
     final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    final TCObjectOutputStream out = new TCObjectOutputStream(bout);
+    final ObjectOutputStream out = new ObjectOutputStream(bout);
     state.writeTo(out);
+    out.flush();
+    out.close();
     final ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-    final TCObjectInputStream in = new TCObjectInputStream(bin);
+    final ObjectInputStream in = new ObjectInputStream(bin);
     final ManagedObjectState state2 = ManagedObjectStateFactory.getInstance().readManagedObjectStateFrom(in, type);
+    System.out.println(state.hashCode() + " "  + state2.hashCode());
     Assert.assertTrue(state.equals(state2));
   }
 
