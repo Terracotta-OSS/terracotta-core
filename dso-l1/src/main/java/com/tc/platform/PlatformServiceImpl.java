@@ -318,4 +318,9 @@ public class PlatformServiceImpl implements PlatformService {
   public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
     manager.registerInterestListener(destination, listenTo);
   }
+
+  @Override
+  public void unregisterInterestListener(final InterestDestination destination) {
+    manager.unregisterInterestListener(destination);
+  }
 }

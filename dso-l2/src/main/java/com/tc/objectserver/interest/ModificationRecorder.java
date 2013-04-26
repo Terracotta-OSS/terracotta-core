@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Records all cache modifications and maps keys to actual values
+ * omiting intermediate object id.
+ *
  * @author Eugene Shelestovich
  */
 public final class ModificationRecorder {

@@ -394,4 +394,6 @@ public interface Manager extends TerracottaLocking {
   void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException;
 
   void registerInterestListener(InterestDestination destination, Set<InterestType> listenTo);
+
+  void unregisterInterestListener(InterestDestination destination);
 }

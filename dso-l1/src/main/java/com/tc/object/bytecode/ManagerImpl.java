@@ -988,4 +988,8 @@ public class ManagerImpl implements Manager {
     serverInterestListenerManager.registerInterestListener(destination, listenTo);
   }
 
+  @Override
+  public void unregisterInterestListener(final InterestDestination destination) {
+    serverInterestListenerManager.unregisterInterestListener(destination);
+  }
 }

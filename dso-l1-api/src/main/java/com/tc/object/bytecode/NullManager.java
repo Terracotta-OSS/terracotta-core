@@ -477,4 +477,9 @@ public class NullManager implements Manager {
   public void registerInterestListener(final InterestDestination destination, final Set<InterestType> listenTo) {
     //
   }
+
+  @Override
+  public void unregisterInterestListener(final InterestDestination destination) {
+    //
+  }
 }

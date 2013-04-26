@@ -6,9 +6,6 @@ package com.tc.objectserver.interest;
 
 import com.tc.object.ObjectID;
 
-/**
- * @author Eugene Shelestovich
- */
 class Modification {
   private final Object key;
   private final ObjectID objectId;
@@ -16,11 +13,13 @@ class Modification {
   private ModificationType type;
   private byte[] value;
 
-  Modification(final ModificationType type, final Object key, final ObjectID objectId, final String cacheName) {
+  Modification(final ModificationType type, final Object key,
+               final ObjectID objectId, final String cacheName) {
     this(type, key, objectId, null, cacheName);
   }
 
-  Modification(final ModificationType type, final Object key, final ObjectID objectId, final byte[] value, final String cacheName) {
+  Modification(final ModificationType type, final Object key, final ObjectID objectId,
+               final byte[] value, final String cacheName) {
     this.type = type;
     this.key = key;
     this.objectId = objectId;

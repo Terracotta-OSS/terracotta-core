@@ -332,6 +332,11 @@ public class ObjectStreamClassMappingTest {
       //
     }
 
+    @Override
+    public void unregisterInterestListener(final InterestDestination destination) {
+      //
+    }
+
   }
 
 }

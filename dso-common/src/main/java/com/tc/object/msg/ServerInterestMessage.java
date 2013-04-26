@@ -4,6 +4,8 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.InterestType;
 
 /**
+ * Server interest notification.
+ *
  * @author Eugene Shelestovich
  */
 public interface ServerInterestMessage extends TCMessage {

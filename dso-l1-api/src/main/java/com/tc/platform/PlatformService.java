@@ -117,4 +117,6 @@ public interface PlatformService {
   boolean isExplicitlyLocked();
 
   void registerInterestListener(InterestDestination destination, Set<InterestType> listenTo);
+
+  void unregisterInterestListener(InterestDestination destination);
 }

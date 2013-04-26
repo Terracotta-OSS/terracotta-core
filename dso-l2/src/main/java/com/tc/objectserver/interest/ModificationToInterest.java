@@ -6,9 +6,6 @@ package com.tc.objectserver.interest;
 
 import com.google.common.base.Function;
 
-/**
- * @author Eugene Shelestovich
- */
 public enum ModificationToInterest implements Function<Modification, Interest> {
 
   FUNCTION;

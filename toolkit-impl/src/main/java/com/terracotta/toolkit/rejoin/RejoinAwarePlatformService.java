@@ -94,6 +94,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
+  public void unregisterInterestListener(final InterestDestination destination) {
+    delegate.unregisterInterestListener(destination);
+  }
+
+  @Override
   public boolean isRejoinEnabled() {
     return delegate.isRejoinEnabled();
   }

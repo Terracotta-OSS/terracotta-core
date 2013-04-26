@@ -4,9 +4,6 @@
 
 package com.tc.objectserver.interest;
 
-/**
- * @author Eugene Shelestovich
- */
 public enum ModificationType {
   PUT,
   REMOVE,

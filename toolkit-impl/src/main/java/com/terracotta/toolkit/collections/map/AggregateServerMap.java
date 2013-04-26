@@ -217,6 +217,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     } else {
       lookupSuccessfulAfterRejoin = false;
     }
+
+    // handles re-join scenario by re-registering interest listener if needed
+    if (!listeners.isEmpty()) {
+      registerServerInterestListener();
+    }
   }
 
   protected boolean isLookupSuccessfulAfterRejoin() {
@@ -362,7 +367,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V unlockedGet(Object key, boolean quiet) {
-    return getServerMapForKey(key).unlockedGet((K) key, quiet);
+    return getServerMapForKey(key).unlockedGet((K)key, quiet);
   }
 
   @Override
@@ -388,24 +393,48 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void addListener(ToolkitCacheListener<K> listener) {
+    boolean needRegistration = false;
     // synchronize not to have duplicate listeners
     synchronized (listeners) {
       if (!listeners.contains(listener)) {
+        if (listeners.isEmpty()) {
+          needRegistration = true;
+        }
         this.listeners.add(listener);
       }
     }
-    final EnumSet<InterestType> types = EnumSet.of(InterestType.EVICT, InterestType.EXPIRE);
-    platformService.registerInterestListener(this, types);
-    LOGGER.info("Interest listener has been registered for cache: "
-                + getName() + ". Notification types: " + types);
+
+    if (needRegistration) {
+      registerServerInterestListener();
+    }
   }
 
   @Override
   public void removeListener(ToolkitCacheListener<K> listener) {
+    boolean needUnregistration = false;
     synchronized (listeners) {
       this.listeners.remove(listener);
+      if (listeners.isEmpty()) {
+        needUnregistration = true;
+      }
     }
-    //platformService.unregister
+
+    if (needUnregistration) {
+      unregisterServerInterestListener();
+    }
+  }
+
+  private void registerServerInterestListener() {
+    final EnumSet<InterestType> types = EnumSet.of(InterestType.EVICT, InterestType.EXPIRE);
+    platformService.registerInterestListener(this, types);
+    LOGGER.info("Server interest listener has been registered for cache: "
+                + getName() + ". Notification types: " + types);
+  }
+
+  private void unregisterServerInterestListener() {
+    platformService.unregisterInterestListener(this);
+    LOGGER.info("Server interest listener has been unregistered for cache: "
+                + getName());
   }
 
   @Override

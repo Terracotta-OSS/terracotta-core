@@ -726,6 +726,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(this.dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     clientHandshakeCallbacks.add(teh);
+    clientHandshakeCallbacks.add(serverInterestListenerManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
     final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
     clearCallbacks.add(stageManager);
@@ -1171,6 +1172,16 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         logger.error("Error stopping lock manager", t);
       } finally {
         this.lockManager = null;
+      }
+    }
+
+    if (serverInterestListenerManager != null) {
+      try {
+        serverInterestListenerManager.shutdown();
+      } catch (final Throwable t) {
+        logger.error("Error stopping server interest listener manager", t);
+      } finally {
+        serverInterestListenerManager = null;
       }
     }
 

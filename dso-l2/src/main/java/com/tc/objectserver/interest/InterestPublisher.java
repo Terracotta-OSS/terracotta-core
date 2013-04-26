@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * A dispatcher component responsible for subscription, posting and rounting events.
+ * Dispatcher component responsible for subscription, posting and rounting events.
  *
  * @author Eugene Shelestovich
  */
