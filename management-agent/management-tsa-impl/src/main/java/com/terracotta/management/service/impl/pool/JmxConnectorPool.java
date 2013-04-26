@@ -9,8 +9,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.remote.JMXConnector;
@@ -22,7 +21,7 @@ import javax.management.remote.JMXServiceURL;
  */
 public class JmxConnectorPool {
 
-  private final ConcurrentMap<String, JMXConnectorHolder> connectorsMap = new ConcurrentHashMap<String, JMXConnectorHolder>();
+  private final ConcurrentMap<String, PooledJMXConnector> connectorsMap = new ConcurrentHashMap<String, PooledJMXConnector>();
   private final Object lock = new Object();
   private final String urlPattern;
 
@@ -37,37 +36,38 @@ public class JmxConnectorPool {
   }
 
   private JMXConnector getConnector(String url, Map<String, Object> env) throws IOException, InterruptedException, MalformedObjectNameException {
-    JMXConnectorHolder jmxConnectorHolder = connectorsMap.get(url);
+    while (true) {
+      PooledJMXConnector pooledJmxConnector = connectorsMap.get(url);
 
-    if (jmxConnectorHolder == null) {
-      synchronized (lock) {
-        jmxConnectorHolder = connectorsMap.get(url);
-        if (jmxConnectorHolder == null) {
-          try {
-            JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL(url), env);
-            jmxConnectorHolder = new JMXConnectorHolder(connector);
-            connectorsMap.put(url, jmxConnectorHolder);
-          } catch (IOException ioe) {
-            // cannot create connector, server is down
-            throw ioe;
+      if (pooledJmxConnector == null) {
+        synchronized (lock) {
+          pooledJmxConnector = connectorsMap.get(url);
+          if (pooledJmxConnector == null) {
+            try {
+              JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL(url), env);
+              pooledJmxConnector = new PooledJMXConnector(connector);
+              connectorsMap.put(url, pooledJmxConnector);
+            } catch (IOException ioe) {
+              // cannot create connector, server is down
+              throw ioe;
+            }
           }
         }
       }
-    }
 
-    try {
-      jmxConnectorHolder.getLock().lock();
-      JMXConnector jmxConnector = jmxConnectorHolder.getJmxConnector();
-      jmxConnector.getMBeanServerConnection().getMBeanCount();
-      return new PooledJMXConnector(jmxConnector, this, url);
-    } catch (IOException ioe) {
-      // dead connection, killing it and retrying...
-      if (!jmxConnectorHolder.isBroken()) {
-        connectorsMap.remove(url);
-        jmxConnectorHolder.setBroken(true);
-        jmxConnectorHolder.getLock().unlock();
+      try {
+        JMXConnector jmxConnector = pooledJmxConnector.getJmxConnector();
+        jmxConnector.getMBeanServerConnection().getMBeanCount();
+        return new JMXConnectorHolder(jmxConnector, this, url);
+      } catch (IOException ioe) {
+        // dead connection, killing it and retrying...
+        if (pooledJmxConnector.markBroken()) {
+          connectorsMap.remove(url);
+        }
       }
-      return getConnector(url, env);
+
+      // the JMXConnector is broken, wait a bit before trying to recreate it
+      Thread.sleep(100);
     }
   }
 
@@ -76,53 +76,39 @@ public class JmxConnectorPool {
   }
 
   void releaseConnector(String url) {
-    JMXConnectorHolder jmxConnectorHolder = connectorsMap.get(url);
-    if (jmxConnectorHolder != null) {
-      jmxConnectorHolder.getLock().unlock();
-    }
+    // nop
   }
 
   public void shutdown() {
-    Collection<JMXConnectorHolder> values = connectorsMap.values();
-    for (JMXConnectorHolder jmxConnectorHolder : values) {
-      jmxConnectorHolder.getLock().lock();
+    Collection<PooledJMXConnector> values = connectorsMap.values();
+    for (PooledJMXConnector pooledJmxConnector : values) {
       try {
-        jmxConnectorHolder.getJmxConnector().close();
+        pooledJmxConnector.getJmxConnector().close();
       } catch (IOException ioe) {
         // ignore
       }
-      jmxConnectorHolder.getLock().unlock();
     }
     connectorsMap.clear();
   }
 
-  private final static class JMXConnectorHolder {
+  private final static class PooledJMXConnector {
 
-    private final Lock lock = new ReentrantLock();
     private final JMXConnector jmxConnector;
-    private volatile boolean broken;
+    private final AtomicBoolean broken = new AtomicBoolean(false);
 
-    private JMXConnectorHolder(JMXConnector jmxConnector) {
+    private PooledJMXConnector(JMXConnector jmxConnector) {
       this.jmxConnector = jmxConnector;
     }
 
-    public Lock getLock() {
-      return lock;
-    }
-
     public JMXConnector getJmxConnector() throws IOException {
-      if (broken) {
+      if (broken.get()) {
         throw new IOException("broken JMX connector");
       }
       return jmxConnector;
     }
 
-    private boolean isBroken() {
-      return broken;
-    }
-
-    private void setBroken(boolean broken) {
-      this.broken = broken;
+    private boolean markBroken() {
+      return broken.compareAndSet(false, true);
     }
   }
 
