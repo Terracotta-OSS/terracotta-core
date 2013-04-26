@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
@@ -36,6 +37,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   protected volatile Object               localResolveLock;
   protected volatile ToolkitReadWriteLock lock;
+  private final transient ToolkitLock     concurrentLock;
   private final List<MutateOperation>     pendingChanges = new ArrayList();
 
   public ToolkitMapImpl() {
@@ -44,6 +46,29 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   public ToolkitMapImpl(KeyValueHolder keyValueHolder) {
     this.keyValueHolder = keyValueHolder;
+    concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT", platformService);
+  }
+
+  private void readUnlock() {
+    lock.readLock().unlock();
+  }
+
+  private void readLock() {
+    lock.readLock().lock();
+  }
+
+  private void writeUnlock() {
+    lock.writeLock().unlock();
+  }
+
+  private void writeLock() {
+    lock.writeLock().lock();
+  }
+
+  private void logicalInvoke(String signature, Object[] params) {
+    concurrentLock.lock();
+    platformService.logicalInvoke(ToolkitMapImpl.this, signature, params);
+    concurrentLock.unlock();
   }
 
   protected void applyPendingChanges() {
@@ -116,14 +141,14 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   @Override
   public int size() {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return keyValueHolder.size();
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
@@ -134,58 +159,58 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   @Override
   public boolean containsKey(Object key) {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return keyValueHolder.containsKey(key);
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
   @Override
   public boolean containsValue(Object value) {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return keyValueHolder.containsValue(value);
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
   @Override
   public V get(Object key) {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return keyValueHolder.get(key);
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
   @Override
   public V put(K key, V value) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         return unlockedPut(key, value);
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public V putIfAbsent(K key, V value) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
@@ -196,7 +221,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         return null;
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
@@ -209,7 +234,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     Object tcKey = getOrCreateObjectForKey(key);
     Object tcVal = createTCCompatibleObject(value);
 
-    platformService.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
+    logicalInvoke(SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
     keyValueHolder.put(key, value, getObjectIDForKey(tcKey));
 
     return rv;
@@ -217,19 +242,19 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   @Override
   public V remove(Object key) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         return unlockedRemove(key);
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public boolean remove(Object key, Object value) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
@@ -241,13 +266,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         return true;
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public V replace(K key, V value) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
@@ -256,13 +281,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         return null;
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public boolean replace(K key, V oldValue, V newValue) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
@@ -275,7 +300,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         return false;
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
@@ -285,7 +310,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     if (oidKey == null) { return null; }
 
     Object tcKey = getOrCreateObjectForKey(key);
-    platformService.logicalInvoke(this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+    logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
     V oldValue = keyValueHolder.remove(key);
 
     return oldValue;
@@ -293,7 +318,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   @Override
   public void putAll(Map<? extends K, ? extends V> m) {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
@@ -302,60 +327,60 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         }
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public void clear() {
-    lock.writeLock().lock();
+    writeLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        platformService.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+        logicalInvoke(SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
         this.keyValueHolder.clear();
       }
     } finally {
-      lock.writeLock().unlock();
+      writeUnlock();
     }
   }
 
   @Override
   public Set<K> keySet() {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return new ToolkitKeySet(keyValueHolder.keySet());
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
   @Override
   public Collection<V> values() {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return new ToolkitValueCollection(keyValueHolder.getMap());
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    lock.readLock().lock();
+    readLock();
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
         return new ToolkitMapEntrySet(keyValueHolder.entrySet());
       }
     } finally {
-      lock.readLock().unlock();
+      readUnlock();
     }
   }
 
@@ -495,14 +520,14 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public int size() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return keySet.size();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -513,53 +538,53 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean contains(Object o) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return keySet.contains(o);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Iterator<K> iterator() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return new KeySetIterator(keySet.iterator());
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Object[] toArray() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return keySet.toArray();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return keySet.toArray(a);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -575,14 +600,14 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean containsAll(Collection<?> c) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return keySet.containsAll(c);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -598,7 +623,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           boolean changed = false;
@@ -610,7 +635,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return changed;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
@@ -630,20 +655,20 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean hasNext() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return iterator.hasNext();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public K next() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -651,24 +676,23 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return currentValue;
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public void remove() {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(currentValue);
-          platformService
-              .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
           keyValueHolder.removeObjectIDForKey(currentValue);
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
   }
@@ -684,14 +708,14 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public int size() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.size();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -702,53 +726,53 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean contains(Object o) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.contains(o);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Iterator<V> iterator() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return new ValuesIterator(values.iterator());
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Object[] toArray() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.toArray();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.toArray(a);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -759,7 +783,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean remove(Object o) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -774,20 +798,20 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return false;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.containsAll(c);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -799,7 +823,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -814,13 +838,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return change;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -835,13 +859,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return change;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public void clear() {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -852,7 +876,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           }
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
@@ -867,27 +891,27 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean hasNext() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return iterator.hasNext();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public V next() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return iterator.next();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -906,14 +930,14 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public int size() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.size();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
@@ -924,59 +948,59 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean contains(Object o) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.contains(o);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Iterator<java.util.Map.Entry<K, V>> iterator() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return new EntrySetIterator(entrySet.iterator());
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Object[] toArray() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.toArray();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.toArray(a);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public boolean add(Entry<K, V> e) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -986,13 +1010,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return true;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean remove(Object o) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -1003,26 +1027,26 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return true;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.containsAll(c);
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public boolean addAll(Collection<? extends Entry<K, V>> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -1035,13 +1059,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return true;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           Set<Entry> toRemoved = new HashSet<Entry>();
@@ -1055,13 +1079,13 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return removeAll(toRemoved);
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           boolean changed = false;
@@ -1074,7 +1098,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return changed;
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
 
@@ -1094,20 +1118,20 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean hasNext() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           return iterator.hasNext();
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public Entry<K, V> next() {
-      lock.readLock().lock();
+      readLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
@@ -1115,24 +1139,23 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           return entry;
         }
       } finally {
-        lock.readLock().unlock();
+        readUnlock();
       }
     }
 
     @Override
     public void remove() {
-      lock.writeLock().lock();
+      writeLock();
       try {
         synchronized (localResolveLock) {
           applyPendingChanges();
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(entry.getKey());
-          platformService
-              .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          logicalInvoke(SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
           keyValueHolder.removeObjectIDForKey(entry.getKey());
         }
       } finally {
-        lock.writeLock().unlock();
+        writeUnlock();
       }
     }
   }

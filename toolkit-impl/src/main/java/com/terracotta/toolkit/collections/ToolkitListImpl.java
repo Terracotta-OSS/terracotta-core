@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
@@ -29,7 +30,11 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
   private volatile transient Object               localResolveLock;
   private volatile transient ToolkitReadWriteLock lock;
+  private final transient ToolkitLock             concurrentLock;
 
+  public ToolkitListImpl() {
+    concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT", platformService);
+  }
 
   @Override
   public String getName() {
@@ -220,8 +225,11 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
   }
 
   private void logicalInvoke(String signature, Object[] params) {
+    concurrentLock.lock();
     platformService.logicalInvoke(this, signature, params);
+    concurrentLock.unlock();
   }
+
 
   @Override
   public void __tc_managed(TCObject t) {
