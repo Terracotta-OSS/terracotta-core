@@ -45,6 +45,14 @@
       <param-value>com.terracotta.management.ApplicationTsa</param-value>
     </init-param>
     <init-param>
+      <description>
+        make sure com.sun.jersey.core.util.FeaturesAndProperties.FEATURE_XMLROOTELEMENT_PROCESSING is set to
+        true so that a list of @XmlRootElement(name = "configuration") is "configurations"
+      </description>
+      <param-name>com.sun.jersey.config.feature.XmlRootElementProcessing</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
       <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
       <param-value>true</param-value>
     </init-param>
