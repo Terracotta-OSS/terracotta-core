@@ -105,8 +105,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  protected void removedReference(ApplyTransactionInfo applyInfo, Object o) {
-    
+  protected void removedReference(final ApplyTransactionInfo applyInfo, final Object o) {
+    if (o instanceof ObjectID) {
+      applyInfo.deleteObject((ObjectID) o);
+    }
   }
 
   protected Object applyPut(ApplyTransactionInfo applyInfo, Object[] params) {

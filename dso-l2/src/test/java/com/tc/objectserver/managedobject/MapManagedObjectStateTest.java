@@ -1,14 +1,5 @@
 package com.tc.objectserver.managedobject;
 
-import org.terracotta.corestorage.KeyValueStorage;
-
-import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
-import com.tc.objectserver.persistence.PersistentObjectFactory;
-import com.tc.test.TCTestCase;
-
-import java.util.Collections;
-
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -18,6 +9,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.terracotta.corestorage.KeyValueStorage;
+
+import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
+import com.tc.test.TCTestCase;
+
+import java.util.Collections;
 
 /**
  * @author tim
@@ -44,8 +44,17 @@ public class MapManagedObjectStateTest extends TCTestCase {
     oid = new ObjectID(0);
     keyValueStorage = mock(KeyValueStorage.class);
     when(persistentObjectFactory.getKeyValueStorage(oid, true)).thenReturn(keyValueStorage);
-    mapManagedObjectState = new MapManagedObjectState(0, oid, persistentObjectFactory);
+    mapManagedObjectState = createManagedObjectState(0, oid, persistentObjectFactory);
     applyTransactionInfo = mock(ApplyTransactionInfo.class);
+  }
+
+  protected MapManagedObjectState createManagedObjectState(final long classID, ObjectID id,
+                                                         PersistentObjectFactory factory) {
+    return new MapManagedObjectState(classID, id, factory);
+  }
+
+  protected boolean isInlineDGCSupported(){
+    return true;
   }
 
   public void testUnknownLogicalAction() throws Exception {
@@ -77,6 +86,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     when(keyValueStorage.get("key")).thenReturn(oldOid);
     mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "key", newOid });
     verify(keyValueStorage).put("key", newOid);
+    verify(applyTransactionInfo, isInlineDGCSupported() ? times(1) : never()).deleteObject(any(ObjectID.class));
   }
 
   public void testRemoveMissingKey() throws Exception {
@@ -90,6 +100,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     when(keyValueStorage.get(key)).thenReturn(value);
     mapManagedObjectState.applyLogicalAction(value, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { key });
     verify(keyValueStorage).remove(key);
+    verify(applyTransactionInfo, isInlineDGCSupported() ? times(2) : never()).deleteObject(any(ObjectID.class));
   }
 
   public void testClear() throws Exception {
@@ -99,6 +110,7 @@ public class MapManagedObjectStateTest extends TCTestCase {
     when(keyValueStorage.values()).thenReturn(Collections.singleton((Object)value));
     mapManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR, new Object[0]);
     verify(keyValueStorage).clear();
+    verify(applyTransactionInfo, isInlineDGCSupported() ? times(2) : never()).deleteObject(any(ObjectID.class));
   }
 
   public void testDestroy() throws Exception {

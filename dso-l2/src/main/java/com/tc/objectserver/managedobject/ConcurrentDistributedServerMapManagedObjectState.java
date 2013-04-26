@@ -277,13 +277,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void removedReference(final ApplyTransactionInfo applyInfo, final Object o) {
     Object ref = o;
     if (o instanceof CDSMValue) {
-      ref = ((CDSMValue)o).getObjectID();
+      ref = ((CDSMValue) o).getObjectID();
     }
-    if (ref instanceof ObjectID) {
-      applyInfo.deleteObject((ObjectID) ref);
-      if (invalidateOnChange) {
-        applyInfo.invalidate(getId(), (ObjectID) ref);
-      }
+    super.removedReference(applyInfo, ref);
+    if (invalidateOnChange && ref instanceof ObjectID) {
+      applyInfo.invalidate(getId(), (ObjectID) ref);
     }
   }
 

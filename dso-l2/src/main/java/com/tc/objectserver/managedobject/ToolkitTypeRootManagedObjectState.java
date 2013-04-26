@@ -39,4 +39,9 @@ public class ToolkitTypeRootManagedObjectState extends PartialMapManagedObjectSt
     return ttrmo;
   }
 
+  @Override
+  protected void removedReference(ApplyTransactionInfo applyInfo, Object o) {
+    // No Inline DGC for ToolkitTypeRoot
+  }
+
 }
