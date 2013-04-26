@@ -532,7 +532,7 @@ public interface TCPropertiesConsts {
    * Section                         : Session properties (applies to all DSO session enabled web apps in this VM)
    * id.length                       : The length (in chars) for session identifiers (min 8)
    * serverid                        : The server identifier to place in the session ID
-   * delimiter                       : Thedelimiter that separates the server ID from the session ID
+   * delimiter                       : The delimiter that separates the server ID from the session ID
    * cookie.domain                   : Domain value for session cookie
    * cookie.secure                   : Enable / disable the secure flag in the session cookie
    * cookie.maxage.seconds           : The maximum lifetime of the session cookie
@@ -542,35 +542,13 @@ public interface TCPropertiesConsts {
    * urlrewrite.enabled              : Enable / disable the URL functionality
    * attribute.listeners             : Comma separated list of HttpSessionAttributeListener classes
    * listeners                       : Comma separated list of HttpSessionListener
-   * classes invalidator.sleep       : Sleep time between runs of the session invalidator
-   * request.bench.enabled           : Enable / disable request benchmark logging
-   * invalidator.bench.enabled       : Enable / disable benchmark logging for session
-   * invalidation request.tracking   : Enable / disable the stuck request monitor
-   * request.tracking.dump           : Enable / disable thread dumping when stuck requests discovered (unix only)
-   * request.tracking.interval       : Frequency (ms) of stuck request inspection
-   * request.tracking.threshold      : Threshold (ms) before requests are considered "stuck"
-   * debug.hops                      : Log session hopping (ie. processing of session by more than one VM)
-   * debug.hops.interval             : Number of hops between debug printing
    * debug.invalidate                : Log session invalidation vhosts.excluded : comma separated list of virtual hosts that should never use Terracotta clustered
    *                                   sessions (tomcat only)
    * debug.sessions                  : output additional debug information when sessions are looked up, created, etc
-   * verify.set.attribute            : Snapshot attributes on access/mutation and report if the attribute has changed at the end of the request
    * </code>
    ********************************************************************************************************************/
-  public static final String SESSION_INVALIDATOR_SLEEP                                      = "session.invalidator.sleep";
-  public static final String SESSION_INVALIDATOR_BENCH_ENABLED                              = "session.invalidator.bench.enabled";
-  public static final String SESSION_REQUEST_BENCH_ENABLED                                  = "session.request.bench.enabled";
-  public static final String SESSION_REQUEST_TRACKING                                       = "session.request.tracking";
-  public static final String SESSION_REQUEST_TRACKING_DUMP                                  = "session.request.tracking.dump";
-  public static final String SESSION_REQUEST_TRACKING_INTERVAL                              = "session.request.tracking.interval";
-  public static final String SESSION_REQUEST_TRACKING_THRESHOLD                             = "session.request.tracking.threshold";
-  public static final String SESSION_DEBUG_HOPS                                             = "session.debug.hops";
-  public static final String SESSION_DEBUG_HOPS_INTERVAL                                    = "session.debug.hops.interval";
   public static final String SESSION_DEBUG_INVALIDATE                                       = "session.debug.invalidate";
   public static final String SESSION_DEBUG_SESSIONS                                         = "session.debug.sessions";
-  public static final String SESSION_VHOSTS_EXCLUDED                                        = "session.vhosts.excluded";
-  public static final String SESSION_STATISTICS_ENABLED                                     = "session.statistics.enabled";
-  public static final String SESSION_VERIFY_SET_ATTRIBUTE                                   = "session.verify.set.attribute";
 
   /*********************************************************************************************************************
    * <code>
