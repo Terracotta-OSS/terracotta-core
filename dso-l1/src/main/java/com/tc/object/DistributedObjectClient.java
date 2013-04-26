@@ -303,11 +303,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   protected DSOClientBuilder createClientBuilder() {
     if (this.connectionComponents.isActiveActive()) {
-      CONSOLE_LOGGER
-          .fatal("An attempt to start a Terracotta server array with more than one active server failed. "
-                 + "This feature is not available in the currently installed Terracotta platform. For more information on "
-                 + "supported features for Terracotta platforms, please see this link http://www.terracotta.org/sadne");
-      System.exit(3);
+      String msg = "An attempt to start a Terracotta server array with more than one active server failed. "
+                   + "This feature is not available in the currently installed Terracotta platform. For more information on "
+                   + "supported features for Terracotta platforms, please see this link http://www.terracotta.org/sadne";
+      CONSOLE_LOGGER.fatal(msg);
+      throw new IllegalStateException(msg);
     }
     return new StandardDSOClientBuilder();
   }
@@ -351,7 +351,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                                                         "client not configured as secure but was constructed with securityManager"); }
   }
 
-  private void validateGroupConfigOrExit() {
+  private void validateGroupConfig() {
     final boolean toCheckTopology = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED);
     if (toCheckTopology) {
@@ -359,18 +359,18 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         this.config.validateGroupInfo(securityManager);
       } catch (final ConfigurationSetupException e) {
         CONSOLE_LOGGER.error(e.getMessage());
-        System.exit(1);
+        throw new IllegalStateException(e.getMessage(), e);
       }
     }
   }
 
-  private ReconnectConfig getReconnectPropertiesFromServerOrExit() {
+  private ReconnectConfig getReconnectPropertiesFromServer() {
     ReconnectConfig reconnectConfig = null;
     try {
       reconnectConfig = this.config.getL1ReconnectProperties(securityManager);
     } catch (ConfigurationSetupException e) {
       CONSOLE_LOGGER.error(e.getMessage());
-      System.exit(1);
+      throw new IllegalStateException(e.getMessage(), e);
     }
     return reconnectConfig;
   }
@@ -395,7 +395,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public synchronized void start(CountDownLatch testStartLatch) {
     rejoinManager.start();
     validateSecurityConfig();
-    validateGroupConfigOrExit();
+    validateGroupConfig();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     this.l1Properties = tcProperties.getPropertiesFor("l1");
@@ -414,7 +414,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final StageManager stageManager = getStageManager();
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
-    final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServerOrExit();
+    final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServer();
 
     final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
     final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory(useOOOLayer,
@@ -746,7 +746,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                              receiveServerMapEvictionBroadcastStage, receiveSearchQueryStage, receiveInvalidationStage,
                              resourceManagerStage);
 
-    openChannelOrExit(serverHost, serverPort, maxConnectRetries);
+    openChannel(serverHost, serverPort, maxConnectRetries);
     waitForHandshake();
 
     // register for memory events for operator console register for it after the handshake happens see MNK-1684
@@ -755,7 +755,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     setLoggerOnExit();
   }
 
-  private void openChannelOrExit(final String serverHost, final int serverPort, final int maxConnectRetries) {
+  private void openChannel(final String serverHost, final int serverPort, final int maxConnectRetries) {
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
@@ -779,12 +779,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       } catch (final MaxConnectionsExceededException e) {
         DSO_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal(LicenseManager.EXIT_MESSAGE);
-        System.exit(1);
+        CONSOLE_LOGGER.fatal(LicenseManager.ERROR_MESSAGE);
+        throw new IllegalStateException(e.getMessage(), e);
       } catch (final CommStackMismatchException e) {
         DSO_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(e.getMessage());
-        System.exit(1);
+        throw new IllegalStateException(e.getMessage(), e);
       } catch (final IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
                             + ioe.getMessage());
@@ -793,8 +793,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       i++;
     }
     if (i == maxConnectRetries) {
-      CONSOLE_LOGGER.error("MaxConnectRetries '" + maxConnectRetries + "' attempted. Exiting.");
-      System.exit(-1);
+      String msg = "MaxConnectRetries '" + maxConnectRetries + "' exceeded";
+      CONSOLE_LOGGER.error(msg);
+      throw new IllegalStateException(msg);
     }
 
   }
@@ -1101,6 +1102,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   @Override
   public void reloadConfiguration() throws ConfigurationSetupException {
+    if (false) throw new ConfigurationSetupException(); // to avoid warning
     throw new UnsupportedOperationException();
   }
 

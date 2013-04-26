@@ -269,13 +269,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       final String msg = "Client/Server Version Mismatch Error: Client Version: " + this.clientVersion
                          + ", Server Version: " + serverVersion + ".  Terminating client now.";
       CONSOLE_LOGGER.error(msg);
-      mismatchExitWay(msg);
+      throw new IllegalStateException(msg);
     }
-  }
-
-  // to be override by test program
-  protected void mismatchExitWay(String msg) {
-    System.exit(-1);
   }
 
   private void shutdownCallbacks() {

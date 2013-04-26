@@ -22,7 +22,6 @@ import org.terracotta.license.util.MemorySizeParser;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
 
 import java.io.InputStream;
@@ -30,27 +29,23 @@ import java.util.Date;
 
 public class LicenseManager {
 
-  private static final TCLogger                       CONSOLE_LOGGER         = CustomerLogging.getConsoleLogger();
-  private static final TCLogger                       LOGGER                 = TCLogging
-                                                                                 .getLogger(LicenseManager.class);
-  public static final String                          EXIT_MESSAGE           = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
-                                                                               + "learn how to enable licensed usage of this feature. For more information, "
-                                                                               + "visit Terracotta support at http://www.terracotta.org.";
+  private static final TCLogger                       CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  public static final String                          ERROR_MESSAGE  = "Contact your Terracotta sales representative to "
+                                                                       + "learn how to enable licensed usage of this feature. For more information, "
+                                                                       + "visit Terracotta support at http://www.terracotta.org.";
   public static final String                          EXPIRY_WARNING         = "Your license key is valid until %s. "
-                                                                               + "You have %s remaining until the expiration date. "
-                                                                               + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
-  public static final String                          EXPIRED_ERROR          = "Your product key expired on %s. "
-                                                                               + EXIT_MESSAGE;
-  public static final int                             WARNING_MARK           = 240;
-  public static final long                            HOUR                   = 1000 * 60 * 60;
+                                                                       + "You have %s remaining until the expiration date. "
+                                                                       + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
+  public static final String                          EXPIRED_ERROR  = "Your product key expired on %s. "
+                                                                       + ERROR_MESSAGE;
+  public static final int                             WARNING_MARK   = 240;
+  public static final long                            HOUR           = 1000 * 60 * 60;
+  private static boolean                              initialized;
+  private static final AbstractLicenseResolverFactory factory        = AbstractLicenseResolverFactory.getFactory();
 
-  private static volatile boolean                     initialized;
-
-  // lazily-init, don't use directly
-  // use getLicense() instead
+  // lazily initialized, don't use it directly use getLicense() instead
   private static License                              license;
-  private static final AbstractLicenseResolverFactory factory                = AbstractLicenseResolverFactory
-                                                                                 .getFactory();
+
 
   private static synchronized void init() {
     license = factory.resolveLicense();
@@ -80,6 +75,7 @@ public class LicenseManager {
    * check for null and expired license
    */
   public static void assertLicenseValid() {
+    String msg;
     if (getLicense() == null) {
       //
       CONSOLE_LOGGER
@@ -87,14 +83,15 @@ public class LicenseManager {
                  + LICENSE_KEY_FILENAME
                  + " in the Terracotta installation directory or in the resource path. You can also specify it as a system property with -D"
                  + PRODUCTKEY_PATH_PROPERTY + "=/path/to/key");
-      LOGGER.error("License key not found", new LicenseException());
-      System.exit(1);
+      msg = "License key not found";
+      CONSOLE_LOGGER.error(msg);
+      throw new LicenseException(msg);
     }
     Date expirationDate = getLicense().expirationDate();
     if (expirationDate != null && expirationDate.before(new Date())) {
-      //
-      CONSOLE_LOGGER.error("Your Terracotta license has expired on " + expirationDate);
-      System.exit(1);
+      msg = "Your Terracotta license has expired on " + expirationDate;
+      CONSOLE_LOGGER.error(msg);
+      throw new LicenseException(msg);
     }
   }
 

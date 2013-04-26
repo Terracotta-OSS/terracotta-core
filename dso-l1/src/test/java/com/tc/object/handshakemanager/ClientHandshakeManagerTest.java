@@ -59,11 +59,6 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       super(logger, channel, chmf, pauseSink, sessionManager,
             new DsoClusterImpl(Mockito.mock(RejoinManagerInternal.class)), clientVersion, callbacks, clearCallbacks);
     }
-
-    @Override
-    protected void mismatchExitWay(String msg) {
-      throw new RuntimeException(msg);
-    }
   }
 
   @Override

@@ -10,10 +10,10 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.client.AbstractClientFactory;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterImpl;
+import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
 import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -76,6 +76,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
@@ -233,9 +234,15 @@ public class ManagerImpl implements Manager {
   }
 
   private void startClient(final boolean forTests, final CountDownLatch testStartLatch) {
-    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(
-                                                                       TCLogging
-                                                                           .getLogger(DistributedObjectClient.class)));
+    L1ThrowableHandler throwableHandler = new L1ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class),
+                                                                 new Callable<Void>() {
+                                                                   @Override
+                                                                   public Void call() throws Exception {
+                                                                     stopImmediate();
+                                                                     return null;
+                                                                   }
+                                                                 });
+    final TCThreadGroup group = new TCThreadGroup(throwableHandler);
 
     final StartupAction action = new StartupHelper.StartupAction() {
       @Override
