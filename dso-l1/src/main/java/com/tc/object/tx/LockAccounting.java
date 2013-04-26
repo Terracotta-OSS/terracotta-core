@@ -8,7 +8,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
-import com.tc.exception.TCRuntimeException;
 import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockID;
 import com.tc.util.AbortedOperationUtil;
@@ -166,21 +165,31 @@ public class LockAccounting implements ClearableCallback {
       listeners.add(listener);
     }
 
+    boolean txnsCompleted = false;
+    boolean interrupted = false;
     try {
       // DEV-6271: During rejoin, the client could be shut down. In that case we need to get
       // out of this wait and throw a TCNotRunningException for upper layers to handle
       do {
-        if (shutdown) { throw new TCNotRunningException(); }
-        if (rejoinInProgress) { throw new PlatformRejoinException(); }
-      } while (!latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS));
-    } catch (InterruptedException e) {
-      AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-      throw new TCRuntimeException(e);
-    } finally {
-        synchronized (this) {
-            listeners.remove(listener);
+        try {
+          if (shutdown) { throw new TCNotRunningException(); }
+          if (rejoinInProgress) { throw new PlatformRejoinException(); }
+          txnsCompleted = latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
+          interrupted = true;
         }
+      } while (!txnsCompleted);
+    } finally {
+      synchronized (this) {
+        listeners.remove(listener);
+      }
+
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
+
   }
 
   private static Set getSetFor(Object key, Map m) {
