@@ -352,7 +352,7 @@ public class Conversion {
     return Conversion.bytes2String(bytes);
   }
 
-  public static enum MemorySizeUnits {
+  public enum MemorySizeUnits {
     KILO("k", 1024),
     MEGA("m", 1024 * KILO.longValue),
     GIGA("g", 1024 * MEGA.longValue);
@@ -360,7 +360,7 @@ public class Conversion {
     private final String unit;
     private final long longValue;
 
-    private MemorySizeUnits(final String unit, final long value) {
+    MemorySizeUnits(final String unit, final long value) {
       this.unit = unit;
       this.longValue = value;
     }

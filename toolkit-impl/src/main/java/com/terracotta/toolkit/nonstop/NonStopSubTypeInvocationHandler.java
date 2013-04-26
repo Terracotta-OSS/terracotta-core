@@ -5,6 +5,7 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopException;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -32,24 +33,40 @@ public class NonStopSubTypeInvocationHandler<T> implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfiguration();
 
-    if (!nonStopConfiguration.isEnabled()) { return invokeMethod(method, args, delegate); }
+    if (!nonStopConfiguration.isEnabled()) { 
+      return invokeMethod(method, args, delegate); 
+    }
 
-    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { return invokeMethod(method,
-                                                                                                                                               args,
-                                                                                                                                               resolveTimeoutBehavior(nonStopConfiguration)); }
+    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { 
+      return handleNonStopBehavior(method, args, nonStopConfiguration); 
+    }
+    
     boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
     try {
       context.getNonStopClusterListener().waitUntilOperationsEnabled();
       Object returnValue = invokeMethod(method, args, delegate);
       return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     } catch (ToolkitAbortableOperationException e) {
-      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
     } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
-      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
     } finally {
       if (started) {
         context.getNonStopManager().finish();
+      }
+    }
+  }
+  
+  
+  private Object handleNonStopBehavior(Method method, Object[] args, NonStopConfiguration nonStopConfiguration) throws Throwable {
+    try {
+      return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
+    } catch (NonStopException e) {
+      if(context.getNonStopClusterListener().isNodeError()) {
+        throw new NonStopException(context.getNonStopClusterListener().getNodeErrorMessage());
+      } else {
+        throw e;
       }
     }
   }

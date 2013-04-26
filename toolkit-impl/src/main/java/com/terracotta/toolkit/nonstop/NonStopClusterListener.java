@@ -5,7 +5,6 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterListener;
-import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -36,6 +35,7 @@ public class NonStopClusterListener implements ClusterListener {
         }
       case NODE_ERROR:
         nodeErrorMessage = event.getDetailedMessage();
+        operationsEnabled.set(false);
         break;
       default:
         // no op
@@ -46,26 +46,24 @@ public class NonStopClusterListener implements ClusterListener {
   /**
    * returns true If cluster Operations are enabled.
    * 
-   * @throws NonStopToolkitInstantiationException when there is an Error in Instantiating Toolkit.
    */
   public boolean areOperationsEnabled() {
-    if (nodeErrorMessage != null) { throw new NonStopToolkitInstantiationException(nodeErrorMessage); }
     return operationsEnabled.get();
   }
 
   /**
    * waits until cluster Operations are enabled.
    * 
-   * @throws NonStopToolkitInstantiationException when there is an Error in Instantiating Toolkit.
    */
   public void waitUntilOperationsEnabled() {
-    if (nodeErrorMessage != null) { throw new NonStopToolkitInstantiationException(nodeErrorMessage); }
+    if (nodeErrorMessage != null) { throw new ToolkitAbortableOperationException(); }
+    
     if (!operationsEnabled.get()) {
       synchronized (this) {
         boolean interrupted = false;
         try {
           while (!operationsEnabled.get()) {
-            if (nodeErrorMessage != null) { throw new NonStopToolkitInstantiationException(nodeErrorMessage); }
+            if (nodeErrorMessage != null) { throw new ToolkitAbortableOperationException(); }
             try {
               this.wait();
             } catch (InterruptedException e) {
@@ -80,5 +78,19 @@ public class NonStopClusterListener implements ClusterListener {
         }
       }
     }
+  }
+
+  /**
+   * @return the error message incase the node is in unrecoverable error state or null if there is no node error.
+   */
+  public String getNodeErrorMessage() {
+    return nodeErrorMessage;
+  }
+
+  /**
+   * return true of the current node is in unrecoverable error state.
+   */
+  public boolean isNodeError() {
+    return (nodeErrorMessage != null) ? true : false;
   }
 }

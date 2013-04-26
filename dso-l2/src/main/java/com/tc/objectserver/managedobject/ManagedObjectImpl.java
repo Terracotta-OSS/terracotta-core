@@ -279,9 +279,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   @Override
   public boolean isRemoveOnRelease() {
     // Serialized entries are always remove on release
-    return (state != null && state instanceof TDCSerializedEntryManagedObjectState)
+    return (state instanceof TDCSerializedEntryManagedObjectState || state instanceof SerializedClusterObjectState)
             || getFlag(REMOVE_ON_RELEASE_OFFSET);
-
   }
   
   @Override

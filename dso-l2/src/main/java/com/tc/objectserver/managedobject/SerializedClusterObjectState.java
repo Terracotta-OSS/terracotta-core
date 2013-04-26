@@ -122,11 +122,16 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
   }
 
   protected void readFromInternal(final ObjectInput in) throws IOException {
-
     final int length = in.readInt();
     if (length >= 0) {
       final byte[] data = new byte[length];
-      in.read(data, 0, length);
+      for (int pos = 0; pos < length;) {
+        int read = in.read(data, pos, length - pos);
+        if (read == -1) {
+          break;
+        }
+        pos += read;
+      }
       this.value = data;
     }
   }

@@ -104,9 +104,13 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
     }
 
     private void checkRange(Object k) {
-      if (greaterThanOrEqual(k) && lessThan(k)) { return; }
+      if (isInRange(k)) { return; }
 
       throw new IllegalArgumentException();
+    }
+
+    private boolean isInRange(Object k) {
+      return greaterThanOrEqual(k) && lessThan(k);
     }
 
     private boolean lessThan(Object k) {
@@ -222,7 +226,7 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
 
     @Override
     public V remove(Object key) {
-      checkRange(key);
+      if (!isInRange(key)) return null;
 
       lock.writeLock().lock();
       try {
@@ -415,17 +419,22 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
 
     @Override
     public boolean remove(Object o) {
-      internalSortedMap.checkRange(((Entry) o).getKey());
+      if (!internalSortedMap.isInRange(((Entry) o).getKey())) return false;
 
       return super.remove(o);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
+      boolean change = false;
       for (Object e : c) {
-        internalSortedMap.checkRange(((Entry) e).getKey());
+        if (internalSortedMap.isInRange(((Entry) e).getKey())) {
+          super.remove(e);
+          change = true;
+        }
       }
-      return super.removeAll(c);
+      return change;
+
     }
 
   }
@@ -456,17 +465,21 @@ public class ToolkitSortedMapImpl<K extends Comparable<? super K>, V> extends To
 
     @Override
     public boolean remove(Object o) {
-      internalSortedMap.checkRange(o);
+      if (!internalSortedMap.isInRange(o)) return false;
 
       return super.remove(o);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
+      boolean change = false;
       for (Object e : c) {
-        internalSortedMap.checkRange(e);
+        if (internalSortedMap.isInRange(e)) {
+          super.remove(e);
+          change = true;
+        }
       }
-      return super.removeAll(c);
+      return change;
     }
 
   }
