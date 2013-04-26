@@ -74,6 +74,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
 
   @Override
   public TCObject __tc_managed() {
+    if (!shared) { return null; }
     return this;
   }
 

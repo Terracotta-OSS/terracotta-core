@@ -4,15 +4,12 @@
 package com.terracotta.toolkit.collections.map;
 
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-import net.sf.ehcache.pool.SizeOfEngine;
-import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.collections.ToolkitMap;
-import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
@@ -83,9 +80,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     SearchableEntity {
   private static final TCLogger                                            LOGGER                               = TCLogging
                                                                                                                     .getLogger(AggregateServerMap.class);
-  private static final int                                                 KB                                   = 1024;
-  private static final String                                              EHCACHE_BULKOPS_MAX_KB_SIZE_PROPERTY = "ehcache.bulkOps.maxKBSize";
-  private static final int                                                 DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE  = KB;
 
   public static final int                                                  DEFAULT_MAX_SIZEOF_DEPTH             = 1000;
 
@@ -96,9 +90,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
                                                                                                                     .asList(ToolkitObjectType.STORE,
                                                                                                                             ToolkitObjectType.CACHE);
 
-  private final int                                                        bulkOpsKbSize;
   private final int                                                        getAllBatchSize;
-  private final ToolkitLock                                                eventualBulkOpsConcurrentLock;
 
   protected volatile InternalToolkitMap<K, V>[]                            serverMaps;
   protected final String                                                   name;
@@ -106,7 +98,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   protected final CopyOnWriteArrayList<ToolkitCacheListener<K>>            listeners;
   private volatile ToolkitObjectStripe<InternalToolkitMap<K, V>>[]         stripeObjects;
   private final Consistency                                                consistency;
-  private final SizeOfEngine                                               sizeOfEngine;
   private final TimeSource                                                 timeSource;
   private final SearchFactory                                              searchBuilderFactory;
   private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
@@ -132,19 +123,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public AggregateServerMap(ToolkitObjectType type, SearchFactory searchBuilderFactory,
                             DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup, String name,
                             ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects, Configuration config,
- Callable<ToolkitMap<String, String>> schemaCreator,
+                            Callable<ToolkitMap<String, String>> schemaCreator,
                             ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     this.toolkitObjectType = type;
     this.searchBuilderFactory = searchBuilderFactory;
     this.lookup = lookup;
     this.platformService = platformService;
     this.clusterInfo = new TerracottaClusterInfo(platformService);
-    this.bulkOpsKbSize = getTerracottaProperty(EHCACHE_BULKOPS_MAX_KB_SIZE_PROPERTY,
-                                               DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE) * KB;
     this.getAllBatchSize = getTerracottaProperty(EHCACHE_GETALL_BATCH_SIZE_PROPERTY, DEFAULT_GETALL_BATCH_SIZE);
-    this.eventualBulkOpsConcurrentLock = ToolkitLockingApi
-        .createConcurrentTransactionLock("bulkops-static-eventual-concurrent-lock", platformService);
-
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;
     Preconditions.checkArgument(isValidType(type), "Type has to be one of %s but was %s", VALID_TYPES, type);
 
@@ -156,8 +142,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.config = new UnclusteredConfiguration(config);
     this.consistency = Consistency.valueOf((String) InternalCacheConfigurationType.CONSISTENCY
         .getExistingValueOrException(config));
-    this.sizeOfEngine = new DefaultSizeOfEngine(DEFAULT_MAX_SIZEOF_DEPTH, true);
-
     localCacheStore = createLocalCacheStore();
     pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
     this.timeSource = new SystemTimeSource();
@@ -518,96 +502,17 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void putAll(Map<? extends K, ? extends V> map) {
     if (map == null || map.isEmpty()) { return; }
-    if (isExplicitLocked()) { throw new UnsupportedOperationException(); }
-    switch (consistency) {
-      case STRONG:
-      case SYNCHRONOUS_STRONG:
-        for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
-          putNoReturn(entry.getKey(), entry.getValue());
-        }
-        break;
-      case EVENTUAL:
-        unlockedPutAll(map);
+    for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
+      putNoReturn(entry.getKey(), entry.getValue());
     }
-  }
-
-  private <L extends K, W extends V> void unlockedPutAll(Map<L, W> map) {
-    Iterator<Map.Entry<L, W>> iter = map.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map<K, V> batchedEntries = createPutAllBatch(iter);
-      commitPutAllBatch(batchedEntries);
-    }
-  }
-
-  private void commitPutAllBatch(Map<? extends K, ? extends V> batchedEntries) {
-    eventualBulkOpsConcurrentLock.lock();
-    try {
-      for (Map.Entry<? extends K, ? extends V> entry : batchedEntries.entrySet()) {
-        int now = timeSource.nowInSeconds();
-        unlockedPutNoReturn(entry.getKey(), entry.getValue(), now, ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-                            ToolkitConfigFields.NO_MAX_TTL_SECONDS);
-      }
-    } finally {
-      eventualBulkOpsConcurrentLock.unlock();
-    }
-  }
-
-  private <L extends K, W extends V> Map<K, V> createPutAllBatch(Iterator<Map.Entry<L, W>> iter) {
-    long currentByteSize = 0;
-    Map<K, V> batchedEntries = new HashMap<K, V>();
-    while (currentByteSize < bulkOpsKbSize && iter.hasNext()) {
-      Map.Entry<? extends K, ? extends V> entry = iter.next();
-      currentByteSize += getEntrySize(entry, false);
-      batchedEntries.put(entry.getKey(), entry.getValue());
-    }
-    return batchedEntries;
   }
 
   @Override
   public void removeAll(Set<K> keys) {
     if (keys == null || keys.isEmpty()) { return; }
-    if (isExplicitLocked()) { throw new UnsupportedOperationException(); }
-    switch (consistency) {
-      case STRONG:
-      case SYNCHRONOUS_STRONG:
-        for (K key : keys) {
-          removeNoReturn(key);
-        }
-        break;
-      case EVENTUAL:
-        Iterator<K> iter = keys.iterator();
-        while (iter.hasNext()) {
-          long currentByteSize = 0;
-          Set<K> batchedEntries = createRemoveAllBatch(iter, currentByteSize);
-          commitRemoveAllBatch(batchedEntries);
-        }
+    for (K key : keys) {
+      removeNoReturn(key);
     }
-  }
-
-  private void commitRemoveAllBatch(Set<K> batchedEntries) {
-    eventualBulkOpsConcurrentLock.lock();
-    try {
-      for (K key : batchedEntries) {
-        unlockedRemoveNoReturn(key);
-      }
-    } finally {
-      eventualBulkOpsConcurrentLock.unlock();
-    }
-  }
-
-  private Set<K> createRemoveAllBatch(Iterator<K> iter, long currentByteSize) {
-    Set<K> batchedEntries = new HashSet<K>();
-    while (currentByteSize < bulkOpsKbSize && iter.hasNext()) {
-      K key = iter.next();
-      currentByteSize += sizeOfEngine.sizeOf(key, null, null).getCalculated();
-      batchedEntries.add(key);
-    }
-    return batchedEntries;
-  }
-
-  private long getEntrySize(Entry entry, boolean withMetaData) {
-    // TODO: fix to include metadata size
-    return sizeOfEngine.sizeOf(entry.getKey(), entry.getValue(), null).getCalculated();
   }
 
   private Map<K, V> doGetAll(final Collection<? extends K> keys, boolean quiet) {

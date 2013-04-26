@@ -302,8 +302,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       if (isEventual) {
         //
         addEventualValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
-      }
-      else {
+      } else {
         addIncoherentValueToCache(key, value, this.objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
     }
@@ -340,30 +339,28 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   @Override
   public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
       throws AbortedOperationException {
-    synchronized (localLock) {
-      Map<Object, Object> rv = new HashMap<Object, Object>();
-      for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
-        Entry<ObjectID, Set<Object>> entry = iterator.next();
-        Set<Object> keys = entry.getValue();
-        for (Iterator i = keys.iterator(); i.hasNext();) {
-          Object key = i.next();
-          AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-          if (item != null) {
-            i.remove();
-            rv.put(key, item.getValueObject());
-          }
-        }
-        if (keys.isEmpty()) {
-          iterator.remove();
+    Map<Object, Object> rv = new HashMap<Object, Object>();
+    for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
+      Entry<ObjectID, Set<Object>> entry = iterator.next();
+      Set<Object> keys = entry.getValue();
+      for (Iterator i = keys.iterator(); i.hasNext();) {
+        Object key = i.next();
+        AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
+        if (item != null) {
+          i.remove();
+          rv.put(key, item.getValueObject());
         }
       }
-
-      // if everything was in local cache
-      if (mapIdToKeysMap.isEmpty()) return rv;
-      getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
-
-      return rv;
+      if (keys.isEmpty()) {
+        iterator.remove();
+      }
     }
+
+    // if everything was in local cache
+    if (mapIdToKeysMap.isEmpty()) return rv;
+    getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
+
+    return rv;
   }
 
   private AbstractLocalCacheStoreValue getValueUnlockedFromCache(Object key) {
