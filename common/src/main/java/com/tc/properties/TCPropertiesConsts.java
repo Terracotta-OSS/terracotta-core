@@ -128,6 +128,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE                     = "l2.objectmanager.objectrequest.split.size";
   public static final String L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED                = "l2.objectmanager.objectrequest.logging.enabled";
   public static final String L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED                       = "l2.objectmanager.request.logging.enabled";
+  public static final String L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED                      = "l2.objectmanager.request.prefetch.enabled";
   public static final String L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED                     = "l2.objectmanager.persistor.logging.enabled";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE                       = "l2.objectmanager.passive.sync.batch.size";
   public static final String L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_MAXSIZE_MB               = "l2.objectmanager.passive.sync.message.maxSizeInMegaBytes";

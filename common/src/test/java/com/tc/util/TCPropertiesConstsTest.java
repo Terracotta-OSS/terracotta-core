@@ -46,6 +46,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
+    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED);
 
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_CONCURRENCY);

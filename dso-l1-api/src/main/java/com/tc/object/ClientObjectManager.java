@@ -266,7 +266,7 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    */
   public TCObject lookupExistingOrNull(Object pojo);
 
-  /**
+    /**
    * Create new peer object instance for the clazz, referred to through a WeakReference.
    * 
    * @param clazz The kind of class
@@ -376,5 +376,7 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @return the weak reference
    */
   WeakReference newWeakObjectReference(ObjectID objectID, Object peer);
+  
+  TCObject addLocalPrefetch(DNA object) throws ClassNotFoundException, AbortedOperationException;
 
 }
