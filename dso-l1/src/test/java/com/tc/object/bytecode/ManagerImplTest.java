@@ -450,5 +450,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
       throw new ImplementMe();
     }
+
+    @Override
+    public TCObject addLocalPrefetch(DNA object) throws ClassNotFoundException {
+      throw new ImplementMe();
+    }
   }
 }

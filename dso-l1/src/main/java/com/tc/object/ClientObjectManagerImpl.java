@@ -58,7 +58,6 @@ import com.tc.util.State;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
-import com.tc.util.concurrent.ResetableLatch;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.io.IOException;
@@ -72,7 +71,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -85,7 +83,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     Evictable, PrettyPrintable {
-
+    
   private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
   private static final int                      REFERENCE_MAP_SEGS           = 32;
@@ -133,7 +131,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-  private final Map<ObjectID, ObjectLatchState> objectLatchStateMap          = new HashMap();
+  private final Map<ObjectID, ObjectLookupState>  objectLatchStateMap        = new HashMap<ObjectID, ObjectLookupState>();
   private final ThreadLocal<LocalLookupContext> localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
@@ -199,8 +197,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     while (referenceQueue.poll() != null) {
       // cleanup the referenceQueue
     }
-    for (ObjectLatchState latchState : objectLatchStateMap.values()) {
-      latchState.getLatch().release();
+    for (ObjectLookupState latchState : objectLatchStateMap.values()) {
+      latchState.setObject(null);
     }
     objectLatchStateMap.clear();
     rootsHolder.cleanup();
@@ -359,31 +357,20 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.localLookupContext.get();
   }
 
-  private ObjectLatchState getObjectLatchState(final ObjectID id) {
-    return this.objectLatchStateMap.get(id);
-  }
-
-  private ObjectLatchState markLookupInProgress(final ObjectID id) {
-    final ResetableLatch latch = getLocalLookupContext().getLatch();
-    final ObjectLatchState ols = new ObjectLatchState(id, latch);
-    final Object old = this.objectLatchStateMap.put(id, ols);
-    Assert.assertNull(old);
-    return ols;
-  }
-
-  private synchronized void markCreateInProgress(final ObjectLatchState ols, final TCObject object,
+  private void markCreateInProgress(final ObjectLookupState ols,
                                                  final LocalLookupContext lookupContext) {
-    final ResetableLatch latch = lookupContext.getLatch();
-    // Make sure this thread owns this object lookup
-    Assert.assertTrue(ols.getLatch() == latch);
-    ols.setObject(object);
-    ols.markCreateState();
+    Assert.assertTrue(ols.getOwner() == Thread.currentThread());
     lookupContext.getObjectCreationCount().increment();
   }
 
-  private synchronized void lookupDone(final ObjectID id, final boolean decrementCount) {
-    this.objectLatchStateMap.remove(id);
-    if (decrementCount) {
+  private synchronized ObjectLookupState lookupDone(final ObjectLookupState state) {
+    try {
+      ObjectLookupState removed = this.objectLatchStateMap.remove(state.getObjectID());
+      if ( removed != state ) {
+        throw new AssertionError("wrong removal of lookup state " + removed + " " + state);
+      }
+      return state;
+    } finally {
       getLocalLookupContext().getObjectCreationCount().decrement();
     }
   }
@@ -515,19 +502,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (id.isNull()) return;
 
     synchronized (this) {
-      if (basicHasLocal(id) || getObjectLatchState(id) != null) { return; }
+      if (basicHasLocal(id) || this.objectLatchStateMap.get(id) != null) { return; }
       // We are temporarily marking lookup in progress so that no other thread sneaks in under us and does a lookup
       // while we are calling prefetch
-      markLookupInProgress(id);
-    }
-    try {
-      this.remoteObjectManager.preFetchObject(id);
-    } finally {
-      synchronized (this) {
-        lookupDone(id, false);
-        notifyAll();
-      }
-    }
+    }    
+    this.remoteObjectManager.preFetchObject(id);
   }
 
   @Override
@@ -556,8 +535,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (objectID.isNull()) { return null; }
     Object o = null;
     while (o == null) {
-      final TCObject tco = lookup(objectID, parentContext, noDepth, quiet);
-      if (tco == null) { throw new AssertionError("TCObject was null for " + objectID);// continue;
+      final TCObject tco = lookup(objectID, null, parentContext, noDepth, quiet);
+      if (tco == null) { 
+        throw new AssertionError("TCObject was null for " + objectID);// continue;
       }
 
       o = tco.getPeerObject();
@@ -601,115 +581,114 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   @Override
   public TCObject lookup(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
-    return lookup(id, null, false, false);
+    return lookup(id, null, null, false, false);
   }
 
   @Override
   public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
-    return lookup(id, null, false, true);
+    return lookup(id, null, null, false, true);
   }
-
-  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
+  
+  private synchronized ObjectLookupState startLookup(ObjectID oid) {
+    ObjectLookupState ols;
+    TCObject local = basicLookupByID(oid);
+    
+    if ( local != null ) {
+      return new ObjectLookupState(local);
+    }
+    
+    ols = this.objectLatchStateMap.get(oid);
+    if (ols != null) { 
+      // if the object is being created, add to the wait set and return the object
+    } else {
+      ols = new ObjectLookupState(oid);
+      final Object old = this.objectLatchStateMap.put(oid, ols);
+      Assert.assertNull(old);
+    }
+    return ols;
+  }
+  
+  private TCObject lookup(final ObjectID id, DNA dna, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
       throws AbortedOperationException, ClassNotFoundException {
     TCObject obj = null;
-    boolean retrieveNeeded = false;
-    boolean isInterrupted = false;
+    ObjectLookupState ols = null;
 
     final LocalLookupContext lookupContext = getLocalLookupContext();
 
     if (lookupContext.getCallStackCount().increment() == 1) {
       // first time
       this.clientTxManager.disableTransactionLogging();
-      lookupContext.getLatch().reset();
     }
-
-    try {
-      ObjectLatchState ols;
-      try {
-        synchronized (this) {
-          while (true) {
-            obj = basicLookupByID(id);
-            if (obj != null) {
-              // object exists in local cache
-              return obj;
-            }
-            ols = getObjectLatchState(id);
-            if (ols != null && ols.isCreateState()) {
-              // if the object is being created, add to the wait set and return the object
-              lookupContext.getObjectLatchWaitSet().add(ols);
-              return ols.getObject();
-            } else if (ols != null && ols.isLookupState()) {
-              // the object is being looked up, wait.
-              try {
-                wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
-              } catch (final InterruptedException ie) {
-                AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-                isInterrupted = true;
-              }
-            } else {
-              // otherwise, we need to lookup the object
-              retrieveNeeded = true;
-              ols = markLookupInProgress(id);
-              break;
-            }
-          }
-        }
-      } finally {
-        Util.selfInterruptIfNeeded(isInterrupted);
+    
+    while ( obj == null ) {
+      ols = startLookup(id);
+      if ( !ols.isOwner() ) {
+        obj = ols.waitForObject();
+      } else {
+        break;
       }
-
+    }
+        
+    try {
       // retrieving object required, first looking up the DNA from the remote server, and creating
       // a pre-init TCObject, then hydrating the object
-      if (retrieveNeeded) {
-        boolean createInProgressSet = false;
+      if (ols.isOwner()) {
+        Assert.assertNull(obj);
+        markCreateInProgress(ols, lookupContext);
         try {
-          final DNA dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
+          if ( dna == null ) {
+            dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
               : (parentContext == null ? this.remoteObjectManager.retrieve(id) : this.remoteObjectManager
                   .retrieveWithParentContext(id, parentContext));
-          Class clazz = this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()));
-          TCClass tcClazz = clazzFactory.getOrCreate(clazz, this);
-          Object pojo = createNewPojoObject(tcClazz, dna);
-          obj = this.factory.getNewInstance(id, pojo, clazz, false);
-
-          // object is retrieved, now you want to make this as Creation in progress
-          markCreateInProgress(ols, obj, lookupContext);
-          createInProgressSet = true;
-
-          Assert.assertFalse(dna.isDelta());
-          // now hydrate the object, this could call resolveReferences which would call this method recursively
-          if (obj instanceof TCObjectSelf) {
-            obj.hydrate(dna, false, null);
-          } else {
-            obj.hydrate(dna, false, newWeakObjectReference(id, pojo));
           }
+          obj = createObjectWithDNA(dna);
         } catch (AbortedOperationException t) {
-          lookupDone(id, createInProgressSet);
           throw t;
         } catch (final Throwable t) {
           if (!quiet) {
             logger.warn("Exception retrieving object " + id, t);
           }
-          lookupDone(id, createInProgressSet);
           this.remoteObjectManager.removed(id);
           // remove the object creating in progress from the list.
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
+        } finally {
+          lookupDone(ols).setObject(obj);
         }
-        basicAddLocal(obj, true);
       }
     } finally {
       if (lookupContext.getCallStackCount().decrement() == 0) {
-        // release your own local latch
-        lookupContext.getLatch().release();
-        final Set waitSet = lookupContext.getObjectLatchWaitSet();
-        waitAndClearLatchSet(waitSet);
-        // enabled transaction logging
         this.clientTxManager.enableTransactionLogging();
       }
     }
     return obj;
+  }
+  
+  private TCObject createObjectWithDNA(DNA dna) throws ClassNotFoundException {
+    TCObject obj = null;
 
+    Class clazz = this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()));
+    TCClass tcClazz = clazzFactory.getOrCreate(clazz, this);
+    Object pojo = createNewPojoObject(tcClazz, dna);
+    obj = this.factory.getNewInstance(dna.getObjectID(), pojo, clazz, false);
+
+    Assert.assertFalse(dna.isDelta());
+    // now hydrate the object, this could call resolveReferences which would call this method recursively
+
+    if (obj instanceof TCObjectSelf) {
+      obj.hydrate(dna, false, null);
+    } else {
+      obj.hydrate(dna, false, newWeakObjectReference(dna.getObjectID(), pojo));
+    }
+
+    basicAddLocal(obj);
+    return obj;
+  }
+  
+  @Override
+  public TCObject addLocalPrefetch(DNA dna) throws ClassNotFoundException, AbortedOperationException {
+    return lookup(dna.getObjectID(),dna,null,true,true);
   }
 
   @Override
@@ -723,26 +702,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
       this.remoteObjectManager.removed(tcoSelf.getObjectID());
     }
-  }
-
-  private void waitAndClearLatchSet(final Set waitSet) {
-    boolean isInterrupted = false;
-    // now wait till all the other objects you are waiting for releases there latch. This is waiting for creation of
-    // objects locally by other threads.
-    for (final Iterator iter = waitSet.iterator(); iter.hasNext();) {
-      final ObjectLatchState ols = (ObjectLatchState) iter.next();
-      while (true) {
-        try {
-          ols.getLatch().acquire();
-          break;
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
-        }
-      }
-
-    }
-    Util.selfInterruptIfNeeded(isInterrupted);
-    waitSet.clear();
   }
 
   @Override
@@ -1012,8 +971,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     ObjectID rootID = null;
     gid = gid == null || GroupID.NULL_ID.equals(gid) ? rootsHolder.getGroupIDForRoot(rootName) : gid;
 
-    boolean retrieveNeeded = false;
-    boolean isNew = false;
     boolean lookupInProgress = false;
     boolean isInterrupted = false;
 
@@ -1036,7 +993,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
             try {
               wait();
             } catch (final InterruptedException e) {
-              e.printStackTrace();
+              logger.debug("root lookup interrupted",e);
               isInterrupted = true;
             }
           }
@@ -1046,9 +1003,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       Util.selfInterruptIfNeeded(isInterrupted);
     }
 
-    retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
+    boolean retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 
-    isNew = retrieveNeeded || (rootID.isNull() && create);
+    boolean isNew = retrieveNeeded || (rootID.isNull() && create);
     if (retrieveNeeded) {
       rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
     }
@@ -1084,6 +1041,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private TCObject basicLookupByID(final ObjectID id) {
+    if ( !Thread.holdsLock(this) ) {
+      throw new AssertionError("not holding lock");
+    }
     return this.objectStore.get(id);
   }
 
@@ -1108,7 +1068,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.pojoToManaged.get(obj);
   }
 
-  private synchronized void basicAddLocal(final TCObject obj, final boolean fromLookup) {
+  private synchronized void basicAddLocal(final TCObject obj) {
     final ObjectID id = obj.getObjectID();
     if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: Object of class "
                                                   + obj.getClass() + " [Identity Hashcode : 0x"
@@ -1131,8 +1091,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         }
       }
     }
-    lookupDone(id, fromLookup);
-    notifyAll();
   }
 
   private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action,
@@ -1251,7 +1209,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       obj = this.factory.getNewInstance(nextObjectID(this.clientTxManager.getCurrentTransaction(), pojo, gid), pojo,
                                         pojo.getClass(), true);
       this.clientTxManager.createObject(obj);
-      basicAddLocal(obj, false);
+      basicAddLocal(obj);
     }
     return obj;
   }
@@ -1509,14 +1467,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private static class LocalLookupContext {
-    private final ResetableLatch latch               = new ResetableLatch();
     private final Counter        callStackCount      = new Counter(0);
     private final Counter        objectCreationCount = new Counter(0);
-    private final Set            objectLatchWaitSet  = new HashSet();
-
-    public ResetableLatch getLatch() {
-      return this.latch;
-    }
 
     public Counter getCallStackCount() {
       return this.callStackCount;
@@ -1525,59 +1477,66 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     public Counter getObjectCreationCount() {
       return this.objectCreationCount;
     }
-
-    public Set getObjectLatchWaitSet() {
-      return this.objectLatchWaitSet;
-    }
-
   }
 
-  private static class ObjectLatchState {
-
-    private static final State   CREATE_STATE = new State("CREATE-STATE");
-
-    private static final State   LOOKUP_STATE = new State("LOOKUP-STATE");
-
+  private class ObjectLookupState {
+    boolean isSet = false;
     private final ObjectID       objectID;
-
-    private final ResetableLatch latch;
-
-    private State                state        = LOOKUP_STATE;
-
+    private final Thread owner;
     private TCObject             object;
 
-    public ObjectLatchState(final ObjectID objectID, final ResetableLatch latch) {
+    public ObjectLookupState(final ObjectID objectID) {
       this.objectID = objectID;
-      this.latch = latch;
+      this.owner = Thread.currentThread();
+    }
+    
+    public ObjectLookupState(final TCObject set) {
+      this.objectID = set.getObjectID();
+      this.object = set;
+      this.isSet = true;
+      this.owner = null;
+    }
+    
+    public ObjectID getObjectID() {
+      return this.objectID;
     }
 
-    public void setObject(final TCObject obj) {
+    public synchronized void setObject(final TCObject obj) {
       this.object = obj;
+      this.isSet = true;
+      notifyAll();
     }
-
-    public ResetableLatch getLatch() {
-      return this.latch;
+    
+    public synchronized boolean isSet() {
+      return isSet;
     }
-
-    public TCObject getObject() {
-      return this.object;
+    
+    public Thread getOwner() {
+      return owner;
     }
-
-    public boolean isLookupState() {
-      return LOOKUP_STATE.equals(this.state);
-    }
-
-    public boolean isCreateState() {
-      return CREATE_STATE.equals(this.state);
-    }
-
-    public void markCreateState() {
-      this.state = CREATE_STATE;
+    
+    public boolean isOwner() {
+      return Thread.currentThread() == owner;
     }
 
     @Override
     public String toString() {
-      return "ObjectLatchState [" + this.objectID + " , " + this.latch + ", " + this.state + " ]";
+      return "ObjectLookupState [" + this.objectID + " , " + this.owner.getName() + ", " + this.isSet + " ]";
+    }
+    
+    public synchronized TCObject waitForObject() throws AbortedOperationException {
+      boolean isInterrupted = false;
+      try {
+        while (this.object == null && !isSet) {
+          wait(CONCURRENT_LOOKUP_TIMED_WAIT);
+        }
+      } catch ( InterruptedException ie ) {
+        AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
+        isInterrupted = true;
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
+      } 
+      return this.object;
     }
   }
 

@@ -1,0 +1,74 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.tc.object;
+
+/**
+ *
+ * @author mscott
+ */
+public class CompoundResponse {
+    private final long creationTime;
+    private final long lastAccessedTime;
+    private final long timeToIdle;
+    private final long timeToLive;
+    private Object data;
+
+    public CompoundResponse(final Object data, final long creationTime, final long lastAccessedTime, final long timeToIdle, final long timeToLive) {
+      this.creationTime = creationTime;
+      this.lastAccessedTime = lastAccessedTime;
+      this.timeToIdle = timeToIdle;
+      this.timeToLive = timeToLive;
+      this.data = data;
+    }
+
+    public long getCreationTime() {
+      return creationTime;
+    }
+
+    public long getLastAccessedTime() {
+      return lastAccessedTime;
+    }
+
+    public long getTimeToIdle() {
+      return timeToIdle;
+    }
+
+    public long getTimeToLive() {
+      return timeToLive;
+    }
+
+    public Object getData() {
+      return data;
+    }
+    
+    public void setData(Object value) {
+      data = value;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final CompoundResponse that = (CompoundResponse)o;
+
+      if (creationTime != that.creationTime) return false;
+      if (lastAccessedTime != that.lastAccessedTime) return false;
+      if (timeToIdle != that.timeToIdle) return false;
+      if (timeToLive != that.timeToLive) return false;
+      if (!data.equals(that.data)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int)(creationTime ^ (creationTime >>> 32));
+      result = 31 * result + (int)(lastAccessedTime ^ (lastAccessedTime >>> 32));
+      result = 31 * result + (int)(timeToIdle ^ (timeToIdle >>> 32));
+      result = 31 * result + (int)(timeToLive ^ (timeToLive >>> 32));
+      result = 31 * result + data.hashCode();
+      return result;
+    }
+}

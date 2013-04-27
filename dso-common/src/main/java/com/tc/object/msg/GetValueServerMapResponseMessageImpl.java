@@ -4,17 +4,22 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.CompoundResponse;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.impl.ObjectDNAImpl;
+import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.session.SessionID;
 
@@ -27,6 +32,9 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
 
   private final static byte                     MAP_OBJECT_ID  = 0;
   private final static byte                     RESPONSES_SIZE = 1;
+  private final static byte                     SERIALIZER_ID  = 2;
+  private final static byte                     OBJECT_ID      = 3;
+  private final static byte                     DNA_ID         = 4;
 
   // TODO::Comeback and verify
   private static final DNAEncoding              encoder        = new StorageDNAEncodingImpl();
@@ -35,6 +43,7 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
 
   private ObjectID                              mapID;
   private Collection<ServerMapGetValueResponse> responses;
+  private ObjectStringSerializer                serializer;
 
   public GetValueServerMapResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                               final MessageChannel channel, final TCMessageHeader header,
@@ -52,8 +61,10 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
 
   @Override
   public void initializeGetValueResponse(final ObjectID mapObjectID,
+                                         final ObjectStringSerializer serializer,
                                          final Collection<ServerMapGetValueResponse> getValueResponses) {
     this.responses = getValueResponses;
+    this.serializer = serializer;
     this.mapID = mapObjectID;
   }
 
@@ -61,6 +72,7 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
   @Override
   protected void dehydrateValues() {
     putNVPair(MAP_OBJECT_ID, this.mapID.toLong());
+    putNVPair(SERIALIZER_ID, serializer);
     putNVPair(RESPONSES_SIZE, this.responses.size());
     // Directly encode the values
     final TCByteBufferOutputStream outStream = getOutputStream();
@@ -68,13 +80,32 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
       outStream.writeLong(r.getRequestID().toLong());
       outStream.writeInt(r.getValues().size());
       for (Entry<Object, Object> entry : r.getValues().entrySet()) {
-        encoder.encode(entry.getKey(), getOutputStream());
-        ServerMapGetValueResponse.ResponseValue responseValue = (ServerMapGetValueResponse.ResponseValue) entry.getValue();
-        encoder.encode(responseValue.getData(), getOutputStream());
-        encoder.encode(responseValue.getCreationTime(), getOutputStream());
-        encoder.encode(responseValue.getLastAccessedTime(), getOutputStream());
-        encoder.encode(responseValue.getTimeToIdle(), getOutputStream());
-        encoder.encode(responseValue.getTimeToLive(), getOutputStream());
+        encoder.encode(entry.getKey(), outStream);
+        CompoundResponse responseValue = (CompoundResponse)entry.getValue();
+        Object value = responseValue.getData();
+        if ( value instanceof ObjectID ) {
+          outStream.writeByte(OBJECT_ID);
+          outStream.writeLong(((ObjectID)value).toLong());
+        } else {
+          TCByteBufferOutputStream list = (TCByteBufferOutputStream)value;
+          outStream.writeByte(DNA_ID);
+          outStream.writeInt(list.getBytesWritten());
+          if ( logger.isDebugEnabled() ) {
+            outStream.write(list.toArray());
+            try {
+              value = new ObjectDNAImpl(this.serializer, false).deserializeFrom(new TCByteBufferInputStream(list.toArray()));
+              logger.debug(value);
+            } catch ( IOException ioe ) {
+              logger.debug("bad serialization", ioe);
+            }
+          } else {
+            outStream.write(list.toArray());
+          }
+        }
+        encoder.encode(responseValue.getCreationTime(), outStream);
+        encoder.encode(responseValue.getLastAccessedTime(), outStream);
+        encoder.encode(responseValue.getTimeToIdle(), outStream);
+        encoder.encode(responseValue.getTimeToLive(), outStream);
       }
     }
   }
@@ -85,10 +116,12 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
       case MAP_OBJECT_ID:
         this.mapID = new ObjectID(getLongValue());
         return true;
-
+      case SERIALIZER_ID:
+        this.serializer = (ObjectStringSerializer)getObject(new ObjectStringSerializerImpl());
+        return true;
       case RESPONSES_SIZE:
         int size = getIntValue();
-        this.responses = new ArrayList<ServerMapGetValueResponse>();
+        this.responses = new ArrayList<ServerMapGetValueResponse>(size);
         // Directly decode the value
         final TCByteBufferInputStream inputStream = getInputStream();
         while (size-- > 0) {
@@ -97,8 +130,24 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
             final int numResponses = getIntValue();
             ServerMapGetValueResponse response = new ServerMapGetValueResponse(new ServerMapRequestID(responseId));
             for (int i = 0; i < numResponses; i++) {
-              response.put(decoder.decode(inputStream), decoder.decode(inputStream), (Long) decoder.decode(inputStream),
+              Object key = decoder.decode(inputStream);
+              byte type = inputStream.readByte();
+              if ( type == OBJECT_ID ) {
+                response.put(key, new ObjectID(inputStream.readLong()), false, (Long) decoder.decode(inputStream),
                   (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
+              } else {
+                if ( type != DNA_ID ) { 
+                  throw new AssertionError("bad type");
+                }
+                int length = inputStream.readInt();
+                byte[] grab = new byte[length];
+                inputStream.readFully(grab);
+                ObjectDNAImpl value = new ObjectDNAImpl(this.serializer, false);
+                value.deserializeFrom(new TCByteBufferInputStream(TCByteBufferFactory.wrap(grab)));
+                response.put(key, value.getObjectID(), true, (Long) decoder.decode(inputStream),
+                  (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
+                response.replace(value.getObjectID(), value);
+              }
             }
             this.responses.add(response);
           } catch (final ClassNotFoundException e) {

@@ -195,6 +195,7 @@ import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
 import com.tc.objectserver.handler.ServerMapCapacityEvictionHandler;
 import com.tc.objectserver.handler.ServerMapEvictionBroadcastHandler;
 import com.tc.objectserver.handler.ServerMapEvictionHandler;
+import com.tc.objectserver.handler.ServerMapPrefetchObjectHandler;
 import com.tc.objectserver.handler.ServerMapRequestHandler;
 import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
@@ -836,14 +837,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage respondToServerTCMapStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
                      maxStageSize);
+    
+    final Stage prefetchStage = stageManager
+        .createStage(ServerConfigurationContext.SERVER_MAP_PREFETCH_STAGE, new ServerMapPrefetchObjectHandler(globalObjectFaultCounter), 8,
+                     maxStageSize);
 
     this.searchRequestManager = this.serverBuilder.createSearchRequestManager(channelManager,
                                                                               objectRequestStage.getSink());
     toInit.add(this.searchRequestManager);
 
     this.serverMapRequestManager = this.serverBuilder
-        .createServerMapRequestManager(this.objectManager, channelManager, respondToServerTCMapStage.getSink(),
-                                       objectRequestStage.getSink(), this.clientStateManager, channelStats);
+        .createServerMapRequestManager(this.objectManager, channelManager, respondToServerTCMapStage.getSink(),prefetchStage.getSink(), 
+                                        this.clientStateManager, channelStats);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();

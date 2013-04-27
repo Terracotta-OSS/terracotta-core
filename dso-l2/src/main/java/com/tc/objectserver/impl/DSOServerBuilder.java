@@ -49,8 +49,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.EvictionTransactionPersistor;
-import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
@@ -95,7 +93,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                             StateSyncManager stateSyncManager);
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
-                                                        Sink respondToServerTCMapSink, Sink managedObjectRequestSink,
+                                                        Sink respondToServerTCMapSink, Sink prefetch,
                                                         ClientStateManager clientStateManager, ChannelStats channelStats);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,

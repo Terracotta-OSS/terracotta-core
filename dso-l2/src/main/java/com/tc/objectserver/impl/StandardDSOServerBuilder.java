@@ -173,11 +173,11 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   public ServerMapRequestManager createServerMapRequestManager(final ObjectManager objectMgr,
                                                                final DSOChannelManager channelManager,
                                                                final Sink respondToServerTCMapSink,
-                                                               final Sink managedObjectRequestSink,
-                                                               ClientStateManager clientStateManager,
-                                                               ChannelStats channelStats) {
-    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink,
-                                           managedObjectRequestSink, clientStateManager, channelStats);
+                                                               final Sink prefetchObjectsSink,
+                                                               final ClientStateManager clientStateManager,
+                                                               final ChannelStats channelStats) {
+    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink, prefetchObjectsSink,
+            clientStateManager, channelStats);
   }
 
   @Override

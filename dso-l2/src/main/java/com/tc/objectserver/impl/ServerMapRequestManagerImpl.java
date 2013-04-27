@@ -10,25 +10,22 @@ import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
-import com.tc.object.ObjectRequestID;
-import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessage;
 import com.tc.object.msg.GetAllSizeServerMapResponseMessage;
-import com.tc.object.msg.GetValueServerMapResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
-import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.ServerMapGetAllSizeHelper;
 import com.tc.objectserver.context.ServerMapRequestAllKeysContext;
 import com.tc.objectserver.context.ServerMapRequestContext;
+import com.tc.objectserver.context.ServerMapRequestPrefetchObjectsContext;
 import com.tc.objectserver.context.ServerMapRequestSizeContext;
 import com.tc.objectserver.context.ServerMapRequestValueContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -36,17 +33,15 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
@@ -55,18 +50,20 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private final ObjectManager         objectManager;
   private final DSOChannelManager     channelManager;
   private final Sink                  respondToServerTCMapSink;
-  private final Sink                  managedObjectRequestSink;
+  private final Sink                  prefetchObjectsSink;
   private final ServerMapRequestQueue requestQueue = new ServerMapRequestQueue();
   private final ClientStateManager    clientStateManager;
   private final ChannelStats          channelStats;
+  private final boolean               enablePrefetch = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED, true);
 
   public ServerMapRequestManagerImpl(final ObjectManager objectManager, final DSOChannelManager channelManager,
-                                     final Sink respondToServerTCMapSink, final Sink managedObjectRequestSink,
+                                     final Sink respondToServerTCMapSink,
+                                     final Sink prefetchObjectsSink,
                                      ClientStateManager clientStateManager, ChannelStats channelStats) {
     this.channelManager = channelManager;
     this.objectManager = objectManager;
     this.respondToServerTCMapSink = respondToServerTCMapSink;
-    this.managedObjectRequestSink = managedObjectRequestSink;
+    this.prefetchObjectsSink = prefetchObjectsSink;
     this.clientStateManager = clientStateManager;
     this.channelStats = channelStats;
   }
@@ -118,8 +115,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
     final ConcurrentDistributedServerMapManagedObjectState cdsmState = (ConcurrentDistributedServerMapManagedObjectState) state;
 
-    final Map<ClientID, Collection<ServerMapGetValueResponse>> results = new HashMap<ClientID, Collection<ServerMapGetValueResponse>>();
-    final Map<ClientID, ObjectIDSet> prefetches = new HashMap<ClientID, ObjectIDSet>();
+    final Map<ClientID, ServerMapRequestPrefetchObjectsContext> results = new HashMap<ClientID, ServerMapRequestPrefetchObjectsContext>();
     try {
       final Collection<ServerMapRequestContext> requests = this.requestQueue.remove(mapID);
 
@@ -137,22 +133,9 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             sendResponseForGetAllKeys(mapID, (ServerMapRequestAllKeysContext) request, cdsmState);
             break;
           case GET_VALUE_FOR_KEY:
-            ClientID clientID = request.getClientID();
-            ObjectIDSet objectIdsForKeys = gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request,
-                                                                     cdsmState, results);
-            Set<ObjectID> objectIdstoPrefetch = Collections.EMPTY_SET;
-            if (!objectIdsForKeys.isEmpty()) {
-              objectIdstoPrefetch = clientStateManager.addReferences(clientID, objectIdsForKeys);
-              MessageChannel channel = getActiveChannel(clientID);
-              if (channel != null) {
-                this.channelStats.notifyReadOperations(channel, objectIdstoPrefetch.size());
-              }
-            }
-
-            for (ObjectID valueObjectId : objectIdstoPrefetch) {
-              gatherPreFetchPortableValues(prefetches, clientID, valueObjectId);
-            }
-
+            ServerMapRequestPrefetchObjectsContext responses = gatherResponseForGetValue(request.getClientID(), mapID, (ServerMapRequestValueContext)request, results.get(request.getClientID()), 
+                                                                     cdsmState);
+            results.put(request.getClientID(), responses);
             break;
           default:
             throw new AssertionError("Unknown request type : " + requestType);
@@ -161,11 +144,19 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     } finally {
       this.objectManager.releaseReadOnly(managedObject);
     }
-    if (!prefetches.isEmpty()) {
-      preFetchPortableValue(prefetches);
-    }
+
     if (!results.isEmpty()) {
-      sendResponseForGetValue(mapID, results);
+      stagePrefetch(results);
+    }
+  }
+  
+  private void stagePrefetch(Map<ClientID, ServerMapRequestPrefetchObjectsContext> results) {
+    for ( Map.Entry<ClientID, ServerMapRequestPrefetchObjectsContext> cxt : results.entrySet() ) {
+      if ( cxt.getValue().shouldPrefetch() ) {
+        this.objectManager.lookupObjectsFor(cxt.getKey(),cxt.getValue());
+      } else {
+        this.prefetchObjectsSink.add(cxt.getValue());
+      }
     }
   }
 
@@ -213,62 +204,40 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
-  private ObjectIDSet gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestValueContext request,
-                                                final ConcurrentDistributedServerMapManagedObjectState cdsmState,
-                                                final Map<ClientID, Collection<ServerMapGetValueResponse>> results) {
-    ObjectIDSet rv = new ObjectIDSet();
-    final ClientID clientID = request.getClientID();
-    Collection<ServerMapGetValueResponse> responses = results.get(clientID);
-    if (responses == null) {
-      responses = new ArrayList<ServerMapGetValueResponse>();
-      results.put(clientID, responses);
+  private ServerMapRequestPrefetchObjectsContext gatherResponseForGetValue(final ClientID clientID, final ObjectID mapID, final ServerMapRequestValueContext request,
+                                                ServerMapRequestPrefetchObjectsContext responses,
+                                                final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
+    if (responses == null ) {
+        responses = new ServerMapRequestPrefetchObjectsContext(clientID, mapID, prefetchObjectsSink);
     }
+    
     for (final ServerMapGetValueRequest r : request.getValueRequests()) {
       ServerMapGetValueResponse response = new ServerMapGetValueResponse(r.getRequestID());
       Set<Object> portableKeys = r.getKeys();
       for (Object portableKey : portableKeys) {
         CDSMValue wrappedValue = cdsmState.getValueForKey(portableKey);
+        
         if (wrappedValue == null) {
           response.put(portableKey, ObjectID.NULL_ID);
         } else {
-          if (wrappedValue.getObjectID() instanceof ObjectID) {
-            rv.add(wrappedValue.getObjectID());
+          ObjectID portableValue = wrappedValue.getObjectID();
+          if ( logger.isDebugEnabled() ) {
+            logger.debug("sending " + portableValue);
           }
-          response.put(portableKey, wrappedValue.getObjectID(), wrappedValue.getCreationTime(),
-              wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive());
+          
+          response.put(portableKey, portableValue, shouldPrefetch(clientID, portableValue), wrappedValue.getCreationTime(),
+          wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive());
         }
       }
-      responses.add(response);
+      responses.addResponse(response);
     }
-    return rv;
-  }
-
-  private void gatherPreFetchPortableValues(final Map<ClientID, ObjectIDSet> prefetches, final ClientID clientID,
-                                            final ObjectID valueID) {
-    if (valueID.isNull()) { return; }
-    ObjectIDSet lookupIDs = prefetches.get(clientID);
-    if (lookupIDs == null) {
-      lookupIDs = new ObjectIDSet();
-      prefetches.put(clientID, lookupIDs);
-    }
-    lookupIDs.add(valueID);
-  }
-
-  private void sendResponseForGetValue(final ObjectID mapID,
-                                       final Map<ClientID, Collection<ServerMapGetValueResponse>> results) {
-    for (final Entry<ClientID, Collection<ServerMapGetValueResponse>> e : results.entrySet()) {
-      final ClientID clientID = e.getKey();
-      final MessageChannel channel = getActiveChannel(clientID);
-      if (channel == null) {
-        this.logger.info("Client " + clientID + " is not active : Ignoring sending response for getValue() ");
-        return;
-      }
-      final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
-          .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
-      responseMessage.initializeGetValueResponse(mapID, e.getValue());
-      responseMessage.send();
-    }
-
+    return responses;
+  } 
+  
+  private boolean shouldPrefetch(ClientID cid, ObjectID object) {
+ //  if the client is fetching the key-value, assume the client needs the value faulted in.  check for sure 
+ //    before sending.  See ServerMapRequestPrefetchObjectsContext
+      return enablePrefetch;
   }
 
   private void sendResponseForGetAllSize(final ObjectID mapID, final ServerMapRequestSizeContext request,
@@ -314,15 +283,6 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     } catch (final NoSuchChannelException e) {
       this.logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
       return null;
-    }
-  }
-
-  private void preFetchPortableValue(final Map<ClientID, ObjectIDSet> prefetches) {
-    for (final Entry<ClientID, ObjectIDSet> element : prefetches.entrySet()) {
-      this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(element.getKey(), ObjectRequestID.NULL_ID,
-                                                                           element.getValue(), Thread.currentThread()
-                                                                               .getName(), 1,
-                                                                           LOOKUP_STATE.SERVER_INITIATED_FORCED));
     }
   }
 

@@ -48,7 +48,7 @@ public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
    */
   @Override
   public void writeObject(Object obj) {
-    if (obj != null && obj.getClass().getName().charAt(0) == '[') {
+    if (obj != null && obj.getClass().isArray()) {
       SERIALIZER_ENCODING.encodeArray(obj, this);
     } else {
       SERIALIZER_ENCODING.encode(obj, this);

@@ -91,4 +91,9 @@ public class CDSMValue implements EvictableEntry {
     result = 31 * result + (int)(lastAccessedTime ^ (lastAccessedTime >>> 32));
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "CDSMValue{" + "objectID=" + objectID + ", creationTime=" + creationTime + ", timeToIdle=" + timeToIdle + ", timeToLive=" + timeToLive + ", lastAccessedTime=" + lastAccessedTime + '}';
+  }
 }

@@ -41,7 +41,10 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     // capacity eviction ignores underlying strategy b/c map.startEviction has already been called
     boolean startedLocally = super.startEviction(map);
 
-    if (startedLocally) { throw new AssertionError("capacity eviction cannot be started locally"); }
+    if (startedLocally) { 
+      LOGGER.fatal(map.toString());
+      throw new AssertionError("capacity eviction cannot be started locally"); 
+    }
 
     repeat = false;
     max = map.getMaxTotalCount();

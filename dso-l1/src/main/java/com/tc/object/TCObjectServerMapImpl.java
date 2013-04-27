@@ -11,6 +11,7 @@ import com.tc.net.GroupID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.locks.LockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -418,7 +419,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     // originally pointed to was deleted by DGC. If that happens we retry until we get a good value.
     long start = System.nanoTime();
     while (true) {
-      final ServerMapGetValueResponse.ResponseValue value = (ServerMapGetValueResponse.ResponseValue) this.serverMapManager.getMappingForKey(mapID, portableKey);
+      final CompoundResponse value = (CompoundResponse) this.serverMapManager.getMappingForKey(mapID, portableKey);
       try {
         return lookupValue(value);
       } catch (TCObjectNotFoundException e) {
@@ -455,25 +456,29 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return portableKey;
   }
 
-  private Object lookupValue(final ServerMapGetValueResponse.ResponseValue value) throws TCObjectNotFoundException, AbortedOperationException {
-    if (value.getData() instanceof ObjectID) {
+  private Object lookupValue(final CompoundResponse value) throws TCObjectNotFoundException, AbortedOperationException {
       try {
-        Object r = this.objectManager.lookupObjectQuiet((ObjectID) value.getData());
-        if (r instanceof ExpirableMapEntry) {
-          ExpirableMapEntry expirableMapEntry = (ExpirableMapEntry)r;
-          expirableMapEntry.setCreationTime(value.getCreationTime());
-          expirableMapEntry.setLastAccessedTime(value.getLastAccessedTime());
-          expirableMapEntry.setTimeToIdle(value.getTimeToIdle());
-          expirableMapEntry.setTimeToLive(value.getTimeToLive());
+        if (value.getData() instanceof ObjectID) {
+          ObjectID oid = (ObjectID) value.getData();
+          if ( oid.isNull() ) {
+            return null;
+          }
+          Object r = this.objectManager.lookupObjectQuiet(oid);
+          if (r instanceof ExpirableMapEntry) {
+            ExpirableMapEntry expirableMapEntry = (ExpirableMapEntry)r;
+            expirableMapEntry.setCreationTime(value.getCreationTime());
+            expirableMapEntry.setLastAccessedTime(value.getLastAccessedTime());
+            expirableMapEntry.setTimeToIdle(value.getTimeToIdle());
+            expirableMapEntry.setTimeToLive(value.getTimeToLive());
+          }
+          return r;
+        } else {
+          return this.objectManager.addLocalPrefetch((DNA)value.getData());
         }
-        return r;
       } catch (final ClassNotFoundException e) {
         logger.warn("Got ClassNotFoundException for objectId: " + value + ". Ignoring exception and returning null");
         return null;
       }
-    } else {
-      return value.getData();
-    }
   }
 
   private TCObjectServerMapImpl lookupTCObjectServerMapImpl(final ObjectID mapID) throws AbortedOperationException {
@@ -511,7 +516,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         Set<Object> portableKeys = entry.getValue();
         for (Iterator<Object> portableKeyIterator = portableKeys.iterator(); portableKeyIterator.hasNext();) {
           Object key = portableKeyIterator.next();
-          ServerMapGetValueResponse.ResponseValue value = (ServerMapGetValueResponse.ResponseValue)rv.get(key);
+          CompoundResponse value = (CompoundResponse)rv.get(key);
           Object data;
           try {
             data = lookupValue(value);

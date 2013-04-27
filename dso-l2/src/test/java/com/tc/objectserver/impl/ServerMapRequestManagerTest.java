@@ -9,8 +9,10 @@ import org.mockito.ArgumentMatcher;
 
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.CompoundResponse;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueRequest;
@@ -21,16 +23,18 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ServerMapRequestManager;
+import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.ServerMapRequestContext;
+import com.tc.objectserver.context.ServerMapRequestPrefetchObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,6 +44,7 @@ import junit.framework.TestCase;
 import static org.junit.internal.matchers.IsCollectionContaining.hasItem;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
@@ -50,22 +55,23 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   private ObjectManager objectManager;
   private Sink responseSink;
-  private Sink managedObjectRequestSink;
+  private Sink prefetchSink;
   private DSOChannelManager channelManager;
   private ChannelStats channelStats;
   private ClientStateManager clientStateManager;
-  private ServerMapRequestManager serverMapRequestManager;
+  private ServerMapRequestManagerImpl serverMapRequestManager;
 
   @Override
   public void setUp() throws Exception {
     objectManager = mock(ObjectManager.class);
     responseSink = mock(Sink.class);
-    managedObjectRequestSink = mock(Sink.class);
+    prefetchSink = mock(Sink.class);
     channelManager = mock(DSOChannelManager.class);
     channelStats = mock(ChannelStats.class);
     clientStateManager = mock(ClientStateManager.class);
-    serverMapRequestManager = new ServerMapRequestManagerImpl(objectManager, channelManager, responseSink,
-        managedObjectRequestSink, clientStateManager, channelStats);
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED, "false");
+    serverMapRequestManager = new ServerMapRequestManagerImpl(objectManager, channelManager, responseSink, prefetchSink, 
+         clientStateManager, channelStats);
   }
 
   public void tests() {
@@ -78,6 +84,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     Set<Object> keys = new HashSet<Object>();
     keys.add(portableKey);
     requests.add(new ServerMapGetValueRequest(requestID, keys));
+        
     serverMapRequestManager.requestValues(clientID, mapID, requests);
     final Set<ObjectID> lookupIDs = new HashSet<ObjectID>();
     lookupIDs.add(mapID);
@@ -106,24 +113,11 @@ public class ServerMapRequestManagerTest extends TestCase {
 
     verify(mo, atLeastOnce()).getManagedObjectState();
 
-    verify(objectManager, atLeastOnce()).releaseReadOnly(mo);
+    ArgumentCaptor<ServerMapRequestPrefetchObjectsContext> capture = ArgumentCaptor.forClass(ServerMapRequestPrefetchObjectsContext.class);
+    verify(prefetchSink, atLeastOnce()).add(capture.capture());
 
-    try {
-      verify(channelManager, atLeastOnce()).getActiveChannel(clientID);
-    } catch (final NoSuchChannelException e) {
-      throw new AssertionError(e);
-    }
-
-    verify(messageChannel, atLeastOnce()).createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
-
-    final ArrayList responses = new ArrayList();
-    ServerMapGetValueResponse response = new ServerMapGetValueResponse(requestID);
-    response.put(portableKey, portableValue);
-    responses.add(response);
-    verify(message, atLeastOnce()).initializeGetValueResponse(mapID, responses);
-
-    verify(message, atLeastOnce()).send();
-
+    ServerMapGetValueResponse msg = capture.getValue().getAnswers().iterator().next();
+    assertEquals(((CompoundResponse)msg.getValues().get(portableKey)).getData(),portableValue);
   }
 
   public void testMultipleKeysRequests() {
@@ -136,6 +130,13 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Object portableKey2 = "key2";
     final ObjectID portableValue2 = new ObjectID(1);
     final ArrayList request1 = new ArrayList();
+    
+    final Set<Object> dataSet = new HashSet<Object>();
+    dataSet.add(portableKey1);
+    dataSet.add(portableKey2);
+    dataSet.add(portableValue1);
+    dataSet.add(portableValue2);
+    
     Set<Object> keys1 = new HashSet<Object>();
     keys1.add(portableKey1);
     request1.add(new ServerMapGetValueRequest(requestID1, keys1));
@@ -143,6 +144,9 @@ public class ServerMapRequestManagerTest extends TestCase {
     Set<Object> keys2 = new HashSet<Object>();
     keys2.add(portableKey2);
     request2.add(new ServerMapGetValueRequest(requestID2, keys2));
+    
+    when(clientStateManager.hasReference(any(NodeID.class),any(ObjectID.class))).thenReturn(Boolean.TRUE);
+    
     serverMapRequestManager.requestValues(clientID, mapID, request1);
     serverMapRequestManager.requestValues(clientID, mapID, request2);
 
@@ -170,25 +174,18 @@ public class ServerMapRequestManagerTest extends TestCase {
     }
     final GetValueServerMapResponseMessage message = mock(GetValueServerMapResponseMessage.class);
     when(messageChannel.createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE)).thenReturn(message);
-
+    
     serverMapRequestManager.sendResponseFor(mapID, mo);
 
     verify(mo, atMost(1)).getManagedObjectState();
 
     verify(objectManager, atLeastOnce()).releaseReadOnly(mo);
 
-    try {
-      verify(channelManager, atLeastOnce()).getActiveChannel(clientID);
-    } catch (final NoSuchChannelException e) {
-      throw new AssertionError(e);
-    }
-
-    verify(messageChannel, atLeastOnce()).createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
-
-    final ArgumentCaptor<Collection> responsesArg = ArgumentCaptor.forClass(Collection.class);
+    verify(objectManager, atLeastOnce()).lookupObjectsFor(any(NodeID.class),any(ObjectManagerResultsContext.class));
+    
+    ArgumentCaptor<ServerMapRequestPrefetchObjectsContext> capture = ArgumentCaptor.forClass(ServerMapRequestPrefetchObjectsContext.class);
 
     final ArrayList responses = new ArrayList();
-    verify(message, atLeastOnce()).initializeGetValueResponse(eq(mapID), responsesArg.capture());
 
     ServerMapGetValueResponse response1 = new ServerMapGetValueResponse(requestID1);
     response1.put(portableKey1, portableValue1);
@@ -198,12 +195,12 @@ public class ServerMapRequestManagerTest extends TestCase {
     responses.add(response1);
     responses.add(response2);
 
-    verify(message, atLeastOnce()).send();
-    assertTrue(responsesArg.getValue().contains(response1));
-    assertTrue(responsesArg.getValue().contains(response2));
-
+    verify(prefetchSink, atLeastOnce()).add(capture.capture());
+    assertTrue(capture.getValue().getAnswers().contains(response1));
+    assertTrue(capture.getValue().getAnswers().contains(response2));
+    
   }
-
+    
   public void testPrefetch() throws Exception {
     final ClientID clientID = new ClientID(0);
     final ServerMapRequestID requestID1 = new ServerMapRequestID(0);
@@ -222,9 +219,6 @@ public class ServerMapRequestManagerTest extends TestCase {
     ManagedObject managedObject = mock(ManagedObject.class);
     when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
     serverMapRequestManager.sendResponseFor(mapID, managedObject);
-
-    verify(managedObjectRequestSink).add(argThat(hasState(LOOKUP_STATE.SERVER_INITIATED_FORCED)));
-    verify(clientStateManager).addReferences(eq(clientID), (Set<ObjectID>)argThat(hasItem(portableValue1ObjID)));
   }
 
   private static Matcher<ObjectRequestServerContextImpl> hasState(final LOOKUP_STATE state) {

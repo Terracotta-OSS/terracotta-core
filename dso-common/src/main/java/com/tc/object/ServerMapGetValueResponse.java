@@ -5,11 +5,14 @@ package com.tc.object;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ServerMapGetValueResponse {
 
   private final ServerMapRequestID  requestID;
   private final Map<Object, Object> responseMap = new HashMap<Object, Object>();
+  private final Map<ObjectID, CompoundResponse> replaceMap = new HashMap<ObjectID, CompoundResponse>();
+  private int replaceCount;
 
   public ServerMapGetValueResponse(final ServerMapRequestID requestID) {
     this.requestID = requestID;
@@ -23,12 +26,30 @@ public class ServerMapGetValueResponse {
     return this.responseMap;
   }
 
-  public void put(Object key, Object value, long creationTime, long lastAccessedTime, long timeToIdle, long timeToLive) {
-    responseMap.put(key, new ResponseValue(value, creationTime, lastAccessedTime, timeToIdle, timeToLive));
+  public void put(Object key, ObjectID value, boolean expectReplacement, long creationTime, long lastAccessedTime, long timeToIdle, long timeToLive) {
+    CompoundResponse setter = new CompoundResponse(value, creationTime, lastAccessedTime, timeToIdle, timeToLive);
+    if ( expectReplacement ) {
+      replaceMap.put(value, setter);
+    }
+    responseMap.put(key, setter);
   }
 
-  public void put(Object key, Object value) {
-    put(key, value, 0, 0, 0, 0);
+  public void put(Object key, ObjectID value) {
+    put(key, value, false, 0, 0, 0, 0);
+  }
+  
+  public Set<ObjectID> getObjectIDs() {
+    return replaceMap.keySet();
+  }
+  
+  public boolean replace(ObjectID oid, Object value) {
+    CompoundResponse placed = replaceMap.remove(oid);
+    if ( placed != null ) {
+      placed.setData(value);
+      replaceCount += 1;
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -47,68 +68,6 @@ public class ServerMapGetValueResponse {
 
   @Override
   public String toString() {
-    return "responses" + this.responseMap;
-  }
-
-  public static class ResponseValue {
-    private final long creationTime;
-    private final long lastAccessedTime;
-    private final long timeToIdle;
-    private final long timeToLive;
-    private final Object data;
-
-    public ResponseValue(final Object data, final long creationTime, final long lastAccessedTime, final long timeToIdle, final long timeToLive) {
-      this.creationTime = creationTime;
-      this.lastAccessedTime = lastAccessedTime;
-      this.timeToIdle = timeToIdle;
-      this.timeToLive = timeToLive;
-      this.data = data;
-    }
-
-    public long getCreationTime() {
-      return creationTime;
-    }
-
-    public long getLastAccessedTime() {
-      return lastAccessedTime;
-    }
-
-    public long getTimeToIdle() {
-      return timeToIdle;
-    }
-
-    public long getTimeToLive() {
-      return timeToLive;
-    }
-
-    public Object getData() {
-      return data;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final ResponseValue that = (ResponseValue)o;
-
-      if (creationTime != that.creationTime) return false;
-      if (lastAccessedTime != that.lastAccessedTime) return false;
-      if (timeToIdle != that.timeToIdle) return false;
-      if (timeToLive != that.timeToLive) return false;
-      if (!data.equals(that.data)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (int)(creationTime ^ (creationTime >>> 32));
-      result = 31 * result + (int)(lastAccessedTime ^ (lastAccessedTime >>> 32));
-      result = 31 * result + (int)(timeToIdle ^ (timeToIdle >>> 32));
-      result = 31 * result + (int)(timeToLive ^ (timeToLive >>> 32));
-      result = 31 * result + data.hashCode();
-      return result;
-    }
+    return "responses " + this.responseMap.size() + " replaces " + this.replaceMap.size() + " replace count " + replaceCount;
   }
 }

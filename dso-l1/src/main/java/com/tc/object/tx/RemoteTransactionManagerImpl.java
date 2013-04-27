@@ -546,7 +546,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID txID,
                                                    final NodeID remoteNode) {
     TransactionBuffer tb = null;
-    Map callbacks;
+    Map callbacks = null;
     if (!this.sessionManager.isCurrentSession(remoteNode, sessionID)) {
       this.logger.warn("Ignoring Transaction ACK for " + txID + " from previous session = " + sessionID);
       return tb;

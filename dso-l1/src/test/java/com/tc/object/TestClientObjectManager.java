@@ -284,4 +284,8 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
+  @Override
+  public TCObject addLocalPrefetch(DNA object) throws ClassNotFoundException {
+    throw new ImplementMe();
+  }
 }
