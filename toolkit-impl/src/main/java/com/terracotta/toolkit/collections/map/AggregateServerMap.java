@@ -466,7 +466,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (InternalToolkitMap serverMap : serverMaps) {
       serverMap.destroy();
     }
-    if (attrSchema.get() != null) attrSchema.get().destroy();
+    try {
+      schemaCreator.call().destroy();
+    } catch (Exception e) {
+      throw new ToolkitRuntimeException(e);
+    }
   }
 
   @Override
