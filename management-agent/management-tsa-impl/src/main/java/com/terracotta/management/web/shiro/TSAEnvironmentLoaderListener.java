@@ -145,7 +145,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         RequestTicketMonitor requestTicketMonitor = new DfltRequestTicketMonitor();
         TSAIdentityAsserter identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
 
-        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService);
+        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService, executorService);
         l1Agent = repoSvc;
 
         serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
@@ -164,7 +164,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         RequestTicketMonitor requestTicketMonitor = new NullRequestTicketMonitor();
         RequestIdentityAsserter identityAsserter = new NullIdentityAsserter();
 
-        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService);
+        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService, executorService);
         l1Agent = repoSvc;
 
         serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);

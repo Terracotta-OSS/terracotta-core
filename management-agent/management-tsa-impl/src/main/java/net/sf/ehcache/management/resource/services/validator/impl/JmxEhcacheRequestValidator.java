@@ -12,6 +12,9 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.terracotta.management.service.TsaManagementClientService;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +32,7 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
 
   private final TsaManagementClientService tsaManagementClientService;
 
-  private static final ThreadLocal<String> tlNode = new ThreadLocal<String>();
+  private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
   public JmxEhcacheRequestValidator(TsaManagementClientService tsaManagementClientService) {
     this.tsaManagementClientService = tsaManagementClientService;
@@ -50,55 +53,43 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
     String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
 
-    if (pathSegments.size() > 1 && pathSegments.get(1).getPath().equals("info")) {
-      if (ids != null) {
-        try {
-          Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
-          String[] idsArray = ids.split("\\,");
-          for (String id : idsArray) {
-            if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
-              throw new ResourceRuntimeException(
-                  String.format("Agent ID must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID),
-                  Response.Status.BAD_REQUEST.getStatusCode());
-            }
-          }
-        } catch (ServiceExecutionException see) {
-          throw new RuntimeException(see);
-        }
-
-        setValidatedNode(ids);
-      }
+    if (ids == null) {
+      setValidatedNodes(Collections.<String>emptySet());
     } else {
-      if (ids == null) {
-        throw new ResourceRuntimeException("Only a single agent id can be used.",
-            Response.Status.BAD_REQUEST.getStatusCode());
-      } else {
-        if (ids.split(",").length > 1) {
-          throw new ResourceRuntimeException("Only a single agent id can be used.",
-              Response.Status.BAD_REQUEST.getStatusCode());
-        }
+      String[] idsArray = ids.split(",");
 
-        try {
-          Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
-          if (!nodes.contains(ids) && !AgentEntity.EMBEDDED_AGENT_ID.equals(ids)) {
+      try {
+        Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
+        for (String id : idsArray) {
+          if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(
-                String.format("Agent ID must be in '%s'.", nodes),
+                String.format("Agent IDs must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID),
                 Response.Status.BAD_REQUEST.getStatusCode());
           }
-        } catch (ServiceExecutionException see) {
-          throw new RuntimeException(see);
         }
 
-        setValidatedNode(ids);
+        setValidatedNodes(new HashSet<String>(Arrays.asList(idsArray)));
+      } catch (ServiceExecutionException see) {
+        throw new ResourceRuntimeException(
+            "Unexpected error validating request.",
+            see,
+            Response.Status.BAD_REQUEST.getStatusCode());
       }
     }
   }
 
-  public String getValidatedNode() {
+  public Set<String> getValidatedNodes() {
     return tlNode.get();
   }
 
-  public void setValidatedNode(String node) {
+  public String getSingleValidatedNode() {
+    if (tlNode.get().size() != 1) {
+      throw new RuntimeException("A single node ID must be specified, got: " + tlNode.get());
+    }
+    return tlNode.get().iterator().next();
+  }
+
+  public void setValidatedNodes(Set<String> node) {
     tlNode.set(node);
   }
 

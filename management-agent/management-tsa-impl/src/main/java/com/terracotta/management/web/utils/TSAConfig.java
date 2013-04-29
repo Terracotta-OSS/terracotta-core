@@ -17,7 +17,7 @@ import javax.management.ObjectName;
  */
 public class TSAConfig {
 
-  private static final int DEFAULT_TIMEOUT = 10000;
+  private static final int DEFAULT_TIMEOUT = 5000;
 
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
   private static final Object KEY_CHAIN_ACCESSOR_LOCK = new Object();
