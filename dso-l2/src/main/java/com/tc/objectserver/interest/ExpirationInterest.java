@@ -18,6 +18,7 @@ public class ExpirationInterest extends CacheInterest {
     return InterestType.EXPIRE;
   }
 
+  @Override
   public Object getKey() {
     return key;
   }

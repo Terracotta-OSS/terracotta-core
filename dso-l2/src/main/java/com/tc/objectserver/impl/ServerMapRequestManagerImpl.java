@@ -52,8 +52,8 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private final Sink                  respondToServerTCMapSink;
   private final Sink                  prefetchObjectsSink;
   private final ServerMapRequestQueue requestQueue = new ServerMapRequestQueue();
-  private final ClientStateManager    clientStateManager;
-  private final ChannelStats          channelStats;
+  // private final ClientStateManager clientStateManager;
+  // private final ChannelStats channelStats;
   private final boolean               enablePrefetch = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED, true);
 
   public ServerMapRequestManagerImpl(final ObjectManager objectManager, final DSOChannelManager channelManager,
@@ -64,8 +64,8 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     this.objectManager = objectManager;
     this.respondToServerTCMapSink = respondToServerTCMapSink;
     this.prefetchObjectsSink = prefetchObjectsSink;
-    this.clientStateManager = clientStateManager;
-    this.channelStats = channelStats;
+    // this.clientStateManager = clientStateManager;
+    // this.channelStats = channelStats;
   }
 
   @Override
@@ -133,7 +133,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             sendResponseForGetAllKeys(mapID, (ServerMapRequestAllKeysContext) request, cdsmState);
             break;
           case GET_VALUE_FOR_KEY:
-            ServerMapRequestPrefetchObjectsContext responses = gatherResponseForGetValue(request.getClientID(), mapID, (ServerMapRequestValueContext)request, results.get(request.getClientID()), 
+            ServerMapRequestPrefetchObjectsContext responses = gatherResponseForGetValue(request.getClientID(), mapID, (ServerMapRequestValueContext)request, results.get(request.getClientID()),
                                                                      cdsmState);
             results.put(request.getClientID(), responses);
             break;
@@ -232,10 +232,10 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       responses.addResponse(response);
     }
     return responses;
-  } 
+  }
   
   private boolean shouldPrefetch(ClientID cid, ObjectID object) {
- //  if the client is fetching the key-value, assume the client needs the value faulted in.  check for sure 
+ //  if the client is fetching the key-value, assume the client needs the value faulted in.  check for sure
  //    before sending.  See ServerMapRequestPrefetchObjectsContext
       return enablePrefetch;
   }

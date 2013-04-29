@@ -42,6 +42,7 @@ public final class BasicServerEvent implements ServerEvent {
     this.type = type;
   }
 
+  @Override
   public Object getKey() {
     return key;
   }

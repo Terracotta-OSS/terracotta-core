@@ -22,6 +22,7 @@ public class RemoveInterest extends CacheInterest {
     return InterestType.REMOVE;
   }
 
+  @Override
   public Object getKey() {
     return key;
   }

@@ -4,15 +4,22 @@
 
 package com.tc.objectserver.interest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import com.google.common.eventbus.EventBus;
+import com.tc.objectserver.interest.EvictionInterest;
+import com.tc.objectserver.interest.Interest;
+import com.tc.objectserver.interest.InterestListener;
+import com.tc.objectserver.interest.InterestPublisher;
+import com.tc.objectserver.interest.PutInterest;
+import com.tc.objectserver.interest.RemoveInterest;
+import com.tc.objectserver.interest.TypedInterestListenerSupport;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eugene Shelestovich

@@ -3,9 +3,17 @@
  */
 package com.tc.objectserver.impl;
 
-import org.hamcrest.Matcher;
+import static org.junit.internal.matchers.IsCollectionContaining.hasItem;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
@@ -14,7 +22,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.CompoundResponse;
 import com.tc.object.ObjectID;
-import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
@@ -24,7 +31,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.ServerMapRequestContext;
 import com.tc.objectserver.context.ServerMapRequestPrefetchObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -40,16 +46,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.TestCase;
-
-import static org.junit.internal.matchers.IsCollectionContaining.hasItem;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ServerMapRequestManagerTest extends TestCase {
 
@@ -70,7 +66,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     channelStats = mock(ChannelStats.class);
     clientStateManager = mock(ClientStateManager.class);
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED, "false");
-    serverMapRequestManager = new ServerMapRequestManagerImpl(objectManager, channelManager, responseSink, prefetchSink, 
+    serverMapRequestManager = new ServerMapRequestManagerImpl(objectManager, channelManager, responseSink, prefetchSink,
          clientStateManager, channelStats);
   }
 
@@ -221,16 +217,16 @@ public class ServerMapRequestManagerTest extends TestCase {
     serverMapRequestManager.sendResponseFor(mapID, managedObject);
   }
 
-  private static Matcher<ObjectRequestServerContextImpl> hasState(final LOOKUP_STATE state) {
-    return new ArgumentMatcher<ObjectRequestServerContextImpl>() {
-      @Override
-      public boolean matches(final Object o) {
-        if (o instanceof ObjectRequestServerContextImpl) {
-          return state == ((ObjectRequestServerContextImpl)o).getLookupState();
-        } else {
-          return false;
-        }
-      }
-    };
-  }
+  // private static Matcher<ObjectRequestServerContextImpl> hasState(final LOOKUP_STATE state) {
+  // return new ArgumentMatcher<ObjectRequestServerContextImpl>() {
+  // @Override
+  // public boolean matches(final Object o) {
+  // if (o instanceof ObjectRequestServerContextImpl) {
+  // return state == ((ObjectRequestServerContextImpl)o).getLookupState();
+  // } else {
+  // return false;
+  // }
+  // }
+  // };
+  // }
 }

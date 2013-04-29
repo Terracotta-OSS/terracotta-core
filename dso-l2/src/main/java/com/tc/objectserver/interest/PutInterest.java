@@ -9,28 +9,36 @@ import com.tc.object.InterestType;
 /**
  * @author Eugene Shelestovich
  */
-public class EvictionInterest extends CacheInterest {
+public class PutInterest extends CacheInterest {
   private final Object key;
+  private final byte[] value;
 
-  public EvictionInterest(final Object key, final String cacheName) {
+  public PutInterest(final Object key, final byte[] value, final String cacheName) {
     super(cacheName);
     this.key = key;
+    this.value = value;
   }
 
   @Override
   public InterestType getType() {
-    return InterestType.EVICT;
+    return InterestType.PUT;
   }
 
+  @Override
   public Object getKey() {
     return key;
   }
 
+  public byte[] getValue() {
+    return value;
+  }
+
   @Override
   public String toString() {
-    return "EvictionInterest{" +
+    return "PutInterest{" +
            "key=" + key +
-           ", cacheName='" + cacheName + '\'' +
+           ", value=" + value +
+           ", cacheName=" + cacheName +
            '}';
   }
 }
