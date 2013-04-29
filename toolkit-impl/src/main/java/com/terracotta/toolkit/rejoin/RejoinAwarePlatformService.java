@@ -11,9 +11,9 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.ServerEventType;
-import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
@@ -212,10 +212,7 @@ public class RejoinAwarePlatformService implements PlatformService {
     try {
       delegate.commitLock(lockID, level);
     } catch (PlatformRejoinException e) {
-      // we can see PlatformRejoinException during rejoin even when we did not lock before rejoin but called unlock so
-      // we should convert it to IllegalMonitorStateException
-      if (isLockedBeforeRejoin) { throw new RejoinException(e); }
-      throw new IllegalMonitorStateException();
+      throw new RejoinException(e);
     } catch (IllegalMonitorStateException e) {
       // if we get IllegalMonitorStateException then we should convert it to RejoinException if locked before rejoin
       if (isLockedBeforeRejoin) { throw new RejoinException(e); }
