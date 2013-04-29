@@ -11,8 +11,6 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -35,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPersistorImpl {
-  private static final TCLogger logger                          = TCLogging.getLogger(EvictionTransactionPersistorImpl.class);
   private static final String EVICTION_TRANSACTION              = "eviction-transaction";
 
   private final KeyValueStorage<ServerTransactionID, TransactionBatchContext> evictionTransactionStorage;
