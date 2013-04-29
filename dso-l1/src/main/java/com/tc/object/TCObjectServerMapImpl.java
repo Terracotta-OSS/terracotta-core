@@ -327,9 +327,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     synchronized (this.localLock) {
       item = getValueUnlockedFromCache(key);
       if (item != null) { return item.getValueObject(); }
-
+    }
       Object value = getValueForKeyFromServer(map, key, true);
-
+    synchronized (this.localLock) {
       if (value != null) {
         updateLocalCacheIfNecessary(key, value);
       }
@@ -458,23 +458,26 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private Object lookupValue(final CompoundResponse value) throws TCObjectNotFoundException, AbortedOperationException {
       try {
+        Object returnValue = null;
         if (value.getData() instanceof ObjectID) {
           ObjectID oid = (ObjectID) value.getData();
           if ( oid.isNull() ) {
             return null;
           }
-          Object r = this.objectManager.lookupObjectQuiet(oid);
-          if (r instanceof ExpirableMapEntry) {
-            ExpirableMapEntry expirableMapEntry = (ExpirableMapEntry)r;
-            expirableMapEntry.setCreationTime(value.getCreationTime());
-            expirableMapEntry.setLastAccessedTime(value.getLastAccessedTime());
-            expirableMapEntry.setTimeToIdle(value.getTimeToIdle());
-            expirableMapEntry.setTimeToLive(value.getTimeToLive());
-          }
-          return r;
+          returnValue = this.objectManager.lookupObjectQuiet(oid);
         } else {
-          return this.objectManager.addLocalPrefetch((DNA)value.getData());
+          returnValue = this.objectManager.addLocalPrefetch((DNA)value.getData());
         }
+        
+        if (returnValue instanceof ExpirableMapEntry) {
+          ExpirableMapEntry expirableMapEntry = (ExpirableMapEntry)returnValue;
+          expirableMapEntry.setCreationTime(value.getCreationTime());
+          expirableMapEntry.setLastAccessedTime(value.getLastAccessedTime());
+          expirableMapEntry.setTimeToIdle(value.getTimeToIdle());
+          expirableMapEntry.setTimeToLive(value.getTimeToLive());
+        }
+        
+        return returnValue;
       } catch (final ClassNotFoundException e) {
         logger.warn("Got ClassNotFoundException for objectId: " + value + ". Ignoring exception and returning null");
         return null;
