@@ -63,7 +63,6 @@ public class EvictionTransactionPersistorImpl extends NullEvictionTransactionPer
   @Override
   public void removeTransaction(ServerTransactionID serverTransactionID) {
     if (evictionTransactionStorage.containsKey(serverTransactionID)) {
-      logger.info("Removing server transaction id = " + serverTransactionID);
       evictionTransactionStorage.remove(serverTransactionID);
     }
   }
