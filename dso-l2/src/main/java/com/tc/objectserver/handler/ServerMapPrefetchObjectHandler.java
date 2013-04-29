@@ -43,42 +43,47 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
   }
   
   public void sendResponseForGetValue(ServerMapRequestPrefetchObjectsContext results) {
-    final ClientID clientID = results.getClientID();
-    final MessageChannel channel = getActiveChannel(clientID);
-    if (channel == null) {
-      this.logger.info("Client " + clientID + " is not active : Ignoring sending response for getValue() ");
-      return;
-    }
+    try {
+      final ClientID clientID = results.getClientID();
+      final MessageChannel channel = getActiveChannel(clientID);
 
-    final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
-        .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
-    int count = results.prefetchObjects(clientManager);
-    if ( count > 0 ) {
-      this.globalObjectRequestCounter.increment(count);
-      this.channelStats.notifyReadOperations(channel, count);
-    }
-    responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
-    responseMessage.send();
-    results.releaseAll(this.objectManager);
-    if ( logger.isDebugEnabled() ) {
-      debugStats(results);
+      if (channel == null) {
+        this.logger.info("Client " + clientID + " is not active : Ignoring sending response for getValue() ");
+        results.releaseAll(this.objectManager);
+        return;
+      }
+
+      final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
+          .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
+      int count = results.prefetchObjects(clientManager);
+      if ( count > 0 ) {
+        this.globalObjectRequestCounter.increment(count);
+        this.channelStats.notifyReadOperations(channel, count);
+      }
+      responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
+      responseMessage.send();
+      if ( logger.isDebugEnabled() ) {
+        debugStats(results);
+      }
+    } finally {
+      results.releaseAll(this.objectManager);
     }
   } 
 
-    private void debugStats(ServerMapRequestPrefetchObjectsContext results) {
-      for ( ServerMapGetValueResponse msg : results.getAnswers() ) {
-        logger.debug(msg);
-      }
+  private void debugStats(ServerMapRequestPrefetchObjectsContext results) {
+    for ( ServerMapGetValueResponse msg : results.getAnswers() ) {
+      logger.debug(msg);
     }
+  }
 
-    private MessageChannel getActiveChannel(final ClientID clientID) {
-      try {
-        return this.channelManager.getActiveChannel(clientID);
-      } catch (final NoSuchChannelException e) {
-        this.logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
-        return null;
-      }
+  private MessageChannel getActiveChannel(final ClientID clientID) {
+    try {
+      return this.channelManager.getActiveChannel(clientID);
+    } catch (final NoSuchChannelException e) {
+      this.logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
+      return null;
     }
+  }
 
   @Override
   public void initialize(final ConfigurationContext context) {
