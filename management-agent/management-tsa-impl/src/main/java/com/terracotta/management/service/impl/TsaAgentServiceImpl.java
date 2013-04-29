@@ -117,6 +117,7 @@ public class TsaAgentServiceImpl implements AgentService {
     ame.setAvailable(true);
 
     ame.setSecured(TSAConfig.isSslEnabled());
+    ame.setSslEnabled(TSAConfig.isSslEnabled());
     ame.setLicensed(tsaManagementClientService.isEnterpriseEdition());
     ame.setNeedClientAuth(false);
     ame.setEnabled(true);
