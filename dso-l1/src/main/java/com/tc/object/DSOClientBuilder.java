@@ -53,7 +53,6 @@ import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
@@ -180,4 +179,5 @@ public interface DSOClientBuilder {
   RemoteResourceManager createRemoteResourceManager(DSOClientMessageChannel dsoChannel,
                                                     AbortableOperationManager abortableOperationManager);
 
+  ServerEventListenerManager createServerEventListenerManager(DSOClientMessageChannel dsoChannel);
 }

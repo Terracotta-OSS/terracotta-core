@@ -26,7 +26,7 @@ public class BrakingEvictionTrigger extends AbstractEvictionTrigger {
     public ServerMapEvictionContext collectEvictionCandidates(int targetMax, String className, EvictableMap map, ClientObjectReferenceSet clients) {
         int size = map.getSize();
         
-        Map sampled = map.getRandomSamples(Math.round(size*turns/10000f),clients);
+        Map sampled = map.getRandomSamples(Math.round(size*turns/10000f),clients, SamplingType.FOR_EVICTION);
 
         return createEvictionContext(className, sampled);
     }

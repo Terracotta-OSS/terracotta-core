@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
@@ -61,7 +60,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V>, NotClearable {
@@ -82,14 +80,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private volatile int                                          maxTTLSeconds;
   private volatile int                                          maxCountInCluster;
   private volatile boolean                                      evictionEnabled;
-  private volatile boolean                                      broadcastEvictions;
 
   // unclustered local fields
   protected volatile TCObjectServerMap<Object>                  tcObjectServerMap;
   protected volatile L1ServerMapLocalCacheStore                 l1ServerMapLocalCacheStore;
   protected volatile LockStrategy                               lockStrategy;
   private volatile String                                       instanceDsoLockName = null;
-  private volatile CopyOnWriteArraySet<ToolkitCacheListener<K>> listeners;
   private volatile Collection<V>                                values              = null;
   private volatile TimeSource                                   timeSource;
   private final String                                          name;
@@ -98,11 +94,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
   private final LOCK_STRATEGY                                   lockMethod;
-
-  public ServerMap(Configuration config, String name, boolean broadcastEvictions) {
-    this(config, name);
-    this.broadcastEvictions = broadcastEvictions;
-  }
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -135,7 +126,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     this.maxTTISeconds = (Integer) InternalCacheConfigurationType.MAX_TTI_SECONDS.getValueIfExistsOrDefault(config);
     this.maxTTLSeconds = (Integer) InternalCacheConfigurationType.MAX_TTL_SECONDS.getValueIfExistsOrDefault(config);
 
-    this.listeners = new CopyOnWriteArraySet<ToolkitCacheListener<K>>();
     this.timeSource = new SystemTimeSource();
     this.compressionEnabled = (Boolean) InternalCacheConfigurationType.COMPRESSION_ENABLED
         .getExistingValueOrException(config);
@@ -395,21 +385,13 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void expire(Object key, SerializedMapValue serializedMapValue, GetType getType) {
-    final boolean notify;
     // perform local get for unsafe operations
     V deserializedValue = deserialize(key, serializedMapValue, isUnsafeGet(getType));
     MetaData metaData = getEvictRemoveMetaData();
 
     if (getType == GetType.LOCKED) {
-
       // XXX - call below uses its own metadata; evict md not preserved!
       boolean removed = remove(key, deserializedValue);
-
-      if (removed) {
-        notify = true;
-      } else {
-        notify = false;
-      }
     } else {
       expireConcurrentLock.lock();
       try {
@@ -423,11 +405,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
       } finally {
         expireConcurrentLock.unlock();
-        notify = true;
       }
-    }
-    if (notify) {
-      notifyElementExpired((K) key);
     }
   }
 
@@ -975,30 +953,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void evictedInServer(boolean notifyEvicted, Object key) {
-    internalRemoveFromLocalCache(key);
-    if (notifyEvicted) {
-      notifyElementEvicted((K) key);
-    }
-  }
-
-  private void internalRemoveFromLocalCache(Object key) {
-    tcObjectServerMap.evictedInServer(key);
-  }
-
-  private void notifyElementEvicted(K key) {
-    for (ToolkitCacheListener<K> listener : listeners) {
-      listener.onEviction(key);
-    }
-  }
-
-  private void notifyElementExpired(K key) {
-    for (ToolkitCacheListener<K> listener : listeners) {
-      listener.onExpiration(key);
-    }
-  }
-
-  @Override
   public void unlockedClear() {
     tcObjectServerMap.doClear(this);
     MetaData metaData = createClearSearchMetaData();
@@ -1183,16 +1137,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void addCacheListener(ToolkitCacheListener<K> listener) {
-    listeners.add(listener);
-  }
-
-  @Override
-  public void removeCacheListener(ToolkitCacheListener<K> listener) {
-    listeners.remove(listener);
-  }
-
-  @Override
   public void cleanupOnDestroy() {
     MetaData destroyMetadata = createClearSearchMetaData();
     if (destroyMetadata != null) {
@@ -1304,20 +1248,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
           ServerMapApplicator.EVICTION_ENABLED_FIELDNAME, this.evictionEnabled });
     }
-  }
-
-  @Override
-  public void setBroadcastEvictions(boolean broadcastEvictions) {
-    if (this.broadcastEvictions != broadcastEvictions) {
-      this.broadcastEvictions = broadcastEvictions;
-      platformService.logicalInvoke(this, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
-          ServerMapApplicator.BROADCAST_EVICTIONS_FIELDNAME, this.broadcastEvictions });
-    }
-  }
-
-  @Override
-  public boolean isBroadcastEvictions() {
-    return broadcastEvictions;
   }
 
   private boolean isSearchable() {

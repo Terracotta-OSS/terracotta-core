@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.objectserver.impl.SamplingType;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Map;
@@ -17,7 +18,7 @@ public interface EvictableMap {
 
   int getTTISeconds();
 
-  Map<Object, EvictableEntry> getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
+  Map<Object, EvictableEntry> getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet, final SamplingType samplingType);
 
   boolean startEviction();
 
@@ -28,6 +29,4 @@ public interface EvictableMap {
   String getCacheName();
 
   boolean isEvictionEnabled();
-
-  boolean isBroadcastEvictions();
 }

@@ -9,6 +9,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
@@ -312,4 +314,13 @@ public class PlatformServiceImpl implements PlatformService {
     return false;
   }
 
+  @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    manager.registerServerEventListener(destination, listenTo);
+  }
+
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination) {
+    manager.unregisterServerEventListener(destination);
+  }
 }

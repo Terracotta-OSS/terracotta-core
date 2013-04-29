@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
@@ -43,10 +42,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   V putIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
   V get(Object key, boolean quiet);
-
-  void addCacheListener(ToolkitCacheListener<K> listener);
-
-  void removeCacheListener(ToolkitCacheListener<K> listener);
 
   void setConfigField(String name, Object value);
 
@@ -103,7 +98,4 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void setConfigFieldInternal(String fieldChanged, Object changedValue);
 
-  void setBroadcastEvictions(boolean broadcastEvictions);
-
-  boolean isBroadcastEvictions();
 }

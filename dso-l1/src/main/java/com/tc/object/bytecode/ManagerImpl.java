@@ -23,11 +23,14 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
+import com.tc.object.ServerEventListenerManager;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -111,6 +114,7 @@ public class ManagerImpl implements Manager {
   private final PlatformServiceImpl                   platformService;
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
+  private ServerEventListenerManager serverEventListenerManager;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -265,6 +269,7 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.lockManager = ManagerImpl.this.dso.getLockManager();
         ManagerImpl.this.searchRequestManager = ManagerImpl.this.dso.getSearchRequestManager();
         ManagerImpl.this.methodCallManager = ManagerImpl.this.dso.getDmiManager();
+        ManagerImpl.this.serverEventListenerManager = ManagerImpl.this.dso.getServerEventListenerManager();
 
         ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
                                                                      ManagerImpl.this.dso,
@@ -985,4 +990,13 @@ public class ManagerImpl implements Manager {
     dso.getRemoteResourceManager().throttleIfMutationIfNecessary(object);
   }
 
+  @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    serverEventListenerManager.registerListener(destination, listenTo);
+  }
+
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination) {
+    serverEventListenerManager.unregisterListener(destination);
+  }
 }

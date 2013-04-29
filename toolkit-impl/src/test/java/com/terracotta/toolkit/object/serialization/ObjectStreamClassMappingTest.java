@@ -11,6 +11,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -323,6 +325,16 @@ public class ObjectStreamClassMappingTest {
     @Override
     public boolean isLockedBeforeRejoin() {
       return false;
+    }
+
+    @Override
+    public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+      //
+    }
+
+    @Override
+    public void unregisterServerEventListener(final ServerEventDestination destination) {
+      //
     }
 
   }

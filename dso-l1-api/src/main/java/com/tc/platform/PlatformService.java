@@ -8,6 +8,8 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -114,4 +116,7 @@ public interface PlatformService {
 
   boolean isExplicitlyLocked();
 
+  void registerServerEventListener(ServerEventDestination destination, Set<ServerEventType> listenTo);
+
+  void unregisterServerEventListener(ServerEventDestination destination);
 }

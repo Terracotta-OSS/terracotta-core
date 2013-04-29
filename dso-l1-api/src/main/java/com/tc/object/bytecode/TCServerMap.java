@@ -5,5 +5,4 @@ package com.tc.object.bytecode;
 
 public interface TCServerMap extends Manageable {
 
-  public void evictedInServer(boolean notifyEvicted, Object key);
 }

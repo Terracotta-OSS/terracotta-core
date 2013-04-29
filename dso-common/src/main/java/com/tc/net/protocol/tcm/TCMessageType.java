@@ -71,7 +71,6 @@ public final class TCMessageType {
   public static final int           TYPE_GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE     = 59;
   public static final int           TYPE_TUNNELED_DOMAINS_CHANGED_MESSAGE             = 60;
   public static final int           TYPE_OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE = 61;
-  public static final int           TYPE_EVICTION_SERVER_MAP_BROADCAST_MESSAGE        = 62;
   public static final int           TYPE_GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE      = 63;
   public static final int           TYPE_GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE     = 64;
   public static final int           TYPE_SEARCH_QUERY_REQUEST_MESSAGE                 = 65;
@@ -81,6 +80,9 @@ public final class TCMessageType {
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
   public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
+  public static final int           TYPE_REGISTER_SERVER_EVENT_LISTENER_MESSAGE       = 72;
+  public static final int           TYPE_UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE     = 73;
+  public static final int           TYPE_SERVER_EVENT_MESSAGE                         = 74;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
@@ -130,7 +132,6 @@ public final class TCMessageType {
   public static final TCMessageType GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE             = new TCMessageType();
   public static final TCMessageType TUNNELED_DOMAINS_CHANGED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE      = new TCMessageType();
-  public static final TCMessageType EVICTION_SERVER_MAP_BROADCAST_MESSAGE             = new TCMessageType();
   public static final TCMessageType GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType SEARCH_QUERY_REQUEST_MESSAGE                      = new TCMessageType();
@@ -139,6 +140,9 @@ public final class TCMessageType {
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
   public static final TCMessageType RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE           = new TCMessageType();
+  public static final TCMessageType REGISTER_SERVER_EVENT_LISTENER_MESSAGE            = new TCMessageType();
+  public static final TCMessageType UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE          = new TCMessageType();
+  public static final TCMessageType SERVER_EVENT_MESSAGE                              = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return typeMap.get(i);

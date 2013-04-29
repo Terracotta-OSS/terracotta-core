@@ -12,6 +12,8 @@ import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -468,6 +470,16 @@ public class NullManager implements Manager {
 
   @Override
   public void commitAtomicTransaction(LockID lock, LockLevel level) {
+    //
+  }
+
+  @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    //
+  }
+
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination) {
     //
   }
 }

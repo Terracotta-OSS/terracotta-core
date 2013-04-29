@@ -38,7 +38,6 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
   public static final String MAX_TTL_SECONDS_FIELDNAME      = "maxTTLSeconds";
   public static final String MAX_COUNT_IN_CLUSTER_FIELDNAME = "maxCountInCluster";
   public static final String EVICTION_ENABLED_FIELDNAME     = "evictionEnabled";
-  public static final String BROADCAST_EVICTIONS_FIELDNAME  = "broadcastEvictions";
   public static final String COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
   public static final String COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
 
@@ -58,7 +57,6 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, serverMap.getMaxTTLSeconds());
     writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, serverMap.getMaxCountInCluster());
     writer.addPhysicalAction(EVICTION_ENABLED_FIELDNAME, serverMap.isEvictionEnabled());
-    writer.addPhysicalAction(BROADCAST_EVICTIONS_FIELDNAME, serverMap.isBroadcastEvictions());
     writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, serverMap.isCompressionEnabled());
     writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, serverMap.isCopyOnReadEnabled());
   }
@@ -92,8 +90,6 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
         } else if (EVICTION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
           config.setBoolean(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME,
               (Boolean)physicalAction.getObject());
-        } else if (BROADCAST_EVICTIONS_FIELDNAME.equals(physicalAction.getFieldName())) {
-          broadcastEvictions = (Boolean)physicalAction.getObject();
         } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
           config.setBoolean(ToolkitConfigFields.COMPRESSION_ENABLED_FIELD_NAME,
               (Boolean) physicalAction.getObject());
@@ -122,7 +118,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
         }
       }
       config.setString(ToolkitConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
-      return new ServerMap(config, name, broadcastEvictions);
+      return new ServerMap(config, name);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }

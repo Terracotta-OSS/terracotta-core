@@ -20,6 +20,7 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
+import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -149,6 +150,11 @@ public class MockChannel implements DSOClientMessageChannel {
   @Override
   public GroupID[] getGroupIDs() {
     return this.groups;
+  }
+
+  @Override
+  public ServerEventListenerMessageFactory getServerEventListenerMessageFactory() {
+    throw new ImplementMe();
   }
 
   @Override

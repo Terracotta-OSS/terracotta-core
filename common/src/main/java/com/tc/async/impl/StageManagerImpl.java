@@ -46,6 +46,7 @@ public class StageManagerImpl implements StageManager {
   private final ThreadGroup        group;
   private String[]                 stageNames    = new String[] {};
   private QueueFactory             queueFactory  = null;
+  private volatile boolean         started;
 
   public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
@@ -98,6 +99,10 @@ public class StageManagerImpl implements StageManager {
   @Override
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadsToQueueRatio,
                                         int maxSize) {
+    if (started) {
+      throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
+    }
+
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
     Stage s = new StageImpl(loggerProvider, name, handler, threads, threadsToQueueRatio, group, this.queueFactory,
                             capacity);
@@ -129,6 +134,7 @@ public class StageManagerImpl implements StageManager {
       Stage s = (Stage) element;
       s.start(context);
     }
+    started = true;
   }
 
   @Override
@@ -143,6 +149,7 @@ public class StageManagerImpl implements StageManager {
       s.destroy();
     }
     stages.clear();
+    started = false;
   }
 
   @Override

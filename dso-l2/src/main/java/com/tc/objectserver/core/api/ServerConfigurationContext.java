@@ -78,13 +78,13 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_MAP_PREFETCH_STAGE                           = "server_map_prefetch_stage";
   public static final String SERVER_MAP_CAPACITY_EVICTION_STAGE                 = "server_map_capacity_eviction_stage";
   public static final String SERVER_MAP_EVICTION_PROCESSOR_STAGE                = "server_map_eviction_processor_stage";
-  public static final String SERVER_MAP_EVICTION_BROADCAST_STAGE                = "server_map_eviction_broadcast_stage";
   public static final String SEARCH_EVENT_STAGE                                 = "search_event_stage";
   public static final String SEARCH_QUERY_REQUEST_STAGE                         = "search_query_request_stage";
   public static final String INVALIDATE_OBJECTS_STAGE                           = "invalidate_objects_stage";
   public static final String VALIDATE_OBJECTS_STAGE                             = "validate_objects_stage";
   public static final String GARBAGE_COLLECT_STAGE                              = "garbage_collect_stage";
   public static final String LOW_WATERMARK_CALLBACK_STAGE                       = "low_watermark_callback_stage";
+  public static final String REGISTER_SERVER_EVENT_LISTENER_STAGE               = "register_server_event_listener_stage";
 
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";

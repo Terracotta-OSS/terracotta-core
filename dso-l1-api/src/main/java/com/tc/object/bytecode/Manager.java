@@ -11,6 +11,8 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -390,4 +392,8 @@ public interface Manager extends TerracottaLocking {
   void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException;
 
   void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException;
+
+  void registerServerEventListener(ServerEventDestination destination, Set<ServerEventType> listenTo);
+
+  void unregisterServerEventListener(ServerEventDestination destination);
 }

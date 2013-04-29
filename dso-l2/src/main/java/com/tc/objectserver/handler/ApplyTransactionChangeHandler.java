@@ -24,6 +24,8 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.event.ServerEventPublisher;
+import com.tc.objectserver.event.ServerEventRecorder;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -63,13 +65,16 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private final ThreadLocal<CommitContext> localCommitContext = new ThreadLocal<CommitContext>();
   private GarbageCollectionManager garbageCollectionManager;
+  private final ServerEventPublisher serverEventPublisher;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
                                        final GlobalTransactionManager gtxm,
                                        final TransactionProvider persistenceTransactionProvider,
-                                       final TaskRunner taskRunner) {
+                                       final TaskRunner taskRunner,
+                                       final ServerEventPublisher serverEventPublisher) {
     this.instanceMonitor = instanceMonitor;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
+    this.serverEventPublisher = serverEventPublisher;
     final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
     timer.scheduleAtFixedRate(new Runnable() {
       @Override
@@ -96,6 +101,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete());
       txnObjectMgr.applyTransactionComplete(applyInfo);
+      publishModifications(applyInfo);
     } else {
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
@@ -124,6 +130,11 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     commit(atc, applyInfo);
+  }
+
+  private void publishModifications(final ApplyTransactionInfo applyInfo) {
+    final ServerEventRecorder recorder = applyInfo.getServerEventRecorder();
+    serverEventPublisher.post(recorder.getEvents());
   }
 
   private void begin() {

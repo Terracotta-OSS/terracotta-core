@@ -102,7 +102,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
                              Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME,
                              Boolean.valueOf(false), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.BROADCAST_EVICTIONS_FIELDNAME, false, false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003), 0L, 0L, 0L, 0L });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004), 0L, 0L, 0L, 0L });

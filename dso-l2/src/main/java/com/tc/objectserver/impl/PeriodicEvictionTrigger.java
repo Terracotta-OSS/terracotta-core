@@ -188,19 +188,21 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map, ClientObjectReferenceSet clients) {
+    public ServerMapEvictionContext collectEvictionCandidates(int max, String className, EvictableMap map,
+                                                              ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
-        
+
+        final SamplingType samplingType = (dumpLive) ? SamplingType.FOR_EVICTION : SamplingType.FOR_EXPIRATION;
         Map<Object, EvictableEntry> grabbed = ( !stop ) ?
-            map.getRandomSamples(samples, (dumpLive) ? clients : noReference) :
+            map.getRandomSamples(samples, (dumpLive) ? clients : noReference, samplingType) :
             Collections.<Object,EvictableEntry>emptyMap();
 
         sampled = grabbed.size();
-        
+
         if ( dumpLive ) {
             overflow += grabbed.size();
         }
-        
+
         return createEvictionContext(className, grabbed);
     }
 

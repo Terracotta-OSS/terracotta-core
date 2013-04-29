@@ -4,7 +4,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.Sink;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -14,10 +13,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.EvictableEntry;
-import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -26,9 +24,9 @@ import com.tc.objectserver.persistence.EvictionTransactionPersistorImpl;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchManager;
-import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -77,7 +75,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
                                                                                   .synchronizedSet(new HashSet());
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
 
-  private Sink                                evictionBroadcastSink;
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
   private EvictionTransactionPersistor        evictionTransactionPersistor;
@@ -95,7 +92,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    this.evictionBroadcastSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE).getSink();
     this.groupManager = scc.getL2Coordinator().getGroupManager();
     this.transactionBatchManager = scc.getTransactionBatchManager();
 
@@ -172,24 +168,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     }
   }
 
-  private void broadcastEvictedEntries(final ObjectID oid, final Map candidates) {
-    boolean broadcastEvictions = false; // do not broadcast keys by default
-    final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
-    if (mo != null) {
-      final ManagedObjectState state = mo.getManagedObjectState();
-      try {
-        final EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-        broadcastEvictions = ev.isBroadcastEvictions();
-      } finally {
-        this.objectManager.releaseReadOnly(mo);
-      }
-    }
-
-    // maybe we can batch up the broadcasts
-    this.evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(
-        oid, Collections.unmodifiableSet(candidates.keySet()), broadcastEvictions));
-  }
-
   void evictFrom(final ObjectID oid, final Map<Object, EvictableEntry> candidates, final String className, final String cacheName) {
     if ( candidates.isEmpty() ) {
       notifyEvictionCompletedFor(oid);
@@ -213,7 +191,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     if (EVICTOR_LOGGING) {
       logger.debug("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
     }
-    broadcastEvictedEntries(oid, candidates);
   }
 
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {

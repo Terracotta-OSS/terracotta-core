@@ -7,6 +7,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.ServerEventType;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -15,6 +16,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.impl.SamplingType;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
@@ -47,7 +49,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public static final String    COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
   public static final String    COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
   public static final String    EVICTION_ENABLED_FIELDNAME     = "evictionEnabled";
-  public static final String    BROADCAST_EVICTIONS_FIELDNAME  = "broadcastEvictions";
 
   protected int                 dsoLockType;
 
@@ -63,6 +64,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   // This is a transient field tracking the status of the eviction for this CDSM
   private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+  private SamplingType samplingType = SamplingType.FOR_EVICTION;
   private Iterator<Object> evictionIterator = null;
 
   private boolean        invalidateOnChange;
@@ -71,7 +73,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        evictionEnabled;
-  private boolean        broadcastEvictions;
   private boolean        localCacheEnabled;
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
@@ -88,7 +89,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.compressionEnabled = in.readBoolean();
     this.copyOnReadEnabled = in.readBoolean();
     this.evictionEnabled = in.readBoolean();
-    this.broadcastEvictions = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
@@ -132,7 +132,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, this.compressionEnabled);
     writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, this.copyOnReadEnabled);
     writer.addPhysicalAction(EVICTION_ENABLED_FIELDNAME, this.evictionEnabled);
-    writer.addPhysicalAction(BROADCAST_EVICTIONS_FIELDNAME, this.broadcastEvictions);
   }
 
   @Override
@@ -145,7 +144,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       if (action instanceof PhysicalAction) {
         applyPhysicalAction((PhysicalAction)action, objectID, applyInfo);
       } else { // LogicalAction
-        // notify subscribers about the mutation operation
         eventCount++;
 
         final LogicalAction logicalAction = (LogicalAction)action;
@@ -193,8 +191,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       this.copyOnReadEnabled = (Boolean)action.getObject();
     } else if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
       this.evictionEnabled = (Boolean)action.getObject();
-    } else if (BROADCAST_EVICTIONS_FIELDNAME.equals(fieldName)) {
-      this.broadcastEvictions = (Boolean)action.getObject();
     } else {
       throw new AssertionError("unexpected field name: " + fieldName);
     }
@@ -212,8 +208,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         final boolean boolValue = (Boolean) params[1];
         if (EVICTION_ENABLED_FIELDNAME.equals(fieldName)) {
           this.evictionEnabled = boolValue;
-        } else if (BROADCAST_EVICTIONS_FIELDNAME.equals(fieldName)) {
-          broadcastEvictions = boolValue;
         }
         break;
       case SerializationUtil.INT_FIELD_CHANGED:
@@ -243,6 +237,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         applyReplace(applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
+        applyInfo.getServerEventRecorder().reconsiderRemovals(samplingType);
         evictionCompleted();
 //  make sure we don't need more capacity eviction to get to target
         startCapacityEvictionIfNeccessary(applyInfo);
@@ -291,17 +286,20 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   protected Object applyPut(final ApplyTransactionInfo applyInfo, Object[] params) {
-    Object key = params[0];
-    CDSMValue value;
+    final Object key = params[0];
+    final ObjectID oid = (ObjectID)params[1];
+    final CDSMValue value;
     if (params.length == 6) {
-      value = new CDSMValue((ObjectID) params[1], (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
+      value = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
     } else {
-      value = new CDSMValue((ObjectID) params[1], 0, 0, 0, 0);
+      value = new CDSMValue(oid, 0, 0, 0, 0);
     }
 
-    CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
+    final CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
     addValue(applyInfo, params[1], old != null);
     startCapacityEvictionIfNeccessary(applyInfo);
+    // collect PUT modifications for futher broadcasting
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT, key, oid, cacheName);
     return old;
   }
   
@@ -363,7 +361,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, (ObjectID)value, cacheName);
     }
+  }
+
+  @Override
+  protected Object applyRemove(final ApplyTransactionInfo applyInfo, final Object[] params) {
+    final Object key = params[0];
+    final Object old = super.applyRemove(applyInfo, params);
+    if (old instanceof CDSMValue) {
+      final ObjectID objectId = ((CDSMValue)old).getObjectID();
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
+    }
+    return old;
   }
 
   private void applySetLastAccessedTime(ApplyTransactionInfo applyInfo, Object[] params) {
@@ -390,7 +400,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     out.writeBoolean(compressionEnabled);
     out.writeBoolean(copyOnReadEnabled);
     out.writeBoolean(evictionEnabled);
-    out.writeBoolean(broadcastEvictions);
   }
 
   public CDSMValue getValueForKey(final Object portableKey) {
@@ -405,7 +414,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
            && this.maxTTLSeconds == mmo.maxTTLSeconds && this.invalidateOnChange == mmo.invalidateOnChange
            && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled
            && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled
-           && this.evictionEnabled == mmo.evictionEnabled && this.broadcastEvictions == mmo.broadcastEvictions;
+           && this.evictionEnabled == mmo.evictionEnabled;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
@@ -424,11 +433,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public boolean isEvictionEnabled() {
     return evictionEnabled;
-  }
-
-  @Override
-  public boolean isBroadcastEvictions() {
-    return broadcastEvictions;
   }
 
   @Override
@@ -482,13 +486,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  public Map<Object, EvictableEntry> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-      if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
-          throw new AssertionError(this.evictionStatus);
-      } else {
- //     it's locked.  go for it
-        this.evictionStatus = EvictionStatus.SAMPLED;
-      }
+  public Map<Object, EvictableEntry> getRandomSamples(final int count,
+                                                      final ClientObjectReferenceSet clientObjectRefSet,
+                                                      final SamplingType samplingType) {
+    this.samplingType = samplingType;
+    if (this.evictionStatus == EvictionStatus.NOT_INITIATED) {
+      throw new AssertionError(this.evictionStatus);
+    } else {
+      // it's locked. go for it
+      this.evictionStatus = EvictionStatus.SAMPLED;
+    }
     final Map<Object, EvictableEntry> samples = new HashMap<Object, EvictableEntry>(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
@@ -499,12 +506,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         evictionIterator = references.keySet().iterator();
       }
       final Object k = evictionIterator.next();
-      if ( k == null ) {
-          throw new AssertionError("key is not null");
+      if (k == null) {
+        throw new AssertionError("key is not null");
       }
       if (r.nextInt(100) < chance) {
         CDSMValue value = getValueForKey(k);
-        if (value == null || serverMapEvictionClientObjectRefSet.contains(value.getObjectID())) {
+        if (value == null || clientObjectRefSet.contains(value.getObjectID())) {
           continue;
         }
         samples.put(k, value);
@@ -513,10 +520,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       }
     }
     if (samples.size() < count) {
-      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
+      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext(); ) {
         final Object k = i.next();
         CDSMValue v = getValueForKey(k);
-        if (v == null || serverMapEvictionClientObjectRefSet.contains(v.getObjectID())) {
+        if (v == null || clientObjectRefSet.contains(v.getObjectID())) {
           continue;
         }
         samples.put(k, v);
@@ -543,7 +550,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     result = prime * result + (compressionEnabled ? 1231 : 1237);
     result = prime * result + (copyOnReadEnabled ? 1231 : 1237);
     result = prime * result + (evictionEnabled ? 1231 : 1237);
-    result = prime * result + (broadcastEvictions ? 1231 : 1237);
     return result;
   }
 

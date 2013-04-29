@@ -73,8 +73,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
 
     // lets try and get smarter about this in the future but for now, just bring it back to capacity
     final int sample = boundsCheckSampleSize(size - maxParam);
-    Map<Object, EvictableEntry> samples = (sample > 0) ? map.getRandomSamples(sample, clients) : Collections
-        .<Object, EvictableEntry> emptyMap();
+    Map<Object, EvictableEntry> samples = (sample > 0) ? map.getRandomSamples(sample, clients, SamplingType.FOR_EVICTION)
+        : Collections.<Object, EvictableEntry>emptyMap();
     // didn't get the sample count we wanted. wait for a clientobjectidset refresh, only once and try it again
     try {
       return createEvictionContext(className, samples);

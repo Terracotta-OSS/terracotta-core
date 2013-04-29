@@ -11,6 +11,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
@@ -84,6 +86,16 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   private void assertNotLockedBeforeRejoin() {
     if (isLockedBeforeRejoin()) { throw new RejoinException("Lock is not valid after rejoin"); }
+  }
+
+  @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    delegate.registerServerEventListener(destination, listenTo);
+  }
+
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination) {
+    delegate.unregisterServerEventListener(destination);
   }
 
   @Override
