@@ -86,7 +86,7 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
     public int prefetchObjects(ClientStateManager state) {
       int count = 0;
       for ( ServerMapGetValueResponse resp : answers ) {
-        for ( ObjectID oid : resp.getObjectIDs() ) {
+        for ( ObjectID oid : new ArrayList<ObjectID>(resp.getObjectIDs()) ) {
           ManagedObject mo = lookedUp.get(oid);
           if ( mo != null && !state.hasReference(clientid, oid) ) {
             state.addReference(clientid, oid);
