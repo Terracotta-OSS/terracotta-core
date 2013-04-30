@@ -30,6 +30,8 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
   public void addRoot(String name, ObjectID id, NodeID nodeID);
 
   public void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID);
+  
+  public void addObject(DNA dna);
 
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID);
 

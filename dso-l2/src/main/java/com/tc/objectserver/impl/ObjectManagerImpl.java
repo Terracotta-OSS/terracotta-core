@@ -81,7 +81,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final PersistentManagedObjectStore                    objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
   private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
-  private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
   private final PendingList                                     pending         = new PendingList();
   private final AtomicBoolean                                   inShutdown      = new AtomicBoolean();
   private final ObjectManagerStatsListener                      stats;
@@ -146,7 +145,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     out.indent().print("collector: ").visit(this.collector).flush();
     out.indent().print("references: ").visit(this.references).flush();
     out.indent().print("checkedOutCount: " + this.checkedOutCount.get()).flush();
-    out.indent().print("prefetched: " + this.preFetchedCount.get()).flush();
     out.indent().print("pending: ").visit(this.pending).flush();
     out.indent().print("objectStore: ").duplicateAndIndent().visit(this.objectStore).flush();
     out.indent().print("stateManager: ").duplicateAndIndent().visit(this.stateManager).flush();

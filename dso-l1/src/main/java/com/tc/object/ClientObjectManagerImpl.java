@@ -535,7 +535,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (objectID.isNull()) { return null; }
     Object o = null;
     while (o == null) {
-      final TCObject tco = lookup(objectID, null, parentContext, noDepth, quiet);
+      final TCObject tco = lookup(objectID, parentContext, noDepth, quiet);
       if (tco == null) { 
         throw new AssertionError("TCObject was null for " + objectID);// continue;
       }
@@ -581,12 +581,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   @Override
   public TCObject lookup(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
-    return lookup(id, null, null, false, false);
+    return lookup(id, null, false, false);
   }
 
   @Override
   public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
-    return lookup(id, null, null, false, true);
+    return lookup(id, null, false, true);
   }
   
   private synchronized ObjectLookupState startLookup(ObjectID oid) {
@@ -608,7 +608,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return ols;
   }
   
-  private TCObject lookup(final ObjectID id, DNA dna, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
+  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
       throws AbortedOperationException, ClassNotFoundException {
     TCObject obj = null;
     ObjectLookupState ols = null;
@@ -636,11 +636,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         Assert.assertNull(obj);
         markCreateInProgress(ols, lookupContext);
         try {
-          if ( dna == null ) {
-            dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
+          DNA dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
               : (parentContext == null ? this.remoteObjectManager.retrieve(id) : this.remoteObjectManager
                   .retrieveWithParentContext(id, parentContext));
-          }
           obj = createObjectWithDNA(dna);
         } catch (AbortedOperationException t) {
           throw t;
@@ -688,7 +686,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   
   @Override
   public TCObject addLocalPrefetch(DNA dna) throws ClassNotFoundException, AbortedOperationException {
-    return lookup(dna.getObjectID(),dna,null,true,true);
+    remoteObjectManager.addObject(dna);
+    return lookup(dna.getObjectID(),null,true,true);
   }
 
   @Override

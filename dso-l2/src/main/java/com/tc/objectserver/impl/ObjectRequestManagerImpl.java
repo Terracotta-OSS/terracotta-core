@@ -208,12 +208,12 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
           // objects. Now we don't want to send those missing objects to clients. Its not really an issue as the
           // clients should never lookup those objects, but still why send them ? Same is true for client prefetched
           // objects.
-          logger.warn("Server Initiated lookup = " + lookupState + ". Ignoring Missing Objects : " + missingObjectIDs);
+//          logger.warn("Server Initiated lookup = " + lookupState + ". Ignoring Missing Objects : " + missingObjectIDs);
         } else {
           for (final Entry<ClientID, BatchAndSend> entry : messageMap.entrySet()) {
             final ClientID clientID = entry.getKey();
             final BatchAndSend batchAndSend = entry.getValue();
-            logger.warn("Sending missing ids: " + missingObjectIDs.size() + " , to client: " + clientID);
+//            logger.warn("Sending missing ids: " + missingObjectIDs.size() + " , to client: " + clientID);
             this.stateManager.removeReferences(clientID, missingObjectIDs, Collections.EMPTY_SET);
             batchAndSend.sendMissingObjects(missingObjectIDs);
           }

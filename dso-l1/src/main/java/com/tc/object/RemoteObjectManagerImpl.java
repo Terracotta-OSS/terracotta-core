@@ -552,8 +552,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
-  // Used only for testing
-  synchronized void addObject(final DNA dna) {
+  @Override
+  public synchronized void addObject(final DNA dna) {
     if (!this.removeObjects.contains(dna.getObjectID())) {
       basicAddObject(dna);
     }

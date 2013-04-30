@@ -90,6 +90,11 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   @Override
+  public void addObject(DNA dna) {
+    throw new ImplementMe();
+  }
+
+  @Override
   public void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     throw new ImplementMe();
   }
