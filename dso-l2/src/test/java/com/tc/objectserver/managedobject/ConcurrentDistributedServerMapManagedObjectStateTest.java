@@ -13,6 +13,7 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.objectserver.event.ServerEventRecorder;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Events;
@@ -69,23 +70,23 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     DNAWriter dnaWriter = mock(DNAWriter.class);
     state.dehydrate(oid, dnaWriter, DNAType.L2_SYNC);
 
-    verify(dnaWriter, times(11)).addPhysicalAction(anyString(), any());
-    verify(dnaWriter).addLogicalAction(SerializationUtil.PUT, new Object[]{"key1", value1.getObjectID(), value1.getCreationTime(),
-        value1.getLastAccessedTime(), value1.getTimeToIdle(), value1.getTimeToLive()});
-    verify(dnaWriter).addLogicalAction(SerializationUtil.PUT, new Object[]{"key2", value2.getObjectID(), value2.getCreationTime(),
-        value2.getLastAccessedTime(), value2.getTimeToIdle(), value2.getTimeToLive()});
+    verify(dnaWriter, times(10)).addPhysicalAction(anyString(), any());
+    verify(dnaWriter).addLogicalAction(SerializationUtil.PUT, new Object[] { "key1", value1.getObjectID(), value1.getCreationTime(),
+        value1.getLastAccessedTime(), value1.getTimeToIdle(), value1.getTimeToLive() });
+    verify(dnaWriter).addLogicalAction(SerializationUtil.PUT, new Object[] { "key2", value2.getObjectID(), value2.getCreationTime(),
+        value2.getLastAccessedTime(), value2.getTimeToIdle(), value2.getTimeToLive() });
   }
 
   public void testL1FaultDehydrate() throws Exception {
     DNAWriter dnaWriter = mock(DNAWriter.class);
     state.dehydrate(oid, dnaWriter, DNAType.L1_FAULT);
-    verify(dnaWriter, times(11)).addPhysicalAction(anyString(), any());
+    verify(dnaWriter, times(10)).addPhysicalAction(anyString(), any());
     verify(dnaWriter, never()).addLogicalAction(anyInt(), any(Object[].class));
   }
 
   public void testPut() throws Exception {
     Object key = "key";
-    CDSMValue value =  new CDSMValue(new ObjectID(2), 0, 0, 0, 0);
+    CDSMValue value = new CDSMValue(new ObjectID(2), 0, 0, 0, 0);
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { key, value.getObjectID() });
     verify(applyTransactionInfo, never()).deleteObject(any(ObjectID.class));
     verify(applyTransactionInfo).recordValue(value.getObjectID(), false);
@@ -104,7 +105,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
 
   public void testRemove() throws Exception {
     Object key = "key";
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE, new Object[]{ key });
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { key });
     verify(applyTransactionInfo, never()).deleteObject(any(ObjectID.class));
     verify(applyTransactionInfo, never()).invalidate(any(ObjectID.class), any(ObjectID.class));
 
@@ -112,7 +113,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     when(keyValueStorage.containsKey(key)).thenReturn(true);
     when(keyValueStorage.get(key)).thenReturn(oldValue);
 
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE, new Object[]{ key });
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE, new Object[] { key });
     verify(keyValueStorage, times(2)).remove(key);
     verify(applyTransactionInfo).deleteObject(oldValue.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, oldValue.getObjectID());
@@ -165,7 +166,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(applyTransactionInfo).deleteObject(value.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value.getObjectID());
 
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REPLACE_IF_VALUE_EQUAL, new Object[]{ key, new ObjectID(1), value.getObjectID()});
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REPLACE_IF_VALUE_EQUAL, new Object[] { key, new ObjectID(1), value
+        .getObjectID() });
     verify(keyValueStorage).put(key, value);
     verify(applyTransactionInfo).deleteObject(new ObjectID(1));
     verify(applyTransactionInfo).invalidate(oid, new ObjectID(1));
@@ -175,7 +177,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     Object key = "key";
     CDSMValue value = new CDSMValue(new ObjectID(1), 0, 0, 0, 0);
     when(keyValueStorage.containsKey(key)).thenReturn(true);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[]{ key, value.getObjectID() });
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[] { key, value.getObjectID() });
     verify(keyValueStorage, never()).put(key, value);
     verify(applyTransactionInfo).deleteObject(value.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value.getObjectID());
@@ -202,14 +204,14 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   public void testPutWithExpiry() throws Exception {
     Object key = "key";
     ObjectID valueOid = new ObjectID(1);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[]{ key, valueOid, 1L, 2L, 3L, 4L});
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { key, valueOid, 1L, 2L, 3L, 4L });
     verify(keyValueStorage).put(key, new CDSMValue(valueOid, 1L, 2L, 3L, 4L));
   }
 
   public void testPutIfAbsentWithExpiry() throws Exception {
     Object key = "key";
     ObjectID valueOid = new ObjectID(1);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[]{ key, valueOid, 1L, 2L, 3L, 4L});
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[] { key, valueOid, 1L, 2L, 3L, 4L });
     verify(keyValueStorage).put(key, new CDSMValue(valueOid, 1L, 2L, 3L, 4L));
   }
 
@@ -227,9 +229,9 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     Object key = "key";
     CDSMValue value = new CDSMValue(new ObjectID(2), 2, 2, 3, 4);
     when(keyValueStorage.get(key)).thenReturn(new CDSMValue(new ObjectID(1), 0, 0, 0, 0));
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REPLACE_IF_VALUE_EQUAL, new Object[]{ key,
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REPLACE_IF_VALUE_EQUAL, new Object[] { key,
         new ObjectID(1), value.getObjectID(), value.getCreationTime(), value.getLastAccessedTime(),
-        value.getTimeToIdle(), value.getTimeToLive()});
+        value.getTimeToIdle(), value.getTimeToLive() });
     verify(keyValueStorage).put(key, value);
   }
 
@@ -276,8 +278,10 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   }
 
   private static ApplyTransactionInfo searchableApplyInfo() {
-    return when(mock(ApplyTransactionInfo.class).isSearchEnabled()).thenReturn(true)
-        .getMock();
+    final ApplyTransactionInfo info = mock(ApplyTransactionInfo.class);
+    when(info.isSearchEnabled()).thenReturn(true);
+    when(info.getServerEventRecorder()).thenReturn(new ServerEventRecorder());
+    return info;
   }
 
   private static void setInvalidateOnChange(ConcurrentDistributedServerMapManagedObjectState state, boolean invalidateOnChange) {
