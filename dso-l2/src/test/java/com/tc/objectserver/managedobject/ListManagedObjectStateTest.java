@@ -4,12 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import org.mockito.Mockito;
-
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
@@ -66,6 +60,7 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   public void testObjectList4() throws Exception {
     final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
+
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2004) });
@@ -73,35 +68,6 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
     cursor.addLogicalAction(SerializationUtil.REMOVE, new Object[] { new ObjectID(2004) });
 
     basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 1);
-  }
-
-  public void testInlineDGC() throws Exception {
-    ObjectID oid = new ObjectID(0);
-    ListManagedObjectState listManagedObjectState = new ListManagedObjectState(0);
-    ApplyTransactionInfo applyTransactionInfo = Mockito.mock(ApplyTransactionInfo.class);
-    for (int i = 2000; i < 2020; i++) {
-      listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.ADD,
-                                                new Object[] { new ObjectID(i) });
-    }
-
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_FIRST, null);
-    verify(applyTransactionInfo, times(1)).deleteObject(any(ObjectID.class));
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_AT,
-                                              new Object[] { 0 });
-    verify(applyTransactionInfo, times(2)).deleteObject(any(ObjectID.class));
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_RANGE, new Object[] {
-        2, 4 });
-    verify(applyTransactionInfo, times(4)).deleteObject(any(ObjectID.class));
-    
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_LAST, null);
-    verify(applyTransactionInfo, times(5)).deleteObject(any(ObjectID.class));
-    
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR, null);
-    verify(applyTransactionInfo, times(20)).deleteObject(any(ObjectID.class));
-    // try removing non-existent object
-    listManagedObjectState.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE,
-                                              new Object[] { new ObjectID(2033) });
-    verify(applyTransactionInfo, times(20)).deleteObject(any(ObjectID.class));
   }
 
 }

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,8 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
 
   @Override
   protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
-                                    final Object[] params) throws AssertionError {
+                                    final Object[] params)
+      throws AssertionError {
     switch (method) {
       case SerializationUtil.ADD:
       case SerializationUtil.ADD_LAST:
@@ -60,33 +61,24 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         }
         break;
       case SerializationUtil.REMOVE:
-        if (references.remove(params[0])) {
-          removedReference(applyInfo, params[0]);
-        }
+        references.remove(params[0]);
         break;
       case SerializationUtil.REMOVE_ALL:
-        for (Object param : params) {
-          if (references.remove(param)) {
-            removedReference(applyInfo, param);
-          }
-        }
-
+        references.removeAll(Arrays.asList(params));
         break;
       case SerializationUtil.REMOVE_AT:
-        int index = (Integer) params[0];
+        int index = (Integer)params[0];
         if (references.size() > index) {
-          removedReference(applyInfo, references.get(index));
           references.remove(index);
         }
         break;
       case SerializationUtil.REMOVE_RANGE: {
         int size = references.size();
-        int fromIndex = (Integer) params[0];
-        int toIndex = (Integer) params[1];
+        int fromIndex = (Integer)params[0];
+        int toIndex = (Integer)params[1];
         int removeIndex = fromIndex;
         if (size > fromIndex && size >= toIndex) {
           while (fromIndex++ < toIndex) {
-            removedReference(applyInfo, references.get(removeIndex));
             references.remove(removeIndex);
           }
         }
@@ -94,7 +86,6 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         break;
       case SerializationUtil.CLEAR:
       case SerializationUtil.DESTROY:
-        removedReferences(applyInfo, references);
         references.clear();
         break;
       case SerializationUtil.SET_ELEMENT:
@@ -104,25 +95,22 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         if (references.size() <= si) {
           references.add(params[1]);
         } else {
-          removedReference(applyInfo, references.get(si));
           references.set(si, params[1]);
         }
         break;
       case SerializationUtil.REMOVE_FIRST:
         if (references.size() > 0) {
-          removedReference(applyInfo, references.get(0));
           references.remove(0);
         }
         break;
       case SerializationUtil.REMOVE_LAST:
         int size = references.size();
         if (size > 0) {
-          removedReference(applyInfo, references.get(size - 1));
           references.remove(size - 1);
         }
         break;
       case SerializationUtil.SET_SIZE:
-        int setSize = (Integer) params[0];
+        int setSize = (Integer)params[0];
         int listSize = references.size();
 
         if (listSize < setSize) {
@@ -131,7 +119,6 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
           }
         } else if (listSize > setSize) {
           for (int i = listSize; i != setSize; i--) {
-            removedReference(applyInfo, references.get(i - 1));
             references.remove(i - 1);
           }
         }
@@ -225,18 +212,6 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     int result = 1;
     result = prime * result + ((references == null) ? 0 : references.hashCode());
     return result;
-  }
-
-  protected void removedReferences(ApplyTransactionInfo applyInfo, Collection<?> objects) {
-    for (Object object : objects) {
-      removedReference(applyInfo, object);
-    }
-  }
-
-  protected void removedReference(final ApplyTransactionInfo applyInfo, final Object o) {
-    if (o instanceof ObjectID) {
-      applyInfo.deleteObject((ObjectID) o);
-    }
   }
 
 }
