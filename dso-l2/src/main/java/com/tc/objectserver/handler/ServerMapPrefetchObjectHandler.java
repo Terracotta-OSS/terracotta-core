@@ -43,31 +43,26 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
   }
   
   public void sendResponseForGetValue(ServerMapRequestPrefetchObjectsContext results) {
-    try {
       final ClientID clientID = results.getClientID();
       final MessageChannel channel = getActiveChannel(clientID);
 
       if (channel == null) {
         this.logger.info("Client " + clientID + " is not active : Ignoring sending response for getValue() ");
-        results.releaseAll(this.objectManager);
-        return;
+      } else {
+        final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
+            .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
+        int count = results.prefetchObjects(clientManager);
+        if ( count > 0 ) {
+          this.globalObjectRequestCounter.increment(count);
+          this.channelStats.notifyReadOperations(channel, count);
+        }
+        responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
+        responseMessage.send();
+        if ( logger.isDebugEnabled() ) {
+          debugStats(results);
+        }
       }
-
-      final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
-          .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
-      int count = results.prefetchObjects(clientManager);
-      if ( count > 0 ) {
-        this.globalObjectRequestCounter.increment(count);
-        this.channelStats.notifyReadOperations(channel, count);
-      }
-      responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
-      responseMessage.send();
-      if ( logger.isDebugEnabled() ) {
-        debugStats(results);
-      }
-    } finally {
       results.releaseAll(this.objectManager);
-    }
   } 
 
   private void debugStats(ServerMapRequestPrefetchObjectsContext results) {
