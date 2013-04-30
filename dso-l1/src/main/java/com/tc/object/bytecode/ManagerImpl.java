@@ -23,14 +23,14 @@ import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.ServerEventDestination;
-import com.tc.object.ServerEventType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
+import com.tc.object.ServerEventDestination;
 import com.tc.object.ServerEventListenerManager;
+import com.tc.object.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -305,6 +305,7 @@ public class ManagerImpl implements Manager {
 
   private void shutdown(boolean fromShutdownHook, boolean forceImmediate) {
     if (clientStopped.attemptSet()) {
+      logger.info("shuting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
       shutdownClient(fromShutdownHook, forceImmediate);
     } else {
       logger.info("Client already shutdown.");
