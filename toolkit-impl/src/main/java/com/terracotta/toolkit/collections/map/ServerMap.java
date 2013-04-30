@@ -101,7 +101,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         .createConcurrentTransactionLock("servermap-static-expire-concurrent-lock", platformService);
     this.eventualConcurrentLock = ToolkitLockingApi
         .createConcurrentTransactionLock("servermap-static-eventual-concurrent-lock", platformService);
-    this.debugExpiration = new TerracottaProperties(platformService).getBoolean("toolkit.map.expiration.debug", false);
+    this.debugExpiration = new TerracottaProperties(platformService).getBoolean("servermap.expiration.debug", false);
     String consistencyStr = (String) InternalCacheConfigurationType.CONSISTENCY.getExistingValueOrException(config);
     this.consistency = Consistency.valueOf(consistencyStr);
     ToolkitLockTypeInternal tmpLockType = null;
@@ -390,8 +390,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     MetaData metaData = getEvictRemoveMetaData();
 
     if (getType == GetType.LOCKED) {
-      // XXX - call below uses its own metadata; evict md not preserved!
-      boolean removed = remove(key, deserializedValue);
+      // XXX - call below uses its own MetaData; evicted MetaData not preserved!
+      remove(key, deserializedValue);
     } else {
       expireConcurrentLock.lock();
       try {
