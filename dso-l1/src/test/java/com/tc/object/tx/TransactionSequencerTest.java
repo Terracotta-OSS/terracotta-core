@@ -285,7 +285,7 @@ public class TransactionSequencerTest extends TestCase {
 
     @Override
     public int byteSize() {
-      return 640000;
+      return 640000 * transactions;
     }
 
     @Override

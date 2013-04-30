@@ -159,51 +159,51 @@ public class TransactionSequencer implements ClearableCallback {
     TransactionBuffer buffer;
     
     try {
-        synchronized (this) {
-            if ( this.currentWritten.getAverage() * this.currentBatch.numberOfTxnsBeforeFolding() > MAX_BYTE_SIZE_FOR_BATCH ) {
-                if ( this.currentBatch.numberOfTxnsBeforeFolding() == 0 ) {
-                    throw new AssertionError("no transaction in batch " + this.currentWritten + " " + this.currentBatch);
-                }
-                put(this.currentBatch);
-                if (LOGGING_ENABLED) {
-                  log_stats();
-                }
-                createNewBatch();
-                this.txnsPerBatch = 0;
-                numBatchesDelta = 1;
-            } 
-    
-            this.txnsPerBatch += 1;
-
-            if ( this.batchFactory.isFoldingSupported() ) {
-                 written = this.currentBatch.byteSize();
-                 FoldedInfo fold = this.currentBatch.addTransaction(txn, sequence, transactionIDGenerator);
-                 this.lockAccounting.add(fold.getFoldedTransactionID(), txn.getAllLockIDs());
-                 numTransactionsDelta = 0;
-                 written = this.currentBatch.byteSize() - written;
-//  if the transaction is folded, it's already written.  return the transaction id
-                 return fold.getFoldedTransactionID();
-            } else {
-                SequenceID sid = new SequenceID(this.sequence.getNextSequence());
-                TransactionID tid = transactionIDGenerator.nextTransactionID();
-                txn.setSequenceID(sid);
-                txn.setTransactionID(tid);
-                buffer = this.currentBatch.addSimpleTransaction(txn);
-                this.lockAccounting.add(tid, txn.getAllLockIDs());
-            }
-       }
-
-       written = buffer.write(txn);
-       this.currentWritten.written(written);
-        
-       return txn.getTransactionID();
-    } finally {    
-          this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
-          synchronized (transactionSizeCounter) {
-              // transactionSize = batchSize / number of transactions
-            this.transactionSizeCounter.setNumeratorValue(written);
-            this.transactionSizeCounter.increment(0, 1);
+      synchronized (this) {
+        if ( this.currentWritten.getAverage() * this.currentBatch.numberOfTxnsBeforeFolding() > MAX_BYTE_SIZE_FOR_BATCH ) {
+          if ( this.currentBatch.numberOfTxnsBeforeFolding() == 0 ) {
+            throw new AssertionError("no transaction in batch " + this.currentWritten + " " + this.currentBatch);
           }
+          put(this.currentBatch);
+          if (LOGGING_ENABLED) {
+            log_stats();
+          }
+          createNewBatch();
+          this.txnsPerBatch = 0;
+          numBatchesDelta = 1;
+        } 
+
+        this.txnsPerBatch += 1;
+
+        if ( this.batchFactory.isFoldingSupported() ) {
+          written = this.currentBatch.byteSize();
+          FoldedInfo fold = this.currentBatch.addTransaction(txn, sequence, transactionIDGenerator);
+          this.lockAccounting.add(fold.getFoldedTransactionID(), txn.getAllLockIDs());
+          numTransactionsDelta = 0;
+          written = this.currentBatch.byteSize() - written;
+          //  if the transaction is folded, it's already written.  return the transaction id
+          return fold.getFoldedTransactionID();
+        } else {
+          SequenceID sid = new SequenceID(this.sequence.getNextSequence());
+          TransactionID tid = transactionIDGenerator.nextTransactionID();
+          txn.setSequenceID(sid);
+          txn.setTransactionID(tid);
+          buffer = this.currentBatch.addSimpleTransaction(txn);
+          this.lockAccounting.add(tid, txn.getAllLockIDs());
+        }
+      }
+
+      written = buffer.write(txn);
+
+      return txn.getTransactionID();
+    } finally {    
+      this.currentWritten.written(written);
+      this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
+      synchronized (transactionSizeCounter) {
+          // transactionSize = batchSize / number of transactions
+        this.transactionSizeCounter.setNumeratorValue(written);
+        this.transactionSizeCounter.increment(0, 1);
+      }
     }
   }
 
