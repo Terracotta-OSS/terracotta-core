@@ -475,9 +475,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
  //  locked by ManagedObject checkout
   @Override
   public void evictionCompleted() {
-    if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
-      throw new AssertionError("cannot complete evictions that are not initiated");
-    }
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 
