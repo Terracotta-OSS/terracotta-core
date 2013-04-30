@@ -165,7 +165,7 @@ public class AbstractEvictionTriggerTest {
     evm = getEvictableMap();
     trigger = getTrigger();
     Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
-    Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet), SamplingType.FOR_EVICTION))
+    Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet), Matchers.eq(SamplingType.FOR_EVICTION)))
         .thenReturn(Collections.<Object, EvictableEntry> emptyMap());
   }
 
