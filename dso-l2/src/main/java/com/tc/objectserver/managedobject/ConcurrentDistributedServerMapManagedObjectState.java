@@ -488,8 +488,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public Map<Object, EvictableEntry> getRandomSamples(final int count,
                                                       final ClientObjectReferenceSet clientObjectRefSet,
-                                                      final SamplingType sampleType) {
-    this.samplingType = sampleType;
+                                                      final SamplingType samplingType) {
+    this.samplingType = samplingType;
     if (this.evictionStatus == EvictionStatus.NOT_INITIATED) {
       throw new AssertionError(this.evictionStatus);
     } else {
