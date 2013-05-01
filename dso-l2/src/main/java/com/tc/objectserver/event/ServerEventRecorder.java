@@ -9,7 +9,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventType;
-import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.impl.SamplingType;
 
 import java.util.ArrayList;
@@ -29,20 +28,7 @@ public final class ServerEventRecorder {
 
   public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId,
                           final String cacheName) {
-    events.add(new IntermediateForm(new BasicServerEvent(type, extractStringIfNecessary(key), cacheName), objectId));
-  }
-
-  /**
-   * Transform a key from internal representation to string if necessary.
-   */
-  private static Object extractStringIfNecessary(final Object key) {
-    final Object normalizedKey;
-    if (key instanceof UTF8ByteDataHolder) {
-      normalizedKey = ((UTF8ByteDataHolder)key).asString();
-    } else {
-      normalizedKey = key;
-    }
-    return normalizedKey;
+    events.add(new IntermediateForm(new BasicServerEvent(type, key, cacheName), objectId));
   }
 
   public void recordEventValue(final ObjectID objectId, final byte[] value) {
