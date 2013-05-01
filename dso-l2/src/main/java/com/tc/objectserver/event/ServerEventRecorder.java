@@ -29,20 +29,20 @@ public final class ServerEventRecorder {
 
   public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId,
                           final String cacheName) {
-    events.add(new IntermediateForm(new BasicServerEvent(type, keyAsString(key), cacheName), objectId));
+    events.add(new IntermediateForm(new BasicServerEvent(type, extractStringIfNecessary(key), cacheName), objectId));
   }
 
   /**
    * Transform a key from internal representation to string if necessary.
    */
-  private static String keyAsString(final Object key) {
-    final String keyAsString;
+  private static Object extractStringIfNecessary(final Object key) {
+    final Object normalizedKey;
     if (key instanceof UTF8ByteDataHolder) {
-      keyAsString = ((UTF8ByteDataHolder)key).asString();
+      normalizedKey = ((UTF8ByteDataHolder)key).asString();
     } else {
-      keyAsString = (String)key;
+      normalizedKey = key;
     }
-    return keyAsString;
+    return normalizedKey;
   }
 
   public void recordEventValue(final ObjectID objectId, final byte[] value) {
