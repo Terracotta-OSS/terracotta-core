@@ -38,7 +38,7 @@ public class ShutdownResourceServiceImpl implements ShutdownResourceService {
   }
 
   @Override
-  public void shutdown(UriInfo info) {
+  public boolean shutdown(UriInfo info) {
     LOG.debug(String.format("Invoking ShutdownResourceServiceImpl.shutdown: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
@@ -51,6 +51,8 @@ public class ShutdownResourceServiceImpl implements ShutdownResourceService {
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
+    
+    return true;
   }
 
 }

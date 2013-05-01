@@ -18,6 +18,6 @@ public interface ShutdownResourceService {
 
   @POST
   @Produces(MediaType.APPLICATION_JSON)
-  void shutdown(@Context UriInfo info);
+  boolean shutdown(@Context UriInfo info);
 
 }

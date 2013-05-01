@@ -56,7 +56,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,11 +92,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
       "StartTime", "ActivateTime", "Restartable", "ResourceState" };
 
-  private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
-      "ObjectFlushRate", "TransactionRate"                         };
+  private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ReadRate", "WriteRate" };
 
   private static final String[]  SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
-      "ObjectFaultRate", "ObjectFlushRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize",
+      "ReadOperationRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize",
       "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
 
   private final JmxConnectorPool jmxConnectorPool;
