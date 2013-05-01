@@ -1112,7 +1112,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     @Subscribe
     public void writeOperationCountEvent(final Events.WriteOperationCountChangeEvent event) {
-      this.counter.increment(event.getDelta());
+      if (event.getSource().getNodeType() == NodeID.CLIENT_NODE_TYPE) {
+        // Only count client events
+        this.counter.increment(event.getDelta());
+      }
     }
   }
 
