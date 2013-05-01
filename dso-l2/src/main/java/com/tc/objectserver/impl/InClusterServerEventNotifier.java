@@ -60,7 +60,7 @@ public class InClusterServerEventNotifier implements ServerEventListener {
       final MessageChannel channel = channelManager.getActiveChannel(clientId);
       final ServerEventMessage msg = (ServerEventMessage)channel.createMessage(
           TCMessageType.SERVER_EVENT_MESSAGE);
-      msg.setCacheName(event.getCacheName());
+      msg.setDestinationName(event.getCacheName());
       msg.setType(event.getType());
       msg.setKey(event.getKey());
       // TODO create a SEDA stage to send asynchronously ?

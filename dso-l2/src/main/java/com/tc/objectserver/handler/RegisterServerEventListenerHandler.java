@@ -36,8 +36,8 @@ public class RegisterServerEventListenerHandler extends AbstractEventHandler {
       if (context instanceof RegisterServerEventListenerMessage) {
         final RegisterServerEventListenerMessage msg = (RegisterServerEventListenerMessage)context;
         serverEventNotifier.register(clientId, msg.getDestination(), msg.getEventTypes());
-        LOG.info("Server event listener registration message from client [" + nodeId + "] has been received: " + context);
-        LOG.info("Destination: " + msg.getDestination() + ", event: " + msg.getEventTypes());
+        LOG.debug("Server event listener registration message from client [" + nodeId + "] has been received: " + context);
+        LOG.debug("Destination: " + msg.getDestination() + ", event: " + msg.getEventTypes());
       } else if (context instanceof UnregisterServerEventListenerMessage) {
         final UnregisterServerEventListenerMessage msg = (UnregisterServerEventListenerMessage)context;
         serverEventNotifier.unregister(clientId, msg.getDestination());

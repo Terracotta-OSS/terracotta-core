@@ -101,7 +101,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete());
       txnObjectMgr.applyTransactionComplete(applyInfo);
-      publishModifications(applyInfo);
     } else {
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
@@ -121,6 +120,9 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     if (txn.isActiveTxn()) {
+      // only for active
+      publishModifications(applyInfo);
+
       final Set<ObjectID> initiateEviction = applyInfo.getObjectIDsToInitateEviction();
       if (!initiateEviction.isEmpty()) {
         evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));

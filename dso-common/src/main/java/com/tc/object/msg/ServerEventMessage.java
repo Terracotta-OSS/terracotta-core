@@ -18,7 +18,7 @@ public interface ServerEventMessage extends TCMessage {
 
   void setKey(Object key);
 
-  String getCacheName();
+  String getDestinationName();
 
-  void setCacheName(String cacheName);
+  void setDestinationName(String cacheName);
 }

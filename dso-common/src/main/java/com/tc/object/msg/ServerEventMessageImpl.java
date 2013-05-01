@@ -24,11 +24,11 @@ public class ServerEventMessageImpl extends DSOMessageBase implements ServerEven
 
   private static final byte KEY_ID = 0;
   private static final byte TYPE_ID = 1;
-  private static final byte CACHE_NAME_ID = 2;
+  private static final byte DESTINATION_NAME_ID = 2;
 
   private Object key;
   private ServerEventType type;
-  private String cacheName;
+  private String destinationName;
 
   public ServerEventMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                 final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -47,7 +47,7 @@ public class ServerEventMessageImpl extends DSOMessageBase implements ServerEven
     putNVPair(TYPE_ID, type.ordinal());
     putNVPair(KEY_ID, true);
     encoder.encode(key, getOutputStream());
-    putNVPair(CACHE_NAME_ID, cacheName);
+    putNVPair(DESTINATION_NAME_ID, destinationName);
   }
 
   @Override
@@ -56,8 +56,8 @@ public class ServerEventMessageImpl extends DSOMessageBase implements ServerEven
       case TYPE_ID:
         type = ServerEventType.values()[getIntValue()];
         return true;
-      case CACHE_NAME_ID:
-        cacheName = getStringValue();
+      case DESTINATION_NAME_ID:
+        destinationName = getStringValue();
         return true;
       case KEY_ID:
         try {
@@ -93,12 +93,12 @@ public class ServerEventMessageImpl extends DSOMessageBase implements ServerEven
   }
 
   @Override
-  public String getCacheName() {
-    return cacheName;
+  public String getDestinationName() {
+    return destinationName;
   }
 
   @Override
-  public void setCacheName(final String cacheName) {
-    this.cacheName = cacheName;
+  public void setDestinationName(final String destinationName) {
+    this.destinationName = destinationName;
   }
 }

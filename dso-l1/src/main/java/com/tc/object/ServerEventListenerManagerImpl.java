@@ -36,16 +36,16 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void dispatch(final ServerEventMessage message) {
-    final String cacheName = message.getCacheName();
-    LOG.info("Server notification message has been received. Type: "
+    final String destinationName = message.getDestinationName();
+    LOG.debug("Server notification message has been received. Type: "
              + message.getType() + ", key: " + message.getKey()
-             + ", cache: " + cacheName);
+             + ", cache: " + destinationName);
 
     lock.readLock().lock();
     try {
-      final SubscribedDestination destination = registry.get(cacheName);
+      final SubscribedDestination destination = registry.get(destinationName);
       if (destination == null) {
-        throw new IllegalStateException("Could not find cache by name: " + cacheName);
+        throw new IllegalStateException("Could not find server event destination by name: " + destinationName);
       }
       destination.target.handleServerEvent(message.getType(), message.getKey());
     } finally {
