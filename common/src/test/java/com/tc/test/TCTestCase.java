@@ -482,6 +482,10 @@ public class TCTestCase extends TestCase {
   }
 
   protected final boolean shouldTestRunInCurrentExecutionMode() {
+    // INT-2303: Disable quarantined tests system.
+    // By returning true unconditionally, all tests will execute in all execution modes.
+    return true;
+
     final ExecutionMode currentMode = executionMode();
     final String skipMessage = this.getClass().getName() + " is in " + testCategory() + ", skipping because this is a "
                                + currentMode + " run.";
