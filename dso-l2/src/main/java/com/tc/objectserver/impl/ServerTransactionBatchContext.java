@@ -19,17 +19,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ServerMapEvictionTransactionBatchContext implements TransactionBatchContext {
+public class ServerTransactionBatchContext implements TransactionBatchContext {
 
   private final List<ServerTransaction>  txns;
   private final NodeID                   nodeID;
-  private final Set<ServerTransactionID> txnIDs = new HashSet();
+  private final Set<ServerTransactionID> txnIDs = new HashSet<ServerTransactionID>();
   private TCByteBuffer[]                 buffers;
   private final ObjectStringSerializer   serializer;
   private final TxnBatchID               batchID;
 
-  public ServerMapEvictionTransactionBatchContext(final NodeID nodeID, final ServerTransaction txn,
-                                                  final ObjectStringSerializer serializer) {
+  public ServerTransactionBatchContext(final NodeID nodeID, final ServerTransaction txn,
+                                       final ObjectStringSerializer serializer) {
     this.nodeID = nodeID;
     this.serializer = serializer;
     this.batchID = txn.getBatchID();

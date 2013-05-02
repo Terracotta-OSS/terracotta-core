@@ -1,38 +1,33 @@
 package com.tc.objectserver.persistence;
 
 
+import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.tx.TransactionBatchContext;
+import com.tc.objectserver.api.EvictableEntry;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 public class NullEvictionTransactionPersistorImpl implements EvictionTransactionPersistor {
 
-  public NullEvictionTransactionPersistorImpl() {
+  @Override
+  public EvictionRemoveContext getEviction(ServerTransactionID serverTransactionID) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public TransactionBatchContext getTransactionBatch(ServerTransactionID serverTransactionID) {
-    return null;
-  }
-
-  @Override
-  public void saveTransactionBatch(ServerTransactionID serverTransactionID, TransactionBatchContext transactionBatchContext) {
+  public void saveEviction(ServerTransactionID serverTransactionID, final ObjectID oid, final String cacheName, final Map<Object, EvictableEntry> samples) {
 
   }
 
   @Override
-  public void removeTransaction(ServerTransactionID serverTransactionID) {
+  public void removeEviction(ServerTransactionID serverTransactionID) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public Collection<TransactionBatchContext> getAllTransactionBatches() {
-    return new HashSet<TransactionBatchContext>();
-  }
-
-  @Override
-  public void removeAllTransactions() {
-
+  public Set<ServerTransactionID> getPersistedTransactions() {
+    return Collections.emptySet();
   }
 }

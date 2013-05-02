@@ -10,6 +10,7 @@ import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.managedobject.CDSMValue;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,9 +20,9 @@ import java.util.Map;
 public class LiteralSerializer extends Serializer<Object> {
   public static final LiteralSerializer INSTANCE = new LiteralSerializer();
 
-  private static final int LONG_SIZE = Long.SIZE / Byte.SIZE;
-  private static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
-  private static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
+  public static final int LONG_SIZE = Long.SIZE / Byte.SIZE;
+  public static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
+  public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
 
   private static enum Type {
     LONG {
@@ -126,15 +127,20 @@ public class LiteralSerializer extends Serializer<Object> {
         if (buffer.get() != ordinal()) {
           throw new AssertionError();
         }
-        return buffer.asCharBuffer().toString();
+        int length = buffer.getInt();
+        CharBuffer charBuffer = buffer.asCharBuffer();
+        charBuffer.limit(length); // length is in characters, not bytes.
+        buffer.position(buffer.position() + length * 2); // Consume the string out of the original buffer
+        return charBuffer.toString();
       }
 
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof String) {
           String s = (String) object;
-          ByteBuffer buffer = ByteBuffer.allocate(1 + s.length() * 2);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + INT_SIZE + s.length() * 2);
           buffer.put((byte)ordinal());
+          buffer.putInt(s.length());
           buffer.position(buffer.position() + buffer.asCharBuffer().put(s).position() * 2);
           buffer.flip();
           return buffer;

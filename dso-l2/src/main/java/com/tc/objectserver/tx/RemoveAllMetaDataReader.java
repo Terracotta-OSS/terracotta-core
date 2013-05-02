@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
-public class ServerMapEvictionMetaDataReader implements MetaDataReader {
+public class RemoveAllMetaDataReader implements MetaDataReader {
 
   private static final NVPairSerializer NVPAIR_SERIALIZER = new NVPairSerializer();
 
@@ -35,7 +35,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
   private final Map<Object, EvictableEntry>                     candidates;
   private final ObjectID                oid;
 
-  public ServerMapEvictionMetaDataReader(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
+  public RemoveAllMetaDataReader(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
     this.cacheName = cacheName;
     this.candidates = candidates;
     this.oid = oid;

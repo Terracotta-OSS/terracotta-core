@@ -5,142 +5,81 @@ package com.tc.objectserver.tx;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.dna.api.DNAException;
-import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.api.EvictableEntry;
 
-import java.util.Iterator;
+import java.io.IOException;
 import java.util.Map;
-import java.util.Map.Entry;
 
-public final class ServerMapEvictionDNA implements DNAInternal {
+public final class ServerMapEvictionDNA extends RemoveAllDNA {
 
-  private final ObjectID oid;
-  private final Map<Object, EvictableEntry>      evictionCandidates;
-  private final String   className;
-  private final String   cacheName;
-
-  public ServerMapEvictionDNA(final ObjectID oid, final String className, final Map<Object, EvictableEntry> candidates, String cacheName) {
-    this.oid = oid;
-    this.className = className;
-    this.evictionCandidates = candidates;
-    this.cacheName = cacheName;
-  }
-
-  @Override
-  public int getArraySize() {
-    return 0;
+  public ServerMapEvictionDNA(final ObjectID oid, final Map<Object, EvictableEntry> candidates, String cacheName) {
+    super(oid, cacheName, candidates);
   }
 
   @Override
   public DNACursor getCursor() {
-    return new ServerMapEvictionDNACursor(this.evictionCandidates);
+    return new ServerMapEvictionDNACursor(super.getCursor());
   }
 
-  @Override
-  public ObjectID getObjectID() throws DNAException {
-    return this.oid;
-  }
+  private static class ServerMapEvictionDNACursor implements DNACursor {
+    private static final LogicalAction EVICTION_COMPLETED = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
+        new Object[] {});
 
-  @Override
-  public ObjectID getParentObjectID() throws DNAException {
-    return ObjectID.NULL_ID;
-  }
+    private final DNACursor removeCursor;
+    private boolean returnedEvictionCompleted = false;
 
-  @Override
-  public String getTypeName() {
-    return this.className;
-  }
-
-  @Override
-  public long getVersion() {
-    return DNA.NULL_VERSION;
-  }
-
-  @Override
-  public boolean hasLength() {
-    return false;
-  }
-
-  @Override
-  public boolean isDelta() {
-    return true;
-  }
-
-  @Override
-  public MetaDataReader getMetaDataReader() {
-    return new ServerMapEvictionMetaDataReader(oid, cacheName, evictionCandidates);
-  }
-
-  @Override
-  public boolean hasMetaData() {
-    return true;
-  }
-
-  private static final class ServerMapEvictionDNACursor implements DNACursor {
-
-    private static final LogicalAction evictionCompleted = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
-                                                                             new Object[] {});
-
-    private final Iterator<Entry<Object, EvictableEntry>>      actions;
-    private int                        actionsCount;
-    private LogicalAction              currentAction;
-
-    public ServerMapEvictionDNACursor(final Map<Object, EvictableEntry> candidates) {
-      this.actions = candidates.entrySet().iterator();
-      this.actionsCount = candidates.size() + 1; // plus one for evictionComplete action
-    }
-
-    @Override
-    public Object getAction() {
-      return this.currentAction;
+    private ServerMapEvictionDNACursor(final DNACursor removeCursor) {
+      this.removeCursor = removeCursor;
     }
 
     @Override
     public int getActionCount() {
-      return actionsCount;
+      return returnedEvictionCompleted ? 0 : removeCursor.getActionCount() + 1;
     }
 
     @Override
-    public LogicalAction getLogicalAction() {
-      return this.currentAction;
-    }
-
-    @Override
-    public PhysicalAction getPhysicalAction() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean next() {
-      if (this.actions.hasNext()) {
-        final Entry<Object, EvictableEntry> e = this.actions.next();
-        this.currentAction = new LogicalAction(SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
-            e.getValue().getObjectID() });
-        actionsCount--;
+    public boolean next() throws IOException {
+      if (removeCursor.next()) {
         return true;
-      } else if (actionsCount == 1) {
-        currentAction = evictionCompleted;
-        actionsCount--;
+      } else if (!returnedEvictionCompleted) {
+        returnedEvictionCompleted = true;
         return true;
-      } else if (actionsCount > 0) { throw new AssertionError("Expected Actions count to be 0 : " + actionsCount); }
-      return false;
+      } else {
+        return false;
+      }
     }
 
     @Override
-    public boolean next(final DNAEncoding arg) {
+    public boolean next(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
       return next();
     }
 
     @Override
     public void reset() throws UnsupportedOperationException {
-      throw new UnsupportedOperationException("Reset is not supported by this class");
+      throw new UnsupportedOperationException("Resetting is not supported.");
+    }
+
+    @Override
+    public LogicalAction getLogicalAction() {
+      if (returnedEvictionCompleted) {
+        return EVICTION_COMPLETED;
+      } else {
+        return removeCursor.getLogicalAction();
+      }
+    }
+
+    @Override
+    public PhysicalAction getPhysicalAction() {
+      throw new UnsupportedOperationException("No physical action to get.");
+    }
+
+    @Override
+    public Object getAction() {
+      return getLogicalAction();
     }
   }
 }

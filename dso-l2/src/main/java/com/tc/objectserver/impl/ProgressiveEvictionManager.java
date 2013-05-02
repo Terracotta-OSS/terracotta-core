@@ -26,7 +26,6 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
-import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
@@ -138,17 +137,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     return evictionStats;
   }
 
-  public ProgressiveEvictionManager(final ObjectManager mgr,final MonitoredResource monitored, final PersistentManagedObjectStore store,
+  public ProgressiveEvictionManager(final ObjectManager mgr, final MonitoredResource monitored, final PersistentManagedObjectStore store,
                                     final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
                                     final CounterManager counterManager,
-                                    final EvictionTransactionPersistor evictionTransactionPersistor,
-                                    final ServerTransactionManagerImpl serverTransactionManager) {
+                                    final EvictionTransactionPersistor evictionTransactionPersistor, final boolean persistent) {
     this.objectManager = mgr;
     this.store = store;
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
-    this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, serverTransactionManager);
+    this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, persistent);
     // assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
     this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
 
@@ -363,7 +361,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
   @Override
   public void evict(ObjectID oid, Map<Object,EvictableEntry> samples, String className, String cacheName) {
-    evictor.evictFrom(oid, samples, className, cacheName);
+    evictor.evictFrom(oid, samples, cacheName);
   }
 
   @Override

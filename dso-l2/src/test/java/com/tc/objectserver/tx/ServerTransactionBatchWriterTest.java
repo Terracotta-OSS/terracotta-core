@@ -67,12 +67,11 @@ public class ServerTransactionBatchWriterTest extends TestCase {
 
   public void testBasicServerEvictionTxn() throws Exception {
     final ObjectID oid = new ObjectID(55455);
-    final String className = "com.tc.state.ConcurrentDistributedServerMap";
     final Map candidates = getCandidatesToEvict();
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid, className,
-                                                                                candidates, serializer, "foo");
+    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid,
+        candidates, serializer, "foo");
     final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID,
                                                                                     serializer);
     final TCByteBuffer[] buffer = txnWriter.writeTransactionBatch(Collections.singletonList(txn));
@@ -92,7 +91,6 @@ public class ServerTransactionBatchWriterTest extends TestCase {
   public void testServerEvictionAmongOtherTxn() throws Exception {
     final ObjectID oid = new ObjectID(55455);
     final NodeID nodeID = new ServerID("localhost", new byte[] { 5, 6, 4, 3 });
-    final String className = "com.tc.state.ConcurrentDistributedServerMap";
     final Map candidates = getCandidatesToEvict();
 
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -107,7 +105,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     // server map eviction txn
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ServerTransaction serverMapEvictionTxn = factory.createServerMapEvictionTransactionFor(nodeID, oid,
-                                                                                                 className, candidates,
+        candidates,
                                                                                                  serializer, "foo");
     serverTransactions.add(serverMapEvictionTxn);
 

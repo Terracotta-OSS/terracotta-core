@@ -1,21 +1,21 @@
 package com.tc.objectserver.persistence;
 
+import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.tx.TransactionBatchContext;
+import com.tc.objectserver.api.EvictableEntry;
 
-import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 
 public interface EvictionTransactionPersistor {
 
-  public void saveTransactionBatch(ServerTransactionID serverTransactionID, TransactionBatchContext transactionBatchContext);
+  public void saveEviction(ServerTransactionID serverTransactionID, final ObjectID oid, final String cacheName, final Map<Object, EvictableEntry> samples);
 
-  public TransactionBatchContext getTransactionBatch(ServerTransactionID serverTransactionID);
+  public EvictionRemoveContext getEviction(ServerTransactionID serverTransactionID);
 
-  public void removeTransaction(ServerTransactionID serverTransactionID);
+  public void removeEviction(ServerTransactionID serverTransactionID);
 
-  public Collection<TransactionBatchContext> getAllTransactionBatches();
-
-  public void removeAllTransactions();
+  public Set<ServerTransactionID> getPersistedTransactions();
 
 }

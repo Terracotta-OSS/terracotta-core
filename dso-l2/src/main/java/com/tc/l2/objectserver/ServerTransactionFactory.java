@@ -17,9 +17,10 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.EvictableEntry;
+import com.tc.objectserver.tx.RemoveAllDNA;
+import com.tc.objectserver.tx.RemoveAllMetaDataReader;
 import com.tc.objectserver.tx.ServerEvictionTransactionImpl;
 import com.tc.objectserver.tx.ServerMapEvictionDNA;
-import com.tc.objectserver.tx.ServerMapEvictionMetaDataReader;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.util.SequenceID;
 
@@ -56,37 +57,48 @@ public class ServerTransactionFactory {
   }
 
   public ServerTransaction createServerMapEvictionTransactionFor(final NodeID localNodeID, final ObjectID oid,
-                                                                 final String className, final Map<Object, EvictableEntry> candidates,
+                                                                 final Map<Object, EvictableEntry> candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
 
     return createServerMapEvictionTransactionFor(getNextServerTransactionID(localNodeID), oid,
-        className, candidates, serializer,
+        candidates, serializer,
         cacheName);
 
   }
 
   public ServerTransaction createServerMapEvictionTransactionFor(final ServerTransactionID serverTransactionID, final ObjectID oid,
-                                                                 final String className, final Map<Object, EvictableEntry> candidates,
+                                                                 final Map<Object, EvictableEntry> candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
     return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(), SequenceID.NULL_ID,
         NULL_LOCK_ID, serverTransactionID.getSourceID(),
-        Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
-            candidates, cacheName)),
+        Collections.singletonList(createServerMapEvictionDNAFor(oid, cacheName, candidates)),
         serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
         NULL_DMI_DESCRIPTOR,
-        new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
+        createEvictionMetaDataFor(oid, cacheName, candidates), 1,
         EMPTY_HIGH_WATER_MARK);
   }
 
-  private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
-    return new ServerMapEvictionMetaDataReader(oid, cacheName, candidates);
+  public ServerTransaction createRemoveAllTransaction(final ServerTransactionID serverTransactionID, final ObjectID oid,
+                                                      final String cacheName, final Map<Object, EvictableEntry> candidates,
+                                                      ObjectStringSerializer objectStringSerializer) {
+    return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(),
+        SequenceID.NULL_ID, NULL_LOCK_ID, serverTransactionID.getSourceID(),
+        Collections.singletonList(createRemoveAllDNA(oid, cacheName, candidates)), objectStringSerializer,
+        Collections.emptyMap(), TxnType.NORMAL, Collections.emptyList(), NULL_DMI_DESCRIPTOR,
+        createEvictionMetaDataFor(oid, cacheName, candidates), 1, EMPTY_HIGH_WATER_MARK);
   }
 
-  private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final Map<Object, EvictableEntry> candidates,
-                                            String cacheName) {
-    return new ServerMapEvictionDNA(oid, className, candidates, cacheName);
+  private MetaDataReader[] createEvictionMetaDataFor(ObjectID oid, String cacheName, Map<Object, EvictableEntry> candidates) {
+    return new MetaDataReader[] { new RemoveAllMetaDataReader(oid, cacheName, candidates) };
   }
 
+  private DNA createServerMapEvictionDNAFor(final ObjectID oid, String cacheName, final Map<Object, EvictableEntry> candidates) {
+    return new ServerMapEvictionDNA(oid, candidates, cacheName);
+  }
+
+  private DNA createRemoveAllDNA(final ObjectID oid, final String cacheName, final Map<Object, EvictableEntry> candidates) {
+    return new RemoveAllDNA(oid, cacheName, candidates);
+  }
 }

@@ -19,25 +19,21 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.persistence.EvictionRemoveContext;
 import com.tc.objectserver.persistence.EvictionTransactionPersistor;
-import com.tc.objectserver.persistence.EvictionTransactionPersistorImpl;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -69,25 +65,24 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   // 15 Minutes
   public static final long                    DEFAULT_SLEEP_TIME              = 15 * 60000;
 
+  private final boolean                       persistent;
   private final ObjectManager                 objectManager;
   private final ServerTransactionFactory      serverTransactionFactory;
   private final Set<ObjectID>                 currentlyEvicting               = Collections
-                                                                                  .synchronizedSet(new HashSet());
+                                                                                  .synchronizedSet(new HashSet<ObjectID>());
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
 
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
   private EvictionTransactionPersistor        evictionTransactionPersistor;
-  private ServerTransactionManagerImpl        serverTransactionManager;
 
   public ServerMapEvictionEngine(final ObjectManager objectManager,
                                  final ServerTransactionFactory serverTransactionFactory,
-                                 final EvictionTransactionPersistor evictionTransactionPersistor,
-                                 final ServerTransactionManagerImpl serverTransactionManager) {
+                                 final EvictionTransactionPersistor evictionTransactionPersistor, final boolean persistent) {
     this.objectManager = objectManager;
     this.serverTransactionFactory = serverTransactionFactory;
     this.evictionTransactionPersistor = evictionTransactionPersistor;
-    this.serverTransactionManager = serverTransactionManager;
+    this.persistent = persistent;
   }
 
   public void initializeContext(final ConfigurationContext context) {
@@ -96,7 +91,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     this.transactionBatchManager = scc.getTransactionBatchManager();
 
     // if running in persistence mode, we need to save each in-flight transaction to FRS and delete it when complete
-    if(evictionTransactionPersistor.getClass() == EvictionTransactionPersistorImpl.class) {
+    if(persistent) {
       scc.getTransactionManager().addTransactionListener(this);
     }
   }
@@ -107,37 +102,18 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
                 + PERIODIC_EVICTOR_ENABLED);
 
     logger.info("Recovering any in-flight eviction transactions from the previous session.");
-    Collection<TransactionBatchContext> transactionBatchContexts = evictionTransactionPersistor.getAllTransactionBatches();
-    final CountDownLatch countDownLatch = new CountDownLatch(1);
-    if (transactionBatchContexts.size() > 0) {
-      serverTransactionManager.addTransactionListener(this);
-      logger.info("Found " + evictionTransactionPersistor.getAllTransactionBatches().size() + " incomplete transactions from previous session, recovering them.");
-      for(TransactionBatchContext transactionBatchContext : transactionBatchContexts) {
-        transactionBatchManager.processTransactions(transactionBatchContext);
-      }
-      serverTransactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
-        @Override
-        public void onCompletion() {
-          countDownLatch.countDown();
-        }
-      });
-      try {
-        countDownLatch.await();
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
-      }
-      evictionTransactionPersistor.removeAllTransactions();
-      logger.info("Recovered all former in-flight eviction transactions. Starting normal evictor operation.");
-    } else {
-      logger.info("No in-flight eviction transactions found from previous session. Starting normal evictor operation.");
-    }
-    if (evictionTransactionPersistor.getAllTransactionBatches().size() > 0) {
-      logger.warn("Not all recovered in-flight transactions were deleted from persistent storage. This could lead to data corruption in future restarts. Number of txns remaining = " + evictionTransactionPersistor.getAllTransactionBatches().size() );
+    for (ServerTransactionID recoveredTxnID : evictionTransactionPersistor.getPersistedTransactions()) {
+      EvictionRemoveContext eviction = evictionTransactionPersistor.getEviction(recoveredTxnID);
+      ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
+      ServerTransaction removeAllTransaction = serverTransactionFactory.createRemoveAllTransaction(recoveredTxnID, eviction
+          .getObjectID(), eviction.getCacheName(), eviction.getSamples(), objectStringSerializer);
+      TransactionBatchContext context = new ServerTransactionBatchContext(recoveredTxnID.getSourceID(), removeAllTransaction, objectStringSerializer);
+      transactionBatchManager.processTransactions(context);
     }
   }
 
   boolean isLogging() {
-      return EVICTOR_LOGGING;
+    return EVICTOR_LOGGING;
   }
 
   boolean markEvictionInProgress(final ObjectID oid) {
@@ -168,7 +144,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     }
   }
 
-  void evictFrom(final ObjectID oid, final Map<Object, EvictableEntry> candidates, final String className, final String cacheName) {
+  void evictFrom(final ObjectID oid, final Map<Object, EvictableEntry> candidates, final String cacheName) {
     if ( candidates.isEmpty() ) {
       notifyEvictionCompletedFor(oid);
       return;
@@ -181,12 +157,12 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     NodeID localNodeID = groupManager.getLocalNodeID();
     ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     ServerTransaction serverTransaction = serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
-        className, candidates, serializer, cacheName);
+        candidates, serializer, cacheName);
 
-    TransactionBatchContext batchContext = new ServerMapEvictionTransactionBatchContext(localNodeID, serverTransaction,
+    TransactionBatchContext batchContext = new ServerTransactionBatchContext(localNodeID, serverTransaction,
         serializer);
 
-    evictionTransactionPersistor.saveTransactionBatch(serverTransaction.getServerTransactionID(), batchContext);
+    evictionTransactionPersistor.saveEviction(serverTransaction.getServerTransactionID(), oid, cacheName, candidates);
     transactionBatchManager.processTransactions(batchContext);
     if (EVICTOR_LOGGING) {
       logger.debug("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
@@ -202,7 +178,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
   @Override
   public void transactionCompleted(ServerTransactionID stxID) {
-    evictionTransactionPersistor.removeTransaction(stxID);
+    evictionTransactionPersistor.removeEviction(stxID);
   }
 
 }

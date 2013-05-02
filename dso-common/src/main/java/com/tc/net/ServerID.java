@@ -53,7 +53,7 @@ public class ServerID implements NodeID, Serializable {
     return false;
   }
 
-  byte[] getUID() {
+  public byte[] getUID() {
     return uid;
   }
 
