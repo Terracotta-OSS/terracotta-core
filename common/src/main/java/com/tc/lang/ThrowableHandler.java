@@ -20,6 +20,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
+import java.lang.reflect.Field;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +94,12 @@ public class ThrowableHandler {
   public void handleThrowable(final Thread thread, final Throwable t) {
     handlePossibleOOME(t);
 
+    if (isNotificationFetcherThread(thread)) {
+      // DEV-5006 -- Do not exit L2.
+      logger.warn("Got Exception in JMX Notification forwarding", t);
+      return;
+    }
+
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
     scheduleExit(throwableState);
 
@@ -125,6 +132,7 @@ public class ThrowableHandler {
       exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
     }
   }
+
 
   private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
     if (isExitScheduled) { return; }
@@ -183,4 +191,21 @@ public class ThrowableHandler {
     System.exit(status);
   }
 
+  private static boolean isNotificationFetcherThread(Thread thread) {
+    // UGLY Way to Ignore exception in JMX Notification Forwarder Thread.
+    try {
+      Field runnableField = thread.getClass().getDeclaredField("target");
+      runnableField.setAccessible(true);
+      Object runnable = runnableField.get(thread);
+      if (runnable != null && runnable.getClass().getSimpleName().equals("NotifFetcher")) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (Throwable e) {
+      e.printStackTrace();
+      return false;
+    }
+
+  }
 }
