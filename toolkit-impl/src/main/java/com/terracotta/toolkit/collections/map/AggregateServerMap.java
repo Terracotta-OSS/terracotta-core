@@ -405,13 +405,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private void registerServerEventListener() {
     final EnumSet<ServerEventType> types = EnumSet.of(ServerEventType.EVICT, ServerEventType.EXPIRE);
     platformService.registerServerEventListener(this, types);
-    LOGGER.info("Server event listener has been registered for cache: "
+    LOGGER.debug("Server event listener has been registered for cache: "
                 + getName() + ". Notification types: " + types);
   }
 
   private void unregisterServerEventListener() {
     platformService.unregisterServerEventListener(this);
-    LOGGER.info("Server event listener has been unregistered for cache: "
+    LOGGER.debug("Server event listener has been unregistered for cache: "
                 + getName());
   }
 
@@ -756,7 +756,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
             listener.onEviction(key);
             break;
           case EXPIRE:
-            LOGGER.info("Server expiration event fired for key: " + key);
             listener.onExpiration(key);
             break;
         }
@@ -772,7 +771,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void expiredLocally(final Object key) {
     // transform to regular server expiration to correctly notify listeners
-    LOGGER.info("Local expiration event fired for key: " + key);
     doHandleServerEvent(ServerEventType.EXPIRE, key);
   }
 
