@@ -278,27 +278,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.state = STARTING;
   }
 
-  private void waitUntilRunningAbortable() throws AbortedOperationException {
-    boolean isInterrupted = false;
-    if (this.state == RUNNING) { return; }
-    synchronized (this) {
-      try {
-        while (this.state != RUNNING) {
-          if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
-          if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
-          try {
-            wait();
-          } catch (final InterruptedException e) {
-            AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
-            isInterrupted = true;
-          }
-        }
-      } finally {
-        Util.selfInterruptIfNeeded(isInterrupted);
-      }
-    }
-  }
-
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
@@ -363,13 +342,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     lookupContext.getObjectCreationCount().increment();
   }
 
-  private synchronized ObjectLookupState lookupDone(final ObjectLookupState state) {
+  private synchronized ObjectLookupState lookupDone(final ObjectLookupState lookupState) {
     try {
-      ObjectLookupState removed = this.objectLatchStateMap.remove(state.getObjectID());
-      if ( removed != state ) {
-        throw new AssertionError("wrong removal of lookup state " + removed + " " + state);
+      ObjectLookupState removed = this.objectLatchStateMap.remove(lookupState.getObjectID());
+      if ( removed != lookupState ) {
+        throw new AssertionError("wrong removal of lookup state " + removed + " " + lookupState);
       }
-      return state;
+      return lookupState;
     } finally {
       getLocalLookupContext().getObjectCreationCount().decrement();
     }
@@ -505,7 +484,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (basicHasLocal(id) || this.objectLatchStateMap.get(id) != null) { return; }
       // We are temporarily marking lookup in progress so that no other thread sneaks in under us and does a lookup
       // while we are calling prefetch
-    }    
+    }
     this.remoteObjectManager.preFetchObject(id);
   }
 
@@ -536,7 +515,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     Object o = null;
     while (o == null) {
       final TCObject tco = lookup(objectID, parentContext, noDepth, quiet);
-      if (tco == null) { 
+      if (tco == null) {
         throw new AssertionError("TCObject was null for " + objectID);// continue;
       }
 
@@ -598,7 +577,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
     
     ols = this.objectLatchStateMap.get(oid);
-    if (ols != null) { 
+    if (ols != null) {
       // if the object is being created, add to the wait set and return the object
     } else {
       ols = new ObjectLookupState(oid);
@@ -1158,7 +1137,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
     @Override
-    public final void visit(final List objects, final GroupID gid) throws AbortedOperationException {
+    public final void visit(final List objects, final GroupID gid) {
       for (final Object pojo : objects) {
         final List<Method> postCreateMethods = ClientObjectManagerImpl.this.clazzFactory
             .getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this).getPostCreateMethods();
@@ -1213,7 +1192,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return obj;
   }
 
-  private List basicCreateIfNecessary(final List pojos, final GroupID gid) throws AbortedOperationException {
+  private List basicCreateIfNecessary(final List pojos, final GroupID gid) {
     reserveObjectIds(pojos.size(), gid);
 
     final List tcObjects = new ArrayList(pojos.size());
@@ -1328,6 +1307,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     while (toEvict > 0 && toClear > 0) {
       final int maxCount = Math.min(COMMIT_SIZE, toClear);
       final Collection removalCandidates = this.objectStore.getRemovalCandidates(maxCount);
+      Assert.assertTrue("L1 Cache Manager is still in use", removalCandidates.isEmpty());
       if (removalCandidates.isEmpty()) {
         break; // couldnt find any more
       }
@@ -1506,10 +1486,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       notifyAll();
     }
     
-    public synchronized boolean isSet() {
-      return isSet;
-    }
-    
     public Thread getOwner() {
       return owner;
     }
@@ -1534,7 +1510,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         isInterrupted = true;
       } finally {
         Util.selfInterruptIfNeeded(isInterrupted);
-      } 
+      }
       return this.object;
     }
   }
