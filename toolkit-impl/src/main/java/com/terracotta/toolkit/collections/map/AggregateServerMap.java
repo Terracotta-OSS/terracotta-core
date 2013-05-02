@@ -78,7 +78,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity, ServerEventDestination {
+    ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
+    ServerEventDestination, LocalExpirationCallback {
   private static final TCLogger                                            LOGGER                               = TCLogging
                                                                                                                     .getLogger(AggregateServerMap.class);
 
@@ -177,6 +178,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         .getValueIfExistsOrDefault(config);
     for (InternalToolkitMap<K, V> serverMap : serverMapsParam) {
       serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback, localCacheEnabled);
+      serverMap.setExpirationCallback(this);
     }
   }
 
@@ -743,6 +745,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void handleServerEvent(final ServerEventType type, final Object key) {
+    doHandleServerEvent(type, key);
+  }
+
+  private void doHandleServerEvent(final ServerEventType type, final Object key) {
     for (final ToolkitCacheListener listener : listeners) {
       try {
         switch (type) {
@@ -750,6 +756,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
             listener.onEviction(key);
             break;
           case EXPIRE:
+            LOGGER.info("Server expiration event fired for key: " + key);
             listener.onExpiration(key);
             break;
         }
@@ -760,6 +767,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         LOGGER.error("Cache listener threw an exception.", t);
       }
     }
+  }
+
+  @Override
+  public void expiredLocally(final Object key) {
+    // transform to regular server expiration to correctly notify listeners
+    LOGGER.info("Local expiration event fired for key: " + key);
+    doHandleServerEvent(ServerEventType.EXPIRE, key);
   }
 
   private static class AggregateServerMapIterator<E> implements Iterator<E> {

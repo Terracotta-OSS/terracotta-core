@@ -94,6 +94,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
   private final LOCK_STRATEGY                                   lockMethod;
+  private LocalExpirationCallback expirationCallback;
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -385,13 +386,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void expire(Object key, SerializedMapValue serializedMapValue, GetType getType) {
+    final boolean shouldNotify;
     // perform local get for unsafe operations
     V deserializedValue = deserialize(key, serializedMapValue, isUnsafeGet(getType));
     MetaData metaData = getEvictRemoveMetaData();
 
     if (getType == GetType.LOCKED) {
-      // XXX - call below uses its own MetaData; evicted MetaData not preserved!
-      remove(key, deserializedValue);
+      // XXX - call below uses its own MetaData; evicted MetaData not preserved!q
+      shouldNotify = remove(key, deserializedValue);
     } else {
       expireConcurrentLock.lock();
       try {
@@ -405,7 +407,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
       } finally {
         expireConcurrentLock.unlock();
+        shouldNotify = true;
       }
+    }
+
+    if (shouldNotify && expirationCallback != null) {
+      expirationCallback.expiredLocally(key);
     }
   }
 
@@ -1391,6 +1398,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void registerAttributeExtractor(ToolkitAttributeExtractor extractor) {
     this.attrExtractor = extractor;
+  }
+
+  @Override
+  public void setExpirationCallback(final LocalExpirationCallback expirationCallback) {
+    this.expirationCallback = expirationCallback;
   }
 
   private class LongLockStrategy implements LockStrategy {

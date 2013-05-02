@@ -98,4 +98,5 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void setConfigFieldInternal(String fieldChanged, Object changedValue);
 
+  void setExpirationCallback(LocalExpirationCallback expirationCallback);
 }
