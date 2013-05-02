@@ -776,15 +776,12 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * <code>
    * Dev console Settings
-   *  console.max.operator.events   -   Number of operator events dev console will show
-   *                                    in the panel before it starts recycling
    *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events
    *  tc.time.sync.threshold        -   Number of second of tolerable system time difference between
    *                                    two nodes of cluster beyond which and operator event will be thrown
    *  l2.logs.store                 -   Number of logs L2s will store to keep the history of the logs
    * </code>
    ********************************************************************************************************************/
-  public static final String DEV_CONSOLE_MAX_OPERATOR_EVENTS                                = "dev.console.max.operator.events";
   public static final String L2_OPERATOR_EVENTS_STORE                                       = "l2.operator.events.store";
   public static final String TC_TIME_SYNC_THRESHOLD                                         = "tc.time.sync.threshold";
   public static final String L2_LOGS_STORE                                                  = "l2.logs.store";
