@@ -390,6 +390,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
+  protected void applyClear(final ApplyTransactionInfo applyInfo) {
+    removedReferences(applyInfo, references.values());
+    references.clear();
+  }
+
+  @Override
   protected void basicWriteTo(final ObjectOutput out) throws IOException {
     super.basicWriteTo(out);
     out.writeInt(this.dsoLockType);
