@@ -466,7 +466,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public boolean startEviction() {
     // do not start eviction if it is turned off
-    if ( ( !this.evictionEnabled && this.maxTTISeconds == 0 && this.maxTTLSeconds == 0 ) 
+    if ( ( !this.evictionEnabled && this.maxTTISeconds == 0 && this.maxTTLSeconds == 0 )
         || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
         return false;
     }
@@ -496,8 +496,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   public Map<Object, EvictableEntry> getRandomSamples(final int count,
                                                       final ClientObjectReferenceSet clientObjectRefSet,
-                                                      final SamplingType samplingType) {
-    this.samplingType = samplingType;
+                                                      final SamplingType smpType) {
+    this.samplingType = smpType;
     if (this.evictionStatus == EvictionStatus.NOT_INITIATED) {
       throw new AssertionError(this.evictionStatus);
     } else {
