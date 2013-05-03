@@ -871,16 +871,23 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     assertNotNull(value);
 
     throttleIfNecessary();
+    MetaData metaData;
     if (isEventual()) {
       final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
       if (old != null) {
-        createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
+        metaData = createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
         eventualConcurrentLock.lock();
         SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
                                                                             ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                             ToolkitConfigFields.NO_MAX_TTL_SECONDS);
         try {
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, newSerializedMapValue);
+          if (metaData != null) {
+            metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
+            metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
+            addMetaData(metaData);
+          }
+
         } finally {
           eventualConcurrentLock.unlock();
         }
@@ -888,7 +895,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       return old;
     } else {
 
-      MetaData metaData = createPutSearchMetaData(key, value);
+      metaData = createPutSearchMetaData(key, value);
       if (metaData != null) {
         metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
@@ -914,13 +921,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     assertNotNull(newValue);
     throttleIfNecessary();
 
+    MetaData metaData;
     if (isEventual()) {
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
       final V old = deserialize(key, oldSerializedMapValue);
-
-      createMetaDataAndSetCommand(key, newValue, SearchCommand.REPLACE);
-
       if (old != null && old.equals(oldValue)) {
+        metaData = createMetaDataAndSetCommand(key, newValue, SearchCommand.REPLACE);
         eventualConcurrentLock.lock();
         try {
           SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue, timeSource.nowInSeconds(),
@@ -928,6 +934,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                                                                               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
 
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue);
+          if (metaData != null) {
+            metaData.add(SearchMetaData.PREV_VALUE, oldSerializedMapValue.getObjectID());
+            metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
+            addMetaData(metaData);
+          }
+
           return true;
         } finally {
           eventualConcurrentLock.unlock();
@@ -936,7 +948,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         return false;
       }
     } else {
-      MetaData metaData = createPutSearchMetaData(key, newValue);
+      metaData = createPutSearchMetaData(key, newValue);
       if (metaData != null) {
         metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
