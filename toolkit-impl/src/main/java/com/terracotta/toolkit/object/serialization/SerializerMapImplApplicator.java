@@ -50,7 +50,7 @@ public class SerializerMapImplApplicator extends BaseApplicator {
         Object v = params[1];
         if (v instanceof ObjectID) {
           try {
-            v = objectManager.lookup((ObjectID) v).getPeerObject();
+            v = objectManager.lookupObject((ObjectID) v);
           } catch (AbortedOperationException e) {
             throw new TCRuntimeException(e);
           }
