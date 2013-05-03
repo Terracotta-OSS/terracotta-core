@@ -167,7 +167,7 @@ public class TestLockManager implements ClientLockManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     // NOP
   }
 

@@ -755,7 +755,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
 
     Assert.assertEquals(2 * count, cache.size());
 
-    globalLocalCacheManager.shutdown();
+    globalLocalCacheManager.shutdown(false);
     for (int i = 0; i < count; i++) {
       int eventualId = count + i;
 

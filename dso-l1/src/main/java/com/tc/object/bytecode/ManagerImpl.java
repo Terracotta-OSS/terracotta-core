@@ -115,6 +115,7 @@ public class ManagerImpl implements Manager {
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
   private ServerEventListenerManager serverEventListenerManager;
+  private final String                                L1VMShutdownHookName      = "L1 VM Shutdown Hook";
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -150,7 +151,7 @@ public class ManagerImpl implements Manager {
     this.uuid = UUID.getUUID();
 
     if (shutdownActionRequired) {
-      this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
+      this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
       // Register a shutdown hook for the terracotta client
       Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     } else {

@@ -145,7 +145,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
   }
 
   private static final class SubscribedDestination {

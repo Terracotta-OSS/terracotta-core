@@ -32,7 +32,7 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     //
   }
 

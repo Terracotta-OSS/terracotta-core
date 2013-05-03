@@ -201,7 +201,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public void shutdown() {
+    public void shutdown(boolean fromShutdownHook) {
       throw new ImplementMe();
     }
 
@@ -354,7 +354,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public void shutdown() {
+    public void shutdown(boolean fromShutdownHook) {
       throw new ImplementMe();
     }
 

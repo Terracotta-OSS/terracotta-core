@@ -188,7 +188,7 @@ public class MockClientLockManager implements ClientLockManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     throw new ImplementMe();
   }
 

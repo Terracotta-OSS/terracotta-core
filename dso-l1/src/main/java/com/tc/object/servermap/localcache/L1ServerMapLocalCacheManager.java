@@ -54,7 +54,7 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
    * Shut down all local caches
    */
   @Override
-  public void shutdown();
+  public void shutdown(boolean fromShutdownHook);
 
   public void evictElements(Map evictedElements, ServerMapLocalCache serverMapLocalCache);
 

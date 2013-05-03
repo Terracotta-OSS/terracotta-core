@@ -558,7 +558,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     state = State.STOPPED;
     reInvalidateHandler.shutdown();
       synchronized (this) {

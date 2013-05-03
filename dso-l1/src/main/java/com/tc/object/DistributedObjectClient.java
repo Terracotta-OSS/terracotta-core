@@ -1138,7 +1138,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     if (this.lockManager != null) {
       try {
-        this.lockManager.shutdown();
+        this.lockManager.shutdown(false);
       } catch (final Throwable t) {
         logger.error("Error stopping lock manager", t);
       } finally {
@@ -1148,7 +1148,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     if (serverEventListenerManager != null) {
       try {
-        serverEventListenerManager.shutdown();
+        serverEventListenerManager.shutdown(false);
       } catch (final Throwable t) {
         logger.error("Error stopping server event listener manager", t);
       } finally {
@@ -1163,12 +1163,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
 
     if (globalLocalCacheManager != null) {
-      globalLocalCacheManager.shutdown();
+      globalLocalCacheManager.shutdown(false);
     }
 
     if (this.objectManager != null) {
       try {
-        this.objectManager.shutdown();
+        this.objectManager.shutdown(false);
       } catch (final Throwable t) {
         logger.error("Error shutting down client object manager", t);
       } finally {

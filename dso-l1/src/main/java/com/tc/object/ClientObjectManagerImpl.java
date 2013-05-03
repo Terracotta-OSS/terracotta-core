@@ -365,8 +365,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   @Override
-  public void shutdown() {
-    this.objectStore.shutdown();
+  public void shutdown(boolean fromShutdownHook) {
+    this.objectStore.shutdown(fromShutdownHook);
     synchronized (this) {
       this.state = SHUTDOWN;
       if (this.reaper != null) {
@@ -1382,8 +1382,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       cacheUnmanaged.clear();
     }
 
-    public void shutdown() {
-      tcObjectSelfStore.shutdown();
+    public void shutdown(boolean fromShutdownHook) {
+      tcObjectSelfStore.shutdown(fromShutdownHook);
     }
 
     public int size() {

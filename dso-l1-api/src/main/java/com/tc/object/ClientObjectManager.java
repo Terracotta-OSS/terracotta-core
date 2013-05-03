@@ -315,7 +315,7 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
   /**
    * Shutdown the client object manager
    */
-  public void shutdown();
+  public void shutdown(boolean fromShutdownHook);
 
   /**
    * @return True if creation in progress

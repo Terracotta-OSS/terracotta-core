@@ -153,7 +153,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     //
   }
 

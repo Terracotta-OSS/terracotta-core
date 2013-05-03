@@ -125,7 +125,7 @@ public class DsoClusterTest extends TestCase {
     }
 
     @Override
-    public void shutdown() {
+    public void shutdown(boolean fromShutdownHook) {
       // no-op
     }
 

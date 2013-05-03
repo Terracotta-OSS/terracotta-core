@@ -316,7 +316,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     @Override
-    public void shutdown() {
+    public void shutdown(boolean fromShutdownHook) {
       // NOP
     }
 

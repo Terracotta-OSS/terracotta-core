@@ -92,9 +92,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     isShutdown = true;
-    shutdownCallbacks();
+    shutdownCallbacks(fromShutdownHook);
   }
 
   @Override
@@ -273,9 +273,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     }
   }
 
-  private void shutdownCallbacks() {
+  private void shutdownCallbacks(boolean fromShutdownHook) {
     for (ClientHandshakeCallback c : this.callBacks) {
-      c.shutdown();
+      c.shutdown(fromShutdownHook);
     }
   }
 

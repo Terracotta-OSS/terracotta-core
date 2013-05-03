@@ -52,7 +52,7 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     //
   }
 

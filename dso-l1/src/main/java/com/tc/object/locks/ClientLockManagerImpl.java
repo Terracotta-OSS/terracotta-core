@@ -656,7 +656,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     stateGuard.writeLock().lock();
     try {
       state = state.shutdown();

@@ -113,7 +113,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
 
     System.out.println("Shutting down the ClientObjectManager");
-    mgr.shutdown();
+    mgr.shutdown(false);
 
     System.out.println("Waiting to join the root replacer thread.");
     waiter.join(10 * 1000);

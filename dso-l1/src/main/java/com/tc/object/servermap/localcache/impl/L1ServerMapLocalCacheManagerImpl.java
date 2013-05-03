@@ -258,14 +258,15 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   @Override
-  public synchronized void shutdown() {
-    tcObjectSelfStore.shutdown();
+  public synchronized void shutdown(boolean fromShutdownHook) {
+    tcObjectSelfStore.shutdown(fromShutdownHook);
 
     shutdown.set(true);
-
-    for (L1ServerMapLocalCacheStore store : localStores.keySet().toArray(new L1ServerMapLocalCacheStore[0])) {
-      store.clear();
-      store.dispose();
+    if (!fromShutdownHook) {
+      for (L1ServerMapLocalCacheStore store : localStores.keySet().toArray(new L1ServerMapLocalCacheStore[0])) {
+        store.clear();
+        store.dispose();
+      }
     }
   }
 

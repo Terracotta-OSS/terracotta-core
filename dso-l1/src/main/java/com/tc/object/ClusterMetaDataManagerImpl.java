@@ -356,7 +356,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     isShutdown = true;
     synchronized (this) {
       this.notifyAll();

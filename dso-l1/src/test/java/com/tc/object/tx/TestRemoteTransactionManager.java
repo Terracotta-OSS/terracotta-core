@@ -98,7 +98,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     // NOP
   }
 

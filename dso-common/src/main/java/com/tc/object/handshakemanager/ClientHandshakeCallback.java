@@ -15,6 +15,6 @@ public interface ClientHandshakeCallback extends ClearableCallback {
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage);
 
-  public void shutdown();
+  public void shutdown(boolean fromShutdownHook);
 
 }

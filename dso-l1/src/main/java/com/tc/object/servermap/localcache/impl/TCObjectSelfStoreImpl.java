@@ -356,7 +356,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     this.isShutdown = true;
   }
 

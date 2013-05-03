@@ -182,7 +182,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     // NOP
   }
 

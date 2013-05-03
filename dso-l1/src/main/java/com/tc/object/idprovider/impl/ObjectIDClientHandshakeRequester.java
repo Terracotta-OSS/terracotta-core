@@ -49,7 +49,7 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     // NOP
   }
 

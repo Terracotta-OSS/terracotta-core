@@ -211,7 +211,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     // Ignore
   }
 

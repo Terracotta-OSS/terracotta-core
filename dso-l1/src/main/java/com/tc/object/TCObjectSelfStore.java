@@ -40,7 +40,7 @@ public interface TCObjectSelfStore extends ClearableCallback {
    */
   public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode);
 
-  void shutdown();
+  void shutdown(boolean fromShutdownHook);
 
   void removeTCObjectSelf(TCObjectSelf self);
 }

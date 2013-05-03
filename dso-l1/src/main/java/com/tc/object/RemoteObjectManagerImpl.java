@@ -153,7 +153,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   @Override
-  public synchronized void shutdown() {
+  public synchronized void shutdown(boolean fromShutdownHook) {
     state = State.STOPPED;
     objectRequestTimer.cancel();
     notifyAll();

@@ -84,7 +84,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     this.l1LocalCacheManagerImpl.addTCObjectSelf(serverMapLocalStore, localStoreValue, self, true);
     serverMapLocalStore.put(oid, "my-key");
 
-    this.l1LocalCacheManagerImpl.shutdown();
+    this.l1LocalCacheManagerImpl.shutdown(false);
 
     boolean expectedException = false;
     try {

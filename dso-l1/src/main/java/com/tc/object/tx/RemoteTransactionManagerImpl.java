@@ -147,7 +147,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean fromShutdownHook) {
     lockAccounting.shutdown();
     isShutdown = true;
     flusherTimer.cancel();

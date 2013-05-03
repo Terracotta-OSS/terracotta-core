@@ -13,6 +13,7 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.platform.rejoin.RejoinManager;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,7 +61,7 @@ public class ClientShutdownManager {
 
     executeBeforeShutdownHooks();
 
-    closeLocalWork(forceImmediate);
+    closeLocalWork(fromShutdownHook, forceImmediate);
 
     if (!fromShutdownHook) {
       shutdown();
@@ -76,10 +77,10 @@ public class ClientShutdownManager {
     }
   }
 
-  private void closeLocalWork(boolean forceImmediate) {
+  private void closeLocalWork(boolean fromShutdownHook, boolean forceImmediate) {
 
     // stop handshaking while shutting down
-    handshakeManager.shutdown();
+    handshakeManager.shutdown(fromShutdownHook);
 
     boolean immediate = forceImmediate || isImmediate();
     if (!immediate) {
