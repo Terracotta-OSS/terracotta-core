@@ -202,7 +202,7 @@ public class TerracottaClusterInfo implements ClusterInfo {
     @Override
     public boolean equals(Object o) {
       if (o instanceof ClusterListenerWrapper) {
-        return listener == ((ClusterListenerWrapper) o).listener;
+        return listener.equals(((ClusterListenerWrapper) o).listener);
       } else {
         return false;
       }
