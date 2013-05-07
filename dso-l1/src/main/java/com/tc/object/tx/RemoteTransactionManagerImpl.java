@@ -761,14 +761,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
     private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
       if (ignoreMax
-          || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 10)) {
+          || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
         ClientTransactionBatch batch = sequencer.getNextBatch();
         if (batch != null) {
           if (batch.numberOfTxnsBeforeFolding() == 0) { throw new AssertionError("no transactions"); }
           TxnBatchID bid = batch.getTransactionBatchID();
           batchAccounting.addBatch(bid, markBatchOutstanding(bid, batch));
           addToSendList(batch);
-        }
+        } 
         return batch;
       }
       return null;
