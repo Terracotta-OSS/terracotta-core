@@ -4,10 +4,10 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.VersionedEntity;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
 import com.tc.config.schema.L2Info;
@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.zip.ZipInputStream;
@@ -70,15 +71,19 @@ import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.JMX;
+import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
 import javax.net.ssl.HttpsURLConnection;
+import javax.security.auth.Subject;
 
 /**
  * @author Ludovic Orban
@@ -139,22 +144,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
     JMXConnector jmxConnector = null;
     try {
-      final MBeanServerConnection mBeanServerConnection;
+      jmxConnector = getJMXConnectorWithL1MBeans();
 
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsL1MBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingL1MBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          mBeanServerConnection = null;
-        } else {
-          mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-        }
-      }
-
-      if (mBeanServerConnection != null) {
+      if (jmxConnector != null) {
+        final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
         for (final ObjectName clientObjectName : clientObjectNames) {
@@ -176,12 +169,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
 
     try {
-      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
-      for (Future<ThreadDumpEntity> future : futures) {
-        ThreadDumpEntity threadDumpEntity = future.get();
-        threadDumpEntities.add(threadDumpEntity);
-      }
-      return threadDumpEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting cluster thread dump", e);
     }
@@ -191,19 +179,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      final MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsL1MBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingL1MBeans();
-        if (jmxConnector == null) {
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
           // there is no connected client
           return Collections.emptyList();
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
@@ -224,12 +205,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         futures.add(future);
       }
 
-      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
-      for (Future<ThreadDumpEntity> future : futures) {
-        ThreadDumpEntity threadDumpEntity = future.get();
-        threadDumpEntities.add(threadDumpEntity);
-      }
-      return threadDumpEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting client stack traces", e);
     } finally {
@@ -289,12 +265,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
-      for (Future<ThreadDumpEntity> future : futures) {
-        ThreadDumpEntity result = future.get();
-        threadDumpEntities.add(result);
-      }
-      return threadDumpEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting remote servers thread dump", e);
     }
@@ -365,19 +336,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Collection<ClientEntity> getClientEntities() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      final MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsL1MBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingL1MBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          return Collections.emptyList();
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return Collections.emptySet();
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       List<Future<ClientEntity>> futures = new ArrayList<Future<ClientEntity>>();
 
@@ -393,12 +357,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         futures.add(future);
       }
 
-      Collection<ClientEntity> clientEntities = new ArrayList<ClientEntity>();
-      for (Future<ClientEntity> future : futures) {
-        ClientEntity clientEntity = future.get();
-        if (clientEntity != null) { clientEntities.add(clientEntity); }
-      }
-      return clientEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     } finally {
@@ -478,19 +437,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
     JMXConnector jmxConnector = null;
     try {
-      final MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsL1MBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingL1MBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          return null;
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return Collections.emptySet();
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(
           new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
@@ -512,12 +464,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         futures.add(future);
       }
 
-      Collection<StatisticsEntity> statisticsEntities = new ArrayList<StatisticsEntity>();
-      for (Future<StatisticsEntity> future : futures) {
-        StatisticsEntity statisticsEntity = future.get();
-        statisticsEntities.add(statisticsEntity);
-      }
-      return statisticsEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     } finally {
@@ -556,7 +503,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
 
     try {
-
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
@@ -584,12 +530,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<StatisticsEntity> result = new ArrayList<StatisticsEntity>();
-      for (Future<StatisticsEntity> future : futures) {
-        StatisticsEntity statisticsEntity = future.get();
-        result.add(statisticsEntity);
-      }
-      return result;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
@@ -785,19 +726,13 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Map<String, Map<String, String>> getL1Nodes() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsEhcacheMBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingEhcacheMBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          return Collections.emptyMap();
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return Collections.emptyMap();
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
 
       Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
@@ -837,19 +772,13 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                               String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsEhcacheMBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingEhcacheMBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          return null;
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      jmxConnector = getJMXConnectorWithEhcacheMBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return null;
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
 
       ObjectName objectName = null;
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
@@ -904,12 +833,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
-      for (Future<ConfigEntity> future : futures) {
-        ConfigEntity configEntity = future.get();
-        configEntities.add(configEntity);
-      }
-      return configEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers config", e);
     }
@@ -951,19 +875,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      final MBeanServerConnection mBeanServerConnection;
-
-      // find the server where L1 Info MBeans are registered
-      if (localServerContainsL1MBeans()) {
-        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
-      } else {
-        jmxConnector = findServerContainingL1MBeans();
-        if (jmxConnector == null) {
-          // there is no connected client
-          return Collections.emptyList();
-        }
-        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return Collections.emptySet();
       }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       List<Future<ConfigEntity>> futures = new ArrayList<Future<ConfigEntity>>();
 
@@ -984,12 +901,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         futures.add(future);
       }
 
-      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
-      for (Future<ConfigEntity> future : futures) {
-        ConfigEntity configEntity = future.get();
-        configEntities.add(configEntity);
-      }
-      return configEntities;
+      return collectEntitiesFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting clients config", e);
     } finally {
@@ -1025,7 +937,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   @Override
   public Collection<BackupEntity> getBackupsStatus() throws ServiceExecutionException {
-
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
@@ -1049,12 +960,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<BackupEntity> backupEntities = new ArrayList<BackupEntity>();
-      for (Future<Collection<BackupEntity>> future : futures) {
-        Collection<BackupEntity> entities = future.get();
-        backupEntities.addAll(entities);
-      }
-      return backupEntities;
+      return collectEntitiesCollectionFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers backup status", e);
     }
@@ -1191,12 +1097,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<LogEntity> logEntities = new ArrayList<LogEntity>();
-      for (Future<Collection<LogEntity>> future : futures) {
-        Collection<LogEntity> entities = future.get();
-        logEntities.addAll(entities);
-      }
-      return logEntities;
+      return collectEntitiesCollectionFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting servers logs", e);
     }
@@ -1270,12 +1171,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         }
       }
 
-      Collection<OperatorEventEntity> operatorEventEntities = new ArrayList<OperatorEventEntity>();
-      for (Future<Collection<OperatorEventEntity>> future : futures) {
-        Collection<OperatorEventEntity> entities = future.get();
-        operatorEventEntities.addAll(entities);
-      }
-      return operatorEventEntities;
+      return collectEntitiesCollectionFromFutures(futures);
     } catch (Exception e) {
       throw new ServiceExecutionException("error getting operator events", e);
     }
@@ -1682,7 +1578,33 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     return threadDumpEntity;
   }
 
-  private JMXConnector findServerContainingEhcacheMBeans() throws JMException, InterruptedException {
+
+  // find the server where L1 Info MBeans are registered
+  private JMXConnector getJMXConnectorWithL1MBeans() throws IOException, JMException, InterruptedException {
+    ObjectName objectName = new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*");
+    return getJmxConnectorWithMBeans(objectName);
+  }
+
+  // find the server where Ehcache MBeans are registered
+  private JMXConnector getJMXConnectorWithEhcacheMBeans() throws IOException, JMException, InterruptedException {
+    ObjectName objectName = new ObjectName("net.sf.ehcache:type=RepositoryService,*");
+    return getJmxConnectorWithMBeans(objectName);
+  }
+
+  private JMXConnector getJmxConnectorWithMBeans(final ObjectName objectName) throws JMException, IOException, InterruptedException {
+    if (localServerContainsMBeans(objectName)) {
+      return new LocalJMXConnector();
+    } else {
+      JMXConnector jmxConnector = findServerContainingMBeans(objectName);
+      if (jmxConnector == null) {
+        // there is no connected client
+        return null;
+      }
+      return jmxConnector;
+    }
+  }
+
+  private JMXConnector findServerContainingMBeans(ObjectName objectName) throws JMException, InterruptedException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
 
@@ -1694,7 +1616,8 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
 
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-        if (serverContainsEhcacheMBeans(mBeanServerConnection)) {
+        Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(objectName, null);
+        if (!dsoClientObjectNames.isEmpty()) {
           return jmxConnector;
         } else {
           jmxConnector.close();
@@ -1703,50 +1626,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         // cannot connect to this L2, it might be down, just skip it
       }
     }
-    return null; // no server has any client in the cluster at the moment
+    return null; // no server has any of the searched objects in the cluster at the moment
   }
 
-  private boolean serverContainsEhcacheMBeans(MBeanServerConnection mBeanServerConnection) throws JMException, IOException {
-    return !mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null).isEmpty();
-  }
-
-  private boolean localServerContainsEhcacheMBeans() throws MalformedObjectNameException {
+  private boolean localServerContainsMBeans(ObjectName objectName) throws JMException, IOException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    return !mBeanServer.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null).isEmpty();
-  }
-
-  private JMXConnector findServerContainingL1MBeans() throws JMException, InterruptedException {
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
-
-    for (L2Info l2Info : l2Infos) {
-      String jmxHost = l2Info.host();
-      int jmxPort = l2Info.jmxPort();
-
-      try {
-        JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
-
-        MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-        if (serverContainsL1MBeans(mBeanServerConnection)) {
-          return jmxConnector;
-        } else {
-          jmxConnector.close();
-        }
-      } catch (IOException ioe) {
-        // cannot connect to this L2, it might be down, just skip it
-      }
-    }
-    return null; // no server has any client in the cluster at the moment
-  }
-
-  private boolean localServerContainsL1MBeans() throws JMException, IOException {
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    return serverContainsL1MBeans(mBeanServer);
-  }
-
-  private boolean serverContainsL1MBeans(MBeanServerConnection mBeanServerConnection) throws JMException, IOException {
-    Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
-        new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
+    Set<ObjectName> dsoClientObjectNames = mBeanServer.queryNames(objectName, null);
     return !dsoClientObjectNames.isEmpty();
   }
 
@@ -1763,6 +1648,66 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       } catch (IOException ioe) {
         LOG.warn("error closing JMX connection", ioe);
       }
+    }
+  }
+
+  private <T extends VersionedEntity> Collection<T> collectEntitiesFromFutures(List<Future<T>> futures) throws InterruptedException, ExecutionException {
+    Collection<T> entities = new ArrayList<T>();
+    for (Future<T> future : futures) {
+      T entity = future.get();
+      entities.add(entity);
+    }
+    return entities;
+  }
+
+  private <T extends VersionedEntity> Collection<T> collectEntitiesCollectionFromFutures(List<Future<Collection<T>>> futures) throws InterruptedException, ExecutionException {
+    Collection<T> allEntities = new ArrayList<T>();
+    for (Future<Collection<T>> future : futures) {
+      Collection<T> entities = future.get();
+      allEntities.addAll(entities);
+    }
+    return allEntities;
+  }
+
+  // A JMXConnector that returns the platform MBeanServer when getMBeanServerConnection is called
+  private final static class LocalJMXConnector implements JMXConnector {
+    @Override
+    public void connect() throws IOException {
+    }
+
+    @Override
+    public void connect(final Map<String, ?> env) throws IOException {
+    }
+
+    @Override
+    public MBeanServerConnection getMBeanServerConnection() throws IOException {
+      return ManagementFactory.getPlatformMBeanServer();
+    }
+
+    @Override
+    public MBeanServerConnection getMBeanServerConnection(final Subject delegationSubject) throws IOException {
+      return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    @Override
+    public void addConnectionNotificationListener(final NotificationListener listener, final NotificationFilter filter, final Object handback) {
+    }
+
+    @Override
+    public void removeConnectionNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
+    }
+
+    @Override
+    public void removeConnectionNotificationListener(final NotificationListener l, final NotificationFilter f, final Object handback) throws ListenerNotFoundException {
+    }
+
+    @Override
+    public String getConnectionId() throws IOException {
+      return null;
     }
   }
 
