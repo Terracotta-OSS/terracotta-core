@@ -260,18 +260,24 @@ public class TransactionSequencer implements ClearableCallback {
 
   public ClientTransactionBatch getNextBatch() {
     ClientTransactionBatch batch = this.pendingBatches.poll();
-    if (batch != null) { return batch; }
-      // Check again to avoid sending the txn in the wrong order
-    synchronized (this) {
-      batch = this.pendingBatches.poll();
-      notifyAll();
+    try {
       if (batch != null) { return batch; }
-      if (!this.currentBatch.isEmpty()) {
-        batch = this.currentBatch;
-        createNewBatch();
-        return batch;
+        // Check again to avoid sending the txn in the wrong order
+      synchronized (this) {
+        batch = this.pendingBatches.poll();
+        notifyAll();
+        if (batch != null) { return batch; }
+        if (!this.currentBatch.isEmpty()) {
+          batch = this.currentBatch;
+          createNewBatch();
+          return batch;
+        }
+        return null;
       }
-      return null;
+    } finally {
+      if ( LOGGING_ENABLED && batch != null && logger.isDebugEnabled() ) {
+        logger.debug("batch count: " + batch.numberOfTxnsBeforeFolding() + " average size: " + this.currentWritten.getAverage());
+      }
     }
   }
 
@@ -301,7 +307,7 @@ public class TransactionSequencer implements ClearableCallback {
     
     public synchronized void written(int w) {
       written += w;
-      if ( count++ == 20 ) {
+      if ( count++ == 1024 ) {
         rebalance();
       }
     }
