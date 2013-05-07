@@ -9,6 +9,7 @@ import org.terracotta.toolkit.builder.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
+import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
@@ -54,7 +55,7 @@ public class ToolkitStoreDistributedTypeFactory<K extends Serializable, V extend
     final ToolkitStoreConfigBuilder builder = new ToolkitStoreConfigBuilder();
     // populate defaults
     builder.concurrency(ToolkitConfigFields.DEFAULT_CONCURRENCY);
-    builder.consistency(ToolkitConfigFields.Consistency.valueOf(ToolkitConfigFields.DEFAULT_CONSISTENCY));
+    builder.consistency(ToolkitConfigFields.Consistency.valueOf(Consistency.STRONG.name()));
     builder.localCacheEnabled(ToolkitConfigFields.DEFAULT_LOCAL_CACHE_ENABLED);
     builder.offheapEnabled(ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED);
     builder.maxBytesLocalHeap(ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP);
