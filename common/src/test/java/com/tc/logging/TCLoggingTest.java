@@ -47,8 +47,8 @@ public class TCLoggingTest extends TCTestCase {
     File[] listFiles = logDirFolder.listFiles();
     int logFileCount = 0;
     for (File file : listFiles) {
-      if (!file.isHidden()) {
-        Assert.assertEquals("log", file.getName().substring(file.getName().lastIndexOf('.') + 1));
+      String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+      if (!file.isHidden() && ext.equals("log")) {
         logFileCount++;
       }
     }
