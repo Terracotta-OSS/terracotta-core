@@ -10,6 +10,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ServerEventType;
 import com.tc.object.msg.ServerEventMessage;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.event.ServerEvent;
 import com.tc.objectserver.event.ServerEventListener;
@@ -24,7 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Eugene Shelestovich
  */
-public class InClusterServerEventNotifier implements ServerEventListener {
+public class InClusterServerEventNotifier implements ServerEventListener, DSOChannelManagerEventListener {
 
   private static final TCLogger LOG = TCLogging.getLogger(InClusterServerEventNotifier.class);
 
@@ -35,6 +36,7 @@ public class InClusterServerEventNotifier implements ServerEventListener {
 
   public InClusterServerEventNotifier(final DSOChannelManager channelManager) {
     this.channelManager = channelManager;
+    this.channelManager.addEventListener(this);
   }
 
   @Override
@@ -68,7 +70,6 @@ public class InClusterServerEventNotifier implements ServerEventListener {
     } catch (NoSuchChannelException e) {
       LOG.warn("Cannot find channel for client: " + clientId
                + ". The client will no longer receive server notifications.");
-      unregisterClient(clientId);
     }
   }
 
@@ -120,6 +121,19 @@ public class InClusterServerEventNotifier implements ServerEventListener {
       }
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void channelCreated(final MessageChannel channel) {
+    // ignore
+  }
+
+  @Override
+  public void channelRemoved(final MessageChannel channel) {
+    final ClientID clientId = channelManager.getClientIDFor(channel.getChannelID());
+    if (clientId != null) {
+      unregisterClient(clientId);
     }
   }
 }
