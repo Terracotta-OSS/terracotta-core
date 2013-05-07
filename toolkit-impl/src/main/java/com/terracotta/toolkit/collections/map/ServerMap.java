@@ -65,7 +65,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V>, NotClearable {
   private static final TCLogger                                 LOGGER              = TCLogging
                                                                                         .getLogger(ServerMap.class);
-  private static final Object[]                                 NO_ARGS             = new Object[0];
+  private static final Object[]                             NO_ARGS             = new Object[0];
+  private static final String                               LOCK_PREFIX         = "__servermap@lock-";
+  private static final String                               KEY_LOCK_PREFIX     = LOCK_PREFIX + "key-";
+
   private final ToolkitLock                                     expireConcurrentLock;
   private final ToolkitLock                                     eventualConcurrentLock;
 
@@ -1439,7 +1442,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
     @Override
     public Object generateLockIdForKey(Object key) {
-      return key;
+      return KEY_LOCK_PREFIX + name + key;
     }
   }
 
@@ -1451,7 +1454,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
     @Override
     public Object generateLockIdForKey(Object key) {
-      return ServerMap.this.getInstanceDsoLockName();
+      return LOCK_PREFIX + name;
     }
   }
 }
