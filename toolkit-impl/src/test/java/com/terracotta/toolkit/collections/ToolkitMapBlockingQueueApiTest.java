@@ -94,4 +94,18 @@ public class ToolkitMapBlockingQueueApiTest extends BlockingQueueApiTest {
     }
   }
 
+  @Test
+  public void testSequentialAdd() throws Exception {
+    final BlockingQueue<Integer> q = new ToolkitMapBlockingQueue<Integer>(
+        "testQueue", new MockToolkitStore<String, Integer>("testQueue_store"),
+        new MockToolkitReadWriteLock("testQueue_lock"));
+
+    for (int i = 0; i < SIZE; i++) {
+      q.add(i);
+    }
+    for (int i = 0; i < SIZE; i++) {
+      assertEquals(i, q.take().intValue());
+    }
+  }
+
 }

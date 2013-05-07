@@ -110,6 +110,9 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   private void initNewMap() {
     writeLock().lock();
     try {
+      // double checked locking to prevent initialization race
+      if (map.get(CAPACITY_KEY) != null) { return; }
+
       unlockedPutNoReturn(HEAD_KEY, (E)Integer.valueOf(0));
       unlockedPutNoReturn(TAIL_KEY, (E)Integer.valueOf(0));
       unlockedPutNoReturn(CAPACITY_KEY, (E)Integer.valueOf(capacity));
