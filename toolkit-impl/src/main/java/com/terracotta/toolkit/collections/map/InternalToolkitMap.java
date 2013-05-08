@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.bytecode.TCServerMap;
@@ -99,4 +100,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   void setConfigFieldInternal(String fieldChanged, Object changedValue);
 
   void setExpirationCallback(LocalExpirationCallback expirationCallback);
+
+  void setLockStrategy(LOCK_STRATEGY strategy);
 }

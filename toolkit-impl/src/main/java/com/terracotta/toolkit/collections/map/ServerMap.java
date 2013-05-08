@@ -8,7 +8,6 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.SearchException;
@@ -96,7 +95,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final ToolkitCacheMetaDataCallback                    metaDataCallback;
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
-  private final LOCK_STRATEGY                                   lockMethod;
   private LocalExpirationCallback expirationCallback;
 
   public ServerMap(Configuration config, String name) {
@@ -121,7 +119,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         break;
     }
     this.lockType = tmpLockType;
-    this.lockMethod = getLockStrategyFromConfig(config);
     // eviction configuration doesn't exist for store
     final Serializable value = InternalCacheConfigurationType.EVICTION_ENABLED.getValueIfExists(config);
     this.evictionEnabled = (value == null) ? false : (Boolean) value;
@@ -164,25 +161,20 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     // TODO: ServerMap should talk to PlatformService
     // DEV-9033 ServerMap doesn't talk to PlatformService, we need this wrapper to handle lock + rejoin scenario
     this.tcObjectServerMap = new ExplicitLockingTCObjectServerMapImpl((TCObjectServerMap) t, platformService);
-    this.lockStrategy = getLockStrategy(lockMethod);
   }
 
-  private LOCK_STRATEGY getLockStrategyFromConfig(Configuration config) {
-    String value = (String) config.getObjectOrNull(ConfigFieldsInternal.LOCK_STRATEGY_NAME);
-    if (value != null) {
- return LOCK_STRATEGY.valueOf(value);
-    }
-    return LOCK_STRATEGY.LONG_LOCK_STRATEGY;
-  }
-
-  private LockStrategy getLockStrategy(LOCK_STRATEGY strategy) {
+  @Override
+  public void setLockStrategy(LOCK_STRATEGY strategy) {
     switch (strategy) {
       case LONG_LOCK_STRATEGY:
-        return new LongLockStrategy(getInstanceDsoLockName());
+        lockStrategy = new LongLockStrategy(getInstanceDsoLockName());
+        break;
       case STRING_LOCK_STRATEGY:
-        return new StringLockStrategy();
+        lockStrategy = new StringLockStrategy();
+        break;
       case OBJECT_LOCK_STRATEGY:
-        return new ObjectLockStrategy();
+        lockStrategy = new ObjectLockStrategy();
+        break;
       default:
         throw new IllegalArgumentException("unknown LockStrategy " + strategy);
     }

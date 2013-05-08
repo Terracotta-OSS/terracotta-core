@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -11,6 +13,8 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
+import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.rejoin.RejoinException;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchQueryResultSet;
@@ -25,10 +29,10 @@ import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.ServerEventDestination;
-import com.tc.object.ServerEventType;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerEventDestination;
+import com.tc.object.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -75,8 +79,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
     ServerEventDestination, LocalExpirationCallback {
@@ -112,6 +114,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final PinnedEntryFaultCallback                                   pinnedEntryFaultCallback;
   private volatile boolean                                                 lookupSuccessfulAfterRejoin;
   private final AtomicReference<ToolkitMap<String, String>>                attrSchema                           = new AtomicReference<ToolkitMap<String, String>>();
+  private final LOCK_STRATEGY                                              lockStrategy;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -147,8 +150,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     localCacheStore = createLocalCacheStore();
     pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
     this.timeSource = new SystemTimeSource();
+    this.lockStrategy = getLockStrategyFromConfig(config);
     setupStripeObjects(stripeObjects);
-
   }
 
   private void setupStripeObjects(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects) {
@@ -156,6 +159,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     List<InternalToolkitMap<K, V>> list = new ArrayList<InternalToolkitMap<K, V>>();
     for (ToolkitObjectStripe<InternalToolkitMap<K, V>> stripeObject : stripeObjects) {
       for (InternalToolkitMap<K, V> serverMap : stripeObject) {
+        serverMap.setLockStrategy(lockStrategy);
         list.add(serverMap);
       }
     }
@@ -164,6 +168,16 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (ToolkitObjectStripe stripeObject : stripeObjects) {
       stripeObject.addConfigChangeListener(this);
     }
+    // logging only when its different than LONG_LOCK_STRATEGY
+    if (lockStrategy != LOCK_STRATEGY.LONG_LOCK_STRATEGY) {
+      LOGGER.info("cache or store " + name + " created with " + lockStrategy);
+    }
+  }
+
+  private LOCK_STRATEGY getLockStrategyFromConfig(Configuration configuration) {
+    String value = (String) configuration.getObjectOrNull(ConfigFieldsInternal.LOCK_STRATEGY_NAME);
+    if (value != null) { return LOCK_STRATEGY.valueOf(value); }
+    return LOCK_STRATEGY.LONG_LOCK_STRATEGY;
   }
 
   private static boolean isValidType(ToolkitObjectType toolkitObjectType) {
