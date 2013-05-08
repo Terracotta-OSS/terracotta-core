@@ -94,6 +94,11 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
+  public void waitUntilActive(final int groupIndex) throws Exception {
+    testServerManager.waitUntilActive(groupIndex);
+  }
+
+  @Override
   public GroupsData[] getGroupsData() {
     return testServerManager.getGroupsData();
   }

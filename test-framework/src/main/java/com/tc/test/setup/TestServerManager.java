@@ -178,7 +178,6 @@ public class TestServerManager {
 
   public boolean isActivePresent(int groupIndex) {
     return groups[groupIndex].isActivePresent();
-
   }
 
   public boolean isPassiveStandBy(int groupIndex) {
@@ -191,6 +190,10 @@ public class TestServerManager {
 
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception {
     groups[groupIndex].waituntilPassiveStandBy();
+  }
+
+  public void waitUntilActive(int groupIndex) throws Exception {
+    groups[groupIndex].waitUntilActive();
   }
 
   public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception {

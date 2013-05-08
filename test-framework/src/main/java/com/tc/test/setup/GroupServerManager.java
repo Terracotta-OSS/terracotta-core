@@ -630,6 +630,12 @@ public class GroupServerManager {
     }
   }
 
+  public void waitUntilActive() throws Exception {
+    while(!isActivePresent()) {
+      Thread.sleep(1000);
+    }
+  }
+
   private boolean isProxyTsaGroupPort() {
     return testConfig.getL2Config().isProxyTsaGroupPorts();
   }
