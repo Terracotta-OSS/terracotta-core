@@ -548,6 +548,7 @@ public interface TCPropertiesConsts {
    * debug.sessions                  : output additional debug information when sessions are looked up, created, etc
    * </code>
    ********************************************************************************************************************/
+  public static final String SESSION_INVALIDATOR_SLEEP                                      = "session.invalidator.sleep";
   public static final String SESSION_DEBUG_INVALIDATE                                       = "session.debug.invalidate";
   public static final String SESSION_DEBUG_SESSIONS                                         = "session.debug.sessions";
 
