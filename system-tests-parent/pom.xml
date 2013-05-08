@@ -37,7 +37,6 @@
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
     <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
     <maven-appserver-plugin.version>1.0.4</maven-appserver-plugin.version>
-    <tc.native-tool.version>1.0.2</tc.native-tool.version>
 
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
@@ -82,12 +81,6 @@
         <artifactId>linked-child-process</artifactId>
         <version>${tc.linked-child-process.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>native-tool</artifactId>
-        <version>${tc.native-tool.version}</version>
-        <scope>test</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -99,10 +92,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>linked-child-process</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>native-tool</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
