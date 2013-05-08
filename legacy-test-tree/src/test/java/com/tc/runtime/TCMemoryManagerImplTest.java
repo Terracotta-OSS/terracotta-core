@@ -19,9 +19,8 @@ import java.util.Vector;
 
 public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEventsListener {
 
-  int                  usedThreshold         = 70;
-  int                  usedCriticalThreshold = 90;
-  long                 sleepInterval         = 50;
+  int                  usedThreshold         = 10;
+  int                  usedCriticalThreshold = 30;
   int                  lc                    = 2;
   SynchronizedInt      callCount             = new SynchronizedInt(0);
 
