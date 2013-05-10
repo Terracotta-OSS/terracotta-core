@@ -97,9 +97,8 @@ public class ServerClientHandshakeManager {
 
   public void notifyClientConnect(final ClientHandshakeMessage handshake) throws ClientHandshakeException {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
-    this.logger.info("Client connected " + clientID);
     synchronized (this) {
-      this.logger.debug("Handling client handshake...");
+      this.logger.info("Handling client handshake for " + clientID);
 
       boolean nodeStarted = this.clientStateManager.startupNode(clientID);
       if (!nodeStarted) { throw new ClientHandshakeException("Previous instance of client " + clientID
@@ -107,11 +106,15 @@ public class ServerClientHandshakeManager {
 
       if (this.state == STARTED) {
         if (handshake.getObjectIDs().size() > 0 || handshake.getObjectIDsToValidate().size() > 0) { throw new ClientHandshakeException(
-                                                                                                                                       "Clients connected after startup should have no existing object references."); }
+                                                                                                                                       "Client "
+                                                                                                                                           + clientID
+                                                                                                                                           + " connected after startup should have no existing object references."); }
 
         for (final ClientServerExchangeLockContext context : handshake.getLockContexts()) {
           if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) { throw new ClientHandshakeException(
-                                                                                                                             "Clients connected after startup should have no existing wait contexts."); }
+                                                                                                                             "Client "
+                                                                                                                                 + clientID
+                                                                                                                                 + " connected after startup should have no existing wait contexts."); }
         }
         if (!handshake.getResentTransactionIDs().isEmpty()) {
           //
@@ -163,7 +166,7 @@ public class ServerClientHandshakeManager {
   }
 
   private void sendAckMessageFor(final ClientID clientID) {
-    this.logger.debug("Sending handshake acknowledgement to " + clientID);
+    this.logger.info("Sending handshake acknowledgement to " + clientID);
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call

@@ -129,7 +129,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     notifyCallbackOnHandshake(remoteNode, handshakeMessage);
     notifyTransitionComplete();
 
-    this.logger.debug("Sending handshake message...");
+    this.logger.info("Sending handshake message...");
     handshakeMessage.send();
   }
 
@@ -216,7 +216,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void acknowledgeHandshake(final ClientHandshakeAckMessage handshakeAck) {
     Map<GroupID, StripeID> stripeIDMap = handshakeAck.getStripeIDMap();
-    logger.info("Received StripeIDMap size:" + stripeIDMap.size());
+    logger.info("Received StripeIDMap size:" + stripeIDMap.size() + " from " + handshakeAck.getGroupID());
     if (stripeIDMap.size() > 0) {
       verifyActiveCoordinator(handshakeAck.getGroupID());
       receivedStripeIDMap(stripeIDMap);
