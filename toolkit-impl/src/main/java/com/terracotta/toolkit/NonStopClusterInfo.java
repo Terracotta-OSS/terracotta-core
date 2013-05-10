@@ -39,11 +39,11 @@ public class NonStopClusterInfo implements ClusterInfo {
         try {
           ClusterInfo localClusterInfo = getToolkit().getClusterInfo();
           synchronized (NonStopClusterInfo.this) {
-            delegate = localClusterInfo;
             for (ClusterListener clusterListener : listeners) {
-              delegate.addClusterListener(clusterListener);
+              localClusterInfo.addClusterListener(clusterListener);
             }
             listeners.clear();
+            delegate = localClusterInfo;
           }
         } catch (final Throwable e) {
           LOGGER.error("Got Exception while initializing Toolkit :" + e);
