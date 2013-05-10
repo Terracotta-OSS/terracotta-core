@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCError;
 import com.tc.exception.TCRuntimeException;
@@ -368,7 +369,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   private void commit(final LockID lock, final ClientTransaction tx) throws AbortedOperationException {
-
+    boolean rejoinInProgress = false;
     boolean hasCommitted = false;
     boolean aborted = false;
     try {
@@ -377,6 +378,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       hasCommitted = commitInternal(lock, tx);
     } catch (AbortedOperationException t) {
       aborted = true;
+    } catch (PlatformRejoinException t) {
+      rejoinInProgress = true;
     } catch (final Throwable t) {
       Banner.errorBanner("Terracotta client shutting down due to error " + t);
       logger.error(t);
@@ -393,11 +396,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       } catch (AbortedOperationException e) {
         // We need to call all the onCommitCallables even If we get aborted otherwise some locks will remain stuck.
         aborted = true;
+      } catch (PlatformRejoinException e) {
+        rejoinInProgress = true;
       }
     }
 
     if (peekContext() != null) {
-      if (hasCommitted || aborted) {
+      if (hasCommitted || aborted || rejoinInProgress) {
         createTxAndInitContext();
       } else {
         // If the current transaction has not committed, we will reuse the current transaction
@@ -406,11 +411,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         setTransaction(tx);
       }
     }
-    if (aborted) {
+    if (aborted || rejoinInProgress) {
       notifyTransactionAborted(tx);
       // If aborted and transaction is not empty then
       // throw AbortedOperationException
-      if (tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+      if (aborted && tx.hasChangesOrNotifies()) { throw new AbortedOperationException(); }
+      if (rejoinInProgress && tx.hasChangesOrNotifies()) { throw new PlatformRejoinException(); }
     }
 
   }

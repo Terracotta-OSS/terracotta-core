@@ -36,8 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RejoinAwarePlatformService implements PlatformService {
-  // private static final TCLogger LOGGER = TCLogging
-  // .getLogger(RejoinAwarePlatformService.class);
+  // private static final TCLogger LOGGER = TCLogging.getLogger(RejoinAwarePlatformService.class);
   private final PlatformService          delegate;
   private final RejoinStateListener      rejoinState;
   private static final ThreadLocal<Long> currentRejoinCount = new VicariousThreadLocal<Long>() {
@@ -60,12 +59,20 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   @Override
   public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
-    delegate.beginAtomicTransaction(lock, level);
+    try {
+      delegate.beginAtomicTransaction(lock, level);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   @Override
   public void commitAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
-    delegate.commitAtomicTransaction(lock, level);
+    try {
+      delegate.commitAtomicTransaction(lock, level);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
   }
 
   private void assertRejoinNotInProgress() {
