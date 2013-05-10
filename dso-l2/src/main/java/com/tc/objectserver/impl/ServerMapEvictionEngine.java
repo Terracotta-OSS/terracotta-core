@@ -15,6 +15,7 @@ import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.EvictionListener;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -32,6 +33,7 @@ import com.tc.text.PrettyPrinter;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,6 +72,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   private final ServerTransactionFactory      serverTransactionFactory;
   private final Set<ObjectID>                 currentlyEvicting               = Collections
                                                                                   .synchronizedSet(new HashSet<ObjectID>());
+  private final Set<EvictionListener>         listeners                       = new HashSet<EvictionListener>();
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
 
   private GroupManager                        groupManager;
@@ -115,13 +118,55 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   boolean isLogging() {
     return EVICTOR_LOGGING;
   }
+  
+  Set<ObjectID> markEvictionInProgress(final Set<ObjectID> oids) {
+    Iterator<ObjectID> list = oids.iterator();
+    while ( list.hasNext() ) {
+      ObjectID oid = list.next();
+      if ( !this.currentlyEvicting.add(oid) ) {
+        list.remove();
+      } else if ( EVICTOR_LOGGING ) {
+        logger.debug("starting eviction " + oid);
+      }
+    }
+    return oids;
+  }
 
   boolean markEvictionInProgress(final ObjectID oid) {
-    return this.currentlyEvicting.add(oid);
+    boolean starting = this.currentlyEvicting.add(oid);
+    if ( starting ) {
+      if ( EVICTOR_LOGGING ) {
+        logger.debug("starting eviction " + oid);
+      }
+      synchronized (listeners) {
+        Iterator<EvictionListener> list = listeners.iterator();
+        while ( list.hasNext() ) {
+          if ( list.next().evictionStarted(oid) ) {
+            list.remove();
+          }
+        }
+      }
+    }
+    return starting;
   }
 
   void markEvictionDone(final ObjectID oid) {
-    this.currentlyEvicting.remove(oid);
+    if ( !this.currentlyEvicting.remove(oid) ) {
+      throw new AssertionError("not evicting");
+    } else {
+      if ( EVICTOR_LOGGING ) {
+        logger.debug("ending eviction " + oid);
+      }
+      synchronized (listeners) {
+        Iterator<EvictionListener> list = listeners.iterator();
+        while ( list.hasNext() ) {
+          EvictionListener evl = list.next();
+          if ( evl.evictionCompleted(oid) ) {
+            list.remove();
+          }
+        }
+      }
+    }
   }
 
   private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
@@ -139,6 +184,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     try {
       final EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
       ev.evictionCompleted();
+      markEvictionDone(oid);
     } finally {
       this.objectManager.releaseReadOnly(mo);
     }
@@ -164,6 +210,9 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
     evictionTransactionPersistor.saveEviction(serverTransaction.getServerTransactionID(), oid, cacheName, candidates);
     transactionBatchManager.processTransactions(batchContext);
+    
+    markEvictionDone(oid);
+
     if (EVICTOR_LOGGING) {
       logger.debug("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
     }
@@ -179,6 +228,18 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   @Override
   public void transactionCompleted(ServerTransactionID stxID) {
     evictionTransactionPersistor.removeEviction(stxID);
+  }
+  
+  public void addEvictionListener(EvictionListener listener) {
+    synchronized ( listeners ) {
+      listeners.add(listener);
+    }
+  }
+  
+  public void removeEvictionListener(EvictionListener listener) {
+    synchronized ( listeners ) {
+      listeners.add(listener);
+    }
   }
 
 }

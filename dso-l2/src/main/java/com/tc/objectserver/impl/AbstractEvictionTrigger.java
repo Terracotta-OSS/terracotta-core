@@ -71,16 +71,11 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     started = true;
     name = map.getCacheName();
     startTime = System.currentTimeMillis();
-    mapEvicting = map.isEvicting();
     mapSize = map.getSize();
-    if (!mapEvicting && LOGGER.isDebugEnabled()) {
-      LOGGER.debug(map);
-    }
-    if (!mapEvicting && mapSize > 0) {
-      return map.startEviction();
-    } else {
-      return false;
-    }
+    if (mapSize > 0) {
+      mapEvicting = map.startEviction();
+    } 
+    return mapEvicting;
   }
 
   @Override
@@ -88,9 +83,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     if (!started) { throw new AssertionError("sample not started"); }
     if (!processed) { throw new AssertionError("sample not processed"); }
     endTime = System.currentTimeMillis() + 1;
-    if (!evicting) {
+    if (!evicting && mapEvicting) {
+//  only call this if nothing was returned from the sample and eviction was started locally
       map.evictionCompleted();
-      mapEvicting = map.isEvicting();
     }
 
   }

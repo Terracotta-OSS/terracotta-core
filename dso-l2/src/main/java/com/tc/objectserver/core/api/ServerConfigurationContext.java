@@ -76,7 +76,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_MAP_REQUEST_STAGE                           = "server_map_request_stage";
   public static final String SERVER_MAP_RESPOND_STAGE                           = "server_map_response_stage";
   public static final String SERVER_MAP_PREFETCH_STAGE                          = "server_map_prefetch_stage";
-  public static final String SERVER_MAP_CAPACITY_EVICTION_STAGE                 = "server_map_capacity_eviction_stage";
   public static final String SERVER_MAP_EVICTION_PROCESSOR_STAGE                = "server_map_eviction_processor_stage";
   public static final String SEARCH_EVENT_STAGE                                 = "search_event_stage";
   public static final String SEARCH_QUERY_REQUEST_STAGE                         = "search_query_request_stage";

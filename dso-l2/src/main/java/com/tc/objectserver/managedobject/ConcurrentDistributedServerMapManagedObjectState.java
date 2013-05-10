@@ -58,12 +58,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
   }
 
-  enum EvictionStatus {
-    NOT_INITIATED, INITIATED, SAMPLED
-  }
-
-  // This is a transient field tracking the status of the eviction for this CDSM
-  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
   private SamplingType samplingType = SamplingType.FOR_EVICTION;
   private Iterator<Object> evictionIterator = null;
 
@@ -310,10 +304,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         && this.evictionEnabled  //  do not trigger if eviction is disabled
         && this.targetMaxTotalCount >= 0 // do not trigger capacity eviction if totalMaxCount is negative
         && this.references.size() > this.targetMaxTotalCount * (1 + (OVERSHOOT / 100))) {
-      if (startEviction()) {
         applyInfo.initiateEvictionFor(getId());
         return true;
-      }
     }
     return false;
   }
@@ -465,23 +457,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
  //  locked by ManagedObject checkout
   @Override
   public boolean startEviction() {
-    // do not start eviction if it is turned off
-    if ( ( !this.evictionEnabled && this.maxTTISeconds == 0 && this.maxTTLSeconds == 0 )
-        || this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
-        return false;
+    if ( !this.evictionEnabled && this.maxTTISeconds == 0 && this.maxTTLSeconds == 0 ) {
+      return false;
     }
-    this.evictionStatus = EvictionStatus.INITIATED;
     return true;
   }
 
-  @Override
-  public boolean isEvicting() {
-      return this.evictionStatus != EvictionStatus.NOT_INITIATED;
-  }
  //  locked by ManagedObject checkout
   @Override
   public void evictionCompleted() {
-    this.evictionStatus = EvictionStatus.NOT_INITIATED;
+
   }
 
   @Override
@@ -498,12 +483,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
                                                       final ClientObjectReferenceSet clientObjectRefSet,
                                                       final SamplingType smpType) {
     this.samplingType = smpType;
-    if (this.evictionStatus == EvictionStatus.NOT_INITIATED) {
-      throw new AssertionError(this.evictionStatus);
-    } else {
-      // it's locked. go for it
-      this.evictionStatus = EvictionStatus.SAMPLED;
-    }
     final Map<Object, EvictableEntry> samples = new HashMap<Object, EvictableEntry>(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
@@ -573,7 +552,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         .getFloat(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT);
 
     if (propVal < MIN || propVal > MAX) {
-      //
       throw new IllegalArgumentException("Invalid value for ["
                                          + TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT + "]: "
                                          + propVal + " (must be between " + MIN + " and " + MAX + ")");

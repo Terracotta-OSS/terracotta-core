@@ -96,15 +96,14 @@ public class AbstractEvictionTriggerTest {
     final AbstractEvictionTrigger et = getTrigger();
     ClientObjectReferenceSet cs = getClientSet();
     ServerMapEvictionContext found = null;
-    boolean isEvicting = map.isEvicting();
 
-    if (et.startEviction(map)) {
+    boolean startEviction = et.startEviction(map);
+    if (startEviction) {
+      Mockito.verify(map).startEviction();
       found = et.collectEvictionCandidates(max, "MOCK", map, cs);
       et.completeEviction(map);
     }
-    if (isEvicting || (max != 0 && map.getSize() > 0)) {
-      Mockito.verify(map).startEviction();
-    }
+    
     if (found != null) {
       Mockito.verify(map).getRandomSamples(Matchers.intThat(new BaseMatcher<Integer>() {
         int maxLocal = et.boundsCheckSampleSize(Integer.MAX_VALUE);

@@ -16,12 +16,12 @@ import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
+import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.FlushApplyCommitContext;
-import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.event.ServerEventPublisher;
@@ -56,7 +56,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private ServerTransactionManager       transactionManager;
   private LockManager                    lockManager;
   private Sink                           broadcastChangesSink;
-  private Sink                           evictionInitiateSink;
+  private final ServerMapEvictionManager serverEvictions;
   private final ObjectInstanceMonitor    instanceMonitor;
   private TransactionalObjectManager     txnObjectMgr;
 
@@ -69,10 +69,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
                                        final GlobalTransactionManager gtxm,
+                                       final ServerMapEvictionManager evictions,
                                        final TransactionProvider persistenceTransactionProvider,
                                        final TaskRunner taskRunner,
                                        final ServerEventPublisher serverEventPublisher) {
     this.instanceMonitor = instanceMonitor;
+    this.serverEvictions = evictions;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.serverEventPublisher = serverEventPublisher;
     final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
@@ -125,7 +127,9 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
       final Set<ObjectID> initiateEviction = applyInfo.getObjectIDsToInitateEviction();
       if (!initiateEviction.isEmpty()) {
-        evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
+        for ( ObjectID oid : initiateEviction ) {
+          serverEvictions.scheduleCapacityEviction(oid);
+        }
       }
 
       broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo));
@@ -173,7 +177,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionManager = scc.getTransactionManager();
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
-    this.evictionInitiateSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
     this.garbageCollectionManager = scc.getGarbageCollectionManager();

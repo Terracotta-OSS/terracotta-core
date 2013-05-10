@@ -192,7 +192,6 @@ import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.RespondToServerMapRequestHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
-import com.tc.objectserver.handler.ServerMapCapacityEvictionHandler;
 import com.tc.objectserver.handler.ServerMapEvictionHandler;
 import com.tc.objectserver.handler.ServerMapPrefetchObjectHandler;
 import com.tc.objectserver.handler.ServerMapRequestHandler;
@@ -787,14 +786,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final EventBus serverEventBus = new EventBus("server-event-bus");
     final ServerEventPublisher serverEventPublisher = new ServerEventPublisher(serverEventBus);
 
-    // Lookup stage should never be blocked trying to add to apply stage
-    int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable);
-    stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor
-                                 .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher), applyStageThreads, 1, -1);
-
-    txnStageCoordinator.lookUpSinks();
-
     final Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                      new ProcessTransactionHandler(transactionBatchManager), 1,
                                                      maxStageSize);
@@ -874,11 +865,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE,
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
-    stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,
-        new ServerMapCapacityEvictionHandler(this.serverMapEvictor),
-        tcProperties.getInt(TCPropertiesConsts.L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS, 1),
-        maxStageSize);
+    
+    // Lookup stage should never be blocked trying to add to apply stage
+    int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable);
+    stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
+                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor, persistor
+                                 .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher), applyStageThreads, 1, -1);    
 
+    txnStageCoordinator.lookUpSinks();
+    
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,
                                                                               this.transactionManager,

@@ -9,6 +9,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
 
 /**
@@ -22,7 +23,7 @@ public class CapacityEvictionTriggerTest extends AbstractEvictionTriggerTest {
 
     @Override
     public AbstractEvictionTrigger createTrigger() {
-        return new CapacityEvictionTrigger(ObjectID.NULL_ID);
+        return new CapacityEvictionTrigger(Mockito.mock(ServerMapEvictionManager.class), ObjectID.NULL_ID);
     }
     
     @Test
@@ -32,14 +33,12 @@ public class CapacityEvictionTriggerTest extends AbstractEvictionTriggerTest {
         //  set max to 250k
         Mockito.when(getEvictableMap().getMaxTotalCount()).thenReturn(250000);
         checkCycle(250000);
-    Mockito.verify(this.getClientSet())
-        .addReferenceSetChangeListener(Matchers.<ClientObjectReferenceSetChangedListener> any());
+        Mockito.verify(this.getClientSet())
+          .addReferenceSetChangeListener(Matchers.<ClientObjectReferenceSetChangedListener> any());
     }
 
     @Override @Before
     public void setUp() {
-        getEvictableMap().startEviction();
-        Mockito.when(getEvictableMap().isEvicting()).thenReturn(Boolean.TRUE);
         Mockito.when(getEvictableMap().getSize()).thenReturn(250);
         super.setUp();
     }

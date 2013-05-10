@@ -24,6 +24,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.GarbageCollectionManager;
+import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
@@ -77,7 +78,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     final ServerEventPublisher serverEventPublisher = new ServerEventPublisher(new EventBus("testBus"));
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
-        mock(ServerGlobalTransactionManager.class),
+        mock(ServerGlobalTransactionManager.class),mock(ServerMapEvictionManager.class),
         persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner(),
         serverEventPublisher);
 
@@ -89,7 +90,6 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     context.txnObjectManager = mock(TransactionalObjectManager.class);
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastStage);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, mock(Stage.class));
-    context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, mock(Stage.class));
     context.garbageCollectionManager = mock(GarbageCollectionManager.class);
     context.lockManager = this.lockManager;
 

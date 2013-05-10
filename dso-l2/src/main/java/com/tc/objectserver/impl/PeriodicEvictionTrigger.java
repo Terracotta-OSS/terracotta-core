@@ -163,16 +163,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public boolean startEviction(EvictableMap map) {
         if ( stop ) {
-            return false;
+          return false;
         }
         tti = map.getTTISeconds();
         ttl = map.getTTLSeconds();
         if ( tti > 0 || 
-            ttl > 0 || 
-            runAlways ||
-            map.getSize() > map.getMaxTotalCount() ) {
-            
-            return super.startEviction(map);
+          ttl > 0 || 
+          runAlways ||
+          map.getSize() > map.getMaxTotalCount() ) {
+
+          return super.startEviction(map);
         }
         return false;
     }

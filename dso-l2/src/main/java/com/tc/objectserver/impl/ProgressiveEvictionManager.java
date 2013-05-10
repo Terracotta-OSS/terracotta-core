@@ -15,6 +15,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.EvictionListener;
 import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ResourceManager;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -218,13 +220,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
   @Override
   public void runEvictor() {
-    scheduleEvictionRun();
+    scheduleEvictionRun(null);
   }
 
-  private Future<SampledRateCounter> scheduleEvictionRun() {
+  Future<SampledRateCounter> scheduleEvictionRun(Set<ObjectID> evictableObjects) {
     try {
       clientObjectReferenceSet.size();
-      final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
+      if ( evictableObjects == null ) {
+        evictableObjects = store.getAllEvictableObjectIDs();
+      }
+      evictableObjects = evictor.markEvictionInProgress(evictableObjects);
       return new FutureCallable<SampledRateCounter>(agent, new PeriodicCallable(this, objectManager, evictableObjects));
     } catch (ShutdownError err) {
       // is probably in shutdown, unregister
@@ -233,6 +238,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     agent.shutdown();
     return completedFuture;
   }
+  
+  @Override
+  public boolean scheduleCapacityEviction(ObjectID oid) {
+    if ( evictor.markEvictionInProgress(oid) ) {
+      scheduleEvictionTrigger(new CapacityEvictionTrigger(this, oid));
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   @Override
   public void scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
@@ -240,10 +255,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     final Future<SampledRateCounter> run = agent.submit(new Runnable() {
       @Override
       public void run() {
-        while (triggerParam.isValid()) {
-          doEvictionOn(triggerParam);
-          count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
-        }
+        doEvictionOn(triggerParam);
+        count.increment(triggerParam.getCount(), triggerParam.getRuntimeInMillis());
       }
     }, count);
     print(triggerParam.getName(), run);
@@ -261,8 +274,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     ObjectID oid = triggerParam.getId();
-
-    if (!evictor.markEvictionInProgress(oid)) { return true; }
+    boolean isDone = false;
 
     final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
     try {
@@ -270,45 +282,49 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         if (evictor.isLogging()) {
           log("Managed object gone : " + oid);
         }
-        return false;
-      }
+        isDone = true;
+      } else {
+        final ManagedObjectState state = mo.getManagedObjectState();
+        final String className = state.getClassName();
 
-      final ManagedObjectState state = mo.getManagedObjectState();
-      final String className = state.getClassName();
-
-      EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-      // if size is zero or cache is pinned or already evicting, exit false
-      if (!triggerParam.startEviction(ev)) {
-        this.objectManager.releaseReadOnly(mo);
-        return true;
-      }
-
-      ServerMapEvictionContext context = doEviction(triggerParam, ev, className);
-
-      // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
-      // to the sink because the sink reached max capacity and blocking
-      // with a checked-out object will result in a deadlock. @see DEV-5207
-      triggerParam.completeEviction(ev);
-      this.objectManager.releaseReadOnly(mo);
-
-      if (context != null) {
-        int size = context.getRandomSamples().size();
-        if (triggerParam instanceof PeriodicEvictionTrigger
-            && ((PeriodicEvictionTrigger) triggerParam).isExpirationOnly()) {
-          expirationStats.increment(size);
+        EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
+        // ignore start eviction status
+        if ( !triggerParam.startEviction(ev) ) {
+          this.objectManager.releaseReadOnly(mo);
+          isDone = !triggerParam.isValid();
         } else {
-          evictionStats.increment(size);
+          ServerMapEvictionContext context = doEviction(triggerParam, ev, className);
+
+          // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
+          // to the sink because the sink reached max capacity and blocking
+          // with a checked-out object will result in a deadlock. @see DEV-5207
+          triggerParam.completeEviction(ev);
+          this.objectManager.releaseReadOnly(mo);
+
+          if (context != null) {
+            int size = context.getRandomSamples().size();
+            if (triggerParam instanceof PeriodicEvictionTrigger
+                && ((PeriodicEvictionTrigger) triggerParam).isExpirationOnly()) {
+              expirationStats.increment(size);
+            } else {
+              evictionStats.increment(size);
+            }
+            this.evictorSink.add(context);
+          } else {
+            isDone = !triggerParam.isValid();
+          }
         }
-        this.evictorSink.add(context);
+      }
+      
+      if ( isDone ) {
+        evictor.markEvictionDone(oid);
       }
     } finally {
-      evictor.markEvictionDone(oid);
       if (evictor.isLogging() && logger.isDebugEnabled()) {
         logger.debug(triggerParam);
       }
     }
-
-    return true;
+    return isDone;
   }
 
   private ServerMapEvictionContext doEviction(final EvictionTrigger triggerParam, final EvictableMap ev,
@@ -333,16 +349,18 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     final AggregateSampleRateCounter rate = new AggregateSampleRateCounter();
     while (!list.isEmpty()) {
       final ObjectID mapID = list.remove(r.nextInt(list.size()));
-      push.add(agent.submit(new Callable<SampledRateCounter>() {
-        @Override
-        public SampledRateCounter call() throws Exception {
-          EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID, blowout)
-              : new EmergencyEvictionTrigger(objectManager, mapID, blowout);
-          doEvictionOn(triggerLocal);
-          rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
-          return rate;
-        }
-      }));
+      if ( evictor.markEvictionInProgress(mapID) ) {
+        push.add(agent.submit(new Callable<SampledRateCounter>() {
+          @Override
+          public SampledRateCounter call() throws Exception {
+            EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID, blowout)
+                : new EmergencyEvictionTrigger(objectManager, mapID, blowout);
+            doEvictionOn(triggerLocal);
+            rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
+            return rate;
+          }
+        }));
+      }
     }
     return new GroupFuture<SampledRateCounter>(push);
   }
@@ -362,6 +380,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   @Override
   public void evict(ObjectID oid, Map<Object,EvictableEntry> samples, String className, String cacheName) {
     evictor.evictFrom(oid, samples, cacheName);
+  }
+
+  void addEvictionListener(EvictionListener evl) {
+    evictor.addEvictionListener(evl);
+  }
+
+  void removeEvictionListener(EvictionListener evl) {
+    evictor.removeEvictionListener(evl);
   }
 
   @Override
@@ -390,7 +416,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         } catch (InterruptedException it) {
           logger.warn("eviction run", it);
         } catch ( CancellationException cancelled ) {
-          logger.warn("eviction run", cancelled);
+          logger.warn("eviction run cancelled");
         }
       }
     });
@@ -469,7 +495,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             // currentRun = emergencyEviction(true, 1);
             // brake = usage.getReservedMemory();
           } else if (PERIODIC_EVICTOR_ENABLED && currentRun.isDone()) {
-            currentRun = scheduleEvictionRun();
+            currentRun = scheduleEvictionRun(null);
             print("Periodic", currentRun);
           }
         }
@@ -477,7 +503,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         resetEpocIfNeeded(System.nanoTime(), reserve, max);
       } catch (UnsupportedOperationException us) {
         if (currentRun.isDone()) {
-          currentRun = scheduleEvictionRun();
+          currentRun = scheduleEvictionRun(null);
         }
         log(us.toString());
       }
@@ -486,12 +512,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private void throttleIfNeeded(DetailedMemoryUsage usage) {
       // if we are this low, stop no matter what
       if (usage.getReservedMemory() >= usage.getMaxMemory() - (16l * 1024 * 1024) && usage.getUsedMemory() > usage.getMaxMemory() / 2 ) {
-          logger.warn("resource usage at max");
+          if ( !isStopped ) {
+            logger.warn("resource usage at max");
+          }
           stop(usage);
       } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
                  && usage.getUsedMemory() >= usage.getMaxMemory() - (96l * 1024 * 1024)
                  && ( System.nanoTime() - throttlePoll > TimeUnit.SECONDS.toNanos(2) )) {
-          logger.warn("resource usage at throttle");
+          if ( this.throttle == 0 ) {
+            logger.warn("resource usage at throttle");
+          }
           controlledThrottle(usage);
       }
 

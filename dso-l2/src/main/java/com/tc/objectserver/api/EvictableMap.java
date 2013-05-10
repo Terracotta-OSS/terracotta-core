@@ -22,8 +22,6 @@ public interface EvictableMap {
 
   boolean startEviction();
 
-  boolean isEvicting();
-
   void evictionCompleted();
 
   String getCacheName();

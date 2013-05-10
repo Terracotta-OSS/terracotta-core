@@ -3,11 +3,11 @@
  */
 package com.tc.objectserver.impl;
 
-import org.apache.log4j.Logger;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
@@ -24,46 +24,53 @@ import java.util.Map;
  */
 public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements ClientObjectReferenceSetChangedListener {
 
-  private static final Logger      LOGGER         = Logger.getLogger(CapacityEvictionTrigger.class);
   private boolean                  aboveCapacity  = true;
   private int                      clientSetCount = 0;
   private int                      max            = 0;
   private int                      size           = 0;
   private ClientObjectReferenceSet clientSet;
   private boolean                  repeat         = false;
+  private final ServerMapEvictionManager    evictor;
+  private boolean                   completed = false;
 
-  public CapacityEvictionTrigger(ObjectID oid) {
+  public CapacityEvictionTrigger(ServerMapEvictionManager engine, ObjectID oid) {
     super(oid);
+    this.evictor = engine;
   }
 
   @Override
   public boolean startEviction(EvictableMap map) {
-    // capacity eviction ignores underlying strategy b/c map.startEviction has already been called
-    boolean startedLocally = super.startEviction(map);
-
-    if (startedLocally) { 
-      LOGGER.fatal(map.toString());
-      throw new AssertionError("capacity eviction cannot be started locally"); 
-    }
-
-    repeat = false;
     max = map.getMaxTotalCount();
     size = map.getSize();
-    // ignore return value, capacity needs to make an independent decision on whether to run
-
-    if (max >= 0 && size > max) {
-      if (!map.isEvicting()) {
-        // eviction state is set when capacity eviction is intiated outside the trigger
-        // this is the only trigger that does this for now
-        throw new AssertionError("map is not in evicting state");
-      }
-      return true;
-    } else {
-      map.evictionCompleted();
+    if ( repeat == true ) {
+      waitForCompletion();
     }
-
+    completed = false;
+    // ignore return value, capacity needs to make an independent decision on whether to run
+    if (max >= 0 && size > max) {
+      return super.startEviction(map);
+    } 
     aboveCapacity = false;
     return false;
+  }
+  
+  private synchronized void waitForCompletion() {
+    while ( !completed ) {
+      try {
+        this.wait();
+      } catch ( InterruptedException ie ) {
+        throw new AssertionError("no interruptions");
+      }
+    }
+  }
+
+  @Override
+  public synchronized void completeEviction(EvictableMap map) {
+    if ( !repeat ) {
+      super.completeEviction(map);
+    }  
+    completed = true;
+    this.notify();
   }
 
   @Override
@@ -83,54 +90,32 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
       if (count == 0) {
         repeat = true;
         registerForUpdates(clients);
+      } else {
+        repeat = false;
       }
     }
   }
 
   private synchronized void registerForUpdates(ClientObjectReferenceSet clients) {
-    if (clientSet == null) {
-      clients.addReferenceSetChangeListener(this);
-      clientSetCount = clients.size();
-      clientSet = clients;
+    if (clientSet != null) {
+      throw new AssertionError("double register for updates");
     }
+    
+    clientSet = clients;
+    clientSetCount = clients.size();
+    clients.addReferenceSetChangeListener(this);
   }
-
-  private synchronized void waitForClient() {
-    while (clientSet != null) {
-      LOGGER.debug("waiting for client " + clientSet);
-      try {
-        this.wait(2000);
-        if (clientSet != null) {
-          clientSet.refreshClientObjectReferencesNow();
-        }
-      } catch (InterruptedException ie) {
-        throw new AssertionError(ie);
-      }
-    }
-  }
-
+    
   private synchronized void clientUpdated() {
     clientSet.removeReferenceSetChangeListener(this);
     clientSet = null;
-    this.notify();
+    reset();
+    evictor.doEvictionOn(this);
   }
-
+  
   @Override
-  public boolean isValid() {
-    if (repeat) {
-      waitForClient();
-      reset();
-      return true;
-    }
-    return super.isValid();
-  }
-
-  @Override
-  public void completeEviction(EvictableMap map) {
-    if (!repeat) {
-      super.completeEviction(map);
-    }
-    LOGGER.debug(this.toString());
+  public synchronized boolean isValid() {
+    return repeat;
   }
 
   @Override
