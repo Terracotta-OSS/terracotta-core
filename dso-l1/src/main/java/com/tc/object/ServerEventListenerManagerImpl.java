@@ -12,6 +12,7 @@ import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerEventMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -24,7 +25,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   private static final TCLogger LOG = TCLogging.getLogger(ServerEventListenerManagerImpl.class);
 
-  private final Map<String, SubscribedDestination> registry = Maps.newHashMap();
+  private final Map<String, Map<ServerEventDestination, Set<ServerEventType>>> registry = Maps.newHashMap();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final ServerEventListenerMessageFactory messageFactory;
@@ -37,18 +38,35 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void dispatch(final ServerEventMessage message) {
-    final String destinationName = message.getDestinationName();
-    LOG.debug("Server notification message has been received. Type: "
-              + message.getType() + ", key: " + message.getKey()
-              + ", cache: " + destinationName);
+    final String name = message.getDestinationName();
+    final ServerEventType type = message.getType();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Server notification message has been received. Type: "
+                + type + ", key: " + message.getKey()
+                + ", cache: " + name);
+    }
 
     lock.readLock().lock();
     try {
-      final SubscribedDestination destination = registry.get(destinationName);
-      if (destination == null) {
-        throw new IllegalStateException("Could not find server event destination by name: " + destinationName);
+      final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
+      if (destinations == null) {
+        throw new IllegalStateException("Could not find server event destinations for cache: "
+                                        + name + ". Incoming event: " + message);
       }
-      destination.target.handleServerEvent(message.getType(), extractStringIfNecessary(message.getKey()));
+
+      boolean handlerFound = false;
+      for (Map.Entry<ServerEventDestination, Set<ServerEventType>> destination : destinations.entrySet()) {
+        final ServerEventDestination target = destination.getKey();
+        final Set<ServerEventType> eventTypes = destination.getValue();
+        if (eventTypes.contains(type)) {
+          handlerFound = true;
+          target.handleServerEvent(type, extractStringIfNecessary(message.getKey()));
+        }
+      }
+
+      if (!handlerFound) {
+        throw new IllegalStateException("Could not find handler for server event: " + message);
+      }
     } finally {
       lock.readLock().unlock();
     }
@@ -69,48 +87,68 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void registerListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
-    registerOnServer(destination.getDestinationName(), listenTo);
-    registerOnClient(destination, listenTo);
+    lock.writeLock().lock();
+    try {
+      doRegister(destination, listenTo);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   @Override
   public void unregisterListener(final ServerEventDestination destination) {
-    unregisterOnServer(destination.getDestinationName());
-    unregisterOnClient(destination);
+    lock.writeLock().lock();
+    try {
+      doUnregister(destination);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
-  private void registerOnClient(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+  private void doRegister(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    boolean needsServerRegistration = true;
     final String name = destination.getDestinationName();
-    lock.writeLock().lock();
-    try {
-      final SubscribedDestination subscribed = registry.get(name);
-      if (subscribed != null) {
-        subscribed.eventTypes.addAll(listenTo);
+    Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
+    if (destinations == null) {
+      destinations = Maps.newHashMap();
+      destinations.put(destination, listenTo);
+      registry.put(name, destinations);
+    } else {
+      final Set<ServerEventType> eventTypes = destinations.get(destination);
+      if (eventTypes == null) {
+        destinations.put(destination, listenTo);
       } else {
-        registry.put(name, new SubscribedDestination(destination, listenTo));
+        // do not register twice for the same events
+        needsServerRegistration = eventTypes.addAll(listenTo);
       }
-    } finally {
-      lock.writeLock().unlock();
+    }
+
+    if (needsServerRegistration) {
+      doRegisterOnServer(name, listenTo);
     }
   }
 
-  private void unregisterOnClient(final ServerEventDestination destination) {
-    lock.writeLock().lock();
-    try {
-      registry.remove(destination.getDestinationName());
-    } finally {
-      lock.writeLock().unlock();
-    }
-  }
-
-  private void registerOnServer(final String destinationName, final Set<ServerEventType> listenTo) {
+  private void doRegisterOnServer(final String destinationName, final Set<ServerEventType> listenTo) {
     final RegisterServerEventListenerMessage msg = messageFactory.newRegisterServerEventListenerMessage(stripeId);
     msg.setDestination(destinationName);
     msg.setEventTypes(listenTo);
     msg.send();
   }
 
-  private void unregisterOnServer(final String destinationName) {
+  private void doUnregister(final ServerEventDestination destination) {
+    final String name = destination.getDestinationName();
+    final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
+    if (destinations != null) {
+      destinations.remove(destination);
+      // unregister on server only if there are no more destinations for a given cache
+      if (destinations.isEmpty()) {
+        registry.remove(name);
+        doUnregisterOnServer(name);
+      }
+    }
+  }
+
+  private void doUnregisterOnServer(final String destinationName) {
     final UnregisterServerEventListenerMessage msg = messageFactory.newUnregisterServerEventListenerMessage(stripeId);
     msg.setDestination(destinationName);
     msg.send();
@@ -131,8 +169,14 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     // on reconnect - resend all local mappings to server
     lock.readLock().lock();
     try {
-      for (SubscribedDestination subscribed : registry.values()) {
-        registerOnServer(subscribed.target.getDestinationName(), subscribed.eventTypes);
+      for (Map.Entry<String, Map<ServerEventDestination, Set<ServerEventType>>> entry : registry.entrySet()) {
+        final Set<ServerEventType> eventTypes = EnumSet.noneOf(ServerEventType.class);
+        final Map<ServerEventDestination, Set<ServerEventType>> destinations = entry.getValue();
+        // collect all distinct event types from destinations registered for a given cache
+        for (Set<ServerEventType> types : destinations.values()) {
+          eventTypes.addAll(types);
+        }
+        doRegisterOnServer(entry.getKey(), eventTypes);
       }
     } finally {
       lock.readLock().unlock();
@@ -146,16 +190,6 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void shutdown(boolean fromShutdownHook) {
-  }
-
-  private static final class SubscribedDestination {
-    private final ServerEventDestination target;
-    private final Set<ServerEventType> eventTypes;
-
-    private SubscribedDestination(final ServerEventDestination target, final Set<ServerEventType> eventTypes) {
-      this.target = target;
-      this.eventTypes = eventTypes;
-    }
   }
 
 }
