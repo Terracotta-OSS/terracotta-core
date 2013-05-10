@@ -135,7 +135,7 @@ public abstract class AbstractTestBase extends TCTestCase {
           writeProxyTcConfigFile();
           startServers();
         }
-        TestHandler testHandlerMBean = new TestHandler(testServerManager, testConfig);
+        TestHandler testHandlerMBean = new TestHandler(testServerManager, clientRunner, testConfig);
         jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
         jmxServerManager.startJMXServer();
         configureTestHandlerMBean(testHandlerMBean);

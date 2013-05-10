@@ -1,6 +1,7 @@
 package com.tc.test.jmx;
 
 import org.terracotta.test.util.TestBaseUtil;
+import org.terracotta.tests.base.TestClientManager;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
@@ -8,6 +9,7 @@ import com.tc.test.setup.TestServerManager;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -26,11 +28,13 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   private final TestServerManager        testServerManager;
+  private final TestClientManager        testClientManager;
   private final TestConfig               testConfig;
   private volatile CustomCommandExecutor executor;
 
-  public TestHandler(TestServerManager manager, TestConfig testConfig) {
+  public TestHandler(TestServerManager manager, final TestClientManager testClientManager, TestConfig testConfig) {
     this.testServerManager = manager;
+    this.testClientManager = testClientManager;
     this.testConfig = testConfig;
   }
 
@@ -174,4 +178,8 @@ public class TestHandler implements TestHandlerMBean {
     return testServerManager.getTsaProxyConfigFile().getAbsolutePath();
   }
 
+  @Override
+  public void runClient(final Class<? extends Runnable> client, final String clientName, final List<String> extraMainClassArgs) throws Throwable {
+    testClientManager.runClient(client, clientName, extraMainClassArgs);
+  }
 }

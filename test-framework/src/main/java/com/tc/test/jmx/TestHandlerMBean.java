@@ -3,6 +3,7 @@ package com.tc.test.jmx;
 import com.tc.test.setup.GroupsData;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface TestHandlerMBean {
 
@@ -200,4 +201,13 @@ public interface TestHandlerMBean {
    */
 
   String getTsaProxyTcConfigFilePath();
+
+  /**
+   * Runs the given client class.
+   *
+   * @param client class of the client to run.
+   * @param clientName
+   * @param extraMainClassArgs
+   */
+  void runClient(Class<? extends Runnable> client, final String clientName, final List<String> extraMainClassArgs) throws Throwable;
 }
