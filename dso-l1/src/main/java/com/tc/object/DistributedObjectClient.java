@@ -4,6 +4,9 @@
  */
 package com.tc.object;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -208,9 +211,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * This is the main point of entry into the DSO client.
@@ -712,7 +712,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
-    clientHandshakeCallbacks.add(this.objectManager);
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(remoteServerMapManager);
     clientHandshakeCallbacks.add(searchRequestManager);
@@ -721,6 +720,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     clientHandshakeCallbacks.add(teh);
     clientHandshakeCallbacks.add(serverEventListenerManager);
+    clientHandshakeCallbacks.add(this.objectManager);
     final ProductInfo pInfo = ProductInfo.getInstance();
     final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
     clearCallbacks.add(stageManager);

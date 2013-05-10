@@ -281,11 +281,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public void reset() {
-    for (ClientHandshakeCallback c : callBacks) {
-      c.cleanup();
-    }
     for (ClearableCallback clearable : clearCallbacks) {
       clearable.cleanup();
+    }
+
+    for (ClientHandshakeCallback c : callBacks) {
+      c.cleanup();
     }
   }
 
