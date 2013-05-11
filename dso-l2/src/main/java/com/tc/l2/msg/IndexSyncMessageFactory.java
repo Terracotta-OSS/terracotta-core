@@ -8,17 +8,17 @@ import com.tc.net.groups.MessageID;
 
 public class IndexSyncMessageFactory {
 
-  public static IndexSyncStartMessage createIndexSyncStartMessage(final long sequenceID) {
+  public static IndexSyncStartMessage createIndexSyncStartMessage(final long sequenceID, int idxPerCache) {
     IndexSyncStartMessage msg = new IndexSyncStartMessage(IndexSyncStartMessage.INDEX_SYNC_START_TYPE);
-    msg.initialize(sequenceID);
+    msg.initialize(sequenceID, idxPerCache);
     return msg;
   }
 
   public static IndexSyncMessage createIndexSyncMessage(String cacheName, String indexId, String fileName,
                                                         byte[] fileData, long sequenceID, boolean isTCFile,
-                                                        boolean isLast, int idxPerCache) {
+                                                        boolean isLast) {
     IndexSyncMessage msg = new IndexSyncMessage(IndexSyncMessage.INDEX_SYNC_TYPE);
-    msg.initialize(cacheName, indexId, fileName, fileData, sequenceID, isTCFile, isLast, idxPerCache);
+    msg.initialize(cacheName, indexId, fileName, fileData, sequenceID, isTCFile, isLast);
     return msg;
   }
 

@@ -303,11 +303,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   @Override
-  public void indexSyncStartFor(NodeID nodeID) {
+  public void indexSyncStartFor(NodeID nodeID, int idxCtPerCache) {
     try {
       logger.info("Index Sync started for " + nodeID);
       final IndexSyncStartMessage msg = IndexSyncMessageFactory.createIndexSyncStartMessage(this.indexSequenceGenerator
-          .getNextSequence(nodeID));
+          .getNextSequence(nodeID), idxCtPerCache);
       this.groupManager.sendTo(nodeID, msg);
     } catch (final GroupException e) {
       logger.error("Error Sending Index Sync Start message  to : " + nodeID, e);

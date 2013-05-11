@@ -23,7 +23,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   private long            sequenceID;
   private boolean         isTCFile;
   private boolean         isLast;
-  private int             idxPerCache;
 
   public IndexSyncMessage() {
     // Make serialization happy
@@ -35,7 +34,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   }
 
   public void initialize(final String cName, String idxId, final String fName, final byte[] fileData, long sID,
-                         boolean tcFile, boolean last, int idxPercache) {
+                         boolean tcFile, boolean last) {
     this.cacheName = cName;
     indexId = idxId;
     this.fileName = fName;
@@ -44,7 +43,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     this.sequenceID = sID;
     this.isTCFile = tcFile;
     this.isLast = last;
-    this.idxPerCache = idxPercache;
   }
 
   @Override
@@ -57,7 +55,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     this.sequenceID = in.readLong();
     this.isLast = in.readBoolean();
     this.isTCFile = in.readBoolean();
-    this.idxPerCache = in.readInt();
     this.data = new byte[this.length];
     in.read(this.data);
   }
@@ -72,7 +69,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     out.writeLong(this.sequenceID);
     out.writeBoolean(this.isLast);
     out.writeBoolean(this.isTCFile);
-    out.writeInt(idxPerCache);
     out.write(this.data);
   }
 
@@ -98,10 +94,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
 
   public boolean isLast() {
     return this.isLast;
-  }
-
-  public int getIdxPerCache() {
-    return this.idxPerCache;
   }
 
   @Override
