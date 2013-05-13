@@ -35,6 +35,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static com.terracotta.management.resource.services.utils.AttachmentUtils.createTimestampedZipFilename;
+
 /**
  * @author Ludovic Orban
  */
@@ -76,7 +78,7 @@ public class LogsResourceServiceImpl implements LogsResourceService {
 
     try {
       InputStream inputStream = zipAndConvertToInputStream(logEntities);
-      return Response.ok().entity(inputStream).header("Content-Disposition", "attachment; filename=logs.zip").build();
+      return Response.ok().entity(inputStream).header("Content-Disposition", "attachment; filename=" + createTimestampedZipFilename("logs")).build();
     } catch (IOException ioe) {
       throw new ResourceRuntimeException("Failed to get TSA logs", ioe, Response.Status.BAD_REQUEST.getStatusCode());
     }
