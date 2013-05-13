@@ -25,10 +25,6 @@ public class NonStopManagerImpl implements NonStopManager {
 
   @Override
   public void begin(long timeout) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("begin nonstop operation with timeout :" + timeout + "for Thread : " + Thread.currentThread());
-    }
-
     if (!timerTasks.containsKey(Thread.currentThread())) {
       abortableOperationManager.begin();
       NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread(), abortableOperationManager);
@@ -60,9 +56,6 @@ public class NonStopManagerImpl implements NonStopManager {
 
   @Override
   public void finish() {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("finish nonstop operation for Thread : " + Thread.currentThread());
-    }
     NonStopTimerTask task = timerTasks.get(Thread.currentThread());
     if (task != null) {
       timerTasks.remove(Thread.currentThread());
@@ -104,7 +97,7 @@ public class NonStopManagerImpl implements NonStopManager {
     @Override
     public synchronized void run() {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug(" nonstop operation with timedout for Thread : " + Thread.currentThread());
+        LOGGER.debug("Nonstop operation timed-out for Thread : " + Thread.currentThread());
       }
       if (state == NonStopTimerTaskState.INIT) {
         state = NonStopTimerTaskState.ABORTED;
