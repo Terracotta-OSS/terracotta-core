@@ -300,7 +300,6 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   private String getTCLoggingFilePath() {
     File log4jPropFile = null;
-    String path = "";
     BufferedWriter writer = null;
     try {
       log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
@@ -313,12 +312,11 @@ public abstract class AbstractTestBase extends TCTestCase {
     } finally {
       try {
         writer.close();
-        path = log4jPropFile.getCanonicalPath();
       } catch (IOException e1) {
         throw new IllegalStateException(e1.getMessage());
       }
     }
-    return path;
+    return log4jPropFile.getParent();
   }
 
   protected String addToClasspath(String cp, String path) {
