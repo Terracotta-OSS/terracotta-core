@@ -243,7 +243,7 @@ public class ManagerImpl implements Manager {
                                                                  new Callable<Void>() {
                                                                    @Override
                                                                    public Void call() throws Exception {
-                                                                     stopImmediate();
+                                                                     stop();
                                                                      return null;
                                                                    }
                                                                  });
