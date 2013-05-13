@@ -224,7 +224,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     NonStopConfigurationLookup nonStopConfigurationLookup = getNonStopConfigurationLookup(name, ToolkitObjectType.CACHE);
 
     final AbstractToolkitObjectLookupAsync<ToolkitCache> toolkitObjectLookup = new AbstractToolkitObjectLookupAsync<ToolkitCache>(
-        abortableOperationManager) {
+        name, abortableOperationManager) {
       @Override
       public ToolkitCache<String, V> lookupObject() {
         return getInitializedToolkit().getCache(name, configuration, klazz);
@@ -250,7 +250,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     NonStopConfigurationLookup nonStopConfigurationLookup = getNonStopConfigurationLookup(name, ToolkitObjectType.STORE);
 
     final AbstractToolkitObjectLookupAsync<ToolkitStore> toolkitObjectLookup = new AbstractToolkitObjectLookupAsync<ToolkitStore>(
-        abortableOperationManager) {
+        name, abortableOperationManager) {
       @Override
       public ToolkitStore<String, V> lookupObject() {
         return getInitializedToolkit().getStore(name, configuration, klazz);

@@ -7,14 +7,19 @@ import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 public abstract class AbstractToolkitObjectLookupAsync<T extends ToolkitObject> implements ToolkitObjectLookup<T> {
+  private static final TCLogger           LOGGER = TCLogging.getLogger(AbstractToolkitObjectLookupAsync.class);
   private volatile T                      initializedObject;
   private volatile RuntimeException       exceptionDuringInitialization;
   private final AbortableOperationManager abortableOperationManager;
+  private final String                    objectName;
 
-  public AbstractToolkitObjectLookupAsync(AbortableOperationManager abortableOperationManager) {
+  public AbstractToolkitObjectLookupAsync(String objectName, AbortableOperationManager abortableOperationManager) {
+    this.objectName = objectName;
     this.abortableOperationManager = abortableOperationManager;
   }
 
@@ -63,6 +68,9 @@ public abstract class AbstractToolkitObjectLookupAsync<T extends ToolkitObject> 
       }
     }
 
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Initialization completed for : " + objectName);
+    }
     return true;
   }
 

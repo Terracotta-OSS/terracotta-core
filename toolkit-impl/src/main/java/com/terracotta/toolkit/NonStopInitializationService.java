@@ -8,6 +8,8 @@ import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 import org.terracotta.toolkit.object.ToolkitObject;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookupAsync;
 import com.terracotta.toolkit.nonstop.NonStopContext;
 
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NonStopInitializationService<T extends ToolkitObject> {
-
+  private static final TCLogger LOGGER                        = TCLogging.getLogger(NonStopInitializationService.class);
   private static final String   CORE_POOL_SIZE_CONFIG_STRING  = "com.tc.non.stop.toolkit.threadpool.core.size";
   private static final String   MAX_POOL_SIZE_CONFIG_STRING   = "com.tc.non.stop.toolkit.threadpool.max.size";
   private static final String   KEEP_ALIVE_TIME_CONFIG_STRING = "com.tc.non.stop.toolkit.threadpool.keep.alive";
@@ -106,6 +108,10 @@ public class NonStopInitializationService<T extends ToolkitObject> {
 
     } finally {
       if (interrupted) Thread.currentThread().interrupt();
+    }
+
+    if (!initializationCompletd && LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Returning without completing Cache initialization. Operations Enabled = " + areOperationsEnabled());
     }
   }
 

@@ -33,7 +33,7 @@ public class NonStopClusterInfo implements ClusterInfo {
   }
 
   private Thread createThreadToInitDelegate() {
-    return new Thread("Non Stop Cluster Info register") {
+    return new Thread("NonStopClusterInfo register") {
       @Override
       public void run() {
         try {
@@ -44,6 +44,9 @@ public class NonStopClusterInfo implements ClusterInfo {
             }
             listeners.clear();
             delegate = localClusterInfo;
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("NonStopClusterInfo Initialization completed.");
+            }
           }
         } catch (final Throwable e) {
           LOGGER.error("Got Exception while initializing Toolkit :" + e);
