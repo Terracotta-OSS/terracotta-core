@@ -52,7 +52,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private final Sink                  respondToServerTCMapSink;
   private final Sink                  prefetchObjectsSink;
   private final ServerMapRequestQueue requestQueue = new ServerMapRequestQueue();
-  // private final ClientStateManager clientStateManager;
+  private final ClientStateManager    clientStateManager;
   // private final ChannelStats channelStats;
   private final boolean               enablePrefetch = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED, true);
 
@@ -64,7 +64,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     this.objectManager = objectManager;
     this.respondToServerTCMapSink = respondToServerTCMapSink;
     this.prefetchObjectsSink = prefetchObjectsSink;
-    // this.clientStateManager = clientStateManager;
+    this.clientStateManager = clientStateManager;
     // this.channelStats = channelStats;
   }
 
@@ -224,8 +224,11 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
           if ( logger.isDebugEnabled() ) {
             logger.debug("sending " + portableValue);
           }
-          
-          response.put(portableKey, portableValue, shouldPrefetch(clientID, portableValue), wrappedValue.getCreationTime(),
+          boolean shouldPrefetch = shouldPrefetch(clientID, portableValue);
+          if (shouldPrefetch) {
+            clientStateManager.addReference(clientID, portableValue);
+          }
+          response.put(portableKey, portableValue, shouldPrefetch, wrappedValue.getCreationTime(),
           wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive());
         }
       }
@@ -237,7 +240,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private boolean shouldPrefetch(ClientID cid, ObjectID object) {
  //  if the client is fetching the key-value, assume the client needs the value faulted in.  check for sure
  //    before sending.  See ServerMapRequestPrefetchObjectsContext
-      return enablePrefetch;
+    return enablePrefetch && !clientStateManager.hasReference(cid, object);
   }
 
   private void sendResponseForGetAllSize(final ObjectID mapID, final ServerMapRequestSizeContext request,

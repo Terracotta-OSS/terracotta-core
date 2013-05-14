@@ -16,8 +16,8 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
-import java.util.ArrayList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -65,7 +65,7 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
     
     public ObjectID getMapID() {
       return mapid;
-    }    
+    }
 
     @Override
     public ObjectIDSet getLookupIDs() {
@@ -88,8 +88,8 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
       for ( ServerMapGetValueResponse resp : answers ) {
         for ( ObjectID oid : new ArrayList<ObjectID>(resp.getObjectIDs()) ) {
           ManagedObject mo = lookedUp.get(oid);
-          if ( mo != null && !state.hasReference(clientid, oid) ) {
-            state.addReference(clientid, oid);
+        if (mo != null) {
+          // state.addReference(clientid, oid);
             TCByteBufferOutputStream out = new TCByteBufferOutputStream();
             mo.toDNA(out, serializer, DNAType.L1_FAULT);
             resp.replace(oid, out);
