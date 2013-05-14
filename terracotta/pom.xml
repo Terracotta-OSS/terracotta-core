@@ -52,7 +52,7 @@
             <phase>compile</phase>
           </execution>
         </executions>
-      </plugin>   
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -61,13 +61,13 @@
             <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
           </archive>
         </configuration>
-      </plugin> 
-    </plugins>      
+      </plugin>
+    </plugins>
   </build>
 
   <profiles>
     <profile>
-      <id>devmode</id>      
+      <id>devmode</id>
       <activation>
         <property>
           <name>devmode</name>
@@ -77,7 +77,7 @@
       <properties>
         <excludeGroupIdsForClasspath/>
         <devmodeResourcePath>${project.build.outputDirectory}/META-INF/devmode/${project.groupId}/${project.artifactId}</devmodeResourcePath>
-        <devmodeDependencies>${devmodeResourcePath}/dependencies.txt</devmodeDependencies>        
+        <devmodeDependencies>${devmodeResourcePath}/dependencies.txt</devmodeDependencies>
       </properties>
       <build>
         <plugins>
@@ -97,9 +97,9 @@
                 <phase>compile</phase>
               </execution>
             </executions>
-          </plugin>        
+          </plugin>
         </plugins>
-      </build>    
+      </build>
     </profile>
 
     <profile>
@@ -109,7 +109,7 @@
           <name>devmode</name>
           <value>false</value>
         </property>
-      </activation>      
+      </activation>
       <properties>
         <excludeGroupIdsForClasspath>org.terracotta.internal</excludeGroupIdsForClasspath>
       </properties>
@@ -127,17 +127,17 @@
                   <include>org.terracotta.internal:*</include>
                   <include>org.terracotta.internal.enterprise:*</include>
                 </includes>
-              </artifactSet>       
+              </artifactSet>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
                   </excludes>
-                </filter>		  
-              </filters>    
+                </filter>
+              </filters>
               <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>          
+              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
             </configuration>
             <executions>
               <execution>
@@ -161,18 +161,46 @@
                 </goals>
                 <configuration>
                   <source>
+
+                def pomProject = new XmlParser().parse("${project.build.directory}/dependency-reduced-pom.xml")
+
+                def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
+                if(gfArtifacts[0] != null) {
+
+                  def gfArtifactsParent = gfArtifacts[0].parent()
+
+                  def profiles = pomProject.profiles
+
+                  def newProfile = profiles[0].appendNode('profile')
+                  def newProfileId = new Node(newProfile,'id',"sag-deps");
+                  def newProfileActivation = new Node(newProfile,'activation');
+                  def newProfileActivationProperty = new Node(newProfileActivation,'property');
+                  def newProfileActivationPropertyName = new Node(newProfileActivationProperty,'name',"sag-deps");
+                  def newProfileActivationPropertyValue = new Node(newProfileActivationProperty,'value',"true");
+                  def newNode = newProfile.appendNode('dependencies',gfArtifacts)
+
+                  gfArtifacts.each { g ->
+                      print g.artifactId.text()
+                      gfArtifactsParent.remove(g)
+                  }
+
+                  def xmlNodePrinter = new XmlNodePrinter(new PrintWriter(new FileWriter(new File(project.build.directory,"dependency-reduced-pom.xml"))))
+                  xmlNodePrinter.preserveWhitespace=true;
+                  xmlNodePrinter.print(pomProject)
+                }
+
                 def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
                 ant.jar(destfile: jarFile, update: "true") {
-                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
+                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"),
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
                   </source>
                 </configuration>
               </execution>
             </executions>
-          </plugin>        
+          </plugin>
         </plugins>
       </build>
     </profile>
-  </profiles>    
+  </profiles>
 </project>
