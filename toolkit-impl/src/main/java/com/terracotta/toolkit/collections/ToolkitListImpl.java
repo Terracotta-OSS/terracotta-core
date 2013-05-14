@@ -87,7 +87,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
     synchronized (localResolveLock) {
       Object o = createTCCompatibleObject(e);
-      logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { o });
+      platformService.logicalInvoke(this, SerializationUtil.ADD_SIGNATURE, new Object[] { o });
       localList.add(o);
       return true;
     }
