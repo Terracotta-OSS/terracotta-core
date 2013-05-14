@@ -60,6 +60,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public void doRejoinCompleted() {
     aggregateServerMap.rejoinCompleted();
+    aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
     if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
       this.activeDelegate = aggregateServerMap;
     } else {
