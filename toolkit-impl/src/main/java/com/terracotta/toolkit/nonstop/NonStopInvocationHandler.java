@@ -46,6 +46,9 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
     }
 
     if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Executing NonStop behaviour for method - " + method.getName());
+      }
       return handleNonStopBehavior(method, args, nonStopConfiguration);
     }
     
