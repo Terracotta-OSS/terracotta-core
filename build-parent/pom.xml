@@ -37,7 +37,7 @@
     <management-core-version>1.1.4</management-core-version>
     <management.version>2.8.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.8</terracotta-license.version>
-    <toolkit-api.version>2.1-SNAPSHOT</toolkit-api.version>
+    <toolkit-api.version>2.1.0</toolkit-api.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.8.0-SNAPSHOT</ehcache.version>
     <maven-forge-plugin.version>1.0.8</maven-forge-plugin.version>
