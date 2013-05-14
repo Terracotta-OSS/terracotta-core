@@ -225,7 +225,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     if (attributeExtractor != null) {
-      setAttributeExtractorInternal(attributeExtractor);
+      registerServerMapAttributeExtractor(attributeExtractor);
     }
   }
 
