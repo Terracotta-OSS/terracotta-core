@@ -130,7 +130,7 @@ public class TestHandler implements TestHandlerMBean {
   @Override
   public void clientExitedWithException(Throwable t) {
     t.printStackTrace();
-
+    testClientManager.clientExitedWithException(t);
   }
 
   @Override

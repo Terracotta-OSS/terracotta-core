@@ -44,6 +44,7 @@ public class TestClientManager {
   private final TestConfig              testConfig;
   private final SetOnceFlag             stopped                          = new SetOnceFlag();
   private final List<LinkedJavaProcess> runningClients                   = new ArrayList<LinkedJavaProcess>();
+  private volatile Throwable            exceptionFromClient;
 
   public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -143,7 +144,11 @@ public class TestClientManager {
         System.out.println("*************Got exception in One of the Clients Killing other clients");
         System.out.println("**** For Details Refer to client Logs at " + output.getAbsolutePath());
         stopAllClients();
-        throw new AssertionError(t);
+        if (exceptionFromClient != null) {
+          throw new AssertionError(exceptionFromClient);
+        } else {
+          throw new AssertionError(t);
+        }
       }
     }
   }
@@ -206,6 +211,10 @@ public class TestClientManager {
     Assert.assertTrue("index: " + index + " no of running clients: " + this.runningClients.size(),
                       index < this.runningClients.size());
     this.runningClients.get(index).destroy();
+  }
+
+  public void clientExitedWithException(Throwable t) {
+    exceptionFromClient = t;
   }
 
 }
