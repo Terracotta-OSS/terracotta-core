@@ -20,8 +20,10 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
+import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
+import com.tc.util.version.Version;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,7 +106,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   @Override
   public Map<String, GroupID> getGroupNameIDMapFromL2() throws ConfigurationSetupException {
     Map<String, GroupID> map = new HashMap<String, GroupID>();
-
+    verifyServerClientCompatibility();
     GroupnameIdMapDocument groupnameIdMapDocument = getAndParseDocumentFromL2("Groupname ID Map",
                                                                               GROUPID_MAP_SERVLET_PATH,
                                                                               new FactoryParser<GroupnameIdMapDocument>() {
@@ -264,6 +267,48 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
       if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text.toString()); }
       ThreadUtil.reallySleep(connectRetryInterval);
     }
+  }
+
+  private void verifyServerClientCompatibility() {
+    ServerURL theURL;
+    for (ConnectionInfo ci : connections) {
+      try {
+        theURL = new ServerURL(ci.getHostname(), ci.getPort(), "/version", ci.getSecurityInfo());
+      } catch (MalformedURLException e1) {
+        throw new IllegalStateException("Some problem occured while checking Client-Server compatibility", e1);
+      }
+      matchServerClientVersion(theURL);
+    }
+  }
+
+  void matchServerClientVersion(ServerURL theURL) {
+    String strServerVersion = theURL.getHeaderField("Version", pwProvider);
+    int responseCode = 0;
+    // we'll get strServerVersion as null in following 2 cases:
+    // 1. Server is 4.0 server
+    // 2. We hit a server which is not up yet
+    if (strServerVersion == null) {
+      try {
+        responseCode = theURL.getResponseCode(pwProvider);
+      } catch (IOException e) {
+        // while getting responseCode if we get this exception it means that
+        // it was an active/passive server which has not started running yet, we can safely ignore this exception
+        return;
+      }
+      if (responseCode != 0) {
+        // a 4.0 server detected, as we didn't get IOException meaning that server is alive
+        Version clientVersion = new Version(ProductInfo.getInstance().version());
+        throw new IllegalStateException("client Server Version mismatch occured: client version : " + clientVersion
+                                        + " is not compatible with a server of Terracotta version: 4.0 or before");
+      }
+    }
+    Version serverVersion = new Version(strServerVersion);
+    Version clientVersion = new Version(ProductInfo.getInstance().version());
+    if (!clientVersion.equals(serverVersion)) { throw new IllegalStateException(
+                                                                                "client Server Version mismatch occured: client version : "
+                                                                                    + clientVersion
+                                                                                    + " is not compatible with serverVersion : "
+                                                                                    + serverVersion); }
   }
 
   /*
