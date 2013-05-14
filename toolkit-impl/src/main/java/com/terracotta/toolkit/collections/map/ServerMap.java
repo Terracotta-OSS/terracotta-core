@@ -1336,8 +1336,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (!recordedTypes.isEmpty()) {
         // check that we're overwriting any existing entries
         String lockId = getInstanceDsoLockName() + getAttrTypeMapLockName();
+        beginLock(lockId, ToolkitLockTypeInternal.WRITE);
         try {
-          beginLock(lockId, ToolkitLockTypeInternal.WRITE);
           for (Entry<String, String> e : recordedTypes.entrySet()) {
             String attrName = e.getKey();
             String existing = searchAttributeTypes.get(attrName);
