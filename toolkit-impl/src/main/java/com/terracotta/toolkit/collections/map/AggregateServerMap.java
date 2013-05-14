@@ -115,6 +115,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private volatile boolean                                                 lookupSuccessfulAfterRejoin;
   private final AtomicReference<ToolkitMap<String, String>>                attrSchema                           = new AtomicReference<ToolkitMap<String, String>>();
   private final LOCK_STRATEGY                                              lockStrategy;
+  private ToolkitAttributeExtractor                                        attributeExtractor                 = null;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -221,6 +222,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     // handles re-join scenario by re-registering server event listener if needed
     if (!listeners.isEmpty()) {
       registerServerEventListener();
+    }
+
+    if (attributeExtractor != null) {
+      setAttributeExtractorInternal(attributeExtractor);
     }
   }
 
@@ -822,6 +827,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
     // This race is okay to have, the only reason for the conditional is to avoid calling call() below
+    attributeExtractor = attrExtractor;
     if (attrSchema.get() == null) {
       try {
         attrSchema.compareAndSet(null, schemaCreator.call());
@@ -829,6 +835,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         throw new ToolkitRuntimeException(e);
       }
     }
+    registerServerMapAttributeExtractor(attrExtractor);
+  }
+
+  private void registerServerMapAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
     for (InternalToolkitMap serverMap : this.serverMaps) {
       serverMap.registerAttributeExtractor(attrExtractor);
       ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema.get());
