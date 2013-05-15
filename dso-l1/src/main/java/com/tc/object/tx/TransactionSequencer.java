@@ -30,6 +30,7 @@ public class TransactionSequencer implements ClearableCallback {
   private static final int                                  MAX_BYTE_SIZE_FOR_BATCH;
   private static final int                                  MAX_PENDING_BATCHES;
   private static final long                                 MAX_SLEEP_TIME_BEFORE_HALT;
+  private static final int                                  MIN_AVG_TRANSACTION_SIZE = 500;
 
   static {
     // Set the values from the properties here.
@@ -314,9 +315,14 @@ public class TransactionSequencer implements ClearableCallback {
     
     public synchronized int getAverage() {
       if ( count == 0 ) {
-        return 0;
+        return MIN_AVG_TRANSACTION_SIZE;
       }
-      return written / count;
+      int ave = written / count;
+      if ( ave < MIN_AVG_TRANSACTION_SIZE ) {
+        return MIN_AVG_TRANSACTION_SIZE;
+      } else {
+        return ave;
+      }
     }
     
     private void rebalance() {
