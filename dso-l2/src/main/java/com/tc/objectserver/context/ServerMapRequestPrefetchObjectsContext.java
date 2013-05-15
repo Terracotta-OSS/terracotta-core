@@ -13,19 +13,17 @@ import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResultsContext {
 
     private final ClientID  clientid;
     private final ObjectID  mapid;
-    private Map<ObjectID, ManagedObject> lookedUp;
+  private ObjectManagerLookupResults                  lookedUp;
     private final Collection<ServerMapGetValueResponse> answers = new ArrayList<ServerMapGetValueResponse>();
     private final ObjectStringSerializerImpl serializer = new ObjectStringSerializerImpl();
     private final Sink destination;
@@ -79,15 +77,15 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
     public void releaseAll(ObjectManager mgr) {
   // could be null if there was nothing to prefetch.
       if ( lookedUp != null ) {
-        mgr.releaseAll(lookedUp.values());
+      mgr.releaseAll(lookedUp.getObjects().values());
       }
     }
     
-    public int prefetchObjects(ClientStateManager state) {
+    public int prefetchObjects() {
       int count = 0;
       for ( ServerMapGetValueResponse resp : answers ) {
         for ( ObjectID oid : new ArrayList<ObjectID>(resp.getObjectIDs()) ) {
-          ManagedObject mo = lookedUp.get(oid);
+        ManagedObject mo = lookedUp.getObjects().get(oid);
         if (mo != null) {
           // state.addReference(clientid, oid);
             TCByteBufferOutputStream out = new TCByteBufferOutputStream();
@@ -107,7 +105,7 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
 
     @Override
     public void setResults(ObjectManagerLookupResults results) {
-      lookedUp = results.getObjects();
+    lookedUp = results;
       this.destination.add(this);
     }
     
@@ -116,5 +114,20 @@ public class ServerMapRequestPrefetchObjectsContext implements ObjectManagerResu
       return super.toString() + " [ value requests : " + this.answers + "]";
     }
 
+  public ObjectIDSet getLookupPendingObjectIDs() {
+    if (lookedUp != null) {
+      return lookedUp.getLookupPendingObjectIDs();
+    } else {
+      return TCCollections.EMPTY_OBJECT_ID_SET;
+    }
+    }
+
+  public ObjectIDSet getMissingObjectIds() {
+    if (lookedUp != null) {
+      return lookedUp.getMissingObjectIDs();
+    } else {
+      return TCCollections.EMPTY_OBJECT_ID_SET;
+    }
+  }
     
 }
