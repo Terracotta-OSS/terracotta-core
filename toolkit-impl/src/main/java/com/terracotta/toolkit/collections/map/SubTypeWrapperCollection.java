@@ -19,7 +19,6 @@ public class SubTypeWrapperCollection<E> implements Collection<E> {
 
   public SubTypeWrapperCollection(Collection<E> collection, ToolkitSubtypeStatus status, String superTypeName,
                                   ToolkitObjectType toolkitObjectType) {
-    super();
     this.collection = collection;
     this.status = status;
     this.rejoinCount = status.getCurrentRejoinCount();
@@ -119,4 +118,12 @@ public class SubTypeWrapperCollection<E> implements Collection<E> {
     assertStatus();
     return collection.toArray(a);
   }
+
+  @Override
+  public String toString() {
+    assertStatus();
+
+    return toolkitObjectType + " : " + collection.toString();
+  }
+
 }
