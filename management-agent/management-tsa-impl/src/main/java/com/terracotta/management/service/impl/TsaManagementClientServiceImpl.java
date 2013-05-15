@@ -56,6 +56,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +64,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
 
 import javax.management.Attribute;
@@ -106,11 +109,13 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   private final JmxConnectorPool jmxConnectorPool;
   private final boolean secure;
   private final ExecutorService executorService;
+  private final long l1BridgeTimeout;
 
-  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure, ExecutorService executorService) {
+  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure, ExecutorService executorService, long l1BridgeTimeoutInMs) {
     this.jmxConnectorPool = jmxConnectorPool;
     this.secure = secure;
     this.executorService = executorService;
+    this.l1BridgeTimeout = l1BridgeTimeoutInMs;
   }
 
   @Override
@@ -723,7 +728,31 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Map<String, Map<String, String>> getL1Nodes() throws ServiceExecutionException {
+  public Set<String> getRemoteAgentNodeNames() throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = getJMXConnectorWithL1MBeans();
+      if (jmxConnector == null) {
+        // there is no connected client
+        return Collections.emptySet();
+      }
+      final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      Set<String> nodeNames = new HashSet<String>();
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      for (ObjectName objectName : objectNames) {
+        nodeNames.add(objectName.getKeyProperty("node"));
+      }
+      return nodeNames;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      closeConnector(jmxConnector);
+    }
+  }
+
+  @Override
+  public Map<String, Map<String, String>> getRemoteAgentNodeDetails() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
@@ -736,15 +765,23 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
-      for (ObjectName objectName : objectNames) {
-        String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
-        String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
-        String node = objectName.getKeyProperty("node");
+      for (final ObjectName objectName : objectNames) {
+        Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
+          @Override
+          public Map<String, String> call() throws Exception {
+            String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
+            String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
 
-        Map<String, String> props = new HashMap<String, String>();
-        props.put("Version", version);
-        props.put("Agency", agency);
-        nodes.put(node, props);
+            Map<String, String> props = new HashMap<String, String>();
+            props.put("Version", version);
+            props.put("Agency", agency);
+            return props;
+          }
+        });
+
+        if (attributes != null) {
+          nodes.put(objectName.getKeyProperty("node"), attributes);
+        }
       }
       return nodes;
     } catch (Exception e) {
@@ -768,8 +805,8 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public byte[] invokeMethod(String nodeName, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
-                              String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException {
+  public byte[] invokeMethod(String nodeName, final Class<DfltSamplerRepositoryServiceMBean> clazz, final String ticket, final String token,
+                              final String securityCallbackUrl, final String methodName, final Class<?>[] paramClasses, final Object[] params) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithEhcacheMBeans();
@@ -793,8 +830,14 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         throw new ServiceExecutionException("Cannot find node : " + nodeName);
       }
 
-      DfltSamplerRepositoryServiceMBean proxy = JMX.newMBeanProxy(mBeanServerConnection, objectName, clazz);
-      return proxy.invoke(ticket, token, securityCallbackUrl, methodName, paramClasses, params);
+      final ObjectName finalObjectName = objectName;
+      return callWithTimeout(new Callable<byte[]>() {
+        @Override
+        public byte[] call() throws Exception {
+          DfltSamplerRepositoryServiceMBean proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, clazz);
+          return proxy.invoke(ticket, token, securityCallbackUrl, methodName, paramClasses, params);
+        }
+      });
     } catch (ServiceExecutionException see) {
       throw see;
     } catch (Exception e) {
@@ -1648,6 +1691,19 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       } catch (IOException ioe) {
         LOG.warn("error closing JMX connection", ioe);
       }
+    }
+  }
+
+  private <T> T callWithTimeout(Callable<T> callable) throws ExecutionException {
+    Future<T> future = executorService.submit(callable);
+    try {
+      return future.get(l1BridgeTimeout, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException ie) {
+      future.cancel(true);
+      return null;
+    } catch (TimeoutException te) {
+      future.cancel(true);
+      return null;
     }
   }
 

@@ -59,7 +59,7 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
       String[] idsArray = ids.split(",");
 
       try {
-        Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
+        Set<String> nodes = tsaManagementClientService.getRemoteAgentNodeNames();
         for (String id : idsArray) {
           if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
             throw new ResourceRuntimeException(

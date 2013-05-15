@@ -47,7 +47,7 @@ public class TsaAgentServiceImpl implements AgentService {
             agentEntities.add(buildAgentEntity());
           } else {
             if (l1Nodes == null) {
-              l1Nodes = tsaManagementClientService.getL1Nodes().keySet();
+              l1Nodes = tsaManagementClientService.getRemoteAgentNodeNames();
             }
             if (l1Nodes.contains(id)) {
               remoteIds.add(id);
@@ -86,7 +86,7 @@ public class TsaAgentServiceImpl implements AgentService {
             agentMetadataEntities.add(buildAgentMetadata());
           } else {
             if (l1Nodes == null) {
-              l1Nodes = tsaManagementClientService.getL1Nodes().keySet();
+              l1Nodes = tsaManagementClientService.getRemoteAgentNodeNames();
             }
             if (l1Nodes.contains(id)) {
               remoteIds.add(id);

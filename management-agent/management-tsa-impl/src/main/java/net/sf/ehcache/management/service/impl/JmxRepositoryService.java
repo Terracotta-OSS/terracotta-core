@@ -1,3 +1,6 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 package net.sf.ehcache.management.service.impl;
 
 import net.sf.ehcache.management.resource.CacheConfigEntity;
@@ -287,7 +290,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
   @Override
   public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
-    Set<String> nodes = tsaManagementClientService.getL1Nodes().keySet();
+    Set<String> nodes = tsaManagementClientService.getRemoteAgentNodeNames();
     if (ids.isEmpty()) {
       ids = new HashSet<String>(nodes);
     }
@@ -334,7 +337,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<AgentEntity> getAgents(Set<String> idSet) throws ServiceExecutionException {
     Collection<AgentEntity> result = new ArrayList<AgentEntity>();
 
-    Map<String, Map<String, String>> nodes = tsaManagementClientService.getL1Nodes();
+    Map<String, Map<String, String>> nodes = tsaManagementClientService.getRemoteAgentNodeDetails();
     if (idSet.isEmpty()) {
       idSet = nodes.keySet();
     }

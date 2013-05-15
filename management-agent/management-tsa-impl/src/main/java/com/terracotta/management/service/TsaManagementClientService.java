@@ -3,8 +3,6 @@
  */
 package com.terracotta.management.service;
 
-import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
-
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.BackupEntity;
@@ -27,7 +25,7 @@ import java.util.Set;
  *
  * @author Ludovic Orban
  */
-public interface TsaManagementClientService {
+public interface TsaManagementClientService extends RemoteAgentBridgeService {
 
   Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException;
 
@@ -49,12 +47,7 @@ public interface TsaManagementClientService {
 
   Collection<String> getL2Urls() throws ServiceExecutionException;
 
-  Map<String, Map<String, String>> getL1Nodes() throws ServiceExecutionException;
-
   boolean isEnterpriseEdition() throws ServiceExecutionException;
-
-  byte[] invokeMethod(String validatedNode, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
-                      String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException;
 
   Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
 

@@ -17,7 +17,8 @@ import javax.management.ObjectName;
  */
 public class TSAConfig {
 
-  private static final int DEFAULT_TIMEOUT = 5000;
+  private static final int DEFAULT_SECURITY_TIMEOUT = 10000;
+  private static final int DEFAULT_L1_BRIDGE_TIMEOUT = 10000;
 
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
   private static final Object KEY_CHAIN_ACCESSOR_LOCK = new Object();
@@ -74,7 +75,7 @@ public class TSAConfig {
       Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceTimeout");
 
       if (response == null) {
-        return DEFAULT_TIMEOUT;
+        return DEFAULT_SECURITY_TIMEOUT;
       }
 
       return (Integer)response;
@@ -127,4 +128,13 @@ public class TSAConfig {
     }
   }
 
+  public static long getL1BridgeTimeout() {
+    // TODO: make this configurable in the TC config file?
+    try {
+      String timeoutString = System.getProperty("com.terracotta.agent.L1BridgeTimeout", "" + DEFAULT_L1_BRIDGE_TIMEOUT);
+      return Long.parseLong(timeoutString);
+    } catch (NumberFormatException nfe) {
+      return DEFAULT_L1_BRIDGE_TIMEOUT;
+    }
+  }
 }

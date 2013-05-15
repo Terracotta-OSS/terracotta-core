@@ -116,7 +116,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         jmxConnectorPool = new JmxConnectorPool("service:jmx:jmxmp://{0}:{1}");
       }
       executorService = Executors.newCachedThreadPool();
-      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService);
+      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService, TSAConfig.getL1BridgeTimeout());
 
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
