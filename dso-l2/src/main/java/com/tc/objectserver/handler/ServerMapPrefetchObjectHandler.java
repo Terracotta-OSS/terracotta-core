@@ -30,18 +30,18 @@ import java.util.Collections;
 
 public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
 
-  private DSOChannelManager           channelManager;
+  private DSOChannelManager     channelManager;
   private ClientStateManager    clientManager;
-  private ObjectManager               objectManager;
-  private ChannelStats                channelStats;
-  private final Counter               globalObjectRequestCounter;
+  private ObjectManager         objectManager;
+  private ChannelStats          channelStats;
+  private final Counter         globalObjectRequestCounter;
   private final static TCLogger logger = TCLogging.getLogger(ServerMapPrefetchObjectHandler.class);
-  private Sink               objectRequestSink;
+  private Sink                  objectRequestSink;
 
   public ServerMapPrefetchObjectHandler(Counter global) {
     globalObjectRequestCounter = global;
   }
-  
+
   @Override
   public void handleEvent(final EventContext context) {
     if (context instanceof ServerMapRequestPrefetchObjectsContext) {
@@ -49,48 +49,48 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
       sendResponseForGetValue(responseContext);
     }
   }
-  
+
   public void sendResponseForGetValue(ServerMapRequestPrefetchObjectsContext results) {
-      final ClientID clientID = results.getClientID();
-      final MessageChannel channel = getActiveChannel(clientID);
+    final ClientID clientID = results.getClientID();
+    final MessageChannel channel = getActiveChannel(clientID);
 
-      if (channel == null) {
+    if (channel == null) {
       logger.info("Client " + clientID + " is not active : Ignoring sending response for getValue() ");
-      } else {
-        final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
-            .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
+    } else {
+      final GetValueServerMapResponseMessage responseMessage = (GetValueServerMapResponseMessage) channel
+          .createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
       int count = results.prefetchObjects();
-        if ( count > 0 ) {
-          this.globalObjectRequestCounter.increment(count);
-          this.channelStats.notifyReadOperations(channel, count);
-        }
-        if (results.getLookupPendingObjectIDs().size() > 0) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Prefetch LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = "
-                         + clientID);
-          }
-          this.objectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID, results
-              .getLookupPendingObjectIDs(), Thread.currentThread().getName(), -1, LOOKUP_STATE.SERVER_INITIATED));
-        }
-
-        if (results.getMissingObjectIds().size() > 0) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Prefetch LookupMissingObjectIDs = " + results.getMissingObjectIds() + " , clientID = "
-                         + clientID);
-          }
-        clientManager.removeReferences(clientID, results.getMissingObjectIds(), Collections.EMPTY_SET);
-        }
-        responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
-        responseMessage.send();
-        if ( logger.isDebugEnabled() ) {
-          debugStats(results);
-        }
+      if (count > 0) {
+        this.globalObjectRequestCounter.increment(count);
+        this.channelStats.notifyReadOperations(channel, count);
       }
-      results.releaseAll(this.objectManager);
+      if (results.getLookupPendingObjectIDs().size() > 0) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Prefetch LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = "
+                       + clientID);
+        }
+        this.objectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID, results
+            .getLookupPendingObjectIDs(), Thread.currentThread().getName(), -1, LOOKUP_STATE.SERVER_INITIATED));
+      }
+
+      if (results.getMissingObjectIds().size() > 0) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Prefetch LookupMissingObjectIDs = " + results.getMissingObjectIds() + " , clientID = "
+                       + clientID);
+        }
+        clientManager.removeReferences(clientID, results.getMissingObjectIds(), Collections.EMPTY_SET);
+      }
+      responseMessage.initializeGetValueResponse(results.getMapID(), results.getSerializer(), results.getAnswers());
+      responseMessage.send();
+      if (logger.isDebugEnabled()) {
+        debugStats(results);
+      }
+    }
+    results.releaseAll(this.objectManager);
   }
 
   private void debugStats(ServerMapRequestPrefetchObjectsContext results) {
-    for ( ServerMapGetValueResponse msg : results.getAnswers() ) {
+    for (ServerMapGetValueResponse msg : results.getAnswers()) {
       logger.debug(msg);
     }
   }
@@ -99,7 +99,7 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
     try {
       return this.channelManager.getActiveChannel(clientID);
     } catch (final NoSuchChannelException e) {
-      this.logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
+      logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
       return null;
     }
   }
