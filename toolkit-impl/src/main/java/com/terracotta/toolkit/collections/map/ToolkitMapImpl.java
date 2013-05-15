@@ -589,6 +589,20 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     }
 
     @Override
+    public String toString() {
+      readLock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          return keySet.toString();
+        }
+      } finally {
+        readUnlock();
+      }
+
+    }
+
+    @Override
     public boolean add(K e) {
       throw new UnsupportedOperationException();
     }
@@ -770,6 +784,19 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         synchronized (localResolveLock) {
           applyPendingChanges();
           return values.toArray(a);
+        }
+      } finally {
+        readUnlock();
+      }
+    }
+
+    @Override
+    public String toString() {
+      readLock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          return values.toString();
         }
       } finally {
         readUnlock();
@@ -992,6 +1019,19 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
         synchronized (localResolveLock) {
           applyPendingChanges();
           return entrySet.toArray(a);
+        }
+      } finally {
+        readUnlock();
+      }
+    }
+
+    @Override
+    public String toString() {
+      readLock();
+      try {
+        synchronized (localResolveLock) {
+          applyPendingChanges();
+          return entrySet.toString();
         }
       } finally {
         readUnlock();
