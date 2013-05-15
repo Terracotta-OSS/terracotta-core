@@ -8,8 +8,14 @@ import com.tc.config.schema.context.ConfigContext;
 import com.terracottatech.config.Management;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Ssl;
+import static com.terracotta.management.security.SecretUtils.*;
 
 public class SecurityConfigObject extends BaseConfigObject implements SecurityConfig {
+
+  public static final String VM_ARG_KEYCHAIN_SECRET_PROVIDER = System.getProperty(TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP);
+  public static final String VM_ARG_KEYCHAIN_IMPL = System.getProperty(TERRACOTTA_KEYCHAIN_IMPL_CLASS_PROP);
+  public static final String VM_ARG_KEYCHAIN_URL = System.getProperty(TERRACOTTA_KEYCHAIN_LOCATION_PROP);
+
 
   public SecurityConfigObject(ConfigContext context) {
     super(context);
@@ -27,6 +33,9 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
 
   @Override
   public String getKeyChainImplClass() {
+    if(VM_ARG_KEYCHAIN_IMPL != null) {
+      return VM_ARG_KEYCHAIN_IMPL;
+    }
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getClass1();
@@ -34,6 +43,9 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
 
   @Override
   public String getSecretProviderImplClass() {
+    if(VM_ARG_KEYCHAIN_SECRET_PROVIDER != null) {
+      return VM_ARG_KEYCHAIN_SECRET_PROVIDER;
+    }
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getSecretProvider();
@@ -41,6 +53,9 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
 
   @Override
   public String getKeyChainUrl() {
+    if(VM_ARG_KEYCHAIN_URL != null) {
+      return VM_ARG_KEYCHAIN_URL;
+    }
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     return bean.getKeychain().getUrl();

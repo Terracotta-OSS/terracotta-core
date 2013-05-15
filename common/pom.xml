@@ -105,6 +105,11 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>slf4j-api</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.terracotta</groupId>
+      <artifactId>security-keychain</artifactId>
+      <scope>compile</scope>
+    </dependency>
     
     <!-- tests dependencies -->
     <dependency>

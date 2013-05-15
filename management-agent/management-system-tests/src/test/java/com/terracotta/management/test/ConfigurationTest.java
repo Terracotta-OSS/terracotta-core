@@ -59,7 +59,7 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
       String config = (String)attributes.get("config");
       System.out.println(config);
-      assertThat(config, containsString("<mirror-group group-name=\"testGroup0\">"));
+      assertThat(config, containsString("group-name=\"testGroup0\">"));
 
       String tcProperties = (String)attributes.get("tcProperties");
       assertThat(tcProperties, containsString("tc.config.total.timeout"));

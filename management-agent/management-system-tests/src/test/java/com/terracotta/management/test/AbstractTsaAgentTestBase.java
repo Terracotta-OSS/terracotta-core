@@ -17,6 +17,7 @@ import org.terracotta.toolkit.ToolkitFactory;
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
+import org.terracotta.util.ToolkitVersion;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -72,7 +73,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
   private String guessVersion() {
     // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
-    String toolkitJar = TestBaseUtil.jarFor(ToolkitFactory.class);
+    String toolkitJar = TestBaseUtil.jarFor(ToolkitVersion.class);
     if (toolkitJar == null) {
       throw new AssertionError("Cannot find toolkit JAR");
     }

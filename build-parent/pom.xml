@@ -33,7 +33,7 @@
     <slf4j.version>1.6.6</slf4j.version>
     <offheap-store.version>1.1.1-SNAPSHOT</offheap-store.version>
     <search.version>1.3.0-SNAPSHOT</search.version>
-    <security-version>1.2.2</security-version>
+    <security-version>1.3.0</security-version>
     <management-core-version>1.1.4</management-core-version>
     <management.version>2.8.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.8</terracotta-license.version>
