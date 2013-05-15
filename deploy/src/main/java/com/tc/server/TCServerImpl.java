@@ -320,8 +320,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public boolean canShutdown() {
-    return (!this.state.isStartState() || (this.dsoServer != null && this.dsoServer.isBlocking()))
-           && !this.state.isStopState();
+    return state.isPassiveStandby() || state.isActiveCoordinator() || state.isPassiveUninitialized();
   }
 
   @Override
