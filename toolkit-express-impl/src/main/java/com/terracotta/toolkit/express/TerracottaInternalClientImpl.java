@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.terracotta.management.security.SecretUtils.TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP;
+
 class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   private static final String SPI_INIT                                                         = "com.terracotta.toolkit.express.SpiInit";
@@ -68,7 +70,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
       if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
         if (env != null) {
-          env.put("com.terracotta.SecretProvider",
+          env.put(TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP,
                   newSecretProviderDelegate(clusteredStateLoader, env.get(TerracottaInternalClientImpl.SECRET_PROVIDER)));
         }
       }
