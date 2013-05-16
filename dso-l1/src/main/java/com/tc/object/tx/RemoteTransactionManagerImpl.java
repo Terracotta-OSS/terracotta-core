@@ -710,7 +710,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         try {
           this.wait();
         } catch (InterruptedException ie) {
-
+          //
         }
       }
     }
@@ -743,7 +743,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                 sendBatches(false);
               }
             } catch (InterruptedException ie) {
-
+              //
             }
           }
         }
@@ -770,7 +770,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
           TxnBatchID bid = batch.getTransactionBatchID();
           batchAccounting.addBatch(bid, markBatchOutstanding(bid, batch));
           addToSendList(batch);
-        } 
+        }
         return batch;
       }
       return null;

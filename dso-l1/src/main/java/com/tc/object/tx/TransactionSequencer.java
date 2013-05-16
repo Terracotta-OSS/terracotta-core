@@ -49,7 +49,7 @@ public class TransactionSequencer implements ClearableCallback {
   private final LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
 
   private ClientTransactionBatch                            currentBatch;
-  private Average                                           currentWritten = new Average();
+  private final Average                                           currentWritten = new Average();
 
   private final int                                         slowDownStartsAt;
   private final double                                      sleepTimeIncrements;
@@ -87,10 +87,10 @@ public class TransactionSequencer implements ClearableCallback {
 
   @Override
   public synchronized void cleanup() {
-    notifyAll();
     sequence = new SequenceGenerator(1);
     pendingBatches.clear();
     createNewBatch();
+    notifyAll();
   }
   
   private void log_settings() {
@@ -172,7 +172,7 @@ public class TransactionSequencer implements ClearableCallback {
           createNewBatch();
           this.txnsPerBatch = 0;
           numBatchesDelta = 1;
-        } 
+        }
 
         this.txnsPerBatch += 1;
 
@@ -197,7 +197,7 @@ public class TransactionSequencer implements ClearableCallback {
       written = buffer.write(txn);
 
       return txn.getTransactionID();
-    } finally {    
+    } finally {
       this.currentWritten.written(written);
       this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
       synchronized (transactionSizeCounter) {
