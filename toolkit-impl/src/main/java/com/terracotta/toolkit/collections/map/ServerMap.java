@@ -1059,17 +1059,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return tcObjectServerMap.getLocalOffHeapSize();
   }
 
-  protected void destroyLocalCache() {
-    try {
-      internalClearLocalCache();
-    } finally {
-      l1ServerMapLocalCacheStore = null;
-      if (tcObjectServerMap != null) {
-        tcObjectServerMap.destroyLocalStore();
-      }
-    }
-  }
-
   @Override
   public boolean containsKeyLocalOnHeap(Object key) {
     return tcObjectServerMap.containsKeyLocalOnHeap(assertKeyLiteral(key));
