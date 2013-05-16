@@ -22,7 +22,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
   private static final int BYTES_SIZE       = 10240;
   int                      usedT            = 50;
-  int                      usedCritialT     = 90;
+  int                      usedCritialT     = 80;
   long                     sleepInterval    = 500;
   int                      lc               = 2;
   int                      percentage2Evict = 10;
@@ -89,7 +89,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
         ThreadUtil.reallySleep(500);
       } else if (i % 50 == 0) {
         ThreadUtil.reallySleep(1);
-      } else if (i % 100 == 1) {
+      } else if (i % 50 == 1) {
         waitTillNotifiedIfCritical();
       }
     }
