@@ -513,7 +513,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private void completeEvictions() {
       if ( currentRun.isDone() ) {
         try {
-          long count = currentRun.get().getAndReset();
+          currentRun.get();
           if ( isEmergency && emergencyCount.get() == 0 ) {
             turnCount = 1;
           }
