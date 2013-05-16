@@ -390,7 +390,7 @@ public enum InternalCacheConfigurationType {
 
     @Override
     public boolean isSupportedBy(final ToolkitObjectType objectType) {
-      return objectType == ToolkitObjectType.CACHE;
+      return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
   },
   COMPRESSION_ENABLED(BOOLEAN, COMPRESSION_ENABLED_FIELD_NAME, DEFAULT_COMPRESSION_ENABLED) {
