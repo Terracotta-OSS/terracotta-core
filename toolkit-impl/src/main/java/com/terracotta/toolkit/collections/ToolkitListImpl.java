@@ -75,7 +75,12 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
     writeLock();
     try {
-      return unlockedAdd(e);
+      synchronized (localResolveLock) {
+        Object o = createTCCompatibleObject(e);
+        logicalInvoke(SerializationUtil.ADD_SIGNATURE, new Object[] { o });
+        localList.add(o);
+        return true;
+      }
     } finally {
       writeUnlock();
     }
