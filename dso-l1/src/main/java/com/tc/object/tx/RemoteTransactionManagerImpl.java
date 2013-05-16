@@ -700,7 +700,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     public synchronized void clear() {
       lastsid = null;
       outStandingBatches = 0;
+      empty = true;
       incompleteBatches.clear();
+      this.notify();
     }
 
     public synchronized void waitForEmpty() {
