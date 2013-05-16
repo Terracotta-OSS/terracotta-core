@@ -138,6 +138,10 @@ public class ServerURL {
     return theURL.toString();
   }
 
+  public String getUsername() {
+    return securityInfo.isSecure() ? securityInfo.getUsername() : null;
+  }
+
   private static void tweakSecureConnectionSettings(URLConnection urlConnection) {
     HttpsURLConnection sslUrlConnection;
 

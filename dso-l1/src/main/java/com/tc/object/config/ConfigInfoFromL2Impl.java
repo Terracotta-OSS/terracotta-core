@@ -13,6 +13,7 @@ import org.xml.sax.SAXParseException;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -20,6 +21,8 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
+import com.tc.security.TCAuthenticationException;
+import com.tc.security.TCAuthorizationException;
 import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
@@ -295,11 +298,23 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
         // it was an active/passive server which has not started running yet, we can safely ignore this exception
         return;
       }
-      if (responseCode != 0) {
-        // a 4.0 server detected, as we didn't get IOException meaning that server is alive
-        Version clientVersion = new Version(ProductInfo.getInstance().version());
-        throw new IllegalStateException("client Server Version mismatch occured: client version : " + clientVersion
-                                        + " is not compatible with a server of Terracotta version: 4.0 or before");
+
+      switch (responseCode) {
+        case 401:
+          throw new TCAuthenticationException("Authentication error connecting to " + theURL
+                                              + " - invalid credentials (tried user " + theURL.getUsername()
+                                              + ")");
+        case 403:
+          throw new TCAuthorizationException("Authorization error connecting to " + theURL
+                                             + " - does the user '" + theURL.getUsername()
+                                             + "' have the required roles?");
+        case 200:
+          // a 4.0 server detected, as we didn't get IOException meaning that server is alive
+          Version clientVersion = new Version(ProductInfo.getInstance().version());
+          throw new IllegalStateException("client Server Version mismatch occurred: client version : " + clientVersion
+                                          + " is not compatible with a server of Terracotta version: 4.0 or before");
+        default:
+          throw new TCRuntimeException("Server returned error " + responseCode + " when trying to fetch its version");
       }
     }
     Version serverVersion = new Version(strServerVersion);
