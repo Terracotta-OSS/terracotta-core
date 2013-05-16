@@ -28,7 +28,6 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
   private long                endTime     = 0;
   private int                 count;
   private int                 mapSize;
-  private static final Logger LOGGER      = Logger.getLogger(AbstractEvictionTrigger.class);
 
   public AbstractEvictionTrigger(final ObjectID oid) {
     this.oid = oid;

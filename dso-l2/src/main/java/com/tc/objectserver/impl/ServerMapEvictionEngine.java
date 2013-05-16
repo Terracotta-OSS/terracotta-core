@@ -118,19 +118,6 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   boolean isLogging() {
     return EVICTOR_LOGGING;
   }
-  
-  Set<ObjectID> markEvictionInProgress(final Set<ObjectID> oids) {
-    Iterator<ObjectID> list = oids.iterator();
-    while ( list.hasNext() ) {
-      ObjectID oid = list.next();
-      if ( !this.currentlyEvicting.add(oid) ) {
-        list.remove();
-      } else if ( EVICTOR_LOGGING ) {
-        logger.debug("starting eviction " + oid);
-      }
-    }
-    return oids;
-  }
 
   boolean markEvictionInProgress(final ObjectID oid) {
     boolean starting = this.currentlyEvicting.add(oid);

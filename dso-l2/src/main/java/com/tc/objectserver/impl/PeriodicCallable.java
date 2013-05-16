@@ -5,7 +5,6 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictionListener;
-import com.tc.objectserver.api.ObjectManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
 import java.util.Set;
@@ -20,34 +19,38 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
     private final Set<ObjectID> workingSet;
     private final Set<ObjectID> listeningSet;
     private final ProgressiveEvictionManager evictor;
-    private final ObjectManager objectManager;
 
     private boolean stopped = false;
     private PeriodicEvictionTrigger current;
     
-    public PeriodicCallable(ProgressiveEvictionManager evictor, ObjectManager objectManager, Set<ObjectID> workingSet) {
+    public PeriodicCallable(ProgressiveEvictionManager evictor, Set<ObjectID> workingSet) {
       this.evictor = evictor;
       this.workingSet = workingSet;
       this.listeningSet = new ObjectIDSet(workingSet);
-      this.objectManager = objectManager;
     }
 
     @Override
-    public synchronized boolean cancel() {
-      stopped = true;
-      if ( current != null ) {
-          current.stop();
-      }
+    public boolean cancel() {
+      stop();
       evictor.removeEvictionListener(this);
       return true;
     }
     
-    private synchronized boolean setCurrent(PeriodicEvictionTrigger trigger) {
-      current = trigger;
-      if ( stopped ) {
-        return false;
+    private synchronized void stop() {
+      stopped = true;
+      listeningSet.clear();
+      workingSet.clear();
+      if ( current != null ) {
+        current.stop();
       }
-      return true;
+    }
+
+    private synchronized boolean isStopped() {
+      return stopped;
+    }
+    
+    private synchronized void setCurrent(PeriodicEvictionTrigger trigger) {
+      current = trigger;
     }
 
     @Override
@@ -57,22 +60,26 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
       try {
         evictor.addEvictionListener(this);
         for (final ObjectID mapID : workingSet) {
-          PeriodicEvictionTrigger trigger = new PeriodicEvictionTrigger(objectManager, mapID);
-          if ( !setCurrent(trigger) ) {
-            return counter;
+          PeriodicEvictionTrigger trigger = evictor.schedulePeriodicEviction(mapID);
+          if ( trigger != null ) {
+            setCurrent(trigger);
+            counter.increment(trigger.getCount(),trigger.getRuntimeInMillis());
+            if ( trigger.filterRatio() > .66f ) {
+              rollover.add(mapID);
+            }
+          } else {
+            listeningSet.remove(mapID);
           }
-          evictor.doEvictionOn(trigger);
-          counter.increment(trigger.getCount(),trigger.getRuntimeInMillis());
-          if ( trigger.filterRatio() > .66f ) {
-            rollover.add(mapID);
+          if ( isStopped() ) {
+            return counter;
           }
         }
       } finally {
         synchronized (this) {
           workingSet.clear();
           current = null;
-          if ( listeningSet.isEmpty() && !rollover.isEmpty() ) {
-            evictor.scheduleEvictionRun(rollover);
+          if ( !stopped && listeningSet.isEmpty() && !rollover.isEmpty() ) {
+            evictor.schedulePeriodicEvictionRun(rollover);
           } else {
             workingSet.addAll(rollover);
           }
@@ -91,8 +98,8 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
   public synchronized boolean evictionCompleted(ObjectID oid) {
     listeningSet.remove(oid);
     if ( listeningSet.isEmpty() ) {
-      if ( current == null && !workingSet.isEmpty() ) {
-          evictor.scheduleEvictionRun(workingSet);
+      if ( !stopped && current == null && !workingSet.isEmpty() ) {
+          evictor.schedulePeriodicEvictionRun(workingSet);
       }
       return true;
     } else {
