@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections.servermap.api.ehcacheimpl;
 
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Element;
+import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PinningConfiguration;
 import net.sf.ehcache.config.PinningConfiguration.Store;
 import net.sf.ehcache.terracotta.InternalEhcache;
@@ -162,7 +163,9 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
   @Override
   public boolean containsKeyOffHeap(Object key) {
     // Offheap has everything in the local cache, so we just need to verify that the key is anywhere in the cache
-    return localStoreCache.isKeyInCache(encode(key));
+    CacheConfiguration conf = localStoreCache.getCacheConfiguration();
+    if (conf.isOverflowToOffHeap()) { return localStoreCache.isKeyInCache(encode(key)); }
+    return false;
   }
 
   @Override
