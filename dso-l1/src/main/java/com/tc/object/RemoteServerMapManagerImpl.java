@@ -12,6 +12,7 @@ import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessage;
@@ -61,6 +62,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final ServerMapMessageFactory                                  smmFactory;
   private final TCLogger                                                 logger;
   private final SessionManager                                           sessionManager;
+  private final RemoteObjectManager                                      remoteObjectManager;
   private final Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
   private final TaskRunner                                               taskRunner;
   private final AbortableOperationManager                                abortableOperationManager;
@@ -79,7 +81,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
   }
 
-  public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger,
+  public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger, final RemoteObjectManager remoteObjectManager,
                                     final ServerMapMessageFactory smmFactory, final SessionManager sessionManager,
                                     L1ServerMapLocalCacheManager globalLocalCacheManager,
                                     final AbortableOperationManager abortableOperationManager,
@@ -88,6 +90,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.logger = logger;
     this.smmFactory = smmFactory;
     this.sessionManager = sessionManager;
+    this.remoteObjectManager = remoteObjectManager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager, taskRunner);
     this.abortableOperationManager = abortableOperationManager;
@@ -653,7 +656,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   }
 
-  private static class GetValueServerMapRequestContext extends AbstractServerMapRequestContext {
+  private class GetValueServerMapRequestContext extends AbstractServerMapRequestContext {
 
     private final Set<Object> portableKeys;
 
@@ -667,6 +670,19 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     public void initializeMessage(final ServerMapRequestMessage requestMessage) {
       ((GetValueServerMapRequestMessage) requestMessage).addGetValueRequestTo(this.requestID, this.oid,
                                                                               this.portableKeys);
+    }
+
+    @Override
+    public void setResult(ObjectID mapID, Map<Object, Object> rv) {
+      super.setResult(mapID, rv);
+      for ( Map.Entry<Object, Object> entry : rv.entrySet() ) {
+        Object value = entry.getValue();
+        if ( value instanceof CompoundResponse ) {
+          if ( ((CompoundResponse)value).getData() instanceof DNA ) {
+            remoteObjectManager.addObject((DNA)((CompoundResponse)value).getData());
+          }
+        }
+      }
     }
 
     @Override

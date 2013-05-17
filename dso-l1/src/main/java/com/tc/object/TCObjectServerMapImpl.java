@@ -458,16 +458,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private Object lookupValue(final CompoundResponse value) throws TCObjectNotFoundException, AbortedOperationException {
       try {
-        Object returnValue = null;
-        if (value.getData() instanceof ObjectID) {
-          ObjectID oid = (ObjectID) value.getData();
-          if ( oid.isNull() ) {
-            return null;
-          }
-          returnValue = this.objectManager.lookupObjectQuiet(oid);
-        } else {
-          returnValue = this.objectManager.addLocalPrefetch((DNA)value.getData());
+        ObjectID oid = (value.getData() instanceof ObjectID) ? (ObjectID)value.getData()
+                :
+                ((DNA)value.getData()).getObjectID();
+
+        if ( oid.isNull() ) {
+          return null;
         }
+        Object returnValue = this.objectManager.lookupObjectQuiet(oid);
         
         if (returnValue instanceof ExpirableMapEntry) {
           ExpirableMapEntry expirableMapEntry = (ExpirableMapEntry)returnValue;

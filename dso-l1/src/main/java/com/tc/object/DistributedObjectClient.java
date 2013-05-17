@@ -540,7 +540,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-                                          .getLogger(RemoteObjectManager.class)), this.channel, sessionManager,
+                                          .getLogger(RemoteObjectManager.class)), remoteObjectManager, this.channel, sessionManager,
                                       globalLocalCacheManager, abortableOperationManager, this.taskRunner);
     final CallbackDumpAdapter remoteServerMgrDumpAdapter = new CallbackDumpAdapter(remoteServerMapManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(remoteServerMgrDumpAdapter);

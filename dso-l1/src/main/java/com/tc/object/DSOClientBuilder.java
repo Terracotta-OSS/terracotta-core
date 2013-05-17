@@ -96,7 +96,9 @@ public interface DSOClientBuilder {
                                                 final AbortableOperationManager abortableOperationManager,
                                                 final TaskRunner taskRunner);
 
-  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, 
+                                                      final RemoteObjectManager remote,
+                                                      final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
                                                       final L1ServerMapLocalCacheManager globalLocalCacheManager,
                                                       final AbortableOperationManager abortableOperationManager,

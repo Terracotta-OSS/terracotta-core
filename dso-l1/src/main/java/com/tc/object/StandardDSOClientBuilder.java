@@ -308,6 +308,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   @Override
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
+                                                             final RemoteObjectManager remoteObjectManager,
                                                              final DSOClientMessageChannel dsoChannel,
                                                              final SessionManager sessionManager,
                                                              final L1ServerMapLocalCacheManager globalLocalCacheManager,
@@ -316,7 +317,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, dsoChannel.getServerMapMessageFactory(),
+    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, remoteObjectManager, dsoChannel.getServerMapMessageFactory(), 
                                           sessionManager, globalLocalCacheManager, abortableOperationManager,
                                           taskRunner);
   }
