@@ -416,30 +416,34 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   }
 
   private void print(final String name, final Future<SampledRateCounter> counter) {
-    agent.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          SampledRateCounter rate = counter.get();
-          if (rate == null) { return; }
-          if ( evictor.isLogging() ) {
-              if (rate.getValue() == 0 ) {
-                 log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
-              } else {
-                 log("Eviction Run:" + name + " " + rate);
-              }
+    try {
+      agent.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            SampledRateCounter rate = counter.get();
+            if (rate == null) { return; }
+            if ( evictor.isLogging() ) {
+                if (rate.getValue() == 0 ) {
+                   log("Eviction Run:" + name + " " + rate + " client references=" + clientObjectReferenceSet.size());
+                } else {
+                   log("Eviction Run:" + name + " " + rate);
+                }
+            }
+            pulse.increment(rate.getValue());
+          } catch (ExecutionException exp) {
+            logger.warn("eviction run", exp);
+            evictionGrp.uncaughtException(Thread.currentThread(), exp);
+          } catch (InterruptedException it) {
+            logger.warn("eviction run", it);
+          } catch ( CancellationException cancelled ) {
+            logger.debug("eviction run cancelled");
           }
-          pulse.increment(rate.getValue());
-        } catch (ExecutionException exp) {
-          logger.warn("eviction run", exp);
-          evictionGrp.uncaughtException(Thread.currentThread(), exp);
-        } catch (InterruptedException it) {
-          logger.warn("eviction run", it);
-        } catch ( CancellationException cancelled ) {
-          logger.debug("eviction run cancelled");
         }
-      }
-    });
+      });
+    } catch ( RejectedExecutionException rejected ) {
+      // ignore
+    }
   }
   
   class Responder implements ResourceEventListener {
