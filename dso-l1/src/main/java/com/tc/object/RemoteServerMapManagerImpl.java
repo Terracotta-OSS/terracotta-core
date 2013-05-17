@@ -398,6 +398,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
     for (final ServerMapGetValueResponse r : responses) {
       setResultForRequest(sessionID, mapID, r.getRequestID(), r.getValues(), nodeID);
+      addResponseToObjectManager(r.getValues());
     }
     notifyAll();
   }
@@ -454,8 +455,19 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     if (context != null) {
       context.setResult(mapID, rv);
     } else {
-      this.logger.warn("Server Map Request Context is null for " + mapID + " request ID : " + requestID + " result : "
+      this.logger.info("Server Map Request Context is null for " + mapID + " request ID : " + requestID + " result : "
                        + rv);
+    }
+  }
+
+  private void addResponseToObjectManager(final Map<Object, Object> rv) {
+    for (Map.Entry<Object, Object> entry : rv.entrySet()) {
+      Object value = entry.getValue();
+      if (value instanceof CompoundResponse) {
+        if (((CompoundResponse) value).getData() instanceof DNA) {
+          remoteObjectManager.addObject((DNA) ((CompoundResponse) value).getData());
+        }
+      }
     }
   }
 
@@ -670,19 +682,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     public void initializeMessage(final ServerMapRequestMessage requestMessage) {
       ((GetValueServerMapRequestMessage) requestMessage).addGetValueRequestTo(this.requestID, this.oid,
                                                                               this.portableKeys);
-    }
-
-    @Override
-    public void setResult(ObjectID mapID, Map<Object, Object> rv) {
-      super.setResult(mapID, rv);
-      for ( Map.Entry<Object, Object> entry : rv.entrySet() ) {
-        Object value = entry.getValue();
-        if ( value instanceof CompoundResponse ) {
-          if ( ((CompoundResponse)value).getData() instanceof DNA ) {
-            remoteObjectManager.addObject((DNA)((CompoundResponse)value).getData());
-          }
-        }
-      }
     }
 
     @Override
