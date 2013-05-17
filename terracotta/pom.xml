@@ -161,8 +161,8 @@
                 </goals>
                 <configuration>
                   <source>
-
-                def pomProject = new XmlParser().parse("${project.build.directory}/dependency-reduced-pom.xml")
+                  
+                def pomProject = new XmlParser().parse(new File(project.build.directory, "dependency-reduced-pom.xml"))
 
                 def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
                 if(gfArtifacts[0] != null) {
