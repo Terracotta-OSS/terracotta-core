@@ -161,7 +161,7 @@
                 </goals>
                 <configuration>
                   <source>
-                def reducedPom = new File(project.build.directory, "dependency-reduced-pom")
+                def reducedPom = new File(project.build.directory, "dependency-reduced-pom.xml")
                 def pomProject = new XmlParser().parse(reducedPom)
 
                 def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
