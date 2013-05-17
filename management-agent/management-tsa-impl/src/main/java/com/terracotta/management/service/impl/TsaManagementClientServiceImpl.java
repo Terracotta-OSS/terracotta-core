@@ -1397,13 +1397,17 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
 
       for (Future<Map<String, Integer>> future : futures) {
-        Map<String, Integer> serverResult = future.get();
-        for(String key : serverResult.keySet()) {
-          Integer value = result.get(key);
-          Integer serverValue = serverResult.get(key);
+        try {
+          Map<String, Integer> serverResult = future.get();
+          for (String key : serverResult.keySet()) {
+            Integer value = result.get(key);
+            Integer serverValue = serverResult.get(key);
 
-          value = value + serverValue;
-          result.put(key, value);
+            value = value + serverValue;
+            result.put(key, value);
+          }
+        } catch (Exception e) {
+          // ignore, we just don't get figures for that node
         }
       }
 
