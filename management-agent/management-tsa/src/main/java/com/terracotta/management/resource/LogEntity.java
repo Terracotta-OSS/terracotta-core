@@ -14,6 +14,7 @@ public class LogEntity extends AbstractTsaEntity {
   private String sourceId;
   private long timestamp;
   private String message;
+  private String[] throwableStringRep;
 
   public String getSourceId() {
     return sourceId;
@@ -37,5 +38,13 @@ public class LogEntity extends AbstractTsaEntity {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public void setThrowableStringRep(String[] throwableStringRep) {
+    this.throwableStringRep = throwableStringRep;
+  }
+
+  public String[] getThrowableStringRep() {
+    return this.throwableStringRep;
   }
 }

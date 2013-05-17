@@ -3,8 +3,6 @@
  */
 package com.tc.objectserver.impl;
 
-import org.apache.log4j.Logger;
-
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;

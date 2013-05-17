@@ -38,7 +38,7 @@ public class JMXAppender extends AppenderSkeleton {
 
   @Override
   protected void append(final LoggingEvent event) {
-    broadcastingBean.broadcastLogEvent(getLayout().format(event));
+    broadcastingBean.broadcastLogEvent(getLayout().format(event), event.getThrowableStrRep());
   }
 
   @Override

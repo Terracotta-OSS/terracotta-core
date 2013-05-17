@@ -874,6 +874,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
+  public String getBackupFailureReason(String name) throws IOException {
+    return dsoServer.getBackupManager().getBackupFailureReason(name);
+  }
+
+  @Override
   public Map<String, String> getBackupStatuses() throws IOException {
     Map<String, String> result = new HashMap<String, String>();
     Map<String, ? extends Object> backups = dsoServer.getBackupManager().getBackupStatuses();
@@ -970,5 +975,4 @@ public class TCServerImpl extends SEDA implements TCServer {
       /**/
     }
   }
-
 }

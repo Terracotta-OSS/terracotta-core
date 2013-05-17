@@ -307,6 +307,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public String getBackupFailureReason(String name) {
+    return null;
+  }
+
+  @Override
   public String getResourceState() {
     return ResourceManager.State.NORMAL.name();
   }

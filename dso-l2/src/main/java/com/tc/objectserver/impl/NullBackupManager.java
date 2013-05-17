@@ -2,6 +2,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.objectserver.api.BackupManager;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -14,6 +15,11 @@ public class NullBackupManager implements BackupManager {
   @Override
   public BackupStatus getBackupStatus(final String name) {
     return BackupStatus.UNKNOWN;
+  }
+
+  @Override
+  public String getBackupFailureReason(String name) throws IOException {
+    return null;
   }
 
   @Override

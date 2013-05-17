@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -18,6 +19,7 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
+import com.tc.objectserver.api.BackupManager.BackupStatus;
 import com.tc.objectserver.api.GCStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
@@ -1024,12 +1026,15 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         try {
           Map<String, String> backups = tcServerInfoMBean.getBackupStatuses();
           for (String name : backups.keySet()) {
+            String status = backups.get(name);
             BackupEntity backupEntity = new BackupEntity();
             backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             backupEntity.setSourceId(sourceId);
             backupEntity.setName(name);
-            backupEntity.setStatus(backups.get(name));
-
+            backupEntity.setStatus(status);
+            if ("FAILED".equals(status)) {
+              backupEntity.setError(tcServerInfoMBean.getBackupFailureReason(name));
+            }
             backupEntities.add(backupEntity);
           }
         } catch (Exception e) {
@@ -1092,8 +1097,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                 backupEntities.add(backupEntity);
               } catch (Exception e) {
                 BackupEntity backupEntity = new BackupEntity();
+                backupEntity.setName(backupName);
                 backupEntity.setSourceId(member.name());
                 backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+                backupEntity.setStatus(BackupStatus.FAILED.name());
                 backupEntity.setError(e.getMessage());
                 backupEntities.add(backupEntity);
               }
@@ -1169,6 +1176,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         logEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
         logEntity.setMessage(logNotification.getMessage());
         logEntity.setTimestamp(logNotification.getTimeStamp());
+        logEntity.setThrowableStringRep((String[]) logNotification.getUserData());
 
         logEntities.add(logEntity);
       }

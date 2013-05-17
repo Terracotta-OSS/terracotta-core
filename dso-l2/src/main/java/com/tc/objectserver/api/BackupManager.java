@@ -13,6 +13,8 @@ public interface BackupManager {
 
   BackupStatus getBackupStatus(String name) throws IOException;
 
+  String getBackupFailureReason(String name) throws IOException;
+
   Map<String, BackupStatus> getBackupStatuses() throws IOException;
 
   String getRunningBackup();

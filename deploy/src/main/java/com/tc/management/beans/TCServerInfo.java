@@ -512,6 +512,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public String getBackupFailureReason(String name) throws IOException {
+    return server.getBackupFailureReason(name);
+  }
+
+  @Override
   public Map<String, String> getBackupStatuses() throws IOException {
     return server.getBackupStatuses();
   }
