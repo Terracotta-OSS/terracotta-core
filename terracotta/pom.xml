@@ -194,13 +194,13 @@
                   zipfileset(file: reducedPom,
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
-                </source>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </build>
-  </profile>
-</profiles>
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
