@@ -108,11 +108,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         ourConnectionId = connectionIdFactory.makeConnectionId(connectionId.getJvmID(), connectionId.getChannelID());
       }
 
-      connectionId = new ConnectionID(ourConnectionId.getJvmID(), ourConnectionId.getChannelID(),
-          ourConnectionId.getServerID(), connectionId.getUsername(), connectionId.getPassword());
-      rv = messageTransportFactory.createNewTransport(connectionId, connection, createHandshakeErrorHandler(),
+      rv = messageTransportFactory.createNewTransport(ourConnectionId, connection, createHandshakeErrorHandler(),
                                                       handshakeMessageFactory, transportListeners);
-      newStackHarness(connectionId, rv);
+      newStackHarness(ourConnectionId, rv);
     } else {
       harness = (NetworkStackHarness) harnesses.get(connectionId);
 
@@ -279,16 +277,18 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
     private void handleSyn(SynMessage syn) throws StackNotFoundException {
 
+      logger.info("XXXXXXXX handling syn " + syn);
+
       ConnectionID connectionId = syn.getConnectionId();
       boolean isMaxConnectionReached = false;
 
       if (connectionId == null) {
         this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
-                                                                    createHandshakeErrorHandler(),
-                                                                    handshakeMessageFactory, transportListeners);
+            createHandshakeErrorHandler(),
+            handshakeMessageFactory, transportListeners);
         sendSynAck(new TransportHandshakeErrorContext("Invalid connection id: " + connectionId,
-                                                      TransportHandshakeError.ERROR_INVALID_CONNECTION_ID),
-                   syn.getSource(), isMaxConnectionReached);
+            TransportHandshakeError.ERROR_INVALID_CONNECTION_ID),
+            syn.getSource(), isMaxConnectionReached);
         this.isHandshakeError = true;
         return;
       }
@@ -302,8 +302,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         if (connectionId.isNewConnection() && !connectionPolicy.isConnectAllowed(connectionId)) {
           isMaxConnectionReached = true;
           this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
-                                                                      createHandshakeErrorHandler(),
-                                                                      handshakeMessageFactory, transportListeners);
+              createHandshakeErrorHandler(),
+              handshakeMessageFactory, transportListeners);
         } else {
           try {
             this.transport = attachNewConnection(connectionId, syn.getSource());
@@ -312,11 +312,14 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
             return;
           }
           ConnectionID sentConnectionId = connectionId;
-          connectionId = this.transport.getConnectionId();
+          ConnectionID transportConnectionId = transport.getConnectionId();
+          // Update the connection ID with the new channel id and server id from server
+          connectionId = new ConnectionID(sentConnectionId.getJvmID(), transportConnectionId.getChannelID(),
+              transportConnectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword());
+          // populate the jvmid on the server copy of the connection id if it's null
           if (connectionId.isJvmIDNull()) {
-            connectionId = new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
-                                            connectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword());
-            this.transport.initConnectionID(connectionId);
+            transport.initConnectionID(new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
+                connectionId.getServerID()));
           }
           isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
         }
@@ -335,8 +338,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         String layersPresentInServer = "Layers Present in Server side communication stack: ";
         layersPresentInServer += this.transport.getCommunicationStackNames(this.transport);
         sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
-                                                                    TransportHandshakeError.ERROR_STACK_MISMATCH),
-                   syn.getSource(), isMaxConnectionReached);
+            TransportHandshakeError.ERROR_STACK_MISMATCH),
+            syn.getSource(), isMaxConnectionReached);
         if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger
             .error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
         else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);

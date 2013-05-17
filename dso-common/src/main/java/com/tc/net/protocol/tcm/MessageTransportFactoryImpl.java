@@ -6,6 +6,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
@@ -30,6 +31,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final int                              callbackport;
   private final TransportHandshakeErrorHandler   defaultHandshakeErrorHandler;
   private final ReconnectionRejectedHandler      reconnectionRejectedHandler;
+  private final TCSecurityManager                securityManager;
 
   public MessageTransportFactoryImpl(final TransportHandshakeMessageFactory transportMessageFactory,
                                      final ConnectionHealthChecker connectionHealthChecker,
@@ -37,7 +39,8 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                      final ConnectionAddressProvider addressProvider, final int maxReconnectTries,
                                      final int timeout, int callbackPort,
                                      TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
-                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour) {
+                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour,
+                                     final TCSecurityManager securityManager) {
     this.transportMessageFactory = transportMessageFactory;
     this.connectionHealthChecker = connectionHealthChecker;
     this.connectionMgr = connectionManager;
@@ -47,6 +50,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.callbackport = callbackPort;
     this.defaultHandshakeErrorHandler = defaultHandshakeErrorHandler;
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
+    this.securityManager = securityManager;
   }
 
   @Override
@@ -69,7 +73,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                                                                 int callbackPortNum) {
     return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler);
+                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager);
   }
 
   @Override

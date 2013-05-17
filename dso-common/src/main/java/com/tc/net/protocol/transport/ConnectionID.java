@@ -108,6 +108,10 @@ public class ConnectionID {
     this.password = null;
   }
 
+  public void setPassword(final char[] password) {
+    this.password = password;
+  }
+
   public ConnectionID(String jvmID, long channelID, String username, char[] password) {
     this(jvmID, channelID, NULL_SERVER_ID, username, password);
   }

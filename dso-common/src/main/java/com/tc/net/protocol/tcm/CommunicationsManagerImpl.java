@@ -289,7 +289,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                      addressProvider,
                                                                                      maxReconnectTries, timeout,
                                                                                      callbackPort, handshakeErrHandler,
-                                                                                     reconnectionRejectedHandler);
+                                                                                     reconnectionRejectedHandler, securityManager);
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
     stackHarness.finalizeStack();
