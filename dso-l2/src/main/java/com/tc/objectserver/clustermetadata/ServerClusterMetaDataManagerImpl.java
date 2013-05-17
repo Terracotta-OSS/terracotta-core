@@ -25,6 +25,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 
@@ -90,15 +91,15 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
           for (Object key : message.getKeys()) {
             UTF8ByteDataHolder holder = new UTF8ByteDataHolder(key.toString());
             if(mos.containsKey(holder)) {
-              Object value = mos.get(holder);
-              if(value instanceof ObjectID) {
+              ObjectID objectId = getObjectIdFor(mos.get(holder));
+              if (objectId != null) {
                 Set<NodeID> nodeIDSet = resultMap.get(key);
                 if(nodeIDSet == null) {
                   nodeIDSet = new HashSet<NodeID>();
                   resultMap.put(holder, nodeIDSet);
                 }
                 for (NodeID nodeID : connectedClients) {
-                  if (clientStateManager.hasReference(nodeID, (ObjectID) value)) {
+                  if (clientStateManager.hasReference(nodeID, objectId)) {
                     nodeIDSet.add(nodeID);
                   }
                 }
@@ -137,12 +138,12 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
 
           MapManagedObjectState mos = (MapManagedObjectState)state;
           for (Object key : mos.keySet()) {
-            Object value = mos.get(key);
-            if (value instanceof ObjectID) {
+            ObjectID objectId = getObjectIdFor(mos.get(key));
+            if (objectId != null) {
               boolean isOrphan = true;
 
               for (NodeID nodeID : connectedClients) {
-                if (clientStateManager.hasReference(nodeID, (ObjectID)value)) {
+                if (clientStateManager.hasReference(nodeID, objectId)) {
                   isOrphan = false;
                   break;
                 }
@@ -226,5 +227,15 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
 
     responseMessage.initialize(message.getThreadID(), ip, hostname);
     responseMessage.send();
+  }
+  
+  private static ObjectID getObjectIdFor(Object value) {
+    if(value instanceof ObjectID) {
+      return (ObjectID) value;
+    } else if (value instanceof CDSMValue) {
+      return ((CDSMValue) value).getObjectID();
+    } else {
+      return null;
+    }
   }
 }
