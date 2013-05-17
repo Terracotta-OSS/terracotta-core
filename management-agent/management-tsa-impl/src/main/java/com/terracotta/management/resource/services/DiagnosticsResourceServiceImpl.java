@@ -161,6 +161,22 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
   }
 
   @Override
+  public boolean dumpClusterState(UriInfo info) {
+    LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.dumpClusterState: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      String names = info.getPathSegments().get(2).getMatrixParameters().getFirst("serverNames");
+      Set<String> serverNames = names == null ? null : new HashSet<String>(Arrays.asList(names.split(",")));
+
+      return diagnosticsService.dumpClusterState(serverNames);
+    } catch (ServiceExecutionException see) {
+      throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
+    }
+  }
+
+  @Override
   public Collection<TopologyReloadStatusEntity> reloadConfiguration(UriInfo info) {
     LOG.debug(String.format("Invoking DiagnosticsResourceServiceImpl.reloadConfiguration: %s", info.getRequestUri()));
 

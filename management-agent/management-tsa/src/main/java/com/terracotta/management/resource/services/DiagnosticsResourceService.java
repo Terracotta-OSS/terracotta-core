@@ -60,6 +60,11 @@ public interface DiagnosticsResourceService {
   boolean runDgc(@Context UriInfo info);
 
   @POST
+  @Path("/dumpClusterState")
+  @Produces(MediaType.APPLICATION_JSON)
+  boolean dumpClusterState(@Context UriInfo info);
+
+  @POST
   @Path("/reloadConfiguration")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<TopologyReloadStatusEntity> reloadConfiguration(@Context UriInfo info);

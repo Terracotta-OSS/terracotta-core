@@ -14,6 +14,7 @@ import org.terracotta.management.resource.exceptions.ExceptionUtils;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.TopologyReloadStatus;
+import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
@@ -603,6 +604,48 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
                 new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
 
             objectManagementMonitorMBean.runGC();
+          } catch (Exception e) {
+            success = false;
+          } finally {
+            closeConnector(jmxConnector);
+          }
+        }
+      }
+
+      return success;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
+  public boolean dumpClusterState(Set<String> serverNames) throws ServiceExecutionException {
+    try {
+      boolean success = true;
+
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            L2DumperMBean l2DumperMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=L2Dumper"), L2DumperMBean.class);
+
+            l2DumperMBean.dumpClusterState();
           } catch (Exception e) {
             success = false;
           } finally {

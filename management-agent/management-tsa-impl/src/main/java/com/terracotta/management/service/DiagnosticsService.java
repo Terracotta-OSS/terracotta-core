@@ -56,6 +56,8 @@ public interface DiagnosticsService {
    */
   boolean runDgc(Set<String> serverNames) throws ServiceExecutionException;
 
+  boolean dumpClusterState(Set<String> serverNames) throws ServiceExecutionException;
+
   /**
    * Reload TSA configuration.
    *

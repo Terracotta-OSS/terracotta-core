@@ -43,6 +43,8 @@ public interface TsaManagementClientService extends RemoteAgentBridgeService {
 
   boolean runDgc(Set<String> serverNames) throws ServiceExecutionException;
 
+  boolean dumpClusterState(Set<String> serverNames) throws ServiceExecutionException;
+
   Collection<StatisticsEntity> getDgcStatistics(Set<String> serverNames, int maxDgcStatsEntries) throws ServiceExecutionException;
 
   Collection<String> getL2Urls() throws ServiceExecutionException;

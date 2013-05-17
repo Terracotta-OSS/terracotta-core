@@ -10,7 +10,6 @@ import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.TsaManagementClientService;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -43,6 +42,11 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
   @Override
   public boolean runDgc(Set<String> serverNames) throws ServiceExecutionException {
     return tsaManagementClientService.runDgc(serverNames);
+  }
+
+  @Override
+  public boolean dumpClusterState(Set<String> serverNames) throws ServiceExecutionException {
+    return tsaManagementClientService.dumpClusterState(serverNames);
   }
 
   @Override
