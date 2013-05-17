@@ -315,7 +315,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
         if (remainingSources[i] == null) continue;
         out = trySource(remainingSources, i);
-
         if (out != null) {
           loadedSource = remainingSources[i];
           trustedSource = loadedSource.isTrusted();
@@ -365,10 +364,17 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private InputStream trySource(ConfigurationSource[] remainingSources, int i) {
     InputStream out = null;
-
+    InputStream copyIn = null;
     try {
+      ByteArrayOutputStream dataCopy = new ByteArrayOutputStream();
       logger.info("Attempting to load configuration from the " + remainingSources[i] + "...");
       out = remainingSources[i].getInputStream(GET_CONFIGURATION_ONE_SOURCE_TIMEOUT);
+      try {
+        IOUtils.copy(out, dataCopy);
+        copyIn = new ByteArrayInputStream(dataCopy.toByteArray());
+      } finally {
+        out.close();
+      }
       directoryLoadedFrom = remainingSources[i].directoryLoadedFrom();
     } catch (ConfigurationSetupException cse) {
       String text = "We couldn't load configuration data from the " + remainingSources[i];
@@ -394,8 +400,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       text += " (Error: " + ioe.getLocalizedMessage() + ".)";
       consoleLogger.warn(text);
     }
-
-    return out;
+    return copyIn;
   }
 
   private void sleepIfNecessaryToAvoidPoundingSources(long lastLoopStartTime) {
