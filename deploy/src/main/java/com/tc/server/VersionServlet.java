@@ -17,7 +17,7 @@ public class VersionServlet extends HttpServlet {
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
     ProductInfo productInfo = ProductInfo.getInstance();
-    response.setHeader("Version", productInfo.version());
+
     PrintWriter writer = response.getWriter();
     writer.println("<html><title>Version Information</title><body><pre>");
     writer.println(productInfo.toLongString());
