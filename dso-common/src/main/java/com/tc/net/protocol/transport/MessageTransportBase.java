@@ -182,7 +182,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   @Override
   public void sendToConnection(TCNetworkMessage message) {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
-    connection.putMessage(message);
+    if (!status.isClosed()) {
+      connection.putMessage(message);
+    } else {
+      logger.warn("Couldn't send message status: " + status);
+    }
   }
 
   /**
