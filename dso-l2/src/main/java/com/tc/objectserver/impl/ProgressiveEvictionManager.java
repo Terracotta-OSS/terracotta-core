@@ -522,7 +522,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         } catch ( ExecutionException ee ) {
           logger.warn(ee);
         } catch ( CancellationException cancelled)  {
-          logger.warn(cancelled);
+          logger.debug(cancelled);
         }
       } else {
         currentRun.cancel(false);
