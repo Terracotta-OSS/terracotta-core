@@ -161,8 +161,8 @@
                 </goals>
                 <configuration>
                   <source>
-                  
-                def pomProject = new XmlParser().parse(new File(project.build.directory, "dependency-reduced-pom.xml"))
+                def reducedPom = new File(project.build.directory, "dependency-reduced-pom")
+                def pomProject = new XmlParser().parse(reducedPom)
 
                 def gfArtifacts = pomProject.dependencies.dependency.findAll{it.groupId.text().contains('gf-3122')}
                 if(gfArtifacts[0] != null) {
@@ -184,14 +184,14 @@
                       gfArtifactsParent.remove(g)
                   }
 
-                  def xmlNodePrinter = new XmlNodePrinter(new PrintWriter(new FileWriter(new File(project.build.directory,"dependency-reduced-pom.xml"))))
+                  def xmlNodePrinter = new XmlNodePrinter(new PrintWriter(new FileWriter(reducedPom)))
                   xmlNodePrinter.preserveWhitespace=true;
                   xmlNodePrinter.print(pomProject)
                 }
 
                 def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
                 ant.jar(destfile: jarFile, update: "true") {
-                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"),
+                  zipfileset(file: reducedPom,
                              fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
                 }
                   </source>
