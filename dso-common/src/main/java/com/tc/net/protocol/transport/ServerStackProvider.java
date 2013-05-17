@@ -276,9 +276,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private void handleSyn(SynMessage syn) throws StackNotFoundException {
-
-      logger.info("XXXXXXXX handling syn " + syn);
-
       ConnectionID connectionId = syn.getConnectionId();
       boolean isMaxConnectionReached = false;
 
