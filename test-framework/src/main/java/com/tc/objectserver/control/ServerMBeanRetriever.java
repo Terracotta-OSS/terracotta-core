@@ -70,15 +70,18 @@ public class ServerMBeanRetriever {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
+        JMXConnector jmxConnector = null;
         try {
+          jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
           MBeanServerConnection msc = jmxConnector.getMBeanServerConnection();
           DSOMBean dsoMBean = MBeanServerInvocationProxy.newMBeanProxy(msc, L2MBeanNames.DSO, DSOMBean.class, false);
           dsoMBean.getLiveObjectCount();
           dsoMBeanRef.set(dsoMBean);
           return true;
         } catch (Exception e) {
-          jmxConnector.close();
+          if (jmxConnector != null) {
+            jmxConnector.close();
+          }
           return false;
         }
       }
@@ -93,14 +96,17 @@ public class ServerMBeanRetriever {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
+        JMXConnector jmxConnector = null;
         try {
+          jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
           MBeanServerConnection msc = jmxConnector.getMBeanServerConnection();
           l2DumperRef.set(MBeanServerInvocationProxy
               .newMBeanProxy(msc, L2MBeanNames.DUMPER, L2DumperMBean.class, false));
           return true;
         } catch (Exception e) {
-          jmxConnector.close();
+          if (jmxConnector != null) {
+            jmxConnector.close();
+          }
           return false;
         }
       }
@@ -113,14 +119,17 @@ public class ServerMBeanRetriever {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        JMXConnector jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
+        JMXConnector jmxConnector = null;
         try {
+          jmxConnector = JMXUtils.getJMXConnector(host, jmxPort);
           MBeanServerConnection msc = jmxConnector.getMBeanServerConnection();
           tcServerInfoMBeanRef.set(MBeanServerInvocationProxy.newMBeanProxy(msc, L2MBeanNames.TC_SERVER_INFO,
                                                                             TCServerInfoMBean.class, false));
           return true;
         } catch (Exception e) {
-          jmxConnector.close();
+          if (jmxConnector != null) {
+            jmxConnector.close();
+          }
           return false;
         }
       }
