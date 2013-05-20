@@ -314,7 +314,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           connectionId = new ConnectionID(sentConnectionId.getJvmID(), transportConnectionId.getChannelID(),
               transportConnectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword());
           // populate the jvmid on the server copy of the connection id if it's null
-          if (connectionId.isJvmIDNull()) {
+          if (transportConnectionId.isJvmIDNull()) {
             transport.initConnectionID(new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
                 connectionId.getServerID()));
           }
