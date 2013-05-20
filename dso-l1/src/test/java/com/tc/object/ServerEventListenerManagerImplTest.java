@@ -97,13 +97,8 @@ public class ServerEventListenerManagerImplTest {
     // remove several mappings
     manager.unregisterListener(asm4);
     manager.unregisterListener(asm5);
-    // exception here because mapping for this event has been removed
-    try {
-      manager.dispatch(eventMsgMock2);
-      fail();
-    } catch (IllegalStateException e) {
-      // just as planned
-    }
+
+    manager.dispatch(eventMsgMock2);
 
     // verify invocations
     verify(registrationMsgMock, times(6)).send();
