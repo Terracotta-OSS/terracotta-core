@@ -296,6 +296,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       sendMessage(opm);
     }
     sendLayer.close();
+    // Also reset delivery on close() to clear out the send queue.
+    delivery.reset();
   }
 
   @Override
