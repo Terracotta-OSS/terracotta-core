@@ -50,8 +50,9 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     try {
       final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
       if (destinations == null) {
-        throw new IllegalStateException("Could not find server event destinations for cache: "
+        LOG.warn("Could not find server event destinations for cache: "
                                         + name + ". Incoming event: " + message);
+        return;
       }
 
       boolean handlerFound = false;
