@@ -193,6 +193,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   @Override
   public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
     tcObjectSelfStore.addAllObjectIDsToValidate(invalidations, remoteNode);
+    for (ServerMapLocalCache cache : localStores.values()) {
+      cache.handleObjectIDsToValidate(invalidations);
+    }
   }
 
   /**

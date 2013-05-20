@@ -3,6 +3,7 @@
  */
 package com.tc.object.servermap.localcache;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
@@ -134,5 +135,7 @@ public interface ServerMapLocalCache {
   void transactionAbortedCallback(Object key,
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+
+  void handleObjectIDsToValidate(Invalidations invalidations);
 
 }
