@@ -1386,8 +1386,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       internalClearLocalCache();
     } finally {
       tcObjectServerMap.destroyLocalStore();
-      this.l1ServerMapLocalCacheStore.dispose();
-      this.l1ServerMapLocalCacheStore = null;
+      if (this.l1ServerMapLocalCacheStore != null) {
+        this.l1ServerMapLocalCacheStore.dispose();
+        this.l1ServerMapLocalCacheStore = null;
+      }
     }
   }
 
