@@ -455,8 +455,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     if (context != null) {
       context.setResult(mapID, rv);
     } else {
-      this.logger.info("Server Map Request Context is null for " + mapID + " request ID : " + requestID + " result : "
+      if (logger.isDebugEnabled()) {
+        this.logger.debug("Server Map Request Context is null for " + mapID + " request ID : " + requestID
+                          + " result : "
                        + rv);
+      }
     }
   }
 
