@@ -77,20 +77,24 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
     }
     backingMap.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
   }
-  
-    @Override
-    public ManagedObject get(final ObjectID key) {
-        byte[] data = backingMap.get(key.toLong());
-        if (data == null) {
-            return null;
-        }
-        try {
-            ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(data));
-            return (ManagedObject) serializer.deserializeFrom(oi);
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
+
+  @Override
+  public ManagedObject get(final ObjectID key) {
+    byte[] data = backingMap.get(key.toLong());
+    if (data == null) {
+      return null;
     }
+    try {
+      ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(data));
+      return (ManagedObject)serializer.deserializeFrom(oi);
+    } catch (ObjectNotFoundException e) {
+      // Clean up the backing map if the object winds up missing (see MNK-5031)
+      backingMap.remove(key.toLong());
+      return null;
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
 
     @Override
     public boolean remove(final ObjectID key) {

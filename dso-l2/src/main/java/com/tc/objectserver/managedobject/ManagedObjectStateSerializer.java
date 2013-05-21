@@ -14,25 +14,17 @@ import java.io.ObjectOutput;
 public class ManagedObjectStateSerializer implements Serializer {
 
   @Override
-  public void serializeTo(Object o, ObjectOutput out) {
+  public void serializeTo(Object o, ObjectOutput out) throws IOException {
     if (!(o instanceof ManagedObjectState)) throw new AssertionError("Attempt to serialize an unknown type: " + o);
-    try {
-      ManagedObjectState mo = (ManagedObjectState) o;
-      out.writeByte(mo.getType());
-      mo.writeTo(out);
-    } catch (IOException e) {
-      throw new TCRuntimeException(e);
-    }
+    ManagedObjectState mo = (ManagedObjectState) o;
+    out.writeByte(mo.getType());
+    mo.writeTo(out);
   }
 
   @Override
-  public Object deserializeFrom(ObjectInput in) {
-    try {
-      byte type = in.readByte();
-      return getStateFactory().readManagedObjectStateFrom(in, type);
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
+  public Object deserializeFrom(ObjectInput in) throws IOException {
+    byte type = in.readByte();
+    return getStateFactory().readManagedObjectStateFrom(in, type);
   }
 
   @Override

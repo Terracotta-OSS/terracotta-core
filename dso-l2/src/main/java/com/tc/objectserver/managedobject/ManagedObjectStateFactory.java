@@ -112,17 +112,13 @@ public class ManagedObjectStateFactory {
     return ManagedObjectStateStaticConfig.values()[((int) classID)].getClientClassName();
   }
 
-  public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {
+  public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) throws IOException {
     try {
       Factory factory = ManagedObjectStateStaticConfig.Factory.getFactoryForType(type);
       if (factory != null) { return factory.readFrom(in, objectFactory); }
 
       // Unreachable!
       throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
-
-    } catch (final IOException e) {
-      e.printStackTrace();
-      throw new TCRuntimeException(e);
     } catch (final ClassNotFoundException e) {
       throw new TCRuntimeException(e);
     }

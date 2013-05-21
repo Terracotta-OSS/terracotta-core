@@ -24,13 +24,13 @@ public class PersistentObjectFactory {
     defaultConfig = storageManagerFactory.wrapMapConfig(MAP_CONFIG);
   }
 
-  public synchronized KeyValueStorage<Object, Object> getKeyValueStorage(ObjectID objectID, final boolean create) {
+  public synchronized KeyValueStorage<Object, Object> getKeyValueStorage(ObjectID objectID, final boolean create) throws ObjectNotFoundException {
     KeyValueStorage<Object, Object> map = storageManager.getKeyValueStorage(objectID.toString(), Object.class, Object.class);
     if (map == null) {
       if (create) {
         map = storageManager.createKeyValueStorage(objectID.toString(), defaultConfig);
       } else {
-        throw new AssertionError("Map for object id " + objectID + " not found.");
+        throw new ObjectNotFoundException("Map for object id " + objectID + " not found.");
       }
     }
     return map;

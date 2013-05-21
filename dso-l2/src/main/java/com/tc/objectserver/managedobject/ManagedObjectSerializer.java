@@ -25,33 +25,25 @@ public class ManagedObjectSerializer implements Serializer {
   }
 
   @Override
-  public void serializeTo(final Object mo, final ObjectOutput out) {
-    try {
-      if (mo instanceof ManagedObject) {
-        ((ManagedObject)mo).serializeTo(out, serializer);
-      } else {
-        throw new IllegalArgumentException("Trying to serialize a non-ManagedObject " + mo);
-      }
-    } catch (final IOException e) {
-      throw new TCRuntimeException(e);
+  public void serializeTo(final Object mo, final ObjectOutput out) throws IOException {
+    if (mo instanceof ManagedObject) {
+      ((ManagedObject)mo).serializeTo(out, serializer);
+    } else {
+      throw new IllegalArgumentException("Trying to serialize a non-ManagedObject " + mo);
     }
   }
 
   @Override
-  public Object deserializeFrom(final ObjectInput in) {
-    try {
-      // read data
-      final long version = in.readLong();
-      final ObjectID id = new ObjectID(in.readLong());
-      final ManagedObjectState state = (ManagedObjectState) this.serializer.deserializeFrom(in);
+  public Object deserializeFrom(final ObjectInput in) throws IOException {
+    // read data
+    final long version = in.readLong();
+    final ObjectID id = new ObjectID(in.readLong());
+    final ManagedObjectState state = (ManagedObjectState) this.serializer.deserializeFrom(in);
 
-      // populate managed object...
-      final ManagedObjectImpl rv = new ManagedObjectImpl(id, persistor);
-      rv.setDeserializedState(version, state);
-      return rv;
-    } catch (final Exception e) {
-      throw new TCRuntimeException(e);
-    }
+    // populate managed object...
+    final ManagedObjectImpl rv = new ManagedObjectImpl(id, persistor);
+    rv.setDeserializedState(version, state);
+    return rv;
   }
 
   @Override
