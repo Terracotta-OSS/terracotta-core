@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.persistence.ObjectNotFoundException;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 
 import java.io.IOException;
@@ -32,7 +33,11 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   SetManagedObjectState(long classID, ObjectID oid, PersistentObjectFactory objectFactory) {
     super(classID);
     this.oid = oid;
-    this.references = objectFactory.getKeyValueStorage(oid, true);
+    try {
+      this.references = objectFactory.getKeyValueStorage(oid, true);
+    } catch (ObjectNotFoundException e) {
+      throw new AssertionError(e);
+    }
   }
 
   protected SetManagedObjectState(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {

@@ -16,6 +16,7 @@ import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
+import com.tc.objectserver.persistence.ObjectNotFoundException;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -40,7 +41,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     super(classID);
     this.factory = factory;
     this.id = id;
-    this.references = factory.getKeyValueStorage(id, true);
+    try {
+      this.references = factory.getKeyValueStorage(id, true);
+    } catch (ObjectNotFoundException e) {
+      throw new AssertionError(e);
+    }
   }
 
   protected MapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
