@@ -68,7 +68,9 @@ public class PeriodicCallable implements Callable<SampledRateCounter>, CanCancel
               rollover.add(mapID);
             }
           } else {
-            listeningSet.remove(mapID);
+            synchronized (this) {
+              listeningSet.remove(mapID);
+            }
           }
           if ( isStopped() ) {
             return counter;

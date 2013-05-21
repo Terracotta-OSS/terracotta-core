@@ -107,8 +107,14 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   }
     
   private synchronized void clientUpdated() {
+    if ( clientSet == null ) {
+      return;
+    }
     clientSet.removeReferenceSetChangeListener(this);
     clientSet = null;
+    if ( !repeat || getCount() > 0 ) {
+      throw new AssertionError("capacity trigger in illegal state");
+    }
     reset();
     evictor.doEvictionOn(this);
   }

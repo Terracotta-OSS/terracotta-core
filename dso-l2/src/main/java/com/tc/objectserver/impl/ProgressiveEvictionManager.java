@@ -259,6 +259,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
   private boolean scheduleEvictionTrigger(final EvictionTrigger triggerParam) {
     try {
+      if ( evictor.markEvictionInProgress(triggerParam.getId()) ) {
+        throw new AssertionError("target should already be locked for eviction");
+      }
       final SampledRateCounter count = new AggregateSampleRateCounter();
       final Future<SampledRateCounter> run = agent.submit(new Runnable() {
         @Override
@@ -330,7 +333,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           }
         }
       }
-      
+            
       if ( isDone ) {
         evictor.markEvictionDone(oid);
       }
@@ -365,19 +368,19 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     while (!list.isEmpty()) {
       final ObjectID mapID = list.remove(r.nextInt(list.size()));
       try {
-        push.add(agent.submit(new Callable<SampledRateCounter>() {
-          @Override
-          public SampledRateCounter call() throws Exception {
-            EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID, blowout)
-                : new EmergencyEvictionTrigger(objectManager, mapID, blowout);
-            if ( evictor.markEvictionInProgress(mapID) ) {
+        if ( evictor.markEvictionInProgress(mapID) ) {
+          push.add(agent.submit(new Callable<SampledRateCounter>() {
+            @Override
+            public SampledRateCounter call() throws Exception {
+              EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID, blowout)
+                  : new EmergencyEvictionTrigger(objectManager, mapID, blowout);
               doEvictionOn(triggerLocal);
               emergencyCount.addAndGet(triggerLocal.getCount());
               rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
+              return rate;
             }
-            return rate;
-          }
-        }));
+          }));
+        }
       } catch ( RejectedExecutionException rejected ) {
         evictor.markEvictionDone(mapID);
       }
