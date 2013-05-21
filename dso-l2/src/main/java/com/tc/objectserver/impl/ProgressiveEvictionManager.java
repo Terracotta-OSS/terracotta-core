@@ -90,6 +90,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   private final ClientObjectReferenceSet          clientObjectReferenceSet;
   private Sink                                    evictorSink;
   private final ExecutorService                   agent;
+  private final ThreadLocal<EvictionTrigger>      currentTrigger = new ThreadLocal<EvictionTrigger>();
   private ThreadGroup                             evictionGrp;
   private final Responder                         responder                           = new Responder();
   private final SampledCounter                    expirationStats;
@@ -284,7 +285,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
   @Override
   public boolean doEvictionOn(final EvictionTrigger triggerParam) {
-    if (Thread.currentThread().getThreadGroup() != this.evictionGrp) {
+    if (Thread.currentThread().getThreadGroup() != this.evictionGrp ||
+          currentTrigger.get() != null ) {
       return scheduleEvictionTrigger(triggerParam);
     }
 
@@ -292,6 +294,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     boolean isDone = false;
 
     final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
+    currentTrigger.set(triggerParam);
     try {
       if (mo == null) {
         if (evictor.isLogging()) {
@@ -341,6 +344,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       if (evictor.isLogging() && logger.isDebugEnabled()) {
         logger.debug(triggerParam);
       }
+      currentTrigger.remove();
     }
     return isDone;
   }
