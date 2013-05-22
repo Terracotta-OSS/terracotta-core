@@ -253,12 +253,14 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public void wait(final LockID lock, final Object waitObject) throws InterruptedException, AbortedOperationException {
+    waitUntilRunning();
     wait(lock, NULL_LISTENER, waitObject);
   }
 
   @Override
   public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException,
       AbortedOperationException {
+    waitUntilRunning();
     wait(lock, NULL_LISTENER, waitObject, timeout);
   }
 
