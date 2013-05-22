@@ -62,12 +62,12 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
       return handleNonStopToolkitInstantiationException(method, args, nonStopConfiguration, e);
     } catch (ToolkitAbortableOperationException e) {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Invocation failed for method - " + method.getName(), e);
+        LOGGER.debug("Invocation failed for method - " + method.getName() + ". Exception occurred - " + e.getMessage());
       }
       return handleNonStopBehavior(method, args, nonStopConfiguration);
     } catch (RejoinException e) {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Invocation failed for method - " + method.getName(), e);
+        LOGGER.debug("Invocation failed for method - " + method.getName() + ". Exception occurred - " + e.getMessage());
       }
       // TODO: Review this.. Is this the right place to handle this...
       return handleNonStopBehavior(method, args, nonStopConfiguration);

@@ -74,8 +74,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     this.nonStopFeature = new NonStopFeatureImpl(this, abortableOperationManager);
     this.asyncToolkitInitializer = new AsyncToolkitInitializer(toolkitDelegateFutureTask, abortableOperationManager);
     this.nonStopClusterInfo = new NonStopClusterInfo(asyncToolkitInitializer);
-    this.nonStopClusterListener = new NonStopClusterListener(abortableOperationManager);
-    this.nonStopClusterInfo.addClusterListener(nonStopClusterListener);
+    this.nonStopClusterListener = new NonStopClusterListener(abortableOperationManager, nonStopClusterInfo);
     this.context = new NonStopContextImpl(nonStopManager, nonStopConfigManager, abortableOperationManager,
                                           nonstopTimeoutBehaviorFactory, asyncToolkitInitializer,
                                           nonStopClusterListener);
