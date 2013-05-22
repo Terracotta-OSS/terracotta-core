@@ -161,6 +161,7 @@ public class ManagerImpl implements Manager {
 
     this.lockIdFactory = new LockIdFactory(this);
     this.platformService = new PlatformServiceImpl(this, isExpressRejoinMode);
+    logger.info("manager created with rejoinEnabled=" + isExpressRejoinMode);
   }
 
   public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {

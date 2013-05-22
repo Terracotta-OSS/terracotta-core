@@ -116,7 +116,6 @@ public class DSOContextImpl implements DSOContext {
     this.configSpec = configSpec;
     this.securityManager = securityManager;
     this.securityInfo = securityInfo;
-    logger.info("context created ");
   }
 
   private void resolveClasses() {
