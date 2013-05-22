@@ -57,12 +57,6 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  private void verifyInput(long sleep, int lc) {
-    if (sleep <= 0) { throw new AssertionError("Sleep Interval cannot be <= 0 : sleep Interval = " + sleep); }
-    if (lc <= 0 || lc >= 100) { throw new AssertionError("Least Count should be > 0 && < 100 : " + lc
-                                                         + " Outside range"); }
-  }
-
   @Override
   public void registerForMemoryEvents(MemoryEventsListener listener) {
     listeners.add(listener);

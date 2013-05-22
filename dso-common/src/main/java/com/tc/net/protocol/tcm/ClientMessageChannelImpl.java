@@ -36,7 +36,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private int                             connectAttemptCount;
   private int                             connectCount;
   private ChannelID                       channelID;
-  private final ChannelIDProviderImpl     cidProvider;
+  private final ChannelIDProviderImpl     channelIdProvider;
   private final SessionProvider           sessionProvider;
   private final SecurityInfo              securityInfo;
   private final PwProvider                pwProvider;
@@ -51,7 +51,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     this.securityInfo = securityInfo;
     this.pwProvider = pwProvider;
     this.addressProvider = addressProvider;
-    this.cidProvider = new ChannelIDProviderImpl();
+    this.channelIdProvider = new ChannelIDProviderImpl();
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider(remoteNodeID);
   }
@@ -94,7 +94,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       final NetworkStackID id = this.sendLayer.open();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));
-      this.cidProvider.setChannelID(this.channelID);
+      this.channelIdProvider.setChannelID(this.channelID);
       this.channelSessionID = this.sessionProvider.getSessionID(getRemoteNodeID());
       channelOpened();
       return id;
@@ -159,7 +159,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     // TODO: review this.
     long channelIdLong = transport.getConnectionId().getChannelID();
     this.channelID = new ChannelID(channelIdLong);
-    this.cidProvider.setChannelID(this.channelID);
+    this.channelIdProvider.setChannelID(this.channelID);
     setLocalNodeID(new ClientID(channelIdLong));
     super.notifyTransportConnected(transport);
     this.connectCount++;
@@ -185,7 +185,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelIDProvider getChannelIDProvider() {
-    return this.cidProvider;
+    return this.channelIdProvider;
   }
 
   private static class ChannelIDProviderImpl implements ChannelIDProvider {
