@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -63,12 +64,14 @@ public class TransactionSequencer implements ClearableCallback {
   private final GroupID                                     groupID;
   private final TransactionIDGenerator                      transactionIDGenerator;
   private final AbortableOperationManager                   abortableOperationManager;
+  private final RemoteTransactionManagerImpl                remoteTxnMgrImpl;
 
   public TransactionSequencer(GroupID groupID, TransactionIDGenerator transactionIDGenerator,
                               TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
                               SampledRateCounter transactionSizeCounter,
                               SampledRateCounter transactionsPerBatchCounter,
-                              AbortableOperationManager abortableOperationManager) {
+                              AbortableOperationManager abortableOperationManager,
+                              RemoteTransactionManagerImpl remoteTxnMgrImpl) {
 
     this.groupID = groupID;
     this.transactionIDGenerator = transactionIDGenerator;
@@ -83,6 +86,7 @@ public class TransactionSequencer implements ClearableCallback {
     this.transactionSizeCounter = transactionSizeCounter;
     this.transactionsPerBatchCounter = transactionsPerBatchCounter;
     this.abortableOperationManager = abortableOperationManager;
+    this.remoteTxnMgrImpl = remoteTxnMgrImpl;
   }
 
   @Override
@@ -212,6 +216,7 @@ public class TransactionSequencer implements ClearableCallback {
     boolean isInterrupted = false;
     try {
       do {
+        if (remoteTxnMgrImpl.isRejoinInProgress()) { throw new PlatformRejoinException(); }
         int diff = this.pendingBatches.size() - this.slowDownStartsAt;
         if (diff >= 0) {
           long sleepTime = (long) (1 + diff * this.sleepTimeIncrements);

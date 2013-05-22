@@ -104,10 +104,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.channel = channel;
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
-    this.lockAccounting = new LockAccounting(abortableOperationManager);
+    this.lockAccounting = new LockAccounting(abortableOperationManager, this);
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
                                               transactionSizeCounter, transactionsPerBatchCounter,
-                                              abortableOperationManager);
+                                              abortableOperationManager, this);
     this.remoteTxManagerRunnable = new RemoteTransactionManagerTask();
     this.flusherTimer = taskRunner.newTimer("RemoteTransactionManager Flusher");
     this.flusherTimer.scheduleWithFixedDelay(this.remoteTxManagerRunnable, COMPLETED_ACK_FLUSH_TIMEOUT,
@@ -115,6 +115,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.batchManager = new BatchManager();
     this.abortableOperationManager = abortableOperationManager;
     batchManager.start();
+  }
+
+  @Override
+  public void preCleanup() {
+    synchronized (this.lock) {
+      checkAndSetstate();
+      lockAccounting.cleanup();
+      sequencer.cleanup();
+    }
   }
 
   @Override
@@ -130,7 +139,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(true);
+    throwExceptionIfNecessary(false);
     status = REJOIN_IN_PROGRESS;
     this.lock.notifyAll();
   }
@@ -519,6 +528,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private boolean isStoppingOrStopped() {
     synchronized (this.lock) {
       return this.status == STOP_INITIATED || this.status == STOPPED;
+    }
+  }
+
+  boolean isRejoinInProgress() {
+    synchronized (this.lock) {
+      return this.status == REJOIN_IN_PROGRESS;
     }
   }
 

@@ -30,8 +30,13 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public long                         txnCounter;
 
   @Override
+  public void preCleanup() {
+    // no-op
+  }
+
+  @Override
   public void cleanup() {
-    // NOP
+    // no-op
   }
 
   @Override

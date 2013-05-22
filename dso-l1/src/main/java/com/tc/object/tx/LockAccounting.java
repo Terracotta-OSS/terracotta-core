@@ -33,16 +33,17 @@ public class LockAccounting implements ClearableCallback {
   private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap();
   private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap();
   private volatile boolean                               shutdown                       = false;
-  private volatile boolean                               rejoinInProgress               = false;
   private final AbortableOperationManager                abortableOperationManager;
+  private final RemoteTransactionManagerImpl             remoteTxnMgrImpl;
 
-  public LockAccounting(AbortableOperationManager abortableOperationManager) {
+  public LockAccounting(AbortableOperationManager abortableOperationManager,
+                        RemoteTransactionManagerImpl remoteTxnMgrImpl) {
     this.abortableOperationManager = abortableOperationManager;
+    this.remoteTxnMgrImpl = remoteTxnMgrImpl;
   }
 
   @Override
   public synchronized void cleanup() {
-    rejoinInProgress = true;
     for (TxnRemovedListener listener : listeners) {
       listener.release();
     }
@@ -50,7 +51,6 @@ public class LockAccounting implements ClearableCallback {
     tx2Locks.clear();
     lock2Txs.clear();
     tid2wrap.clear();
-    rejoinInProgress = false;
   }
 
   public synchronized Object dump() {
@@ -173,7 +173,7 @@ public class LockAccounting implements ClearableCallback {
       do {
         try {
           if (shutdown) { throw new TCNotRunningException(); }
-          if (rejoinInProgress) { throw new PlatformRejoinException(); }
+          if (remoteTxnMgrImpl.isRejoinInProgress()) { throw new PlatformRejoinException(); }
           txnsCompleted = latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
           AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);

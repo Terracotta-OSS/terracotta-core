@@ -4,6 +4,8 @@
  */
 package com.tc.object.tx;
 
+import org.mockito.Mockito;
+
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -40,7 +42,7 @@ public class LockAccountingTest extends TestCase {
 
   @Override
   public void setUp() {
-    la = new LockAccounting(new NullAbortableOperationManager());
+    la = new LockAccounting(new NullAbortableOperationManager(), Mockito.mock(RemoteTransactionManagerImpl.class));
   }
 
   @Override

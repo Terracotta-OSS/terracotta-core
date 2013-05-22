@@ -4,7 +4,7 @@
 package com.tc.net;
 
 import java.util.Arrays;
-import java.util.TreeSet;
+import java.util.Collection;
 
 /**
  * This class's purpose is to give a definite order to a set of GroupIDs and determine the coordinator GroupID, that way
@@ -15,9 +15,12 @@ public class OrderedGroupIDs {
   private final GroupID[] groupIDs;
 
   public OrderedGroupIDs(GroupID[] gids) {
-    TreeSet<GroupID> sorted = new TreeSet<GroupID>(Arrays.asList(gids));
-    this.groupIDs = sorted.toArray(new GroupID[sorted.size()]);
+    this.groupIDs = gids;
+    Arrays.sort(groupIDs);
+  }
 
+  public Collection<GroupID> getGroupIDSet() {
+    return Arrays.asList(groupIDs);
   }
 
   public GroupID[] getGroupIDs() {
