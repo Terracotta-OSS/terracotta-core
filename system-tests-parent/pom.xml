@@ -62,6 +62,7 @@
         (see the container-tests-windows profile definition).
     -->
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
+    <os-classifier>linux</os-classifier>
   </properties>
 
   <dependencyManagement>
@@ -301,6 +302,7 @@
       </activation>
       <properties>
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
+        <os-classifier>windows</os-classifier>
       </properties>
     </profile>
 
@@ -380,6 +382,15 @@
           <name>appserver</name>
         </property>
       </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.terracotta.test</groupId>
+          <artifactId>websphere-profiles</artifactId>
+          <classifier>${os-classifier}</classifier>
+          <version>1.0</version>
+          <type>tar.gz</type>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>
           <!-- increase websphere test timeout to 1800 seconds (30 minutes) -->
@@ -396,8 +407,24 @@
                 </goals>
                 <configuration>
                   <source><![CDATA[
+                    import org.apache.maven.artifact.Artifact
                     if (project.properties['appserver'] =~ /websphere/) {
                       project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '1800')
+                      def cacheDir = System.getProperty("user.home") + File.separator + ".tc"
+                      if (System.getProperty("os.name") =~ /Windows/) {
+                        cacheDir = "c:/temp"
+                      }
+                      def cacheVersion = "unknown"
+                      def artifactVersionFile = new File(cacheDir, "websphere-profiles.version")
+                      if (artifactVersionFile.exists()) {
+                        cacheVersion = artifactVersionFile.text
+                      }                        
+                      for (def a : project.getArtifacts()) {
+                        if (a.artifactId == "websphere-profiles" && !cacheVersion.equals(a.version)) {
+                          ant.untar(src: a.getFile(), dest: cacheDir, compression: "gzip")
+                          artifactVersionFile.write(a.version)
+                        }
+                      }
                     }
                     ]]>
                   </source>
