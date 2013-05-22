@@ -70,7 +70,7 @@ public class ServerMapPrefetchObjectHandler extends AbstractEventHandler {
                        + clientID);
         }
         this.objectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID, results
-            .getLookupPendingObjectIDs(), Thread.currentThread().getName(), -1, LOOKUP_STATE.SERVER_INITIATED));
+            .getLookupPendingObjectIDs(), Thread.currentThread().getName(), -1, LOOKUP_STATE.SERVER_INITIATED_FORCED));
       }
 
       if (results.getMissingObjectIds().size() > 0) {
