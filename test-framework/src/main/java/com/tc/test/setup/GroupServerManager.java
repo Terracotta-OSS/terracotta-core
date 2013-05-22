@@ -209,6 +209,7 @@ public class GroupServerManager {
         continue;
       }
       startServer(i);
+      waitUntilActive();
     }
     Thread.sleep(500 * serverControl.length);
 
