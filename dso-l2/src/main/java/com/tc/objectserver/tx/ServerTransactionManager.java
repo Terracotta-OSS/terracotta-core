@@ -87,6 +87,11 @@ public interface ServerTransactionManager {
 
   public void removeTransactionListener(ServerTransactionListener listener);
 
+  /**
+   * Returns when all transactions which were added to the transaction accounting system
+   * after the listener was attached have finished processing. 
+   * @param l
+   */
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionListener l);
 
   public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionListener l);
@@ -103,8 +108,22 @@ public interface ServerTransactionManager {
 
   public void goToActiveMode();
 
+
+  /**Returns the number of transactions which have been added to the transaction accounting system
+   * and are in various stages of being applied. This is somewhat similar to the number of transactions
+   * "flowing" through the system.
+   *
+   * @return an int equal to the number of transactions which are in various stages of being applied.
+   */
   public int getTotalPendingTransactionsCount();
 
+  /**
+   * Returns the number of transactions the server has processed since it started.
+   * For passive servers this is always zero. Each active server keeps a track of
+   * the total number of transactions it has processed since it was started using an
+   * internal non-decreasing counter. This method returns the current value of that counter.
+   * @return a long equal to the number transactions processed by the server since it started
+   */
   public long getTotalNumOfActiveTransactions();
 
   public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo);
@@ -117,8 +136,17 @@ public interface ServerTransactionManager {
    */
   public void callbackOnLowWaterMarkInSystemCompletion(Runnable r);
 
+  /**
+   * Pauses addition of new transactions to the server. New transactions sent by the clients after this
+   * method's call will not be added to the transaction accounting system and will get queued up.
+   * Note that this method does not halt the processing for transactions which have already been added
+   * to the transaction accounting system.
+   */
   public void pauseTransactions();
 
+  /**
+   * Allows transactions to be added to the accounting system, reversing the effect of pauseTransactions() method.
+   */
   public void unPauseTransactions();
 
 
