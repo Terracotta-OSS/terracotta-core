@@ -47,14 +47,14 @@ public class GroupServerCrashManager implements Runnable {
         try {
 
           if (getCrashConfig().getCrashMode().equals(ServerCrashMode.RANDOM_ACTIVE_CRASH)) {
-            debug("about to crash active servers in all groups");
+            debug("about to crash active server");
             serverManager.crashActiveAndWaitForPassiveToTakeOver();
-            debug("about to restart last crashed servers in all groups");
+            debug("about to restart last crashed server");
             serverManager.restartLastCrashedServer();
           } else if (getCrashConfig().getCrashMode().equals(ServerCrashMode.RANDOM_SERVER_CRASH)) {
             debug("about to crash server");
             serverManager.crashRandomServer();
-            debug("about to restart crashed server");
+            debug("about to restart last crashed server");
             serverManager.restartLastCrashedServer();
           }
 
@@ -92,6 +92,7 @@ public class GroupServerCrashManager implements Runnable {
 
   public void debug(String msg) {
     System.out.println("[****** ServerCrasher : " + dateFormatter.format(new Date()) + " '"
-                       + Thread.currentThread().getName() + "'] " + msg);
+                       + Thread.currentThread().getName() + "' '" + serverManager.getGroupData().getGroupName() + "'] "
+                       + msg);
   }
 }
