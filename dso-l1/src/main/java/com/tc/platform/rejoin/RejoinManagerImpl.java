@@ -102,20 +102,26 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private void doRejoin(ClientMessageChannel channel) {
     logger.info("Doing rejoin for channel: " + channel);
     if (rejoinInProgress.compareAndSet(false, true)) {
-      notifyRejoinStart();
-      while (true) {
-        try {
-          channel.reopen();
-          break;
-        } catch (Throwable t) {
-          logger
-              .warn("Error in channel open, going to retry after 1 second channel: " + channel + " " + t.getMessage());
+      try {
+        notifyRejoinStart();
+        while (true) {
           try {
-            TimeUnit.SECONDS.sleep(1L);
-          } catch (InterruptedException e) {
-            logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
+            channel.reopen();
+            break;
+          } catch (Throwable t) {
+            logger.warn("Error during channel open : " + channel + " " + t);
+            try {
+              TimeUnit.SECONDS.sleep(1L);
+            } catch (InterruptedException e) {
+              logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
+            }
           }
         }
+      } catch (Throwable th) {
+        // RejoinWorker thread should not die and should be able to accept more rejoin requests if one rejoin request
+        // fails for some reason
+        rejoinInProgress.set(false);
+        logger.warn("Error during rejoin : " + channel + " " + th);
       }
     }
   }
