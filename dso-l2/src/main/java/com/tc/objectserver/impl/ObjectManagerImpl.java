@@ -521,11 +521,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   @Override
-  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
     Set<ObjectID> retry = new ObjectIDSet();
     for (ObjectID objectID : objectsToDelete) {
       ManagedObjectReference ref = getOrLookupReference(objectID);
-      if (ref == null || !markReferenced(ref)) {
+      if (checkedOutObjects.contains(objectID)) {
+        // If the object is already checked out by this operation, just delete it.
+        objectStore.removeAllObjectsByID(Collections.singleton(objectID));
+        ref.setRemoveOnRelease(true);
+        continue;
+      } else if (ref == null || !markReferenced(ref)) {
         // The object either doesn't exist or we failed to mark it, drop it into the retry set.
         retry.add(objectID);
         continue;

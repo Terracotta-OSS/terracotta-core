@@ -12,6 +12,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,7 +93,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
   }
 
   public synchronized Collection<ManagedObject> getObjects() {
-    return objects.values();
+    return new ArrayList<ManagedObject>(objects.values());
   }
 
   @Override

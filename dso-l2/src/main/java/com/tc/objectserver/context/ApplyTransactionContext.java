@@ -11,6 +11,7 @@ import com.tc.objectserver.tx.TxnObjectGrouping;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +34,14 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
     Set<ObjectID> oids = new ObjectIDSet(txn.getObjectIDs());
     oids.removeAll(ignoredObjects);
     return grouping.getObjects(oids);
+  }
+
+  public Set<ObjectID> allCheckedOutObjects() {
+    Set<ObjectID> objects = new HashSet<ObjectID>();
+    for (ManagedObject managedObject : grouping.getObjects()) {
+      objects.add(managedObject.getID());
+    }
+    return objects;
   }
 
   public ServerTransaction getTxn() {

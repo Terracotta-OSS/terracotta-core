@@ -14,6 +14,7 @@ import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -43,8 +44,8 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
   }
 
   @Override
-  public void deleteObjects(SortedSet<ObjectID> objects) {
-    delegate.deleteObjects(objects);
+  public void deleteObjects(SortedSet<ObjectID> objects, final Set<ObjectID> checkouts) {
+    delegate.deleteObjects(objects, checkouts);
   }
 
   @Override
@@ -89,8 +90,8 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     private final TCLogger logger = TCLogging.getLogger(PassiveGarbageCollectionManager.class);
 
     @Override
-    public void deleteObjects(SortedSet<ObjectID> objects) {
-      activeGCManager.deleteObjects(objects);
+    public void deleteObjects(SortedSet<ObjectID> objects, final Set<ObjectID> checkouts) {
+      activeGCManager.deleteObjects(objects, checkouts);
     }
 
     @Override
@@ -141,7 +142,7 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     public void l2StateChanged(StateChangedEvent sce) {
       if (StateManager.PASSIVE_STANDBY.equals(sce.getCurrentState())) {
         acceptMissing = false;
-        deleteObjects(missingObjects);
+        deleteObjects(missingObjects, Collections.<ObjectID>emptySet());
         missingObjects.clear();
       }
     }

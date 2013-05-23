@@ -125,10 +125,12 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    * Try to checkout and delete objects. Will simply skip (and return) any objects
    * that fail to be checked out without blocking.
    *
+   *
    * @param objectsToDelete set of objects to delete
+   * @param checkedOutObjects
    * @return objects that are either missing or were unable to be checked out.
    */
-  public Set<ObjectID> tryDeleteObjects(Set<ObjectID> objectsToDelete);
+  public Set<ObjectID> tryDeleteObjects(Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects);
 
   public void start();
 

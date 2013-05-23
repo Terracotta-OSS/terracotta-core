@@ -60,8 +60,8 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
   }
 
   @Override
-  public void deleteObjects(SortedSet<ObjectID> objects) {
-    Set<ObjectID> remaining = objectManager.tryDeleteObjects(objects);
+  public void deleteObjects(SortedSet<ObjectID> objects, final Set<ObjectID> checkouts) {
+    Set<ObjectID> remaining = objectManager.tryDeleteObjects(objects, checkouts);
     if (!remaining.isEmpty()) {
       synchronized (this) {
         objectsToDelete.addAll(remaining);

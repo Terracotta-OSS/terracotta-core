@@ -17,7 +17,7 @@ import java.util.SortedSet;
 public class TestGarbageCollectionManager implements GarbageCollectionManager {
 
   @Override
-  public void deleteObjects(SortedSet<ObjectID> objects) {
+  public void deleteObjects(SortedSet<ObjectID> objects, final Set<ObjectID> checkouts) {
     // do nothing
   }
 

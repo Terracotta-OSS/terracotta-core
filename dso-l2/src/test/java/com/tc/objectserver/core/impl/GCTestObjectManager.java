@@ -245,7 +245,7 @@ public class GCTestObjectManager implements ObjectManager {
   }
 
   @Override
-  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete) {
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
     return Collections.EMPTY_SET;
   }
 }

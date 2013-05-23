@@ -16,7 +16,7 @@ public interface GarbageCollectionManager extends PostInit, StateChangeListener 
 
   public void missingObjectsToDelete(Set<ObjectID> objects);
 
-  public void deleteObjects(SortedSet<ObjectID> objects);
+  public void deleteObjects(SortedSet<ObjectID> objects, final Set<ObjectID> checkouts);
 
   public ObjectIDSet nextObjectsToDelete();
 
