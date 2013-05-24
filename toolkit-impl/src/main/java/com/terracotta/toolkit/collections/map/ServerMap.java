@@ -192,6 +192,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return this.consistency == Consistency.EVENTUAL && !platformService.isExplicitlyLocked();
   }
 
+  private ToolkitLockTypeInternal getEffectiveLockType() {
+    if (this.lockType == ToolkitLockTypeInternal.CONCURRENT && platformService.isExplicitlyLocked()) {
+      return ToolkitLockTypeInternal.WRITE;
+    } else {
+      return lockType;
+    }
+  }
+
   @Override
   public boolean invalidateOnChange() {
     return isEventual()
@@ -554,11 +562,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       // DEV-5244: no need to broadcast 'clear local cache' when invalidateOnChange
       internalClearLocalCache();
     } else {
-      beginLock(getInstanceDsoLockName(), this.lockType);
+      beginLock(getInstanceDsoLockName(), getEffectiveLockType());
       try {
         platformService.logicalInvoke(this, SerializationUtil.CLEAR_LOCAL_CACHE_SIGNATURE, NO_ARGS);
       } finally {
-        commitLock(getInstanceDsoLockName(), this.lockType);
+        commitLock(getInstanceDsoLockName(), getEffectiveLockType());
         try {
           platformService.waitForAllCurrentTransactionsToComplete();
         } catch (AbortedOperationException e) {
@@ -648,13 +656,13 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } else {
       MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         doLogicalPutLocked(lockID, key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
         return old;
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -682,11 +690,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } else {
       MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         doLogicalPutLocked(lockID, key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
 
@@ -734,7 +742,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       MetaData metaData = createPutSearchMetaData(key, value);
 
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old == null) {
@@ -746,7 +754,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
         return old;
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -778,7 +786,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       return old;
     } else {
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null) {
@@ -786,7 +794,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
         return old;
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -816,7 +824,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
     } else {
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null && old.equals(value)) {
@@ -826,7 +834,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           return false;
         }
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -852,11 +860,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
     } else {
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         doLogicalRemoveLocked(key, lockID);
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -896,7 +904,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
 
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null) {
@@ -905,7 +913,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
         return old;
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
@@ -949,7 +957,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
 
       final Object lockID = generateLockIdForKey(key);
-      beginLock(lockID, this.lockType);
+      beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old != null && old.equals(oldValue)) {
@@ -961,7 +969,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           return false;
         }
       } finally {
-        commitLock(lockID, this.lockType);
+        commitLock(lockID, getEffectiveLockType());
       }
     }
   }
