@@ -221,6 +221,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.REMOVE_IF_VALUE_EQUAL:
         applyRemoveIfValueEqual(applyInfo, params);
         break;
+      case SerializationUtil.EXPIRE_IF_VALUE_EQUAL:
+        applyExpireIfValueEqual(applyInfo, params);
+        break;
       case SerializationUtil.PUT_IF_ABSENT:
         applyPutIfAbsent(applyInfo, params);
         break;
@@ -349,13 +352,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   private void applyRemoveIfValueEqual(ApplyTransactionInfo applyInfo, Object[] params) {
-    Object key = params[0];
-    Object value = params[1];
-    CDSMValue valueInMap = getValueForKey(key);
+    final Object key = params[0];
+    final Object value = params[1];
+    final CDSMValue valueInMap = getValueForKey(key);
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
       applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, (ObjectID)value, cacheName);
+    }
+  }
+
+  private void applyExpireIfValueEqual(ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = params[0];
+    final Object value = params[1];
+    final CDSMValue valueInMap = getValueForKey(key);
+    if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
+      references.remove(key);
+      removedReferences(applyInfo, value);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.EXPIRE, key, (ObjectID)value, cacheName);
     }
   }
 

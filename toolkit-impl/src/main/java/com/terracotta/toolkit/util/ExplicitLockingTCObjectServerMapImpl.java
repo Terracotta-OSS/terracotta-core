@@ -459,4 +459,16 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     delegate.doLogicalSetLastAccessedTime(key, value, lastAccessedTime);
   }
 
+  @Override
+  public void doLogicalExpire(final Object lockID, final Object key, final Object value) {
+    assertLockStateBeforeRejoin();
+    delegate.doLogicalExpire(lockID, key, value);
+  }
+
+  @Override
+  public boolean doLogicalExpireUnlocked(final TCServerMap map, final Object key, final Object value) {
+    assertLockStateBeforeRejoin();
+    return delegate.doLogicalExpireUnlocked(map, key, value);
+  }
+
 }

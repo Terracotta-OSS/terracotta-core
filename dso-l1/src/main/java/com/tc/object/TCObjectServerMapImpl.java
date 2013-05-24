@@ -205,7 +205,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   /**
    * Does a logic remove and removes from the local cache if present
    * 
-   * @param map ServerTCMap
+   * @param map TCServerMap
    * @param lockID, lock under which this entry is removed
    * @param key Key Object
    */
@@ -213,6 +213,22 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key) {
     synchronized (localLock) {
       invokeLogicalRemove(map, key);
+      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, null, ObjectID.NULL_ID,
+                            MapOperationType.REMOVE);
+    }
+  }
+
+  /**
+   * Does a logic expire and removes from the local cache if present
+   *
+   * @param lockID, lock under which this entry is expired
+   * @param key key object
+   * @param value value object
+   */
+  @Override
+  public void doLogicalExpire(final L lockID, final Object key, final Object value) {
+    synchronized (localLock) {
+      invokeLogicalExpire(key, value);
       addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, null, ObjectID.NULL_ID,
                             MapOperationType.REMOVE);
     }
@@ -267,6 +283,35 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   /**
+   * Does a two arg logical expire and removes from the local cache if present but without an associated lock.
+   *
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @return {@code true} if value was mutated, otherwise {@code false}
+   */
+  @Override
+  public boolean doLogicalExpireUnlocked(final TCServerMap map, final Object key, final Object value) {
+    synchronized (localLock) {
+      final AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
+      if (item != null && value != item.getValueObject()) {
+        // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
+        // and coz of DEV-5462
+        return false;
+      }
+
+      invokeLogicalExpire(key, value);
+
+      if (!isEventual) {
+        addIncoherentValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
+      } else {
+        addEventualValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
+      }
+
+      return true;
+    }
+  }
+
+  /**
    * Returns the value for a particular Key in a ServerTCMap.
    * 
    * @param map Map Object
@@ -291,7 +336,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
       if (value != null) {
         addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
-                              objectManager.lookupExistingObjectID(value), MapOperationType.GET);
+            objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
     }
@@ -787,6 +832,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private void invokeLogicalRemove(final TCServerMap map, final Object key, final Object value) {
     logicalInvoke(SerializationUtil.REMOVE_IF_VALUE_EQUAL, SerializationUtil.REMOVE_IF_VALUE_EQUAL_SIGNATURE,
+                  new Object[] { key, value });
+  }
+
+  private void invokeLogicalExpire(final Object key, final Object value) {
+    logicalInvoke(SerializationUtil.EXPIRE_IF_VALUE_EQUAL, SerializationUtil.EXPIRE_IF_VALUE_EQUAL_SIGNATURE,
                   new Object[] { key, value });
   }
 

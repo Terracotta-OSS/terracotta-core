@@ -95,7 +95,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final ToolkitCacheMetaDataCallback                    metaDataCallback;
   private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
-  private LocalExpirationCallback expirationCallback;
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -389,18 +388,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void expire(Object key, SerializedMapValue serializedMapValue, GetType getType) {
-    final boolean shouldNotify;
-    // perform local get for unsafe operations
-    V deserializedValue = deserialize(key, serializedMapValue, isUnsafeGet(getType));
-    MetaData metaData = getEvictRemoveMetaData();
-
+    final MetaData metaData = getEvictRemoveMetaData();
     if (getType == GetType.LOCKED) {
-      // XXX - call below uses its own MetaData; evicted MetaData not preserved!q
-      shouldNotify = remove(key, deserializedValue);
+      final Object lockID = generateLockIdForKey(key);
+      beginLock(lockID, this.lockType);
+      try {
+        doLogicalExpireLocked(lockID, key, serializedMapValue);
+      } finally {
+        commitLock(lockID, this.lockType);
+      }
     } else {
       expireConcurrentLock.lock();
       try {
-        boolean mutated = this.tcObjectServerMap.doLogicalRemoveUnlocked(this, key, serializedMapValue);
+        boolean mutated = this.tcObjectServerMap.doLogicalExpireUnlocked(this, key, serializedMapValue);
         if (mutated && metaData != null) {
           metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE_IF_VALUE_EQUAL);
           metaData.add("", 1);
@@ -410,12 +410,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         }
       } finally {
         expireConcurrentLock.unlock();
-        shouldNotify = true;
       }
-    }
-
-    if (shouldNotify && expirationCallback != null) {
-      expirationCallback.expiredLocally(key);
     }
   }
 
@@ -507,6 +502,18 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
     MetaData metaData = createRemoveSearchMetaData(key);
 
+    if (metaData != null) {
+      metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE);
+      metaData.add(SearchMetaData.KEY, key.toString());
+      addMetaData(metaData);
+    }
+  }
+
+  private void doLogicalExpireLocked(final Object lockID, final Object key, final Object value) {
+    assertKeyLiteral(key);
+    this.tcObjectServerMap.doLogicalExpire(lockID, key, value);
+
+    MetaData metaData = createRemoveSearchMetaData(key);
     if (metaData != null) {
       metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE);
       metaData.add(SearchMetaData.KEY, key.toString());
@@ -1404,11 +1411,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void registerAttributeExtractor(ToolkitAttributeExtractor extractor) {
     this.attrExtractor = extractor;
-  }
-
-  @Override
-  public void setExpirationCallback(final LocalExpirationCallback expirationCallback) {
-    this.expirationCallback = expirationCallback;
   }
 
   private class LongLockStrategy implements LockStrategy {

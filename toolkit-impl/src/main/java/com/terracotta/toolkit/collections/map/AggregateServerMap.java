@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -79,9 +77,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
-    ServerEventDestination, LocalExpirationCallback {
+    ServerEventDestination {
   private static final TCLogger                                            LOGGER                               = TCLogging
                                                                                                                     .getLogger(AggregateServerMap.class);
 
@@ -193,7 +193,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         .getValueIfExistsOrDefault(config);
     for (InternalToolkitMap<K, V> serverMap : serverMapsParam) {
       serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback, localCacheEnabled);
-      serverMap.setExpirationCallback(this);
     }
   }
 
@@ -731,7 +730,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public V put(K key, V value) {
     return put(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+        ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -789,12 +788,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         LOGGER.error("Cache listener threw an exception.", t);
       }
     }
-  }
-
-  @Override
-  public void expiredLocally(final Object key) {
-    // transform to regular server expiration to correctly notify listeners
-    doHandleServerEvent(ServerEventType.EXPIRE, key);
   }
 
   private static class AggregateServerMapIterator<E> implements Iterator<E> {

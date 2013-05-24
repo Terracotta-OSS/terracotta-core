@@ -48,6 +48,7 @@ public class SerializationUtil {
   public final static int         FIELD_CHANGED                        = 33;
   public final static int         INT_FIELD_CHANGED                    = 34;
   public final static int         SET_LAST_ACCESSED_TIME               = 35;
+  public final static int         EXPIRE_IF_VALUE_EQUAL                = 36;
 
   public final static String      PUSH_SIGNATURE                       = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                        = "pop()java/lang/Object;";
@@ -132,6 +133,7 @@ public class SerializationUtil {
   public final static String      FIELD_CHANGED_SIGNATURE              = "fieldChanged()V";
   public final static String      INT_FIELD_CHANGED_SIGNATURE          = "intFieldChanged(Ljava/lang/String;I)V";
   public final static String      SET_LAST_ACCESSED_TIME_SIGNATURE     = "setLastAccessedTime(Ljava/lang/Object;Ljava/lang/Object;J)V";
+  public final static String      EXPIRE_IF_VALUE_EQUAL_SIGNATURE      = "expireIfValueEqual(Ljava/lang/Object;Ljava/lang/Object;)Z";
 
   private final Map<String, Integer> mappings                             = new HashMap<String, Integer>();
 
@@ -180,6 +182,7 @@ public class SerializationUtil {
     mappings.put(FIELD_CHANGED_SIGNATURE, FIELD_CHANGED);
     mappings.put(INT_FIELD_CHANGED_SIGNATURE, INT_FIELD_CHANGED);
     mappings.put(SET_LAST_ACCESSED_TIME_SIGNATURE, SET_LAST_ACCESSED_TIME);
+    mappings.put(EXPIRE_IF_VALUE_EQUAL_SIGNATURE, EXPIRE_IF_VALUE_EQUAL);
   }
 
   public String[] getSignatures() {
