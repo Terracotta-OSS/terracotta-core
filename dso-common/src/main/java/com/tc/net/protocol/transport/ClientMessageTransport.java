@@ -9,6 +9,8 @@ import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
+import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.security.TCSecurityManager;
@@ -44,13 +46,14 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final TCSecurityManager           securityManager;
+  private final ConnectionAddressProvider   addressProvider;
 
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
     this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort,
-         ReconnectionRejectedHandlerL1.SINGLETON, null);
+         ReconnectionRejectedHandlerL1.SINGLETON, null, null);
   }
 
   /**
@@ -58,15 +61,18 @@ public class ClientMessageTransport extends MessageTransportBase {
    * create an unopened MessageTransport.
    *
    * @param securityManager
+   * @param addressProvider
    */
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort,
-                                ReconnectionRejectedHandler reconnectionRejectedHandler, final TCSecurityManager securityManager) {
+                                ReconnectionRejectedHandler reconnectionRejectedHandler, final TCSecurityManager securityManager,
+                                final ConnectionAddressProvider addressProvider) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
+    this.addressProvider = addressProvider;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
     this.callbackPort = callbackPort;
@@ -273,9 +279,9 @@ public class ClientMessageTransport extends MessageTransportBase {
       short stackLayerFlags = getCommunicationStackFlags(this);
       if (connectionId.isSecured() && connectionId.getPassword() == null) {
         // Re-init the password
+        ConnectionInfo connectionInfo = addressProvider.getIterator().next();
         connectionId.setPassword(securityManager.getPasswordForTC(connectionId.getUsername(),
-                getConnection().getRemoteAddress().getAddress().getHostName(),
-                getConnection().getRemoteAddress().getPort()));
+                connectionInfo.getHostname(), connectionInfo.getPort()));
       }
       TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
                                                                     stackLayerFlags, this.callbackPort);

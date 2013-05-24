@@ -73,7 +73,8 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                                                                 int callbackPortNum) {
     return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager);
+                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler, securityManager,
+                                      addressProvider);
   }
 
   @Override
