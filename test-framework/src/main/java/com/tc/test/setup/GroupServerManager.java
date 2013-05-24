@@ -740,6 +740,22 @@ public class GroupServerManager {
     return false;
   }
 
+  public boolean isPassiveUninitialized(int index) {
+    boolean isPassiveUnitialized = false;
+    try {
+      isPassiveUnitialized = tcServerInfoMBeans[index].isPassiveUninitialized();
+    } catch (Exception e) {
+      System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[index].getTsaPort() + "]...");
+      try {
+        tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
+        isPassiveUnitialized = tcServerInfoMBeans[index].isPassiveUninitialized();
+      } catch (Exception e2) {
+        System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
+      }
+    }
+    return isPassiveUnitialized;
+  }
+
   public boolean isActive(int index) {
     boolean isActive = false;
     try {

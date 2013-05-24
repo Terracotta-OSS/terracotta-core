@@ -88,6 +88,11 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
+  public boolean isPassiveUninitialized(final int groupIndex, final int serverIndex) {
+    return testServerManager.isPassiveUninitialized(groupIndex, serverIndex);
+  }
+
+  @Override
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception {
     testServerManager.waitUntilPassiveStandBy(groupIndex);
   }

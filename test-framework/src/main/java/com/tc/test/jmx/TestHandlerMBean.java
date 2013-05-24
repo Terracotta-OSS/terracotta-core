@@ -77,6 +77,15 @@ public interface TestHandlerMBean {
   public boolean isPassiveStandBy(int groupIndex) throws Exception;
 
   /**
+   * Check if the given server is passive uninitialized.
+   *
+   * @param groupIndex group number
+   * @param serverIndex server number
+   * @return true if the server is passive uninitialized
+   */
+  public boolean isPassiveUninitialized(int groupIndex, int serverIndex);
+
+  /**
    * Waits until a passive standby comes up in the mirror group
    * 
    * @param groupIndex

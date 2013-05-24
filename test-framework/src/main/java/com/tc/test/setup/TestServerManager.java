@@ -188,6 +188,10 @@ public class TestServerManager {
     return groups[groupIndex].isServerRunning(serverIndex);
   }
 
+  public boolean isPassiveUninitialized(int groupIndex, int serverIndex) {
+    return groups[groupIndex].isPassiveUninitialized(serverIndex);
+  }
+
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception {
     groups[groupIndex].waituntilPassiveStandBy();
   }
