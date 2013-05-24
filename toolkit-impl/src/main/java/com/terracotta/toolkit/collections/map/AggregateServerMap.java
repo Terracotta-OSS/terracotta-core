@@ -115,7 +115,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private volatile boolean                                                 lookupSuccessfulAfterRejoin;
   private final AtomicReference<ToolkitMap<String, String>>                attrSchema                           = new AtomicReference<ToolkitMap<String, String>>();
   private final LOCK_STRATEGY                                              lockStrategy;
-  private ToolkitAttributeExtractor                                        attributeExtractor                 = null;
+  private volatile ToolkitAttributeExtractor                               attributeExtractor                 = null;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -225,7 +225,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     if (attributeExtractor != null) {
-      registerServerMapAttributeExtractor(attributeExtractor);
+      registerServerMapAttributeExtractor();
     }
   }
 
@@ -835,12 +835,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         throw new ToolkitRuntimeException(e);
       }
     }
-    registerServerMapAttributeExtractor(attrExtractor);
+    registerServerMapAttributeExtractor();
   }
 
-  private void registerServerMapAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
+  private void registerServerMapAttributeExtractor() {
     for (InternalToolkitMap serverMap : this.serverMaps) {
-      serverMap.registerAttributeExtractor(attrExtractor);
+      serverMap.registerAttributeExtractor(attributeExtractor);
       ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema.get());
     }
   }
