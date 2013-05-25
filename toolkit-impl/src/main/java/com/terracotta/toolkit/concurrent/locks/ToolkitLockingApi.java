@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 public class ToolkitLockingApi {
 
-  private static final String STRING_LOCK_ID_PREFIX      = "string-lock-prefix";
   private static final String TOOLKIT_OBJECT_LOCK_PREFIX = "toolkit-object-lock-prefix";
   private static final String DELIMITER                  = "|";
 
@@ -178,11 +177,11 @@ public class ToolkitLockingApi {
   }
 
   private static void lock(String lockName, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doBeginLock(generateStringLockId(lockName), lockType, service);
+    doBeginLock(lockName, lockType, service);
   }
 
   private static void unlock(String lockName, ToolkitLockTypeInternal lockType, PlatformService service) {
-    doCommitLock(generateStringLockId(lockName), lockType, service);
+    doCommitLock(lockName, lockType, service);
   }
 
   public static void lock(ToolkitObjectType toolkitObjectType, String toolkitObjectName,
@@ -209,10 +208,6 @@ public class ToolkitLockingApi {
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }
-  }
-
-  private static String generateStringLockId(String lockName) {
-    return STRING_LOCK_ID_PREFIX + DELIMITER + lockName;
   }
 
   private static String generateStringLockId(ToolkitObjectType toolkitObjectType, String toolkitObjectName) {
