@@ -202,7 +202,11 @@ public class TestClientManager {
   synchronized void stopAllClients() {
     if (stopped.attemptSet()) {
       for (LinkedJavaProcess client : runningClients) {
-        client.destroy();
+        try {
+          client.destroy();
+        } catch (IllegalStateException e) {
+          System.out.println("Got an IllegalStateException stopping a client. Msg - " + e.getMessage());
+        }
       }
     }
   }
