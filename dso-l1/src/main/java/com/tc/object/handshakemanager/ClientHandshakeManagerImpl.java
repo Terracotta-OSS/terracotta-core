@@ -159,7 +159,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       // can happen when we get server disconnects before ack for client handshake
       this.logger.info("Disconnected: Ignoring disconnect event from  RemoteNode : " + remoteNode
                        + " as the current state is " + currentState + ". Disconnect count: " + getDisconnectedCount());
-      pauseThisNode(remoteNode);
+      // pauseThisNode(remoteNode);
 
     } else {
       this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode

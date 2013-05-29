@@ -220,13 +220,12 @@ public class ClientConnectionEstablisher {
             reconnectionRejected = true;
             handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (TCTimeoutException e) {
-            handleConnectException(e, false, connectionErrorLossyLogger, connection);
+            handleConnectException(e, true, connectionErrorLossyLogger, connection);
           } catch (IOException e) {
             handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (Exception e) {
             handleConnectException(e, true, connectionErrorLossyLogger, connection);
           }
-
         }
       }
     } finally {
@@ -240,6 +239,7 @@ public class ClientConnectionEstablisher {
     boolean connected = cmt.isConnected();
     if (connected) {
       cmt.logger.warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
+      return;
     }
 
     this.asyncReconnecting.set(true);
@@ -266,7 +266,7 @@ public class ClientConnectionEstablisher {
           // DEV-2781
           throw e;
         } catch (TCTimeoutException e) {
-          handleConnectException(e, false, cmt.logger, connection);
+          handleConnectException(e, true, cmt.logger, connection);
         } catch (ReconnectionRejectedException e) {
           reconnectionRejected = true;
           handleConnectException(e, false, cmt.logger, connection);
