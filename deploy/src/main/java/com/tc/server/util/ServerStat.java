@@ -21,6 +21,8 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -100,13 +102,19 @@ public class ServerStat {
   public String getGroupName() {
     if (!connected) return UNKNOWN;
     ServerGroupInfo[] serverGroupInfos = infoBean.getServerGroupInfo();
-    for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
-      L2Info[] l2Infos = serverGroupInfo.members();
-      for (L2Info l2Info : l2Infos) {
-        if (this.host.equals(l2Info.host()) && this.port == l2Info.jmxPort()) {
-          return serverGroupInfo.name();
+    try {
+      InetAddress address = InetAddress.getByName(host);
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] l2Infos = serverGroupInfo.members();
+        for (L2Info l2Info : l2Infos) {
+          InetAddress l2Addr = InetAddress.getByName(l2Info.host());
+          if (l2Addr.equals(address) && this.port == l2Info.jmxPort()) {
+            return serverGroupInfo.name();
+          }
         }
       }
+    } catch (UnknownHostException e) {
+      throw new RuntimeException(e);
     }
     return UNKNOWN;
   }
