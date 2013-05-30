@@ -31,7 +31,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   private ClientObjectReferenceSet clientSet;
   private boolean                  repeat         = false;
   private final ServerMapEvictionManager    evictor;
-  private boolean                   completed = false;
+  private boolean                   completed = true;
 
   public CapacityEvictionTrigger(ServerMapEvictionManager engine, ObjectID oid) {
     super(oid);
@@ -42,10 +42,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   public boolean startEviction(EvictableMap map) {
     max = map.getMaxTotalCount();
     size = map.getSize();
-    if ( repeat == true ) {
-      waitForCompletion();
-    }
-    completed = false;
+    start();
     // ignore return value, capacity needs to make an independent decision on whether to run
     if (max >= 0 && size > max) {
       return super.startEviction(map);
@@ -54,7 +51,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     return false;
   }
   
-  private synchronized void waitForCompletion() {
+  private synchronized void start() {
     while ( !completed ) {
       try {
         this.wait();
@@ -62,6 +59,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         throw new AssertionError("no interruptions");
       }
     }
+    reset();
+    completed = false;
   }
 
   @Override
@@ -77,7 +76,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   public ServerMapEvictionContext collectEvictionCandidates(final int maxParam, String className,
                                                             final EvictableMap map,
                                                             final ClientObjectReferenceSet clients) {
-
     // lets try and get smarter about this in the future but for now, just bring it back to capacity
     final int sample = boundsCheckSampleSize(size - maxParam);
     Map<Object, EvictableEntry> samples = (sample > 0) ? map.getRandomSamples(sample, clients, SamplingType.FOR_EVICTION)
@@ -115,7 +113,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     if ( !repeat || getCount() > 0 ) {
       throw new AssertionError("capacity trigger in illegal state");
     }
-    reset();
     evictor.doEvictionOn(this);
   }
   
