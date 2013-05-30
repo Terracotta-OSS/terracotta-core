@@ -29,7 +29,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   private int                      max            = 0;
   private int                      size           = 0;
   private ClientObjectReferenceSet clientSet;
-  private boolean                  repeat         = false;
+  private boolean                  valid         = true;
   private final ServerMapEvictionManager    evictor;
   private boolean                   completed = true;
 
@@ -40,9 +40,15 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
 
   @Override
   public boolean startEviction(EvictableMap map) {
+    start();
+    
+    if ( !valid ) {
+// job has already been performed on previous iteration
+      return false;
+    }
+    reset();
     max = map.getMaxTotalCount();
     size = map.getSize();
-    start();
     // ignore return value, capacity needs to make an independent decision on whether to run
     if (max >= 0 && size > max) {
       return super.startEviction(map);
@@ -59,13 +65,12 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         throw new AssertionError("no interruptions");
       }
     }
-    reset();
     completed = false;
   }
 
   @Override
   public synchronized void completeEviction(EvictableMap map) {
-    if ( !repeat ) {
+    if ( !valid ) {
       super.completeEviction(map);
     }  
     completed = true;
@@ -86,10 +91,10 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     } finally {
       int count = getCount();
       if (count == 0) {
-        repeat = true;
+        valid = true;
         registerForUpdates(clients);
       } else {
-        repeat = false;
+        valid = false;
       }
     }
   }
@@ -110,7 +115,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     }
     clientSet.removeReferenceSetChangeListener(this);
     clientSet = null;
-    if ( !repeat || getCount() > 0 ) {
+    if ( !valid || getCount() > 0 ) {
       throw new AssertionError("capacity trigger in illegal state");
     }
     evictor.doEvictionOn(this);
@@ -118,7 +123,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   
   @Override
   public synchronized boolean isValid() {
-    return repeat;
+    return valid;
   }
 
   @Override
@@ -133,7 +138,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
 
   @Override
   public String toString() {
-    return "CapacityEvictionTrigger{" + ", size=" + size + ", max=" + max + ", repeat=" + repeat
+    return "CapacityEvictionTrigger{" + ", size=" + size + ", max=" + max + ", valid=" + valid
            + ", was above capacity=" + aboveCapacity + ", client set=" + clientSetCount + ", parent="
            + super.toString() + '}';
   }
