@@ -155,12 +155,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     State currentState = getState(remoteNode);
     if (currentState == State.PAUSED) {
       this.logger.warn("Pause called while already PAUSED for " + remoteNode);
-    } else if (currentState == State.STARTING) {
-      // can happen when we get server disconnects before ack for client handshake
-      this.logger.info("Disconnected: Ignoring disconnect event from  RemoteNode : " + remoteNode
-                       + " as the current state is " + currentState + ". Disconnect count: " + getDisconnectedCount());
-      // pauseThisNode(remoteNode);
-
     } else {
       this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode
                        + ". Disconnect count: " + getDisconnectedCount());
