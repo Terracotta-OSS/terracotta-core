@@ -50,13 +50,13 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * SerializedEntry - explicit state factory
    */
-  SERIALIZED_MAP_VALUE(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_MAP_VALUE_TYPE_FACTORY),
+  SERIALIZED_MAP_VALUE(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_CLUSTERED_OBJECT_FACTORY),
 
   /**
    * CustomLifespanSerializedEntry - explicit state factory
    */
   CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE,
-      Factory.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY),
+      Factory.SERIALIZED_CLUSTERED_OBJECT_FACTORY),
 
   /**
    * Toolkit Map Type
@@ -209,42 +209,6 @@ public enum ManagedObjectStateStaticConfig {
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             PersistentObjectFactory objectFactory) {
         return new ToolkitNotifierManagedObjectState(classId);
-      }
-    },
-    SERIALIZED_MAP_VALUE_TYPE_FACTORY() {
-
-      @Override
-      protected byte getStateObjectType() {
-        return ManagedObjectState.TDC_SERIALIZED_ENTRY;
-      }
-
-      @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory) throws IOException {
-        return TDCSerializedEntryManagedObjectState.readFrom(objectInput);
-      }
-
-      @Override
-      public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentObjectFactory objectFactory) {
-        return new TDCSerializedEntryManagedObjectState(classId);
-      }
-    },
-    CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY() {
-
-      @Override
-      protected byte getStateObjectType() {
-        return ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY;
-      }
-
-      @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput, PersistentObjectFactory objectFactory) throws IOException {
-        return TDCCustomLifespanSerializedEntryManagedObjectState.readFrom(objectInput);
-      }
-
-      @Override
-      public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentObjectFactory objectFactory) {
-        return new TDCCustomLifespanSerializedEntryManagedObjectState(classId);
       }
     },
     SET_TYPE_FACTORY() {

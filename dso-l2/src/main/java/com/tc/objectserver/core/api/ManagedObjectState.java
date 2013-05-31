@@ -37,7 +37,6 @@ public interface ManagedObjectState {
   public static final byte PARTIAL_MAP_TYPE                     = 0x0d;
   // XXX: hack to get support various tims.
   public static final byte TDC_SERIALIZED_ENTRY                 = 0x12;
-  public static final byte TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY = 0x13;
   public static final byte TOOLKIT_TYPE_ROOT_TYPE               = 0x14;
   public static final byte MAX_TYPE               = 0x15;
 
