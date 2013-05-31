@@ -6,6 +6,7 @@ package com.tc.util.runtime;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,7 +72,7 @@ public final class VmVersion {
         final Matcher serviceReleaseMatcher = IBM_SERVICE_RELEASE_PATTERN.matcher(runtimeVersion);
         if (serviceReleaseMatcher.matches()) {
           String serviceRelease = serviceReleaseMatcher.groupCount() == 1 ? serviceReleaseMatcher.group(1)
-              .toLowerCase() : null;
+              .toLowerCase(Locale.ENGLISH) : null;
           if (null == version_patch && null == serviceRelease) {
             patch = null;
           } else if (null == version_patch) {
@@ -262,23 +263,23 @@ public final class VmVersion {
   }
 
   private static boolean isAzul(Properties props) {
-    return props.getProperty("java.vendor", "").toLowerCase().contains("azul");
+    return props.getProperty("java.vendor", "").toLowerCase(Locale.ENGLISH).contains("azul");
   }
 
   private static boolean isIBM(Properties props) {
-    return props.getProperty("java.vm.name", "").toLowerCase().contains("ibm");
+    return props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH).contains("ibm");
   }
 
   private static boolean isJRockit(Properties props) {
     return props.getProperty("jrockit.version") != null
-           || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
+           || props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH).indexOf("jrockit") >= 0;
   }
 
   private static boolean isHotspot(Properties props) {
-    return props.getProperty("java.vm.name", "").toLowerCase().contains("hotspot");
+    return props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH).contains("hotspot");
   }
 
   private static boolean isOpenJdk(Properties props) {
-    return props.getProperty("java.vm.name", "").toLowerCase().contains("openjdk");
+    return props.getProperty("java.vm.name", "").toLowerCase(Locale.ENGLISH).contains("openjdk");
   }
 }
