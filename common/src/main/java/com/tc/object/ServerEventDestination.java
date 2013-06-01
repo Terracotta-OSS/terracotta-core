@@ -1,5 +1,7 @@
 package com.tc.object;
 
+import com.tc.server.ServerEventType;
+
 /**
  * @author Eugene Shelestovich
  */

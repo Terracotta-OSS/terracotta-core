@@ -5,12 +5,13 @@
 package com.tc.objectserver.event;
 
 import com.google.common.eventbus.Subscribe;
+import com.tc.server.ServerEvent;
 
 /**
  * Generic listener interface for server events.
  *
  * @author Eugene Shelestovich
- * @see ServerEvent
+ * @see com.tc.server.ServerEvent
  */
 public interface ServerEventListener {
 

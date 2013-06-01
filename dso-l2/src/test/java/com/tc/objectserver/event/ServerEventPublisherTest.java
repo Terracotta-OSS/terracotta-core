@@ -7,7 +7,9 @@ package com.tc.objectserver.event;
 import org.junit.Test;
 
 import com.google.common.eventbus.EventBus;
-import com.tc.object.ServerEventType;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 
 import java.util.ArrayList;
 import java.util.List;

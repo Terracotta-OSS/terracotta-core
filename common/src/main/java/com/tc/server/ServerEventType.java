@@ -1,4 +1,4 @@
-package com.tc.object;
+package com.tc.server;
 
 /**
  * Type of server cache event.

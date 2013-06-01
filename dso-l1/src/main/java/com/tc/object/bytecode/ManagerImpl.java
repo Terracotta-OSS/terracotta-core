@@ -30,7 +30,7 @@ import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.ServerEventListenerManager;
-import com.tc.object.ServerEventType;
+import com.tc.server.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;

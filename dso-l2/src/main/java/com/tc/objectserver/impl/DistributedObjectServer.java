@@ -137,7 +137,7 @@ import com.tc.object.msg.RequestRootResponseMessage;
 import com.tc.object.msg.ResourceManagerThrottleMessage;
 import com.tc.object.msg.SearchQueryRequestMessageImpl;
 import com.tc.object.msg.SearchQueryResponseMessageImpl;
-import com.tc.object.msg.ServerEventMessageImpl;
+import com.tc.object.msg.ServerEventBatchMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -169,6 +169,8 @@ import com.tc.objectserver.dgc.impl.GCControllerImpl;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
+import com.tc.objectserver.event.InClusterServerEventNotifier;
+import com.tc.objectserver.event.ServerEventBatcher;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
@@ -917,7 +919,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
-    final InClusterServerEventNotifier inClusterServerEventNotifier = new InClusterServerEventNotifier(channelManager);
+    final ServerEventBatcher batcher = new ServerEventBatcher(channelManager, taskRunner);
+    final InClusterServerEventNotifier inClusterServerEventNotifier = new InClusterServerEventNotifier(channelManager, batcher);
     serverEventBus.register(inClusterServerEventNotifier);
 
     final Stage registerServerEventListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_SERVER_EVENT_LISTENER_STAGE,
@@ -1248,7 +1251,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_MESSAGE, ServerEventMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, ServerEventBatchMessageImpl.class);
     return messageTypeClassMapping;
   }
 

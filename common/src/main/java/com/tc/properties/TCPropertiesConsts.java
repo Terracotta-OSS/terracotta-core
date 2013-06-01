@@ -861,4 +861,13 @@ public interface TCPropertiesConsts {
   public static final String FILESYSTEM_BLOCK_SIZE                                          = "offHeapFilesystem.file.blockSize";
   public static final String FILESYSTEM_MAX_DATA_PAGE_SIZE                                  = "offHeapFileSystem.file.maxDataPageSize";
 
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Server Event settings
+   * </code>
+   ********************************************************************************************************************/
+  String L2_SERVER_EVENT_BATCHER_INTERVAL_MS                                                = "l2.serverEvent.batcher.intervalInMillis";
+  String L2_SERVER_EVENT_BATCHER_QUEUE_SIZE                                                 = "l2.serverEvent.batcher.queueSize";
+
 }

@@ -80,6 +80,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD);
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD);
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_SIZEBASED_AMOUNT);
+
+    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE);
   }
 
   private void loadDefaults(String propFile) {

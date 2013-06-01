@@ -8,7 +8,9 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tc.object.ObjectID;
-import com.tc.object.ServerEventType;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 import com.tc.objectserver.impl.SamplingType;
 
 import java.util.ArrayList;

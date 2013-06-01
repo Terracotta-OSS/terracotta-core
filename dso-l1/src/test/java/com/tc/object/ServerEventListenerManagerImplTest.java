@@ -1,21 +1,23 @@
 package com.tc.object;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.ServerEventMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 
 import java.util.EnumSet;
 
-import static com.tc.object.ServerEventType.EVICT;
-import static com.tc.object.ServerEventType.EXPIRE;
-import static com.tc.object.ServerEventType.PUT;
-import static com.tc.object.ServerEventType.REMOVE;
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.EXPIRE;
+import static com.tc.server.ServerEventType.PUT;
+import static com.tc.server.ServerEventType.REMOVE;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -29,91 +31,83 @@ import static org.mockito.Mockito.when;
  */
 public class ServerEventListenerManagerImplTest {
 
+  private RegisterServerEventListenerMessage registrationMsgMock;
+  private UnregisterServerEventListenerMessage unregistrationMsgMock;
+  private ServerEventListenerManagerImpl manager;
+  private ServerEventDestination[] destinations;
+
   @Before
   public void setUp() throws Exception {
-  }
-
-  @Test
-  public void testShouldRegisterUnregisterAndDeliverEvents() {
     final GroupID groupId = new GroupID(1);
-    final RegisterServerEventListenerMessage registrationMsgMock = mock(RegisterServerEventListenerMessage.class);
-    final UnregisterServerEventListenerMessage unregistrationMsgMock = mock(UnregisterServerEventListenerMessage.class);
+    registrationMsgMock = mock(RegisterServerEventListenerMessage.class);
+    unregistrationMsgMock = mock(UnregisterServerEventListenerMessage.class);
 
     final ServerEventListenerMessageFactory factoryMock = mock(ServerEventListenerMessageFactory.class);
     when(factoryMock.newRegisterServerEventListenerMessage(groupId)).thenReturn(registrationMsgMock);
     when(factoryMock.newUnregisterServerEventListenerMessage(groupId)).thenReturn(unregistrationMsgMock);
 
-    final ServerEventListenerManagerImpl manager = new ServerEventListenerManagerImpl(factoryMock, groupId);
-
-    // event message 1
-    final ServerEventMessage eventMsgMock1 = mock(ServerEventMessage.class);
-    when(eventMsgMock1.getDestinationName()).thenReturn("cache1");
-    when(eventMsgMock1.getKey()).thenReturn(1);
-    when(eventMsgMock1.getType()).thenReturn(EVICT);
-
-    // event message 2
-    final ServerEventMessage eventMsgMock2 = mock(ServerEventMessage.class);
-    when(eventMsgMock2.getDestinationName()).thenReturn("cache3");
-    when(eventMsgMock2.getKey()).thenReturn(2);
-    when(eventMsgMock2.getType()).thenReturn(PUT);
-
-    // event message 3
-    final ServerEventMessage eventMsgMock3 = mock(ServerEventMessage.class);
-    when(eventMsgMock3.getDestinationName()).thenReturn("cache2");
-    when(eventMsgMock3.getKey()).thenReturn(3);
-    when(eventMsgMock3.getType()).thenReturn(EXPIRE);
+    manager = new ServerEventListenerManagerImpl(factoryMock, groupId);
 
     // destinations
-    final ServerEventDestination asm1 = mock(ServerEventDestination.class);
-    when(asm1.getDestinationName()).thenReturn("cache1");
-    final ServerEventDestination asm2 = mock(ServerEventDestination.class);
-    when(asm2.getDestinationName()).thenReturn("cache1");
-    final ServerEventDestination asm3 = mock(ServerEventDestination.class);
-    when(asm3.getDestinationName()).thenReturn("cache2");
-    final ServerEventDestination asm4 = mock(ServerEventDestination.class);
-    when(asm4.getDestinationName()).thenReturn("cache3");
-    final ServerEventDestination asm5 = mock(ServerEventDestination.class);
-    when(asm5.getDestinationName()).thenReturn("cache3");
+    destinations = new ServerEventDestination[5];
+    destinations[0] = createDestination("cache1");
+    destinations[1] = createDestination("cache1");
+    destinations[2] = createDestination("cache2");
+    destinations[3] = createDestination("cache3");
+    destinations[4] = createDestination("cache3");
 
     // register several listeners
-    manager.registerListener(asm1, EnumSet.of(EXPIRE, PUT));
-    manager.registerListener(asm1, EnumSet.of(EXPIRE, PUT));
-    manager.registerListener(asm2, EnumSet.of(EVICT));
-    manager.registerListener(asm3, EnumSet.of(EVICT));
-    manager.registerListener(asm3, EnumSet.of(PUT, REMOVE));
-    manager.registerListener(asm4, EnumSet.of(PUT));
-    manager.registerListener(asm5, EnumSet.of(PUT));
+    manager.registerListener(destinations[0], EnumSet.of(EXPIRE, PUT));
+    manager.registerListener(destinations[0], EnumSet.of(EXPIRE, PUT));
+    manager.registerListener(destinations[1], EnumSet.of(EVICT));
+    manager.registerListener(destinations[2], EnumSet.of(EVICT));
+    manager.registerListener(destinations[2], EnumSet.of(PUT, REMOVE));
+    manager.registerListener(destinations[3], EnumSet.of(PUT));
+    manager.registerListener(destinations[4], EnumSet.of(PUT));
+  }
+
+  private ServerEventDestination createDestination(final String name) {
+    return when(mock(ServerEventDestination.class).getDestinationName()).thenReturn(name).getMock();
+  }
+
+  @Test
+  public void testShouldRegisterUnregisterAndDeliverEvents() {
+    final NodeID remoteNode = new GroupID(1);
+    final ServerEvent event1 = new BasicServerEvent(EVICT, 1, "cache1");
+    final ServerEvent event2 = new BasicServerEvent(PUT, 2, "cache3");
+    final ServerEvent event3 = new BasicServerEvent(EXPIRE, 3, "cache2");
+
     // two events should be delivered
-    manager.dispatch(eventMsgMock1);
-    manager.dispatch(eventMsgMock2);
+    manager.dispatch(event1, remoteNode);
+    manager.dispatch(event2, remoteNode);
     // exception due to non-existent mapping
     try {
-      manager.dispatch(eventMsgMock3);
+      manager.dispatch(event3, remoteNode);
       fail();
     } catch (IllegalStateException e) {
       // just as planned
     }
 
     // remove several mappings
-    manager.unregisterListener(asm4);
-    manager.unregisterListener(asm5);
+    manager.unregisterListener(destinations[3]);
+    manager.unregisterListener(destinations[4]);
 
-    manager.dispatch(eventMsgMock2);
+    manager.dispatch(event2, remoteNode);
 
     // verify invocations
     verify(registrationMsgMock, times(6)).send();
-    verify(asm2).handleServerEvent(EVICT, 1);
-    verify(asm4).handleServerEvent(PUT, 2);
-    verify(asm5).handleServerEvent(PUT, 2);
-    verify(asm1, never()).handleServerEvent((ServerEventType)any(), any());
-    verify(asm3, never()).handleServerEvent((ServerEventType)any(), any());
+    verify(destinations[1]).handleServerEvent(EVICT, 1);
+    verify(destinations[3]).handleServerEvent(PUT, 2);
+    verify(destinations[4]).handleServerEvent(PUT, 2);
+    verify(destinations[0], never()).handleServerEvent((ServerEventType)any(), any());
+    verify(destinations[2], never()).handleServerEvent((ServerEventType)any(), any());
     verify(unregistrationMsgMock, times(1)).send();
   }
 
   @Test
-  @Ignore
-  public void testUnpause() {
-
+  public void testShouldReregisterListenersOnUnpause() {
+    manager.unpause((NodeID)any(), 0); // don't care about params
+    verify(registrationMsgMock, times(9)).send(); // 6 initial registrations + 3 re-registrations on reconnect
   }
 
 }

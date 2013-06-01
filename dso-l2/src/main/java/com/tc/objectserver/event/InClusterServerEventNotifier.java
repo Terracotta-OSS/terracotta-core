@@ -1,4 +1,4 @@
-package com.tc.objectserver.impl;
+package com.tc.objectserver.event;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -6,14 +6,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.ServerEventType;
-import com.tc.object.msg.ServerEventMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.object.net.NoSuchChannelException;
-import com.tc.objectserver.event.ServerEvent;
-import com.tc.objectserver.event.ServerEventListener;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,11 +26,13 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
   private static final TCLogger LOG = TCLogging.getLogger(InClusterServerEventNotifier.class);
 
   private final Map<ServerEventType, Map<ClientID, Set<String>>> registry = Maps.newEnumMap(ServerEventType.class);
-
-  private final DSOChannelManager channelManager;
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  public InClusterServerEventNotifier(final DSOChannelManager channelManager) {
+  private final DSOChannelManager channelManager;
+  private final ServerEventBatcher batcher;
+
+  public InClusterServerEventNotifier(final DSOChannelManager channelManager, final ServerEventBatcher batcher) {
+    this.batcher = batcher;
     this.channelManager = channelManager;
     this.channelManager.addEventListener(this);
   }
@@ -48,7 +46,7 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
         for (Map.Entry<ClientID, Set<String>> entry : clientToDestMap.entrySet()) {
           final Set<String> destinations = entry.getValue();
           if (destinations.contains(event.getCacheName())) {
-            sendNotification(entry.getKey(), event);
+            batcher.add(entry.getKey(), event);
           }
         }
       }
@@ -57,24 +55,8 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
     }
   }
 
-  void sendNotification(final ClientID clientId, final ServerEvent event) {
-    try {
-      final MessageChannel channel = channelManager.getActiveChannel(clientId);
-      final ServerEventMessage msg = (ServerEventMessage)channel.createMessage(
-          TCMessageType.SERVER_EVENT_MESSAGE);
-      msg.setDestinationName(event.getCacheName());
-      msg.setType(event.getType());
-      msg.setKey(event.getKey());
-      // TODO create a SEDA stage to send asynchronously ?
-      msg.send();
-    } catch (NoSuchChannelException e) {
-      LOG.warn("Cannot find channel for client: " + clientId
-               + ". The client will no longer receive server notifications.");
-    }
-  }
-
   /**
-   * Registration is relatively rare operation comparing to notification.
+   * Registration is relatively rare operation comparing to event firing.
    * So we can loop thru the registry instead of maintaining a reversed data structure.
    */
   public final void register(final ClientID clientId, final String destination, final Set<ServerEventType> events) {

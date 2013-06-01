@@ -92,7 +92,7 @@ import com.tc.object.handler.ReceiveSyncWriteTransactionAckHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
 import com.tc.object.handler.ReceiveTransactionHandler;
 import com.tc.object.handler.ResourceManagerMessageHandler;
-import com.tc.object.handler.ServerNotificationHandler;
+import com.tc.object.handler.ServerEventMessageHandler;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -143,7 +143,7 @@ import com.tc.object.msg.RequestRootResponseMessage;
 import com.tc.object.msg.ResourceManagerThrottleMessage;
 import com.tc.object.msg.SearchQueryRequestMessageImpl;
 import com.tc.object.msg.SearchQueryResponseMessageImpl;
-import com.tc.object.msg.ServerEventMessageImpl;
+import com.tc.object.msg.ServerEventBatchMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -708,7 +708,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
     final Stage serverEventStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_STAGE,
-        new ServerNotificationHandler(serverEventListenerManager), 1, maxSize);
+        new ServerEventMessageHandler(serverEventListenerManager), 1, maxSize);
 
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
@@ -930,7 +930,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_MESSAGE, ServerEventMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, ServerEventBatchMessageImpl.class);
     return messageTypeClassMapping;
   }
 
@@ -992,7 +992,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                    resourceManagerStage.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.SERVER_EVENT_MESSAGE, serverEventStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, serverEventStage.getSink(), hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
   }
 

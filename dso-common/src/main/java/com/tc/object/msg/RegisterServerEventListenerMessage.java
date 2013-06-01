@@ -6,7 +6,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.ServerEventType;
+import com.tc.server.ServerEventType;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;

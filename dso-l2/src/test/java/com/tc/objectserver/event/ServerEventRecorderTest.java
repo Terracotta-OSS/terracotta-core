@@ -7,7 +7,8 @@ package com.tc.objectserver.event;
 import org.junit.Test;
 
 import com.tc.object.ObjectID;
-import com.tc.object.ServerEventType;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 
 import java.util.List;
 

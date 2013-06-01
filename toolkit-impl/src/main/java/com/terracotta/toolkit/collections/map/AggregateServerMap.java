@@ -30,7 +30,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
-import com.tc.object.ServerEventType;
+import com.tc.server.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;

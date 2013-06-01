@@ -5,6 +5,7 @@
 package com.tc.objectserver.event;
 
 import com.google.common.eventbus.EventBus;
+import com.tc.server.ServerEvent;
 
 import java.util.Arrays;
 import java.util.Collection;

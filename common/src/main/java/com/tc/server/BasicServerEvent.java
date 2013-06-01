@@ -1,8 +1,6 @@
-package com.tc.objectserver.event;
+package com.tc.server;
 
 import org.apache.commons.lang.ArrayUtils;
-
-import com.tc.object.ServerEventType;
 
 /**
  * Base class for all typed events.
@@ -17,7 +15,7 @@ public final class BasicServerEvent implements ServerEvent {
   private byte[] value;
 
   public BasicServerEvent(final ServerEventType type, final Object key, final String cacheName) {
-    this(type, key, emptyValue(), cacheName);
+    this(type, key, ArrayUtils.EMPTY_BYTE_ARRAY, cacheName);
   }
 
   public BasicServerEvent(final ServerEventType type, final Object key, byte[] value, final String cacheName) {
@@ -55,10 +53,6 @@ public final class BasicServerEvent implements ServerEvent {
   @Override
   public void setValue(final byte[] value) {
     this.value = value;
-  }
-
-  protected static byte[] emptyValue() {
-    return ArrayUtils.EMPTY_BYTE_ARRAY;
   }
 
   @Override

@@ -10,7 +10,7 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.impl.InClusterServerEventNotifier;
+import com.tc.objectserver.event.InClusterServerEventNotifier;
 import com.tc.util.Assert;
 
 /**

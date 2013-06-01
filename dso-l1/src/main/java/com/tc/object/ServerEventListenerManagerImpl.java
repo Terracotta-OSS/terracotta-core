@@ -9,8 +9,9 @@ import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.ServerEventMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -37,12 +38,12 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
   }
 
   @Override
-  public void dispatch(final ServerEventMessage message) {
-    final String name = message.getDestinationName();
-    final ServerEventType type = message.getType();
+  public void dispatch(final ServerEvent event, final NodeID remoteNode) {
+    final String name = event.getCacheName();
+    final ServerEventType type = event.getType();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Server notification message has been received. Type: "
-                + type + ", key: " + message.getKey()
+                + type + ", key: " + event.getKey()
                 + ", cache: " + name);
     }
 
@@ -51,7 +52,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
       final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
       if (destinations == null) {
         LOG.warn("Could not find server event destinations for cache: "
-                                        + name + ". Incoming event: " + message);
+                 + name + ". Incoming event: " + event);
         return;
       }
 
@@ -61,12 +62,12 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
         final Set<ServerEventType> eventTypes = destination.getValue();
         if (eventTypes.contains(type)) {
           handlerFound = true;
-          target.handleServerEvent(type, extractStringIfNecessary(message.getKey()));
+          target.handleServerEvent(type, extractStringIfNecessary(event.getKey()));
         }
       }
 
       if (!handlerFound) {
-        throw new IllegalStateException("Could not find handler for server event: " + message);
+        throw new IllegalStateException("Could not find handler for server event: " + event);
       }
     } finally {
       lock.readLock().unlock();

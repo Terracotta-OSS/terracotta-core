@@ -10,7 +10,7 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ServerEventDestination;
-import com.tc.object.ServerEventType;
+import com.tc.server.ServerEventType;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
