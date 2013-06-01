@@ -372,9 +372,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     synchronized (this.localLock) {
       item = getValueUnlockedFromCache(key);
       if (item != null) { return item.getValueObject(); }
-    }
+
       Object value = getValueForKeyFromServer(map, key, true);
-    synchronized (this.localLock) {
       if (value != null) {
         updateLocalCacheIfNecessary(key, value);
       }
