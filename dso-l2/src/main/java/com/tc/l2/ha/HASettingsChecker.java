@@ -9,6 +9,8 @@ import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * Checks if the TC-Properties and TC-Config settings for Health Checker and Reconnect are adequate to provide High
  * Availability. The checks are inspired from the experiences described in Field War Stories (FWS) in JIRA. The checks
@@ -58,8 +60,8 @@ public class HASettingsChecker {
     this.l2l2HealthCheckFailureTolerance = interNodeHealthCheckTime(l2l2PingIdleTime, l2l2SocketConnectCount,
                                                                     l2l2PingInterval, l2l2PingProbes,
                                                                     l2l2SocketConnectTimeout);
-    this.clientReconnectWindow = config.dsoL2Config().clientReconnectWindow();
-    this.electionTime = config.getActiveServerGroupForThisL2().getElectionTimeInSecs();
+    this.clientReconnectWindow = SECONDS.toMillis(config.dsoL2Config().clientReconnectWindow());
+    this.electionTime = SECONDS.toMillis(config.getActiveServerGroupForThisL2().getElectionTimeInSecs());
     this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);
   }
 
