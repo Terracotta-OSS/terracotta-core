@@ -111,7 +111,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
   public int getCount() {
     return count;
   }
-
+  
   @Override
   public boolean isValid() {
     return !started;
@@ -119,7 +119,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
 
   @Override
   public String toString() {
-    return "AbstractEvictionTrigger{" + "name=" + name + " - " + oid + ", count=" + count + ", started=" + started
+    return "AbstractEvictionTrigger{" + "name=" + name + " - " + oid + ", collected count=" + count + ", started=" + started
            + ", startTime=" + startTime + ", endTime=" + endTime + ", processed=" + processed + ", map evicting="
            + mapEvicting + ", map size=" + mapSize + ", evicting=" + evicting + '}';
   }

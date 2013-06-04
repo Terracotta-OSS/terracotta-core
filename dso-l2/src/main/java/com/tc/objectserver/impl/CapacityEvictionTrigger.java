@@ -32,6 +32,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   private boolean                  valid         = true;
   private final ServerMapEvictionManager    evictor;
   private boolean                   completed = true;
+  private int                      count = 0;
+  private java.util.UUID           id = java.util.UUID.randomUUID();
 
   public CapacityEvictionTrigger(ServerMapEvictionManager engine, ObjectID oid) {
     super(oid);
@@ -41,14 +43,19 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   @Override
   public boolean startEviction(EvictableMap map) {
     start();
-    
-    if ( !valid ) {
-// job has already been performed on previous iteration
-      return false;
+
+    try {
+      if ( !valid ) {
+  // job has already been performed on previous iteration
+        return false;
+      }
+    } finally {
+      reset();
     }
-    reset();
+    
     max = map.getMaxTotalCount();
     size = map.getSize();
+    count += 1;
     // ignore return value, capacity needs to make an independent decision on whether to run
     if (max >= 0 && size > max) {
       return super.startEviction(map);
@@ -138,7 +145,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
 
   @Override
   public String toString() {
-    return "CapacityEvictionTrigger{" + ", size=" + size + ", max=" + max + ", valid=" + valid
+    return "CapacityEvictionTrigger{id=" + id + ", count=" + count +", size=" + size + ", max=" + max + ", valid=" + valid
            + ", was above capacity=" + aboveCapacity + ", client set=" + clientSetCount + ", parent="
            + super.toString() + '}';
   }

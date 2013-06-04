@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -70,10 +71,10 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   private final boolean                       persistent;
   private final ObjectManager                 objectManager;
   private final ServerTransactionFactory      serverTransactionFactory;
-  private final Set<ObjectID>                 currentlyEvicting               = Collections
-                                                                                  .synchronizedSet(new HashSet<ObjectID>());
+  private final Set<ObjectID>                 currentlyEvicting               = new HashSet<ObjectID>();
   private final Set<EvictionListener>         listeners                       = new HashSet<EvictionListener>();
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
+  private final Map<ServerTransactionID, ObjectID> inflightEvictions          = new ConcurrentHashMap<ServerTransactionID, ObjectID>();
 
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
@@ -94,9 +95,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     this.transactionBatchManager = scc.getTransactionBatchManager();
 
     // if running in persistence mode, we need to save each in-flight transaction to FRS and delete it when complete
-    if(persistent) {
-      scc.getTransactionManager().addTransactionListener(this);
-    }
+    scc.getTransactionManager().addTransactionListener(this);
   }
 
   public void startEvictor() {
@@ -119,38 +118,35 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
     return EVICTOR_LOGGING;
   }
 
-  boolean markEvictionInProgress(final ObjectID oid) {
+  synchronized boolean markEvictionInProgress(final ObjectID oid) {
     boolean starting = this.currentlyEvicting.add(oid);
     if ( starting ) {
       if ( EVICTOR_LOGGING ) {
         logger.debug("starting eviction " + oid);
       }
-      synchronized (listeners) {
-        Iterator<EvictionListener> list = listeners.iterator();
-        while ( list.hasNext() ) {
-          if ( list.next().evictionStarted(oid) ) {
-            list.remove();
-          }
+      Iterator<EvictionListener> list = listeners.iterator();
+      while ( list.hasNext() ) {
+        if ( list.next().evictionStarted(oid) ) {
+          list.remove();
         }
       }
     }
     return starting;
   }
 
-  void markEvictionDone(final ObjectID oid) {
+  synchronized void markEvictionDone(final ObjectID oid) {
     if ( !this.currentlyEvicting.remove(oid) ) {
       throw new AssertionError("not evicting");
     } else {
       if ( EVICTOR_LOGGING ) {
         logger.debug("ending eviction " + oid);
       }
-      synchronized (listeners) {
-        Iterator<EvictionListener> list = listeners.iterator();
-        while ( list.hasNext() ) {
-          EvictionListener evl = list.next();
-          if ( evl.evictionCompleted(oid) ) {
-            list.remove();
-          }
+      
+      Iterator<EvictionListener> list = listeners.iterator();
+      while ( list.hasNext() ) {
+        EvictionListener evl = list.next();
+        if ( evl.evictionCompleted(oid) ) {
+          list.remove();
         }
       }
     }
@@ -194,15 +190,11 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
     TransactionBatchContext batchContext = new ServerTransactionBatchContext(localNodeID, serverTransaction,
         serializer);
+    
+    inflightEvictions.put(serverTransaction.getServerTransactionID(), oid);
 
     evictionTransactionPersistor.saveEviction(serverTransaction.getServerTransactionID(), oid, cacheName, candidates);
     transactionBatchManager.processTransactions(batchContext);
-    
-    markEvictionDone(oid);
-
-    if (EVICTOR_LOGGING) {
-      logger.debug("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
-    }
   }
 
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
@@ -214,19 +206,29 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
 
   @Override
   public void transactionCompleted(ServerTransactionID stxID) {
-    evictionTransactionPersistor.removeEviction(stxID);
-  }
-  
-  public void addEvictionListener(EvictionListener listener) {
-    synchronized ( listeners ) {
-      listeners.add(listener);
+    ObjectID targetID = inflightEvictions.remove(stxID);
+    
+    if ( targetID == null ) {
+      return;
+    }
+    
+    markEvictionDone(targetID);
+
+    if (EVICTOR_LOGGING) {
+      logger.debug("Server Map Eviction  : Evicted  from " + targetID);
+    }
+    
+    if ( persistent ) {
+      evictionTransactionPersistor.removeEviction(stxID);
     }
   }
   
-  public void removeEvictionListener(EvictionListener listener) {
-    synchronized ( listeners ) {
+  public synchronized void addEvictionListener(EvictionListener listener) {
       listeners.add(listener);
-    }
+  }
+  
+  public synchronized void removeEvictionListener(EvictionListener listener) {
+      listeners.add(listener);
   }
 
 }

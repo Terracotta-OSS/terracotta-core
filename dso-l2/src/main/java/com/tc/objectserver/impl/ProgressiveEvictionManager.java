@@ -42,6 +42,8 @@ import com.tc.util.Conversion;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -175,6 +177,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     log(this.threshold.log(L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD));
 
     this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
+    this.evictionGrp = new ThreadGroup(evictionGrp, "Eviction Worker Group");
+
     this.agent = new ThreadPoolExecutor(4, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
                                         new ThreadFactory() {
                                           private int count = 1;
@@ -244,7 +248,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   @Override
   public boolean scheduleCapacityEviction(ObjectID oid) {
     if ( evictor.markEvictionInProgress(oid) ) {
-      return doEvictionOn(new CapacityEvictionTrigger(this, oid));
+      CapacityEvictionTrigger trigger = new CapacityEvictionTrigger(this, oid);
+      return doEvictionOn(trigger);
     }
     return false;
   }
@@ -278,7 +283,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
     return false;
   }
-
+  
   /*
    * return of false means the map is gone
    */
@@ -291,10 +296,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     ObjectID oid = triggerParam.getId();
+
+    currentTrigger.set(triggerParam);
+    
     boolean isDone = false;
 
     final ManagedObject mo = this.objectManager.getObjectByIDReadOnly(oid);
-    currentTrigger.set(triggerParam);
     try {
       if (mo == null) {
         if (evictor.isLogging()) {

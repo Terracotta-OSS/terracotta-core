@@ -224,7 +224,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             sampled = 100;
         }
         
-        if ( ev.isEvictionEnabled() && max > 0 && count - max > 0 ) {
+        if ( ev.isEvictionEnabled() && count - max > 0 ) {
             sampled = count - max;
             dumpLive = true;
         }
