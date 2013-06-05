@@ -295,7 +295,7 @@ public class TCTestCase extends TestCase {
   }
 
   protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
-    cancelScheduleTask();
+    cancelTimeoutTask();
     Throwable exceptionInTimeoutCallback = (Throwable) beforeTimeoutException.get();
 
     // favor the "real" exception to make test fail. If there was a exception in the timeout callback,
@@ -365,7 +365,7 @@ public class TCTestCase extends TestCase {
     timeoutTimer.schedule(timerTask, delay);
   }
 
-  private void cancelScheduleTask() {
+  private void cancelTimeoutTask() {
     if (timeoutTaskAdded.commit(true, false)) {
       if (timerTask != null) {
         timerTask.cancel();
