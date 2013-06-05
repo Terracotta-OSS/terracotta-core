@@ -20,6 +20,11 @@ import java.util.Vector;
 
 public class CacheManagerTest extends TCTestCase implements Evictable {
 
+  public CacheManagerTest() {
+    super();
+    disableTest();
+  }
+
   private static final int BYTES_SIZE       = 10240;
   int                      usedT            = 50;
   int                      usedCritialT     = 80;
