@@ -272,5 +272,11 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       throw new ImplementMe();
 
     }
+
+    @Override
+    public void rejoinInProgress(boolean rejoinInProgress) {
+      throw new ImplementMe();
+
+    }
   }
 }

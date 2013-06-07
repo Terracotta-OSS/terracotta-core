@@ -111,6 +111,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private void checkAndSetstate() {
     throwExceptionIfNecessary(true);
     state = State.REJOIN_IN_PROGRESS;
+    globalLocalCacheManager.rejoinInProgress(true);
     notifyAll();
   }
 
@@ -562,6 +563,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isStopped()) { return; }
     assertPausedOrRejoinInProgress("Attempt to init handshake while");
+    globalLocalCacheManager.rejoinInProgress(false);
     this.state = State.STARTING;
     globalLocalCacheManager.addAllObjectIDsToValidate(handshakeMessage.getObjectIDsToValidate(), remoteNode);
   }

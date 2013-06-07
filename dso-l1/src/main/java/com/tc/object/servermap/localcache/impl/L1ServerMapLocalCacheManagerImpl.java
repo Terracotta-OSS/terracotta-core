@@ -261,6 +261,11 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   @Override
+  public void rejoinInProgress(boolean rejoinInProgress) {
+    tcObjectSelfStore.rejoinInProgress(rejoinInProgress);
+  }
+
+  @Override
   public synchronized void shutdown(boolean fromShutdownHook) {
     tcObjectSelfStore.shutdown(fromShutdownHook);
 

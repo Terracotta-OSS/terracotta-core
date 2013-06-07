@@ -42,5 +42,7 @@ public interface TCObjectSelfStore extends ClearableCallback {
 
   void shutdown(boolean fromShutdownHook);
 
+  void rejoinInProgress(boolean rejoinInProgress);
+
   void removeTCObjectSelf(TCObjectSelf self);
 }
