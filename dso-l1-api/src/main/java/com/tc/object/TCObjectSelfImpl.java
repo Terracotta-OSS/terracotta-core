@@ -20,7 +20,7 @@ import java.lang.ref.WeakReference;
  */
 public class TCObjectSelfImpl implements TCObjectSelf {
 
-  private volatile transient ObjectID oid;
+  protected volatile transient ObjectID oid;
   private volatile transient TCClass  tcClazz;
   private volatile transient boolean  isNew;
   private volatile transient long     version;

@@ -52,7 +52,6 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   private volatile int               lastAccessedTime;
 
   private transient T                cached;
-  private transient volatile boolean shared                                    = false;
   private transient volatile boolean alreadyInCache                            = false;
 
   public SerializedMapValue() {
@@ -69,18 +68,17 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   @Override
   public void __tc_managed(TCObject t) {
     if (t != this) { throw new AssertionError(); }
-    shared = true;
   }
 
   @Override
   public TCObject __tc_managed() {
-    if (!shared) { return null; }
+    if (oid == null) { return null; }
     return this;
   }
 
   @Override
   public boolean __tc_isManaged() {
-    return shared;
+    return oid != null;
   }
 
   /**
@@ -155,8 +153,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   @Override
   public String toString() {
     return "SerializedEntry [oid: " + getObjectID() + ", cached=" + cached + ", value=" + value + ", createTime="
-           + createTime + ", lastAccessedTime=" + lastAccessedTime + ", alreadyInCache=" + alreadyInCache + ", shared="
-           + shared + "]";
+           + createTime + ", lastAccessedTime=" + lastAccessedTime + ", alreadyInCache=" + alreadyInCache + "]";
   }
 
   @Override
@@ -166,7 +163,6 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     out.writeInt(lastAccessedTime);
     out.writeInt(value.length);
     out.write(value);
-    out.writeBoolean(shared);
   }
 
   @Override
@@ -179,7 +175,6 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     in.readFully(localValue);
     internalSetValue(localValue);
     this.alreadyInCache = true;
-    this.shared = in.readBoolean();
   }
 
   @Override
