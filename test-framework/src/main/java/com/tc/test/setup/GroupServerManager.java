@@ -646,11 +646,11 @@ public class GroupServerManager {
   }
 
   public boolean dumpClusterState() throws Exception {
-
+    boolean rv = true;
     for (int i = 0; i < getGroupData().getServerCount(); i++) {
-      if (!dumpClusterStateInternal(i)) return false;
+      if (!dumpClusterStateInternal(i)) rv = false;
     }
-    return true;
+    return rv;
   }
 
   private boolean dumpClusterStateInternal(int serverIndex) throws IOException, InterruptedException, Exception {
