@@ -455,42 +455,23 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   private void sendBatches(final boolean ignoreMax, final String message) {
-    boolean isInterrupted = false;
-    try {
-
-      try {
-        ClientTransactionBatch batch = batchManager.sendNextBatch(ignoreMax);
-        while (batch != null) {
-          if (message != null && logger.isDebugEnabled()) {
-            this.logger.debug(message + " : Sending batch containing " + batch.numberOfTxnsBeforeFolding() + " txns");
-          }
-          batch = batchManager.sendNextBatch(ignoreMax);
-        }
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
+    ClientTransactionBatch batch = batchManager.sendNextBatch(ignoreMax);
+    while (batch != null) {
+      if (message != null && logger.isDebugEnabled()) {
+        this.logger.debug(message + " : Sending batch containing " + batch.numberOfTxnsBeforeFolding() + " txns");
       }
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
+      batch = batchManager.sendNextBatch(ignoreMax);
     }
   }
 
   void resendOutstanding() {
-    boolean isInterrupted = false;
-    try {
-      final List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
-      if (toSend.isEmpty()) {
-        sendBatches(false, " resendOutstanding()");
-      } else {
-        try {
-          batchManager.resendList(toSend);
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
-        }
-      }
-      batchManager.waitForEmpty();
-    } finally {
-      Util.selfInterruptIfNeeded(isInterrupted);
+    final List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
+    if (toSend.isEmpty()) {
+      sendBatches(false, " resendOutstanding()");
+    } else {
+      batchManager.resendList(toSend);
     }
+    batchManager.waitForEmpty();
   }
 
   List getTransactionSequenceIDs() {
@@ -776,7 +757,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       agent = null;
     }
 
-    private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) throws InterruptedException {
+    private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) {
       if (ignoreMax
           || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
         ClientTransactionBatch batch = sequencer.getNextBatch();
@@ -795,7 +776,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       return incompleteBatches.get(id);
     }
 
-    private synchronized void resendList(List<TxnBatchID> toSend) throws InterruptedException {
+    private synchronized void resendList(List<TxnBatchID> toSend) {
       // sendList.clear();
       lastsid = null;
       for (TxnBatchID id : toSend) {
