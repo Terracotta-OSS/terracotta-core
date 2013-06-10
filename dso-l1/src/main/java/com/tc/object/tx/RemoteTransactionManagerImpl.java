@@ -121,7 +121,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   public void preCleanup() {
     synchronized (this.lock) {
       checkAndSetstate();
-      lockAccounting.cleanup();
       sequencer.cleanup();
     }
   }
@@ -133,7 +132,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       lockFlushCallbacks.clear();
       batchManager.clear();
       batchAccounting = new TransactionBatchAccounting();
-      lockAccounting.cleanup();
       sequencer.cleanup();
     }
   }

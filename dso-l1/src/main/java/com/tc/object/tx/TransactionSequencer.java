@@ -93,6 +93,7 @@ public class TransactionSequencer implements ClearableCallback {
   public synchronized void cleanup() {
     sequence = new SequenceGenerator(1);
     pendingBatches.clear();
+    lockAccounting.cleanup();
     createNewBatch();
     notifyAll();
   }
