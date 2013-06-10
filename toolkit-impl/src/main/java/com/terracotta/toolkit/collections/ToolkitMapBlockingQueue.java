@@ -11,7 +11,7 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
+import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -49,7 +49,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   // capacity is immutable, so let's cache it locally
   private final int capacity;
 
-  private final ToolkitSubtypeStatusImpl status;
+  private final ToolkitObjectStatusImpl status;
 
   public ToolkitMapBlockingQueue(final String name, final ToolkitStore<String, E> map,
                                  final ToolkitReadWriteLock lock) {
@@ -80,7 +80,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     this.lock = lock;
     this.notEmptyOrFull = writeLock().getCondition();
     this.capacity = capacity;
-    this.status = new ToolkitSubtypeStatusImpl();
+    this.status = new ToolkitObjectStatusImpl();
 
     final Integer oldCapacity = (Integer)map.get(CAPACITY_KEY);
     if (oldCapacity == null) {

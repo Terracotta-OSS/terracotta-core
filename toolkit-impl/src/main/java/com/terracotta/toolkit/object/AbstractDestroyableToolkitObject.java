@@ -9,22 +9,21 @@ import org.terracotta.toolkit.rejoin.RejoinException;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.factory.impl.AbstractPrimaryToolkitObjectFactory;
 import com.terracotta.toolkit.rejoin.RejoinCallback;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
 
 public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> implements DestroyableToolkitObject,
     RejoinCallback {
 
   protected final AbstractPrimaryToolkitObjectFactory factory;
   protected final DestroyApplicator                   destroyApplicator;
-  private volatile boolean                            destroyed;
-  private final AtomicBoolean                         rejoinInProgress = new AtomicBoolean(false);
+  protected final ToolkitObjectStatusImpl             status;
 
   public AbstractDestroyableToolkitObject(ToolkitObjectFactory<T> factory) {
     if (!(factory instanceof AbstractPrimaryToolkitObjectFactory)) { throw new IllegalStateException(); }
 
     this.factory = (AbstractPrimaryToolkitObjectFactory) factory;
     this.destroyApplicator = new DestroyApplicatorImpl(this);
+    status = new ToolkitObjectStatusImpl();
   }
 
   public final DestroyApplicator getDestroyApplicator() {
@@ -33,27 +32,28 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
   @Override
   public final boolean isDestroyed() {
-    return destroyed;
+    return status.isDestroyed();
   }
 
   @Override
   public final void destroy() {
-    if (rejoinInProgress.get()) { throw new RejoinException("Cannot destroy object with name: '" + getName()
-                                                            + "' as rejoin is in progress. (type: "
-                                                            + getClass().getName() + ")"); }
+    if (status.isRejoinInProgress()) { throw new RejoinException("Cannot destroy object with name: '" + getName()
+                                                                 + "' as rejoin is in progress. (type: "
+                                                                 + getClass().getName() + ")"); }
     factory.destroy(this);
   }
 
   @Override
   public final void rejoinStarted() {
-    rejoinInProgress.set(true);
+    status.incrementRejoinCount();
+    status.setRejoinInProgress(true);
     doRejoinStarted();
   }
 
   @Override
   public final void rejoinCompleted() {
     doRejoinCompleted();
-    rejoinInProgress.set(false);
+    status.setRejoinInProgress(false);
   }
 
   protected abstract void doRejoinStarted();
@@ -62,7 +62,6 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
   public void destroyFromCluster() {
     doDestroy();
-    destroyed = true;
   }
 
   /**
@@ -80,7 +79,7 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
     @Override
     public void applyDestroy() {
-      toolkitObject.destroyed = true;
+      toolkitObject.status.setDestroyed();
       toolkitObject.factory.applyDestroy(toolkitObject);
       toolkitObject.applyDestroy();
     }

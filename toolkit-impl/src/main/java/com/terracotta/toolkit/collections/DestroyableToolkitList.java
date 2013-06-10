@@ -13,8 +13,7 @@ import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
+import com.terracotta.toolkit.util.ToolkitObjectStatus;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -27,7 +26,6 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private volatile ToolkitListInternal<E>                      list;
   private final String                                         name;
   private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
-  private final ToolkitSubtypeStatusImpl                       status;
 
   public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                 ToolkitListImpl<E> list, String name) {
@@ -36,13 +34,11 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     this.list = list;
     this.name = name;
     list.setApplyDestroyCallback(getDestroyApplicator());
-    status = new ToolkitSubtypeStatusImpl();
   }
 
   @Override
   public void doRejoinStarted() {
     this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitListInternal.class);
-    status.incrementRejoinCount();
   }
 
   @Override
@@ -59,8 +55,8 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void applyDestroy() {
+    // status.setDestroyed() is called from Parent class
     this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitListInternal.class);
-    status.setDestroyed();
   }
 
   @Override
@@ -196,9 +192,9 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   private class SubListWrapper implements List<E> {
     private final List<E>              subList;
     private final int                  currentRejoinCount;
-    private final ToolkitSubtypeStatus subTypeStatus;
+    private final ToolkitObjectStatus subTypeStatus;
 
-    public SubListWrapper(List<E> subList, ToolkitSubtypeStatus status) {
+    public SubListWrapper(List<E> subList, ToolkitObjectStatus status) {
       this.subList = subList;
       this.currentRejoinCount = status.getCurrentRejoinCount();
       this.subTypeStatus = status;

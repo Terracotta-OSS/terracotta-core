@@ -59,6 +59,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public void applyDestroy() {
+    // status.setDestroyed() is called from Parent class
     this.notifier = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitNotifier.class);
   }
 

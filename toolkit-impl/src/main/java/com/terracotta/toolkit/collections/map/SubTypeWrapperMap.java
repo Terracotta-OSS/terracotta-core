@@ -3,22 +3,22 @@ package com.terracotta.toolkit.collections.map;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
-import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
+import com.terracotta.toolkit.util.ToolkitObjectStatus;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
 public class SubTypeWrapperMap<K, V> implements Map<K, V> {
-  protected final Map<K, V>            map;
+  protected final Map<K, V>           map;
 
-  protected final ToolkitSubtypeStatus status;
-  protected final int                  rejoinCount;
-  protected final String               superTypeName;
-  protected final ToolkitObjectType    toolkitObjectType;
+  protected final ToolkitObjectStatus status;
+  protected final int                 rejoinCount;
+  protected final String              superTypeName;
+  protected final ToolkitObjectType   toolkitObjectType;
 
-  public SubTypeWrapperMap(Map<K, V> map, ToolkitSubtypeStatus status, String superTypeName,
-                                             ToolkitObjectType toolkitObjectType) {
+  public SubTypeWrapperMap(Map<K, V> map, ToolkitObjectStatus status, String superTypeName,
+                           ToolkitObjectType toolkitObjectType) {
     super();
     this.map = map;
     this.status = status;
@@ -105,14 +105,12 @@ public class SubTypeWrapperMap<K, V> implements Map<K, V> {
   @Override
   public Collection<V> values() {
     assertStatus();
-    return new SubTypeWrapperCollection<V>(map.values(), status, superTypeName,
-                                                             ToolkitObjectType.CACHE);
+    return new SubTypeWrapperCollection<V>(map.values(), status, superTypeName, ToolkitObjectType.CACHE);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
     assertStatus();
-    return new SubTypeWrapperSet<Entry<K, V>>(map.entrySet(), status, this.superTypeName,
-                                                            ToolkitObjectType.CACHE);
+    return new SubTypeWrapperSet<Entry<K, V>>(map.entrySet(), status, this.superTypeName, ToolkitObjectType.CACHE);
   }
 }

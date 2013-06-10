@@ -17,7 +17,6 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 import com.terracotta.toolkit.util.collections.OnGCCallable;
 
 import java.io.Serializable;
@@ -31,22 +30,19 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
     OnGCCallable {
 
-  private volatile AggregateServerMap<K, V>   aggregateServerMap;
+  private volatile AggregateServerMap<K, V>        aggregateServerMap;
   private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
   private volatile ToolkitCacheImplInterface<K, V> localDelegate;
-  private final String                        name;
-  private final ToolkitSubtypeStatusImpl      status;
-  private volatile OnGCCallable               onGCCallable;
+  private final String                             name;
+  private volatile OnGCCallable                    onGCCallable;
 
-  public ToolkitCacheImpl(ToolkitObjectFactory factory, String name,
-                          AggregateServerMap<K, V> delegate) {
+  public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate) {
     super(factory);
     this.name = name;
     this.aggregateServerMap = delegate;
     this.activeDelegate = aggregateServerMap;
     this.localDelegate = aggregateServerMap;
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
-    status = new ToolkitSubtypeStatusImpl();
     this.onGCCallable = new OnGCCallable(aggregateServerMap);
   }
 
@@ -54,7 +50,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void doRejoinStarted() {
     this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
     aggregateServerMap.rejoinStarted();
-    status.incrementRejoinCount();
   }
 
   @Override
@@ -70,9 +65,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void applyDestroy() {
+    // status.setDestroyed() is called from Parent class
     this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
     this.localDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
-    status.setDestroyed();
   }
 
   @Override

@@ -4,20 +4,20 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.terracotta.toolkit.collections.StatusAwareIterator;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
+import com.terracotta.toolkit.util.ToolkitObjectStatus;
 
 import java.util.Collection;
 import java.util.Iterator;
 
 public class SubTypeWrapperCollection<E> implements Collection<E> {
-  private final Collection<E>          collection;
+  private final Collection<E>         collection;
 
-  protected final ToolkitSubtypeStatus status;
-  private final int                    rejoinCount;
-  protected final String               superTypeName;
-  protected final ToolkitObjectType    toolkitObjectType;
+  protected final ToolkitObjectStatus status;
+  private final int                   rejoinCount;
+  protected final String              superTypeName;
+  protected final ToolkitObjectType   toolkitObjectType;
 
-  public SubTypeWrapperCollection(Collection<E> collection, ToolkitSubtypeStatus status, String superTypeName,
+  public SubTypeWrapperCollection(Collection<E> collection, ToolkitObjectStatus status, String superTypeName,
                                   ToolkitObjectType toolkitObjectType) {
     this.collection = collection;
     this.status = status;

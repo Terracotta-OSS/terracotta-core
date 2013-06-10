@@ -11,7 +11,7 @@ import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
+import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,11 +22,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObject {
   static final Integer                            DUMMY_VALUE = 0;
   private final RejoinAwareToolkitMap<E, Integer> toolkitMap;
-  protected final ToolkitSubtypeStatusImpl        status;
+  protected final ToolkitObjectStatusImpl         status;
 
   public ToolkitSetImpl(RejoinAwareToolkitMap<E, Integer> toolkitMap) {
     this.toolkitMap = toolkitMap;
-    this.status = new ToolkitSubtypeStatusImpl();
+    this.status = new ToolkitObjectStatusImpl();
   }
 
   @Override

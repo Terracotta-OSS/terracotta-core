@@ -5,17 +5,17 @@ package com.terracotta.toolkit.collections;
 
 import org.terracotta.toolkit.rejoin.RejoinException;
 
-import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
+import com.terracotta.toolkit.util.ToolkitObjectStatus;
 
 import java.util.Iterator;
 
 public class StatusAwareIterator<E> implements Iterator<E> {
 
-  private final Iterator<E>          iterator;
-  private final ToolkitSubtypeStatus status;
-  private final int                  currentRejoinCount;
+  private final Iterator<E>         iterator;
+  private final ToolkitObjectStatus status;
+  private final int                 currentRejoinCount;
 
-  public StatusAwareIterator(Iterator<E> iterator, ToolkitSubtypeStatus status) {
+  public StatusAwareIterator(Iterator<E> iterator, ToolkitObjectStatus status) {
     this.iterator = iterator;
     this.status = status;
     this.currentRejoinCount = this.status.getCurrentRejoinCount();

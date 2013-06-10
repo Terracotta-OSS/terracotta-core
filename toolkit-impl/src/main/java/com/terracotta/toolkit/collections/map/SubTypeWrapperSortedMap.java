@@ -2,7 +2,7 @@ package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 
-import com.terracotta.toolkit.util.ToolkitSubtypeStatus;
+import com.terracotta.toolkit.util.ToolkitObjectStatus;
 
 import java.util.Comparator;
 import java.util.SortedMap;
@@ -10,7 +10,7 @@ import java.util.SortedMap;
 public class SubTypeWrapperSortedMap<K, V> extends SubTypeWrapperMap<K, V> implements SortedMap<K, V> {
   private final SortedMap<K, V> sortedMap;
 
-  public SubTypeWrapperSortedMap(SortedMap<K, V> map, ToolkitSubtypeStatus status, String superTypeName,
+  public SubTypeWrapperSortedMap(SortedMap<K, V> map, ToolkitObjectStatus status, String superTypeName,
                                  ToolkitObjectType toolkitObjectType) {
     super(map, status, superTypeName, toolkitObjectType);
     this.sortedMap = map;

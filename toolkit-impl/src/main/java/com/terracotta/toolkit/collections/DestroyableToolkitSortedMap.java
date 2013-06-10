@@ -16,7 +16,6 @@ import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,7 +29,6 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   private final String                                              name;
   private volatile ToolkitSortedMap<K, V>                           map;
   private final IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup;
-  private final ToolkitSubtypeStatusImpl                            status;
 
   public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory,
                                      IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
@@ -39,14 +37,12 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
     this.lookup = lookup;
     this.map = map;
     this.name = name;
-    status = new ToolkitSubtypeStatusImpl();
     map.setApplyDestroyCallback(getDestroyApplicator());
   }
 
   @Override
   public void doRejoinStarted() {
     this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitSortedMap.class);
-    status.incrementRejoinCount();
   }
 
   @Override
@@ -63,6 +59,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void applyDestroy() {
+    // status.setDestroyed() is called from Parent class
     this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
   }
 

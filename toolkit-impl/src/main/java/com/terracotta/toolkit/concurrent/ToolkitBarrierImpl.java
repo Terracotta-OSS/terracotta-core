@@ -9,7 +9,7 @@ import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.rejoin.RejoinCallback;
 import com.terracotta.toolkit.util.ToolkitIDGenerator;
-import com.terracotta.toolkit.util.ToolkitSubtypeStatusImpl;
+import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
 
 import java.io.Serializable;
 import java.util.concurrent.BrokenBarrierException;
@@ -25,7 +25,7 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
   private final ToolkitLock                               lock;
   private final long                                      uid;
   private final ToolkitIDGenerator                        longIdGenerator;
-  private final ToolkitSubtypeStatusImpl                  status;
+  private final ToolkitObjectStatusImpl                   status;
   private final AtomicInteger                             currentRejoinCount = new AtomicInteger();
 
   public ToolkitBarrierImpl(String name, int parties, ToolkitStore<String, ToolkitBarrierState> clusteredMap,
@@ -51,7 +51,7 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
                                                                                 + state.getParties()); }
     this.uid = state.getUid();
     this.longIdGenerator = barrierIdGenerator;
-    status = new ToolkitSubtypeStatusImpl();
+    status = new ToolkitObjectStatusImpl();
     currentRejoinCount.set(status.getCurrentRejoinCount());
   }
 
