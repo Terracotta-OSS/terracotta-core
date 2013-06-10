@@ -33,11 +33,11 @@
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
 
     <surefire.version>2.12.4</surefire.version>
-    <gmaven-plugin.version>1.4</gmaven-plugin.version>
+    <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
     <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
     <maven-appserver-plugin.version>1.0.4</maven-appserver-plugin.version>
-
+    <gmavenProviderSelection>2.0</gmavenProviderSelection>
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <tc.dso.globalmode>false</tc.dso.globalmode>
@@ -188,6 +188,10 @@
           <groupId>org.codehaus.gmaven</groupId>
           <artifactId>gmaven-plugin</artifactId>
           <version>${gmaven-plugin.version}</version>
+          <configuration>
+            <providerSelection>${gmavenProviderSelection}</providerSelection>
+            <sourceEncoding>UTF-8</sourceEncoding>
+          </configuration>
           <executions>
             <execution>
               <id>generate-test-properties</id>
