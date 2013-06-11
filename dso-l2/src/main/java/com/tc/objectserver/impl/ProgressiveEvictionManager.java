@@ -368,7 +368,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     return triggerParam.collectEvictionCandidates(max, className, ev, clientObjectReferenceSet);
   }
 
-  Future<SampledRateCounter> emergencyEviction(final boolean pre, final int blowout) {
+  Future<SampledRateCounter> emergencyEviction(final int blowout) {
     final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
     List<Future<SampledRateCounter>> push = new ArrayList<Future<SampledRateCounter>>(evictableObjects.size());
     Random r = new Random();
@@ -379,21 +379,20 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     while (!list.isEmpty()) {
       final ObjectID mapID = list.remove(r.nextInt(list.size()));
       try {
-        if ( evictor.markEvictionInProgress(mapID) ) {
           push.add(agent.submit(new Callable<SampledRateCounter>() {
             @Override
             public SampledRateCounter call() throws Exception {
-              EvictionTrigger triggerLocal = (pre) ? new BrakingEvictionTrigger(mapID, blowout)
-                  : new EmergencyEvictionTrigger(objectManager, mapID, blowout);
-              doEvictionOn(triggerLocal);
-              emergencyCount.addAndGet(triggerLocal.getCount());
-              rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
+              if ( evictor.markEvictionInProgress(mapID) ) {
+                EvictionTrigger triggerLocal = new EmergencyEvictionTrigger(mapID, blowout);
+                doEvictionOn(triggerLocal);
+                emergencyCount.addAndGet(triggerLocal.getCount());
+                rate.increment(triggerLocal.getCount(), triggerLocal.getRuntimeInMillis());
+              }
               return rate;
             }
           }));
-        }
       } catch ( RejectedExecutionException rejected ) {
-        evictor.markEvictionDone(mapID);
+
       }
     }
     return new GroupFuture<SampledRateCounter>(push);
@@ -427,6 +426,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return evictor.prettyPrint(out);
+  }
+  
+  Set<ObjectID> getCurrentlyEvicting() {
+    return evictor.currentlyEvicting();
   }
 
   private void print(final String name, final Future<SampledRateCounter> counter) {
@@ -638,7 +641,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
       }
 
-      currentRun = emergencyEviction(false, turnCount++);
+      currentRun = emergencyEviction(turnCount++);
 
       // if already in emergency situation, really try hard to remove items.
       print("Emergency", currentRun);

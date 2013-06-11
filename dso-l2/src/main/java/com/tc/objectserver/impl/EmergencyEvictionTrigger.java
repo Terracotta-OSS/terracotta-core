@@ -30,7 +30,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     private final int blowout;
     private int sizeCount;
 
-    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int blowout) {
+    public EmergencyEvictionTrigger(ObjectID oid, int blowout) {
         super(oid);
         this.blowout = blowout;
     }

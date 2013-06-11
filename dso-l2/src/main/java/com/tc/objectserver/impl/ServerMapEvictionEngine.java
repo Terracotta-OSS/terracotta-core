@@ -230,5 +230,9 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   public synchronized void removeEvictionListener(EvictionListener listener) {
       listeners.add(listener);
   }
+  
+  public synchronized Set<ObjectID> currentlyEvicting() {
+    return new HashSet(currentlyEvicting);
+  }
 
 }
