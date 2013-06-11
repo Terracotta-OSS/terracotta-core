@@ -1084,7 +1084,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           BackupEntity backupEntity = new BackupEntity();
           backupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
           backupEntity.setSourceId(sourceId);
-          backupEntity.setError(e.getMessage());
+          backupEntity.setError(e.toString());
           backupEntities.add(backupEntity);
         }
       }
