@@ -1008,4 +1008,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     h += (h << 2) + (h << 14);
     return h ^ (h >>> 16);
   }
+
+  @Override
+  public void addTxnInProgressKeys(Set addSet, Set removeSet) {
+    this.cache.addTxnInProgressKeys(addSet, removeSet);
+  }
 }

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -949,6 +950,26 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         }
       }
       invalidations.removeAll(toRemoveSet);
+    } finally {
+      releaseAllLocks();
+    }
+  }
+
+  @Override
+  public void addTxnInProgressKeys(Set<Object> addSet, Set<Object> removeSet) {
+    grabAllLocks();
+    try {
+      for (Object object : pendingTransactionEntries.entrySet()) {
+        Entry<Object, Object> entry = (Entry<Object, Object>) object;
+        if (!(entry.getKey() instanceof ObjectID)) {
+          AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) entry.getValue();
+          if (value.getValueObject() != null) {
+            addSet.add(entry.getKey());
+          } else {
+            removeSet.add(entry.getKey());
+          }
+        }
+      }
     } finally {
       releaseAllLocks();
     }

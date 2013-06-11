@@ -14,6 +14,7 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.object.TCToolkitObject;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -100,4 +101,12 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   void setConfigFieldInternal(String fieldChanged, Object changedValue);
 
   void setLockStrategy(LOCK_STRATEGY strategy);
+
+  void addTxnInProgressKeys(Set<K> txnInProgressForAdd, Set<K> removeSet);
+
+  Set<K> keySet(Set<K> filterSet);
+
+  Collection<V> values(Set<K> filterSet);
+
+  Set<Entry<K, V>> entrySet(Set<K> filterSet);
 }

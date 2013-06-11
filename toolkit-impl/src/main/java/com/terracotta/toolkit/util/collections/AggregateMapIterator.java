@@ -3,20 +3,22 @@
  */
 package com.terracotta.toolkit.util.collections;
 
+import com.terracotta.toolkit.collections.map.InternalToolkitMap;
+
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 public abstract class AggregateMapIterator<T> implements Iterator<T> {
 
-  protected final Iterator<? extends Map> listIterator;
+  protected final Iterator<? extends InternalToolkitMap> listIterator;
   protected Iterator<T>                   currentIterator;
 
-  public AggregateMapIterator(Iterator<? extends Map> listIterator) {
+  public AggregateMapIterator(Iterator<? extends InternalToolkitMap> listIterator, Iterator additionalValues) {
     this.listIterator = listIterator;
+    this.currentIterator = additionalValues;
     while (this.listIterator.hasNext()) {
-      this.currentIterator = getNextIterator();
       if (this.currentIterator.hasNext()) { return; }
+      this.currentIterator = getNextIterator();
     }
   }
 
@@ -24,7 +26,7 @@ public abstract class AggregateMapIterator<T> implements Iterator<T> {
     return getClusterMapIterator(listIterator.next());
   }
 
-  public abstract Iterator<T> getClusterMapIterator(Map map);
+  public abstract Iterator<T> getClusterMapIterator(InternalToolkitMap map);
 
   @Override
   public boolean hasNext() {

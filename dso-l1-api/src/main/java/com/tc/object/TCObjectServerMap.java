@@ -259,4 +259,10 @@ public interface TCObjectServerMap<L> extends TCObject {
   void doLogicalExpire(L lockID, Object key, Object value);
 
   boolean doLogicalExpireUnlocked(TCServerMap map, Object key, Object value);
+
+  /**
+   * Adds the Keys for which pending additions are in progress to addSet and the Keys for which pending removes are in
+   * progress to removeSet.
+   */
+  void addTxnInProgressKeys(Set addSet, Set removeSet);
 }

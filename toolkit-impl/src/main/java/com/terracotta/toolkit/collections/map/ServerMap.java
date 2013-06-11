@@ -55,6 +55,7 @@ import com.terracottatech.search.SearchMetaData;
 import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -88,7 +89,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   protected volatile L1ServerMapLocalCacheStore                 l1ServerMapLocalCacheStore;
   protected volatile LockStrategy                               lockStrategy;
   private volatile String                                       instanceDsoLockName = null;
-  private volatile Collection<V>                                values              = null;
   private volatile TimeSource                                   timeSource;
   private final String                                          name;
   private final Consistency                                     consistency;
@@ -605,6 +605,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<K> keySet() {
+    return keySet(Collections.EMPTY_SET);
+  }
+
+  @Override
+  public Set<K> keySet(Set<K> filterSet) {
     Set keySet = null;
     try {
       keySet = tcObjectServerMap.keySet(this);
@@ -613,11 +618,18 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
+    keySet.removeAll(filterSet);
     return new ServerMapKeySet<K, V>(this, keySet);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
+    return entrySet(Collections.EMPTY_SET);
+  }
+
+  @Override
+  public Set<Entry<K, V>> entrySet(Set<K> filterSet) {
+
     Set keySet = null;
     try {
       keySet = tcObjectServerMap.keySet(this);
@@ -626,6 +638,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
+    keySet.removeAll(filterSet);
     return new ServerMapEntrySet<K, V>(this, keySet);
   }
 
@@ -1116,43 +1129,46 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Collection<V> values() {
-    if (values == null) {
-      values = new AbstractCollection<V>() {
-        @Override
-        public Iterator<V> iterator() {
-          return new Iterator<V>() {
-            private final Iterator<Entry<K, V>> i = entrySet().iterator();
-
-            @Override
-            public boolean hasNext() {
-              return i.hasNext();
-            }
-
-            @Override
-            public V next() {
-              return i.next().getValue();
-            }
-
-            @Override
-            public void remove() {
-              i.remove();
-            }
-          };
-        }
-
-        @Override
-        public int size() {
-          return ServerMap.this.size();
-        }
-
-        @Override
-        public boolean contains(Object v) {
-          return ServerMap.this.containsValue(v);
-        }
-      };
-    }
-    return values;
+    return values(Collections.EMPTY_SET);
   }
+
+  @Override
+  public Collection<V> values(final Set<K> filterSet) {
+    return new AbstractCollection<V>() {
+      @Override
+      public Iterator<V> iterator() {
+        return new Iterator<V>() {
+          private final Iterator<Entry<K, V>> i = entrySet(filterSet).iterator();
+
+          @Override
+          public boolean hasNext() {
+            return i.hasNext();
+          }
+
+          @Override
+          public V next() {
+            return i.next().getValue();
+          }
+
+          @Override
+          public void remove() {
+            i.remove();
+          }
+        };
+      }
+
+      @Override
+      public int size() {
+        return ServerMap.this.size();
+      }
+
+      @Override
+      public boolean contains(Object v) {
+        return ServerMap.this.containsValue(v);
+      }
+    };
+  }
+
 
   @Override
   public void cleanupOnDestroy() {
@@ -1449,5 +1465,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     public Object generateLockIdForKey(Object key) {
       return LOCK_PREFIX + name;
     }
+  }
+
+  @Override
+  public void addTxnInProgressKeys(Set<K> addSet, Set<K> removeSet) {
+    tcObjectServerMap.addTxnInProgressKeys(addSet, removeSet);
   }
 }

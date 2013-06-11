@@ -471,4 +471,9 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     return delegate.doLogicalExpireUnlocked(map, key, value);
   }
 
+  @Override
+  public void addTxnInProgressKeys(Set addSet, Set removeSet) {
+    delegate.addTxnInProgressKeys(addSet, removeSet);
+  }
+
 }

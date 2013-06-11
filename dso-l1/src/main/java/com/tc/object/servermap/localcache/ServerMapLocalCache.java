@@ -138,4 +138,6 @@ public interface ServerMapLocalCache {
 
   void handleObjectIDsToValidate(Invalidations invalidations);
 
+  void addTxnInProgressKeys(Set<Object> addSet, Set<Object> removeSet);
+
 }
