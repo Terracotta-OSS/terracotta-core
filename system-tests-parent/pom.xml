@@ -203,7 +203,7 @@
                 <source><![CDATA[
                   Properties outputProperties = new Properties()
                   project.properties.each { key, value ->
-                    if (key =~ /^tc\.tests\./) {
+                    if (key.startsWith("tc.tests")) {
                       outputProperties.setProperty(key, value)
                     }
                   }
