@@ -59,14 +59,13 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  private void waitUntilRunning() {
+  private void isShutdownThenException() {
     if (isShutdown) { throw new TCNotRunningException("TCObjectSelfStore already shutdown"); }
-    if (isRejoinInProgress) { throw new PlatformRejoinException(); }
   }
 
   @Override
   public void removeObjectById(ObjectID oid) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
@@ -84,7 +83,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public Object getById(ObjectID oid) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     long timePrev = System.currentTimeMillis();
     long startTime = timePrev;
@@ -140,8 +139,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   private void waitUntilNotified() {
-    waitUntilRunning();
-
+    isShutdownThenException();
+    if (isRejoinInProgress) { throw new PlatformRejoinException(); }
     boolean isInterrupted = false;
     try {
       // since i know I am going to wait, let me wait on client lock manager instead of this condition
@@ -151,10 +150,11 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     } catch (InterruptedException e) {
       isInterrupted = true;
     } finally {
-      waitUntilRunning();
       if (isInterrupted) {
         Thread.currentThread().interrupt();
       }
+      isShutdownThenException();
+      if (isRejoinInProgress) { throw new PlatformRejoinException(); }
     }
   }
 
@@ -166,7 +166,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     if (tcoSelf != null) {
       tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(tcoSelf);
@@ -175,7 +175,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void addTCObjectSelfTemp(TCObjectSelf tcObjectSelf) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     tcObjectStoreLock.writeLock().lock();
     try {
@@ -191,7 +191,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   @Override
   public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
                                  Object tcoself, final boolean isNew) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
@@ -221,7 +221,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     if (objectSelf == null) { return; }
 
@@ -246,7 +246,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
@@ -275,7 +275,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void removeTCObjectSelf(TCObjectSelf self) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
@@ -302,7 +302,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     tcObjectStoreLock.writeLock().lock();
     try {
@@ -320,7 +320,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public int size() {
-    waitUntilRunning();
+    isShutdownThenException();
 
     tcObjectStoreLock.readLock().lock();
     try {
@@ -332,7 +332,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void addAllObjectIDs(Set oids) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     tcObjectStoreLock.readLock().lock();
     try {
@@ -345,7 +345,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public boolean contains(ObjectID objectID) {
-    waitUntilRunning();
+    isShutdownThenException();
 
     tcObjectStoreLock.readLock().lock();
     try {
