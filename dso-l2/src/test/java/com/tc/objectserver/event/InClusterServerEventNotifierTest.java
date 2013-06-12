@@ -10,9 +10,9 @@ import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.Runners;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -46,8 +46,8 @@ public class InClusterServerEventNotifierTest {
     notifier.handleServerEvent(new BasicServerEvent(ServerEventType.EVICT, 1003, "cache1"));
 
     // wait for batcher to pick up events
-    while(batcher.messages.size() < 2) {
-      Thread.sleep(100L);
+    while (batcher.messages.size() < 2) {
+      Thread.sleep(50L);
     }
     assertEquals(2, batcher.messages.size());
 
@@ -82,7 +82,7 @@ public class InClusterServerEventNotifierTest {
   }
 
   private static final class MockBatcher extends ServerEventBatcher {
-    private final List<Message> messages = new ArrayList<Message>();
+    private final List<Message> messages = new CopyOnWriteArrayList<Message>();
 
     public MockBatcher(final DSOChannelManager channelManager) {
       super(channelManager, Runners.newSingleThreadScheduledTaskRunner());
