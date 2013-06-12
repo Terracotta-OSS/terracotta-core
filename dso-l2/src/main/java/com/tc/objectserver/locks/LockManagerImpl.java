@@ -329,7 +329,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
 
   private boolean isClientAlive(ClientID cid) {
     if (!this.channelManager.isActiveID(cid)) {
-      logger.warn("Lock Manager ignoring message received from dead client");
+      logger.warn("Lock Manager ignoring message received from dead client:" + cid);
       return false;
     }
     return true;
