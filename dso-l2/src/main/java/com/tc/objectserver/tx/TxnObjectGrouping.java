@@ -22,11 +22,16 @@ import java.util.Set;
 public final class TxnObjectGrouping implements PrettyPrintable {
   private static final int MAX_TXN_COUNT = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
 
+  // Turns out Object.hasCode() is a bit pricey in terms of CPU time. Just using a simple counter to create "hashes"
+  // This way the object groupings will be round-robinned around about the apply threads.
+  private static int nextHash = 0;
+
   private int addedTxns = 0;
   private ServerTransactionID txnID;
   private boolean closed;
   private final Set<ServerTransactionID>  txns = new HashSet<ServerTransactionID>();
   private final Map<ObjectID, ManagedObject> objects = new HashMap<ObjectID, ManagedObject>();
+  private final int hashCode = nextHash++;
 
   public TxnObjectGrouping(ServerTransactionID stxID) {
     addServerTransactionID(stxID);
@@ -94,6 +99,11 @@ public final class TxnObjectGrouping implements PrettyPrintable {
 
   public synchronized Collection<ManagedObject> getObjects() {
     return new ArrayList<ManagedObject>(objects.values());
+  }
+
+  @Override
+  public int hashCode() {
+    return hashCode;
   }
 
   @Override
