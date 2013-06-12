@@ -1314,7 +1314,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private static final class ObjectStore {
 
-    private final ConcurrentHashMap cacheUnmanaged = new ConcurrentHashMap<ObjectID, TCObject>(10240, 0.75f, 128);
+    private final ConcurrentHashMap objectStoreMap = new ConcurrentHashMap<ObjectID, TCObject>(10240, 0.75f, 128);
     private final TCObjectSelfStore             tcObjectSelfStore;
 
     ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
@@ -1322,7 +1322,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public void cleanup() {
-      cacheUnmanaged.clear();
+      objectStoreMap.clear();
     }
 
     public void shutdown(boolean fromShutdownHook) {
@@ -1330,7 +1330,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public int size() {
-      return this.cacheUnmanaged.size();
+      return this.objectStoreMap.size();
     }
 
     public void add(final TCObject obj) {
@@ -1340,11 +1340,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         return;
       }
 
-      this.cacheUnmanaged.put(obj.getObjectID(), obj);
+      this.objectStoreMap.put(obj.getObjectID(), obj);
     }
 
     public TCObject get(final ObjectID id) {
-      TCObject tc = (TCObject) this.cacheUnmanaged.get(id);
+      TCObject tc = (TCObject) this.objectStoreMap.get(id);
       if (tc == null) {
         tc = (TCObject) tcObjectSelfStore.getById(id);
       }
@@ -1352,7 +1352,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public Set addAllObjectIDs(final Set oids) {
-      oids.addAll(this.cacheUnmanaged.keySet());
+      oids.addAll(this.objectStoreMap.keySet());
       this.tcObjectSelfStore.addAllObjectIDs(oids);
       return oids;
     }
@@ -1361,11 +1361,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (tcobj instanceof TCObjectSelf) { throw new AssertionError(
                                                                     "TCObjectSelf should not have called removed from here: "
                                                                         + tcobj); }
-        this.cacheUnmanaged.remove(tcobj.getObjectID());
+        this.objectStoreMap.remove(tcobj.getObjectID());
     }
 
     public boolean contains(final ObjectID objectID) {
-      return this.cacheUnmanaged.containsKey(objectID)
+      return this.objectStoreMap.containsKey(objectID)
              || this.tcObjectSelfStore.contains(objectID);
     }
 
