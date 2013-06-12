@@ -48,10 +48,13 @@ public interface TCPropertiesConsts {
       "l2.offHeapCache.max.page.count", "l2.offHeapCache.map.tableSize", "l2.offHeapCache.map.concurrency",
       "l2.offHeapCache.operator.event.generator.threshold", "l2.offHeapCache.operator.event.generator.sleepInterval",
       "l2.offHeapCache.max.chunk.size", "l2.offHeapCache.min.chunk.size", "l2.offHeapCache.object.initialDataSize",
-      "l2.offHeapCache.object.tableSize", "l2.offHeapCache.object.concurrency", "l2.offHeapCache.temp.swap.flush.to.disk.count",
-      "l2.offHeapCache.temp.swap.throttle.megaBytes", "l2.offHeapCache.skip.jvmarg.check"
-
-
+      "l2.offHeapCache.object.tableSize", "l2.offHeapCache.object.concurrency",
+      "l2.offHeapCache.temp.swap.flush.to.disk.count",
+      "l2.offHeapCache.temp.swap.throttle.megaBytes", "l2.offHeapCache.skip.jvmarg.check",
+      "l1.cachemanager.enabled", "l1.cachemanager.logging.enabled",
+      "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
+      "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
+      "l1.cachemanager.criticalObjectThreshold"
   };
 
   /*********************************************************************************************************************
@@ -303,31 +306,12 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Cache Manager Properties
+   * Section : L1 Memory Manager Properties
    * Description : This section contains the defaults for the cache manager for the L1
-   * enabled             : Enable/disable L2's cache manager
-   * logging.enabled     : Enable/disable L2's cache manager logging
-   * leastCount          : Minimum increase in the % usage of memory for starting eviction
-   *                       once the threshold value specified of memory used is reached
-   * percentageToEvict   : % of memory to evict once it reaches threshold
-   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis
    * criticalThreshold   : % of memory used after which memory manager will evict aggressively
-   * threshold           : % of memory used after which eviction may start
-   * monitorOldGenOnly   : Only monitor old gen objects
-   * criticalObjectThreshold : Number of objects that the cache can hold after which the eviction
-   *                           may start, its highly recommended to not to set it as the size
-   *                           of the objects is not generally known
    * </code>
    ********************************************************************************************************************/
-  public static final String L1_CACHEMANAGER_ENABLED                                        = "l1.cachemanager.enabled";
-  public static final String L1_CACHEMANAGER_LOGGING_ENABLED                                = "l1.cachemanager.logging.enabled";
-  public static final String L1_CACHEMANAGER_LEASTCOUNT                                     = "l1.cachemanager.leastCount";
-  public static final String L1_CACHEMANAGER_PERCENTAGE_TOEVICT                             = "l1.cachemanager.percentageToEvict";
-  public static final String L1_CACHEMANAGER_SLEEPINTERVAL                                  = "l1.cachemanager.sleepInterval";
-  public static final String L1_CACHEMANAGER_CRITICAL_THRESHOLD                             = "l1.cachemanager.criticalThreshold";
-  public static final String L1_CACHEMANAGER_THRESHOLD                                      = "l1.cachemanager.threshold";
-  public static final String L1_CACHEMANAGER_MONITOR_OLDGENONLY                             = "l1.cachemanager.monitorOldGenOnly";
-  public static final String L1_CACHEMANAGER_CRITICAL_OBJECT_THRESHOLD                      = "l1.cachemanager.criticalObjectThreshold";
+  public static final String L1_MEMORYMANAGER_CRITICAL_THRESHOLD                             = "l1.memorymanager.criticalThreshold";
 
   /*********************************************************************************************************************
    * <code>

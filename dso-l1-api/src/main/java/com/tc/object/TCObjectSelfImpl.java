@@ -132,12 +132,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
   }
 
   @Override
-  public boolean canEvict() {
-    // nothing to evict as tco=self
-    return false;
-  }
-
-  @Override
   public Object getResolveLock() {
     return this;
   }
@@ -185,11 +179,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
   @Override
   public void clearAccessed() {
     // No-op
-  }
-
-  @Override
-  public boolean isCacheManaged() {
-    return false;
   }
 
   @Override

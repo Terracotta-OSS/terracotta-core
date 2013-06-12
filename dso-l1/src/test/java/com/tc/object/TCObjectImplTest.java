@@ -279,11 +279,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public boolean isNotClearable() {
-      return false;
-    }
-
-    @Override
     public List<Method> getPostCreateMethods() {
       throw new ImplementMe();
     }

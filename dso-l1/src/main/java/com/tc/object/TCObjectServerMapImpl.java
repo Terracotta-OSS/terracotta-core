@@ -754,11 +754,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  @Override
-  protected boolean isEvictable() {
-    return true;
-  }
-
   /**
    * Called by the memory manager
    */

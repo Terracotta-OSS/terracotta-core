@@ -207,16 +207,6 @@ public class NullTCObject implements TCObject {
   }
 
   @Override
-  public boolean canEvict() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public boolean isCacheManaged() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     // do nothing
   }

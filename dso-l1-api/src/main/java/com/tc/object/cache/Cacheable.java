@@ -43,16 +43,4 @@ public interface Cacheable {
    */
   public int accessCount(int factor);
 
-  /**
-   * This method checks to see if the element is in a state where it can be evicted.
-   * 
-   * @return true if can evict now
-   */
-  public boolean canEvict();
-
-  /**
-   * This method checks to see if the element is to be managed by the cache or not
-   */
-  public boolean isCacheManaged();
-
 }

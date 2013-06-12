@@ -263,11 +263,6 @@ public class MockTCObject implements TCObject {
   }
 
   @Override
-  public boolean canEvict() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     throw new ImplementMe();
   }
@@ -311,8 +306,4 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  @Override
-  public boolean isCacheManaged() {
-    return true;
-  }
 }

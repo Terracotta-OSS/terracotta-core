@@ -166,11 +166,6 @@ public class MockTCClass implements TCClass {
   }
 
   @Override
-  public boolean isNotClearable() {
-    return false;
-  }
-
-  @Override
   public List<Method> getPostCreateMethods() {
     throw new ImplementMe();
   }

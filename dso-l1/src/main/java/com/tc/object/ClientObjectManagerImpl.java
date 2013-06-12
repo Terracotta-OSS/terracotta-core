@@ -25,9 +25,6 @@ import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.cache.CacheStats;
-import com.tc.object.cache.ConcurrentClockEvictionPolicy;
-import com.tc.object.cache.Evictable;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -69,7 +66,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -82,7 +78,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
-    Evictable, PrettyPrintable {
+    PrettyPrintable {
     
   private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
@@ -1294,53 +1290,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.reaper.start();
   }
 
-  // XXX::: Cache eviction doesn't clear it from the cache. it happens in reap().
-  @Override
-  public void evictCache(final CacheStats stat) {
-    final int size = objectStore_size();
-    int toEvict = stat.getObjectCountToEvict(size);
-    if (toEvict <= 0) { return; }
-    // Cache is full
-    final boolean debug = this.logger.isDebugEnabled();
-    int totalReferencesCleared = 0;
-    int toClear = toEvict;
-    while (toEvict > 0 && toClear > 0) {
-      final int maxCount = Math.min(COMMIT_SIZE, toClear);
-      final Collection removalCandidates = this.objectStore.getRemovalCandidates(maxCount);
-      Assert.assertTrue("L1 Cache Manager is still in use", removalCandidates.isEmpty());
-      if (removalCandidates.isEmpty()) {
-        break; // couldnt find any more
-      }
-      for (final Iterator i = removalCandidates.iterator(); i.hasNext() && toClear > 0;) {
-        final TCObject removed = (TCObject) i.next();
-        if (removed != null) {
-          final Object pr = removed.getPeerObject();
-          if (pr != null) {
-            // We don't want to take dso locks while clearing since it will happen inside the scope of the resolve lock
-            // (see CDV-596)
-            this.clientTxManager.disableTransactionLogging();
-            final int cleared;
-            try {
-              cleared = removed.clearReferences(toClear);
-            } finally {
-              this.clientTxManager.enableTransactionLogging();
-            }
-
-            totalReferencesCleared += cleared;
-            if (debug) {
-              this.logger.debug("Clearing:" + removed.getObjectID() + " class:" + pr.getClass() + " Total cleared =  "
-                                + totalReferencesCleared);
-            }
-            toClear -= cleared;
-          }
-        }
-      }
-      toEvict -= removalCandidates.size();
-    }
-    // TODO:: Send the correct set of targetObjects2GC
-    stat.objectEvicted(totalReferencesCleared, objectStore_size(), Collections.EMPTY_LIST, false);
-  }
-
   private int objectStore_size() {
     return this.objectStore.size();
   }
@@ -1365,20 +1314,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private static final class ObjectStore {
 
-    private final ConcurrentHashMap             cacheManaged   = new ConcurrentHashMap<ObjectID, TCObject>(10240,
-                                                                                                           0.75f, 128);
-    private final ConcurrentHashMap             cacheUnmanaged = new ConcurrentHashMap<ObjectID, TCObject>(10240,
-                                                                                                           0.75f, 128);
-    private final ConcurrentClockEvictionPolicy cache;
+    private final ConcurrentHashMap cacheUnmanaged = new ConcurrentHashMap<ObjectID, TCObject>(10240, 0.75f, 128);
     private final TCObjectSelfStore             tcObjectSelfStore;
 
     ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
       this.tcObjectSelfStore = tcObjectSelfStore;
-      this.cache = new ConcurrentClockEvictionPolicy(this.cacheManaged);
     }
 
     public void cleanup() {
-      cacheManaged.clear();
       cacheUnmanaged.clear();
     }
 
@@ -1387,11 +1330,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public int size() {
-      return this.cacheManaged.size() + this.cacheUnmanaged.size();
-    }
-
-    public Collection getRemovalCandidates(final int maxCount) {
-      return this.cache.getRemovalCandidates(maxCount);
+      return this.cacheUnmanaged.size();
     }
 
     public void add(final TCObject obj) {
@@ -1401,18 +1340,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         return;
       }
 
-      if (obj.isCacheManaged()) {
-        this.cache.add(obj);
-      } else {
-        this.cacheUnmanaged.put(obj.getObjectID(), obj);
-      }
+      this.cacheUnmanaged.put(obj.getObjectID(), obj);
     }
 
     public TCObject get(final ObjectID id) {
       TCObject tc = (TCObject) this.cacheUnmanaged.get(id);
-      if (tc == null) {
-        tc = (TCObject) this.cacheManaged.get(id);
-      }
       if (tc == null) {
         tc = (TCObject) tcObjectSelfStore.getById(id);
       }
@@ -1420,7 +1352,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public Set addAllObjectIDs(final Set oids) {
-      oids.addAll(this.cacheManaged.keySet());
       oids.addAll(this.cacheUnmanaged.keySet());
       this.tcObjectSelfStore.addAllObjectIDs(oids);
       return oids;
@@ -1430,16 +1361,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (tcobj instanceof TCObjectSelf) { throw new AssertionError(
                                                                     "TCObjectSelf should not have called removed from here: "
                                                                         + tcobj); }
-
-      if (tcobj.isCacheManaged()) {
-        this.cache.remove(tcobj);
-      } else {
         this.cacheUnmanaged.remove(tcobj.getObjectID());
-      }
     }
 
     public boolean contains(final ObjectID objectID) {
-      return this.cacheUnmanaged.containsKey(objectID) || this.cacheManaged.containsKey(objectID)
+      return this.cacheUnmanaged.containsKey(objectID)
              || this.tcObjectSelfStore.contains(objectID);
     }
 

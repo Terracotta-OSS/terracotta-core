@@ -7,12 +7,11 @@ import org.terracotta.toolkit.ToolkitRuntimeException;
 
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.NotClearable;
 import com.tc.util.FindbugsSuppressWarnings;
 
 import java.io.IOException;
 
-public class SerializedClusterObjectImpl<T> implements SerializedClusterObject<T>, NotClearable, Manageable {
+public class SerializedClusterObjectImpl<T> implements SerializedClusterObject<T>, Manageable {
   /**
    * <pre>
    * ********************************************************************************************

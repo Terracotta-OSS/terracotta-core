@@ -133,7 +133,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           fireMemoryEvent(mu);
           adjust(mu);
         } catch (Throwable t) {
-          // for debugging pupose
+          // for debugging purpose
           StackTraceElement[] trace = t.getStackTrace();
           for (StackTraceElement element : trace)
             logger.warn(element.toString());

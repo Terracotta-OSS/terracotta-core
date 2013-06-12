@@ -254,16 +254,6 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public boolean canEvict() {
-    return delegate.canEvict();
-  }
-
-  @Override
-  public boolean isCacheManaged() {
-    return delegate.isCacheManaged();
-  }
-
-  @Override
   public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxTotalCount, boolean invalidateOnChange,
                          boolean localCacheEnabled) {
     delegate.initialize(maxTTISeconds, maxTTLSeconds, targetMaxTotalCount, invalidateOnChange, localCacheEnabled);

@@ -9,7 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.NotClearable;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.TCToolkitObject;
@@ -19,7 +18,7 @@ import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTypeRoot<T>, Manageable, NotClearable {
+public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTypeRoot<T>, Manageable {
   private transient volatile TCObject           tcManaged;
   private transient final Map<String, ObjectID> localCache = new HashMap<String, ObjectID>();
   private transient volatile GroupID            gid;

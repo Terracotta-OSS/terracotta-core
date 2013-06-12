@@ -191,11 +191,6 @@ public interface TCClass {
   public boolean useResolveLockWhileClearing();
 
   /**
-   * Returns true if instances of this type should NOT be cleared by the memory manager
-   */
-  public boolean isNotClearable();
-
-  /**
    * List of method handles for the post create methods for this type. This list will include the post create methods
    * for all superclasses and may be empty (but never null)
    */

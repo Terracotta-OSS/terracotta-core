@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.object.bytecode.Clearable;
-import com.tc.util.Assert;
 
 public class TCObjectLogical extends TCObjectImpl {
 
@@ -19,23 +17,13 @@ public class TCObjectLogical extends TCObjectImpl {
   }
 
   @Override
-  protected boolean isEvictable() {
-    Object peer;
-    if ((peer = getPeerObject()) instanceof Clearable) {
-      return ((Clearable) peer).isEvictionEnabled();
-    } else {
-      return false;
-    }
-  }
-
-  @Override
   protected int clearReferences(final Object pojo, final int toClear) {
-    if (!(pojo instanceof Clearable)) {
-      Assert.fail("TCObjectLogical.clearReferences expected Clearable but got "
-                  + (pojo == null ? "null" : pojo.getClass().getName()));
-    }
-    final Clearable clearable = (Clearable) pojo;
-    return clearable.__tc_clearReferences(toClear);
+    // if (!(pojo instanceof Clearable)) { //dev-6999
+    // Assert.fail("TCObjectLogical.clearReferences expected Clearable but got "
+    // + (pojo == null ? "null" : pojo.getClass().getName()));
+    // }
+    // final Clearable clearable = (Clearable) pojo;
+    return 0;
   }
 
   @Override

@@ -397,18 +397,6 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   @Override
-  public final synchronized boolean canEvict() {
-    return isEvictable() && !this.tcClazz.isNotClearable() && !isNew();
-  }
-
-  @Override
-  public boolean isCacheManaged() {
-    return !this.tcClazz.isNotClearable();
-  }
-
-  protected abstract boolean isEvictable();
-
-  @Override
   public ToggleableStrongReference getOrCreateToggleRef() {
     final Object peer = getPeerObject();
     if (peer == null) { throw new AssertionError("cannot create a toggle reference if peer object is gone"); }

@@ -63,9 +63,6 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.cache.CacheConfig;
-import com.tc.object.cache.CacheConfigImpl;
-import com.tc.object.cache.CacheManager;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNAEncoding;
@@ -243,7 +240,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private RemoteTransactionManager                   remoteTxnManager;
   private ClientHandshakeManager                     clientHandshakeManager;
   private ClusterMetaDataManager                     clusterMetaDataManager;
-  private CacheManager                               cacheManager;
   private L1Management                               l1Management;
   private TCProperties                               l1Properties;
   private DmiManager                                 dmiManager;
@@ -566,25 +562,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.objectManager));
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.objectManager));
 
-    final TCProperties cacheManagerProperties = this.l1Properties.getPropertiesFor("cachemanager");
-    final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
-    this.tcMemManager = new TCMemoryManagerImpl(
-        getThreadGroup());
+    this.tcMemManager = new TCMemoryManagerImpl(getThreadGroup());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.dsoClientBuilder.createLongGCLogger(timeOut);
     this.tcMemManager.registerForMemoryEvents(gcLogger);
     // CDV-1181 warn if using CMS
     this.tcMemManager.checkGarbageCollectors();
-
-    if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, this.tcMemManager);
-      this.cacheManager.start();
-      if (DSO_LOGGER.isDebugEnabled()) {
-        DSO_LOGGER.debug("CacheManager Enabled : " + this.cacheManager);
-      }
-    } else {
-      DSO_LOGGER.warn("CacheManager is Disabled");
-    }
 
     this.threadIDManager = new ThreadIDManagerImpl(this.threadIDMap);
 
@@ -755,7 +738,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     waitForHandshake();
 
     // register for memory events for operator console register for it after the handshake happens see MNK-1684
-    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
+    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(tcProperties
+        .getInt(TCPropertiesConsts.L1_MEMORYMANAGER_CRITICAL_THRESHOLD)));
 
     setLoggerOnExit();
   }

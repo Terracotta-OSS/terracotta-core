@@ -194,11 +194,6 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     @Override
-    public boolean isNotClearable() {
-      return false;
-    }
-
-    @Override
     public List<Method> getPostCreateMethods() {
       return Collections.EMPTY_LIST;
     }

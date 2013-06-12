@@ -183,11 +183,6 @@ public class TCObjectPhysical extends TCObjectImpl {
   }
 
   @Override
-  protected boolean isEvictable() {
-    return true;
-  }
-
-  @Override
   protected int clearReferences(Object pojo, int toClear) {
     if (tcClazz.isIndexed()) {
       if (ClassUtils.isPrimitiveArray(pojo)) return 0;

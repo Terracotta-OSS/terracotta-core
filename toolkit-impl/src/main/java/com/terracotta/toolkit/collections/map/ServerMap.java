@@ -29,7 +29,6 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -62,7 +61,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V>, NotClearable {
+public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V> {
   private static final TCLogger                                 LOGGER              = TCLogging
                                                                                         .getLogger(ServerMap.class);
   private static final Object[]                             NO_ARGS             = new Object[0];
