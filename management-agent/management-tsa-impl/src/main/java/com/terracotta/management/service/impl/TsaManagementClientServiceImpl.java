@@ -1088,6 +1088,8 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           backupEntities.add(backupEntity);
         }
       }
+    } catch (Exception e) {
+      LOG.error("Connecting to server at '" + jmxHost + ":" + jmxPort + "'", e);
     } finally {
       closeConnector(jmxConnector);
     }
