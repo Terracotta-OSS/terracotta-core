@@ -5,6 +5,7 @@ package com.terracotta.toolkit.collections.map;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +59,11 @@ public class GetAllCustomMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public boolean containsValue(Object value) {
-    throw new UnsupportedOperationException("containsValue is not supported on this map implementation");
+    for (int i = 0; i < internalMaps.length; i++) {
+      fetchValuesForIndex(i);
+      if (internalMaps[i].containsValue(value)) return true;
+    }
+    return false;
   }
 
   @Override
@@ -99,9 +104,13 @@ public class GetAllCustomMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public Collection<V> values() {
-    throw new UnsupportedOperationException("values is not supported on this map implementation");
+    Collection<V> values = new ArrayList<V>(keys.size());
+    for (int i = 0; i < internalMaps.length; i++) {
+      fetchValuesForIndex(i);
+      values.addAll(internalMaps[i].values());
+    }
+    return Collections.unmodifiableCollection(values);
   }
-
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
