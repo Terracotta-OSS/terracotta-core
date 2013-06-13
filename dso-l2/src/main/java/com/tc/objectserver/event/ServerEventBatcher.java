@@ -35,30 +35,38 @@ public class ServerEventBatcher implements Runnable {
 
   public ServerEventBatcher(final DSOChannelManager channelManager, final TaskRunner taskRunner) {
     this.channelManager = channelManager;
-    final int queueSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE, 2048);
-    final long interval = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS, 100L);
+    final int queueSize = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE, 4096);
+    final long interval = TCPropertiesImpl.getProperties()
+        .getLong(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS, 50L);
     buffer = new ArrayBlockingQueue<ClientEnvelope>(queueSize);
-    taskRunner.newTimer("Server event queue batcher").scheduleWithFixedDelay(this, 50L, interval, TimeUnit.MILLISECONDS);
+    taskRunner.newTimer("Server event queue batcher")
+        .scheduleWithFixedDelay(this, 20L, interval, TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void run() {
     if (!buffer.isEmpty()) {
-      final List<ClientEnvelope> toProcess = new ArrayList<ClientEnvelope>(buffer.size());
-      buffer.drainTo(toProcess);
-      final Map<ClientID, List<ServerEvent>> groups = partition(toProcess);
-      // send batch messages for each client
-      for (final Map.Entry<ClientID, List<ServerEvent>> entry : groups.entrySet()) {
-        send(entry.getKey(), entry.getValue());
-      }
+      drain();
     }
   }
 
+  /**
+   * Uses a retention policy similar to {@link java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy}.
+   */
   public void add(final ClientID clientId, final ServerEvent event) {
-    try {
-      buffer.put(new ClientEnvelope(clientId, event));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    while (!buffer.offer(new ClientEnvelope(clientId, event))) {
+      drain();
+    }
+  }
+
+  private void drain() {
+    final List<ClientEnvelope> toProcess = new ArrayList<ClientEnvelope>(buffer.size());
+    buffer.drainTo(toProcess);
+    final Map<ClientID, List<ServerEvent>> groups = partition(toProcess);
+    // send batch messages for each client
+    for (final Map.Entry<ClientID, List<ServerEvent>> entry : groups.entrySet()) {
+      send(entry.getKey(), entry.getValue());
     }
   }
 
@@ -88,6 +96,10 @@ public class ServerEventBatcher implements Runnable {
     final ServerEventBatchMessage msg = (ServerEventBatchMessage)channel.createMessage(TCMessageType.SERVER_EVENT_BATCH_MESSAGE);
     msg.setEvents(events);
     msg.send();
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(events.size() + " server events have been sent to client '" + clientId + "'");
+    }
   }
 
   /**

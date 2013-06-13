@@ -3,6 +3,8 @@ package com.tc.objectserver.event;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.server.BasicServerEvent;
@@ -10,9 +12,11 @@ import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.Runners;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CyclicBarrier;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -21,6 +25,8 @@ import static org.mockito.Mockito.mock;
  * @author Eugene Shelestovich
  */
 public class InClusterServerEventNotifierTest {
+
+  private static final TCLogger LOGGER = TCLogging.getLogger(InClusterServerEventNotifierTest.class);
 
   private InClusterServerEventNotifier notifier;
   private MockBatcher batcher;
@@ -81,8 +87,48 @@ public class InClusterServerEventNotifierTest {
 
   }
 
+  @Test
+  public void testPerformance() throws Exception {
+    notifier.register(new ClientID(1L), "cache1", EnumSet.of(ServerEventType.PUT));
+    final int iterations = 200000;
+    final int threadsCount = 4;
+
+    final CyclicBarrier barrier = new CyclicBarrier(threadsCount + 1);
+    final Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          barrier.await();
+
+          for (int i = 0; i < iterations; i++) {
+            notifier.handleServerEvent(new BasicServerEvent(ServerEventType.PUT, i, new byte[] { 101 }, "cache1"));
+          }
+
+          barrier.await();
+        } catch (Exception e) {
+          LOGGER.error(e);
+          Thread.currentThread().interrupt();
+        }
+      }
+    };
+
+    for (int i = 0; i < threadsCount; i++) {
+      new Thread(task).start();
+    }
+    // start threads
+    barrier.await();
+    // wait for threads
+    barrier.await();
+
+    // wait for batcher to pick up events
+    while (batcher.getEventsCount() < iterations * threadsCount) {
+      Thread.sleep(50L);
+    }
+    assertEquals(iterations * threadsCount, batcher.getEventsCount());
+  }
+
   private static final class MockBatcher extends ServerEventBatcher {
-    private final List<Message> messages = new CopyOnWriteArrayList<Message>();
+    private final List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
 
     public MockBatcher(final DSOChannelManager channelManager) {
       super(channelManager, Runners.newSingleThreadScheduledTaskRunner());
@@ -91,6 +137,14 @@ public class InClusterServerEventNotifierTest {
     @Override
     void send(final ClientID clientId, final List<ServerEvent> events) {
       messages.add(new Message(clientId, events));
+    }
+
+    int getEventsCount() {
+      int count = 0;
+      for (Message message : messages) {
+        count += message.events.size();
+      }
+      return count;
     }
   }
 
