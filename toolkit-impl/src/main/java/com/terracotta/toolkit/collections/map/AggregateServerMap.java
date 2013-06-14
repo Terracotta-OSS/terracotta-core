@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -11,6 +13,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.search.ToolkitAttributeExtractorInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.rejoin.RejoinException;
@@ -18,6 +21,7 @@ import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchQueryResultSet;
 import org.terracotta.toolkit.search.ToolkitSearchQuery;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
@@ -30,7 +34,6 @@ import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
-import com.tc.server.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -76,8 +79,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
@@ -832,6 +833,22 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void registerServerMapAttributeExtractor() {
+    if (attributeExtractor instanceof ToolkitAttributeExtractorInternal) {
+      ToolkitAttributeExtractorInternal<K, V> intExtr = (ToolkitAttributeExtractorInternal<K, V>) attributeExtractor;
+      Map<String, Class<?>> initialSchema = intExtr.getInitialTypeSchema();
+      Map<String, String> configSchema = new HashMap<String, String>(initialSchema.size());
+
+      for (Map.Entry<String, Class<?>> attrType : initialSchema.entrySet()) {
+        ToolkitAttributeType t = ToolkitAttributeType.typeFor(attrType.getValue());
+        if (t == null) throw new ToolkitRuntimeException(String.format("Attribute %s is of unknown type %s", attrType.getKey(), attrType.getValue().getName()));
+        String typeName = (t == ToolkitAttributeType.ENUM ? attrType.getValue().getName() : t.name());
+        configSchema.put(attrType.getKey(), typeName);
+      }
+      ToolkitMap<String, String> schema = attrSchema.get();
+      if (schema.isEmpty()) schema.putAll(configSchema);
+      // Attempt to prevent classloader leaks by clearing the initial schema map
+      initialSchema.clear();
+    }
     for (InternalToolkitMap serverMap : this.serverMaps) {
       serverMap.registerAttributeExtractor(attributeExtractor);
       ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema.get());
