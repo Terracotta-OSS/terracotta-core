@@ -8,6 +8,8 @@ import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.event.DefaultServerEventRecorder;
+import com.tc.objectserver.event.NullServerEventRecorder;
 import com.tc.objectserver.event.ServerEventRecorder;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -35,7 +37,7 @@ public class ApplyTransactionInfo {
   private Invalidations             invalidate;
   private final boolean             isSearchEnabled;
   private final Map<ObjectID, Boolean> keyPresentForValue = new HashMap<ObjectID, Boolean>();
-  private boolean commitNow;
+  private boolean                   commitNow;
   private final ServerEventRecorder serverEventRecorder;
 
   // For tests
@@ -49,7 +51,7 @@ public class ApplyTransactionInfo {
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.serverEventRecorder = new ServerEventRecorder();
+    this.serverEventRecorder = isActiveTxn ? new DefaultServerEventRecorder() : new NullServerEventRecorder();
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {

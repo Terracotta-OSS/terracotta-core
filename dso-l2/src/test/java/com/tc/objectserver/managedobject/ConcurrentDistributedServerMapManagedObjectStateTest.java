@@ -13,7 +13,7 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.objectserver.event.ServerEventRecorder;
+import com.tc.objectserver.event.DefaultServerEventRecorder;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Events;
@@ -280,7 +280,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   private static ApplyTransactionInfo searchableApplyInfo() {
     final ApplyTransactionInfo info = mock(ApplyTransactionInfo.class);
     when(info.isSearchEnabled()).thenReturn(true);
-    when(info.getServerEventRecorder()).thenReturn(new ServerEventRecorder());
+    when(info.getServerEventRecorder()).thenReturn(new DefaultServerEventRecorder());
     return info;
   }
 

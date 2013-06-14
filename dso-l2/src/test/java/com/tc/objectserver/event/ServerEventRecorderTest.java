@@ -22,7 +22,7 @@ public class ServerEventRecorderTest {
   @Test
   public void testShouldResolveKeyToValuePairsOnGet() {
     final String cacheName = "test-cache";
-    final ServerEventRecorder recorder = new ServerEventRecorder();
+    final ServerEventRecorder recorder = new DefaultServerEventRecorder();
     final ObjectID objectId1 = new ObjectID(1001);
     recorder.recordEvent(ServerEventType.PUT, 1, objectId1, cacheName);
     final ObjectID objectId2 = new ObjectID(1002);
