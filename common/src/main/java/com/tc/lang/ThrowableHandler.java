@@ -37,6 +37,8 @@ public class ThrowableHandler {
   // XXX: The dispatching in this class is retarded, but I wanted to move as much of the exception handling into a
   // single place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
 
+  // instantiating message here to avoid any allocations on OOME
+  private static final String                        OOME_ERROR_MSG                  = "Fatal error: server run out of available memory. Exiting...";
   protected final TCLogger                           logger;
   private final ExceptionHelperImpl                  helper;
   private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
@@ -129,6 +131,7 @@ public class ThrowableHandler {
    */
   void handlePossibleOOME(final Throwable t) {
     if (Throwables.getRootCause(t) instanceof OutOfMemoryError) {
+      logger.error(OOME_ERROR_MSG);
       exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
     }
   }
