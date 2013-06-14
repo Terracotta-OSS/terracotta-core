@@ -58,7 +58,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void reset() {
-    close();
     init();
   }
 
