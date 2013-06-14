@@ -17,6 +17,8 @@ import org.terracotta.toolkit.ToolkitFactory;
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
+import com.tc.util.concurrent.ThreadUtil;
+
 import org.terracotta.util.ToolkitVersion;
 
 import java.io.BufferedReader;
@@ -52,7 +54,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       m2Root = System.getProperty("maven.repo.local");
       System.out.println("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
     }
-    String version = guessVersion();
+    String version = AbstractTsaClient.guessMavenArtifactVersion(ToolkitVersion.class);
 
     String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;
 
@@ -71,21 +73,6 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     return agentDir + File.separator + files.get(files.size() - 1);
   }
 
-  private String guessVersion() {
-    // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
-    String toolkitJar = TestBaseUtil.jarFor(ToolkitVersion.class);
-    if (toolkitJar == null) {
-      throw new AssertionError("Cannot find toolkit JAR");
-    }
-
-    String[] pathes = toolkitJar.split("\\/");
-    if (pathes.length > 2) {
-      return pathes[pathes.length - 2];
-    }
-
-    throw new AssertionError("Invalid toolkit JAR: " + toolkitJar);
-  }
-
   @Override
   protected String createClassPath(Class client) throws IOException {
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
@@ -102,6 +89,10 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
 
     protected static final String TSA_TEST_CACHE = "tsaTest";
+
+    protected String guessVersion() {
+      return guessMavenArtifactVersion(ToolkitVersion.class);
+    }
 
     @Override
     protected final void doTest() throws Throwable {
@@ -212,6 +203,16 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     }
 
+    protected void waitUntilServerAgentUp(int port) {
+      while (true) {
+        try {
+          httpGet("http://localhost:" + port + "/tc-management-api/agents");
+          break;
+        } catch (IOException e) {
+          ThreadUtil.reallySleep(1000);
+        }
+      }
+    }
 
     public AbstractTsaClient(String[] args) {
       super(args);
@@ -231,6 +232,21 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       configuration.addCache(cacheConfiguration);
 
       return new CacheManager(configuration);
+    }
+
+    static String guessMavenArtifactVersion(Class<?> clazz) {
+      // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
+      String jar = TestBaseUtil.jarFor(clazz);
+      if (jar == null) {
+        throw new AssertionError("Cannot find JAR for class: " + clazz);
+      }
+
+      String[] pathes = jar.split("\\/");
+      if (pathes.length > 2) {
+        return pathes[pathes.length - 2];
+      }
+
+      throw new AssertionError("Invalid JAR: " + jar);
     }
   }
 
