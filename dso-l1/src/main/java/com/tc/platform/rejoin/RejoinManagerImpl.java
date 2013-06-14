@@ -109,7 +109,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
             channel.reopen();
             break;
           } catch (Throwable t) {
-            logger.warn("Error during channel open : " + channel + " " + t);
+            logger.warn("Error during channel open : " + channel + " ", t);
             try {
               TimeUnit.SECONDS.sleep(1L);
             } catch (InterruptedException e) {
