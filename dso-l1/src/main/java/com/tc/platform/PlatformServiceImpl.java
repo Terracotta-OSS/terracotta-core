@@ -9,9 +9,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
-import com.tc.object.ServerEventDestination;
-import com.tc.server.ServerEventType;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
@@ -26,6 +25,7 @@ import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.server.ServerEventType;
 import com.tc.util.VicariousThreadLocal;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
@@ -322,5 +322,10 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public void unregisterServerEventListener(final ServerEventDestination destination) {
     manager.unregisterServerEventListener(destination);
+  }
+
+  @Override
+  public int getRejoinCount() {
+    return manager.getRejoinCount();
   }
 }

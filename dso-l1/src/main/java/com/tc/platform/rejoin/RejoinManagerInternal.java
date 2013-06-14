@@ -13,4 +13,6 @@ public interface RejoinManagerInternal extends RejoinManager {
   void initiateRejoin(ClientMessageChannel channel);
 
   boolean thisNodeJoined(ClientID newNodeId);
+
+  int getRejoinCount();
 }

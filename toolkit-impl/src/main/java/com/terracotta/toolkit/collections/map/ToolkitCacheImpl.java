@@ -25,6 +25,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
@@ -35,6 +37,8 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private volatile ToolkitCacheImplInterface<K, V> localDelegate;
   private final String                             name;
   private volatile OnGCCallable                    onGCCallable;
+  // lock used to protect the state of activeDelegate and localDelegate.
+  private final ReadWriteLock                      lock = new ReentrantReadWriteLock();
 
   public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate) {
     super(factory);
@@ -46,28 +50,62 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     this.onGCCallable = new OnGCCallable(aggregateServerMap);
   }
 
+  private void readLock() {
+    lock.readLock().lock();
+  }
+
+  private void readUnlock() {
+    lock.readLock().unlock();
+  }
+
+  private void writeLock() {
+    lock.writeLock().lock();
+  }
+
+  private void writeUnlock() {
+    lock.writeLock().unlock();
+  }
+
   @Override
   public void doRejoinStarted() {
-    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
-    aggregateServerMap.rejoinStarted();
+    writeLock();
+    try {
+      this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
+      aggregateServerMap.rejoinStarted();
+    } finally {
+      writeUnlock();
+    }
   }
 
   @Override
   public void doRejoinCompleted() {
-    aggregateServerMap.rejoinCompleted();
-    aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
-    if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
-      this.activeDelegate = aggregateServerMap;
-    } else {
-      destroyApplicator.applyDestroy();
+    writeLock();
+    try {
+      aggregateServerMap.rejoinCompleted();
+      aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
+      if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
+        this.activeDelegate = aggregateServerMap;
+      } else {
+        destroyApplicator.applyDestroy();
+      }
+    } finally {
+      writeUnlock();
     }
   }
 
   @Override
   public void applyDestroy() {
-    // status.setDestroyed() is called from Parent class
-    this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
-    this.localDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
+    writeLock();
+    try {
+      // status.setDestroyed() is called from Parent class
+      ToolkitCacheImplInterface destroyedInstanceProxy = ToolkitInstanceProxy
+          .newDestroyedInstanceProxy(getName(), ToolkitCacheImplInterface.class);
+      this.aggregateServerMap = null;
+      this.activeDelegate = destroyedInstanceProxy;
+      this.localDelegate = destroyedInstanceProxy;
+    } finally {
+      writeUnlock();
+    }
   }
 
   @Override
@@ -82,259 +120,515 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public QueryBuilder createQueryBuilder() {
-    return activeDelegate.createQueryBuilder();
+    readLock();
+    try {
+      return activeDelegate.createQueryBuilder();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V putIfAbsent(K key, V value) {
-    return activeDelegate.putIfAbsent(key, value);
+    readLock();
+    try {
+      return activeDelegate.putIfAbsent(key, value);
+    } finally {
+      readUnlock();
+    }
+
   }
 
   @Override
   public boolean remove(Object key, Object value) {
-    return activeDelegate.remove(key, value);
+    readLock();
+    try {
+      return activeDelegate.remove(key, value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean replace(K key, V oldValue, V newValue) {
-    return activeDelegate.replace(key, oldValue, newValue);
+    readLock();
+    try {
+      return activeDelegate.replace(key, oldValue, newValue);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V replace(K key, V value) {
-    return activeDelegate.replace(key, value);
+    readLock();
+    try {
+      return activeDelegate.replace(key, value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public int size() {
-    return activeDelegate.size();
+    readLock();
+    try {
+      return activeDelegate.size();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean isEmpty() {
-    return activeDelegate.isEmpty();
+    readLock();
+    try {
+      return activeDelegate.isEmpty();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean containsKey(Object key) {
-    return activeDelegate.containsKey(key);
+    readLock();
+    try {
+      return activeDelegate.containsKey(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean containsValue(Object value) {
-    return activeDelegate.containsValue(value);
+    readLock();
+    try {
+      return activeDelegate.containsValue(value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V get(Object key) {
-    return activeDelegate.get(key);
+    readLock();
+    try {
+      return activeDelegate.get(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V get(K key, ObjectID valueOid) {
-    return ((ValuesResolver<K, V>) activeDelegate).get(key, valueOid);
+    readLock();
+    try {
+      return ((ValuesResolver<K, V>) activeDelegate).get(key, valueOid);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V put(K key, V value) {
-    return activeDelegate.put(key, value);
+    readLock();
+    try {
+      return activeDelegate.put(key, value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V remove(Object key) {
-    return activeDelegate.remove(key);
+    readLock();
+    try {
+      return activeDelegate.remove(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void putAll(Map<? extends K, ? extends V> m) {
-    activeDelegate.putAll(m);
+    readLock();
+    try {
+      activeDelegate.putAll(m);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void clear() {
-    activeDelegate.clear();
+    readLock();
+    try {
+      activeDelegate.clear();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Set<K> keySet() {
-    return new SubTypeWrapperSet(activeDelegate.keySet(), status, this.name, ToolkitObjectType.CACHE);
+    readLock();
+    try {
+      return new SubTypeWrapperSet(activeDelegate.keySet(), status, this.name, ToolkitObjectType.CACHE);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Collection<V> values() {
-    return new SubTypeWrapperCollection<V>(activeDelegate.values(), status, this.name, ToolkitObjectType.CACHE);
+    readLock();
+    try {
+      return new SubTypeWrapperCollection<V>(activeDelegate.values(), status, this.name, ToolkitObjectType.CACHE);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return new SubTypeWrapperSet(activeDelegate.entrySet(), status, this.name, ToolkitObjectType.CACHE);
+    readLock();
+    try {
+      return new SubTypeWrapperSet(activeDelegate.entrySet(), status, this.name, ToolkitObjectType.CACHE);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public ToolkitReadWriteLock createLockForKey(K key) {
-    return activeDelegate.createLockForKey(key);
+    readLock();
+    try {
+      return activeDelegate.createLockForKey(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void removeNoReturn(Object key) {
-    activeDelegate.removeNoReturn(key);
+    readLock();
+    try {
+      activeDelegate.removeNoReturn(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V unsafeLocalGet(Object key) {
-    return localDelegate.unsafeLocalGet(key);
+    readLock();
+    try {
+      return localDelegate.unsafeLocalGet(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void putNoReturn(K key, V value) {
-    activeDelegate.putNoReturn(key, value);
+    readLock();
+    try {
+      activeDelegate.putNoReturn(key, value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public int localSize() {
-    return localDelegate.localSize();
+    readLock();
+    try {
+      return localDelegate.localSize();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Set<K> localKeySet() {
-    return localDelegate.localKeySet();
+    readLock();
+    try {
+      return localDelegate.localKeySet();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean containsLocalKey(Object key) {
-    return localDelegate.containsLocalKey(key);
+    readLock();
+    try {
+      return localDelegate.containsLocalKey(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Map<K, V> getAll(Collection<? extends K> keys) {
-    return new SubTypeWrapperMap<K, V>(activeDelegate.getAll(keys), status, this.name, ToolkitObjectType.CACHE);
+    readLock();
+    try {
+      return new SubTypeWrapperMap<K, V>(activeDelegate.getAll(keys), status, this.name, ToolkitObjectType.CACHE);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Map<K, V> getAllQuiet(Collection<K> keys) {
-    return new SubTypeWrapperMap<K, V>(activeDelegate.getAllQuiet(keys), status, this.name, ToolkitObjectType.CACHE);
+    readLock();
+    try {
+      return new SubTypeWrapperMap<K, V>(activeDelegate.getAllQuiet(keys), status, this.name, ToolkitObjectType.CACHE);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void addListener(ToolkitCacheListener<K> listener) {
-    // TODO : handle rejoin ...
-    activeDelegate.addListener(listener);
+    readLock();
+    try {
+      activeDelegate.addListener(listener);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void removeListener(ToolkitCacheListener<K> listener) {
-    activeDelegate.removeListener(listener);
+    readLock();
+    try {
+      activeDelegate.removeListener(listener);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Configuration getConfiguration() {
-    return activeDelegate.getConfiguration();
+    readLock();
+    try {
+      return activeDelegate.getConfiguration();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V getQuiet(Object key) {
-    return activeDelegate.getQuiet(key);
+    readLock();
+    try {
+      return activeDelegate.getQuiet(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void setConfigField(String name, Serializable value) {
-    activeDelegate.setConfigField(name, value);
+    readLock();
+    try {
+      activeDelegate.setConfigField(name, value);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void putNoReturn(K key, V value, long createTimeInSecs, int maxTTISeconds, int maxTTLSeconds) {
-    activeDelegate.putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+    readLock();
+    try {
+      activeDelegate.putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V putIfAbsent(K key, V value, long createTimeInSecs, int maxTTISeconds, int maxTTLSeconds) {
-    return activeDelegate.putIfAbsent(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+    readLock();
+    try {
+      return activeDelegate.putIfAbsent(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public long localOnHeapSizeInBytes() {
-    return localDelegate.localOnHeapSizeInBytes();
+    readLock();
+    try {
+      return localDelegate.localOnHeapSizeInBytes();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public long localOffHeapSizeInBytes() {
-    return localDelegate.localOffHeapSizeInBytes();
+    readLock();
+    try {
+      return localDelegate.localOffHeapSizeInBytes();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public int localOnHeapSize() {
-    return localDelegate.localOnHeapSize();
+    readLock();
+    try {
+      return localDelegate.localOnHeapSize();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public int localOffHeapSize() {
-    return localDelegate.localOffHeapSize();
+    readLock();
+    try {
+      return localDelegate.localOffHeapSize();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean containsKeyLocalOnHeap(Object key) {
-    return localDelegate.containsKeyLocalOnHeap(key);
+    readLock();
+    try {
+      return localDelegate.containsKeyLocalOnHeap(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public boolean containsKeyLocalOffHeap(Object key) {
-    return localDelegate.containsKeyLocalOffHeap(key);
+    readLock();
+    try {
+      return localDelegate.containsKeyLocalOffHeap(key);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void disposeLocally() {
-    localDelegate.disposeLocally();
+    writeLock();
+    try {
+      localDelegate.disposeLocally();
+      destroyApplicator.applyDestroy();
+    } finally {
+      writeUnlock();
+    }
   }
 
   @Override
   public Map<Object, Set<ClusterNode>> getNodesWithKeys(Set portableKeys) {
-    return activeDelegate.getNodesWithKeys(portableKeys);
+    readLock();
+    try {
+      return activeDelegate.getNodesWithKeys(portableKeys);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void unlockedPutNoReturn(K k, V v, int createTime, int customTTI, int customTTL) {
-    activeDelegate.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
+    readLock();
+    try {
+      activeDelegate.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void unlockedRemoveNoReturn(Object k) {
-    activeDelegate.unlockedRemoveNoReturn(k);
+    readLock();
+    try {
+      activeDelegate.unlockedRemoveNoReturn(k);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void clearLocalCache() {
-    localDelegate.clearLocalCache();
+    readLock();
+    try {
+      localDelegate.clearLocalCache();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V unlockedGet(Object k, boolean quiet) {
-    return activeDelegate.unlockedGet(k, quiet);
+    readLock();
+    try {
+      return activeDelegate.unlockedGet(k, quiet);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public Iterator<InternalToolkitMap<K, V>> iterator() {
-    return aggregateServerMap.iterator();
+    readLock();
+    try {
+      return aggregateServerMap.iterator();
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void setAttributeExtractor(ToolkitAttributeExtractor extractor) {
-    activeDelegate.setAttributeExtractor(extractor);
+    readLock();
+    try {
+      activeDelegate.setAttributeExtractor(extractor);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    return activeDelegate.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    readLock();
+    try {
+      return activeDelegate.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void removeAll(Set<K> keys) {
-    activeDelegate.removeAll(keys);
+    readLock();
+    try {
+      activeDelegate.removeAll(keys);
+    } finally {
+      readUnlock();
+    }
 
   }
 
   @Override
   public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
-    return activeDelegate.unlockedGetAll(keys, quiet);
+    readLock();
+    try {
+      return activeDelegate.unlockedGetAll(keys, quiet);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override

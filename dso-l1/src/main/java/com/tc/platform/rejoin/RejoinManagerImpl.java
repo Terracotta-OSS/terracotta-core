@@ -17,11 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RejoinManagerImpl implements RejoinManagerInternal {
 
-  private static final TCLogger                logger           = TCLogging.getLogger(RejoinManagerImpl.class);
-  private final List<RejoinLifecycleListener>  listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
-  private final boolean                        rejoinEnabled;
-  private final RejoinWorker                   rejoinWorker;
-  private final AtomicBoolean                  rejoinInProgress = new AtomicBoolean(false);
+  private static final TCLogger               logger           = TCLogging.getLogger(RejoinManagerImpl.class);
+  private final List<RejoinLifecycleListener> listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
+  private final boolean                       rejoinEnabled;
+  private final RejoinWorker                  rejoinWorker;
+  private final AtomicBoolean                 rejoinInProgress = new AtomicBoolean(false);
+  private volatile int                        rejoinCount      = 0;
 
   public RejoinManagerImpl(boolean isRejoinEnabled) {
     this.rejoinEnabled = isRejoinEnabled;
@@ -56,7 +57,8 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   private void notifyRejoinStart() {
     assertRejoinEnabled();
-    logger.info("Notifying rejoin start...");
+    logger.info("Notifying rejoin start... current rejoin count" + rejoinCount);
+    rejoinCount++;
     // this calls cleanup for all ClearableCallbacks
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinStart();
@@ -133,9 +135,9 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   private static class RejoinWorker implements Runnable {
 
-    private final Object                monitor                 = new Object();
-    private volatile RejoinManagerImpl  manager;
-    private volatile boolean            shutdown                = false;
+    private final Object                      monitor                 = new Object();
+    private volatile RejoinManagerImpl        manager;
+    private volatile boolean                  shutdown                = false;
     private final Queue<ClientMessageChannel> rejoinRequestedChannels = new LinkedList<ClientMessageChannel>();
 
     public RejoinWorker(RejoinManagerImpl rejoinManager) {
@@ -182,5 +184,10 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
         monitor.notifyAll();
       }
     }
+  }
+
+  @Override
+  public int getRejoinCount() {
+    return rejoinCount;
   }
 }

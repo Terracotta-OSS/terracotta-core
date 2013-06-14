@@ -11,9 +11,8 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.GroupID;
-import com.tc.object.ServerEventDestination;
-import com.tc.server.ServerEventType;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockID;
@@ -26,6 +25,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.server.ServerEventType;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -396,4 +396,6 @@ public interface Manager extends TerracottaLocking {
   void registerServerEventListener(ServerEventDestination destination, Set<ServerEventType> listenTo);
 
   void unregisterServerEventListener(ServerEventDestination destination);
+
+  int getRejoinCount();
 }

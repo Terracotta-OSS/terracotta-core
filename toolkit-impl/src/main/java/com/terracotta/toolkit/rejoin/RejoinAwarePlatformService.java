@@ -13,7 +13,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
-import com.tc.server.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
@@ -25,6 +24,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.server.ServerEventType;
 import com.tc.util.VicariousThreadLocal;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
@@ -32,19 +32,17 @@ import com.terracottatech.search.NVPair;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class RejoinAwarePlatformService implements PlatformService {
   // private static final TCLogger LOGGER = TCLogging.getLogger(RejoinAwarePlatformService.class);
-  private final PlatformService          delegate;
-  private final RejoinStateListener      rejoinState;
-  private static final ThreadLocal<Long> currentRejoinCount = new VicariousThreadLocal<Long>() {
-                                                              @Override
-                                                              protected Long initialValue() {
-                                                                return new Long(0);
-                                                              }
-                                                            };
+  private final PlatformService             delegate;
+  private final RejoinStateListener         rejoinState;
+  private static final ThreadLocal<Integer> currentRejoinCount = new VicariousThreadLocal<Integer>() {
+                                                                 @Override
+                                                                 protected Integer initialValue() {
+                                                                   return new Integer(0);
+                                                                 }
+                                                               };
 
   public RejoinAwarePlatformService(PlatformService delegate) {
     this.delegate = delegate;
@@ -82,12 +80,12 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public boolean isLockedBeforeRejoin() {
     // already taken a lock && rejoin count has changed
-    return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != rejoinState.getRejoinCount());
+    return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != getRejoinCount());
   }
 
   private void resetRejoinCountIfNecessary() {
     if (!isExplicitlyLocked()) {
-      currentRejoinCount.set(rejoinState.getRejoinCount());
+      currentRejoinCount.set(getRejoinCount());
     }
   }
 
@@ -496,28 +494,27 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   private static class RejoinStateListener implements RejoinLifecycleListener {
-    private final AtomicBoolean rejoinInProgress = new AtomicBoolean(false);
-    private final AtomicLong    rejoinCount      = new AtomicLong();
+    private volatile boolean rejoinInProgress = false;
 
     @Override
     public void onRejoinStart() {
-      rejoinInProgress.set(true);
-      rejoinCount.incrementAndGet();
+      rejoinInProgress = true;
     }
 
     @Override
     public void onRejoinComplete() {
-      rejoinInProgress.set(false);
+      rejoinInProgress = false;
     }
 
     public void assertRejoinNotInProgress() throws RejoinException {
-      if (rejoinInProgress.get()) throw new RejoinException("Rejoin is in progress");
+      if (rejoinInProgress) throw new RejoinException("Rejoin is in progress");
     }
 
-    public long getRejoinCount() {
-      return rejoinCount.get();
-    }
+  }
 
+  @Override
+  public int getRejoinCount() {
+    return delegate.getRejoinCount();
   }
 
 }

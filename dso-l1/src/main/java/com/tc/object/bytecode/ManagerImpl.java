@@ -30,7 +30,6 @@ import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
 import com.tc.object.ServerEventDestination;
 import com.tc.object.ServerEventListenerManager;
-import com.tc.server.ServerEventType;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -65,6 +64,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
+import com.tc.server.ServerEventType;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 import com.tc.util.Util;
@@ -1001,5 +1001,11 @@ public class ManagerImpl implements Manager {
   @Override
   public void unregisterServerEventListener(final ServerEventDestination destination) {
     serverEventListenerManager.unregisterListener(destination);
+  }
+
+  @Override
+  public int getRejoinCount() {
+
+    return rejoinManager.getRejoinCount();
   }
 }

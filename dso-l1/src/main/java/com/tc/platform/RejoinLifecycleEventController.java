@@ -28,12 +28,12 @@ public class RejoinLifecycleEventController {
   }
 
   private void onRejoinStart() {
+    // reset all subsystems
+    clientHandshakeManager.reset();
     // notify upper listeners
     for (RejoinLifecycleListener listener : upperLayerListeners) {
       listener.onRejoinStart();
     }
-    // reset all subsystems
-    clientHandshakeManager.reset();
   }
 
   private void onRejoinComplete() {

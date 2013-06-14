@@ -11,9 +11,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
-import com.tc.object.ServerEventDestination;
-import com.tc.server.ServerEventType;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerEventDestination;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
@@ -25,6 +24,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.server.ServerEventType;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
@@ -335,6 +335,11 @@ public class ObjectStreamClassMappingTest {
     @Override
     public void unregisterServerEventListener(final ServerEventDestination destination) {
       //
+    }
+
+    @Override
+    public int getRejoinCount() {
+      return 0;
     }
 
   }
