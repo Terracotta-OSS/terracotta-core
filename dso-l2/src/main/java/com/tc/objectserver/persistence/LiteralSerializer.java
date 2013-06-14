@@ -24,7 +24,7 @@ public class LiteralSerializer extends Serializer<Object> {
   public static final int INT_SIZE = Integer.SIZE / Byte.SIZE;
   public static final int SHORT_SIZE = Short.SIZE / Byte.SIZE;
 
-  private static enum Type {
+  private enum Type {
     LONG {
       @Override
       public Long deserialize(final ByteBuffer buffer) {
@@ -274,18 +274,20 @@ public class LiteralSerializer extends Serializer<Object> {
         ObjectID objectID = new ObjectID(buffer.getLong());
         long creationTime = buffer.getLong();
         long lastAccessedTime = buffer.getLong();
-        if (buffer.get() == 1) {
-          return new CDSMValue(objectID, creationTime, lastAccessedTime, buffer.getLong(), buffer.getLong());
-        } else {
-          return new CDSMValue(objectID, creationTime, lastAccessedTime, 0, 0);
-        }
+
+        final byte isTtiTtlSet = buffer.get();
+        final long tti = (isTtiTtlSet == 1) ? buffer.getLong() : 0;
+        final long ttl = (isTtiTtlSet == 1) ? buffer.getLong() : 0;
+        final long version = buffer.getLong();
+
+        return new CDSMValue(objectID, creationTime, lastAccessedTime, tti, ttl, version);
       }
 
       @Override
       ByteBuffer serialize(final Object object) {
         if (object instanceof CDSMValue) {
           CDSMValue cdsmValue = (CDSMValue) object;
-          ByteBuffer buffer = ByteBuffer.allocate(2 + LONG_SIZE * 5);
+          ByteBuffer buffer = ByteBuffer.allocate(2 + LONG_SIZE * 6);
           buffer.put((byte) ordinal());
           buffer.putLong(cdsmValue.getObjectID().toLong()).putLong(cdsmValue.getCreationTime()).putLong(cdsmValue.getLastAccessedTime());
           if (cdsmValue.getTimeToIdle() != 0 || cdsmValue.getTimeToLive() != 0) {
@@ -294,6 +296,7 @@ public class LiteralSerializer extends Serializer<Object> {
           } else {
             buffer.put((byte)0);
           }
+          buffer.putLong(cdsmValue.getVersion());
           buffer.flip();
           return buffer;
         } else {

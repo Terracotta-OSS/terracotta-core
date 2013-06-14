@@ -99,6 +99,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
+    delegate.registerServerEventListener(destination, listenTo);
+  }
+
+  @Override
   public void unregisterServerEventListener(final ServerEventDestination destination) {
     delegate.unregisterServerEventListener(destination);
   }

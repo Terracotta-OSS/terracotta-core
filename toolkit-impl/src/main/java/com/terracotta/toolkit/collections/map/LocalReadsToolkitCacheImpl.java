@@ -7,6 +7,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -224,7 +225,17 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
+  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime, final int customTTI, final int customTTL) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void unlockedRemoveNoReturn(Object k) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void unlockedRemoveNoReturnVersioned(final Object key, final long version) {
     throw new UnsupportedOperationException();
   }
 
@@ -295,6 +306,17 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
+  public void putVersioned(final K key, final V value, final long version) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
+                           final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void disposeLocally() {
     // TODO: discuss
     throw new UnsupportedOperationException();
@@ -303,6 +325,16 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   @Override
   public void removeAll(Set<K> keys) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeVersioned(final Object key, final long version) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void registerVersionUpdateListener(final VersionUpdateListener listener) {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override

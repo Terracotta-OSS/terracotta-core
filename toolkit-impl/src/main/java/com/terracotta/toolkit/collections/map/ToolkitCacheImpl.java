@@ -8,6 +8,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -551,6 +552,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
+  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime, final int customTTI, final int customTTL) {
+    activeDelegate.unlockedPutNoReturnVersioned(k, v, version, createTime, customTTI, customTTL);
+  }
+
+  @Override
   public void unlockedRemoveNoReturn(Object k) {
     readLock();
     try {
@@ -558,6 +564,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     } finally {
       readUnlock();
     }
+  }
+
+  @Override
+  public void unlockedRemoveNoReturnVersioned(final Object key, final long version) {
+    activeDelegate.unlockedRemoveNoReturnVersioned(key, version);
   }
 
   @Override
@@ -611,6 +622,17 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
+  public void putVersioned(final K key, final V value, final long version) {
+    activeDelegate.putVersioned(key, value, version);
+  }
+
+  @Override
+  public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
+                           final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    activeDelegate.putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+  }
+
+  @Override
   public void removeAll(Set<K> keys) {
     readLock();
     try {
@@ -618,7 +640,16 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     } finally {
       readUnlock();
     }
+  }
 
+  @Override
+  public void removeVersioned(final Object key, final long version) {
+    activeDelegate.removeVersioned(key, version);
+  }
+
+  @Override
+  public void registerVersionUpdateListener(final VersionUpdateListener listener) {
+    activeDelegate.registerVersionUpdateListener(listener);
   }
 
   @Override

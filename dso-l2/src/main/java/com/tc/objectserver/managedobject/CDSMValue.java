@@ -15,14 +15,21 @@ public class CDSMValue implements EvictableEntry {
   private final long timeToLive;
 
   private long lastAccessedTime;
+  private long version;
 
   public CDSMValue(final ObjectID objectID, final long creationTime, final long lastAccessedTime, final long timeToIdle, final long timeToLive) {
+    this(objectID, creationTime, lastAccessedTime, timeToIdle, timeToLive, 0L);
+  }
+
+  public CDSMValue(final ObjectID objectID, final long creationTime, final long lastAccessedTime,
+                   final long timeToIdle, final long timeToLive, final long version) {
     checkArgument(lastAccessedTime >= creationTime);
     this.objectID = objectID;
     this.creationTime = creationTime;
     this.lastAccessedTime = lastAccessedTime;
     this.timeToIdle = timeToIdle;
     this.timeToLive = timeToLive;
+    this.version = version;
   }
 
   @Override
@@ -44,6 +51,14 @@ public class CDSMValue implements EvictableEntry {
 
   public long getTimeToLive() {
     return timeToLive;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public void setVersion(final long version) {
+    this.version = version;
   }
 
   public void setLastAccessedTime(final long lastAccessedTime) {
@@ -77,6 +92,7 @@ public class CDSMValue implements EvictableEntry {
     if (lastAccessedTime != cdsmValue.lastAccessedTime) return false;
     if (timeToIdle != cdsmValue.timeToIdle) return false;
     if (timeToLive != cdsmValue.timeToLive) return false;
+    if (version != cdsmValue.version) return false;
     if (!objectID.equals(cdsmValue.objectID)) return false;
 
     return true;
@@ -89,11 +105,12 @@ public class CDSMValue implements EvictableEntry {
     result = 31 * result + (int)(timeToIdle ^ (timeToIdle >>> 32));
     result = 31 * result + (int)(timeToLive ^ (timeToLive >>> 32));
     result = 31 * result + (int)(lastAccessedTime ^ (lastAccessedTime >>> 32));
+    result = 31 * result + (int)(version ^ (version >>> 32));
     return result;
   }
 
   @Override
   public String toString() {
-    return "CDSMValue{" + "objectID=" + objectID + ", creationTime=" + creationTime + ", timeToIdle=" + timeToIdle + ", timeToLive=" + timeToLive + ", lastAccessedTime=" + lastAccessedTime + '}';
+    return "CDSMValue{" + "objectID=" + objectID + ", creationTime=" + creationTime + ", timeToIdle=" + timeToIdle + ", timeToLive=" + timeToLive + ", lastAccessedTime=" + lastAccessedTime + ", version=" + version + '}';
   }
 }

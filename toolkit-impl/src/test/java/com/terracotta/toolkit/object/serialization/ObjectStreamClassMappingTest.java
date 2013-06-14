@@ -333,6 +333,11 @@ public class ObjectStreamClassMappingTest {
     }
 
     @Override
+    public void registerServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
+      //
+    }
+
+    @Override
     public void unregisterServerEventListener(final ServerEventDestination destination) {
       //
     }

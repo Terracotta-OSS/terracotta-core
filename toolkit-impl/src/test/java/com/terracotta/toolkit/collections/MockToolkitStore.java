@@ -8,6 +8,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
@@ -50,8 +51,18 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   }
 
   @Override
+  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime, final int customTTI, final int customTTL) {
+    super.put(k, v);
+  }
+
+  @Override
   public void unlockedRemoveNoReturn(final Object k) {
     super.remove(k);
+  }
+
+  @Override
+  public void unlockedRemoveNoReturnVersioned(final Object key, final long version) {
+    super.remove(key);
   }
 
   @Override
@@ -205,12 +216,33 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   }
 
   @Override
+  public void putVersioned(final K key, final V value, final long version) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
+                           final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
   public void disposeLocally() {
     throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
   public void removeAll(final Set<K> keys) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void removeVersioned(final Object key, final long version) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     throw new UnsupportedOperationException("Implement me!");
   }
 }

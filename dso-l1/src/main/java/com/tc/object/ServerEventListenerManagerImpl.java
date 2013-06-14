@@ -43,8 +43,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     final ServerEventType type = event.getType();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Server notification message has been received. Type: "
-                + type + ", key: " + event.getKey()
-                + ", cache: " + name);
+                + type + ", key: " + event.getKey() + ", cache: " + name);
     }
 
     lock.readLock().lock();
@@ -62,7 +61,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
         final Set<ServerEventType> eventTypes = destination.getValue();
         if (eventTypes.contains(type)) {
           handlerFound = true;
-          target.handleServerEvent(type, extractStringIfNecessary(event.getKey()));
+          target.handleServerEvent(event);
         }
       }
 
@@ -171,6 +170,10 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     // on reconnect - resend all local mappings to server
     lock.readLock().lock();
     try {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Client '" + remoteNode + "' is reconnected. Re-sending server event listener registrations");
+      }
+
       for (Map.Entry<String, Map<ServerEventDestination, Set<ServerEventType>>> entry : registry.entrySet()) {
         final Set<ServerEventType> eventTypes = EnumSet.noneOf(ServerEventType.class);
         final Map<ServerEventDestination, Set<ServerEventType>> destinations = entry.getValue();

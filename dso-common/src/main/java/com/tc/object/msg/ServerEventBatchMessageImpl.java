@@ -13,6 +13,7 @@ import com.tc.object.session.SessionID;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
+import com.tc.server.VersionedServerEvent;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -53,6 +54,10 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
       encoder.encode(event.getType().ordinal(), outStream);
       encoder.encode(event.getCacheName(), outStream);
       encoder.encode(event.getKey(), outStream);
+      encoder.encode(event.getValue(), outStream);
+      if (event instanceof VersionedServerEvent) {
+        encoder.encode(((VersionedServerEvent)event).getVersion(), outStream);
+      }
       count++;
     }
     Assert.assertEquals(events.size(), count);
@@ -71,7 +76,10 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
             final ServerEventType type = ServerEventType.values()[index];
             final String destination = (String)decoder.decode(inputStream);
             final Object key = decoder.decode(inputStream);
-            events.add(new BasicServerEvent(type, key, destination));
+            final byte[] value = (byte[])decoder.decode(inputStream);
+            final long version = (inputStream.available() > 0) ? (Long)decoder.decode(inputStream)
+                : VersionedServerEvent.DEFAULT_VERSION;
+            events.add(new BasicServerEvent(type, key, value, version, destination));
           }
         } catch (ClassNotFoundException e) {
           throw new AssertionError(e);

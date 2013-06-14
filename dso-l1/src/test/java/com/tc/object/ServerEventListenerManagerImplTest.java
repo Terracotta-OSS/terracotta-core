@@ -10,7 +10,6 @@ import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
-import com.tc.server.ServerEventType;
 
 import java.util.EnumSet;
 
@@ -96,17 +95,17 @@ public class ServerEventListenerManagerImplTest {
 
     // verify invocations
     verify(registrationMsgMock, times(6)).send();
-    verify(destinations[1]).handleServerEvent(EVICT, 1);
-    verify(destinations[3]).handleServerEvent(PUT, 2);
-    verify(destinations[4]).handleServerEvent(PUT, 2);
-    verify(destinations[0], never()).handleServerEvent((ServerEventType)any(), any());
-    verify(destinations[2], never()).handleServerEvent((ServerEventType)any(), any());
+    verify(destinations[1]).handleServerEvent(event1);
+    verify(destinations[3]).handleServerEvent(event2);
+    verify(destinations[4]).handleServerEvent(event2);
+    verify(destinations[0], never()).handleServerEvent(any(ServerEvent.class));
+    verify(destinations[2], never()).handleServerEvent(any(ServerEvent.class));
     verify(unregistrationMsgMock, times(1)).send();
   }
 
   @Test
   public void testShouldReregisterListenersOnUnpause() {
-    manager.unpause((NodeID)any(), 0); // don't care about params
+    manager.unpause(any(NodeID.class), 0); // don't care about params
     verify(registrationMsgMock, times(9)).send(); // 6 initial registrations + 3 re-registrations on reconnect
   }
 

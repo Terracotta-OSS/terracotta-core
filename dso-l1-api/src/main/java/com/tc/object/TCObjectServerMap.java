@@ -34,6 +34,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   void doLogicalRemove(final TCServerMap map, final L lockID, final Object key);
 
+  void doLogicalRemoveVersioned(TCServerMap map, L lockID, Object key, long version);
+
   /**
    * Does a logic remove and mark as removed in the local cache if present. The cached item is not associated to a lock.
    * 
@@ -41,6 +43,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    */
   void doLogicalRemoveUnlocked(final TCServerMap map, final Object key);
+
+  void doLogicalRemoveUnlockedVersioned(TCServerMap map, Object key, long version);
 
   /**
    * Does a logic remove and mark as removed in the local cache if present only if there exist a mapping of key to
@@ -86,13 +90,23 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   /**
    * Does a logical put and updates the local cache
-   * 
+   *
+   * @param key Key Object
+   * @param value Object in the mapping
+   */
+  void doLogicalPut(final L lockID, final Object key, final Object value);
+
+
+  /**
+   * Does a logical put with version and updates the local cache
+   *
    * @param map ServerTCMap
    * @param lockID, lock under which this entry is added
    * @param key Key Object
    * @param value Object in the mapping
+   * @param version
    */
-  void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value);
+  void doLogicalPutVersioned(TCServerMap map, L lockID, Object key, Object value, long version);
 
   /**
    * Clear this map
@@ -109,6 +123,17 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param value Object in the mapping
    */
   void doLogicalPutUnlocked(final TCServerMap map, final Object key, final Object value);
+
+
+  /**
+   * Does a logical put with version and updates the local cache without using a lock. The cached Item is not associated to a lock.
+   *
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param value Object in the mapping
+   * @param version
+   */
+  void doLogicalPutUnlockedVersioned(TCServerMap map, Object key, Object value, long version);
 
   /**
    * Returns the value for a particular key in a TCServerMap. If already present in local cache, returns the value

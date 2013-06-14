@@ -7,7 +7,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.server.ServerEventType;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -21,6 +20,7 @@ import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.ServerEventType;
 import com.tc.util.Events;
 
 import java.io.IOException;
@@ -227,6 +227,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.PUT_IF_ABSENT:
         applyPutIfAbsent(applyInfo, params);
         break;
+      case SerializationUtil.PUT_VERSIONED:
+        applyPutVersioned(applyInfo, params);
+        break;
+      case SerializationUtil.REMOVE_VERSIONED:
+        applyRemoveVersioned(applyInfo, params);
+        break;
       case SerializationUtil.REPLACE_IF_VALUE_EQUAL:
         applyReplaceIfEqualWithExpiry(applyInfo, params);
         break;
@@ -236,7 +242,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.EVICTION_COMPLETED:
         applyInfo.getServerEventRecorder().reconsiderRemovals(samplingType);
         evictionCompleted();
-//  make sure we don't need more capacity eviction to get to target
+        // make sure we don't need more capacity eviction to get to target
         startCapacityEvictionIfNeccessary(applyInfo);
        break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
@@ -272,7 +278,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       ref = ((CDSMValue)o).getObjectID();
     }
     if (ref instanceof ObjectID) {
-      applyInfo.deleteObject((ObjectID) ref);
+      applyInfo.deleteObject((ObjectID)ref);
       if (invalidateOnChange) {
         applyInfo.invalidate(getId(), (ObjectID) ref);
       }
@@ -284,9 +290,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   @Override
-  protected Object applyPut(final ApplyTransactionInfo applyInfo, Object[] params) {
+  protected Object applyPut(final ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = params[0];
     final ObjectID oid = (ObjectID)params[1];
+
     final CDSMValue value;
     if (params.length == 6) {
       value = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4], (Long) params[5]);
@@ -294,14 +301,45 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       value = new CDSMValue(oid, 0, 0, 0, 0);
     }
 
-    final CDSMValue old = (CDSMValue) super.applyPut(applyInfo, new Object[] { key, value });
-    addValue(applyInfo, params[1], old != null);
-    startCapacityEvictionIfNeccessary(applyInfo);
-    // collect PUT modifications for futher broadcasting
-    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT, key, oid, cacheName);
+    final CDSMValue old = (CDSMValue) references.get(key);
+    final long newVersion = (old == null) ? 0 // new key-value pair
+        : old.getVersion() + 1; // local put - increment version, if key already exists
+    value.setVersion(newVersion);
+
+    applyPutInternal(applyInfo, params, value, old);
+
+    // collect modifications for futher broadcasting
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT_LOCAL, key, oid, value.getVersion(), cacheName);
     return old;
   }
-  
+
+  private Object applyPutVersioned(ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = params[0];
+    final ObjectID oid = (ObjectID)params[1];
+    // put came from the WAN orchestrator - obediently apply new version
+    final CDSMValue value = new CDSMValue(oid, (Long) params[2], (Long) params[3],
+        (Long) params[4], (Long) params[5], (Long) params[6]);
+    final CDSMValue old = (CDSMValue)references.get(key);
+
+    applyPutInternal(applyInfo, params, value, old);
+    return old;
+  }
+
+  private void applyPutInternal(final ApplyTransactionInfo applyInfo, final Object[] params, final CDSMValue value, final CDSMValue old) {
+    final Object key = params[0];
+    final ObjectID oid = (ObjectID)params[1];
+
+    references.put(key, value);
+    addedReferences(applyInfo, key, value);
+    removedReferences(applyInfo, old);
+
+    addValue(applyInfo, oid, old != null);
+    startCapacityEvictionIfNeccessary(applyInfo);
+
+    // collect modifications for futher broadcasting
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT, key, oid, cacheName);
+  }
+
   private boolean startCapacityEvictionIfNeccessary(final ApplyTransactionInfo applyInfo) {
     if (applyInfo.isActiveTxn()
         && this.evictionEnabled  //  do not trigger if eviction is disabled
@@ -358,7 +396,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
-      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, (ObjectID)value, cacheName);
+      final ObjectID objectId = (ObjectID)value;
+
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, valueInMap.getVersion(), cacheName);
     }
   }
 
@@ -376,6 +417,21 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   @Override
   protected Object applyRemove(final ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = params[0];
+    final Object old = super.applyRemove(applyInfo, params);
+    if (old instanceof CDSMValue) {
+      final CDSMValue oldValue = (CDSMValue)old;
+      final ObjectID objectId = oldValue.getObjectID();
+
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, oldValue.getVersion(), cacheName);
+    }
+    return old;
+  }
+
+  private Object applyRemoveVersioned(final ApplyTransactionInfo applyInfo, final Object[] params) {
+    final Object key = params[0];
+    final long version = (Long)params[1]; // ignoring for the time being
+
     final Object old = super.applyRemove(applyInfo, params);
     if (old instanceof CDSMValue) {
       final ObjectID objectId = ((CDSMValue)old).getObjectID();

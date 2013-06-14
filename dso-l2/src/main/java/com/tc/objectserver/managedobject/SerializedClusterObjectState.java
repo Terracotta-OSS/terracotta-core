@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.base.Preconditions;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -39,9 +40,7 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
   protected boolean basicEquals(final AbstractManagedObjectState o) {
     final SerializedClusterObjectState other = (SerializedClusterObjectState) o;
 
-    if (!Arrays.equals(this.value, other.value)) { return false; }
-
-    return true;
+    return Arrays.equals(this.value, other.value);
   }
 
   @Override
@@ -57,7 +56,8 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
       if (pa.isEntireArray()) {
         final Object array = pa.getObject();
         if (array instanceof byte[]) {
-          this.value = (byte[]) array;
+          value = (byte[]) array;
+          includeIDs.getServerEventRecorder().recordEventValue(objectID, value);
         } else {
           final String type = safeTypeName(array);
           logger.error("received array of type " + type + " -- ignoring it");
@@ -65,12 +65,12 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
       } else {
         logger.error("received physical action: " + pa + " -- ignoring it");
       }
+      Preconditions.checkState(!cursor.next(), "Only one iteration expected");
     }
   }
 
   private static String safeTypeName(final Object obj) {
-    final String type = obj == null ? "null" : obj.getClass().getName();
-    return type;
+    return obj == null ? "null" : obj.getClass().getName();
   }
 
   @Override

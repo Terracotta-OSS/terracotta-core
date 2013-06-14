@@ -8,6 +8,7 @@ import com.tc.objectserver.impl.SamplingType;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
+import com.tc.server.VersionedServerEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,12 @@ public class DefaultServerEventRecorder implements ServerEventRecorder {
   public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId,
                           final String cacheName) {
     events.add(new IntermediateForm(new BasicServerEvent(type, key, cacheName), objectId));
+  }
+
+  @Override
+  public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId,
+                          final long version, final String cacheName) {
+    events.add(new IntermediateForm(new BasicServerEvent(type, key, version, cacheName), objectId));
   }
 
   @Override
@@ -68,10 +75,10 @@ public class DefaultServerEventRecorder implements ServerEventRecorder {
   }
 
   private static final class IntermediateForm {
-    private final ServerEvent target;
+    private final VersionedServerEvent target;
     private final ObjectID objectId;
 
-    private IntermediateForm(final ServerEvent target, final ObjectID objectId) {
+    private IntermediateForm(final VersionedServerEvent target, final ObjectID objectId) {
       this.target = target;
       this.objectId = objectId;
     }

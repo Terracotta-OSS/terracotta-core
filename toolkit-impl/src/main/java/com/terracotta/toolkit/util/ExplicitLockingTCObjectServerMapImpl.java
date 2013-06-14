@@ -266,9 +266,21 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
+  public void doLogicalRemoveVersioned(final TCServerMap map, final Object lockID, final Object key, final long version) {
+    assertLockStateBeforeRejoin();
+    delegate.doLogicalRemoveVersioned(map, lockID, key, version);
+  }
+
+  @Override
   public void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
     assertLockStateBeforeRejoin();
     delegate.doLogicalRemoveUnlocked(map, key);
+  }
+
+  @Override
+  public void doLogicalRemoveUnlockedVersioned(final TCServerMap map, final Object key, final long version) {
+    assertLockStateBeforeRejoin();
+    delegate.doLogicalRemoveUnlockedVersioned(map, key, version);
   }
 
   @Override
@@ -296,9 +308,15 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public void doLogicalPut(TCServerMap map, Object lockID, Object key, Object value) {
+  public void doLogicalPut(Object lockID, Object key, Object value) {
     assertLockStateBeforeRejoin();
-    delegate.doLogicalPut(map, lockID, key, value);
+    delegate.doLogicalPut(lockID, key, value);
+  }
+
+  @Override
+  public void doLogicalPutVersioned(final TCServerMap map, final Object lockID, final Object key, final Object value, final long version) {
+    assertLockStateBeforeRejoin();
+    delegate.doLogicalPutVersioned(map, lockID, key, value, version);
   }
 
   @Override
@@ -311,6 +329,12 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   public void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
     assertLockStateBeforeRejoin();
     delegate.doLogicalPutUnlocked(map, key, value);
+  }
+
+  @Override
+  public void doLogicalPutUnlockedVersioned(final TCServerMap map, final Object key, final Object value, final long version) {
+    assertLockStateBeforeRejoin();
+    delegate.doLogicalPutUnlockedVersioned(map, key, value, version);
   }
 
   @Override

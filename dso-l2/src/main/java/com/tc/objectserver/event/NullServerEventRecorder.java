@@ -12,8 +12,13 @@ import java.util.List;
  * @author Eugene Shelestovich
  */
 public class NullServerEventRecorder implements ServerEventRecorder {
+
   @Override
   public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId, final String cacheName) {
+  }
+
+  @Override
+  public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId, final long version, final String cacheName) {
   }
 
   @Override

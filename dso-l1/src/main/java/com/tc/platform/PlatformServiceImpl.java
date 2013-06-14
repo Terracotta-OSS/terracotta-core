@@ -3,6 +3,7 @@
  */
 package com.tc.platform;
 
+import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
@@ -30,6 +31,8 @@ import com.tc.util.VicariousThreadLocal;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -277,7 +280,7 @@ public class PlatformServiceImpl implements PlatformService {
                                          List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
       throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                aggregators, maxResults, batchSize, waitForTxn);
+        aggregators, maxResults, batchSize, waitForTxn);
   }
 
   @Override
@@ -316,7 +319,14 @@ public class PlatformServiceImpl implements PlatformService {
 
   @Override
   public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    Preconditions.checkArgument(listenTo != null && !listenTo.isEmpty());
     manager.registerServerEventListener(destination, listenTo);
+  }
+
+  @Override
+  public void registerServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
+    Preconditions.checkNotNull(listenTo);
+    registerServerEventListener(destination, EnumSet.copyOf(Arrays.asList(listenTo)));
   }
 
   @Override

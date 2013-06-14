@@ -75,6 +75,11 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
           clientToDestMap.put(clientId, destinations);
         }
         destinations.add(destination);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Client '" + clientId + "' has registered server event listener for cache '"
+                    + destination + "'. Event types: " + events);
+        }
       }
     } finally {
       lock.writeLock().unlock();
@@ -89,6 +94,11 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
         if (destinations != null) {
           destinations.remove(destination);
         }
+      }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Client '" + clientId + "' has unregistered server event listener for cache '"
+                  + destination + "'");
       }
     } finally {
       lock.writeLock().unlock();

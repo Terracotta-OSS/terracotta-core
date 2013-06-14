@@ -8,6 +8,8 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -25,7 +27,6 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.event.ServerEventPublisher;
-import com.tc.objectserver.event.ServerEventRecorder;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -33,6 +34,7 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.server.ServerEvent;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
 
@@ -40,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +54,9 @@ import java.util.concurrent.TimeUnit;
  * @author steve
  */
 public class ApplyTransactionChangeHandler extends AbstractEventHandler {
+
+  private static final TCLogger          LOGGER                          = TCLogging.getLogger(ApplyTransactionChangeHandler.class);
+
   private static final int               LWM_UPDATE_INTERVAL = 10000;
 
   private ServerTransactionManager       transactionManager;
@@ -139,8 +145,15 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   }
 
   private void publishModifications(final ApplyTransactionInfo applyInfo) {
-    final ServerEventRecorder recorder = applyInfo.getServerEventRecorder();
-    serverEventPublisher.post(recorder.getEvents());
+    final List<ServerEvent> events = applyInfo.getServerEventRecorder().getEvents();
+    if (events != null && !events.isEmpty()) {
+      serverEventPublisher.post(events);
+
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug(events.size() + " server events have been queued for sending");
+        LOGGER.debug(events);
+      }
+    }
   }
 
   private void begin() {

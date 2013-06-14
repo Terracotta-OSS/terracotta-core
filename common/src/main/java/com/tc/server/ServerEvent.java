@@ -6,7 +6,6 @@ package com.tc.server;
 
 /**
  * Server event.
- * TODO: add versioning to each event
  *
  * @author Eugene Shelestovich
  */
@@ -22,5 +21,4 @@ public interface ServerEvent {
 
   byte[] getValue();
 
-  void setValue(byte[] value);
 }

@@ -7,22 +7,32 @@ import org.apache.commons.lang.ArrayUtils;
  *
  * @author Eugene Shelestovich
  */
-public final class BasicServerEvent implements ServerEvent {
+public final class BasicServerEvent implements VersionedServerEvent {
 
   private final String cacheName;
   private final Object key;
   private ServerEventType type;
   private byte[] value;
+  private long version = DEFAULT_VERSION;
 
   public BasicServerEvent(final ServerEventType type, final Object key, final String cacheName) {
-    this(type, key, ArrayUtils.EMPTY_BYTE_ARRAY, cacheName);
+    this(type, key, ArrayUtils.EMPTY_BYTE_ARRAY, DEFAULT_VERSION, cacheName);
   }
 
-  public BasicServerEvent(final ServerEventType type, final Object key, byte[] value, final String cacheName) {
+  public BasicServerEvent(final ServerEventType type, final Object key, final byte[] value, final String cacheName) {
+    this(type, key, value, DEFAULT_VERSION, cacheName);
+  }
+
+  public BasicServerEvent(final ServerEventType type, final Object key, final long version, final String cacheName) {
+    this(type, key, ArrayUtils.EMPTY_BYTE_ARRAY, version, cacheName);
+  }
+
+  public BasicServerEvent(final ServerEventType type, final Object key, final byte[] value, final long version, final String cacheName) {
     this.type = type;
     this.key = key;
     this.value = value;
     this.cacheName = cacheName;
+    this.version = version;
   }
 
   @Override
@@ -56,10 +66,17 @@ public final class BasicServerEvent implements ServerEvent {
   }
 
   @Override
+  public long getVersion() {
+    return version;
+  }
+
+  @Override
   public String toString() {
     return "ServerEvent" +
            "{type=" + type +
            ", key=" + key +
+           ", value=" + value +
+           ", version=" + version +
            ", cacheName='" + cacheName + '\'' +
            '}';
   }

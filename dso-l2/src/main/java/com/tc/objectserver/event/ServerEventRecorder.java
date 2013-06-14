@@ -22,6 +22,9 @@ public interface ServerEventRecorder {
   void recordEvent(ServerEventType type, Object key, ObjectID objectId,
                    String cacheName);
 
+  void recordEvent(ServerEventType type, Object key, ObjectID objectId,
+                   long version, String cacheName);
+
   void recordEventValue(ObjectID objectId, byte[] value);
 
   void reconsiderRemovals(SamplingType samplingType);

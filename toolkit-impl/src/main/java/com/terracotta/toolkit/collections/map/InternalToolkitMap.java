@@ -39,6 +39,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
+  void putVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
+
   void putNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
   V putIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
@@ -51,6 +53,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
                             boolean localCacheEnabled);
 
   void removeNoReturn(Object key);
+
+  void removeNoReturnVersioned(Object key, long version);
 
   V unsafeLocalGet(Object key);
 
@@ -82,7 +86,11 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
+  void unlockedPutNoReturnVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
+
   void unlockedRemoveNoReturn(Object key);
+
+  void unlockedRemoveNoReturnVersioned(Object key, long version);
 
   void unlockedClear();
 

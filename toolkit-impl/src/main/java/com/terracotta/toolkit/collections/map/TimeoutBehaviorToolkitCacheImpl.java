@@ -7,6 +7,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -201,8 +202,18 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime, final int customTTI, final int customTTL) {
+    mutationBehaviourResolver.unlockedPutNoReturnVersioned(k, v, version, createTime, customTTI, customTTL);
+  }
+
+  @Override
   public void unlockedRemoveNoReturn(Object k) {
     mutationBehaviourResolver.unlockedRemoveNoReturn(k);
+  }
+
+  @Override
+  public void unlockedRemoveNoReturnVersioned(final Object key, final long version) {
+    mutationBehaviourResolver.unlockedRemoveNoReturnVersioned(key, version);
   }
 
   @Override
@@ -271,6 +282,17 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public void putVersioned(final K key, final V value, final long version) {
+    mutationBehaviourResolver.putVersioned(key, value, version);
+  }
+
+  @Override
+  public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
+                           final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    mutationBehaviourResolver.putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+  }
+
+  @Override
   public void disposeLocally() {
     // TODO: discuss
     mutationBehaviourResolver.disposeLocally();
@@ -279,6 +301,16 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   @Override
   public void removeAll(Set<K> keys) {
     mutationBehaviourResolver.removeAll(keys);
+  }
+
+  @Override
+  public void removeVersioned(final Object key, final long version) {
+    mutationBehaviourResolver.removeVersioned(key, version);
+  }
+
+  @Override
+  public void registerVersionUpdateListener(final VersionUpdateListener listener) {
+    mutationBehaviourResolver.registerVersionUpdateListener(listener);
   }
 
   @Override
