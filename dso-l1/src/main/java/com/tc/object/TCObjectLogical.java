@@ -17,16 +17,6 @@ public class TCObjectLogical extends TCObjectImpl {
   }
 
   @Override
-  protected int clearReferences(final Object pojo, final int toClear) {
-    // if (!(pojo instanceof Clearable)) { //dev-6999
-    // Assert.fail("TCObjectLogical.clearReferences expected Clearable but got "
-    // + (pojo == null ? "null" : pojo.getClass().getName()));
-    // }
-    // final Clearable clearable = (Clearable) pojo;
-    return 0;
-  }
-
-  @Override
   public void unresolveReference(final String fieldName) {
     throw new AssertionError();
   }

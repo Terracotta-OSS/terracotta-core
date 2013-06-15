@@ -49,7 +49,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     assertTrue(to1.test2 == to2);
 
     tcObj.getTCClass().dehydrate(tcObj, new TestDNAWriter(), tcObj.getPeerObject());
-    tcObj.clearReferences(100);
     assertTrue(to1.test2 == null);
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
     assertTrue(to1.test2 == to2);

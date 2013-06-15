@@ -196,12 +196,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     // No reference to clear
   }
 
-  @Override
-  public int clearReferences(int arg0) {
-    // No reference to clear
-    return 0;
-  }
-
   // ====================================================
   // Not relevant for this implementation
   // ====================================================

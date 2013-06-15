@@ -10,7 +10,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.field.TCField;
 import com.tc.util.Assert;
-import com.tc.util.ClassUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -180,18 +179,6 @@ public class TCObjectPhysical extends TCObjectImpl {
   public void setLiteralValue(Object newValue) {
     Assert.eval(newValue != null);
     setPeerObject(getObjectManager().newWeakObjectReference(getObjectID(), newValue));
-  }
-
-  @Override
-  protected int clearReferences(Object pojo, int toClear) {
-    if (tcClazz.isIndexed()) {
-      if (ClassUtils.isPrimitiveArray(pojo)) return 0;
-      return clearArrayReferences((Object[]) pojo);
-    } else if (pojo instanceof TransparentAccess) {
-      return clearObjectReferences((TransparentAccess) pojo);
-    } else {
-      return 0;
-    }
   }
 
   private int clearArrayReferences(Object[] array) {

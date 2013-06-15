@@ -58,11 +58,6 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public int clearReferences(int toClear) {
-    return delegate.clearReferences(toClear);
-  }
-
-  @Override
   public Object getResolveLock() {
     return delegate.getResolveLock();
   }

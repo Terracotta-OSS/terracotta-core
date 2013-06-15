@@ -827,15 +827,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  /**
-   * Called by the memory manager
-   */
-  @Override
-  protected int clearReferences(final Object pojo, final int toClear) {
-    // if this method is called, means there is a bug in the code, throwing AssertionError
-    throw new AssertionError("clearReferences should not be called from L1 cache manager");
-  }
-
   @Override
   public Set getLocalKeySet() {
     return isCacheInitialized() ? this.cache.getKeys() : Collections.emptySet();

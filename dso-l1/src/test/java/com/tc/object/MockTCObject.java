@@ -183,11 +183,6 @@ public class MockTCObject implements TCObject {
   }
 
   @Override
-  public int clearReferences(final int toClear) {
-    return 0;
-  }
-
-  @Override
   public Object getResolveLock() {
     return this.resolveLock;
   }

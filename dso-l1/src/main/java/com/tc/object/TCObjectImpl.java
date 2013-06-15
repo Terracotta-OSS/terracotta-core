@@ -12,7 +12,6 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.util.ToggleableStrongReference;
-import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.Util;
 
@@ -188,26 +187,6 @@ public abstract class TCObjectImpl implements TCObject {
     if (obj == null) { return "null"; }
     return obj.getClass().getSimpleName();
   }
-
-  @Override
-  public final int clearReferences(final int toClear) {
-    if (this.tcClazz.useResolveLockWhileClearing()) {
-      synchronized (getResolveLock()) {
-        return basicClearReferences(toClear);
-      }
-    } else {
-      return basicClearReferences(toClear);
-    }
-  }
-
-  private int basicClearReferences(final int toClear) {
-    final Object po = getPeerObject();
-    Assert.assertFalse(isNew()); // Shouldn't clear new Objects
-    if (po == null) { return 0; }
-    return clearReferences(po, toClear);
-  }
-
-  protected abstract int clearReferences(Object pojo, int toClear);
 
   @Override
   public final Object getResolveLock() {

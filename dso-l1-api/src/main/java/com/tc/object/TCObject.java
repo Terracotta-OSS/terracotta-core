@@ -45,14 +45,6 @@ public interface TCObject extends Cacheable {
   public TCClass getTCClass();
 
   /**
-   * Clear memory references up to toClear limit
-   * 
-   * @param toClear - the number of references to clear atmost
-   * @return - the number of references actually cleared
-   */
-  public int clearReferences(int toClear);
-
-  /**
    * Get an object to lock on to modify this object.
    * 
    * @return The lock object
