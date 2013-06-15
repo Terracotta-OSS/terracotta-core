@@ -262,7 +262,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
         // that can properly account for all properties that should not be passed
         // through.
         if (parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX)
-            && !parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "properties")) {
+            && !parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "properties")
+            && !parentJvmArg.contains(TCPropertiesConsts.PRODUCTKEY_PATH)) {
           args.add(parentJvmArg);
         }
       }
