@@ -9,6 +9,7 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
+import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.session.SessionID;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
@@ -79,7 +80,7 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
             final byte[] value = (byte[])decoder.decode(inputStream);
             final long version = (inputStream.available() > 0) ? (Long)decoder.decode(inputStream)
                 : VersionedServerEvent.DEFAULT_VERSION;
-            events.add(new BasicServerEvent(type, key, value, version, destination));
+            events.add(new BasicServerEvent(type, extractStringIfNecessary(key), value, version, destination));
           }
         } catch (ClassNotFoundException e) {
           throw new AssertionError(e);
@@ -88,6 +89,19 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
       default:
         return false;
     }
+  }
+
+  /**
+   * Transform a key from internal representation to string if necessary.
+   */
+  private static Object extractStringIfNecessary(final Object key) {
+    final Object normalizedKey;
+    if (key instanceof UTF8ByteDataHolder) {
+      normalizedKey = ((UTF8ByteDataHolder)key).asString();
+    } else {
+      normalizedKey = key;
+    }
+    return normalizedKey;
   }
 
   @Override

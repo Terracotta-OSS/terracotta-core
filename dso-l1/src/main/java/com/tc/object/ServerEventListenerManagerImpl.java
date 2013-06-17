@@ -5,7 +5,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.ServerEventListenerMessageFactory;
@@ -71,19 +70,6 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     } finally {
       lock.readLock().unlock();
     }
-  }
-
-  /**
-   * Transform a key from internal representation to string if necessary.
-   */
-  private static Object extractStringIfNecessary(final Object key) {
-    final Object normalizedKey;
-    if (key instanceof UTF8ByteDataHolder) {
-      normalizedKey = ((UTF8ByteDataHolder)key).asString();
-    } else {
-      normalizedKey = key;
-    }
-    return normalizedKey;
   }
 
   @Override
