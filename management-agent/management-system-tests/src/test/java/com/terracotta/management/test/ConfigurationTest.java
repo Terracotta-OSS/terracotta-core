@@ -1,52 +1,63 @@
 package com.terracotta.management.test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.containsString;
-
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.cluster.ClusterScheme;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.matchers.JUnitMatchers.containsString;
+
 /**
  * ConfigurationTest
  */
 public class ConfigurationTest extends AbstractTsaAgentTestBase {
-
+  private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
   private static final int MEMBER_COUNT = 2;
 
   public ConfigurationTest(TestConfig testConfig) {
     super(testConfig);
-
+    testConfig.setNumOfGroups(GROUP_COUNT);
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
-    testConfig.getClientConfig().setClientClasses(new Class[]{ConfigurationTestClient.class, ConfigurationClientTestClient.class, ConfigurationServerTestClient.class});
+    testConfig.getClientConfig().setClientClasses(new Class[]{ConfigurationServerTestClient.class, ConfigurationClientTestClient.class});
   }
 
-  public abstract static class AbstractConfigurationTestClient extends AbstractTsaClient {
 
-    public AbstractConfigurationTestClient(String[] args) {
+  public static class ConfigurationServerTestClient extends AbstractTsaClient {
+
+    public ConfigurationServerTestClient(String[] args) {
       super(args);
     }
 
-    protected void checkClientConfiguration(JSONObject content) {
-      checkCommonConfiguration(content);
+    @Override
+    protected void doTsaTest() throws Throwable {
+      for (int group = 0; group < GROUP_COUNT; group++) {
+        for (int member = 0; member < MEMBER_COUNT; member++) {
+          int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
+
+          JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers;names=" + getGroupData(group).getServerNames()[member]);
+          assertThat(contentArray.size(), is(1));
+          JSONObject content = (JSONObject)contentArray.get(0);
+          checkServerConfigurationWithName(group, member, content);
+
+          contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers");
+          assertThat(contentArray.size(), is(MEMBER_COUNT * GROUP_COUNT));
+          content = (JSONObject)contentArray.get(0);
+          checkServerConfigurationWithName(0, 0, content);
+          content = (JSONObject)contentArray.get(1);
+          checkServerConfigurationWithName(0, 1, content);
+        }
+      }
     }
 
-    protected void checkServerConfiguration(JSONObject content) {
-      checkCommonConfiguration(content);
-    }
-
-    private void checkCommonConfiguration(JSONObject content) {
+    private void checkServerConfigurationWithName(int groupIndex, int serverIndex, JSONObject content) {
+      String sourceId = (String)content.get("sourceId");
+      assertThat(sourceId.contains(getGroupData(groupIndex).getServerNames()[serverIndex]), is(true));
 
       JSONObject attributes = (JSONObject)content.get("attributes");
       assertThat(attributes, is(notNullValue()));
@@ -63,43 +74,13 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
       String tcProperties = (String)attributes.get("tcProperties");
       assertThat(tcProperties, containsString("tc.config.total.timeout"));
-    }
-  }
 
-  public static class ConfigurationTestClient extends AbstractConfigurationTestClient {
-
-    public ConfigurationTestClient(String[] args) {
-      super(args);
-    }
-
-    @Override
-    protected void doTsaTest() throws Throwable {
-      int groupIndex = 0;
-
-      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(groupIndex).getTsaPort(0)));
-
-      for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-
-        int tsaGroupPort = getGroupData(groupIndex).getTsaGroupPort(serverIndex);
-        JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations");
-
-        for (int i = 0; i< MEMBER_COUNT; i++) {
-          JSONObject content = (JSONObject)contentArray.get(i);
-
-          checkServerConfiguration(content);
-        }
-
-        for (int i = MEMBER_COUNT; i < contentArray.size(); i++) {
-          checkClientConfiguration((JSONObject)contentArray.get(i));
-        }
-      }
-
-      cacheManager.shutdown();
+      assertThat((String)content.get("version"), is(guessVersion()));
     }
 
   }
 
-  public static class ConfigurationClientTestClient extends AbstractConfigurationTestClient {
+  public static class ConfigurationClientTestClient extends AbstractTsaClient {
 
     public ConfigurationClientTestClient(String[] args) {
       super(args);
@@ -107,54 +88,14 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
-      int tsaPort = getGroupData(0).getTsaPort(0);
-      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(tsaPort));
-      String nodeId = cacheManager.getCluster(ClusterScheme.TERRACOTTA).getCurrentNode().getId();
-      String id = nodeId.substring(nodeId.length() - 2, nodeId.length() - 1);
-
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaPort,
-          "/tc-management-api/agents/configurations/clients;ids=" + id);
-
-      assertThat(contentArray.size(), is(1));
-      checkClientConfigurationWithName(id, (JSONObject)contentArray.get(0));
-
-      cacheManager.shutdown();
+      for (int group = 0; group < GROUP_COUNT; group++) {
+        for (int member = 0; member < MEMBER_COUNT; member++) {
+          int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
+          JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/clients");
+          assertThat(contentArray.size(), is(0));
+        }
+      }
     }
-
-    private void checkClientConfigurationWithName(String id, JSONObject content) {
-      assertThat((String)content.get("sourceId"), equalTo(id));
-      checkClientConfiguration(content);
-    }
-  }
-
-  public static class ConfigurationServerTestClient extends AbstractConfigurationTestClient {
-
-    public ConfigurationServerTestClient(String[] args) {
-      super(args);
-    }
-
-    @Override
-    protected void doTsaTest() throws Throwable {
-      int groupIndex = 0;
-      int serverIndex = 0;
-
-      int tsaGroupPort = getGroupData(groupIndex).getTsaGroupPort(serverIndex);
-      JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort,
-          "/tc-management-api/agents/configurations/servers;names=" + getGroupData(groupIndex).getServerNames()[serverIndex]);
-
-      assertThat(contentArray.size(), is(1));
-      JSONObject content = (JSONObject)contentArray.get(0);
-
-      checkServerConfigurationWithName(groupIndex, serverIndex, content);
-    }
-
-    private void checkServerConfigurationWithName(int groupIndex, int serverIndex, JSONObject content) {
-      String sourceId = (String)content.get("sourceId");
-      assertThat(sourceId.contains(getGroupData(groupIndex).getServerNames()[serverIndex]), is(true));
-
-      checkServerConfiguration(content);
-    }
-
 
   }
 

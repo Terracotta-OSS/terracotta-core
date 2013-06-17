@@ -18,6 +18,7 @@ import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 
 import org.terracotta.util.ToolkitVersion;
 
@@ -75,6 +76,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
   @Override
   protected String createClassPath(Class client) throws IOException {
+    String tk = TestBaseUtil.jarFor(ToolkitVersion.class);
+    String common = TestBaseUtil.jarFor(Os.class);
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
     String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTestBase.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);
@@ -82,7 +85,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String ehCache = TestBaseUtil.jarFor(CacheManager.class);
     String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
     String commonsIo = TestBaseUtil.jarFor(IOUtils.class);
-    return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo);
+    return makeClasspath(tk, common, expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
@@ -177,7 +180,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       return sb.toString();
     }
 
-    protected void httpPost(String urlString) throws IOException {
+    protected String httpPost(String urlString) throws IOException {
       HttpURLConnection httpConnection = (HttpURLConnection) new URL(urlString).openConnection();
       try {
         httpConnection.setRequestMethod("POST");
@@ -192,11 +195,13 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
         BufferedReader br = new BufferedReader(new InputStreamReader((httpConnection.getInputStream())));
 
-        String output;
+        StringBuffer sb = new StringBuffer();
         System.out.println("Output from Server .... \n");
+        String output;
         while ((output = br.readLine()) != null) {
-          System.out.println(output);
+          sb.append(output).append('\n');
         }
+        return sb.toString();
       } finally {
         httpConnection.disconnect();
       }
