@@ -80,15 +80,17 @@ public class GroupServerManager {
 
     private final String serverName;
     private final int    dsoPort;
+    private final int    index;
 
-    private ServerExitCallback(String server, int port) {
+    private ServerExitCallback(String server, int port, int index) {
       serverName = server;
       dsoPort = port;
+      this.index = index;
     }
 
     @Override
     public boolean onExit(final int exitCode) {
-
+      expectedServerRunning[index] = false;
       String errMsg;
       if (exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST && testConfig.isRestartZappedL2()) {
         errMsg = "*** Server '" + serverName + "' with dso-port " + dsoPort
@@ -175,7 +177,7 @@ public class GroupServerManager {
         Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
       }
       serverControl[i] = getServerControl(groupData.getTsaPort(i), groupData.getJmxPort(i),
-                                          groupData.getServerNames()[i], perServerJvmArgs, l2Config);
+                                          groupData.getServerNames()[i], perServerJvmArgs, l2Config, i);
       expectedServerRunning[i] = false;
     }
   }
@@ -185,7 +187,7 @@ public class GroupServerManager {
   }
 
   private ServerControl getServerControl(final int dsoPort, final int jmxPort, final String serverName,
-                                         List<String> jvmArgs, final L2Config l2config) {
+                                         List<String> jvmArgs, final L2Config l2config, final int index) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
@@ -196,7 +198,7 @@ public class GroupServerManager {
     return new MonitoringServerControl(new ExtraProcessServerControl(HOST, dsoPort, jmxPort,
                                                                      tcConfigFile.getAbsolutePath(), true, serverName,
                                                                      jvmArgs, javaHome, true, workingDir),
-                                       new ServerExitCallback(serverName, dsoPort));
+                                       new ServerExitCallback(serverName, dsoPort, index));
   }
 
   public void startAllServers() throws Exception {
@@ -542,7 +544,7 @@ public class GroupServerManager {
 
     boolean active = isActive(index);
     System.out.println("Crashing server: dsoPort=[" + serverControl[index].getTsaPort() + "]");
-    if (!ignoreState && expectedRunningServerCount() > 1) {
+    if (active && !ignoreState && expectedRunningServerCount() > 1) {
       waituntilPassiveStandBy();
     }
     ServerControl server = serverControl[index];
