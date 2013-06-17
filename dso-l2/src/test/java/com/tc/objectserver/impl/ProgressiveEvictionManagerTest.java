@@ -78,9 +78,7 @@ public class ProgressiveEvictionManagerTest {
   public void testEmergencyEviction() throws Throwable {
     Future<SampledRateCounter> counter = mgr.emergencyEviction(5);
     counter.cancel(false);
-    while ( !counter.isDone() ) {
-      Thread.sleep(1000);
-    }
+    mgr.shutdownEvictor();
     System.out.println(mgr.getCurrentlyEvicting());
     Assert.assertTrue(mgr.getCurrentlyEvicting().isEmpty());
   }
