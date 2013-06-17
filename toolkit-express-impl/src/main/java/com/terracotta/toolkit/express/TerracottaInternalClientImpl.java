@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.express;
 
+import static com.terracotta.management.security.SecretUtils.TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP;
+
 import org.terracotta.toolkit.ToolkitRuntimeException;
 
 import com.terracotta.toolkit.express.loader.Util;
@@ -17,8 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.terracotta.management.security.SecretUtils.TERRACOTTA_CUSTOM_SECRET_PROVIDER_PROP;
 
 class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
@@ -137,9 +137,15 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public <T> T instantiate(String className, Class[] cstrArgTypes, Object[] cstrArgs) throws Exception {
+    try {
     Class clazz = clusteredStateLoader.loadClass(className);
     Constructor cstr = clazz.getConstructor(cstrArgTypes);
     return (T) cstr.newInstance(cstrArgs);
+    } catch (InvocationTargetException e) {
+      Throwable targetEx = e.getTargetException();
+      throw (targetEx instanceof ToolkitRuntimeException) ? (ToolkitRuntimeException) targetEx
+          : new ToolkitRuntimeException(targetEx);
+    }
   }
 
   @Override
