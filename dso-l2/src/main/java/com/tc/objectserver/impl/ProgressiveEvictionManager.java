@@ -229,6 +229,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   public void runEvictor() {
     schedulePeriodicEvictionRun(null);
   }
+ 
+  // used only for tests
+  void shutdownEvictor() {
+    agent.shutdown();
+    try {
+      agent.awaitTermination(10, TimeUnit.SECONDS);
+    } catch ( InterruptedException ie ) {
+      logger.debug("bad test termintation", ie);
+    }
+  }
 
   Future<SampledRateCounter> schedulePeriodicEvictionRun(Set<ObjectID> evictableObjects) {
     try {
@@ -244,7 +254,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     agent.shutdown();
     return completedFuture;
   }
-  
+    
   @Override
   public boolean scheduleCapacityEviction(ObjectID oid) {
     if ( evictor.markEvictionInProgress(oid) ) {
