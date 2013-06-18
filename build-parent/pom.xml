@@ -592,9 +592,10 @@
                     <artifactId>
                       maven-dependency-plugin
                     </artifactId>
-                    <versionRange>[2.2,)</versionRange>
+                    <versionRange>[2.1,)</versionRange>
                     <goals>
                       <goal>unpack-dependencies</goal>
+                      <goal>list</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
