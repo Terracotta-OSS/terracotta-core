@@ -169,7 +169,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.runtime.logging.MemoryOperatorEventListener;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -736,10 +735,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     openChannel(serverHost, serverPort, maxConnectRetries);
     waitForHandshake();
-
-    // register for memory events for operator console register for it after the handshake happens see MNK-1684
-    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(tcProperties
-        .getInt(TCPropertiesConsts.L1_MEMORYMANAGER_CRITICAL_THRESHOLD)));
 
     setLoggerOnExit();
   }
