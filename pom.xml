@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
- 
+
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent-ee</artifactId>
     <version>3.5</version>
     <relativePath/>
   </parent>
-  
+
   <groupId>org.terracotta</groupId>
   <artifactId>terracotta-root</artifactId>
   <version>4.1.0-SNAPSHOT</version>
@@ -19,7 +19,7 @@
   <properties>
     <build.edition>opensource</build.edition>
   </properties>
-  
+
   <modules>
     <module>build-parent</module>
     <module>build-data</module>
@@ -31,16 +31,16 @@
     <module>dso-l2</module>
     <module>deploy</module>
     <module>dso-cluster-api</module>
-    
+
     <module>legacy-test-tree</module>
     <module>dso-system-tests</module>
-    
+
     <module>terracotta-parent</module>
     <module>terracotta</module>
     <module>terracotta-l1-parent</module>
     <module>terracotta-l1</module>
-    <module>test-framework</module>        
-    <module>system-tests-parent</module>        
+    <module>test-framework</module>
+    <module>system-tests-parent</module>
 
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
@@ -49,7 +49,7 @@
     <module>management</module>
     <module>management-agent</module>
   </modules>
-  
+
   <profiles>
     <!-- Allow building kit from the top level -->
     <profile>
@@ -69,7 +69,7 @@
         <file>
           <exists>../terracotta-ee/pom.xml</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>../ent-common</module>
         <module>../ent-dso-l1</module>
@@ -78,29 +78,29 @@
         <module>../ent-system-tests</module>
         <module>../ent-active-active-tests</module>
         <module>../terracotta-ee</module>
-        <module>../terracotta-l1-ee</module>         
+        <module>../terracotta-l1-ee</module>
         <module>../toolkit-impl-ee</module>
         <module>../toolkit-express-impl-ee</module>
         <module>../toolkit-runtime-ee</module>
         <module>../toolkit-ee-system-tests</module>
         <module>../toolkit-lrt-system-tests</module>
-      </modules>        
+      </modules>
     </profile>
-    
-    <!-- activate by default if 'terracotta-toolkit-api' module exists. 
+
+    <!-- activate by default if 'terracotta-toolkit-api' module exists.
          You have to check out this module manually under 'community/devwork' -->
-     <profile>
+    <profile>
       <id>toolkit-api</id>
       <activation>
         <file>
           <exists>devwork/terracotta-toolkit-api</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/terracotta-toolkit-api</module>
       </modules>
     </profile>
-    <!-- activate by default if 'ehcache' module exists. 
+    <!-- activate by default if 'ehcache' module exists.
          You have to check out this module manually under 'community/devwork' -->
     <profile>
       <id>ehcache</id>
@@ -108,12 +108,12 @@
         <file>
           <exists>devwork/ehcache</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/ehcache</module>
       </modules>
     </profile>
-    <!-- activate by default if 'ehcache-ee' module exists. 
+    <!-- activate by default if 'ehcache-ee' module exists.
          You have to check out this module manually under 'community/devwork' -->
     <profile>
       <id>ehcache-ee</id>
@@ -121,59 +121,59 @@
         <file>
           <exists>devwork/ehcache-ee</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/ehcache-ee</module>
       </modules>
-    </profile>        
-    
+    </profile>
+
     <profile>
       <id>quartz</id>
       <activation>
         <file>
           <exists>devwork/quartz</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/quartz</module>
       </modules>
-    </profile>     
-    
+    </profile>
+
     <profile>
       <id>quartz-ee</id>
       <activation>
         <file>
           <exists>devwork/quartz-ee</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/quartz-ee</module>
       </modules>
-    </profile>     
- 
+    </profile>
+
     <profile>
       <id>management-core</id>
       <activation>
         <file>
           <exists>devwork/management-core</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/management-core</module>
       </modules>
-    </profile>     
- 
+    </profile>
+
     <profile>
       <id>management-apps</id>
       <activation>
         <file>
           <exists>devwork/management-apps</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/management-apps</module>
       </modules>
-    </profile>     
+    </profile>
 
     <profile>
       <id>core-storage-api</id>
@@ -181,29 +181,29 @@
         <file>
           <exists>devwork/core-storage-api</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/core-storage-api</module>
       </modules>
-    </profile>     
+    </profile>
     <profile>
       <id>heap-core-storage</id>
       <activation>
         <file>
           <exists>devwork/heap-core-storage</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/heap-core-storage</module>
       </modules>
-    </profile>     
+    </profile>
     <profile>
       <id>bigmemory-core-storage</id>
       <activation>
         <file>
           <exists>devwork/bigmemory-core-storage</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/bigmemory-core-storage</module>
       </modules>
@@ -215,7 +215,7 @@
         <file>
           <exists>devwork/search</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/search</module>
       </modules>
@@ -227,7 +227,7 @@
         <file>
           <exists>devwork/terracotta-license</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/terracotta-license</module>
       </modules>
@@ -239,11 +239,11 @@
         <file>
           <exists>devwork/offheap-store</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/offheap-store</module>
       </modules>
-    </profile>     
+    </profile>
 
     <profile>
       <id>statistics</id>
@@ -251,11 +251,11 @@
         <file>
           <exists>devwork/statistics</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/statistics</module>
       </modules>
-    </profile>     
+    </profile>
 
     <profile>
       <id>security-modules</id>
@@ -263,13 +263,13 @@
         <file>
           <exists>devwork/security-modules</exists>
         </file>
-      </activation>      
+      </activation>
       <modules>
         <module>devwork/security-modules</module>
       </modules>
-    </profile>     
+    </profile>
   </profiles>
-  
+
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
@@ -280,7 +280,7 @@
       <url>http://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
-  
+
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
@@ -289,6 +289,6 @@
     <pluginRepository>
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>   
-  </pluginRepositories>  
+    </pluginRepository>
+  </pluginRepositories>
 </project>
