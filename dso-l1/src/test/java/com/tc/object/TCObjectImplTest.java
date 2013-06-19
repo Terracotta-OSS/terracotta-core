@@ -47,11 +47,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
     assertTrue(to1.test1 == null);// nothing should happen from that
     assertTrue(to1.test2 == to2);
-
-    tcObj.getTCClass().dehydrate(tcObj, new TestDNAWriter(), tcObj.getPeerObject());
-    assertTrue(to1.test2 == null);
-    tcObj.resolveReference(TestObject.class.getName() + ".test2");
-    assertTrue(to1.test2 == to2);
   }
 
   private static class TestObject implements TransparentAccess {
