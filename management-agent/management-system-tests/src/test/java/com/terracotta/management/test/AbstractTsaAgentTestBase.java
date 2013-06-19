@@ -7,6 +7,7 @@ import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -47,6 +49,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     String war = guessWarLocation();
     testConfig.getL2Config().addExtraServerJvmArg("-Dcom.tc.management.war=" + war);
+    testConfig.getClientConfig().setParallelClients(false);
   }
 
   private String guessWarLocation() {
@@ -252,6 +255,60 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       }
 
       throw new AssertionError("Invalid JAR: " + jar);
+    }
+
+    protected boolean serverContainsAllOfThoseLogs(int group, int member, String... logs) throws IOException {
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents/logs");
+      boolean[] contains = new boolean[logs.length];
+
+      for (Object aLogsArray : logsArray) {
+        JSONObject o = (JSONObject)aLogsArray;
+        String message = (String)o.get("message");
+
+        for (int j = 0; j < logs.length; j++) {
+          contains[j] |= message.contains(logs[j]);
+        }
+
+        boolean allTrue = true;
+        for (boolean contain : contains) {
+          allTrue &= contain;
+        }
+        if (allTrue) { return true; }
+      }
+
+      return false;
+    }
+
+    protected boolean serverContainsAnyOfThoseLogs(int group, int member, String... logs) throws IOException {
+      JSONArray logsArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member), "/tc-management-api/agents/logs");
+      for (Object aLogsArray : logsArray) {
+        JSONObject o = (JSONObject)aLogsArray;
+        String message = (String)o.get("message");
+
+        for (String log : logs) {
+          if (message.contains(log)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    protected void assertTrueWithin(long timeInMs, Callable<Boolean> callable) throws Exception {
+      Boolean success = false;
+
+      while (timeInMs > 0) {
+        success = callable.call();
+
+        if (success != null && success) {
+          break;
+        }
+
+        ThreadUtil.reallySleep(1000L);
+        timeInMs -= 1000L;
+      }
+
+      assertThat(success, is(true));
     }
   }
 
