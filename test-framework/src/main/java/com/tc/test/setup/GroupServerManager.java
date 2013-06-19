@@ -90,7 +90,6 @@ public class GroupServerManager {
 
     @Override
     public boolean onExit(final int exitCode) {
-      expectedServerRunning[index] = false;
       String errMsg;
       if (exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST && testConfig.isRestartZappedL2()) {
         errMsg = "*** Server '" + serverName + "' with dso-port " + dsoPort
@@ -98,6 +97,8 @@ public class GroupServerManager {
         System.out.println(errMsg);
         return true;
       }
+      expectedServerRunning[index] = false;
+
       errMsg = "*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly with exit code "
                + exitCode + ". ***";
       System.err.println(errMsg);
