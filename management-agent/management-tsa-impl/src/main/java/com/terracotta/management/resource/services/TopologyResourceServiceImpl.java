@@ -65,6 +65,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       TopologyEntity result = new TopologyEntity();
+      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
