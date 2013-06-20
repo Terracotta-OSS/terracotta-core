@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
+
 public class ConcurrentDistributedServerMapManagedObjectState extends PartialMapManagedObjectState implements
     EvictableMap {
 
@@ -103,7 +105,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
-      dehydrateFields(objectID, writer);
+      dehydrateFields(writer);
       for (Object o : references.keySet()) {
         CDSMValue value = getValueForKey(o);
         writer.addLogicalAction(SerializationUtil.PUT, new Object[] {o, value.getObjectID(), value.getCreationTime(),
@@ -111,11 +113,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       }
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
-      dehydrateFields(objectID, writer);
+      dehydrateFields(writer);
     }
   }
 
-  protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
+  protected void dehydrateFields(final DNAWriter writer) {
     writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, this.dsoLockType);
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, this.maxTTISeconds);
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, this.maxTTLSeconds);
@@ -195,7 +197,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
                                     final Object[] params) {
     switch (method) {
       case SerializationUtil.SET_LAST_ACCESSED_TIME:
-        applySetLastAccessedTime(applyInfo, params);
+        applySetLastAccessedTime(params);
         break;
       case SerializationUtil.FIELD_CHANGED:
         final String fieldName = asString(params[0]);
@@ -418,13 +420,13 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected Object applyRemove(final ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = params[0];
     final Object old = super.applyRemove(applyInfo, params);
-    if (old instanceof CDSMValue) {
-      final CDSMValue oldValue = (CDSMValue)old;
-      final ObjectID objectId = oldValue.getObjectID();
+    if (old != null && !(old instanceof CDSMValue)) { return null; }
 
-      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
-      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, oldValue.getVersion(), cacheName);
-    }
+    final ObjectID objectId = (old == null) ? null : ((CDSMValue)old).getObjectID();
+    final long version = (old == null) ? DEFAULT_VERSION : ((CDSMValue)old).getVersion();
+
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, version, cacheName);
     return old;
   }
 
@@ -440,7 +442,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return old;
   }
 
-  private void applySetLastAccessedTime(ApplyTransactionInfo applyInfo, Object[] params) {
+  private void applySetLastAccessedTime(Object[] params) {
     Object key = params[0];
     Object value = params[1];
     long lastAccessedTime = (Long) params[2];

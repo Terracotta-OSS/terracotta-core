@@ -66,9 +66,11 @@ public class DefaultServerEventRecorder implements ServerEventRecorder {
   private final class FormToEventFunction implements Function<IntermediateForm, ServerEvent> {
     @Override
     public ServerEvent apply(final IntermediateForm form) {
-      final byte[] value = oidToValueMap.get(form.objectId);
-      if (value != null) {
-        form.target.setValue(value);
+      if (form.objectId != null) {
+        final byte[] value = oidToValueMap.get(form.objectId);
+        if (value != null) {
+          form.target.setValue(value);
+        }
       }
       return form.target;
     }
