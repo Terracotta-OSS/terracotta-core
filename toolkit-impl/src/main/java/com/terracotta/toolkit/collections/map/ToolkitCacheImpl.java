@@ -525,7 +525,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     writeLock();
     try {
       localDelegate.disposeLocally();
-      destroyApplicator.applyDestroy();
+      // do not use applicator as that will destroy the object in cluster also.
+      applyDestroy();
+      factory.dispose(this);
     } finally {
       writeUnlock();
     }

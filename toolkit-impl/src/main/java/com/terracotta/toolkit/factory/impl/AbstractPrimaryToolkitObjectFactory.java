@@ -41,4 +41,8 @@ public abstract class AbstractPrimaryToolkitObjectFactory<T extends RejoinAwareT
   public final void applyDestroy(ToolkitObject obj) {
     aggregateRootMap.applyDestroy(obj.getName());
   }
+
+  public final void dispose(ToolkitObject obj) {
+    aggregateRootMap.dispose(getManufacturedToolkitObjectType(), obj.getName());
+  }
 }

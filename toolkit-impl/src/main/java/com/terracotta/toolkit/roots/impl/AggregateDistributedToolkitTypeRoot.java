@@ -222,4 +222,14 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
       roots[i] = ToolkitTypeRootsStaticFactory.lookupOrCreateRootInGroup(platformService, gids[i], rootName);
     }
   }
+
+  @Override
+  public void dispose(ToolkitObjectType toolkitObjectType, String name) {
+    lock(toolkitObjectType, name);
+    try {
+      distributedTypes.remove(name);
+    } finally {
+      unlock(toolkitObjectType, name);
+  }
+  }
 }
