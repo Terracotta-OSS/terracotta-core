@@ -15,7 +15,7 @@ public interface ServerMapEvictionManager extends PostInit, PrettyPrintable {
   public void startEvictor();
 
   public void runEvictor();
-
+  
   public boolean doEvictionOn(EvictionTrigger trigger);
   
   public boolean scheduleCapacityEviction(ObjectID oid);

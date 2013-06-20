@@ -229,6 +229,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   public void runEvictor() {
     schedulePeriodicEvictionRun(null);
   }
+  
+    // used only for tests
+  ServerMapEvictionEngine getEngine() {
+    return evictor;
+  }
  
   // used only for tests
   void shutdownEvictor() {
