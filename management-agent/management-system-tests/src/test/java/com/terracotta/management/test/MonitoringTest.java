@@ -17,10 +17,12 @@ import java.util.Arrays;
  * MonitoringTest
  */
 public class MonitoringTest extends AbstractTsaAgentTestBase {
+  private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
   private static final int MEMBER_COUNT = 2;
 
   public MonitoringTest(TestConfig testConfig) {
     super(testConfig);
+    testConfig.setNumOfGroups(GROUP_COUNT);
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
     testConfig.getClientConfig().setClientClasses(new Class[]{MonitoringServersClientTest.class});

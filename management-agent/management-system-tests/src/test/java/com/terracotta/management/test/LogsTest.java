@@ -19,10 +19,12 @@ import java.util.Map;
  * LogsTest
  */
 public class LogsTest extends AbstractTsaAgentTestBase {
+  private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
   private static final int MEMBER_COUNT = 2;
 
   public LogsTest(TestConfig testConfig) {
     super(testConfig);
+    testConfig.setNumOfGroups(GROUP_COUNT);
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
     testConfig.getClientConfig().setClientClasses(new Class[]{LogsTestClient.class});
@@ -83,8 +85,8 @@ public class LogsTest extends AbstractTsaAgentTestBase {
 
     private void createLogEvents() throws IOException {
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
-        getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
-                  "/tc-management-api/agents/logs?sinceWhen=" + System.currentTimeMillis());
+        httpPost("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(serverIndex) +
+                 "/tc-management-api/agents/diagnostics/dumpClusterState");
       }
     }
   }
