@@ -200,4 +200,14 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
     }
   }
 
+  @Override
+  public void dispose(ToolkitObjectType toolkitObjectType, String name) {
+    lock(toolkitObjectType, name);
+    try {
+      isolatedTypes.remove(name);
+    } finally {
+      unlock(toolkitObjectType, name);
+    }
+  }
+
 }
