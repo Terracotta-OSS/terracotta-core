@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Sends off committed transactions
@@ -76,7 +78,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final LockAccounting                           lockAccounting;
   private final TCLogger                                 logger;
   private final long                                     ackOnExitTimeout;
-  private State                                          status;
+  private volatile State                                 status;
   private final SessionManager                           sessionManager;
   private final TransactionSequencer                     sequencer;
   private final DSOClientMessageChannel                  channel;
@@ -88,6 +90,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private final Timer                                    flusherTimer;
   private final RemoteTransactionManagerTask             remoteTxManagerRunnable;
+  // this lock protects the state change during rejoin and addition of data to the sequencer.
+  private final ReadWriteLock                            rejoinCleanupLock           = new ReentrantReadWriteLock();
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -119,6 +123,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   @Override
   public void preCleanup() {
+    // do not take rejoinCleanUpLock as it wont cause existing threads in throttling to kick out..
     synchronized (this.lock) {
       checkAndSetstate();
       sequencer.cleanup();
@@ -128,11 +133,19 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   @Override
   public void cleanup() {
     synchronized (this.lock) {
+      // this is outside the rejoinCleanUpLock in order to kick out all the threads that are throttling at present..
       checkAndSetstate();
-      lockFlushCallbacks.clear();
-      batchManager.clear();
-      batchAccounting = new TransactionBatchAccounting();
-      sequencer.cleanup();
+    }
+    rejoinCleanupLock.writeLock().lock();
+    try {
+      synchronized (this.lock) {
+        lockFlushCallbacks.clear();
+        batchManager.clear();
+        batchAccounting = new TransactionBatchAccounting();
+        sequencer.cleanup();
+      }
+    } finally {
+      rejoinCleanupLock.writeLock().unlock();
     }
   }
 
@@ -391,8 +404,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   @Override
   public void commit(final ClientTransaction txn) throws AbortedOperationException {
-    throttleIfNecessary();
-    commitWithoutThrottling(txn);
+    rejoinCleanupLock.readLock().lock();
+    try {
+      if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
+      throttleIfNecessary();
+      commitWithoutThrottling(txn);
+    } finally {
+      rejoinCleanupLock.readLock().unlock();
+    }
   }
 
   void throttleIfNecessary() throws AbortedOperationException {
@@ -511,9 +530,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   boolean isRejoinInProgress() {
-    synchronized (this.lock) {
+    // called from transaction sequencer do not take synchronize status is volatile.
       return this.status == REJOIN_IN_PROGRESS;
-    }
   }
 
   // XXX:: Currently server always sends NULL BatchID

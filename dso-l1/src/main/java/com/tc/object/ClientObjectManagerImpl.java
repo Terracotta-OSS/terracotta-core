@@ -341,8 +341,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private synchronized ObjectLookupState lookupDone(final ObjectLookupState lookupState) {
     try {
       ObjectLookupState removed = this.objectLatchStateMap.remove(lookupState.getObjectID());
-      if ( removed != lookupState ) {
-        throw new AssertionError("wrong removal of lookup state " + removed + " " + lookupState);
+      if (removed != lookupState) {
+        // removed can be null if rejoin cleans up state during lookup.
+        if (removed == null && this.state == REJOIN_IN_PROGRESS) {
+          throw new PlatformRejoinException("lookup failed for ObjectID" + lookupState.getObjectID() + " due to rejoin");
+        } else {
+          throw new AssertionError("wrong removal of lookup state " + removed + " " + lookupState);
+        }
+
       }
       return lookupState;
     } finally {
@@ -565,6 +571,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
   
   private synchronized ObjectLookupState startLookup(ObjectID oid) {
+    if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException("Unable to start lookup for objectID"
+                                                                              + oid
+                                                                              + " due to rejoin in progress state"); }
     ObjectLookupState ols;
     TCObject local = basicLookupByID(oid);
     

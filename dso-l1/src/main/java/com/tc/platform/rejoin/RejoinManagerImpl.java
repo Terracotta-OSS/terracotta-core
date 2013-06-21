@@ -17,12 +17,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RejoinManagerImpl implements RejoinManagerInternal {
 
-  private static final TCLogger               logger           = TCLogging.getLogger(RejoinManagerImpl.class);
-  private final List<RejoinLifecycleListener> listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
+  private static final TCLogger               logger                          = TCLogging
+                                                                                  .getLogger(RejoinManagerImpl.class);
+  private final List<RejoinLifecycleListener> listeners                       = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final boolean                       rejoinEnabled;
   private final RejoinWorker                  rejoinWorker;
-  private final AtomicBoolean                 rejoinInProgress = new AtomicBoolean(false);
-  private volatile int                        rejoinCount      = 0;
+  private final AtomicBoolean                 rejoinInProgress                = new AtomicBoolean(false);
+  private volatile int                        rejoinCount                     = 0;
+  // true if listeners are notified of rejoin completed
+  private final AtomicBoolean                 rejoinStartedNotificationStatus = new AtomicBoolean(false);
 
   public RejoinManagerImpl(boolean isRejoinEnabled) {
     this.rejoinEnabled = isRejoinEnabled;
@@ -56,23 +59,27 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   private void notifyRejoinStart() {
-    assertRejoinEnabled();
-    logger.info("Notifying rejoin start... current rejoin count" + rejoinCount);
-    rejoinCount++;
-    // this calls cleanup for all ClearableCallbacks
-    for (RejoinLifecycleListener listener : listeners) {
-      listener.onRejoinStart();
+    if (rejoinStartedNotificationStatus.compareAndSet(false, true)) {
+      assertRejoinEnabled();
+      logger.info("Notifying rejoin start... current rejoin count" + rejoinCount);
+      rejoinCount++;
+      // this calls cleanup for all ClearableCallbacks
+      for (RejoinLifecycleListener listener : listeners) {
+        listener.onRejoinStart();
+      }
+      logger.info("Notified rejoin start...");
     }
-    logger.info("Notified rejoin start...");
   }
 
   private void notifyRejoinComplete() {
-    assertRejoinEnabled();
-    logger.info("Notifying rejoin complete...");
-    for (RejoinLifecycleListener listener : listeners) {
-      listener.onRejoinComplete();
+    if (rejoinStartedNotificationStatus.compareAndSet(true, false)) {
+      assertRejoinEnabled();
+      logger.info("Notifying rejoin complete...");
+      for (RejoinLifecycleListener listener : listeners) {
+        listener.onRejoinComplete();
+      }
+      logger.info("Notified rejoin complete...");
     }
-    logger.info("Notified rejoin complete...");
   }
 
   @Override
@@ -91,11 +98,9 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
                 + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
-      if (rejoinInProgress.compareAndSet(true, false)) {
-        // take care of any cleanup/re-initialization
-        notifyRejoinComplete();
-        return true;
-      }
+      // take care of any cleanup/re-initialization
+      notifyRejoinComplete();
+      return true;
     }
     return false;
   }
@@ -122,8 +127,9 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
       } catch (Throwable th) {
         // RejoinWorker thread should not die and should be able to accept more rejoin requests if one rejoin request
         // fails for some reason
-        rejoinInProgress.set(false);
         logger.warn("Error during rejoin : " + channel + " " + th);
+      } finally {
+        rejoinInProgress.set(false);
       }
     }
   }
