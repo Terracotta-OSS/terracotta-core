@@ -345,8 +345,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       boolean foundCompactibleActive = false;
       Version clientVersion = null;
       for (int j = 0; j < serverInfos.length; j++) {
-        ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(serverInfos[j].getName()), serverInfos[j]
-            .getTsaPort().intValue(), i * j + j, grpName);
+        ConnectionInfo connectionIn = new ConnectionInfo(serverInfos[j].getName(), serverInfos[j].getTsaPort()
+            .intValue(), i * j + j, grpName);
 
         ServerURL serverUrl = null;
         try {
@@ -367,7 +367,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
           throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
                                           + " is not compatible with serverVersion : " + serverVersion);
         } else {
-//          logger.info("Found Compatible active Server = " + serverUrl);
+          // logger.info("Found Compatible active Server = " + serverUrl);
           foundCompactibleActive = true;
           break;
         }
