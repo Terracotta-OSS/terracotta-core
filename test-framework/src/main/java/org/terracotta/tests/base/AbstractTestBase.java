@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -125,8 +126,8 @@ public abstract class AbstractTestBase extends TCTestCase {
 
     if (testWillRun) {
       try {
-        System.out.println("*************** Starting Test with Test Profile : " + testConfig.getConfigName()
-                           + " **************************");
+        System.out.println("***************" + Calendar.getInstance().getTime() + " Starting Test with Test Profile : "
+                           + testConfig.getConfigName() + " **************************");
         setJavaHome();
         clientRunner = new TestClientManager(tempDir, this, this.testConfig);
         if (!testConfig.isStandAloneTest()) {
@@ -343,8 +344,8 @@ public abstract class AbstractTestBase extends TCTestCase {
       duringRunningClusterThread.join();
       if (!testConfig.isStandAloneTest()) this.testServerManager.stopAllServers();
       this.jmxServerManager.stopJmxServer();
-      System.out.println("*************** Stopped Test with Test Profile : " + testConfig.getConfigName()
-                         + " **************************");
+      System.out.println("***************" + Calendar.getInstance().getTime() + " Stopped Test with Test Profile : "
+                         + testConfig.getConfigName() + " **************************");
     }
   }
 
