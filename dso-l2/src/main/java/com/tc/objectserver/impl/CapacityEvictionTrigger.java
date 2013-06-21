@@ -33,7 +33,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   private final ServerMapEvictionManager    evictor;
   private boolean                   completed = true;
   private int                      count = 0;
-  private java.util.UUID           id = java.util.UUID.randomUUID();
+  private final java.util.UUID           id = java.util.UUID.randomUUID();
 
   public CapacityEvictionTrigger(ServerMapEvictionManager engine, ObjectID oid) {
     super(oid);
@@ -59,7 +59,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     // ignore return value, capacity needs to make an independent decision on whether to run
     if (max >= 0 && size > max) {
       return super.startEviction(map);
-    } 
+    }
     aboveCapacity = false;
     return false;
   }
@@ -79,7 +79,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
   public synchronized void completeEviction(EvictableMap map) {
     if ( !valid ) {
       super.completeEviction(map);
-    }  
+    }
     completed = true;
     this.notify();
   }
@@ -96,8 +96,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     try {
       return createEvictionContext(className, samples);
     } finally {
-      int count = getCount();
-      if (count == 0) {
+      if (getCount() == 0) {
         valid = true;
         registerForUpdates(clients);
       } else {

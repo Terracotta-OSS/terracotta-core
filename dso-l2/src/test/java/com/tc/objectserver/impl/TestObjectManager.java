@@ -264,7 +264,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   @Override
-  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
+  public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> coObjects) {
     return Collections.EMPTY_SET;
   }
 }

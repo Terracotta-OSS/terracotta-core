@@ -263,8 +263,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
   @Override
   public boolean scheduleCapacityEviction(ObjectID oid) {
     if ( evictor.markEvictionInProgress(oid) ) {
-      CapacityEvictionTrigger trigger = new CapacityEvictionTrigger(this, oid);
-      return doEvictionOn(trigger);
+      CapacityEvictionTrigger ceTrigger = new CapacityEvictionTrigger(this, oid);
+      return doEvictionOn(ceTrigger);
     }
     return false;
   }
