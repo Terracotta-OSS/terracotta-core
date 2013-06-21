@@ -57,6 +57,8 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig {
 
   public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException;
 
+  public void validateClientServerCompatibility(final PwProvider pwProvider) throws ConfigurationSetupException;
+
   boolean useResolveLockWhenClearing(Class clazz);
 
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;

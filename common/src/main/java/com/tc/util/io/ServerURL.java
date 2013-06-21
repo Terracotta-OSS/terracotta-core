@@ -55,39 +55,12 @@ public class ServerURL {
     return this.openStream(null);
   }
 
+  public String getHeaderField(String fieldName, PwProvider pwProvider) {
+    URLConnection urlConnection = createSecureConnection(pwProvider);
+    return urlConnection.getHeaderField(fieldName);
+  }
   public InputStream openStream(PwProvider pwProvider) throws IOException {
-    if(securityInfo.isSecure()) {
-      Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
-    }
-
-    URLConnection urlConnection = theURL.openConnection();
-    String uri = null;
-
-    if (securityInfo.isSecure()) {
-      if (securityInfo.getUsername() != null) {
-        String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
-        uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
-        final char[] passwordTo;
-        try {
-          final URI theURI = new URI(uri);
-          passwordTo = pwProvider.getPasswordFor(theURI);
-        } catch (URISyntaxException e) {
-          throw new TCRuntimeException("Couldn't create URI to connect to " + uri, e);
-        }
-        Assert.assertNotNull("No password for " + theURL + " found!", passwordTo);
-        urlConnection.addRequestProperty("Authorization", "Basic " + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(passwordTo))
-            .getBytes()));
-      }
-
-      if (DISABLE_HOSTNAME_VERIFIER || TRUST_ALL_CERTS) {
-        tweakSecureConnectionSettings(urlConnection);
-      }
-    }
-
-    if (timeout > -1) {
-      urlConnection.setConnectTimeout(timeout);
-      urlConnection.setReadTimeout(timeout);
-    }
+    URLConnection urlConnection = createSecureConnection(pwProvider);
 
     try {
       return urlConnection.getInputStream();
@@ -96,20 +69,63 @@ public class ServerURL {
         int responseCode = ((HttpURLConnection)urlConnection).getResponseCode();
         switch (responseCode) {
           case 401:
-            throw new TCAuthenticationException("Authentication error connecting to " +
-                                                (uri != null ? uri : urlConnection.getURL()) +
-                                                " - invalid credentials (tried user " +
-                                                securityInfo.getUsername() + ")", e);
+            throw new TCAuthenticationException("Authentication error connecting to " + urlConnection.getURL()
+                                                + " - invalid credentials (tried user " + securityInfo.getUsername()
+                                                + ")", e);
           case 403:
-            throw new TCAuthorizationException("Authorization error connecting to " +
-                                                (uri != null ? uri : urlConnection.getURL()) +
-                                                " - does the user '" + securityInfo.getUsername() +
-                                                "' have the required roles?", e);
+            throw new TCAuthorizationException("Authorization error connecting to " + urlConnection.getURL()
+                                               + " - does the user '" + securityInfo.getUsername()
+                                               + "' have the required roles?", e);
           default:
         }
       }
       throw e;
     }
+  }
+
+  private URLConnection createSecureConnection(PwProvider pwProvider) {
+    if (securityInfo.isSecure()) {
+      Assert.assertNotNull("Secured URL '" + theURL + "', yet PwProvider instance", pwProvider);
+    }
+
+    URLConnection urlConnection;
+    try {
+      urlConnection = theURL.openConnection();
+      String uri = null;
+
+      if (securityInfo.isSecure()) {
+        if (securityInfo.getUsername() != null) {
+          String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
+          uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
+          final char[] passwordTo;
+          try {
+            final URI theURI = new URI(uri);
+            passwordTo = pwProvider.getPasswordFor(theURI);
+          } catch (URISyntaxException e) {
+            throw new TCRuntimeException("Couldn't create URI to connect to " + uri, e);
+          }
+          Assert.assertNotNull("No password for " + theURL + " found!", passwordTo);
+          urlConnection
+              .addRequestProperty("Authorization",
+                                  "Basic "
+                                      + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(
+                                                                                                                  passwordTo))
+                                          .getBytes()));
+        }
+
+        if (DISABLE_HOSTNAME_VERIFIER || TRUST_ALL_CERTS) {
+          tweakSecureConnectionSettings(urlConnection);
+        }
+      }
+    } catch (IOException e1) {
+      throw new IllegalStateException(e1);
+    }
+
+    if (timeout > -1) {
+      urlConnection.setConnectTimeout(timeout);
+      urlConnection.setReadTimeout(timeout);
+    }
+    return urlConnection;
   }
 
   @Override

@@ -390,12 +390,25 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     start(null);
   }
 
+  private void validateClientServerCompatibility() {
+    try {
+      this.config.validateClientServerCompatibility(securityManager);
+    } catch (final ConfigurationSetupException e) {
+      CONSOLE_LOGGER.error(e.getMessage());
+      throw new IllegalStateException(e.getMessage(), e);
+    }
+  }
+
   public synchronized void start(CountDownLatch testStartLatch) {
     rejoinManager.start();
     validateSecurityConfig();
     validateGroupConfig();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    final boolean matchClientServerVersion = tcProperties.getBoolean(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK);
+    if (matchClientServerVersion) {
+      validateClientServerCompatibility();
+    }
     this.l1Properties = tcProperties.getPropertiesFor("l1");
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
     final int faultCount = this.config.getFaultCount();

@@ -23,9 +23,13 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
+import com.tc.util.io.ServerURL;
+import com.tc.util.version.Version;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -328,6 +332,56 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     if (!connInfoFromL1.containsAll(connInfoFromL2)) {
       logConfigMismatchAndThrowException(connInfoFromL1, connInfoFromL2, errMsg);
     }
+  }
+
+  @Override
+  public void validateClientServerCompatibility(PwProvider pwProvider) throws ConfigurationSetupException {
+    ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
+        .getServerGroups();
+    ServerGroup[] grpArray = serverGroupsFromL2.getServerGroupArray();
+    for (int i = 0; i < grpArray.length; i++) {
+      String grpName = grpArray[i].getGroupName();
+      ServerInfo[] serverInfos = grpArray[i].getServerInfoArray();
+      boolean foundCompactibleActive = false;
+      Version clientVersion = null;
+      for (int j = 0; j < serverInfos.length; j++) {
+        ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(serverInfos[j].getName()), serverInfos[j]
+            .getTsaPort().intValue(), i * j + j, grpName);
+
+        ServerURL serverUrl = null;
+        try {
+          serverUrl = new ServerURL(connectionIn.getHostname(), connectionIn.getPort(), "/version",
+                                    connectionIn.getSecurityInfo());
+        } catch (MalformedURLException e) {
+          throw new ConfigurationSetupException("Error while trying to verify Client-Server version Compatibility ");
+        }
+
+        String strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
+        clientVersion = getClientVersion();
+        if (strServerVersion == null) {
+          // logger.info("Found passive Server = " + serverUrl);
+          continue;
+        }
+        Version serverVersion = new Version(strServerVersion);
+        if (!clientVersion.equals(serverVersion)) {
+          throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
+                                          + " is not compatible with serverVersion : " + serverVersion);
+        } else {
+//          logger.info("Found Compatible active Server = " + serverUrl);
+          foundCompactibleActive = true;
+          break;
+        }
+
+      }
+      if (!foundCompactibleActive) { throw new IllegalStateException(
+                                                                     "client Server Version mismatch occured: client version : "
+                                                                         + clientVersion
+                                                                         + " is not compatible with a server of Terracotta version: 4.0 or before"); }
+    }
+  }
+
+  private Version getClientVersion() {
+    return new Version(ProductInfo.getInstance().version());
   }
 
   private void dumpConnInfo(StringBuilder builder, String mesg, HashSet<ConnectionInfo> connInfo) {
