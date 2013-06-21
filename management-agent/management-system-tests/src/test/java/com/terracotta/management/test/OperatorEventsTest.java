@@ -7,11 +7,12 @@ import com.tc.test.config.model.TestConfig;
  * OperatorEventsTest
  */
 public class OperatorEventsTest extends AbstractTsaAgentTestBase {
-
-  private static final int MEMBER_COUNT = 2;
+  private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
+  private static final int MEMBER_COUNT = 1;
 
   public OperatorEventsTest(TestConfig testConfig) {
     super(testConfig);
+    testConfig.setNumOfGroups(GROUP_COUNT);
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
     testConfig.getClientConfig().setClientClasses(new Class[] {OperatorEventsTestClient.class});
