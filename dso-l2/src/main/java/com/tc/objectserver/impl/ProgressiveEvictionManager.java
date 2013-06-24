@@ -73,14 +73,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                                                                           .getProperties()
                                                                                           .getLong(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL,
                                                                                                    -1);
-  private static final int                        L2_EVICTION_CRITICALTHRESHOLD       = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,
-                                                                                                  -1);
-  private static final int                        L2_EVICTION_HALTTHRESHOLD           = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,
-                                                                                                  -1);
+  private final int                               L2_EVICTION_CRITICALTHRESHOLD;
+  private final int                               L2_EVICTION_HALTTHRESHOLD;
   private final static boolean                    PERIODIC_EVICTOR_ENABLED            = TCPropertiesImpl
                                                                                           .getProperties()
                                                                                           .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED,
@@ -154,6 +148,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
     this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, persistent);
+    L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
+            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
+    L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
+    
     // assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
     this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
 
