@@ -97,8 +97,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private static final int                      NO_DEPTH                     = 0;
 
-  private static final int                      COMMIT_SIZE                  = 100;
-
   private volatile State                        state                        = RUNNING;
   private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
@@ -138,6 +136,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                              };
   private final RootsHolder                     rootsHolder;
   private final AbortableOperationManager       abortableOperationManager;
+  private int                                    currentRejoinCount           = 0;
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
@@ -260,6 +259,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown()) return;
     assertPausedOrRejoinInProgress("Attempt to initiateHandshake " + thisNode + " <--> " + remoteNode);
+    if (this.state == REJOIN_IN_PROGRESS) {
+      currentRejoinCount++;
+    }
     changeStateToStarting();
     addAllObjectIDs(handshakeMessage.getObjectIDs(), remoteNode);
 
@@ -343,7 +345,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       ObjectLookupState removed = this.objectLatchStateMap.remove(lookupState.getObjectID());
       if (removed != lookupState) {
         // removed can be null if rejoin cleans up state during lookup.
-        if (removed == null && this.state == REJOIN_IN_PROGRESS) {
+        if (lookupState.getRejoinCount() != currentRejoinCount) {
           throw new PlatformRejoinException("lookup failed for ObjectID" + lookupState.getObjectID() + " due to rejoin");
         } else {
           throw new AssertionError("wrong removal of lookup state " + removed + " " + lookupState);
@@ -1299,10 +1301,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.reaper.start();
   }
 
-  private int objectStore_size() {
-    return this.objectStore.size();
-  }
-
   public void dumpToLogger() {
     final DumpLoggerWriter writer = new DumpLoggerWriter();
     final PrintWriter pw = new PrintWriter(writer);
@@ -1398,10 +1396,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     private final ObjectID       objectID;
     private final Thread owner;
     private TCObject             object;
+    private final int      rejoinCount;
 
     public ObjectLookupState(final ObjectID objectID) {
       this.objectID = objectID;
       this.owner = Thread.currentThread();
+      this.rejoinCount = currentRejoinCount;
+
     }
     
     public ObjectLookupState(final TCObject set) {
@@ -1409,6 +1410,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       this.object = set;
       this.isSet = true;
       this.owner = null;
+      this.rejoinCount = currentRejoinCount;
     }
     
     public ObjectID getObjectID() {
@@ -1447,6 +1449,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         Util.selfInterruptIfNeeded(isInterrupted);
       }
       return this.object;
+    }
+
+    public int getRejoinCount() {
+      return rejoinCount;
     }
   }
 

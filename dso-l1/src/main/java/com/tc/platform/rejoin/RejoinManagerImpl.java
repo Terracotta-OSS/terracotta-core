@@ -71,7 +71,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     }
   }
 
-  private void notifyRejoinComplete() {
+  private boolean notifyRejoinComplete() {
     if (rejoinStartedNotificationStatus.compareAndSet(true, false)) {
       assertRejoinEnabled();
       logger.info("Notifying rejoin complete...");
@@ -79,7 +79,9 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
         listener.onRejoinComplete();
       }
       logger.info("Notified rejoin complete...");
+      return true;
     }
+    return false;
   }
 
   @Override
@@ -99,8 +101,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
       // take care of any cleanup/re-initialization
-      notifyRejoinComplete();
-      return true;
+      return notifyRejoinComplete();
     }
     return false;
   }
