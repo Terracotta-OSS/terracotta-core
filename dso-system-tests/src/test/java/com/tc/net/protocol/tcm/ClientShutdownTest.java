@@ -30,9 +30,7 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.platform.rejoin.RejoinManagerInternal;
-import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
 import com.tc.util.Assert;
@@ -51,7 +49,6 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
   private PreparedComponentsFromL2Connection preparedComponentsFromL2Connection;
   private boolean                            originalReconnect;
-  private final TCProperties                 tcProps = TCPropertiesImpl.getProperties();
 
   @Override
   protected void setUp() throws Exception {
