@@ -278,6 +278,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   public void cleanLocalState() {
     this.pendingTransactionEntries.clear();
     this.localStore.cleanLocalState();
+    this.oidsForWhichTxnAreInProgress.clear();
   }
 
   @Override
