@@ -14,14 +14,16 @@ import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.toolkit.ToolkitFactory;
+import org.terracotta.util.ToolkitVersion;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
-
-import org.terracotta.util.ToolkitVersion;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -38,6 +40,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -249,12 +254,33 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
         throw new AssertionError("Cannot find JAR for class: " + clazz);
       }
 
-      String[] pathes = jar.split("\\/");
-      if (pathes.length > 2) {
-        return pathes[pathes.length - 2];
-      }
+      if (jar.endsWith(".jar")) {
+        String[] pathes = jar.split("\\/");
+        if (pathes.length > 2) {
+          return pathes[pathes.length - 2];
+        }
+        throw new AssertionError("Invalid JAR: " + jar);
+      } else {
+        // running from IDE? try to get the version from the pom file
+        try {
+          File fXmlFile = new File("pom.xml");
+          DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+          DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+          Document doc = dBuilder.parse(fXmlFile);
 
-      throw new AssertionError("Invalid JAR: " + jar);
+          NodeList childNodes = doc.getDocumentElement().getChildNodes();
+          for (int i=0;i<childNodes.getLength();i++) {
+            Node node = childNodes.item(i);
+            if ("version".equals(node.getNodeName())) {
+              return node.getTextContent();
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+        fail("cannot guess version");
+        return null; // make the compiler happy
+      }
     }
 
     protected boolean serverContainsAllOfThoseLogs(int group, int member, String... logs) throws IOException {
