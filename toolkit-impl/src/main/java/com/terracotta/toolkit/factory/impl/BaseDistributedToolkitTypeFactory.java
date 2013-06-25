@@ -129,8 +129,8 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   @Override
   public void validateConfig(Configuration config) {
     for (InternalCacheConfigurationType configType : getAllSupportedConfigs()) {
-      if (config.hasField(configType.name())) {
-        configType.validateLegalValue(config.getObjectOrNull(configType.name()));
+      if (config.hasField(configType.getConfigString())) {
+        configType.validateLegalValue(config.getObjectOrNull(configType.getConfigString()));
       }
     }
   }
