@@ -20,9 +20,6 @@ import com.tc.object.dna.api.LogicalAction;
 import com.terracotta.toolkit.object.DestroyApplicator;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class ToolkitMapImplApplicator extends BaseApplicator {
   public ToolkitMapImplApplicator(final DNAEncoding encoding, final TCLogger logger) {
@@ -104,29 +101,7 @@ public class ToolkitMapImplApplicator extends BaseApplicator {
   @Override
   public void dehydrate(final ClientObjectManager objectManager, final TCObject tco, final DNAWriter writer,
                         final Object pojo) {
-
-    final Map map = (Map) pojo;
-    for (final Iterator i = map.entrySet().iterator(); i.hasNext();) {
-      final Entry entry = (Entry) i.next();
-      final Object key = entry.getKey();
-      final Object value = entry.getValue();
-
-      if (!objectManager.isPortableInstance(key)) {
-        continue;
-      }
-      if (!objectManager.isPortableInstance(value)) {
-        continue;
-      }
-
-      final Object addKey = getDehydratableObject(key, objectManager);
-      final Object addValue = getDehydratableObject(value, objectManager);
-
-      if (addKey == null || addValue == null) {
-        continue;
-      }
-
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { addKey, addValue });
-    }
+    // Nothing to dehydrate
   }
 
   @Override

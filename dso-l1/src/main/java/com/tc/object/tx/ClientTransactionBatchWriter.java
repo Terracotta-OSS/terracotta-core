@@ -60,7 +60,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private final GroupID                         groupID;
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
-  private final LinkedHashMap                         transactionData        = new LinkedHashMap();
+  private final LinkedHashMap                   transactionData        = new LinkedHashMap();
   private final Map                             foldingKeys            = new HashMap();
   private final ObjectStringSerializer          serializer;
   private final DNAEncodingInternal             encoding;
@@ -611,8 +611,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private void writeChanges(final Map changes) {
       for (final Iterator i = changes.entrySet().iterator(); i.hasNext();) {
         final Map.Entry entry = (Entry) i.next();
-        final ObjectID oid = (ObjectID) entry.getKey();
-        final TCChangeBuffer buffer = (TCChangeBuffer) entry.getValue();
+        final ObjectID oid = (ObjectID)entry.getKey();
+        final TCChangeBuffer buffer = (TCChangeBuffer)entry.getValue();
 
         final TCObject tco = buffer.getTCObject();
 
@@ -622,7 +622,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
         if (writer == null) {
           final TCClass tcc = tco.getTCClass();
           writer = new DNAWriterImpl(this.output, oid, tcc.getExtendingClassName(), this.serializer, this.encoding,
-                                     !isNew);
+              !isNew);
 
           this.writers.put(oid, writer);
         } else {
@@ -640,9 +640,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
             // DEV-5320
             logger.error("not sending meta data attached to \"new\" object of type " + tco.getTCClass().getName());
           }
-        } else {
-          buffer.writeTo(writer);
         }
+
+        buffer.writeTo(writer);
 
         writer.markSectionEnd();
 

@@ -164,20 +164,7 @@ public class ListApplicator extends BaseApplicator {
 
   @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
-    List list = (List) pojo;
-
-    for (int i = 0; i < list.size(); i++) {
-      Object value = list.get(i);
-      if (!objectManager.isPortableInstance(value)) {
-        continue;
-      }
-
-      final Object addValue = getDehydratableObject(value, objectManager);
-      if (addValue == null) {
-        continue;
-      }
-      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { addValue });
-    }
+    // Nothing to dehydrate
   }
 
   @Override
