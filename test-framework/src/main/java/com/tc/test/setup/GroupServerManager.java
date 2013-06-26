@@ -30,6 +30,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -63,6 +64,7 @@ public class GroupServerManager {
   protected ProxyConnectManager[]   proxyL1Managers;
   private final boolean[]           expectedServerRunning;
   private GroupServerCrashManager   serverCrasher;
+  private final AtomicBoolean       crasherStarted        = new AtomicBoolean(false);
 
   private ExecutorService           asyncExecutor         = Executors.newCachedThreadPool(new ThreadFactory() {
                                                             @Override
@@ -776,9 +778,13 @@ public class GroupServerManager {
   }
 
   public void startCrasher() {
+    if (crasherStarted.compareAndSet(false, true)) {
     if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)
         && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.CUSTOMIZED_CRASH)) {
       new Thread(serverCrasher).start();
+      }
+    } else {
+      throw new AssertionError("server Crasher already started");
     }
   }
 

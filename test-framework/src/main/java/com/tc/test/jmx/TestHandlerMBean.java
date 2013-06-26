@@ -219,4 +219,11 @@ public interface TestHandlerMBean {
    * @param extraMainClassArgs
    */
   void runClient(Class<? extends Runnable> client, final String clientName, final List<String> extraMainClassArgs) throws Throwable;
+
+  /**
+   * starts server crasher, can be used in the tests that wants to start the crasher after doing some initialization
+   * tasks
+   */
+
+  void startCrasher();
 }

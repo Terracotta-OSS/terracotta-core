@@ -12,6 +12,7 @@ public class CrashConfig {
   private boolean         shouldCleanDbOnCrash     = true;
   private long            initialDelayInSeconds    = 0;
   private boolean         ignoreUnexpectedL2Crash  = false;
+  private boolean         autoStartCrasher         = true;
 
   /**
    * Get the initial delay time before starting to crash servers
@@ -99,5 +100,13 @@ public class CrashConfig {
    */
   public boolean shouldIgnoreUnexpectedL2Crash() {
     return ignoreUnexpectedL2Crash;
+  }
+
+  public boolean autoStartCrasher() {
+    return autoStartCrasher;
+  }
+
+  public void setAutoStartCrasher(boolean autoStartCrasher) {
+    this.autoStartCrasher = autoStartCrasher;
   }
 }

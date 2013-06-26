@@ -187,4 +187,10 @@ public class TestHandler implements TestHandlerMBean {
   public void runClient(final Class<? extends Runnable> client, final String clientName, final List<String> extraMainClassArgs) throws Throwable {
     testClientManager.runClient(client, clientName, extraMainClassArgs);
   }
+
+  @Override
+  public void startCrasher() {
+    testServerManager.startServerCrasher();
+
+  }
 }

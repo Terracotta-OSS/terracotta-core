@@ -56,7 +56,9 @@ public class TestServerManager {
         public void run() {
           try {
             serverManager.startAllServers();
-            serverManager.startCrasher();
+            if (testConfig.getCrashConfig().autoStartCrasher()) {
+              serverManager.startCrasher();
+            }
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -279,5 +281,12 @@ public class TestServerManager {
       if (file.exists()) { return file; }
     }
     return null;
+  }
+
+  public void startServerCrasher() {
+    for (GroupServerManager groupServerManager : groups) {
+      groupServerManager.startCrasher();
+    }
+
   }
 }
