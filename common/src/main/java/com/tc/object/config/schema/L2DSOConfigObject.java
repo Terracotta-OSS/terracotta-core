@@ -355,11 +355,27 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       throws XmlException {
     final String defaultKeyChainImpl = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(),
                                                                                     "keychain/class")).getStringValue();
+    final String defaultKeyChainUrl = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(),
+                                                                                    "keychain/url")).getStringValue();
+    final String defaultKeyChainSecretProvider = ((XmlString) defaultValueProvider.defaultFor(security.schemaType(),
+                                                                                    "keychain/secret-provider")).getStringValue();
+    if (!security.isSetKeychain()) {
+      Keychain keychain = Keychain.Factory.newInstance();
+      security.setKeychain(keychain);
+    }
 
     if (!security.getKeychain().isSetClass1()) {
       security.getKeychain().setClass1(defaultKeyChainImpl);
     }
+
+    if (!security.getKeychain().isSetUrl()) {
+      security.getKeychain().setUrl(defaultKeyChainUrl);
+    }
     security.getKeychain().setUrl(ParameterSubstituter.substitute(security.getKeychain().getUrl()));
+
+    if (!security.getKeychain().isSetSecretProvider()) {
+      security.getKeychain().setSecretProvider(defaultKeyChainSecretProvider);
+    }
   }
 
   private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider)
