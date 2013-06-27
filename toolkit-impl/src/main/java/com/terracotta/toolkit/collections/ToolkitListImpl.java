@@ -231,8 +231,11 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
 
   private void logicalInvoke(String signature, Object[] params) {
     concurrentLock.lock();
-    platformService.logicalInvoke(this, signature, params);
-    concurrentLock.unlock();
+    try {
+      platformService.logicalInvoke(this, signature, params);
+    } finally {
+      concurrentLock.unlock();
+    }
   }
 
 

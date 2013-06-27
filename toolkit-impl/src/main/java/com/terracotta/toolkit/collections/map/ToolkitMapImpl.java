@@ -67,8 +67,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   private void logicalInvoke(String signature, Object[] params) {
     concurrentLock.lock();
-    platformService.logicalInvoke(ToolkitMapImpl.this, signature, params);
-    concurrentLock.unlock();
+    try {
+      platformService.logicalInvoke(ToolkitMapImpl.this, signature, params);
+    } finally {
+      concurrentLock.unlock();
+    }
   }
 
   protected void applyPendingChanges() {
