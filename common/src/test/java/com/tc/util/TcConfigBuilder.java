@@ -56,7 +56,7 @@ public class TcConfigBuilder {
     }
   }
 
-  private TcConfigBuilder(TcConfigDocument tcd) {
+  public TcConfigBuilder(TcConfigDocument tcd) {
     tcConfigDocument = tcd;
     tcConfig = tcConfigDocument.getTcConfig();
   }
