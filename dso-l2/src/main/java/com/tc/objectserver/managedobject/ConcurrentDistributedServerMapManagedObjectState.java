@@ -420,13 +420,13 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected Object applyRemove(final ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = params[0];
     final Object old = super.applyRemove(applyInfo, params);
-    if (old != null && !(old instanceof CDSMValue)) { return null; }
+    if (old instanceof CDSMValue) {
+      final CDSMValue oldValue = (CDSMValue)old;
+      final ObjectID objectId = oldValue.getObjectID();
 
-    final ObjectID objectId = (old == null) ? null : ((CDSMValue)old).getObjectID();
-    final long version = (old == null) ? DEFAULT_VERSION : ((CDSMValue)old).getVersion();
-
-    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
-    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, version, cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, oldValue.getVersion(), cacheName);
+    }
     return old;
   }
 
