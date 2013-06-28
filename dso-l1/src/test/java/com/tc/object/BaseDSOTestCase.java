@@ -14,7 +14,6 @@ import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.Client;
@@ -29,11 +28,6 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
 
   private Exception            failTestException;
   protected final TCProperties tcProps = TCPropertiesImpl.getProperties();
-
-  @Override
-  protected void setUp() throws Exception {
-    tcProps.setProperty(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK, "false");
-  }
 
   private class TestFailingIllegalConfigChangeHandler implements IllegalConfigurationChangeHandler {
     @Override
@@ -56,7 +50,6 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   protected synchronized final void setUp(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
     super.setUp();
-    setUp();
     this.configFactory = factory;
     this.configHelper = helper;
   }

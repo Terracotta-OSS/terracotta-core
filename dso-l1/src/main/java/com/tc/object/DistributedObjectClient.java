@@ -392,7 +392,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   private void validateClientServerCompatibility() {
     try {
-      this.config.validateClientServerCompatibility(securityManager);
+      this.config.validateClientServerCompatibility(securityManager, config.getSecurityInfo());
     } catch (final ConfigurationSetupException e) {
       CONSOLE_LOGGER.error(e.getMessage());
       throw new IllegalStateException(e.getMessage(), e);

@@ -335,7 +335,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   @Override
-  public void validateClientServerCompatibility(PwProvider pwProvider) throws ConfigurationSetupException {
+  public void validateClientServerCompatibility(PwProvider pwProvider, SecurityInfo securityInfo)
+      throws ConfigurationSetupException {
     ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
         .getServerGroups();
     ServerGroup[] grpArray = serverGroupsFromL2.getServerGroupArray();
@@ -346,7 +347,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       Version clientVersion = null;
       for (int j = 0; j < serverInfos.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(serverInfos[j].getName(), serverInfos[j].getTsaPort()
-            .intValue(), i * j + j, grpName);
+            .intValue(), i * j + j, grpName, securityInfo);
 
         ServerURL serverUrl = null;
         try {
