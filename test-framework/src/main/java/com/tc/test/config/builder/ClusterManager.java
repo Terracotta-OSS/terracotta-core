@@ -43,11 +43,26 @@ public class ClusterManager {
 
   private final TcConfigBuilder tcConfigBuilder;
   private final File workingDir;
+  private final String version;
+
+  private final Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
   private String maxDirectMemorySize = "1G";
 
-  private Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
+  public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
+    this(new File(System.getProperty("project.build.directory",
+        "target"), "temp" + File.separator + testClass.getSimpleName()), tcConfig, true);
+  }
 
-  public ClusterManager(File workingDir, TcConfig tcConfig) throws IOException, XmlException {
+  public ClusterManager(Class<?> testClass, TcConfig tcConfig, boolean fillUpConfig) throws IOException, XmlException {
+    this(new File(System.getProperty("project.build.directory",
+        "target"), "temp" + File.separator + testClass.getSimpleName()), tcConfig, fillUpConfig);
+  }
+
+  public ClusterManager(File workingDir, TcConfig tcConfig, boolean fillUpConfig) throws IOException, XmlException {
+    if (fillUpConfig) {
+      tcConfig.fillUpConfig(workingDir);
+    }
+
     XStream xstream = new XStream(new DomDriver());
     xstream.autodetectAnnotations(true);
     String xml = xstream.toXML(tcConfig);
@@ -56,13 +71,25 @@ public class ClusterManager {
 
     this.tcConfigBuilder = new TcConfigBuilder(parsedDoc);
     this.workingDir = workingDir;
+    this.version = guessMavenArtifactVersion(getClass());
+    if (version == null) {
+      throw new IllegalStateException("cannot figure out version");
+    }
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public File getWorkingDir() {
+    return workingDir;
   }
 
   public String getMaxDirectMemorySize() {
     return maxDirectMemorySize;
   }
 
-  public void setMaxDirectMemorySize(final String maxDirectMemorySize) {
+  public void setMaxDirectMemorySize(String maxDirectMemorySize) {
     this.maxDirectMemorySize = maxDirectMemorySize;
   }
 
@@ -109,7 +136,6 @@ public class ClusterManager {
       m2Root = System.getProperty("maven.repo.local");
       LOG.info("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
     }
-    String version = guessMavenArtifactVersion(getClass());
 
     String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;
 
@@ -128,7 +154,7 @@ public class ClusterManager {
     return agentDir + File.separator + files.get(files.size() - 1);
   }
 
-  private String guessMavenArtifactVersion(Class<?> clazz) {
+  private static String guessMavenArtifactVersion(Class<?> clazz) {
     // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
     String jar = TestBaseUtil.jarFor(clazz);
     if (jar == null) {
@@ -163,7 +189,7 @@ public class ClusterManager {
     }
   }
 
-  private void waitUntilTsaAgentInitialized(int port) {
+  private static void waitUntilTsaAgentInitialized(int port) {
     for (int i = 0; i < 30; i++) {
       try {
         URL url = new URL("http://localhost:" + port + "/tc-management-api/agents");
