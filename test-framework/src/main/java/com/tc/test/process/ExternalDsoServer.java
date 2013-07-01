@@ -43,6 +43,7 @@ public class ExternalDsoServer {
   private boolean                   persistentMode;
   private int                       tsaPort;
   private int                       jmxPort;
+  private int                       tsaGroupPort;
   private final List                jvmArgs                = new ArrayList();
   private final File                workingDir;
   private String                    serverName;
@@ -76,6 +77,7 @@ public class ExternalDsoServer {
             foundServer = true;
             jmxPort = server.getJmxPort().getIntValue();
             tsaPort = server.getTsaPort().getIntValue();
+            tsaGroupPort = server.getTsaGroupPort().getIntValue();
             break;
           }
         }
@@ -83,6 +85,7 @@ public class ExternalDsoServer {
       } else {
         jmxPort = servers[0].getJmxPort().getIntValue();
         tsaPort = servers[0].getTsaPort().getIntValue();
+        tsaGroupPort = servers[0].getTsaGroupPort().getIntValue();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -105,6 +108,7 @@ public class ExternalDsoServer {
     PortChooser portChooser = new PortChooser();
     this.workingDir = workingDir;
     this.tsaPort = portChooser.chooseRandomPort();
+    this.tsaGroupPort = portChooser.chooseRandomPort();
     this.jmxPort = portChooser.chooseRandomPort();
     this.serverLog = new File(workingDir, "dso-server.log");
     try {
@@ -132,6 +136,7 @@ public class ExternalDsoServer {
   private void initStart() throws FileNotFoundException {
     logOutputStream = new FileOutputStream(serverLog);
     serverProc = new ExtraProcessServerControl("localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false);
+    serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
     serverProc.getJvmArgs().addAll(jvmArgs);
@@ -192,6 +197,7 @@ public class ExternalDsoServer {
     L2ConfigBuilder l2 = servers.getL2s()[0];
 
     l2.setTSAPort(tsaPort);
+    l2.setTSAGroupPort(tsaGroupPort);
     l2.setJMXPort(jmxPort);
     l2.setData(workingDir + File.separator + "data");
     l2.setLogs(workingDir + File.separator + "logs");
@@ -212,6 +218,10 @@ public class ExternalDsoServer {
 
   public int getServerPort() {
     return tsaPort;
+  }
+
+  public int getServerGroupPort() {
+    return tsaGroupPort;
   }
 
   public int getAdminPort() {
@@ -240,5 +250,9 @@ public class ExternalDsoServer {
 
   public int waitForExit() throws Exception {
     return serverProc.waitFor();
+  }
+
+  public ExtraProcessServerControl getServerProc() {
+    return serverProc;
   }
 }

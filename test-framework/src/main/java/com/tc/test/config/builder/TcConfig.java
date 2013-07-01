@@ -62,6 +62,7 @@ public class TcConfig {
    *  <ul>TC servers log folder</ul>
    *  <ul>TC servers data folder</ul>
    *  <ul>TC servers TSA, JMX and TSA group ports</ul>
+   *  <ul>TC servers offheap if restartable is set to true</ul>
    * @param workingDir
    */
   public void fillUpConfig(File workingDir) {
@@ -69,6 +70,14 @@ public class TcConfig {
     int tempServerNameIdx = 0;
 
     PortChooser portChooser = new PortChooser();
+
+    boolean restartable = false;
+    for (TcConfigChild tcConfigChild : children) {
+      if (tcConfigChild instanceof Restartable) {
+        restartable = true;
+        break;
+      }
+    }
 
     for (TcConfigChild tcConfigChild : children) {
       if (tcConfigChild instanceof TcMirrorGroup) {
@@ -78,14 +87,14 @@ public class TcConfig {
         for (TcMirrorGroupChild tcMirrorGroupChild : mirrorGroup.getChildren()) {
           if (tcMirrorGroupChild instanceof TcServer) {
             TcServer tcServer = (TcServer)tcMirrorGroupChild;
-            tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer);
+            tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer, restartable);
           }
         }
       }
 
       if (tcConfigChild instanceof TcServer) {
         TcServer tcServer = (TcServer)tcConfigChild;
-        tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer);
+        tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer, restartable);
       }
     }
   }
@@ -99,7 +108,7 @@ public class TcConfig {
     return tempGroupNameIdx;
   }
 
-  private int fillUpTcServer(File workingDir, int tempServerNameIdx, PortChooser portChooser, TcServer tcServer) {
+  private int fillUpTcServer(File workingDir, int tempServerNameIdx, PortChooser portChooser, TcServer tcServer, boolean restartable) {
     String tcServerName = tcServer.getName();
     if (tcServerName == null) {
       tcServerName = "testServer" + (tempServerNameIdx++);
@@ -121,10 +130,14 @@ public class TcConfig {
     if (tcServer.getTsaPort() == 0) tcServer.setTsaPort(portChooser.chooseRandomPort());
     if (tcServer.getJmxPort() == 0) tcServer.setJmxPort(portChooser.chooseRandomPort());
     if (tcServer.getTsaGroupPort() == 0) tcServer.setTsaGroupPort(portChooser.chooseRandomPort());
+
+    if (restartable && tcServer.getOffHeap() == null)
+      tcServer.offHeap(new OffHeap().enabled(true).maxDataSize(ClusterManager.DEFAULT_MAX_DATA_SIZE));
+
     return tempServerNameIdx;
   }
 
-  public TcServer server(int groupIdx, int serverIdx) {
+  public TcServer serverAt(int groupIdx, int serverIdx) {
     TcConfigChild tcConfigChild = children.get(groupIdx);
     if (tcConfigChild instanceof TcMirrorGroup) {
       TcMirrorGroup mirrorGroup = (TcMirrorGroup)tcConfigChild;

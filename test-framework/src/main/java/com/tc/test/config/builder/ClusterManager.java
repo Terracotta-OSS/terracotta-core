@@ -1,5 +1,6 @@
 package com.tc.test.config.builder;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlException;
 import org.slf4j.Logger;
@@ -42,12 +43,14 @@ public class ClusterManager {
   private static final Logger LOG = LoggerFactory.getLogger(ClusterManager.class);
 
   public static final String DEFAULT_MAX_DIRECT_MEMORY_SIZE = "1G";
+  public static final String DEFAULT_MAX_DATA_SIZE = "512M";
 
   private final TcConfigBuilder tcConfigBuilder;
   private final File workingDir;
   private final String version;
 
   private final Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
+  private final TcConfig tcConfig;
   private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
@@ -71,6 +74,7 @@ public class ClusterManager {
     LOG.info("Starting cluster for config: " + xml);
     TcConfigDocument parsedDoc = new Loader().parse(xml);
 
+    this.tcConfig = tcConfig;
     this.tcConfigBuilder = new TcConfigBuilder(parsedDoc);
     this.workingDir = workingDir;
     this.version = guessMavenArtifactVersion(getClass());
@@ -104,6 +108,11 @@ public class ClusterManager {
       String serverName = server.getName();
 
       File serverWorkingDir = server.getName() != null ? new File(workingDir, server.getName()) : workingDir;
+      try {
+        FileUtils.deleteDirectory(serverWorkingDir);
+      } catch (IOException ioe) {
+        // ignore
+      }
       serverWorkingDir.mkdir();
       ExternalDsoServer externalDsoServer = new ExternalDsoServer(serverWorkingDir, tcConfigBuilder.newInputStream(), serverName);
       externalDsoServer.addJvmArg("-Dcom.tc.management.war=" + war);
@@ -121,6 +130,20 @@ public class ClusterManager {
     System.out.println("All TSA agents started successfully");
   }
 
+  public void crash(int groupIdx, int serverIdx) throws Exception {
+    ExternalDsoServer externalDsoServer = externalDsoServers.get(nameOf(groupIdx, serverIdx));
+    externalDsoServer.getServerProc().crash();
+  }
+
+  public void restart(int groupIdx, int serverIdx) throws Exception {
+    ExternalDsoServer externalDsoServer = externalDsoServers.get(nameOf(groupIdx, serverIdx));
+    if (externalDsoServer.getServerProc().isRunning()) {
+      return;
+    }
+    externalDsoServer.getServerProc().startWithoutWait();
+    waitUntilTsaAgentInitialized(externalDsoServer.getServerGroupPort());
+  }
+
   public void stop() throws Exception {
     for (ExternalDsoServer externalDsoServer : externalDsoServers.values()) {
       try {
@@ -130,6 +153,10 @@ public class ClusterManager {
       }
     }
     externalDsoServers.clear();
+  }
+
+  private String nameOf(int groupIdx, int serverIdx) {
+    return tcConfig.serverAt(groupIdx, serverIdx).getName();
   }
 
   private String guessAgentWarLocation() {

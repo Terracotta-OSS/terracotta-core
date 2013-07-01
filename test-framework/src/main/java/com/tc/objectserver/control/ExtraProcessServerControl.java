@@ -54,7 +54,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected File               javaHome;
   protected final String       configFileLoc;
   protected final List<String> jvmArgs;
-  private final File           runningDirectory;
+  private File                 runningDirectory;
   private String               serverName;
   private OutputStream         outStream;
   private StreamCopier         outCopier;
@@ -298,8 +298,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.serverName = serverName;
   }
 
+  public void setRunningDirectory(final File runningDirectory) {
+    this.runningDirectory = runningDirectory;
+  }
+
   /**
-   * The JAVA_HOME for the JVM to use when creating a {@link LinkedChildProcess}.
+   * The JAVA_HOME for the JVM to use when creating a {@link LinkedJavaProcess}.
    */
   public File getJavaHome() {
     if (javaHome == null) {
