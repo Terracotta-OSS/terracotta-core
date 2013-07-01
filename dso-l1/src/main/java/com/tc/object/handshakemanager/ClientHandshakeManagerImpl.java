@@ -150,36 +150,21 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public synchronized void disconnected(final NodeID remoteNode) {
+  public void disconnected(final NodeID remoteNode) {
     if (checkShutdown()) return;
-    State currentState = getState(remoteNode);
-    if (currentState == State.PAUSED) {
-      this.logger.warn("Pause called while already PAUSED for " + remoteNode);
-    } else {
-      this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode
-                       + ". Disconnect count: " + getDisconnectedCount());
-      pauseThisNode(remoteNode);
-
-      // only send the operations disabled event when this was the first group to disconnect
-      if (isOnlyOneGroupDisconnected()) {
-        dsoClusterEventsGun.fireOperationsDisabled();
-      }
-    }
-  }
-
-  private void pauseThisNode(final NodeID remoteNode) {
     // Atomize manager and callbacks state changes
     synchronized (transitionInProgress) {
       waitForTransitionToComplete();
       transitionInProgress.set(true);
     }
-    changeToPaused(remoteNode);
-    pauseCallbacks(remoteNode, getDisconnectedCount());
+    boolean isPaused = changeToPaused(remoteNode);
+    if (isPaused) {
+      pauseCallbacks(remoteNode, getDisconnectedCount());
+      this.sessionManager.newSession(remoteNode);
+      this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
+                       + " for remote node " + remoteNode);
+    }
     notifyTransitionComplete();
-
-    this.sessionManager.newSession(remoteNode);
-    this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
-                     + " for remote node " + remoteNode);
   }
 
   @Override
@@ -324,14 +309,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     }
   }
 
-  private synchronized void changeToPaused(final NodeID node) {
+  // returns true if PAUSED else return false if already PAUSED
+  private synchronized boolean changeToPaused(final NodeID node) {
     Object old = this.groupStates.put(node, State.PAUSED);
 
-    if (old == State.PAUSED) { throw new AssertionError("old value was already equal PAUSED for remote node " + node); }
+    if (old == State.PAUSED) { return false; }
 
     if (old == State.RUNNING) {
       this.disconnected++;
     }
+    this.logger.info("Disconnected: Pausing from " + old + " RemoteNode : " + node + ". Disconnect count: "
+                     + disconnected);
 
     if (this.disconnected > this.groupIDs.length) { throw new AssertionError(
                                                                              "disconnected count was greater then number of groups ( "
@@ -339,6 +327,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
                                                                                  + " disconnected = "
                                                                                  + this.disconnected); }
     notifyAll();
+    // only send the operations disabled event when this was the first group to disconnect
+    if (isOnlyOneGroupDisconnected()) {
+      dsoClusterEventsGun.fireOperationsDisabled();
+    }
+    return true;
   }
 
   private synchronized void changeToStarting(final NodeID node) {

@@ -17,15 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RejoinManagerImpl implements RejoinManagerInternal {
 
-  private static final TCLogger               logger                          = TCLogging
-                                                                                  .getLogger(RejoinManagerImpl.class);
-  private final List<RejoinLifecycleListener> listeners                       = new CopyOnWriteArrayList<RejoinLifecycleListener>();
+  private static final TCLogger               logger           = TCLogging.getLogger(RejoinManagerImpl.class);
+  private final List<RejoinLifecycleListener> listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final boolean                       rejoinEnabled;
   private final RejoinWorker                  rejoinWorker;
-  private final AtomicBoolean                 rejoinInProgress                = new AtomicBoolean(false);
-  private volatile int                        rejoinCount                     = 0;
-  // true if listeners are notified of rejoin completed
-  private final AtomicBoolean                 rejoinStartedNotificationStatus = new AtomicBoolean(false);
+  private final AtomicBoolean                 rejoinInProgress = new AtomicBoolean(false);
+  private volatile int                        rejoinCount      = 0;
 
   public RejoinManagerImpl(boolean isRejoinEnabled) {
     this.rejoinEnabled = isRejoinEnabled;
@@ -59,29 +56,23 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   private void notifyRejoinStart() {
-    if (rejoinStartedNotificationStatus.compareAndSet(false, true)) {
-      assertRejoinEnabled();
-      logger.info("Notifying rejoin start... current rejoin count" + rejoinCount);
-      rejoinCount++;
-      // this calls cleanup for all ClearableCallbacks
-      for (RejoinLifecycleListener listener : listeners) {
-        listener.onRejoinStart();
-      }
-      logger.info("Notified rejoin start...");
+    assertRejoinEnabled();
+    logger.info("Notifying rejoin start... current rejoin count " + rejoinCount);
+    rejoinCount++;
+    // this calls cleanup for all ClearableCallbacks
+    for (RejoinLifecycleListener listener : listeners) {
+      listener.onRejoinStart();
     }
+    logger.info("Notified rejoin start...");
   }
 
-  private boolean notifyRejoinComplete() {
-    if (rejoinStartedNotificationStatus.compareAndSet(true, false)) {
-      assertRejoinEnabled();
-      logger.info("Notifying rejoin complete...");
-      for (RejoinLifecycleListener listener : listeners) {
-        listener.onRejoinComplete();
-      }
-      logger.info("Notified rejoin complete...");
-      return true;
+  private void notifyRejoinComplete() {
+    assertRejoinEnabled();
+    logger.info("Notifying rejoin complete...");
+    for (RejoinLifecycleListener listener : listeners) {
+      listener.onRejoinComplete();
     }
-    return false;
+    logger.info("Notified rejoin complete...");
   }
 
   @Override
@@ -100,8 +91,11 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
                 + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
-      // take care of any cleanup/re-initialization
-      return notifyRejoinComplete();
+      if (rejoinInProgress.compareAndSet(true, false)) {
+        // take care of any cleanup/re-initialization
+        notifyRejoinComplete();
+        return true;
+      }
     }
     return false;
   }
@@ -110,27 +104,20 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private void doRejoin(ClientMessageChannel channel) {
     logger.info("Doing rejoin for channel: " + channel);
     if (rejoinInProgress.compareAndSet(false, true)) {
-      try {
-        notifyRejoinStart();
-        while (true) {
+      notifyRejoinStart();
+      while (true) {
+        try {
+          channel.reopen();
+          break;
+        } catch (Throwable t) {
+          logger.warn("Error during channel open : " + channel, t);
           try {
-            channel.reopen();
-            break;
-          } catch (Throwable t) {
-            logger.warn("Error during channel open : " + channel + " ", t);
-            try {
-              TimeUnit.SECONDS.sleep(1L);
-            } catch (InterruptedException e) {
-              logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
-            }
+            TimeUnit.SECONDS.sleep(1L);
+          } catch (InterruptedException e) {
+            logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
+            Thread.currentThread().interrupt();
           }
         }
-      } catch (Throwable th) {
-        // RejoinWorker thread should not die and should be able to accept more rejoin requests if one rejoin request
-        // fails for some reason
-        logger.warn("Error during rejoin : " + channel + " " + th);
-      } finally {
-        rejoinInProgress.set(false);
       }
     }
   }
