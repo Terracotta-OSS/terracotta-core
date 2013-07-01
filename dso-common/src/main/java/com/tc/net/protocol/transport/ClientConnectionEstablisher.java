@@ -382,7 +382,7 @@ public class ClientConnectionEstablisher {
 
     public void startThreadIfNecessary() {
       if (threadStarted.compareAndSet(false, true)) {
-        Thread thread = new Thread(this, RECONNECT_THREAD_NAME);
+        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId());
         thread.setDaemon(true);
         thread.start();
       }
