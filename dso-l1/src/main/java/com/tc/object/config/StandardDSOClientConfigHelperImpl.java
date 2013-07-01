@@ -337,17 +337,18 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   @Override
   public void validateClientServerCompatibility(PwProvider pwProvider, SecurityInfo securityInfo)
       throws ConfigurationSetupException {
-    ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
-        .getServerGroups();
-    ServerGroup[] grpArray = serverGroupsFromL2.getServerGroupArray();
-    for (int i = 0; i < grpArray.length; i++) {
-      String grpName = grpArray[i].getGroupName();
-      ServerInfo[] serverInfos = grpArray[i].getServerInfoArray();
+    PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(
+                                                                                                     configSetupManager,
+                                                                                                     pwProvider);
+    ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
+    for (int i = 0; i < connectionInfoItems.length; i++) {
+      ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       boolean foundCompactibleActive = false;
       Version clientVersion = null;
-      for (int j = 0; j < serverInfos.length; j++) {
-        ConnectionInfo connectionIn = new ConnectionInfo(serverInfos[j].getName(), serverInfos[j].getTsaPort()
-            .intValue(), i * j + j, grpName, securityInfo);
+      for (int j = 0; j < connectionInfo.length; j++) {
+        ConnectionInfo connectionIn = new ConnectionInfo(connectionInfo[j].getHostname(), connectionInfo[j].getPort(),
+                                                         i * j + j, connectionInfo[j].getGroupName(),
+                                                         connectionInfo[j].getSecurityInfo());
 
         ServerURL serverUrl = null;
         try {
@@ -360,7 +361,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         String strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
         clientVersion = getClientVersion();
         if (strServerVersion == null) {
-          // logger.info("Found passive Server = " + serverUrl);
+          logger.debug("Found passive Server = " + serverUrl);
           continue;
         }
         Version serverVersion = new Version(strServerVersion);
@@ -368,7 +369,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
           throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
                                           + " is not compatible with serverVersion : " + serverVersion);
         } else {
-          // logger.info("Found Compatible active Server = " + serverUrl);
+          logger.debug("Found Compatible active Server = " + serverUrl);
           foundCompactibleActive = true;
           break;
         }
