@@ -41,12 +41,14 @@ public class ClusterManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClusterManager.class);
 
+  public static final String DEFAULT_MAX_DIRECT_MEMORY_SIZE = "1G";
+
   private final TcConfigBuilder tcConfigBuilder;
   private final File workingDir;
   private final String version;
 
   private final Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
-  private String maxDirectMemorySize = "1G";
+  private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
     this(new File(System.getProperty("project.build.directory",

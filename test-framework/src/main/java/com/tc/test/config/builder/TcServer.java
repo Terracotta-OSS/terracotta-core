@@ -28,7 +28,7 @@ public class TcServer implements TcMirrorGroupChild {
   private int tsaGroupPort;
 
   @XStreamAlias("offheap")
-  private com.tc.test.config.builder.OffHeap offHeap;
+  private OffHeap offHeap;
 
   public TcServer() {
   }

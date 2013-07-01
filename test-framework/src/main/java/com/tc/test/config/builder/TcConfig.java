@@ -38,13 +38,32 @@ public class TcConfig {
     return this;
   }
 
+  public TcConfig mirrorGroup(TcServer... tcServers) {
+    TcMirrorGroup tcMirrorGroup = new TcMirrorGroup();
+    for (TcServer tcServer : tcServers) {
+      tcMirrorGroup.server(tcServer);
+    }
+    this.children.add(tcMirrorGroup);
+    return this;
+  }
+
   public TcConfig restartable(boolean restartable) {
     this.children.add(new Restartable().enabled(restartable));
     return this;
   }
 
 
-
+  /**
+   * Fills up the config object with missing bits:
+   *  <ul>Mirror groups name</ul>
+   *  <ul>TC servers name</ul>
+   *  <ul>TC servers host</ul>
+   *  <ul>TC servers index folder</ul>
+   *  <ul>TC servers log folder</ul>
+   *  <ul>TC servers data folder</ul>
+   *  <ul>TC servers TSA, JMX and TSA group ports</ul>
+   * @param workingDir
+   */
   public void fillUpConfig(File workingDir) {
     int tempGroupNameIdx = 0;
     int tempServerNameIdx = 0;
@@ -71,7 +90,7 @@ public class TcConfig {
     }
   }
 
-  private int fillUpMirrorGroup(int tempGroupNameIdx, final TcMirrorGroup mirrorGroup) {
+  private int fillUpMirrorGroup(int tempGroupNameIdx, TcMirrorGroup mirrorGroup) {
     String groupName = mirrorGroup.getGroupName();
     if (groupName == null) {
       groupName = "testGroup" + (tempGroupNameIdx++);
@@ -80,7 +99,7 @@ public class TcConfig {
     return tempGroupNameIdx;
   }
 
-  private int fillUpTcServer(final File workingDir, int tempServerNameIdx, final PortChooser portChooser, final TcServer tcServer) {
+  private int fillUpTcServer(File workingDir, int tempServerNameIdx, PortChooser portChooser, TcServer tcServer) {
     String tcServerName = tcServer.getName();
     if (tcServerName == null) {
       tcServerName = "testServer" + (tempServerNameIdx++);
