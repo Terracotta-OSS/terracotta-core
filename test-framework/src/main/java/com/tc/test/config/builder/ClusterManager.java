@@ -234,7 +234,7 @@ public class ClusterManager {
           }
         });
         inputStream.close();
-        LOG.debug("TSA agent to initialized on port {}", port);
+        LOG.info("TSA agent listening on port {}", port);
         break;
       } catch (IOException ioe) {
         LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
