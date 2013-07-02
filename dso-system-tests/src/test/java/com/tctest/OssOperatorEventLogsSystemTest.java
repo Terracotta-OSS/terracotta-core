@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -50,9 +52,12 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     System.out.println("server1 started");
     waitTillBecomeActive(jmxPort_1);
     System.out.println("server1 became active");
+    TimeUnit.SECONDS.sleep(1L);
 
     TerracottaOperatorEvent movedToActiveOpEvent = TerracottaOperatorEventFactory
         .createClusterNodeStateChangedEvent(StateManager.ACTIVE_COORDINATOR.getName());
+    System.out.println(Calendar.getInstance().getTime() + " server1 log location "
+                       + server_1.getServerLog().getAbsolutePath());
 
     FileInputStream fstream = new FileInputStream(server_1.getServerLog());
     DataInputStream in = new DataInputStream(fstream);
@@ -60,6 +65,7 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     String strLine;
     while ((strLine = br.readLine()) != null) {
       if (strLine.contains("tc.operator.event") && strLine.contains(movedToActiveOpEvent.getEventMessage())) {
+        br.close();
         in.close();
         return;
       }
