@@ -11,6 +11,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.tc.config.Loader;
+import com.tc.test.TestConfigUtil;
 import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -54,18 +55,16 @@ public class ClusterManager {
   private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
-    this(new File(System.getProperty("project.build.directory",
-        "target"), "temp" + File.separator + testClass.getSimpleName()), tcConfig, true);
+    this(new File(TestConfigUtil.getTcBaseDirPath(), "temp" + File.separator + testClass.getSimpleName()), tcConfig, true);
   }
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig, boolean fillUpConfig) throws IOException, XmlException {
-    this(new File(System.getProperty("project.build.directory",
-        "target"), "temp" + File.separator + testClass.getSimpleName()), tcConfig, fillUpConfig);
+    this(new File(TestConfigUtil.getTcBaseDirPath(), "temp" + File.separator + testClass.getSimpleName()), tcConfig, fillUpConfig);
   }
 
   public ClusterManager(File workingDir, TcConfig tcConfig, boolean fillUpConfig) throws IOException, XmlException {
     if (fillUpConfig) {
-      tcConfig.fillUpConfig(workingDir);
+      tcConfig.fillUpConfig();
     }
 
     XStream xstream = new XStream(new DomDriver());

@@ -4,7 +4,6 @@ import com.tc.util.PortChooser;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,9 +62,8 @@ public class TcConfig {
    *  <ul>TC servers data folder</ul>
    *  <ul>TC servers TSA, JMX and TSA group ports</ul>
    *  <ul>TC servers offheap if restartable is set to true</ul>
-   * @param workingDir
    */
-  public void fillUpConfig(File workingDir) {
+  public void fillUpConfig() {
     int tempGroupNameIdx = 0;
     int tempServerNameIdx = 0;
 
@@ -87,14 +85,14 @@ public class TcConfig {
         for (TcMirrorGroupChild tcMirrorGroupChild : mirrorGroup.getChildren()) {
           if (tcMirrorGroupChild instanceof TcServer) {
             TcServer tcServer = (TcServer)tcMirrorGroupChild;
-            tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer, restartable);
+            tempServerNameIdx = fillUpTcServer(tempServerNameIdx, portChooser, tcServer, restartable);
           }
         }
       }
 
       if (tcConfigChild instanceof TcServer) {
         TcServer tcServer = (TcServer)tcConfigChild;
-        tempServerNameIdx = fillUpTcServer(workingDir, tempServerNameIdx, portChooser, tcServer, restartable);
+        tempServerNameIdx = fillUpTcServer(tempServerNameIdx, portChooser, tcServer, restartable);
       }
     }
   }
@@ -108,7 +106,7 @@ public class TcConfig {
     return tempGroupNameIdx;
   }
 
-  private int fillUpTcServer(File workingDir, int tempServerNameIdx, PortChooser portChooser, TcServer tcServer, boolean restartable) {
+  private int fillUpTcServer(int tempServerNameIdx, PortChooser portChooser, TcServer tcServer, boolean restartable) {
     String tcServerName = tcServer.getName();
     if (tcServerName == null) {
       tcServerName = "testServer" + (tempServerNameIdx++);
@@ -120,12 +118,9 @@ public class TcConfig {
       tcServer.setHost(host);
     }
 
-    File serverWorkingDir = new File(workingDir, tcServerName);
-
-
-    if (tcServer.getData() == null) tcServer.setData(new File(serverWorkingDir, "data").getPath());
-    if (tcServer.getIndex() == null) tcServer.setIndex(new File(serverWorkingDir, "index").getPath());
-    if (tcServer.getLogs() == null) tcServer.setLogs(new File(serverWorkingDir, "logs").getPath());
+    if (tcServer.getData() == null) tcServer.setData("data");
+    if (tcServer.getIndex() == null) tcServer.setIndex("index");
+    if (tcServer.getLogs() == null) tcServer.setLogs("logs");
 
     if (tcServer.getTsaPort() == 0) tcServer.setTsaPort(portChooser.chooseRandomPort());
     if (tcServer.getJmxPort() == 0) tcServer.setJmxPort(portChooser.chooseRandomPort());
