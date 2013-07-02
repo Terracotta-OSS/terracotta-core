@@ -100,7 +100,7 @@ public class ClusterManager {
   }
 
   public void start() throws Exception {
-    String war = guessAgentWarLocation();
+    String war = findAgentWarLocation();
     workingDir.mkdirs();
 
     Server[] servers = tcConfigBuilder.getServers();
@@ -159,28 +159,32 @@ public class ClusterManager {
     return tcConfig.serverAt(groupIdx, serverIdx).getName();
   }
 
-  private String guessAgentWarLocation() {
+  private String findAgentWarLocation() {
+    return findWarLocation("org.terracotta", "management-tsa-war", version);
+  }
+
+  public String findWarLocation(String gid, String aid, String ver) {
     String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
     if (System.getProperty("maven.repo.local") != null) {
       m2Root = System.getProperty("maven.repo.local");
       LOG.info("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
     }
 
-    String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;
+    String warDir = m2Root + ("/" + gid.replace('.', '/') + "/" + aid + "/").replace('/', File.separatorChar) + ver;
 
-    List<String> files = Arrays.asList(new File(agentDir).list(new FilenameFilter() {
+    List<String> files = Arrays.asList(new File(warDir).list(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(".war") && !name.endsWith("-sources.jar") && !name.endsWith("-tests.jar");
       }
     }));
     if (files.isEmpty()) {
-      throw new AssertionError("No agent WAR file found in [" + agentDir + "]");
+      throw new AssertionError("No WAR file found in [" + warDir + "]");
     }
     Collections.sort(files);
 
     // always take the last one of the sorted list, it should be the latest version
-    return agentDir + File.separator + files.get(files.size() - 1);
+    return warDir + File.separator + files.get(files.size() - 1);
   }
 
   private static String guessMavenArtifactVersion(Class<?> clazz) {
@@ -212,7 +216,7 @@ public class ClusterManager {
           }
         }
       } catch (Exception e) {
-        // ignore
+        e.printStackTrace();
       }
       throw new AssertionError("cannot guess version");
     }
