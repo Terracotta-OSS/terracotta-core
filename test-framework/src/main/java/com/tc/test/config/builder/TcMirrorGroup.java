@@ -17,7 +17,6 @@ public class TcMirrorGroup implements TcConfigChild {
   @XStreamAsAttribute
   private String groupName;
 
-  @XStreamAlias("children")
   @XStreamImplicit
   private List<TcMirrorGroupChild> children = new ArrayList<TcMirrorGroupChild>();
 
@@ -30,7 +29,7 @@ public class TcMirrorGroup implements TcConfigChild {
   }
 
   public TcMirrorGroup groupName(String groupName) {
-    this.groupName = groupName;
+    setGroupName(groupName);
     return this;
   }
 

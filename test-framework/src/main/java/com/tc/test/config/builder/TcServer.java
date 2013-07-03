@@ -30,6 +30,8 @@ public class TcServer implements TcMirrorGroupChild {
   @XStreamAlias("offheap")
   private OffHeap offHeap;
 
+  private Security security;
+
   public TcServer() {
   }
 
@@ -159,7 +161,20 @@ public class TcServer implements TcMirrorGroupChild {
   }
 
   public TcServer offHeap(OffHeap offHeap) {
-    this.offHeap = offHeap;
+    setOffHeap(offHeap);
+    return this;
+  }
+
+  public Security getSecurity() {
+    return security;
+  }
+
+  public void setSecurity(Security security) {
+    this.security = security;
+  }
+
+  public TcServer security(Security security) {
+    setSecurity(security);
     return this;
   }
 

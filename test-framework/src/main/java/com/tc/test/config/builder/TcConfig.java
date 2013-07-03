@@ -4,7 +4,6 @@ import com.tc.util.PortChooser;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,14 +25,14 @@ public class TcConfig {
   private String xsiSchemaLocation = "http://www.terracotta.org/schema/terracotta-8.xsd";
 
   @XStreamAlias("servers")
-  private final List<TcConfigChild> children = new ArrayList<TcConfigChild>();
+  private TcServers servers = new TcServers();
 
   public List<TcConfigChild> getChildren() {
-    return children;
+    return servers.getChildren();
   }
 
   public TcConfig mirrorGroup(TcMirrorGroup mirrorGroup) {
-    this.children.add(mirrorGroup);
+    this.servers.getChildren().add(mirrorGroup);
     return this;
   }
 
@@ -42,12 +41,17 @@ public class TcConfig {
     for (TcServer tcServer : tcServers) {
       tcMirrorGroup.server(tcServer);
     }
-    this.children.add(tcMirrorGroup);
+    this.servers.getChildren().add(tcMirrorGroup);
     return this;
   }
 
   public TcConfig restartable(boolean restartable) {
-    this.children.add(new Restartable().enabled(restartable));
+    this.servers.getChildren().add(new Restartable().enabled(restartable));
+    return this;
+  }
+
+  public TcConfig secure(boolean secure) {
+    this.servers.setSecure(secure);
     return this;
   }
 
@@ -70,14 +74,14 @@ public class TcConfig {
     PortChooser portChooser = new PortChooser();
 
     boolean restartable = false;
-    for (TcConfigChild tcConfigChild : children) {
+    for (TcConfigChild tcConfigChild : servers.getChildren()) {
       if (tcConfigChild instanceof Restartable) {
         restartable = true;
         break;
       }
     }
 
-    for (TcConfigChild tcConfigChild : children) {
+    for (TcConfigChild tcConfigChild : servers.getChildren()) {
       if (tcConfigChild instanceof TcMirrorGroup) {
         TcMirrorGroup mirrorGroup = (TcMirrorGroup)tcConfigChild;
         tempGroupNameIdx = fillUpMirrorGroup(tempGroupNameIdx, mirrorGroup);
@@ -133,7 +137,7 @@ public class TcConfig {
   }
 
   public TcServer serverAt(int groupIdx, int serverIdx) {
-    TcConfigChild tcConfigChild = children.get(groupIdx);
+    TcConfigChild tcConfigChild = servers.getChildren().get(groupIdx);
     if (tcConfigChild instanceof TcMirrorGroup) {
       TcMirrorGroup mirrorGroup = (TcMirrorGroup)tcConfigChild;
       TcMirrorGroupChild tcMirrorGroupChild = mirrorGroup.getChildren().get(serverIdx);
