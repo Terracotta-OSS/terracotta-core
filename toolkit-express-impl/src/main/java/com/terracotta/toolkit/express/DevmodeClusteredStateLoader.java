@@ -70,7 +70,7 @@ class DevmodeClusteredStateLoader extends ClusteredStateLoader {
         URL url = new URL(line);
         urlList.add(url);
       }
-      System.out.println("XXX: toolkit devmode embedded jars " + urlList);
+      // System.out.println("XXX: toolkit devmode embedded jars " + urlList);
       return new URLClassLoader(urlList.toArray(new URL[0]), null);
     } catch (IOException e) {
       throw new RuntimeException(e);
