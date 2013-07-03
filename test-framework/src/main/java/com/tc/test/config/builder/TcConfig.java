@@ -50,6 +50,10 @@ public class TcConfig {
     return this;
   }
 
+  public boolean isSecure() {
+    return this.servers.isSecure();
+  }
+
   public TcConfig secure(boolean secure) {
     this.servers.setSecure(secure);
     return this;

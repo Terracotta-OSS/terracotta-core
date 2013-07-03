@@ -1,11 +1,10 @@
 package com.tc.test.config.builder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -14,23 +13,40 @@ import java.net.URLClassLoader;
  */
 public class TmsManager {
 
-  private String workingDir;
+  private static final Logger LOG = LoggerFactory.getLogger(TmsManager.class);
+
   private String warLocation;
   private int listenPort;
 
   private Object server;
 
-  public TmsManager(File workingDir, String warLocation, int listenPort) {
-    this.workingDir = workingDir.getPath();
+  public TmsManager(int listenPort) {
+    String[] jars = System.getProperty("java.class.path").split(File.pathSeparator);
+    for (String jar : jars) {
+      String filename = new File(jar).getName();
+      if (filename.startsWith("management-client-") && filename.endsWith(".war")) {
+        warLocation = jar;
+        break;
+      }
+    }
+    if (warLocation == null) {
+      throw new RuntimeException("TMS WAR not on the classpath - cannot automatically find it");
+    }
+    this.listenPort = listenPort;
+  }
+
+  public TmsManager(String warLocation, int listenPort) {
     this.warLocation = warLocation;
     this.listenPort = listenPort;
   }
 
   public void start() throws Exception {
-    setupTms();
+    LOG.info("Deploying TMS on port " + listenPort + " with war archive: " + warLocation);
 
     // those are the jetty-8.1.7.v20120910 dependencies
     URL[] urls = {
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.taglibs.standard.lang.jstl.VariableResolver"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.jstl.core.ConditionalTagSupport"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("com.sun.el.ExpressionFactoryImpl"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.el.ELException"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.JspFactory"))),
@@ -65,16 +81,6 @@ public class TmsManager {
       server.getClass().getMethod("join").invoke(server);
       server = null;
     }
-  }
-
-  private void setupTms() throws FileNotFoundException {
-    String tmsWorkDir = workingDir + "/tms-work/";
-    new File(tmsWorkDir).mkdirs();
-    PrintWriter printWriter = new PrintWriter(new FileOutputStream(tmsWorkDir + "settings.ini"));
-    printWriter.println("authenticationEnabled=false");
-    printWriter.println("firstRun=false");
-    printWriter.close();
-    System.setProperty("com.tc.management.config.directory", tmsWorkDir);
   }
 
 }

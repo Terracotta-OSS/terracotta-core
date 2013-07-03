@@ -3,6 +3,11 @@ package com.tc.test.config.builder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlException;
+import org.eclipse.jetty.client.ContentExchange;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.HttpExchange;
+import org.eclipse.jetty.io.Buffer;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
@@ -28,10 +33,12 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -53,6 +60,8 @@ public class ClusterManager {
   private final Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
   private final TcConfig tcConfig;
   private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
+
+  private Map<String, String> systemProperties = new TreeMap<String, String>();
 
   public ClusterManager(Class<?> testClass, TcConfig tcConfig) throws IOException, XmlException {
     this(new File(TestConfigUtil.getTcBaseDirPath(), "temp" + File.separator + testClass.getSimpleName()), tcConfig, true);
@@ -98,6 +107,10 @@ public class ClusterManager {
     this.maxDirectMemorySize = maxDirectMemorySize;
   }
 
+  public Map<String, String> getSystemProperties() {
+    return systemProperties;
+  }
+
   public void start() throws Exception {
     String war = findAgentWarLocation();
     workingDir.mkdirs();
@@ -116,6 +129,11 @@ public class ClusterManager {
       ExternalDsoServer externalDsoServer = new ExternalDsoServer(serverWorkingDir, tcConfigBuilder.newInputStream(), serverName);
       externalDsoServer.addJvmArg("-Dcom.tc.management.war=" + war);
       externalDsoServer.addJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemorySize);
+
+      for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
+        externalDsoServer.addJvmArg("-D" + entry.getKey() + "=" + entry.getValue());
+      }
+
       externalDsoServer.startWithoutWait();
 
       externalDsoServers.put(serverName, externalDsoServer);
@@ -147,6 +165,17 @@ public class ClusterManager {
     for (ExternalDsoServer externalDsoServer : externalDsoServers.values()) {
       try {
         externalDsoServer.stop();
+      } catch (Exception e) {
+        LOG.error("error stopping server", e);
+      }
+    }
+    externalDsoServers.clear();
+  }
+
+  public void stopSecured(String username, String password) throws Exception {
+    for (ExternalDsoServer externalDsoServer : externalDsoServers.values()) {
+      try {
+        externalDsoServer.stopSecured(username, password);
       } catch (Exception e) {
         LOG.error("error stopping server", e);
       }
@@ -221,7 +250,59 @@ public class ClusterManager {
     }
   }
 
-  private static void waitUntilTsaAgentInitialized(int port) {
+  private void waitUntilTsaAgentInitialized(int port) throws Exception {
+    if (tcConfig.isSecure()) {
+      https_waitUntilTsaAgentInitialized(port);
+    } else {
+      http_waitUntilTsaAgentInitialized(port);
+    }
+  }
+
+  private static void https_waitUntilTsaAgentInitialized(int port) throws Exception {
+    HttpClient httpClient = new HttpClient(new SslContextFactory(true));
+    try {
+      httpClient.start();
+
+      for (int i = 0; i < 30; i++) {
+        final AtomicBoolean success = new AtomicBoolean(false);
+
+        ContentExchange exchange = new ContentExchange(true) {
+          protected void onResponseComplete() throws IOException {
+            // if we get JSON back (even an error) then we can assume the agent started
+            Collection<String> contentTypes = getResponseFields().getValuesCollection("content-type");
+            for (String contentType : contentTypes) {
+              if (contentType.startsWith("application/json")) {
+                success.set(true);
+              }
+            }
+          }
+
+          @Override
+          protected synchronized void onResponseHeader(Buffer name, Buffer value) throws IOException {
+            super.onResponseHeader(name, value);    //To change body of overridden methods use File | Settings | File Templates.
+          }
+        };
+        exchange.setMethod("GET");
+        exchange.setURL("https://localhost:" + port + "/tc-management-api/agents");
+
+        httpClient.send(exchange);
+        int exchangeState = exchange.waitForDone();
+
+        if (exchangeState == HttpExchange.STATUS_COMPLETED && success.get()) {
+          LOG.info("TSA agent listening on port {}", port);
+          break;
+        }
+
+        ThreadUtil.reallySleep(1000L);
+        LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
+      }
+
+    } finally {
+      httpClient.stop();
+    }
+  }
+
+  private static void http_waitUntilTsaAgentInitialized(int port) {
     for (int i = 0; i < 30; i++) {
       try {
         URL url = new URL("http://localhost:" + port + "/tc-management-api/agents");
