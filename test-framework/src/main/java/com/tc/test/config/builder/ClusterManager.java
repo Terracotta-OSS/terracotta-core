@@ -191,6 +191,32 @@ public class ClusterManager {
     return findWarLocation("org.terracotta", "management-tsa-war", version);
   }
 
+  public String versionOf(String artifact) {
+    String jarLocation = null;
+    String[] jars = System.getProperty("java.class.path").split(File.pathSeparator);
+    for (String jar : jars) {
+      String filename = new File(jar).getName();
+      if (filename.startsWith(artifact + "-") && filename.endsWith(".jar")) {
+        jarLocation = jar;
+        break;
+      }
+    }
+    if (jarLocation == null) {
+      jars = System.getProperty("surefire.test.class.path").split(File.pathSeparator);
+      for (String jar : jars) {
+        String filename = new File(jar).getName();
+        if (filename.startsWith(artifact + "-") && filename.endsWith(".jar")) {
+          jarLocation = jar;
+          break;
+        }
+      }
+    }
+    if (jarLocation == null) {
+      return null;
+    }
+    return new File(jarLocation).getParentFile().getName();
+  }
+
   public String findWarLocation(String gid, String aid, String ver) {
     String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
     if (System.getProperty("maven.repo.local") != null) {

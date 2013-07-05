@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
 
-import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -19,21 +18,6 @@ public class TmsManager {
   private int listenPort;
 
   private Object server;
-
-  public TmsManager(int listenPort) {
-    String[] jars = System.getProperty("java.class.path").split(File.pathSeparator);
-    for (String jar : jars) {
-      String filename = new File(jar).getName();
-      if (filename.startsWith("management-client-") && filename.endsWith(".war")) {
-        warLocation = jar;
-        break;
-      }
-    }
-    if (warLocation == null) {
-      throw new RuntimeException("TMS WAR not on the classpath - cannot automatically find it");
-    }
-    this.listenPort = listenPort;
-  }
 
   public TmsManager(String warLocation, int listenPort) {
     this.warLocation = warLocation;
