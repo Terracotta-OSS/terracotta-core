@@ -76,6 +76,7 @@
         <module>../ent-dso-l2</module>
         <module>../ent-deploy</module>
         <module>../ent-system-tests</module>
+        <module>../management-ent-system-tests</module>
         <module>../ent-active-active-tests</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>
