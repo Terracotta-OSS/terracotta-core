@@ -40,30 +40,27 @@ import java.util.Set;
 
 public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper {
 
-  private static final TCLogger                              logger                             = CustomerLogging
-                                                                                                    .getDSOGenericLogger();
-  private final L1ConfigurationSetupManager                  configSetupManager;
+  private static final TCLogger             logger               = CustomerLogging.getDSOGenericLogger();
+  private final L1ConfigurationSetupManager configSetupManager;
 
   // ====================================================================================================================
   /**
    * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
    */
-  private final Object                                       specLock                           = new Object();
-
+  private final Object                      specLock             = new Object();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
    * 
    * @GuardedBy {@link #specLock}
    */
-  private final Map                                          classSpecs                         = new HashMap();
+  private final Map                         classSpecs           = new HashMap();
   // ====================================================================================================================
 
-  private final Portability                                  portability;
-  private int                                                faultCount                         = -1;
-  private final Set<String>                                  tunneledMBeanDomains               = Collections
-                                                                                                    .synchronizedSet(new HashSet<String>());
-  private ReconnectConfig                                    l1ReconnectConfig                  = null;
+  private final Portability                 portability;
+  private int                               faultCount           = -1;
+  private final Set<String>                 tunneledMBeanDomains = Collections.synchronizedSet(new HashSet<String>());
+  private ReconnectConfig                   l1ReconnectConfig    = null;
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
                                            final L1ConfigurationSetupManager configSetupManager)
@@ -273,7 +270,9 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
   @Override
   public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException {
-    PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager, pwProvider);
+    PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(
+                                                                                                     configSetupManager,
+                                                                                                     pwProvider);
     ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
         .getServerGroups();
 
@@ -284,7 +283,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
                                                          connectionInfo[j].getPort(), i * j + j,
-                                                         connectionInfo[j].getGroupName()); // We don't care about security info here
+                                                         connectionInfo[j].getGroupName()); // We don't care about
+                                                                                            // security info here
         connInfoFromL1.add(connectionIn);
       }
     }
@@ -442,7 +442,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   @Override
-  public synchronized ReconnectConfig getL1ReconnectProperties(final PwProvider securityManager) throws ConfigurationSetupException {
+  public synchronized ReconnectConfig getL1ReconnectProperties(final PwProvider securityManager)
+      throws ConfigurationSetupException {
     if (l1ReconnectConfig == null) {
       setupL1ReconnectProperties(securityManager);
     }
