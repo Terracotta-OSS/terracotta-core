@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,6 +58,7 @@ public class ClusterManager {
   private final File workingDir;
   private final String version;
 
+  private final List<String> extraJvmArgs = new ArrayList<String>();
   private final Map<String, ExternalDsoServer> externalDsoServers = new TreeMap<String, ExternalDsoServer>();
   private final TcConfig tcConfig;
   private String maxDirectMemorySize = DEFAULT_MAX_DIRECT_MEMORY_SIZE;
@@ -107,6 +109,10 @@ public class ClusterManager {
     this.maxDirectMemorySize = maxDirectMemorySize;
   }
 
+  public void addExtraJvmArg(String arg) {
+    extraJvmArgs.add(arg);
+  }
+
   public Map<String, String> getSystemProperties() {
     return systemProperties;
   }
@@ -129,6 +135,9 @@ public class ClusterManager {
       ExternalDsoServer externalDsoServer = new ExternalDsoServer(serverWorkingDir, tcConfigBuilder.newInputStream(), serverName);
       externalDsoServer.addJvmArg("-Dcom.tc.management.war=" + war);
       externalDsoServer.addJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemorySize);
+      for (String extraJvmArg : extraJvmArgs) {
+        externalDsoServer.addJvmArg(extraJvmArg);
+      }
 
       for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
         externalDsoServer.addJvmArg("-D" + entry.getKey() + "=" + entry.getValue());
@@ -229,7 +238,7 @@ public class ClusterManager {
     List<String> files = Arrays.asList(new File(warDir).list(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return name.endsWith(".war") && !name.endsWith("-sources.jar") && !name.endsWith("-tests.jar");
+        return name.endsWith(".war") && !name.endsWith("-sources.war") && !name.endsWith("-tests.war");
       }
     }));
     if (files.isEmpty()) {
