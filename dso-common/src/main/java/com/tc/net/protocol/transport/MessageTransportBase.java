@@ -282,7 +282,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         } else {
           logger.warn("closing down connection - " + event);
           if (status.isSynSent()) {
-            fireTransportClosedEvent();
+            fireTransportForcedDisconnectEvent();
           }
           return;
         }
