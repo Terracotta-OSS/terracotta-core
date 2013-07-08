@@ -14,14 +14,24 @@ public class TmsManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(TmsManager.class);
 
-  private String warLocation;
-  private int listenPort;
+  private final String warLocation;
+  private final int listenPort;
+  private final String keystorePath;
+  private final String keystorePassword;
+  private final boolean ssl;
 
   private Object server;
 
   public TmsManager(String warLocation, int listenPort) {
+    this(warLocation, listenPort, false, null, null);
+  }
+
+  public TmsManager(String warLocation, int listenPort, boolean ssl, String keystorePath, String keystorePassword) {
     this.warLocation = warLocation;
     this.listenPort = listenPort;
+    this.keystorePath = keystorePath;
+    this.keystorePassword = keystorePassword;
+    this.ssl = ssl;
   }
 
   public void start() throws Exception {
@@ -37,6 +47,7 @@ public class TmsManager {
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.jasper.servlet.JspServlet"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.xerces.jaxp.SAXParserFactoryImpl"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.ssl.SslSocketConnector"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.Server")))
     };
 
@@ -52,9 +63,27 @@ public class TmsManager {
     webAppContextClazz.getMethod("setContextPath", String.class).invoke(webAppContext, "/tmc");
     webAppContextClazz.getMethod("setWar", String.class).invoke(webAppContext, warLocation);
 
-    server = serverClazz.getConstructor(int.class).newInstance(listenPort);
+    if (!ssl) {
+      server = serverClazz.getConstructor(int.class).newInstance(listenPort);
+    } else {
+      server = serverClazz.getConstructor().newInstance();
+
+      Class<?> sslContextFactoryClazz = classloader.loadClass("org.eclipse.jetty.util.ssl.SslContextFactory");
+      Class<?> sslSocketConnectorClazz = classloader.loadClass("org.eclipse.jetty.server.ssl.SslSocketConnector");
+      Class<?> connectorClazz = classloader.loadClass("org.eclipse.jetty.server.Connector");
+
+      Object sslContextFactory = sslContextFactoryClazz.getConstructor().newInstance();
+      sslContextFactoryClazz.getMethod("setKeyStorePath", String.class).invoke(sslContextFactory, keystorePath);
+      sslContextFactoryClazz.getMethod("setKeyStorePassword", String.class).invoke(sslContextFactory, keystorePassword);
+      sslContextFactoryClazz.getMethod("setCertAlias", String.class).invoke(sslContextFactory, "l2");
+
+      Object sslSocketConnector = sslSocketConnectorClazz.getConstructor(sslContextFactoryClazz).newInstance(sslContextFactory);
+      sslSocketConnectorClazz.getMethod("setPort", int.class).invoke(sslSocketConnector, listenPort);
+
+      serverClazz.getMethod("addConnector", connectorClazz).invoke(server, sslSocketConnector);
+    }
+
     serverClazz.getMethod("setHandler", handlerClazz).invoke(server, webAppContext);
-    
     serverClazz.getMethod("start").invoke(server);
     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
   }
