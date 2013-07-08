@@ -55,8 +55,9 @@ public class ServerURL {
     return this.openStream(null);
   }
 
-  public String getHeaderField(String fieldName, PwProvider pwProvider) {
+  public String getHeaderField(String fieldName, PwProvider pwProvider) throws IOException {
     URLConnection urlConnection = createSecureConnection(pwProvider);
+    urlConnection.connect();
     return urlConnection.getHeaderField(fieldName);
   }
   public InputStream openStream(PwProvider pwProvider) throws IOException {

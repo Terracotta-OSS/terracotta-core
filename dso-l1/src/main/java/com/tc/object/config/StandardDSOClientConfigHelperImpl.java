@@ -21,6 +21,8 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
@@ -28,6 +30,7 @@ import com.tc.util.io.ServerURL;
 import com.tc.util.version.Version;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -40,27 +43,31 @@ import java.util.Set;
 
 public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper {
 
-  private static final TCLogger             logger               = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger             logger                      = CustomerLogging.getDSOGenericLogger();
   private final L1ConfigurationSetupManager configSetupManager;
 
   // ====================================================================================================================
   /**
    * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
    */
-  private final Object                      specLock             = new Object();
+  private final Object                      specLock                    = new Object();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
    * 
    * @GuardedBy {@link #specLock}
    */
-  private final Map                         classSpecs           = new HashMap();
+  private final Map                         classSpecs                  = new HashMap();
   // ====================================================================================================================
 
   private final Portability                 portability;
-  private int                               faultCount           = -1;
-  private final Set<String>                 tunneledMBeanDomains = Collections.synchronizedSet(new HashSet<String>());
-  private ReconnectConfig                   l1ReconnectConfig    = null;
+  private int                               faultCount                  = -1;
+  private final Set<String>                 tunneledMBeanDomains        = Collections
+                                                                            .synchronizedSet(new HashSet<String>());
+  private ReconnectConfig                   l1ReconnectConfig           = null;
+  private static final long                 CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
                                            final L1ConfigurationSetupManager configSetupManager)
@@ -341,14 +348,22 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
                                                                                                      configSetupManager,
                                                                                                      pwProvider);
     ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
-    for (int i = 0; i < connectionInfoItems.length; i++) {
-      ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
+    for (int stripeNumber = 0; stripeNumber < connectionInfoItems.length; stripeNumber++) {
+      ConnectionInfo[] connectionInfo = connectionInfoItems[stripeNumber].getConnectionInfos();
       boolean foundCompactibleActive = false;
-      Version clientVersion = null;
-      for (int j = 0; j < connectionInfo.length; j++) {
-        ConnectionInfo connectionIn = new ConnectionInfo(connectionInfo[j].getHostname(), connectionInfo[j].getPort(),
-                                                         i * j + j, connectionInfo[j].getGroupName(),
-                                                         connectionInfo[j].getSecurityInfo());
+      boolean activeDown = false;
+      int serverNumberInStripe = 0;
+      long startTime = System.currentTimeMillis();
+      long endTime = System.currentTimeMillis();
+      // keep looping till we find version of an active server
+      // or the timeout occurs
+      while ((endTime - startTime) < CONFIGURATION_TOTAL_TIMEOUT) {
+
+        ConnectionInfo connectionIn = new ConnectionInfo(connectionInfo[serverNumberInStripe].getHostname(),
+                                                         connectionInfo[serverNumberInStripe].getPort(),
+                                                         stripeNumber * serverNumberInStripe + serverNumberInStripe,
+                                                         connectionInfo[serverNumberInStripe].getGroupName(),
+                                                         connectionInfo[serverNumberInStripe].getSecurityInfo());
 
         ServerURL serverUrl = null;
         try {
@@ -358,27 +373,61 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
           throw new ConfigurationSetupException("Error while trying to verify Client-Server version Compatibility ");
         }
 
-        String strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
-        clientVersion = getClientVersion();
-        if (strServerVersion == null) {
-          logger.debug("Found passive Server = " + serverUrl);
-          continue;
+        String strServerVersion = null;
+        try {
+          strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
+          if (strServerVersion == null) {
+            logger.debug("Found passive Server = " + serverUrl);
+          }
+        } catch (IOException e) {
+          // server that we pinged was not up
+          // we should try other servers in stripe
+          activeDown = true;
+          logger.info("Server seems to be down.." + serverUrl + ", retrying next available in stripe");
         }
-        Version serverVersion = new Version(strServerVersion);
-        if (!clientVersion.equals(serverVersion)) {
-          throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
-                                          + " is not compatible with serverVersion : " + serverVersion);
+        if (strServerVersion == null) {
+          if (serverNumberInStripe == (connectionInfo.length - 1)) {
+            if (activeDown) {
+              // active was down and we have reached the end of connectionInfo Array
+              // so we need to start checking from 0th index again
+              serverNumberInStripe = 0;
+            } else {
+              // active was not down and we have reached end of array
+              // we didn't find any compatible active
+              foundCompactibleActive = false;
+              break;
+            }
+          } else {
+            // we found serverNumberInStripe = null
+            // but there are some server left in stripe we should try to get version from them
+            serverNumberInStripe++;
+          }
+          endTime = System.currentTimeMillis();
+          continue;
         } else {
-          logger.debug("Found Compatible active Server = " + serverUrl);
-          foundCompactibleActive = true;
+          Version serverVersion = new Version(strServerVersion);
+          foundCompactibleActive = matchServerClientVersion(serverVersion, serverUrl);
           break;
         }
-
       }
+      if ((endTime - startTime) > CONFIGURATION_TOTAL_TIMEOUT) { throw new ConfigurationSetupException(
+                                                                                                       "Timeout occured while trying to get Server Version, No Active server Found for : "
+                                                                                                           + CONFIGURATION_TOTAL_TIMEOUT); }
       if (!foundCompactibleActive) { throw new IllegalStateException(
                                                                      "client Server Version mismatch occured: client version : "
-                                                                         + clientVersion
+                                                                         + getClientVersion()
                                                                          + " is not compatible with a server of Terracotta version: 4.0 or before"); }
+    }
+  }
+
+  private boolean matchServerClientVersion(Version serverVersion, ServerURL serverUrl) {
+    Version clientVersion = getClientVersion();
+    if (!clientVersion.equals(serverVersion)) {
+      throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
+                                      + " is not compatible with serverVersion : " + serverVersion);
+    } else {
+      logger.debug("Found Compatible active Server = " + serverUrl);
+      return true;
     }
   }
 
