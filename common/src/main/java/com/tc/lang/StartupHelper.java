@@ -33,17 +33,13 @@ public class StartupHelper {
 
     setThreadGroup(currentThread, targetThreadGroup);
 
-    Throwable actionError = null;
     try {
       action.execute();
     } catch (Throwable t) {
-      actionError = t;
+      targetThreadGroup.uncaughtException(currentThread, t);
+      throw new RuntimeException(t);
     } finally {
       setThreadGroup(currentThread, origThreadGroup);
-    }
-
-    if (actionError != null) {
-      targetThreadGroup.uncaughtException(currentThread, actionError);
     }
   }
 
