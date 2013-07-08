@@ -315,11 +315,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
     if (old == State.PAUSED) { return false; }
 
+    this.logger.info("Disconnected: Pausing from " + old + " RemoteNode : " + node + ". Disconnect count: "
+                     + disconnected);
+
     if (old == State.RUNNING) {
       this.disconnected++;
     }
-    this.logger.info("Disconnected: Pausing from " + old + " RemoteNode : " + node + ". Disconnect count: "
-                     + disconnected);
+
 
     if (this.disconnected > this.groupIDs.length) { throw new AssertionError(
                                                                              "disconnected count was greater then number of groups ( "
