@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.api;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
@@ -24,6 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class TestGarbageCollector implements GarbageCollector {
   public ObjectIDSet          collectedObjects = new ObjectIDSet();
@@ -33,12 +35,12 @@ public class TestGarbageCollector implements GarbageCollector {
   private boolean             isStarted        = false;
   private boolean             isDelete         = false;
 
-  private LinkedQueue         collectCalls;
-  private LinkedQueue         notifyReadyToGCCalls;
-  private LinkedQueue         notifyGCCompleteCalls;
-  private LinkedQueue         requestGCCalls;
-  private LinkedQueue         blockUntilReadyToGCCalls;
-  private LinkedQueue         blockUntilReadyToGCQueue;
+  private BlockingQueue<CollectCallContext> collectCalls;
+  private BlockingQueue<Object>             notifyReadyToGCCalls;
+  private BlockingQueue<Object>             notifyGCCompleteCalls;
+  private BlockingQueue<Object>             requestGCCalls;
+  private BlockingQueue<Object>             blockUntilReadyToGCCalls;
+  private BlockingQueue<Object>             blockUntilReadyToGCQueue;
   private final ObjectManager objectProvider;
 
   public TestGarbageCollector(final ObjectManager objectProvider) {
@@ -47,15 +49,15 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   private void initQueues() {
-    this.collectCalls = new LinkedQueue();
-    this.notifyReadyToGCCalls = new LinkedQueue();
-    this.notifyGCCompleteCalls = new LinkedQueue();
-    this.requestGCCalls = new LinkedQueue();
-    this.blockUntilReadyToGCCalls = new LinkedQueue();
-    this.blockUntilReadyToGCQueue = new LinkedQueue();
+    this.collectCalls = new LinkedBlockingQueue<TestGarbageCollector.CollectCallContext>();
+    this.notifyReadyToGCCalls = new LinkedBlockingQueue<Object>();
+    this.notifyGCCompleteCalls = new LinkedBlockingQueue<Object>();
+    this.requestGCCalls = new LinkedBlockingQueue<Object>();
+    this.blockUntilReadyToGCCalls = new LinkedBlockingQueue<Object>();
+    this.blockUntilReadyToGCQueue = new LinkedBlockingQueue<Object>();
   }
 
-  private List drainQueue(final LinkedQueue queue) {
+  private List drainQueue(final BlockingQueue<CollectCallContext> queue) {
     final List rv = new ArrayList();
     while (queue.peek() != null) {
       try {
@@ -90,7 +92,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitForCollectToBeCalled(final long timeout) {
     try {
-      return this.collectCalls.poll(timeout) != null;
+      return this.collectCalls.poll(timeout, TimeUnit.MILLISECONDS) != null;
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -98,7 +100,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public CollectCallContext getNextCollectCall() {
     try {
-      return (CollectCallContext) this.collectCalls.take();
+      return this.collectCalls.take();
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -155,7 +157,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitFor_notifyReadyToGC_ToBeCalled(final long timeout) {
     try {
-      return this.notifyReadyToGCCalls.poll(timeout) != null;
+      return this.notifyReadyToGCCalls.poll(timeout, TimeUnit.MILLISECONDS) != null;
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -189,7 +191,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitFor_blockUntilReadyToGC_ToBeCalled(final int timeout) {
     try {
-      return this.blockUntilReadyToGCCalls.poll(timeout) != null;
+      return this.blockUntilReadyToGCCalls.poll(timeout, TimeUnit.MILLISECONDS) != null;
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -222,7 +224,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitFor_notifyGCComplete_ToBeCalled(final long timeout) {
     try {
-      return this.notifyGCCompleteCalls.poll(timeout) != null;
+      return this.notifyGCCompleteCalls.poll(timeout, TimeUnit.MILLISECONDS) != null;
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }

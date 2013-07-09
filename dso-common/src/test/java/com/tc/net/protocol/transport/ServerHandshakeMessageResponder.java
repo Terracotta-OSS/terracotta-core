@@ -3,21 +3,22 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
-import com.tc.net.protocol.transport.TransportHandshakeMessage;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Assert;
 
 class ServerHandshakeMessageResponder extends HandshakeMessageResponderBase {
 
-  private LinkedQueue synAckErrors = new LinkedQueue();
+  private final BlockingQueue<String> synAckErrors = new LinkedBlockingQueue<String>();
 
-  protected ServerHandshakeMessageResponder(LinkedQueue sentQueue, LinkedQueue receivedQueue,
+  protected ServerHandshakeMessageResponder(BlockingQueue<TransportHandshakeMessage> sentQueue,
+                                            BlockingQueue<TransportHandshakeMessage> receivedQueue,
                                             TransportHandshakeMessageFactory messageFactory,
                                             ConnectionID assignedConnectionId, MessageTransportBase transport,
-                                            SynchronizedRef errorRef) {
+                                            AtomicReference<Throwable> errorRef) {
     super(sentQueue, receivedQueue, messageFactory, assignedConnectionId, transport, errorRef);
   }
 
@@ -43,12 +44,12 @@ class ServerHandshakeMessageResponder extends HandshakeMessageResponderBase {
   }
 
   public boolean wasSynAckReceived(long timeout) throws Exception {
-    TransportHandshakeMessage message = (TransportHandshakeMessage) this.receivedQueue.poll(timeout);
+    TransportHandshakeMessage message = this.receivedQueue.poll(timeout, TimeUnit.MILLISECONDS);
     return message != null && message.isSynAck();
   }
 
   public String waitForSynAckErrorToBeReceived(long timeout) throws InterruptedException {
-    return (String) this.synAckErrors.poll(timeout);
+    return this.synAckErrors.poll(timeout, TimeUnit.MILLISECONDS);
   }
 
 }

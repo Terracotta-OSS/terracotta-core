@@ -3,7 +3,7 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import static org.mockito.Mockito.mock;
 
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -15,11 +15,12 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 
-import static org.mockito.Mockito.mock;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class GuaranteedDeliveryProtocolTest extends TCTestCase {
-  LinkedQueue                         clientReceiveQueue;
-  LinkedQueue                         serverReceiveQueue;
+  BlockingQueue<TCNetworkMessage>     clientReceiveQueue;
+  BlockingQueue<TCNetworkMessage>     serverReceiveQueue;
   private TestProtocolMessageDelivery clientDelivery;
   private TestProtocolMessageDelivery serverDelivery;
   private GuaranteedDeliveryProtocol  serverGdp;
@@ -27,8 +28,8 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
   private ReconnectConfig             reconnectConfig;
 
   public void setUp(ReconnectConfig reconnectCfg) {
-    clientReceiveQueue = new LinkedQueue();
-    serverReceiveQueue = new LinkedQueue();
+    clientReceiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
+    serverReceiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
 
     reconnectConfig = reconnectCfg;
     clientDelivery = new TestProtocolMessageDelivery(clientReceiveQueue);

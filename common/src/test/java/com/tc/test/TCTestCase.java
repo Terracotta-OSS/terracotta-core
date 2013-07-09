@@ -6,9 +6,6 @@ package com.tc.test;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
 import com.tc.test.collections.CollectionAssert;
@@ -48,6 +45,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -69,7 +68,7 @@ public class TCTestCase extends TestCase {
 
   private static final long                  DEFAULT_TIMEOUT_THRESHOLD     = 60000;
 
-  private final SynchronizedRef              beforeTimeoutException        = new SynchronizedRef(null);
+  private final AtomicReference<Throwable>   beforeTimeoutException        = new AtomicReference(null);
 
   private DataDirectoryHelper                dataDirectoryHelper;
   private TempDirectoryHelper                tempDirectoryHelper;
@@ -81,7 +80,7 @@ public class TCTestCase extends TestCase {
   // the timer for each test method given this
   private static final Timer                 timeoutTimer                  = new Timer("Timeout Thread", true);
   private static TimerTask                   timerTask;
-  protected static final SynchronizedBoolean timeoutTaskAdded              = new SynchronizedBoolean(false);
+  protected static final AtomicBoolean     timeoutTaskAdded              = new AtomicBoolean(false);
 
   private static boolean                     printedProcess                = false;
 
@@ -218,7 +217,7 @@ public class TCTestCase extends TestCase {
   }
 
   public static boolean commitTimeoutTaskAdded(boolean from, boolean to) {
-    return timeoutTaskAdded.commit(from, to);
+    return timeoutTaskAdded.compareAndSet(from, to);
   }
 
   // override this method if you want to do something before your test times out
@@ -271,7 +270,7 @@ public class TCTestCase extends TestCase {
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
     // set your value in the constructor of your test case instead of setUp()
-    if (timeoutTaskAdded.commit(false, true)) {
+    if (timeoutTaskAdded.compareAndSet(false, true)) {
       scheduleTimeoutTask();
     }
 
@@ -296,7 +295,7 @@ public class TCTestCase extends TestCase {
 
   protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
     cancelTimeoutTask();
-    Throwable exceptionInTimeoutCallback = (Throwable) beforeTimeoutException.get();
+    Throwable exceptionInTimeoutCallback = beforeTimeoutException.get();
 
     // favor the "real" exception to make test fail. If there was a exception in the timeout callback,
     // make that able to fail the test too
@@ -366,7 +365,7 @@ public class TCTestCase extends TestCase {
   }
 
   private void cancelTimeoutTask() {
-    if (timeoutTaskAdded.commit(true, false)) {
+    if (timeoutTaskAdded.compareAndSet(true, false)) {
       if (timerTask != null) {
         timerTask.cancel();
       }

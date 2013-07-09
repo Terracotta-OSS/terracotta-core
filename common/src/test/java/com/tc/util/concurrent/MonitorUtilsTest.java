@@ -3,11 +3,11 @@
  */
 package com.tc.util.concurrent;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.test.TCTestCase;
 import com.tc.util.runtime.Vm;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MonitorUtilsTest extends TCTestCase {
 
@@ -19,10 +19,10 @@ public class MonitorUtilsTest extends TCTestCase {
     }
 
     Thread.currentThread().setName("main");
-    final Latch latch = new Latch();
-    final Latch latch2 = new Latch();
+    final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch latch2 = new CountDownLatch(1);
     final Object lock = new Object();
-    final SynchronizedRef ref = new SynchronizedRef(null);
+    final AtomicReference<Throwable> ref = new AtomicReference<Throwable>(null);
 
     Thread t = new Thread() {
       @Override
@@ -36,13 +36,13 @@ public class MonitorUtilsTest extends TCTestCase {
               log("monitor acquired 2");
               synchronized (lock) {
                 log("monitor acquired 3");
-                latch.release();
+                latch.countDown();
                 log("about to sleep");
                 ThreadUtil.reallySleep(10000);
                 log("done sleeping, about to release monitor");
                 int count = MonitorUtils.releaseMonitor(lock);
                 log("release count was " + count);
-                latch2.acquire();
+                latch2.await();
                 log("re-acquiring lock");
                 MonitorUtils.monitorEnter(lock, count);
                 log("lock re-acquired");
@@ -60,12 +60,12 @@ public class MonitorUtilsTest extends TCTestCase {
     t.start();
 
     log("waiting for thread");
-    latch.acquire();
+    latch.await();
     log("signaled");
 
     synchronized (lock) {
       log("got the lock");
-      latch2.release();
+      latch2.countDown();
       log("released");
     }
 
@@ -74,7 +74,7 @@ public class MonitorUtilsTest extends TCTestCase {
     log("thread dead");
 
     if (ref.get() != null) {
-      fail((Throwable) ref.get());
+      fail(ref.get());
     }
 
   }

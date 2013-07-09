@@ -3,8 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.WaitableInt;
-
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -36,6 +34,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
@@ -48,14 +47,15 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
   private final PortChooser         pc                   = new PortChooser();
   private final int                 listenPort           = pc.chooseRandomPort();
   private final int                 proxyPort            = pc.chooseRandomPort();
+  private static final int          numPings             = 5;
 
   // private final int clientListenPort = pc.chooseRandomPort();
 
   private final TCPProxy            proxy                = new TCPProxy(proxyPort, TCSocketAddress.LOOPBACK_ADDR,
                                                                         listenPort, 0, false, null);
 
-  private final WaitableInt         serverRecvCount      = new WaitableInt(0);
-  private final WaitableInt         serverSocketConnects = new WaitableInt(0);
+  private final CountDownLatch      serverRecvCount      = new CountDownLatch(numPings);
+  private final CountDownLatch      serverSocketConnects = new CountDownLatch(3);
 
   private CommunicationsManagerImpl clientComms;
   private CommunicationsManagerImpl serverComms;
@@ -102,7 +102,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
       @Override
       public void putMessage(TCMessage message) {
         logger.info("server recv: " + message.getMessageType().getTypeName());
-        serverRecvCount.increment();
+        serverRecvCount.countDown();
       }
     });
 
@@ -123,18 +123,19 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
   }
 
   public void testReverseCallback() throws Exception {
-    int numPings = 5;
+
     for (int i = 0; i < numPings; i++) {
       channel.createMessage(TCMessageType.PING_MESSAGE).send();
     }
 
-    serverRecvCount.whenEqual(numPings, null);
+
+    serverRecvCount.await();
 
     // prevent all ping probes from flowing (in both directions)
     proxy.setDelay(Long.MAX_VALUE);
 
     // observe some socket connects (which will succeed)
-    serverSocketConnects.whenGreaterEqual(3, null);
+    serverSocketConnects.await();
 
     assertEquals(1, numServerConnections());
 
@@ -151,11 +152,15 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     return ((ConnectionHealthCheckerImpl) serverComms.getConnHealthChecker()).getTotalConnsUnderMonitor();
   }
 
+  private void waitTillGreaterOrEqual() {
+
+  }
+
   private static class MyConnectionManager implements TCConnectionManager {
     private final TCConnectionManagerImpl delegate;
-    private final WaitableInt             connects;
+    private final CountDownLatch          connects;
 
-    MyConnectionManager(WaitableInt serverSocketConnects) {
+    MyConnectionManager(CountDownLatch serverSocketConnects) {
       this.delegate = new TCConnectionManagerImpl();
       this.connects = serverSocketConnects;
     }
@@ -177,7 +182,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
     @Override
     public final TCConnection createConnection(TCProtocolAdaptor adaptor) {
-      connects.increment();
+      connects.countDown();
       return delegate.createConnection(adaptor);
     }
 

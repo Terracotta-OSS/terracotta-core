@@ -9,8 +9,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
-
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -38,6 +36,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -322,12 +321,12 @@ public class DsoClusterTest extends TestCase {
   public void testWaitUntilNodeJoinsCluster() {
     final ClientID thisNodeId = new ClientID(1);
 
-    Latch startLatch = new Latch();
+    CountDownLatch startLatch = new CountDownLatch(1);
     TimingRunnable targetRunnable = new TimingRunnable(cluster, thisNodeId, startLatch);
     new Thread(targetRunnable).start();
     while (true)
       try {
-        startLatch.acquire();
+        startLatch.await();
         break;
       } catch (InterruptedException e) {
         System.err.println("XXX startLatch acquire exception : " + e);
@@ -470,9 +469,9 @@ public class DsoClusterTest extends TestCase {
     private final DsoClusterImpl cluster;
     private final ClientID       expectedNode;
     private DsoNode              node;
-    private final Latch          startLatch;
+    private final CountDownLatch startLatch;
 
-    public TimingRunnable(DsoClusterImpl cluster, ClientID expectedNode, Latch startLatch) {
+    public TimingRunnable(DsoClusterImpl cluster, ClientID expectedNode, CountDownLatch startLatch) {
       super();
       this.cluster = cluster;
       this.expectedNode = expectedNode;
@@ -492,7 +491,7 @@ public class DsoClusterTest extends TestCase {
     @Override
     public void run() {
       long start = System.currentTimeMillis();
-      this.startLatch.release();
+      this.startLatch.countDown();
       node = cluster.waitUntilNodeJoinsCluster();
       assertEquals(expectedNode.toString(), node.getId());
       elapsedTimeMillis = System.currentTimeMillis() - start;

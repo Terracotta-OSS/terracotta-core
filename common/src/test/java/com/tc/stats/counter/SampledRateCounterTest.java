@@ -4,14 +4,14 @@
  */
 package com.tc.stats.counter;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -103,9 +103,9 @@ public class SampledRateCounterTest extends TestCase {
 
     final SampledRateCounter counter = (SampledRateCounter) config.createCounter();
 
-    final SynchronizedLong localNumerator = new SynchronizedLong(0L);
-    final SynchronizedLong localDenominator = new SynchronizedLong(0L);
-    final SynchronizedRef error = new SynchronizedRef(null);
+    final AtomicLong localNumerator = new AtomicLong(0L);
+    final AtomicLong localDenominator = new AtomicLong(0L);
+    final AtomicReference<Throwable> error = new AtomicReference(null);
 
     Thread[] threads = new Thread[10];
     for (int i = 0; i < threads.length; i++) {
@@ -117,14 +117,14 @@ public class SampledRateCounterTest extends TestCase {
             for (int n = 0; n < 100000; n++) {
               long numeratorOperand = getOperand(random);
               long denominatorOperand = getOperand(random);
-              localNumerator.add(numeratorOperand);
-              localDenominator.add(denominatorOperand);
+              localNumerator.addAndGet(numeratorOperand);
+              localDenominator.addAndGet(denominatorOperand);
               counter.increment(numeratorOperand, denominatorOperand);
 
               numeratorOperand = getOperand(random);
               denominatorOperand = getOperand(random);
-              localNumerator.subtract(numeratorOperand);
-              localDenominator.subtract(denominatorOperand);
+              localNumerator.addAndGet(-numeratorOperand);
+              localDenominator.addAndGet(-denominatorOperand);
               counter.decrement(numeratorOperand, denominatorOperand);
 
             }

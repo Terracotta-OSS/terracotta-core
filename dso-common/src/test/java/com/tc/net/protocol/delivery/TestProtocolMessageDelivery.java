@@ -3,11 +3,11 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.Assert;
+
+import java.util.concurrent.BlockingQueue;
 
 /**
  *
@@ -20,9 +20,9 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   public TCNetworkMessage   tcMessage      = null;
   public boolean            created        = false;
   public int                receivedMessageCount;
-  private LinkedQueue       receivedQueue;
+  private final BlockingQueue<TCNetworkMessage> receivedQueue;
 
-  public TestProtocolMessageDelivery(LinkedQueue receivedQueue) {
+  public TestProtocolMessageDelivery(BlockingQueue<TCNetworkMessage> receivedQueue) {
     this.receivedQueue = receivedQueue;
   }
 

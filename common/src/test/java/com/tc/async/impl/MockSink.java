@@ -1,6 +1,5 @@
 package com.tc.async.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
@@ -11,17 +10,19 @@ import com.tc.stats.Stats;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author orion
  */
 public class MockSink implements Sink {
 
-  public BoundedLinkedQueue queue = new BoundedLinkedQueue(Integer.MAX_VALUE);
+  public BlockingQueue<EventContext> queue = new LinkedBlockingQueue<EventContext>(); // its not bounded
 
   public EventContext take() {
     try {
-      return (EventContext) this.queue.take();
+      return this.queue.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -45,7 +46,7 @@ public class MockSink implements Sink {
   public void addMany(Collection contexts) {
     for (Iterator i = contexts.iterator(); i.hasNext();)
       try {
-        this.queue.put(contexts);
+        this.queue.put((EventContext) i.next());
       } catch (Exception e) {
         throw new AssertionError(e);
       }

@@ -4,9 +4,9 @@
 package com.tc.stats.counter;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import junit.framework.TestCase;
 
 public class CounterTest extends TestCase {
@@ -21,8 +21,8 @@ public class CounterTest extends TestCase {
 
   public void testConcurrency() throws InterruptedException {
     final Counter counter = new CounterImpl();
-    final SynchronizedLong local = new SynchronizedLong(0L);
-    final SynchronizedRef error = new SynchronizedRef(null);
+    final AtomicLong local = new AtomicLong(0L);
+    final AtomicReference<Throwable> error = new AtomicReference(null);
 
     Thread[] threads = new Thread[10];
     for (int i = 0; i < threads.length; i++) {
@@ -36,24 +36,24 @@ public class CounterTest extends TestCase {
 
               switch (operation) {
                 case 0: {
-                  local.decrement();
+                  local.decrementAndGet();
                   counter.decrement();
                   break;
                 }
-                case 1: {                  
-                  local.increment();
+                case 1: {
+                  local.incrementAndGet();
                   counter.increment();
                   break;
                 }
                 case 2: {
                   long amount = random.nextLong();
-                  local.subtract(amount);
+                  local.addAndGet(-amount);
                   counter.decrement(amount);
                   break;
                 }
                 case 3: {
                   long amount = random.nextLong();
-                  local.add(amount);
+                  local.addAndGet(amount);
                   counter.increment(amount);
                   break;
                 }
@@ -71,8 +71,8 @@ public class CounterTest extends TestCase {
       threads[i].start();
     }
 
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].join();
+    for (Thread thread : threads) {
+      thread.join();
     }
 
     if (error.get() != null) {

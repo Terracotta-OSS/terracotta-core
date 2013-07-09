@@ -3,8 +3,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
@@ -18,6 +16,7 @@ import com.tc.util.Assert;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -25,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 abstract class AbstractMessageChannel implements MessageChannel, MessageChannelInternal {
 
-  private final Map               attachments    = new ConcurrentReaderHashMap();
+  private final Map<String, Object> attachments    = new ConcurrentHashMap<String, Object>();
   private final Object            attachmentLock = new Object();
   private final Set               listeners      = new CopyOnWriteArraySet();
   private final ChannelStatus     status         = new ChannelStatus();

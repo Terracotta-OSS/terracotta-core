@@ -3,13 +3,13 @@
  */
 package com.tc.object.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 
@@ -123,10 +123,10 @@ public class TransactionBatchAccountingTest extends TestCase {
   }
 
   private static final class Sequence {
-    private SynchronizedLong sequence = new SynchronizedLong(0);
+    private final AtomicLong sequence = new AtomicLong(0);
 
     public long next() {
-      return sequence.increment();
+      return sequence.getAndIncrement();
     }
   }
 

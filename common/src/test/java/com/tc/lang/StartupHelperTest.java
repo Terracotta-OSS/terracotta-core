@@ -4,16 +4,17 @@
  */
 package com.tc.lang;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.logging.NullTCLogger;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
 public class StartupHelperTest extends TestCase {
 
   public void testException() throws Throwable {
-    final SynchronizedRef error = new SynchronizedRef(null);
+    final AtomicReference<Throwable> error = new AtomicReference(null);
 
     ThreadGroup group = new ThreadGroup("group") {
       @Override

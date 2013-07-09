@@ -3,9 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.TCSocketAddress;
@@ -31,6 +28,8 @@ import com.tc.util.TCTimeoutException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * x normal connect and handshake o reconnect and handshake
@@ -69,8 +68,10 @@ public class ClientMessageTransportTest extends TCTestCase {
   }
 
   public void testRoundRobinReconnect() throws Exception {
-    SynchronizedRef errorRef = new SynchronizedRef(null);
-    ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(new LinkedQueue(), new LinkedQueue(),
+    AtomicReference<Throwable> errorRef = new AtomicReference(null);
+    ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(
+                                                                                 new LinkedBlockingQueue<TransportHandshakeMessage>(),
+                                                                                 new LinkedBlockingQueue<TransportHandshakeMessage>(),
                                                                                  this.transportMessageFactory,
                                                                                  this.connectionId, this.transport,
                                                                                  errorRef);
@@ -90,8 +91,10 @@ public class ClientMessageTransportTest extends TCTestCase {
   }
 
   public void testConnectAndHandshake() throws Exception {
-    SynchronizedRef errorRef = new SynchronizedRef(null);
-    ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(new LinkedQueue(), new LinkedQueue(),
+    AtomicReference<Throwable> errorRef = new AtomicReference(null);
+    ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(
+                                                                                 new LinkedBlockingQueue<TransportHandshakeMessage>(),
+                                                                                 new LinkedBlockingQueue<TransportHandshakeMessage>(),
                                                                                  this.transportMessageFactory,
                                                                                  this.connectionId, this.transport,
                                                                                  errorRef);

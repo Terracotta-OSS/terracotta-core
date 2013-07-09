@@ -3,7 +3,8 @@
  */
 package com.tc.util.sequence;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SequenceGenerator {
 
@@ -23,7 +24,7 @@ public class SequenceGenerator {
 
   }
 
-  private final ConcurrentReaderHashMap   map = new ConcurrentReaderHashMap();
+  private final Map                       map = new ConcurrentHashMap<Object, Sequence>();
   private final SequenceGeneratorListener listener;
 
   public SequenceGenerator() {

@@ -3,7 +3,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
@@ -44,6 +43,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -588,10 +589,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
 
     if (this.closed.attemptSet()) {
-      final Latch latch = new Latch();
+      final CountDownLatch latch = new CountDownLatch(1);
       closeImpl(createCloseCallback(latch));
       try {
-        return latch.attempt(timeout);
+        return latch.await(timeout, TimeUnit.MILLISECONDS);
       } catch (final InterruptedException e) {
         logger.warn("close interrupted");
         Thread.currentThread().interrupt();
@@ -602,7 +603,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return isClosed();
   }
 
-  private final Runnable createCloseCallback(final Latch latch) {
+  private final Runnable createCloseCallback(final CountDownLatch latch) {
     final boolean fireClose = isConnected();
 
     return new Runnable() {
@@ -616,7 +617,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         }
 
         if (latch != null) {
-          latch.release();
+          latch.countDown();
         }
       }
     };

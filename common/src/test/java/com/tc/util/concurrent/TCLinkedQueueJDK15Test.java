@@ -4,17 +4,17 @@
  */
 package com.tc.util.concurrent;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
 public class TCLinkedQueueJDK15Test extends TestCase {
   public static final int              NUMBER_OF_TRANSACTIONS = 1000000;
   public static final int              TIMEOUT                = 500;
-  private static final SynchronizedInt nodeId                 = new SynchronizedInt(0);
+  private static final AtomicInteger nodeId                 = new AtomicInteger(0);
 
   public void testLinkedQueue() {
     System.out.println(" --TEST CASE : testLinkedQueue");
@@ -207,7 +207,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
   }
 
   private synchronized static int getNextNodeID() {
-    return nodeId.increment();
+    return nodeId.incrementAndGet();
   }
 
   private synchronized static int getCurrentNodeID() {

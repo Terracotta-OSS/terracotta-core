@@ -3,18 +3,20 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Monitors transport events.
  */
 public class TransportEventMonitor implements MessageTransportListener {
 
-  private final LinkedQueue connectedEvents      = new LinkedQueue();
-  private final LinkedQueue disconnectedEvents   = new LinkedQueue();
-  private final LinkedQueue connectAttemptEvents = new LinkedQueue();
-  private final LinkedQueue closedEvents         = new LinkedQueue();
-  private final LinkedQueue rejectedEvents       = new LinkedQueue();
+  private final BlockingQueue<Object> connectedEvents      = new LinkedBlockingQueue<Object>();
+  private final BlockingQueue<Object> disconnectedEvents   = new LinkedBlockingQueue<Object>();
+  private final BlockingQueue<Object> connectAttemptEvents = new LinkedBlockingQueue<Object>();
+  private final BlockingQueue<Object> closedEvents         = new LinkedBlockingQueue<Object>();
+  private final BlockingQueue<Object> rejectedEvents       = new LinkedBlockingQueue<Object>();
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
@@ -62,23 +64,23 @@ public class TransportEventMonitor implements MessageTransportListener {
   }
 
   public boolean waitForConnect(long timeout) throws InterruptedException {
-    return this.connectedEvents.poll(timeout) != null;
+    return this.connectedEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
 
   public boolean waitForDisconnect(long timeout) throws InterruptedException {
-    return this.disconnectedEvents.poll(timeout) != null;
+    return this.disconnectedEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
 
   public boolean waitForConnectAttempt(long timeout) throws InterruptedException {
-    return this.connectAttemptEvents.poll(timeout) != null;
+    return this.connectAttemptEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
 
   public boolean waitForClose(long timeout) throws InterruptedException {
-    return this.closedEvents.poll(timeout) != null;
+    return this.closedEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
 
   public boolean waitForConnectionRejected(long timeout) throws InterruptedException {
-    return this.rejectedEvents.poll(timeout) != null;
+    return this.rejectedEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
 
 }

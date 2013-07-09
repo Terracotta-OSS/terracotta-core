@@ -4,7 +4,9 @@
  */
 package com.tc.objectserver.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
@@ -49,16 +51,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class ServerTransactionManagerImplTest extends TestCase {
 
@@ -613,7 +614,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
   private static final class TestChannelStats implements ChannelStats {
 
-    public LinkedQueue notifyTransactionContexts = new LinkedQueue();
+    public BlockingQueue<NodeID> notifyTransactionContexts = new LinkedBlockingQueue<NodeID>();
 
     @Override
     public Counter getCounter(MessageChannel channel, String name) {

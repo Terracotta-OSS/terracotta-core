@@ -3,11 +3,11 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.net.protocol.NetworkMessageSink;
 import com.tc.net.protocol.TCNetworkMessage;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Assert;
 
@@ -15,14 +15,15 @@ abstract class HandshakeMessageResponderBase implements NetworkMessageSink, Hand
   protected final ConnectionID                     assignedConnectionId;
   private final MessageTransportBase               transport;
   protected final TransportHandshakeMessageFactory messageFactory;
-  protected LinkedQueue                            sentQueue;
-  protected LinkedQueue                            receivedQueue;
-  private final SynchronizedRef                    errorRef;
+  protected BlockingQueue<TransportHandshakeMessage> sentQueue;
+  protected BlockingQueue<TransportHandshakeMessage> receivedQueue;
+  private final AtomicReference<Throwable>           errorRef;
 
-  protected HandshakeMessageResponderBase(LinkedQueue sentQueue, LinkedQueue receivedQueue,
+  protected HandshakeMessageResponderBase(BlockingQueue<TransportHandshakeMessage> sentQueue,
+                                          BlockingQueue<TransportHandshakeMessage> receivedQueue,
                                           TransportHandshakeMessageFactory messageFactory,
                                           ConnectionID assignedConnectionId, MessageTransportBase transport,
-                                          SynchronizedRef errorRef) {
+                                          AtomicReference<Throwable> errorRef) {
     super();
     this.sentQueue = sentQueue;
     this.receivedQueue = receivedQueue;

@@ -3,16 +3,19 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import junit.framework.Assert;
 
 class ClientHandshakeMessageResponder extends HandshakeMessageResponderBase {
 
-  protected ClientHandshakeMessageResponder(LinkedQueue sentQueue, LinkedQueue receivedQueue,
+  protected ClientHandshakeMessageResponder(BlockingQueue<TransportHandshakeMessage> sentQueue,
+                                            BlockingQueue<TransportHandshakeMessage> receivedQueue,
                                             TransportHandshakeMessageFactory messageFactory,
                                             ConnectionID assignedConnectionId, MessageTransportBase transport,
-                                            SynchronizedRef errorRef) {
+                                            AtomicReference<Throwable> errorRef) {
     super(sentQueue, receivedQueue, messageFactory, assignedConnectionId, transport, errorRef);
   }
 
@@ -33,7 +36,7 @@ class ClientHandshakeMessageResponder extends HandshakeMessageResponderBase {
   public boolean waitForAckToBeReceived(long timeout) throws InterruptedException {
     TransportHandshakeMessage handshake;
     do {
-      handshake = (TransportHandshakeMessage) receivedQueue.poll(timeout);
+      handshake = receivedQueue.poll(timeout, TimeUnit.MILLISECONDS);
       if (handshake == null) return false;
     } while (!(handshake.isAck()));
     return true;
@@ -42,7 +45,7 @@ class ClientHandshakeMessageResponder extends HandshakeMessageResponderBase {
   public boolean waitForSynAckToBeSent(long timeout) throws InterruptedException {
     TransportHandshakeMessage handshake;
     do {
-      handshake = (TransportHandshakeMessage) sentQueue.poll(timeout);
+      handshake = sentQueue.poll(timeout, TimeUnit.MILLISECONDS);
       if (handshake == null) return false;
     } while (!handshake.isSynAck());
     return true;

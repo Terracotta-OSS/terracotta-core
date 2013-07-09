@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.impl.MockSink;
@@ -258,7 +257,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static final class ExceptionHolder {
-    private final SynchronizedBoolean exceptionOccurred = new SynchronizedBoolean(false);
+    private final AtomicBoolean exceptionOccurred = new AtomicBoolean(false);
     private Exception                 threadException;
 
     public Exception getThreadException() {
@@ -269,7 +268,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       this.threadException = threadException;
     }
 
-    public SynchronizedBoolean getExceptionOccurred() {
+    public AtomicBoolean getExceptionOccurred() {
       return this.exceptionOccurred;
     }
 

@@ -7,8 +7,6 @@ package com.tc.object.tx;
 import org.junit.Assert;
 import org.mockito.Mockito;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
@@ -20,6 +18,8 @@ import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.StringLockID;
 import com.tc.stats.counter.sampled.SampledCounter;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import junit.framework.TestCase;
 
 public class ClientTransactionManagerTest extends TestCase {
@@ -27,7 +27,7 @@ public class ClientTransactionManagerTest extends TestCase {
   TestRemoteTransactionManager rmtTxnMgr;
   TestClientObjectManager      objMgr;
   ClientTransactionManagerImpl clientTxnMgr;
-  SynchronizedRef              error = new SynchronizedRef(null);
+  AtomicReference<Throwable>   error = new AtomicReference<Throwable>(null);
 
   @Override
   public void setUp() throws Exception {
@@ -42,7 +42,7 @@ public class ClientTransactionManagerTest extends TestCase {
 
   @Override
   public void tearDown() throws Exception {
-    if (error.get() != null) { throw new RuntimeException((Throwable) error.get()); }
+    if (error.get() != null) { throw new RuntimeException(error.get()); }
   }
 
   public void testCheckWriteAccess() throws Exception {

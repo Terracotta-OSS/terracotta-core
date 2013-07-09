@@ -7,8 +7,6 @@ package com.tc.object.tx;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
@@ -25,6 +23,7 @@ import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -34,7 +33,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
   TestRemoteTransactionManager rmtTxnMgr;
   TestClientObjectManager      objMgr;
   ClientTransactionManagerImpl clientTxnMgr;
-  SynchronizedRef              error = new SynchronizedRef(null);
+  AtomicReference<Throwable>   error = new AtomicReference<Throwable>(null);
   AbortableOperationManager    abortableOperationManager;
 
   @Override
@@ -52,7 +51,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
   @Override
   public void tearDown() throws Exception {
-    if (error.get() != null) { throw new RuntimeException((Throwable) error.get()); }
+    if (error.get() != null) { throw new RuntimeException(error.get()); }
   }
 
   public void test() throws Exception {

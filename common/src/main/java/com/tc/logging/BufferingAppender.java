@@ -7,7 +7,8 @@ import org.apache.log4j.Appender;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
@@ -16,22 +17,18 @@ import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
  */
 public class BufferingAppender extends AppenderSkeleton {
 
-  private final BoundedBuffer buffer;
+  private final BlockingQueue<LoggingEvent> buffer;
   private boolean             on;
 
   public BufferingAppender(int maxCapacity) {
-    this.buffer = new BoundedBuffer(maxCapacity);
+    this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
     this.on = true;
   }
 
   @Override
   protected synchronized void append(LoggingEvent event) {
     if (on) {
-      try {
-        this.buffer.offer(event, 0);
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-      }
+      this.buffer.offer(event);
     }
   }
 
@@ -50,21 +47,10 @@ public class BufferingAppender extends AppenderSkeleton {
       on = false;
     }
 
-    boolean interrupted = false;
-    try {
-      while (true) {
-        try {
-          LoggingEvent event = (LoggingEvent) this.buffer.poll(0);
-          if (event == null) break;
-          otherAppender.doAppend(event);
-        } catch (InterruptedException ie) {
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
+    while (true) {
+      LoggingEvent event = this.buffer.poll();
+      if (event == null) break;
+      otherAppender.doAppend(event);
     }
   }
 

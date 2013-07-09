@@ -3,20 +3,19 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author orion
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
   private static final TCLogger logger       = TCLogging.getLogger(TCMessageRouter.class);
-  private final Map             routesByType = new ConcurrentReaderHashMap();
+  private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<TCMessageType, TCMessageSink>();
   private final TCMessageSink   defaultRoute;
 
   public TCMessageRouterImpl() {
@@ -43,7 +42,7 @@ public class TCMessageRouterImpl implements TCMessageRouter {
     if (debug) logger.debug("Received a message: " + msg.toString());
 
     // try routing by message type
-    final TCMessageSink route = (TCMessageSink) routesByType.get(msg.getMessageType());
+    final TCMessageSink route = routesByType.get(msg.getMessageType());
 
     if (route != null) {
       if (debug) logger.debug(msg.getMessageType().toString() + " message being routed by message type");

@@ -3,9 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -23,19 +20,22 @@ import com.tc.test.TCTestCase;
 import com.tc.util.TCAssertionError;
 
 import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test case for MessageTransportImpl
  */
 public class MessageTransportTest extends TCTestCase {
-  private SynchronizedRef                  clientErrorRef;
-  private SynchronizedRef                  serverErrorRef;
+  private AtomicReference<Throwable>       clientErrorRef;
+  private AtomicReference<Throwable>       serverErrorRef;
   private ClientHandshakeMessageResponder  clientResponder;
   private ServerHandshakeMessageResponder  serverResponder;
-  private LinkedQueue                      clientResponderReceivedQueue;
-  private LinkedQueue                      clientResponderSentQueue;
-  private LinkedQueue                      serverResponderReceivedQueue;
-  private LinkedQueue                      serverResponderSentQueue;
+  private BlockingQueue<TransportHandshakeMessage> clientResponderReceivedQueue;
+  private BlockingQueue<TransportHandshakeMessage> clientResponderSentQueue;
+  private BlockingQueue<TransportHandshakeMessage> serverResponderReceivedQueue;
+  private BlockingQueue<TransportHandshakeMessage> serverResponderSentQueue;
   private TransportEventMonitor            clientEventMonitor;
   private TransportEventMonitor            serverEventMonitor;
   private ClientMessageTransport           clientTransport;
@@ -50,12 +50,12 @@ public class MessageTransportTest extends TCTestCase {
 
   @Override
   public void setUp() throws Exception {
-    this.clientResponderReceivedQueue = new LinkedQueue();
-    this.clientResponderSentQueue = new LinkedQueue();
-    this.serverResponderReceivedQueue = new LinkedQueue();
-    this.serverResponderSentQueue = new LinkedQueue();
-    this.clientErrorRef = new SynchronizedRef(null);
-    this.serverErrorRef = new SynchronizedRef(null);
+    this.clientResponderReceivedQueue = new LinkedBlockingQueue<TransportHandshakeMessage>();
+    this.clientResponderSentQueue = new LinkedBlockingQueue<TransportHandshakeMessage>();
+    this.serverResponderReceivedQueue = new LinkedBlockingQueue<TransportHandshakeMessage>();
+    this.serverResponderSentQueue = new LinkedBlockingQueue<TransportHandshakeMessage>();
+    this.clientErrorRef = new AtomicReference(null);
+    this.serverErrorRef = new AtomicReference(null);
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
     this.connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
 

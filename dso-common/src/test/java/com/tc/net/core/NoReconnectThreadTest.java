@@ -3,7 +3,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -37,10 +36,11 @@ import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
-  private final SynchronizedInt connections          = new SynchronizedInt(0);
+  private final AtomicInteger connections          = new AtomicInteger(0);
 
   @Override
   protected void setUp() throws Exception {
@@ -128,7 +128,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     System.err.println("XXX closing all client connections");
     serverCommsMgr.getConnectionManager().closeAllConnections(1000);
 
-    while (connections.compareTo(0) != 0) {
+    while (connections.get() != 0) {
       ThreadUtil.reallySleep(2000);
       System.err.println(".");
     }
@@ -192,7 +192,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     // let the OOO settle down
     ThreadUtil.reallySleep(L1_RECONNECT_TIMEOUT);
 
-    while (connections.compareTo(0) != 0) {
+    while (connections.get() != 0) {
       ThreadUtil.reallySleep(2000);
       System.err.println(".");
     }
@@ -232,10 +232,10 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     } else if (ChannelEventType.TRANSPORT_DISCONNECTED_EVENT.matches(event)) {
       // simulating TCGrpoupManager->StateMachine->disconnect event handling
       channel.close();
-      connections.decrement();
+      connections.decrementAndGet();
       System.out.println("XXX CLOSED " + event.getChannel());
     } else if (ChannelEventType.TRANSPORT_CONNECTED_EVENT.matches(event)) {
-      connections.increment();
+      connections.incrementAndGet();
       System.out.println("XXX CONNECTED " + event.getChannel());
     }
   }

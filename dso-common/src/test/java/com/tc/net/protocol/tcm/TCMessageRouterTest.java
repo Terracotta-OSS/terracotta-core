@@ -3,13 +3,12 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.security.SecureRandom;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -25,7 +24,7 @@ public class TCMessageRouterTest extends TestCase {
       // expected
     }
 
-    final SynchronizedRef msg = new SynchronizedRef(null);
+    final AtomicReference<TCMessage> msg = new AtomicReference(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
       public void putMessage(TCMessage message) {
@@ -48,7 +47,7 @@ public class TCMessageRouterTest extends TestCase {
   }
 
   public void testRouteByType() {
-    final SynchronizedRef defmsg = new SynchronizedRef(null);
+    final AtomicReference<TCMessage> defmsg = new AtomicReference(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
       public void putMessage(TCMessage m) {
@@ -56,7 +55,7 @@ public class TCMessageRouterTest extends TestCase {
       }
     });
 
-    final SynchronizedRef msg = new SynchronizedRef(null);
+    final AtomicReference<TCMessage> msg = new AtomicReference<TCMessage>(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       @Override
       public void putMessage(TCMessage m) {
@@ -78,7 +77,7 @@ public class TCMessageRouterTest extends TestCase {
 
   public void testConcurrency() throws Exception {
     final Random random = new SecureRandom();
-    final SynchronizedRef error = new SynchronizedRef(null);
+    final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
     final SetOnceFlag stop = new SetOnceFlag();
     final TCMessageSink nullSink = new TCMessageSink() {
       @Override
@@ -125,28 +124,28 @@ public class TCMessageRouterTest extends TestCase {
       }
     };
 
-    Thread[] threads = new Thread[10];    
+    Thread[] threads = new Thread[10];
     for (int i = 0; i < 5; i++) {
       threads[i] = new Thread(putter);
       threads[5+i] = new Thread(changer);
     }
     
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].setDaemon(true);
-      threads[i].start();
+    for (Thread thread : threads) {
+      thread.setDaemon(true);
+      thread.start();
     }
     
     Thread.sleep(5000);
     stop.set();
     
-    for (int i = 0; i < threads.length; i++) {      
-      threads[i].join(5000);
+    for (Thread thread : threads) {
+      thread.join(5000);
     }
     
-    assertNull(error.get());    
+    assertNull(error.get());
   }
 
-  private static void setError(Throwable t, SynchronizedRef error) {
+  private static void setError(Throwable t, AtomicReference<Throwable> error) {
     t.printStackTrace();
     error.set(t);
   }

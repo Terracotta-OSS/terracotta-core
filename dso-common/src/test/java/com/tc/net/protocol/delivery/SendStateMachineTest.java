@@ -3,8 +3,7 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
@@ -13,13 +12,15 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.UUID;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
  * Testing the basic functionality of OOO Send State Machine. More functional test at GuaranteedDeliveryProtocolTest
  */
 public class SendStateMachineTest extends TCTestCase {
 
   public void tests() throws Exception {
-    TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedQueue());
+    TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedBlockingQueue<TCNetworkMessage>());
     final UUID sessionId = UUID.getUUID();
     final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl(true, 5000, 100, 16, 32);
     SendStateMachine ssm = new SendStateMachine(delivery, reconnectConfig, true);

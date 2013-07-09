@@ -4,9 +4,8 @@
  */
 package com.tc.util.concurrent;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
@@ -23,8 +22,8 @@ public class SetOnceFlagTest extends TestCase {
 
     for (int i = 0; i < 50; i++) {
       final SetOnceFlag flag = new SetOnceFlag();
-      final SynchronizedBoolean thread1 = new SynchronizedBoolean(false);
-      final SynchronizedBoolean thread2 = new SynchronizedBoolean(false);
+      final AtomicBoolean thread1 = new AtomicBoolean(false);
+      final AtomicBoolean thread2 = new AtomicBoolean(false);
       final AtomicReference<Exception> exception = new AtomicReference<Exception>();
 
       Runnable r1 = new Runnable() {

@@ -5,8 +5,7 @@ package com.tc.abortable;
 
 import org.junit.Assert;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
@@ -28,7 +27,7 @@ public class AbortableOperationManagerTest extends TestCase {
         try {
           abortableOperationManager.begin();
           try {
-            barrier.barrier();
+            barrier.await();
             try {
               Thread.currentThread().join();
             } catch (InterruptedException e) {
@@ -43,7 +42,7 @@ public class AbortableOperationManagerTest extends TestCase {
       }
     };
     thread.start();
-    barrier.barrier();
+    barrier.await();
     abortableOperationManager.abort(thread);
     thread.join();
     if (exception.get() != null) { throw new AssertionError(exception.get()); }
@@ -59,13 +58,13 @@ public class AbortableOperationManagerTest extends TestCase {
         try {
           abortableOperationManager.begin();
           try {
-            barrier.barrier();
+            barrier.await();
             try {
               Thread.currentThread().join();
             } catch (InterruptedException e) {
               Assert.assertTrue(abortableOperationManager.isAborted());
             }
-            barrier.barrier();
+            barrier.await();
           } finally {
             // set interrupted status this should get cleared on finish.
             Thread.currentThread().interrupt();
@@ -78,14 +77,14 @@ public class AbortableOperationManagerTest extends TestCase {
       }
     };
     thread.start();
-    barrier.barrier();
+    barrier.await();
     abortableOperationManager.abort(thread);
     try {
       abortableOperationManager.abort(thread);
       throw new AssertionError();
     } catch (IllegalStateException e) {
       // expected
-      barrier.barrier();
+      barrier.await();
     }
     thread.join();
     if (exception.get() != null) { throw new AssertionError(exception.get()); }

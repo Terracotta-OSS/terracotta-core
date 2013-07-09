@@ -5,8 +5,6 @@ package com.tc.management.lock.stats;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -29,13 +27,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LockStatElement implements TCSerializable, Serializable, LockTraceElement {
   private static final long              serialVersionUID  = 1L;
   private LockID                         lockID;
   private LockStats                      lockStat;
   private int                            hashCode;
-  private Map                            nextStat          = new ConcurrentHashMap(); // Map<LockStatElement,
+  private Map<LockStatElement, LockStatElement> nextStat          = new ConcurrentHashMap<LockStatElement, LockStatElement>(); // Map<LockStatElement,
   // LockStatElement>
   public final transient LockHolderStats holderStats       = new LockHolderStats();  // TCSerializable and Serializable
   // transient
@@ -55,14 +54,17 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     //
   }
 
+  @Override
   public String getConfigElement() {
     return lockConfigElement;
   }
 
+  @Override
   public LockStats getStats() {
     return lockStat;
   }
 
+  @Override
   public boolean hasChildren() {
     return nextStat.size() > 0;
   }
@@ -70,10 +72,12 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   /**
    * @return Collection<LockStatElement>
    */
+  @Override
   public Collection children() {
     return new ArrayList(nextStat.values());
   }
 
+  @Override
   public StackTraceElement getStackFrame() {
     return stackTraceElement;
   }
@@ -205,15 +209,15 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   public void aggregateLockHoldersData(LockStats stat, int startIndex) {
     holderStats.aggregateLockHoldersData(stat);
 
-    for (Iterator i = nextStat.keySet().iterator(); i.hasNext();) {
-      LockStatElement child = (LockStatElement) i.next();
+    for (Object element : nextStat.keySet()) {
+      LockStatElement child = (LockStatElement) element;
       child.aggregateLockHoldersData(child.getStats(), startIndex + 1);
     }
   }
 
-  public void setChild(Collection lockStatElements) {
-    for (Iterator i = lockStatElements.iterator(); i.hasNext();) {
-      LockStatElement lse = (LockStatElement) i.next();
+  public void setChild(Collection<LockStatElement> lockStatElements) {
+    for (LockStatElement element : lockStatElements) {
+      LockStatElement lse = element;
       nextStat.put(lse, lse);
     }
   }
@@ -229,13 +233,13 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     lockStat.aggregateStatistics(pendingRequests, lockRequested, lockHopRequests, lockAwarded, timeToAwardedInMillis,
                                  heldTimeInMillis, numOfReleases);
 
-    for (Iterator i = lockStatElement.nextStat.values().iterator(); i.hasNext();) {
-      mergeChild((LockStatElement) i.next());
+    for (Object element : lockStatElement.nextStat.values()) {
+      mergeChild((LockStatElement) element);
     }
   }
 
   public void mergeChild(LockStatElement lockStatElement) {
-    LockStatElement existLSE = (LockStatElement) nextStat.get(lockStatElement);
+    LockStatElement existLSE = nextStat.get(lockStatElement);
     if (existLSE == null) {
       nextStat.put(lockStatElement, lockStatElement);
     } else {
@@ -266,6 +270,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     return hashCode;
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     LockIDSerializer lidsr = new LockIDSerializer();
     this.lockID = ((LockIDSerializer) lidsr.deserializeFrom(serialInput)).getLockID();
@@ -297,6 +302,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     return this;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput serialOutput) {
     new LockIDSerializer(lockID).serializeTo(serialOutput);
     serialOutput.writeString(lockConfigElement);
@@ -353,7 +359,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
 
   private LockStatElement getOrCreateChild(StackTraceElement element) {
     LockStatElement ls = new LockStatElement(lockID, element);
-    LockStatElement child = (LockStatElement) nextStat.get(ls);
+    LockStatElement child = nextStat.get(ls);
     if (child == null) {
       child = ls;
       nextStat.put(child, child);

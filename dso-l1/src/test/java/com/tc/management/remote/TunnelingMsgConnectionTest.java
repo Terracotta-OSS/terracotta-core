@@ -3,7 +3,6 @@
  */
 package com.tc.management.remote;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
@@ -27,6 +26,8 @@ import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import javax.management.remote.generic.MessageConnection;
 
@@ -96,13 +97,13 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
   }
 
   private class MockClientMessageChannelForTMC extends ClientMessageChannelImpl {
-    private final BoundedLinkedQueue queue;
+    private final BlockingQueue<Object> queue;
 
     MockClientMessageChannelForTMC() {
       super(new TCMessageFactoryImpl(new NullSessionManager(), new NullMessageMonitor()), null,
             new NullSessionManager(), null, new SecurityInfo(), null, null);
-      queue = new BoundedLinkedQueue(10);
-      for (int i = 0; i < queue.capacity(); i++) {
+      queue = new ArrayBlockingQueue<Object>(10);
+      for (int i = 0; i < 10; i++) {
         try {
           queue.put(new Object());
         } catch (InterruptedException e) {

@@ -3,9 +3,9 @@
  */
 package com.tc.util;
 
-import EDU.oswego.cs.dl.util.concurrent.CountDown;
-
 import com.tc.object.ObjectID;
+
+import java.util.concurrent.CountDownLatch;
 
 import junit.framework.TestCase;
 
@@ -13,8 +13,8 @@ public class SyncObjectIdSetImplTest extends TestCase {
 
   private SyncObjectIdSetImpl set;
   private int                 threadCnt;
-  private CountDown           preMon;
-  private CountDown           postMon;
+  private CountDownLatch      preMon;
+  private CountDownLatch      postMon;
   private ObjectID            id1;
   private ObjectID            id2;
 
@@ -24,8 +24,8 @@ public class SyncObjectIdSetImplTest extends TestCase {
     id2 = new ObjectID(2);
     set = new SyncObjectIdSetImpl();
     threadCnt = 5;
-    preMon = new CountDown(threadCnt);
-    postMon = new CountDown(threadCnt);
+    preMon = new CountDownLatch(threadCnt);
+    postMon = new CountDownLatch(threadCnt);
   }
 
   public void testRemove() throws Throwable {
@@ -79,18 +79,18 @@ public class SyncObjectIdSetImplTest extends TestCase {
       ct.setDaemon(true);
       ct.start();
     }
-    preMon.acquire();
+    preMon.await();
     // here, we can be sure that all client threads a ready to call the method..
     // sleep for a while, then make sure that no thread came out of the method..
     System.err.println("\n### Sleeping...");
     Thread.sleep(10 * 1000);
     System.err.println("\n### Woke up...");
-    assertEquals(threadCnt, postMon.currentCount());
+    assertEquals(threadCnt, postMon.getCount());
 
     // now release all client threads
     set.stopPopulating(new ObjectIDSet());
     // if all threads don't come out of the method we'll hang forever on the next line..
-    postMon.acquire();
+    postMon.await();
 
   }
 
@@ -131,10 +131,10 @@ class ContainsCaller extends MethodCaller {
 class ClientThread extends Thread {
   private final MethodCaller        mc;
   private final SyncObjectIdSetImpl set;
-  private final CountDown           pre;
-  private final CountDown           post;
+  private final CountDownLatch      pre;
+  private final CountDownLatch      post;
 
-  public ClientThread(MethodCaller mc, SyncObjectIdSetImpl set, CountDown pre, CountDown post) {
+  public ClientThread(MethodCaller mc, SyncObjectIdSetImpl set, CountDownLatch pre, CountDownLatch post) {
     this.mc = mc;
     this.set = set;
     this.pre = pre;
@@ -144,9 +144,9 @@ class ClientThread extends Thread {
   @Override
   public void run() {
     try {
-      pre.release();
+      pre.countDown();
       mc.invoke(set);
-      post.release();
+      post.countDown();
     } catch (Throwable e) {
       e.printStackTrace();
       throw new RuntimeException(e);

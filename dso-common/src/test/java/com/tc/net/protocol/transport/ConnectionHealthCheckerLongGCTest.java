@@ -3,7 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
@@ -46,6 +45,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
@@ -686,7 +686,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
       }
     }
 
-    private final SynchronizedInt connectCount = new SynchronizedInt(0);
+    private final AtomicInteger connectCount = new AtomicInteger(0);
 
     class LongGCTestHealthCheckerSocketConnectImpl extends HealthCheckerSocketConnectImpl {
 
@@ -697,7 +697,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
       @Override
       public synchronized void connectEvent(TCConnectionEvent event) {
-        connectCount.increment();
+        connectCount.getAndIncrement();
         if (connectCount.get() <= 1) {
           System.out.println("LongGCTestHealthCheckerSocketConnectImpl: supering connect event");
           super.connectEvent(event);

@@ -4,8 +4,12 @@
  */
 package com.tc.util.sequence;
 
-import EDU.oswego.cs.dl.util.concurrent.FutureResult;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import junit.framework.TestCase;
 
 public class BatchSequenceTest extends TestCase {
@@ -13,26 +17,22 @@ public class BatchSequenceTest extends TestCase {
   public void test() throws Exception {
     TestRemoteBatchIDProvider remote = new TestRemoteBatchIDProvider();
     final BatchSequence sequence = new BatchSequence(remote, 5);
-    final LinkedQueue longs = new LinkedQueue();
+    final BlockingQueue<Long> longs = new LinkedBlockingQueue<Long>();
 
-    final FutureResult barrier = new FutureResult();
+    FutureTask<Void> futureTask = new FutureTask<Void>(new Callable<Void>() {
 
-    Thread t = new Thread("BatchIDProviderTestThread") {
       @Override
-      public void run() {
-        barrier.set(new Object());
-        try {
-          longs.put(Long.valueOf(sequence.next()));
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-          throw new AssertionError(e);
-        }
+      public Void call() throws Exception {
+        longs.add(Long.valueOf(sequence.next()));
+        return null;
       }
-    };
 
+    });
+
+    Thread t = new Thread(futureTask, "BatchIDProviderTestThread");
     t.start();
-    barrier.get();
-    assertTrue(longs.poll(2000) == null);
+    futureTask.get();
+    assertTrue(longs.poll(2000, TimeUnit.MILLISECONDS) == null);
     assertTrue(remote.take() == sequence);
     assertTrue(remote.size == 5);
 
@@ -42,7 +42,7 @@ public class BatchSequenceTest extends TestCase {
     remote.clear();
     sequence.setNextBatch(5, 10);
 
-    assertTrue(((Long) longs.take()).longValue() == 0);
+    assertTrue(longs.take().longValue() == 0);
     assertTrue(sequence.next() == 1);
     assertTrue(sequence.next() == 2);
     assertTrue(sequence.next() == 3);
@@ -57,7 +57,7 @@ public class BatchSequenceTest extends TestCase {
 
   private static class TestRemoteBatchIDProvider implements BatchSequenceProvider {
     public volatile int      size  = -1;
-    public final LinkedQueue queue = new LinkedQueue();
+    public final BlockingQueue<BatchSequenceReceiver> queue = new LinkedBlockingQueue<BatchSequenceReceiver>();
 
     @Override
     public void requestBatch(BatchSequenceReceiver theProvider, int theSize) {

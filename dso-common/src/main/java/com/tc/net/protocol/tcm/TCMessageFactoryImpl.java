@@ -3,8 +3,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
@@ -12,9 +10,10 @@ import com.tc.object.session.SessionProvider;
 
 import java.lang.reflect.Constructor;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final Map             factories = new ConcurrentReaderHashMap();
+  private final Map<TCMessageType, GeneratedMessageFactory> factories = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 
@@ -54,7 +53,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     // This strange synchronization is for things like system tests that will end up using the same
     // message class, but with different TCMessageFactoryImpl instances
     synchronized (msgClass.getName().intern()) {
-      final GeneratedMessageFactory factory = (GeneratedMessageFactory) this.factories.get(type);
+      final GeneratedMessageFactory factory = this.factories.get(type);
       if (factory == null) {
         this.factories.put(type, new GeneratedMessageFactoryImpl(msgClass));
       } else {
@@ -64,7 +63,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   }
 
   private GeneratedMessageFactory lookupFactory(final TCMessageType type) {
-    final GeneratedMessageFactory factory = (GeneratedMessageFactory) this.factories.get(type);
+    final GeneratedMessageFactory factory = this.factories.get(type);
     if (factory == null) { throw new RuntimeException("No factory for type " + type); }
     return factory;
   }

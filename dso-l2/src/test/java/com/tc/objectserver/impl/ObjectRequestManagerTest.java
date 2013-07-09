@@ -4,9 +4,10 @@
  */
 package com.tc.objectserver.impl;
 
-import org.apache.commons.lang.NotImplementedException;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+import org.apache.commons.lang.NotImplementedException;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
@@ -83,11 +84,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class ObjectRequestManagerTest extends TestCase {
 
@@ -624,7 +623,7 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void run() {
       try {
-        this.barrier.barrier();
+        this.barrier.await();
       } catch (final Exception e) {
         throw new AssertionError(e);
       }
@@ -650,7 +649,7 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void run() {
       try {
-        this.barrier.barrier();
+        this.barrier.await();
       } catch (final Exception e) {
         throw new AssertionError(e);
       }

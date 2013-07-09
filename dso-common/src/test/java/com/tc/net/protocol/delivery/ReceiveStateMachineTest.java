@@ -3,12 +3,14 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.test.TCTestCase;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Testing the basic functionality of OOO Receive State Machine. More functional test at GuaranteedDeliveryProtocolTest
@@ -17,7 +19,7 @@ import com.tc.test.TCTestCase;
 public class ReceiveStateMachineTest extends TCTestCase {
 
   public void tests() throws Exception {
-    LinkedQueue receiveQueue = new LinkedQueue();
+    BlockingQueue<TCNetworkMessage> receiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
     ReceiveStateMachine rsm = new ReceiveStateMachine(delivery, new L1ReconnectConfigImpl(), true);
     TestProtocolMessage tpm = new TestProtocolMessage();
@@ -34,11 +36,11 @@ public class ReceiveStateMachineTest extends TCTestCase {
     rsm.execute(tpm);
     int received = delivery.receivedMessageCount;
     assertTrue(delivery.receivedMessageCount > 0);
-    assertTrue(receiveQueue.poll(0) != null);
+    assertTrue(receiveQueue.poll() != null);
 
     // Receive a second time
     rsm.execute(tpm);
     assertEquals(received, delivery.receivedMessageCount);
-    assertTrue(receiveQueue.poll(0) == null);
+    assertTrue(receiveQueue.poll() == null);
   }
 }

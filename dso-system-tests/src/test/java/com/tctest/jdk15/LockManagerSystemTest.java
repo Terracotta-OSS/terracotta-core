@@ -4,7 +4,6 @@
  */
 package com.tctest.jdk15;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
@@ -65,6 +64,8 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
 
@@ -79,8 +80,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   @Override
   public void setUp() throws Exception {
-    BoundedLinkedQueue clientLockRequestQueue = new BoundedLinkedQueue();
-    BoundedLinkedQueue serverLockRespondQueue = new BoundedLinkedQueue();
+    BlockingQueue<EventContext> clientLockRequestQueue = new ArrayBlockingQueue<EventContext>(1024);
+    BlockingQueue<EventContext> serverLockRespondQueue = new ArrayBlockingQueue<EventContext>(1024);
 
     TestRemoteLockManagerImpl rmtLockManager = new TestRemoteLockManagerImpl(new TestLockRequestMessageFactory(),
                                                                              new TestClientGlobalTransactionManager(),
@@ -508,10 +509,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   }
 
   private static class TestRemoteLockManagerImpl extends RemoteLockManagerImpl {
-    private BoundedLinkedQueue clientLockRequestQueue = null;
+    private BlockingQueue<EventContext> clientLockRequestQueue = null;
 
     public TestRemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager,
-                                     BoundedLinkedQueue clientLockRequestQueue) {
+                                     BlockingQueue<EventContext> clientLockRequestQueue) {
       super(new ClientIDProviderImpl(new TestChannelIDProvider()), GroupID.NULL_ID, lrmf, gtxManager,
             ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, Runners.newSingleThreadScheduledTaskRunner());
       this.clientLockRequestQueue = clientLockRequestQueue;
@@ -633,9 +634,9 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   }
 
   private static class TestRespondToRequestLockHandler extends RespondToRequestLockHandler {
-    BoundedLinkedQueue serverLockRespondQueue;
+    BlockingQueue<EventContext> serverLockRespondQueue;
 
-    public TestRespondToRequestLockHandler(BoundedLinkedQueue serverLockRespondQueue) {
+    public TestRespondToRequestLockHandler(BlockingQueue<EventContext> serverLockRespondQueue) {
       this.serverLockRespondQueue = serverLockRespondQueue;
     }
 
@@ -658,9 +659,9 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   private static class StageThread extends Thread {
 
     private final AbstractEventHandler handler;
-    private final BoundedLinkedQueue   queue;
+    private final BlockingQueue<EventContext> queue;
 
-    StageThread(String name, BoundedLinkedQueue queue, AbstractEventHandler handler) {
+    StageThread(String name, BlockingQueue<EventContext> queue, AbstractEventHandler handler) {
       this.setName(name);
       this.queue = queue;
       this.handler = handler;
@@ -672,7 +673,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       while (true) {
         EventContext ec;
         try {
-          ec = (EventContext) queue.take();
+          ec = queue.take();
           handler.handleEvent(ec);
         } catch (Exception e) {
           throw new AssertionError(e);

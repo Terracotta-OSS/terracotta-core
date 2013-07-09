@@ -3,8 +3,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -38,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This is a test case for MessageChannel. XXX: This test could use some work. It's not very coherent and uses sleeps.
@@ -58,7 +57,7 @@ public class MessageChannelTest extends TCTestCase {
   ClientMessageChannel         clientChannel;
   MessageSendAndReceiveWatcher clientWatcher;
   MessageSendAndReceiveWatcher serverWatcher;
-  SynchronizedRef              error         = new SynchronizedRef(null);
+  AtomicReference<Throwable>   error         = new AtomicReference(null);
   SequenceGenerator            sq            = new SequenceGenerator();
 
   private int                  port          = 0;
@@ -165,7 +164,7 @@ public class MessageChannelTest extends TCTestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
 
-    final Throwable lastError = (Throwable) error.get();
+    final Throwable lastError = error.get();
     if (lastError != null) { throw new Exception(lastError); }
 
     if (lsnr != null) lsnr.stop(WAIT);
