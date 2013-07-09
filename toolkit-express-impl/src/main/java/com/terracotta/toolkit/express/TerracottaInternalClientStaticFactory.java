@@ -18,6 +18,6 @@ public class TerracottaInternalClientStaticFactory {
   }
 
   public static TerracottaInternalClient getOrCreateTerracottaInternalClient(TerracottaClientConfig config) {
-    return INSTANCE.getOrCreateL1Client(config);
+    return INSTANCE.createL1Client(config);
   }
 }

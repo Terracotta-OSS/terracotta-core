@@ -40,22 +40,15 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final AppClassLoader                  appClassLoader;
   private volatile DSOContextControl            contextControl;
   private final AtomicInteger                   refCount             = new AtomicInteger(0);
-  private final TerracottaInternalClientFactory parent;
-  private final String                          tcConfig;
-  private final boolean                         isUrlConfig;
   private final boolean                         rejoinEnabled;
   private boolean                               shutdown             = false;
   private volatile Object                       dsoContext;
   private final Set<String>                     tunneledMBeanDomains = new HashSet<String>();
   private volatile boolean                      isInitialized        = false;
 
-  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader,
-                               TerracottaInternalClientFactory parent, boolean rejoinEnabled,
+  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader, boolean rejoinEnabled,
                                Set<String> tunneledMBeanDomains, Map<String, Object> env) {
     this.rejoinEnabled = rejoinEnabled;
-    this.tcConfig = tcConfig;
-    this.isUrlConfig = isUrlConfig;
-    this.parent = parent;
     if (tunneledMBeanDomains != null) {
       this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
     }
@@ -119,7 +112,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
   @Override
   public boolean isDedicatedClient() {
-    return rejoinEnabled;
+    return true;
   }
 
   @Override
@@ -182,7 +175,6 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
         contextControl.shutdown();
       } finally {
         appClassLoader.clear();
-        parent.remove(this, tcConfig, isUrlConfig);
       }
     }
   }

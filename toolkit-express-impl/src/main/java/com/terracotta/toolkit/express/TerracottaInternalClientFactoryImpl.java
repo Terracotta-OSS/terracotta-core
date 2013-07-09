@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.express;
 
 import com.terracotta.toolkit.client.TerracottaClientConfig;
-import com.terracotta.toolkit.express.TerracottaInternalClientImpl.ClientShutdownException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
-  private final Map<String, TerracottaInternalClient>      clientsByUrl = new ConcurrentHashMap<String, TerracottaInternalClient>();
-
   private final ConcurrentMap<String, Map<String, Object>> envByUrl     = new ConcurrentHashMap<String, Map<String, Object>>();
 
   // public nullary constructor needed as entry point from SPI
@@ -26,76 +23,21 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
   }
 
   @Override
-  public TerracottaInternalClient getOrCreateL1Client(TerracottaClientConfig config) {
+  public TerracottaInternalClient createL1Client(TerracottaClientConfig config) {
     String tcConfig = config.getTcConfigSnippetOrUrl();
     if (config.isUrl()) {
       tcConfig = URLConfigUtil.translateSystemProperties(tcConfig);
     }
-    return getOrCreateClient(tcConfig, config.isUrl(), config.isRejoin(), config.getTunnelledMBeanDomains());
+    return createClient(tcConfig, config.isUrl(), config.isRejoin(), config.getTunnelledMBeanDomains());
   }
 
-  @Override
-  public void remove(TerracottaInternalClient client, String tcConfig, boolean isUrlConfig) {
-    if (client.isDedicatedClient()) {
-      // nothing to clean up for dedicated/non-shared clients
-      return;
-    }
-
-    if (isUrlConfig) {
-      synchronized (tcConfig.intern()) {
-        TerracottaInternalClient removed = clientsByUrl.remove(tcConfig);
-        if (removed != client) { throw new AssertionError("removed: " + removed + ", expecting: " + client + ", for "
-                                                          + tcConfig); }
-      }
-    }
-  }
-
-  private TerracottaInternalClient getOrCreateClient(String tcConfig, boolean isUrlConfig, final boolean rejoinClient,
-                                                     Set<String> tunneledMBeanDomains) {
-    TerracottaInternalClient client = null;
-    if (rejoinClient) {
-      return createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
-    } else {
-      if (!isUrlConfig) {
-        return createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
-      } else {
-        synchronized (tcConfig.intern()) {
-          client = clientsByUrl.get(tcConfig);
-          if (client == null) {
-            // create a new client
-            client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
-            clientsByUrl.put(tcConfig, client);
-          } else {
-            // check if existing client is initializing or online, if not create a new one else reuse
-            if (!client.isInitialized() || client.isOnline()) {
-              return joinSharedClient(client, tunneledMBeanDomains);
-            } else {
-              // create a new client and update the mapping too
-              client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
-              clientsByUrl.put(tcConfig, client);
-            }
-          }
-        }
-      }
-    }
-    return client;
-  }
-
-  private TerracottaInternalClient joinSharedClient(TerracottaInternalClient client, Set<String> tunneledMBeanDomains) {
-    try {
-      client.join(tunneledMBeanDomains);
-      return client;
-    } catch (ClientShutdownException e) {
-      throw new IllegalStateException("this client is already shutdown", e);
-    }
-  }
 
   private TerracottaInternalClient createClient(String tcConfig, boolean isUrlConfig, final boolean rejoinClient,
                                                 Set<String> tunneledMBeanDomains) {
 
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
     TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, getClass()
-        .getClassLoader(), this, rejoinClient, tunneledMBeanDomains, new ConcurrentHashMap<String, Object>(env));
+        .getClassLoader(), rejoinClient, tunneledMBeanDomains, new ConcurrentHashMap<String, Object>(env));
     return client;
   }
 

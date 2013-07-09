@@ -13,10 +13,6 @@ public interface TerracottaInternalClientFactory {
   /**
    * Get or create a new client depending on config
    */
-  public TerracottaInternalClient getOrCreateL1Client(TerracottaClientConfig config);
+  public TerracottaInternalClient createL1Client(TerracottaClientConfig config);
 
-  /**
-   * Removes a client
-   */
-  public void remove(TerracottaInternalClient client, String tcConfig, boolean isUrlConfig);
 }
