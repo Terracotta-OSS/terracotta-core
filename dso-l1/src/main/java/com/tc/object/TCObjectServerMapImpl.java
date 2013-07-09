@@ -3,6 +3,8 @@
  */
 package com.tc.object;
 
+import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
+
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCObjectNotFoundException;
@@ -25,6 +27,8 @@ import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
+import com.tc.object.tx.TransactionCompleteListener;
+import com.tc.object.tx.TransactionID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.ThreadUtil;
@@ -41,8 +45,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjectServerMap<L> {
 
@@ -81,6 +83,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final TCObjectSelfStore             tcObjectSelfStore;
   final L1ServerMapLocalCacheManager          globalLocalCacheManager;
   private volatile PinnedEntryFaultCallback   callback;
+  private volatile boolean                    createdOnServer;
 
   public TCObjectServerMapImpl(final Manager manager, final ClientObjectManager objectManager,
                                final RemoteServerMapManager serverMapManager, final ObjectID id, final Object peer,
@@ -100,6 +103,22 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     localLocks = new Lock[concurrency];
     for (int i = 0; i < concurrency; i++) {
       localLocks[i] = new ReentrantLock();
+    }
+    if (isNew) {
+      manager.addTransactionCompleteListener(new TransactionCompleteListener() {
+
+        @Override
+        public void transactionComplete(TransactionID txnID) {
+          createdOnServer = true;
+        }
+
+        @Override
+        public void transactionAborted(TransactionID txnID) {
+          // TODO: handle this with atomic transaction rollback.
+        }
+      });
+    } else {
+      createdOnServer = true;
     }
   }
 
@@ -531,8 +550,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     // if everything was in local cache
     if (mapIdToKeysMap.isEmpty()) return rv;
-    getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
-
+    if (!createdOnServer) {
+      // add null for the values as no data is present on server.
+      for (Set<Object> keys : mapIdToKeysMap.values()) {
+        for (Object key : keys) {
+          rv.put(key, null);
+        }
+      }
+    } else {
+      getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
+    }
     return rv;
   }
 
@@ -586,6 +613,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       throw new UnsupportedOperationException(
           "getValueForKeyInMap is not supported in a non-shared ServerMap");
     }
+    if (!createdOnServer) { return null; }
+
     final ObjectID mapID = tcObject.getObjectID();
     Object portableKey = getPortableKey(key);
 
@@ -673,6 +702,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private void getAllValuesForKeyFromServer(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv)
       throws AbortedOperationException {
+    if (!createdOnServer) {
+      // add null for the values as no data is present on server.
+      for (Set<Object> keys : mapIdToKeysMap.values()) {
+        for (Object key : keys) {
+          rv.put(key, null);
+        }
+      }
+      return;
+    }
     final Map<ObjectID, Set<Object>> mapIdsToLookup = new HashMap<ObjectID, Set<Object>>();
     for (Entry<ObjectID, Set<Object>> entry : mapIdToKeysMap.entrySet()) {
       // converting Map from <mapID, key> to <mapID, portableKey>
@@ -733,7 +771,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     final TCObject tcObject = map.__tc_managed();
     if (tcObject == null) { throw new UnsupportedOperationException("keySet is not supported in a non-shared ServerMap"); }
     final ObjectID mapID = tcObject.getObjectID();
-    return this.serverMapManager.getAllKeys(mapID);
+    if (!createdOnServer) {
+      return Collections.emptySet();
+    } else {
+      return this.serverMapManager.getAllKeys(mapID);
+    }
   }
 
   /**
@@ -757,7 +799,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                                                                       "getSize is not supported in a non-shared ServerMap"); }
       mapIDs[i] = tcObject.getObjectID();
     }
-    return this.serverMapManager.getAllSize(mapIDs);
+    if (!createdOnServer) {
+      return 0;
+    } else {
+      return this.serverMapManager.getAllSize(mapIDs);
+    }
   }
 
   @Override
