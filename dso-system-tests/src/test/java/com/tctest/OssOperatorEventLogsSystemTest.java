@@ -22,14 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
-
+  private final String      serverName = "server-1";
   private TcConfigBuilder   configBuilder;
   private ExternalDsoServer server_1;
   private int               jmxPort_1;
@@ -44,7 +42,7 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     configBuilder = new TcConfigBuilder("/com/tctest/operator-event-logs-system-test.xml");
     configBuilder.randomizePorts();
     jmxPort_1 = configBuilder.getJmxPort(0);
-    server_1 = createServer("server-1");
+    server_1 = createServer(serverName);
   }
 
   public void testDatabaseState() throws Exception {
@@ -52,14 +50,13 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     System.out.println("server1 started");
     waitTillBecomeActive(jmxPort_1);
     System.out.println("server1 became active");
-    TimeUnit.SECONDS.sleep(1L);
 
     TerracottaOperatorEvent movedToActiveOpEvent = TerracottaOperatorEventFactory
         .createClusterNodeStateChangedEvent(StateManager.ACTIVE_COORDINATOR.getName());
-    System.out.println(Calendar.getInstance().getTime() + " server1 log location "
-                       + server_1.getServerLog().getAbsolutePath());
 
-    FileInputStream fstream = new FileInputStream(server_1.getServerLog());
+    File serverLog = new File(server_1.getWorkingDir(), serverName + "-logs/terracotta-server.log");
+    System.out.println("server log location " + serverLog.getAbsolutePath());
+    FileInputStream fstream = new FileInputStream(serverLog);
     DataInputStream in = new DataInputStream(fstream);
     BufferedReader br = new BufferedReader(new InputStreamReader(in));
     String strLine;
@@ -108,8 +105,9 @@ public class OssOperatorEventLogsSystemTest extends BaseDSOTestCase {
     }
   }
 
-  private ExternalDsoServer createServer(final String serverName) throws IOException {
-    ExternalDsoServer server = new ExternalDsoServer(getWorkDir(serverName), configBuilder.newInputStream(), serverName);
+  private ExternalDsoServer createServer(final String serverName1) throws IOException {
+    ExternalDsoServer server = new ExternalDsoServer(getWorkDir(serverName1), configBuilder.newInputStream(),
+                                                     serverName);
     return server;
   }
 
