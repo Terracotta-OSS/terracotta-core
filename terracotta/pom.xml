@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
     <relativePath>../terracotta-parent</relativePath>
   </parent>
 
@@ -179,7 +179,7 @@
                   def newProfileActivationPropertyValue = new Node(newProfileActivationProperty,'value',"true");
                   def newNode = newProfile.appendNode('dependencies',gfArtifacts)
 
-                  gfArtifacts.each { g ->
+                  gfArtifacts.each { g -&gt;
                       print g.artifactId.text()
                       gfArtifactsParent.remove(g)
                   }
