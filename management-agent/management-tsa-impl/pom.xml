@@ -11,12 +11,6 @@
     <relativePath>../../build-parent</relativePath>
   </parent>
 
-  <properties>
-    <ehcache.management.version>2.9.0-SNAPSHOT</ehcache.management.version>
-    <management.apps.parent.version>1.3.0-SNAPSHOT</management.apps.parent.version>
-  </properties>
-
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -75,7 +69,7 @@
     <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>management-ehcache-impl</artifactId>
-      <version>${ehcache.management.version}</version>
+      <version>${ehcache.version}</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
