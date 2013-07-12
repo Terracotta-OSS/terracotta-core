@@ -43,11 +43,14 @@ public class TmsManager {
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.jstl.core.ConditionalTagSupport"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("com.sun.el.ExpressionFactoryImpl"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.el.ELException"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.JspFactory"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.JspApplicationContext"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.jasper.servlet.JspServlet"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.xerces.jaxp.SAXParserFactoryImpl"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.ssl.SslSocketConnector"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.webapp.WebAppContext"))),
+        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.util.Attributes"))),
         new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.Server")))
     };
 
