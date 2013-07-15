@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -30,11 +28,14 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.util.SequenceGenerator;
 
 import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Ping implements TCMessageSink {
 
   private final int         port;
-  private final LinkedQueue queue = new LinkedQueue();
+  private final BlockingQueue<TCMessage> queue = new LinkedBlockingQueue<TCMessage>();
 
   Ping(int port) {
     this.port = port;
@@ -85,7 +86,7 @@ public class Ping implements TCMessageSink {
 
   private TCMessage getMessage(long timeout) {
     try {
-      return (TCMessage) queue.poll(timeout);
+      return queue.poll(timeout, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       throw new TCRuntimeException(e);
     }
