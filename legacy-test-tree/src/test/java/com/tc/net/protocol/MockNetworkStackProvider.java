@@ -3,17 +3,19 @@
  */
 package com.tc.net.protocol;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.exception.ImplementMe;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NetworkStackProvider;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class MockNetworkStackProvider implements NetworkStackProvider {
 
-  private final LinkedQueue connectTransportCalls       = new LinkedQueue();
+  private final BlockingQueue<TCConnection> connectTransportCalls       = new LinkedBlockingQueue<TCConnection>();
 
   public boolean            throwStackNotFoundException = false;
 
@@ -27,7 +29,7 @@ public class MockNetworkStackProvider implements NetworkStackProvider {
   }
 
   public MessageTransport waitForConnectTransportCall(long timeout) throws InterruptedException {
-    return (MessageTransport) connectTransportCalls.poll(timeout);
+    return (MessageTransport) connectTransportCalls.poll(timeout, TimeUnit.MILLISECONDS);
   }
 
   public NetworkStackHarness removeNetworkStack(ConnectionID connectionId) {

@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
@@ -40,6 +39,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
 
 public class RemoteObjectManagerImplTest extends TCTestCase {
 
@@ -173,7 +173,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
         } catch (final TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
           try {
-            barrier.barrier();
+            barrier.await();
           } catch (final Exception e1) {
             e1.printStackTrace();
           }
@@ -185,7 +185,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     final Set missingSet = new HashSet();
     missingSet.add(new ObjectID(ObjectID.MAX_ID, this.groupID.toInt()));
     this.manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet, this.groupID);
-    barrier.barrier();
+    barrier.await();
   }
 
   public void testRequestOutstandingRequestRootMessages() throws Exception {

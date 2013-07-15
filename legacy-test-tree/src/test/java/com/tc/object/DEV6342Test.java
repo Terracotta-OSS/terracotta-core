@@ -3,7 +3,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
@@ -27,10 +26,12 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.ThreadUtil;
-import junit.framework.TestCase;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
+
+import junit.framework.TestCase;
 
 public class DEV6342Test extends TestCase {
   @Override
@@ -72,7 +73,7 @@ public class DEV6342Test extends TestCase {
         } catch (final TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
           try {
-            barrier.barrier();
+            barrier.await();
           } catch (final Exception e1) {
             e1.printStackTrace();
           }
@@ -84,7 +85,7 @@ public class DEV6342Test extends TestCase {
     final Set missingSet = new HashSet();
     missingSet.add(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
     manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet, groupID);
-    barrier.barrier();
+    barrier.await();
   }
 
   private TestRequestRootMessage newRrm(TestRequestRootMessageFactory rrmf) {

@@ -3,7 +3,8 @@
  */
 package com.tc.test;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CyclicBarrier;
+
 
 public class BitChangeNotReflected extends TCTestCase {
 
@@ -55,7 +56,7 @@ public class BitChangeNotReflected extends TCTestCase {
     public void run2() throws Exception {
       int count = LOOP_COUNT;
       while (count-- > 0) {
-        barrier.barrier();
+        barrier.await();
         synchronized (lock) {
           data.shiftRightRotate();
         }
@@ -93,7 +94,7 @@ public class BitChangeNotReflected extends TCTestCase {
         synchronized (lock) {
           data.isEqual(local);
         }
-        barrier.barrier();
+        barrier.await();
       }
 
     }

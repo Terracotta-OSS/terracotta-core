@@ -4,16 +4,18 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.PooledExecutor;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.EchoSink;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.test.TCTestCase;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SimpleServerTest extends TCTestCase {
   private final boolean         useProxy  = false;
@@ -21,7 +23,7 @@ public class SimpleServerTest extends TCTestCase {
   private int                   proxyPort = -1;
   private TCConnectionManager   connMgr;
   private SimpleServer          server;
-  private final SynchronizedRef error     = new SynchronizedRef(null);
+  private final AtomicReference<Throwable> error     = new AtomicReference<Throwable>(null);
 
   protected void setUp(int serverThreadCount) throws Exception {
     connMgr = new TCConnectionManagerImpl();
@@ -95,9 +97,7 @@ public class SimpleServerTest extends TCTestCase {
 
     try {
       final int numConcurrent = Math.min(maxConcurrent, numClients);
-      PooledExecutor pool = new PooledExecutor(new LinkedQueue(), numConcurrent);
-      pool.setKeepAliveTime(1000);
-      pool.setMinimumPoolSize(numConcurrent);
+      ExecutorService pool = Executors.newFixedThreadPool(numConcurrent);
 
       final TCSocketAddress addr;
       if (proxy != null) {
@@ -105,20 +105,20 @@ public class SimpleServerTest extends TCTestCase {
       } else {
         addr = new TCSocketAddress(server.getServerAddr().getPort());
       }
-
+      List<ClientTask> clientTasks = new ArrayList<ClientTask>();
       for (int i = 0; i < numClients; i++) {
-        pool.execute(new ClientTask(i, new VerifierClient(connMgr, addr, dataSize, addExtra, numToSend, minDelay,
+        clientTasks.add(new ClientTask(i, new VerifierClient(connMgr, addr, dataSize, addExtra, numToSend, minDelay,
                                                           maxDelay)));
       }
 
-      pool.shutdownAfterProcessingCurrentlyQueuedTasks();
-      pool.awaitTerminationAfterShutdown();
+      pool.invokeAll(clientTasks);
+      pool.shutdown();
     } finally {
       System.err.println("Took " + (System.currentTimeMillis() - start) + " millis for test: " + getName());
     }
   }
 
-  private class ClientTask implements Runnable {
+  private class ClientTask implements Callable<Void> {
     private final VerifierClient client;
     private final int            num;
 
@@ -128,7 +128,7 @@ public class SimpleServerTest extends TCTestCase {
     }
 
     @Override
-    public void run() {
+    public Void call() throws Exception {
       try {
         client.run();
       } catch (Throwable t) {
@@ -136,6 +136,7 @@ public class SimpleServerTest extends TCTestCase {
       } finally {
         System.err.println(System.currentTimeMillis() + ": client " + num + " finished");
       }
+      return null;
     }
 
   }

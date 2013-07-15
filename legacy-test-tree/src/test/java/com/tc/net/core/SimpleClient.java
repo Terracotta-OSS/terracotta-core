@@ -3,7 +3,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
@@ -12,12 +11,14 @@ import com.tc.net.protocol.GenericNetworkMessage;
 import com.tc.net.protocol.GenericNetworkMessageSink;
 import com.tc.net.protocol.GenericProtocolAdaptor;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class SimpleClient {
   private final int                 numMsgs;
   private final TCConnectionManager connMgr;
   private final TCSocketAddress     addr;
   private final int                 dataSize;
-  private final SynchronizedLong    msgs = new SynchronizedLong(0);
+  private final AtomicLong          msgs = new AtomicLong(0);
   private final long                sleepFor;
 
   public SimpleClient(TCConnectionManager connMgr, TCSocketAddress addr, int numMsgs, int dataSize, long sleepFor) {
@@ -32,7 +33,7 @@ public class SimpleClient {
     final GenericNetworkMessageSink recvSink = new GenericNetworkMessageSink() {
       @Override
       public void putMessage(GenericNetworkMessage msg) {
-        final long recv = msgs.increment();
+        final long recv = msgs.incrementAndGet();
         if ((recv % 1000) == 0) {
           System.out.println("Processed " + (recv * msg.getTotalLength()) + " bytes...");
         }

@@ -4,8 +4,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NullProtocolAdaptor;
@@ -13,6 +11,9 @@ import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
@@ -44,8 +45,8 @@ public class ConnectionCreateTest extends TestCase {
     final int numThreads = 5;
     final Object STOP = new Object();
     final Object work = new Object();
-    final SynchronizedInt failures = new SynchronizedInt(0);
-    final LinkedQueue queue = new LinkedQueue();
+    final AtomicInteger failures = new AtomicInteger(0);
+    final BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
 
     class ConnectTask implements Runnable {
       @Override
@@ -61,7 +62,7 @@ public class ConnectionCreateTest extends TestCase {
             return;
           } catch (Throwable t) {
             t.printStackTrace();
-            failures.increment();
+            failures.incrementAndGet();
           }
 
         }
@@ -78,12 +79,12 @@ public class ConnectionCreateTest extends TestCase {
       queue.put(work);
     }
 
-    for (int i = 0; i < threads.length; i++) {
+    for (Thread thread : threads) {
       queue.put(STOP);
     }
 
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].join();
+    for (Thread thread : threads) {
+      thread.join();
     }
 
     int errors = failures.get();

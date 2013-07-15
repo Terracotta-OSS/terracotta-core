@@ -102,10 +102,6 @@
       <artifactId>xmlbeans-jsr173-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>concurrent</groupId>
-      <artifactId>concurrent</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>

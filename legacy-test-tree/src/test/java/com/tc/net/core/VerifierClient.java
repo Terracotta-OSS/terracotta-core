@@ -4,8 +4,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.TCSocketAddress;
@@ -20,6 +18,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author teck
@@ -36,7 +35,7 @@ public class VerifierClient implements Runnable {
   private final int                 numToSend;
   private final int                 maxDelay;
   private final int                 minDelay;
-  private final SynchronizedRef     error         = new SynchronizedRef(null);
+  private final AtomicReference<Throwable> error         = new AtomicReference<Throwable>(null);
   private final Random              random;
   private final Verifier            verifier;
   private final Verifier            sendVerifier;
@@ -192,8 +191,7 @@ public class VerifierClient implements Runnable {
       Assert.assertEquals(1, data.length);
     }
 
-    for (int d = 0; d < data.length; d++) {
-      TCByteBuffer buf = data[d];
+    for (TCByteBuffer buf : data) {
       Assert.eval((buf.limit() % 8) == 0);
 
       while (buf.hasRemaining()) {
@@ -211,7 +209,7 @@ public class VerifierClient implements Runnable {
   }
 
   private void checkForError() {
-    final Throwable t = (Throwable) error.get();
+    final Throwable t = error.get();
     if (t != null) { throw new RuntimeException(t); }
   }
 }

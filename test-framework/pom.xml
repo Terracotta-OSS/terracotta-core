@@ -81,10 +81,6 @@
       <artifactId>jetty-all-server</artifactId>
     </dependency>
     <dependency>
-      <groupId>concurrent</groupId>
-      <artifactId>concurrent</artifactId>
-    </dependency>
-    <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
     </dependency>

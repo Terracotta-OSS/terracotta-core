@@ -4,7 +4,6 @@
  */
 package com.tc.object.locks;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
@@ -26,6 +25,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.TestCase;
 
@@ -114,7 +114,7 @@ public class ClientServerLockManagerTest extends TestCase {
             @Override
             public void handleWaitEvent() {
               try {
-                barrier.barrier();
+                barrier.await();
               } catch (Exception e) {
                 e.printStackTrace();
                 throw new AssertionError(e);
@@ -129,7 +129,7 @@ public class ClientServerLockManagerTest extends TestCase {
       }
     };
     waitCallThread.start();
-    barrier.barrier();
+    barrier.await();
     LockMBean[] lockBeans1 = serverLockManager.getAllLocks();
     LockManagerImpl server2 = glue.restartServer();
     LockMBean[] lockBeans2 = server2.getAllLocks();
