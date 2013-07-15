@@ -88,7 +88,8 @@ public class ClusterManager {
     this.tcConfigBuilder = new TcConfigBuilder(parsedDoc);
     this.workingDir = workingDir;
     this.version = guessMavenArtifactVersion(getClass());
-    if (version == null) {
+    LOG.info("Guessed version:" + this.version);
+    if (this.version == null) {
       throw new IllegalStateException("cannot figure out version");
     }
   }
@@ -234,6 +235,7 @@ public class ClusterManager {
     }
 
     String warDir = m2Root + ("/" + gid.replace('.', '/') + "/" + aid + "/").replace('/', File.separatorChar) + ver;
+    LOG.info("Looking for WAR file in path " + warDir);
 
     List<String> files = Arrays.asList(new File(warDir).list(new FilenameFilter() {
       @Override
@@ -247,7 +249,9 @@ public class ClusterManager {
     Collections.sort(files);
 
     // always take the last one of the sorted list, it should be the latest version
-    return warDir + File.separator + files.get(files.size() - 1);
+    String warPath = warDir + File.separator + files.get(files.size() - 1);
+    LOG.info("Found WAR file at " + warDir);
+    return warPath;
   }
 
   private static String guessMavenArtifactVersion(Class<?> clazz) {
