@@ -29,6 +29,9 @@ public class ApplicationTsa extends javax.ws.rs.core.Application {
     s.add(net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.AgentsResourceServiceImpl.class);
+    s.add(org.terracotta.management.application.WebApplicationExceptionMapper.class);
+    s.add(org.terracotta.management.application.ResourceRuntimeExceptionMapper.class);
+    s.add(org.terracotta.management.application.DefaultExceptionMapper.class);
     return s;
   }
 
