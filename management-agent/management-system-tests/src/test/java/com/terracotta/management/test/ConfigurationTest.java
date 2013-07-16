@@ -1,5 +1,6 @@
 package com.terracotta.management.test;
 
+import net.sf.ehcache.CacheManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -122,13 +123,25 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
+
       for (int group = 0; group < GROUP_COUNT; group++) {
         for (int member = 0; member < MEMBER_COUNT; member++) {
           int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
           JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/clients");
-          assertThat(contentArray.size(), is(0));
+          assertThat(contentArray.size(), is(1));
+
+          JSONObject obj = (JSONObject)contentArray.get(0);
+          assertThat((String)obj.get("version"), is(guessVersion()));
+          assertThat(obj.get("sourceId"), is(notNullValue()));
+          assertThat(((JSONObject)obj.get("attributes")).size(), is(4));
+
+          contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations");
+          assertThat(contentArray.size(), is(3));
         }
       }
+
+      cacheManager.shutdown();
     }
 
   }

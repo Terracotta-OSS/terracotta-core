@@ -1,6 +1,7 @@
 package com.terracotta.management.test;
 
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
@@ -87,13 +88,16 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String tk = TestBaseUtil.jarFor(ToolkitVersion.class);
     String common = TestBaseUtil.jarFor(Os.class);
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
+    String fs = TestBaseUtil.jarFor(com.terracotta.toolkit.api.TerracottaToolkitFactoryService.class);
+    String l1 = TestBaseUtil.jarFor(org.terracotta.toolkit.internal.TerracottaL1Instance.class);
     String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTestBase.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);
     String jsonParser = TestBaseUtil.jarFor(JSONValue.class);
     String ehCache = TestBaseUtil.jarFor(CacheManager.class);
     String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
     String commonsIo = TestBaseUtil.jarFor(IOUtils.class);
-    return makeClasspath(tk, common, expressRuntime, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo);
+    String ehcache = TestBaseUtil.jarFor(Ehcache.class);
+    return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo, ehcache);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
@@ -255,7 +259,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       }
 
       if (jar.endsWith(".jar")) {
-        String[] pathes = jar.split("\\/");
+        String[] pathes = jar.split("\\" + File.separatorChar);
         if (pathes.length > 2) {
           return pathes[pathes.length - 2];
         }
@@ -263,13 +267,27 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       } else {
         // running from IDE? try to get the version from the pom file
         try {
-          File fXmlFile = new File("pom.xml");
+          File folder = new File(".").getAbsoluteFile();
+          File pomFile = new File(folder, "pom.xml");
+
+          for (int i = 0; i < 10; i++) {
+            if (pomFile.exists()) {
+              break;
+            }
+            folder = folder.getParentFile();
+            pomFile = new File(folder, "pom.xml");
+          }
+          if (!pomFile.exists()) {
+            throw new AssertionError("cannot find pom file to guess version");
+          }
+          System.out.println("found POM to guess version from: " + pomFile.getAbsolutePath());
+
           DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
           DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-          Document doc = dBuilder.parse(fXmlFile);
+          Document doc = dBuilder.parse(pomFile);
 
           NodeList childNodes = doc.getDocumentElement().getChildNodes();
-          for (int i=0;i<childNodes.getLength();i++) {
+          for (int i = 0; i < childNodes.getLength(); i++) {
             Node node = childNodes.item(i);
             if ("version".equals(node.getNodeName())) {
               return node.getTextContent();
@@ -278,8 +296,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
         } catch (Exception e) {
           // ignore
         }
-        fail("cannot guess version");
-        return null; // make the compiler happy
+        throw new AssertionError("cannot guess version");
       }
     }
 

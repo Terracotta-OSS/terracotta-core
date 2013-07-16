@@ -1,5 +1,6 @@
 package com.terracotta.management.test;
 
+import net.sf.ehcache.CacheManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -11,6 +12,7 @@ import java.io.IOException;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.containsString;
 
@@ -23,7 +25,7 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     testConfig.setNumOfGroups(GROUP_COUNT);
     testConfig.getGroupConfig().setMemberCount(MEMBER_COUNT);
 
-    testConfig.getClientConfig().setClientClasses(new Class[] { TopologyTestClient.class, TopologyServerTestClient.class });
+    testConfig.getClientConfig().setClientClasses(new Class[] { TopologyTestClient.class, TopologyServerTestClient.class, TopologyClientTestClient.class });
   }
 
   public static abstract class AbstractTopologyTestClient extends AbstractTsaClient {
@@ -184,4 +186,34 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     }
   }
 
+  public static class TopologyClientTestClient extends AbstractTopologyTestClient {
+
+    @Override
+    protected void doTsaTest() throws Throwable {
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
+
+      for (int i = 0; i < MEMBER_COUNT; i++) {
+        int port = getGroupData(0).getTsaGroupPort(i);
+        String host = ConfigHelper.HOST;
+
+        JSONArray content = getTsaJSONArrayContent(host, port, "/tc-management-api/agents/topologies/clients");
+
+        assertThat(content.size(), is(1));
+        JSONObject o0 = (JSONObject)content.get(0);
+
+        parseAndAssertClientEntities(o0);
+
+        JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
+        assertThat(serverGroupEntities.size(), is(0));
+
+        assertThat(o0.get("unreadOperatorEventCount"), nullValue());
+      }
+
+      cacheManager.shutdown();
+    }
+
+    public TopologyClientTestClient(String[] args) {
+      super(args);
+    }
+  }
 }

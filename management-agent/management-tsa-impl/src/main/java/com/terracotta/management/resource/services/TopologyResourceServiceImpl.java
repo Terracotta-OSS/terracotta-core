@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
@@ -48,6 +49,8 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       TopologyEntity result = new TopologyEntity();
+      result.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+      result.setVersion(this.getClass().getPackage().getImplementationVersion());
       result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       result.getClientEntities().addAll(topologyService.getClients());
@@ -65,6 +68,8 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       TopologyEntity result = new TopologyEntity();
+      result.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+      result.setVersion(this.getClass().getPackage().getImplementationVersion());
       result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       return Collections.singleton(result);
@@ -81,6 +86,8 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       TopologyEntity result = new TopologyEntity();
+      result.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+      result.setVersion(this.getClass().getPackage().getImplementationVersion());
       result.getClientEntities().addAll(topologyService.getClients());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
