@@ -87,8 +87,8 @@ public class ClusterManager {
     this.tcConfig = tcConfig;
     this.tcConfigBuilder = new TcConfigBuilder(parsedDoc);
     this.workingDir = workingDir;
-    this.version = guessMavenArtifactVersion(getClass());
-    LOG.info("Guessed version:" + this.version);
+    this.version = guessMavenArtifactVersion(com.tc.config.ClusterInfo.class);
+    LOG.info("Guessed version: " + this.version);
     if (this.version == null) {
       throw new IllegalStateException("cannot figure out version");
     }
@@ -250,7 +250,7 @@ public class ClusterManager {
 
     // always take the last one of the sorted list, it should be the latest version
     String warPath = warDir + File.separator + files.get(files.size() - 1);
-    LOG.info("Found WAR file at " + warDir);
+    LOG.info("Found WAR file at " + warPath);
     return warPath;
   }
 
@@ -262,7 +262,8 @@ public class ClusterManager {
     }
 
     if (jar.endsWith(".jar")) {
-      String[] pathes = jar.split("\\/");
+      LOG.info("Guessing version from path: " + jar);
+      String[] pathes = jar.split("\\" + File.separatorChar);
       if (pathes.length > 2) {
         return pathes[pathes.length - 2];
       }
