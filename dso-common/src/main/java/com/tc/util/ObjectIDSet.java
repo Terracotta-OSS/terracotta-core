@@ -29,7 +29,7 @@ import java.util.SortedSet;
 public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable, TCSerializable {
 
   public static enum ObjectIDSetType {
-    RANGE_BASED_SET, BITSET_BASED_SET, MASK_BASED_SET
+    RANGE_BASED_SET, BITSET_BASED_SET, MASK_BASED_SET, EXPANDING_BITSET_BASED_SET
   }
 
   /**
@@ -53,6 +53,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     } else if ( oidSetType == ObjectIDSetType.MASK_BASED_SET ) {
       this.type = ObjectIDSetType.MASK_BASED_SET;
       this.oidSet = new MaskingObjectIDSet();
+    } else if ( oidSetType == ObjectIDSetType.EXPANDING_BITSET_BASED_SET ) {
+      this.type = ObjectIDSetType.EXPANDING_BITSET_BASED_SET;
+      this.oidSet = new ExpandingBitSetObjectIDSet();
     } else {
       this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
@@ -71,6 +74,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
       } else if ( o.type == ObjectIDSetType.MASK_BASED_SET ) {
         this.type = ObjectIDSetType.MASK_BASED_SET;
         this.oidSet = new MaskingObjectIDSet(o.oidSet);
+      } else if ( o.type == ObjectIDSetType.EXPANDING_BITSET_BASED_SET ) {
+        this.type = ObjectIDSetType.EXPANDING_BITSET_BASED_SET;
+        this.oidSet = new ExpandingBitSetObjectIDSet(o.oidSet);
       } else {
         throw new AssertionError("wrong ObjectIDSet type: " + o.type);
       }
@@ -105,6 +111,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     } else if (oidSetType == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
       this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
+    } else if (oidSetType == ObjectIDSetType.EXPANDING_BITSET_BASED_SET.ordinal()) {
+      this.type = ObjectIDSetType.EXPANDING_BITSET_BASED_SET;
+      this.oidSet = new ExpandingBitSetObjectIDSet();
     } else {
       throw new AssertionError("wrong type: " + oidSetType);
     }
@@ -173,6 +182,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
           return ((BitSetObjectIDSet) this.oidSet).addAll((BitSetObjectIDSet) o.oidSet);
         } else if (this.type == ObjectIDSetType.RANGE_BASED_SET) {
           return ((RangeObjectIDSet) this.oidSet).addAll((RangeObjectIDSet) o.oidSet);
+        } else if (this.type == ObjectIDSetType.EXPANDING_BITSET_BASED_SET) {
+          // Brute force add all, but it's not used often anyways.
+          return oidSet.addAll(o.oidSet);
         } else {
           throw new AssertionError("wrong ObjectIDSet type: " + o.type);
         }
