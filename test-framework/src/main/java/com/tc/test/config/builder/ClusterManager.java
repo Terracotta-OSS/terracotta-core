@@ -38,8 +38,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -87,7 +90,7 @@ public class ClusterManager {
     this.tcConfig = tcConfig;
     this.tcConfigBuilder = new TcConfigBuilder(parsedDoc);
     this.workingDir = workingDir;
-    this.version = guessMavenArtifactVersion(com.tc.config.ClusterInfo.class);
+    this.version = guessMavenArtifactVersion();
     LOG.info("Guessed version: " + this.version);
     if (this.version == null) {
       throw new IllegalStateException("cannot figure out version");
@@ -254,20 +257,28 @@ public class ClusterManager {
     return warPath;
   }
 
-  private static String guessMavenArtifactVersion(Class<?> clazz) {
-    // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
-    String jar = TestBaseUtil.jarFor(clazz);
+  private static String guessMavenArtifactVersion() throws IOException {
+    String jar = TestBaseUtil.jarFor(ClusterManager.class);
     if (jar == null) {
-      throw new AssertionError("Cannot find JAR for class: " + clazz);
+      throw new AssertionError("Cannot find JAR for class: " + ClusterManager.class);
     }
 
     if (jar.endsWith(".jar")) {
-      LOG.info("Guessing version from path: " + jar);
-      String[] pathes = jar.split("\\" + File.separatorChar);
-      if (pathes.length > 2) {
-        return pathes[pathes.length - 2];
+      LOG.info("Guessing version from pom.properties in JAR: " + jar);
+      JarFile jarFile = new JarFile(jar);
+      ZipEntry entry = jarFile.getEntry("META-INF/maven/org.terracotta.test/test-framework/pom.properties");
+      if (entry == null) {
+        throw new AssertionError("cannot find entry [META-INF/maven/org.terracotta.test/test-framework/pom.properties] in JAR file");
       }
-      throw new AssertionError("Invalid JAR: " + jar);
+      InputStream inputStream = jarFile.getInputStream(entry);
+      Properties properties;
+      try {
+        properties = new Properties();
+        properties.load(inputStream);
+      } finally {
+        IOUtils.closeQuietly(inputStream);
+      }
+      return properties.getProperty("version");
     } else {
       // running from IDE? try to get the version from the pom file
       try {
