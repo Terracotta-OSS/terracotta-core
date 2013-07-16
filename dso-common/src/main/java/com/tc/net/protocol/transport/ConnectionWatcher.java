@@ -20,7 +20,7 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    cce.quitReconnectAttempts();
+    cce.shutDown();
     target.notifyTransportClosed(transport);
   }
 

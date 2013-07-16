@@ -59,7 +59,7 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    cce.quitReconnectAttempts();
+    cce.shutDown();
     oooLayer.notifyTransportClosed(transport);
   }
 
