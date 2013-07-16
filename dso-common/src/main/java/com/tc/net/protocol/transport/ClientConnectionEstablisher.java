@@ -343,11 +343,9 @@ public class ClientConnectionEstablisher {
     private final AtomicBoolean               threadStarted      = new AtomicBoolean(false);
     private volatile boolean                  stopped            = false;
     private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ClientConnectionEstablisher.ConnectionRequest>();
-    private final String                      reconnectThreadName;
 
     public AsyncReconnect(ClientConnectionEstablisher cce) {
       this.cce = cce;
-      this.reconnectThreadName = RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId();
     }
 
     public boolean isStopped() {
@@ -384,7 +382,7 @@ public class ClientConnectionEstablisher {
 
     public void startThreadIfNecessary() {
       if (threadStarted.compareAndSet(false, true)) {
-        Thread thread = new Thread(this, reconnectThreadName);
+        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId());
         thread.setDaemon(true);
         thread.start();
       }
@@ -423,7 +421,7 @@ public class ClientConnectionEstablisher {
           if (cmt != null) cmt.logger.warn("Reconnect failed !", t);
         }
       }
-      logger.info(reconnectThreadName + " Connection establisher exiting.");
+      logger.info("Connection establisher exiting.");
     }
   }
 
