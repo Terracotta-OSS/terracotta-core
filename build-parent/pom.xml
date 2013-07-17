@@ -724,7 +724,6 @@
       <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
-        <skipTests>false</skipTests>
       </properties>     
       <build>
         <plugins>
@@ -733,7 +732,6 @@
             <artifactId>maven-forge-plugin</artifactId>
             <configuration>
               <groups>org.terracotta.test.categories.SmokeTests</groups>
-              <failIfNoTests>false</failIfNoTests>
             </configuration>
           </plugin>
         </plugins>      

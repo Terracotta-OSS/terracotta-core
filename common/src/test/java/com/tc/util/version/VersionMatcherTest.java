@@ -7,8 +7,10 @@ import org.junit.Assert;
 import org.junit.experimental.categories.Category;
 import org.terracotta.test.categories.SmokeTests;
 
+import com.tc.test.TCTestCase;
+
 @Category(SmokeTests.class)
-public class VersionMatcherTest {
+public class VersionMatcherTest extends TCTestCase {
 
   public void testExactMatch() {
     VersionMatcher matcher = new VersionMatcher("3.0.0");
