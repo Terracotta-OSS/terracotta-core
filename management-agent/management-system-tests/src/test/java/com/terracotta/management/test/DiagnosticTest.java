@@ -1,5 +1,6 @@
 package com.terracotta.management.test;
 
+import net.sf.ehcache.CacheManager;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,6 +46,8 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
+
       testResources(0, 0);
       testResources(0, 1);
 
@@ -63,6 +66,8 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       waitUntilAllServerAgentsUp();
       testResources(0, 0);
       testResources(0, 1);
+
+      cacheManager.shutdown();
     }
 
     private void testResources(int group, int member) throws IOException {
@@ -73,6 +78,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       testGroupThreadDump(group, member, failures);
       testZippedGroupThreadDump(group, member);
       testZippedServersThreadDump(group, member);
+      testZippedClientsThreadDump(group, member);
       testSingleServerThreadDump(group, member);
     }
 
@@ -128,6 +134,28 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       }};
       byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
           "/tc-management-api/agents/diagnostics/threadDumpArchive/servers", headers);
+
+      ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
+
+      while (true) {
+        ZipEntry zipEntry = zipInputStream.getNextEntry();
+        if (zipEntry == null) break;
+
+        // if we can unzip the bytes, we assume that the thread dump is good
+        IOUtils.toString(zipInputStream, "UTF-8");
+
+        zipInputStream.closeEntry();
+      }
+
+      zipInputStream.close();
+    }
+
+    private void testZippedClientsThreadDump(int group, int member) throws IOException {
+      Map<String, String> headers = new HashMap<String, String>() {{
+        put("Accept", "application/zip");
+      }};
+      byte[] bytes = getTsaRawContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
+          "/tc-management-api/agents/diagnostics/threadDumpArchive/clients", headers);
 
       ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
 

@@ -1,9 +1,11 @@
 package com.terracotta.management.test;
 
+import net.sf.ehcache.CacheManager;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.hasItem;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -36,6 +38,8 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
 
     @Override
     protected void doTsaTest() throws Throwable {
+      CacheManager cacheManager = createCacheManager(ConfigHelper.HOST, Integer.toString(getGroupData(0).getTsaGroupPort(0)));
+
       for (int serverIndex = 0; serverIndex < MEMBER_COUNT; serverIndex++) {
         JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
             "/tc-management-api/agents/statistics/servers");
@@ -43,7 +47,7 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
         assertThat(contentArray.size(), is(MEMBER_COUNT));
 
         for (int i = 0; i < MEMBER_COUNT; i++) {
-          checkStatisticContent((JSONObject)contentArray.get(i));
+          checkServerStatisticContent((JSONObject)contentArray.get(i));
         }
 
         String serverName = getGroupData(0).getServerNames()[serverIndex];
@@ -53,14 +57,28 @@ public class MonitoringTest extends AbstractTsaAgentTestBase {
 
         JSONObject statistics = (JSONObject)singleServerStats.get(0);
         assertThat((String)statistics.get("sourceId"), equalTo(serverName));
-        checkStatisticContent(statistics);
+        checkServerStatisticContent(statistics);
+
+        contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(0).getTsaGroupPort(serverIndex),
+            "/tc-management-api/agents/statistics/clients");
+
+        assertThat(contentArray.size(), is(1));
+        checkClientStatisticContent((JSONObject)contentArray.get(0));
       }
 
+      cacheManager.shutdown();
     }
 
-    private void checkStatisticContent(JSONObject content) {
+    private void checkServerStatisticContent(JSONObject content) {
       String sourceId = (String)content.get("sourceId");
       assertThat(Arrays.asList(getGroupData(0).getServerNames()).contains(sourceId), is(true));
+
+      JSONObject statistics = (JSONObject)content.get("statistics");
+      assertThat(statistics.isEmpty(), is(false));
+    }
+
+    private void checkClientStatisticContent(JSONObject content) {
+      assertThat(content.get("sourceId"), is(notNullValue()));
 
       JSONObject statistics = (JSONObject)content.get("statistics");
       assertThat(statistics.isEmpty(), is(false));
