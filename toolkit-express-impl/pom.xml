@@ -30,13 +30,19 @@
       <artifactId>terracotta-toolkit-api-internal</artifactId>
       <version>${toolkit-api.version}</version>
     </dependency>
-
     <dependency>
       <!-- XXX: This should really be a dependency on the core TC Client API -->
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>  
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

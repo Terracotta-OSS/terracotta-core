@@ -4,7 +4,9 @@
  */
 package com.tc.object.tx;
 
+import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
+import org.terracotta.test.categories.SmokeTests;
 
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
@@ -24,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+@Category(SmokeTests.class)
 public class LockAccountingTest extends TestCase {
 
   private LockAccounting la;

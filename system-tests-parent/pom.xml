@@ -32,7 +32,8 @@
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
 
-    <surefire.version>2.12.4</surefire.version>
+    <maven-forge-plugin.version>1.1.1-SNAPSHOT</maven-forge-plugin.version>
+    <surefire.version>2.15</surefire.version>
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
     <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
@@ -97,7 +98,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.10</version>
+      <version>4.11</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.test</groupId>
@@ -401,6 +402,28 @@
             </configuration>
           </plugin>
         </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>check-short</id>
+      <properties>
+        <should_skip_tests>false</should_skip_tests>
+        <skipTests>false</skipTests>
+      </properties>     
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <groups>org.terracotta.test.categories.SmokeTests</groups>
+              <failIfNoTests>false</failIfNoTests>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>              
+            </configuration>
+          </plugin>
+        </plugins>      
       </build>
     </profile>
 

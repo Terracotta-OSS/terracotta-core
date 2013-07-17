@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.core.api;
 
+import org.junit.experimental.categories.Category;
+import org.terracotta.test.categories.SmokeTests;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
@@ -20,6 +23,7 @@ import com.tc.test.TCTestCase;
 
 import java.util.Map;
 
+@Category(SmokeTests.class)
 public class ManagedObjectTest extends TCTestCase {
 
   static {

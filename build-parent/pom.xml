@@ -40,12 +40,12 @@
     <toolkit-api.version>2.2.0</toolkit-api.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
-    <maven-forge-plugin.version>1.0.10</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.1.1-SNAPSHOT</maven-forge-plugin.version>
     <tcconfig.version>4.1.1</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
-    <surefire.version>2.10</surefire.version>
+    <surefire.version>2.15</surefire.version>
     <skip.deploy>false</skip.deploy>
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
@@ -361,7 +361,7 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.8.1</version>
+        <version>4.11</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -724,20 +724,21 @@
       <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
-      </properties>      
+        <skipTests>false</skipTests>
+      </properties>     
       <build>
         <plugins>
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
             <configuration>
-              <__TC_listFile>${basedir}/checkshort.txt</__TC_listFile>
+              <groups>org.terracotta.test.categories.SmokeTests</groups>
               <failIfNoTests>false</failIfNoTests>
             </configuration>
           </plugin>
-        </plugins>
+        </plugins>      
       </build>
-    </profile>    
+    </profile>   
 
     <profile>
       <id>system-tests</id>
