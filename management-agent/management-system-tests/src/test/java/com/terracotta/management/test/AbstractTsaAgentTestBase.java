@@ -16,34 +16,24 @@ import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.util.ToolkitVersion;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.test.config.builder.MavenArtifactFinder;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -59,28 +49,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
   }
 
   private String guessWarLocation() {
-    String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
-    if (System.getProperty("maven.repo.local") != null) {
-      m2Root = System.getProperty("maven.repo.local");
-      System.out.println("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
-    }
-    String version = AbstractTsaClient.guessMavenArtifactVersion(ToolkitVersion.class);
-
-    String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;
-
-    List<String> files = Arrays.asList(new File(agentDir).list(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".war") && !name.endsWith("-sources.jar") && !name.endsWith("-tests.jar");
-      }
-    }));
-    if (files.isEmpty()) {
-      throw new AssertionError("No agent WAR file found in [" + agentDir + "]");
-    }
-    Collections.sort(files);
-
-    // always take the last one of the sorted list, it should be the latest version
-    return agentDir + File.separator + files.get(files.size() - 1);
+    String version = AbstractTsaClient.guessMavenArtifactVersion();
+    return MavenArtifactFinder.findArtifactLocation("org.terracotta", "management-tsa-war", version, null, "war");
   }
 
   @Override
@@ -102,11 +72,10 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
 
-
     protected static final String TSA_TEST_CACHE = "tsaTest";
 
     protected String guessVersion() {
-      return guessMavenArtifactVersion(ToolkitVersion.class);
+      return guessMavenArtifactVersion();
     }
 
     @Override
@@ -207,7 +176,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
         BufferedReader br = new BufferedReader(new InputStreamReader((httpConnection.getInputStream())));
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         System.out.println("Output from Server .... \n");
         String output;
         while ((output = br.readLine()) != null) {
@@ -251,51 +220,10 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       return new CacheManager(configuration);
     }
 
-    static String guessMavenArtifactVersion(Class<?> clazz) {
-      // e.g. /home/userXYZ/.m2/repository/org/terracotta/terracotta-toolkit-runtime/3.8.0-SNAPSHOT/terracotta-toolkit-runtime-3.8.0-SNAPSHOT.jar
-      String jar = TestBaseUtil.jarFor(clazz);
-      if (jar == null) {
-        throw new AssertionError("Cannot find JAR for class: " + clazz);
-      }
-
-      if (jar.endsWith(".jar")) {
-        String[] pathes = jar.split("\\" + File.separatorChar);
-        if (pathes.length > 2) {
-          return pathes[pathes.length - 2];
-        }
-        throw new AssertionError("Invalid JAR: " + jar);
-      } else {
-        // running from IDE? try to get the version from the pom file
-        try {
-          File folder = new File(".").getAbsoluteFile();
-          File pomFile = new File(folder, "pom.xml");
-
-          for (int i = 0; i < 10; i++) {
-            if (pomFile.exists()) {
-              break;
-            }
-            folder = folder.getParentFile();
-            pomFile = new File(folder, "pom.xml");
-          }
-          if (!pomFile.exists()) {
-            throw new AssertionError("cannot find pom file to guess version");
-          }
-          System.out.println("found POM to guess version from: " + pomFile.getAbsolutePath());
-
-          DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-          DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-          Document doc = dBuilder.parse(pomFile);
-
-          NodeList childNodes = doc.getDocumentElement().getChildNodes();
-          for (int i = 0; i < childNodes.getLength(); i++) {
-            Node node = childNodes.item(i);
-            if ("version".equals(node.getNodeName())) {
-              return node.getTextContent();
-            }
-          }
-        } catch (Exception e) {
-          // ignore
-        }
+    static String guessMavenArtifactVersion() {
+      try {
+        return MavenArtifactFinder.figureCurrentArtifactMavenVersion();
+      } catch (IOException ioe) {
         throw new AssertionError("cannot guess version");
       }
     }

@@ -10,10 +10,6 @@ import org.eclipse.jetty.io.Buffer;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.test.util.TestBaseUtil;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import com.tc.config.Loader;
 import com.tc.test.TestConfigUtil;
@@ -26,26 +22,17 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * @author Ludovic Orban
@@ -230,75 +217,12 @@ public class ClusterManager {
     return new File(jarLocation).getParentFile().getName();
   }
 
-  public String findWarLocation(String gid, String aid, String ver) {
-    String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
-    if (System.getProperty("maven.repo.local") != null) {
-      m2Root = System.getProperty("maven.repo.local");
-      LOG.info("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
-    }
-
-    String warDir = m2Root + ("/" + gid.replace('.', '/') + "/" + aid + "/").replace('/', File.separatorChar) + ver;
-    LOG.info("Looking for WAR file in path " + warDir);
-
-    List<String> files = Arrays.asList(new File(warDir).list(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".war") && !name.endsWith("-sources.war") && !name.endsWith("-tests.war");
-      }
-    }));
-    if (files.isEmpty()) {
-      throw new AssertionError("No WAR file found in [" + warDir + "]");
-    }
-    Collections.sort(files);
-
-    // always take the last one of the sorted list, it should be the latest version
-    String warPath = warDir + File.separator + files.get(files.size() - 1);
-    LOG.info("Found WAR file at " + warPath);
-    return warPath;
+  public static String findWarLocation(String gid, String aid, String ver) {
+    return MavenArtifactFinder.findArtifactLocation(gid, aid, ver, null, "war");
   }
 
-  private static String guessMavenArtifactVersion() throws IOException {
-    String jar = TestBaseUtil.jarFor(ClusterManager.class);
-    if (jar == null) {
-      throw new AssertionError("Cannot find JAR for class: " + ClusterManager.class);
-    }
-
-    if (jar.endsWith(".jar")) {
-      LOG.info("Guessing version from pom.properties in JAR: " + jar);
-      JarFile jarFile = new JarFile(jar);
-      ZipEntry entry = jarFile.getEntry("META-INF/maven/org.terracotta.test/test-framework/pom.properties");
-      if (entry == null) {
-        throw new AssertionError("cannot find entry [META-INF/maven/org.terracotta.test/test-framework/pom.properties] in JAR file");
-      }
-      InputStream inputStream = jarFile.getInputStream(entry);
-      Properties properties;
-      try {
-        properties = new Properties();
-        properties.load(inputStream);
-      } finally {
-        IOUtils.closeQuietly(inputStream);
-      }
-      return properties.getProperty("version");
-    } else {
-      // running from IDE? try to get the version from the pom file
-      try {
-        File fXmlFile = new File("pom.xml");
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dBuilder.parse(fXmlFile);
-
-        NodeList childNodes = doc.getDocumentElement().getChildNodes();
-        for (int i=0;i<childNodes.getLength();i++) {
-          Node node = childNodes.item(i);
-          if ("version".equals(node.getNodeName())) {
-            return node.getTextContent();
-          }
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      throw new AssertionError("cannot guess version");
-    }
+  public static String guessMavenArtifactVersion() throws IOException {
+    return MavenArtifactFinder.figureCurrentArtifactMavenVersion();
   }
 
   private void waitUntilTsaAgentInitialized(int port) throws Exception {
