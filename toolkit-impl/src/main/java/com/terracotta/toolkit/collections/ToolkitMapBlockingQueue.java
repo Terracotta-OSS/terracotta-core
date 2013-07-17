@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 /**
- * A distributed bounded blocking queue implementation based on the clustered map {@link ToolkitStore}.
- * The map access pattern is similar to an circular indexing array <tt>[0..capacity - 1]</tt>.
- *
+ * A distributed bounded blocking queue implementation based on the clustered map {@link ToolkitStore}. The map access
+ * pattern is similar to an circular indexing array <tt>[0..capacity - 1]</tt>.
+ * 
  * @author Eugene Shelestovich
  * @see ToolkitBlockingQueue
  * @see java.util.concurrent.ArrayBlockingQueue
@@ -31,66 +31,65 @@ import java.util.concurrent.locks.Condition;
 public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, RejoinAwareToolkitObject {
 
   // store head, tail and capacity in the same map to make it more compact
-  private static final String HEAD_KEY = "__head";
+  private static final String                   HEAD_KEY              = "__head";
   // points to the next free slot immediately following the last occupied element
-  private static final String TAIL_KEY = "__tail";
-  private static final String CAPACITY_KEY = "__capacity";
+  private static final String                   TAIL_KEY              = "__tail";
+  private static final String                   CAPACITY_KEY          = "__capacity";
 
-  private static final int RESERVED_FIELDS_COUNT = 3;
+  private static final int                      RESERVED_FIELDS_COUNT = 3;
 
-  private final ToolkitReadWriteLock lock;
+  private final ToolkitReadWriteLock            lock;
   // we have to use a single condition here,
   // because ToolkitLock doesn't support multiple conditions
-  private final Condition notEmptyOrFull;
+  private final Condition                       notEmptyOrFull;
 
-  private final String name;
+  private final String                          name;
   // to access unlocked store operations
   private final ToolkitCacheInternal<String, E> map;
   // capacity is immutable, so let's cache it locally
-  private final int capacity;
+  private final int                             capacity;
 
-  private final ToolkitObjectStatusImpl status;
+  private final ToolkitObjectStatusImpl         status;
 
-  public ToolkitMapBlockingQueue(final String name, final ToolkitStore<String, E> map,
-                                 final ToolkitReadWriteLock lock) {
+  public ToolkitMapBlockingQueue(final String name, final ToolkitStore<String, E> map, final ToolkitReadWriteLock lock) {
     this(name, Integer.MAX_VALUE, map, lock);
   }
 
-  public ToolkitMapBlockingQueue(final String name,
-                                 final int capacity, final Collection<? extends E> c,
+  public ToolkitMapBlockingQueue(final String name, final int capacity, final Collection<? extends E> c,
                                  final ToolkitStore<String, E> map, final ToolkitReadWriteLock lock) {
     this(name, capacity, map, lock);
 
-    if (capacity < c.size()) throw new IllegalArgumentException(
-        "Queue capacity " + capacity + " is less than input collection size " + c.size());
+    if (capacity < c.size()) throw new IllegalArgumentException("Queue capacity " + capacity
+                                                                + " is less than input collection size " + c.size());
 
     for (final E element : c) {
       add(element);
     }
   }
 
-  public ToolkitMapBlockingQueue(final String name, final int capacity,
-                                 final ToolkitStore<String, E> map, final ToolkitReadWriteLock lock) {
+  public ToolkitMapBlockingQueue(final String name, final int capacity, final ToolkitStore<String, E> map,
+                                 final ToolkitReadWriteLock lock) {
     if (capacity <= 0) throw new IllegalArgumentException("Capacity should be a positive integer");
     if (map == null) throw new NullPointerException("Store is not specified");
     if (lock == null) throw new NullPointerException("Lock is not specified");
 
-    this.map = (ToolkitCacheInternal<String, E>)map;
+    this.map = (ToolkitCacheInternal<String, E>) map;
     this.name = name;
     this.lock = lock;
     this.notEmptyOrFull = writeLock().getCondition();
     this.capacity = capacity;
     this.status = new ToolkitObjectStatusImpl();
 
-    final Integer oldCapacity = (Integer)map.get(CAPACITY_KEY);
+    final Integer oldCapacity = (Integer) map.get(CAPACITY_KEY);
     if (oldCapacity == null) {
       initNewMap();
     } else {
-      if (capacity != oldCapacity) {
-        throw new IllegalArgumentException("A " + ToolkitMapBlockingQueue.class.getSimpleName() + " with name '"
-                                           + name + "' already exists with different capacity - " + oldCapacity
-                                           + ", requested capacity - " + capacity);
-      }
+      if (capacity != oldCapacity) { throw new IllegalArgumentException("A "
+                                                                        + ToolkitMapBlockingQueue.class.getSimpleName()
+                                                                        + " with name '" + name
+                                                                        + "' already exists with different capacity - "
+                                                                        + oldCapacity + ", requested capacity - "
+                                                                        + capacity); }
     }
   }
 
@@ -113,9 +112,9 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
       // double checked locking to prevent initialization race
       if (map.get(CAPACITY_KEY) != null) { return; }
 
-      unlockedPutNoReturn(HEAD_KEY, (E)Integer.valueOf(0));
-      unlockedPutNoReturn(TAIL_KEY, (E)Integer.valueOf(0));
-      unlockedPutNoReturn(CAPACITY_KEY, (E)Integer.valueOf(capacity));
+      unlockedPutNoReturn(HEAD_KEY, (E) Integer.valueOf(0));
+      unlockedPutNoReturn(TAIL_KEY, (E) Integer.valueOf(0));
+      unlockedPutNoReturn(CAPACITY_KEY, (E) Integer.valueOf(capacity));
     } finally {
       writeLock().unlock();
     }
@@ -127,19 +126,19 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   }
 
   private int getHead() {
-    return (Integer)unlockedGet(HEAD_KEY);
+    return (Integer) unlockedGet(HEAD_KEY);
   }
 
   private void setHead(int head) {
-    unlockedPutNoReturn(HEAD_KEY, (E)Integer.valueOf(head));
+    unlockedPutNoReturn(HEAD_KEY, (E) Integer.valueOf(head));
   }
 
   private int getTail() {
-    return (Integer)unlockedGet(TAIL_KEY);
+    return (Integer) unlockedGet(TAIL_KEY);
   }
 
   private void setTail(int tail) {
-    unlockedPutNoReturn(TAIL_KEY, (E)Integer.valueOf(tail));
+    unlockedPutNoReturn(TAIL_KEY, (E) Integer.valueOf(tail));
   }
 
   // this is supposed to be inlined by JIT
@@ -152,8 +151,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   }
 
   /**
-   * {@link ToolkitStore} currently supports only {@link String} keys,
-   * so we have to use some kind of converter.
+   * {@link ToolkitStore} currently supports only {@link String} keys, so we have to use some kind of converter.
    */
   private static String toKey(int i) {
     return String.valueOf(i);
@@ -245,8 +243,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
           insert(e);
           return true;
         }
-        if (nanos <= 0)
-          return false;
+        if (nanos <= 0) return false;
         try {
           nanos = notEmptyOrFull.awaitNanos(nanos);
         } catch (InterruptedException ie) {
@@ -267,7 +264,9 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     writeLock().lockInterruptibly();
     try {
       try {
-        while (isFull()) { notEmptyOrFull.await(); }
+        while (isFull()) {
+          notEmptyOrFull.await();
+        }
       } catch (InterruptedException ie) {
         // propagate to non-interrupted thread
         notEmptyOrFull.signalAll();
@@ -310,9 +309,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     writeLock().lockInterruptibly();
     try {
       while (true) {
-        if (isNotEmpty()) {
-          return extract();
-        }
+        if (isNotEmpty()) { return extract(); }
         if (nanos <= 0) return null;
 
         try {
@@ -480,7 +477,8 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
 
   /**
    * {@inheritDoc}
-   * <p>This operation is atomic.
+   * <p>
+   * This operation is atomic.
    */
   @Override
   public boolean removeAll(final Collection<?> c) {
@@ -506,7 +504,8 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
 
   /**
    * {@inheritDoc}
-   * <p>This operation is atomic.
+   * <p>
+   * This operation is atomic.
    */
   @Override
   public boolean retainAll(final Collection<?> c) {
@@ -532,8 +531,8 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
 
   /**
    * {@inheritDoc}
-   * <p>This implementation repeatedly invokes {@link #poll poll} until it
-   * returns <tt>null</tt>. This operation is atomic.
+   * <p>
+   * This implementation repeatedly invokes {@link #poll poll} until it returns <tt>null</tt>. This operation is atomic.
    */
   @Override
   public void clear() {
@@ -579,14 +578,13 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     try {
       final int size = size();
       if (a.length < size) {
-        a = (T[])Array.newInstance(
-            a.getClass().getComponentType(), size);
+        a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
       }
 
       int k = 0;
       int i = getHead();
       while (k < size) {
-        a[k++] = (T)unlockedGet(toKey(i));
+        a[k++] = (T) unlockedGet(toKey(i));
         i = increment(i);
       }
       if (a.length > size) {
@@ -608,9 +606,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
       int i = getHead(); // index of the current element
       int k = 0; // number of visited elements
       while (k++ < size) {
-        if (o.equals(unlockedGet(toKey(i)))) {
-          return true;
-        }
+        if (o.equals(unlockedGet(toKey(i)))) { return true; }
         i = increment(i);
       }
       return false;
@@ -624,9 +620,7 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     readLock().lock();
     try {
       for (final Object element : c) {
-        if (!contains(element)) {
-          return false;
-        }
+        if (!contains(element)) { return false; }
       }
       return true;
     } finally {
@@ -668,9 +662,13 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     }
   }
 
-  private boolean isNotFull() {return !isFull();}
+  private boolean isNotFull() {
+    return !isFull();
+  }
 
-  private boolean isNotEmpty() {return !isEmpty();}
+  private boolean isNotEmpty() {
+    return !isEmpty();
+  }
 
   /**
    * Inserts element at the end of the queue. Should be invoked under lock.
@@ -723,13 +721,11 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   }
 
   /**
-   * Returns an iterator over the elements in this queue in proper sequence.
-   * The returned <tt>Iterator</tt> is a "weakly consistent" iterator that
-   * will never throw {@link java.util.ConcurrentModificationException},
-   * and guarantees to traverse elements as they existed upon
-   * construction of the iterator, and may (but is not guaranteed to)
-   * reflect any modifications subsequent to construction.
-   *
+   * Returns an iterator over the elements in this queue in proper sequence. The returned <tt>Iterator</tt> is a
+   * "weakly consistent" iterator that will never throw {@link java.util.ConcurrentModificationException}, and
+   * guarantees to traverse elements as they existed upon construction of the iterator, and may (but is not guaranteed
+   * to) reflect any modifications subsequent to construction.
+   * 
    * @return an iterator over the elements in this queue in proper sequence
    */
   @Override
@@ -763,11 +759,11 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
 
   private final class SimpleMapBlockingQueueIterator implements Iterator<E> {
 
-    private int remaining; // number of elements yet to be returned
-    private int nextIndex; // index of element to be returned by next() call
-    private E nextItem;    // element to be returned by next call to next
-    private E lastItem;    // element returned by last call to next
-    private int lastReturned;   // index of last element returned, or -1 if none
+    private int remaining;   // number of elements yet to be returned
+    private int nextIndex;   // index of element to be returned by next() call
+    private E   nextItem;    // element to be returned by next call to next
+    private E   lastItem;    // element returned by last call to next
+    private int lastReturned; // index of last element returned, or -1 if none
 
     private SimpleMapBlockingQueueIterator() {
       remaining = size();
@@ -778,10 +774,12 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
       }
     }
 
+    @Override
     public boolean hasNext() {
       return remaining > 0;
     }
 
+    @Override
     public E next() {
       if (remaining <= 0) throw new NoSuchElementException();
 
@@ -801,13 +799,14 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
       }
     }
 
+    @Override
     public void remove() {
       writeLock().lock();
       try {
         // call remove() only after next()
         int i = lastReturned;
-        if (i == -1) throw new IllegalStateException("remove() should only be invoked after next(). " +
-                                                     "This call can only be made once per call to next()");
+        if (i == -1) throw new IllegalStateException("remove() should only be invoked after next(). "
+                                                     + "This call can only be made once per call to next()");
         lastReturned = -1;
 
         final E x = lastItem;
