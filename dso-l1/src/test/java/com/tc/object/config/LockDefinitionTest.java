@@ -5,7 +5,7 @@
 package com.tc.object.config;
 
 import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.SmokeTests;
+import org.terracotta.test.categories.CheckShorts;
 
 import junit.framework.TestCase;
 
@@ -13,7 +13,7 @@ import junit.framework.TestCase;
  * Unit test for LockDefinition
  */
 
-@Category(SmokeTests.class)
+@Category(CheckShorts.class)
 public class LockDefinitionTest extends TestCase {
 
   private String          lockName;

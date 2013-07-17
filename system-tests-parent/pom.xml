@@ -417,7 +417,7 @@
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
             <configuration>
-              <groups>org.terracotta.test.categories.SmokeTests</groups>
+              <groups>org.terracotta.test.categories.CheckShorts</groups>
               <failIfNoTests>false</failIfNoTests>
               <printSummary>true</printSummary>
               <reportFormat>plain</reportFormat>              

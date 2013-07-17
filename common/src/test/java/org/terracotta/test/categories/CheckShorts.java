@@ -3,6 +3,6 @@
  */
 package org.terracotta.test.categories;
 
-public interface SmokeTests {
+public interface CheckShorts {
   // test marked with this will be run with check-short profile
 }

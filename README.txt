@@ -124,4 +124,4 @@ for maven to find it.
 9. To add test to check-short profile:
 ******************************************************************************
 
-Annotate @Category(SmokeTests.class) to class level of the test or the test method
+Annotate @Category(CheckShorts.class) to class level of the test or the test method

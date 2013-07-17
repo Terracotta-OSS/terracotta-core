@@ -4,7 +4,7 @@
 package com.tc.l2.ha;
 
 import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.SmokeTests;
+import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.Assert;
 
-@Category(SmokeTests.class)
+@Category(CheckShorts.class)
 public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
   TestDsoChannelManager          channelManager1           = new TestDsoChannelManager();
   TestDsoChannelManager          channelManager2           = new TestDsoChannelManager();

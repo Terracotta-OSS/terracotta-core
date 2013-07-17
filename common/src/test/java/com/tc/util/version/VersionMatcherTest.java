@@ -5,11 +5,11 @@ package com.tc.util.version;
 
 import org.junit.Assert;
 import org.junit.experimental.categories.Category;
-import org.terracotta.test.categories.SmokeTests;
+import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.test.TCTestCase;
 
-@Category(SmokeTests.class)
+@Category(CheckShorts.class)
 public class VersionMatcherTest extends TCTestCase {
 
   public void testExactMatch() {
