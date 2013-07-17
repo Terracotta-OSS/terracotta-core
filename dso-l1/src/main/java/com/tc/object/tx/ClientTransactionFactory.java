@@ -11,6 +11,6 @@ import com.tc.object.locks.LockID;
 public interface ClientTransactionFactory {
   public ClientTransaction newNullInstance(LockID id, TxnType type);
 
-  public ClientTransaction newInstance();
+  public ClientTransaction newInstance(int modCount);
 
 }

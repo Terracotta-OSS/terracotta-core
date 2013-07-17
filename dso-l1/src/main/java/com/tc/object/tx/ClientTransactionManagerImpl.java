@@ -81,6 +81,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private final boolean                        sendErrors  = System.getProperty("project.name") != null;
   private final TCObjectSelfStore              tcObjectSelfStore;
   private final AbortableOperationManager      abortableOperationManager;
+  private volatile int                         session     = 0;
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider,
                                       final ClientObjectManager clientObjectManager,
@@ -103,6 +104,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   @Override
   public void cleanup() {
+    session++;
     // remoteTxnManager will be cleanup from clientHandshakeCallbacks
     // clientObjectManager can't because this call is from ClientObjectManagerImpl
     // clientLockManager will be cleanup from clientHandshakeCallbacks
@@ -330,7 +332,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   private void createTxAndInitContext() {
-    final ClientTransaction ctx = this.txFactory.newInstance();
+    final ClientTransaction ctx = this.txFactory.newInstance(this.session);
     ctx.setTransactionContext(peekContext());
     setTransaction(ctx);
   }
@@ -375,6 +377,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     try {
       // Check here that If operation was already aborted.
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
+      if (this.session != tx.getSession()) { throw new PlatformRejoinException(
+                                                                                       "unable to commit transaction as rejoin occured"); }
       hasCommitted = commitInternal(lock, tx);
     } catch (AbortedOperationException t) {
       aborted = true;

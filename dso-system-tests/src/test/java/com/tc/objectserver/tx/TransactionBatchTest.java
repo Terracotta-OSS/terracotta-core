@@ -137,11 +137,11 @@ public class TransactionBatchTest extends TestCase {
     // A nested transaction (all this buys us is more than 1 lock in a txn)
     final LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction tmp = new ClientTransactionImpl();
+    final ClientTransaction tmp = new ClientTransactionImpl(0);
     tmp.setTransactionContext(tc);
     final LockID lid2 = new StringLockID("2");
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL, Arrays.asList(new LockID[] { lid1, lid2 }));
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
 
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
@@ -158,7 +158,7 @@ public class TransactionBatchTest extends TestCase {
     }
 
     tc = new TransactionContextImpl(new StringLockID("3"), TxnType.CONCURRENT, TxnType.CONCURRENT);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
 
     this.writer = new ClientTransactionBatchWriter(GroupID.NULL_ID, batchID, serializer, this.encoding, mf,
@@ -235,18 +235,18 @@ public class TransactionBatchTest extends TestCase {
 
     final LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     // txn3 has more objects than 1 & 2, but contains all from the previous, it can be folded
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn3 = new ClientTransactionImpl();
+    final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
     txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
@@ -270,7 +270,7 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid2 = new StringLockID("2");
 
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn4 = new ClientTransactionImpl();
+    final ClientTransaction txn4 = new ClientTransactionImpl(0);
     txn4.setTransactionContext(tc);
     txn4.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
@@ -339,14 +339,14 @@ public class TransactionBatchTest extends TestCase {
 
     final LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn1.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn1.fieldChanged(new MockTCObject(new ObjectID(3), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn2.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
@@ -377,12 +377,12 @@ public class TransactionBatchTest extends TestCase {
     final List threeLocks = Arrays.asList(lid1, lid2, lid3);
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL, threeLocks);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL, threeLocks);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
@@ -408,12 +408,12 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
@@ -439,22 +439,22 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txnWithRoot = new ClientTransactionImpl();
+    final ClientTransaction txnWithRoot = new ClientTransactionImpl(0);
     txnWithRoot.setTransactionContext(tc);
     txnWithRoot.createRoot("root", new ObjectID(234));
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txnWithDMI = new ClientTransactionImpl();
+    final ClientTransaction txnWithDMI = new ClientTransactionImpl(0);
     txnWithDMI.setTransactionContext(tc);
     txnWithDMI.addDmiDescriptor(new DmiDescriptor(new ObjectID(12), new ObjectID(13), new DmiClassSpec[] {}, true));
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txnWithNotify = new ClientTransactionImpl();
+    final ClientTransaction txnWithNotify = new ClientTransactionImpl(0);
     txnWithNotify.setTransactionContext(tc);
     txnWithNotify.addNotify(new NotifyImpl(lid1, new ThreadID(122), true));
 
@@ -494,19 +494,19 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid2 = new StringLockID("2");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     final MockTCObject mtco = new MockTCObject(new ObjectID(2), new Object());
     mtco.setNew(true);
     txn2.createObject(mtco);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn3 = new ClientTransactionImpl();
+    final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
     txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     txn3.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
@@ -539,12 +539,12 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
     final MockTCObject mtco = new MockTCObject(new ObjectID(2), new Object());
@@ -573,17 +573,17 @@ public class TransactionBatchTest extends TestCase {
     final LockID lid2 = new StringLockID("2");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn1 = new ClientTransactionImpl();
+    final ClientTransaction txn1 = new ClientTransactionImpl(0);
     txn1.setTransactionContext(tc);
     txn1.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn2 = new ClientTransactionImpl();
+    final ClientTransaction txn2 = new ClientTransactionImpl(0);
     txn2.setTransactionContext(tc);
     txn2.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txn3 = new ClientTransactionImpl();
+    final ClientTransaction txn3 = new ClientTransactionImpl(0);
     txn3.setTransactionContext(tc);
     txn3.fieldChanged(new MockTCObject(new ObjectID(1), this), "class", "class.field", ObjectID.NULL_ID, -1);
 

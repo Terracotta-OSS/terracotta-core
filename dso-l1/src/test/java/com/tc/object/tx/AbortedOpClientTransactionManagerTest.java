@@ -108,7 +108,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
     }
 
     @Override
-    public ClientTransaction newInstance() {
+    public ClientTransaction newInstance(int session) {
       ClientTransaction clientTransaction = Mockito.mock(ClientTransaction.class);
       Mockito.when(clientTransaction.hasChangesOrNotifies()).thenReturn(true);
 

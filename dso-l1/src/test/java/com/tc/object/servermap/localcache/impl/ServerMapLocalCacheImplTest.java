@@ -998,6 +998,11 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       return Collections.EMPTY_LIST;
     }
 
+    @Override
+    public int getSession() {
+      return 0;
+    }
+
   }
 
   private static class TestLocksRecallHelper implements LocksRecallService {

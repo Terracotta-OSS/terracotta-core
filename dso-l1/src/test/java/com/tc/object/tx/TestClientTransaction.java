@@ -217,4 +217,9 @@ public class TestClientTransaction implements ClientTransaction {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
+  public int getSession() {
+    return 0;
+  }
+
 }

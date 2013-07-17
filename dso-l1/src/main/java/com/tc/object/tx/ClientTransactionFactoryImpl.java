@@ -16,8 +16,8 @@ public class ClientTransactionFactoryImpl implements ClientTransactionFactory {
   }
 
   @Override
-  public ClientTransaction newInstance() {
-    return new ClientTransactionImpl();
+  public ClientTransaction newInstance(int session) {
+    return new ClientTransactionImpl(session);
   }
 
   @Override

@@ -115,4 +115,9 @@ public class NullClientTransaction extends AbstractClientTransaction {
   protected void basicAddMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
     // do nothing
   }
+
+  @Override
+  public int getSession() {
+    return 0;
+  }
 }

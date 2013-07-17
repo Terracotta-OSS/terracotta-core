@@ -34,9 +34,11 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
 
   // used to keep things referenced until the transaction is completely ACKED
   private final Map                           referenced    = new IdentityHashMap();
+  private final int                           session;
 
-  public ClientTransactionImpl() {
+  public ClientTransactionImpl(int session) {
     super();
+    this.session = session;
   }
 
   @Override
@@ -166,6 +168,11 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   @Override
   public List getDmiDescriptors() {
     return dmis == null ? Collections.EMPTY_LIST : dmis;
+  }
+
+  @Override
+  public int getSession() {
+    return session;
   }
 
 }

@@ -248,4 +248,9 @@ public interface ClientTransaction {
 
   public List<OnCommitCallable> getOnCommitCallables();
 
+  /**
+   * returns the session in which this transaction was created
+   */
+  public int getSession();
+
 }
