@@ -78,7 +78,9 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
       testGroupThreadDump(group, member, failures);
       testZippedGroupThreadDump(group, member);
       testZippedServersThreadDump(group, member);
-      testZippedClientsThreadDump(group, member);
+      if (!failures[0]) {
+        testZippedClientsThreadDump(group, member);
+      }
       testSingleServerThreadDump(group, member);
     }
 
@@ -90,7 +92,7 @@ public class DiagnosticTest extends AbstractTsaAgentTestBase {
     private void testGroupThreadDump(int group, int member, boolean[] failures) throws IOException {
       JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, getGroupData(group).getTsaGroupPort(member),
           "/tc-management-api/agents/diagnostics/threadDump");
-      assertThat(contentArray.size(), is(MEMBER_COUNT));
+      assertThat(contentArray.size(), is(MEMBER_COUNT + (failures[0] ? 0 : 1)));
 
       JSONObject content1 = getWithSourceId(contentArray, "testserver0");
       assertThat(content1, is(notNullValue()));
