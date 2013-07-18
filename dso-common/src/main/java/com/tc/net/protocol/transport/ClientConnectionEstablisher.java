@@ -167,7 +167,8 @@ public class ClientConnectionEstablisher {
 
       this.asyncReconnecting.set(true);
       boolean reconnectionRejected = false;
-      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected; i++) {
+      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected
+                      && !connectionEstablisher.isStopped(); i++) {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
 
