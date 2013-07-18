@@ -352,7 +352,7 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
       if (!isEmpty() && nextLongs[arrayIndex(hint)] == 0) {
         // Identify the run of empty blocks
         int left = arrayIndex(hint);
-        while (left > MIN_SIZE - 1) {
+        while (left > 0) {
           if (nextLongs[left] != 0) {
             break;
           } else {
@@ -362,7 +362,7 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
         // Align left to MIN_SIZE boundaries
         left += (MIN_SIZE - ((left + 1) % MIN_SIZE));
         int right = arrayIndex(hint);
-        while (right < nextLongs.length - MIN_SIZE) {
+        while (right < nextLongs.length) {
           if (nextLongs[right] != 0) {
             break;
           } else {
@@ -371,12 +371,15 @@ class ExpandingBitSetObjectIDSet extends ObjectIDSetBase {
         }
         // Align right to MIN_SIZE boundaries
         right -= (right % MIN_SIZE);
-        if (right - left > SPLIT_THRESHOLD) {
+        if (right - left >= SPLIT_THRESHOLD) {
           if (right < nextLongs.length) {
             long splitStart = start + right * Long.SIZE;
             long[] splitLongs = new long[nextLongs.length - right];
             System.arraycopy(nextLongs, right, splitLongs, 0, splitLongs.length);
             split = new BitSet(splitStart, splitLongs);
+            if (split.isEmpty()) {
+              throw new AssertionError();
+            }
           }
           long[] temp = new long[left + 1];
           System.arraycopy(nextLongs, 0, temp, 0, temp.length);
