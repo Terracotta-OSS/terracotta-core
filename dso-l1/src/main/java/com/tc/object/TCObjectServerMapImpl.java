@@ -99,7 +99,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (serverMapLocalStore != null) {
       setupLocalCache(serverMapLocalStore, callback);
     }
-    int concurrency = TCPropertiesImpl.getProperties().getInt("tcObjectServerMapConcurrency", 128);
+    int concurrency = TCPropertiesImpl.getProperties().getInt("tcObjectServerMapConcurrency", 8);
     localLocks = new Lock[concurrency];
     for (int i = 0; i < concurrency; i++) {
       localLocks[i] = new ReentrantLock();
