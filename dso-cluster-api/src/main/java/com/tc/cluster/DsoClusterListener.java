@@ -89,7 +89,8 @@ public interface DsoClusterListener {
   void nodeRejoined(DsoClusterEvent event);
 
   /**
-   * Fired when node rejoin is rejected
+   * Fired in case of an irrecoverable error, which renders node invalid for joining back to the cluster
    */
-  void nodeRejoinRejected(DsoClusterEvent event);
+  void nodeError(DsoClusterEvent event);
+
 }

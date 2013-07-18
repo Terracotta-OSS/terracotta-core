@@ -73,7 +73,7 @@ public class ClientChannelEventController {
   }
 
   private void requestRejoin(ChannelEvent event) {
-    clientHandshakeManager.reconnectionRejected();
+    clientHandshakeManager.reconnectionRejected(rejoinManager.isRejoinEnabled());
     if (rejoinManager.isRejoinEnabled()) {
       pauseSink.add(new RejoinContext(channel.channel()));
     } else {

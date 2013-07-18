@@ -142,7 +142,15 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void reconnectionRejected() {
+  public void reconnectionRejected(boolean rejoinEnabled) {
+    if (!rejoinEnabled) {
+      final String msg = "Reconnection Rejected By Server, But Rejoin Is Not Enabled, Client Can Never Join The Cluster Back ";
+      logger.error(msg);
+      CONSOLE_LOGGER.error(msg);
+      dsoClusterEventsGun.fireNodeError();
+      return;
+
+    }
     for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
       logger.warn("reconnection rejected from server, disconnecting from " + groupId);
       disconnected(groupId);
@@ -204,7 +212,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
                            + " \n received " + stripeIDMap;
         logger.error(msg);
         CONSOLE_LOGGER.error(msg);
-        dsoClusterEventsGun.fireRejoinRejected();
+        dsoClusterEventsGun.fireNodeError();
         return;
       }
     }
@@ -321,7 +329,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     if (old == State.RUNNING) {
       this.disconnected++;
     }
-
 
     if (this.disconnected > this.groupIDs.length) { throw new AssertionError(
                                                                              "disconnected count was greater then number of groups ( "

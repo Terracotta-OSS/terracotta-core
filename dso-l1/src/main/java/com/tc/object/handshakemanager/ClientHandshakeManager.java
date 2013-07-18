@@ -15,7 +15,7 @@ public interface ClientHandshakeManager {
 
   public void connected(NodeID remoteNode);
 
-  public void reconnectionRejected();
+  public void reconnectionRejected(boolean isRejoinEnabled);
 
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck);
 

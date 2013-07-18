@@ -19,6 +19,7 @@ public interface DsoClusterInternalEventsGun {
 
   void fireOperationsDisabled();
 
-  void fireRejoinRejected();
+  void fireNodeError();
+
 
 }
