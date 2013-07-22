@@ -246,7 +246,7 @@ public class ClientConnectionEstablisher {
     this.asyncReconnecting.set(true);
     try {
       boolean reconnectionRejected = false;
-      while (!connected) {
+      while (!connected && !connectionEstablisher.isStopped()) {
 
         if (reconnectionRejected) {
           if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
