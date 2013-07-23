@@ -28,13 +28,19 @@ public class AsyncToolkitInitializer {
    * waits until the toolkit is initialized and returns the toolkit.
    */
   public ToolkitInternal getToolkit() {
+    return getToolkit(true);
+  }
+  
+  private ToolkitInternal getToolkit(boolean abortable) {
     boolean interrupted = false;
     try {
       while (true) {
         try {
           return toolkitDelegateFutureTask.get();
         } catch (InterruptedException e) {
-          handleInterruptedException(e);
+          if (abortable) {
+            handleInterruptedException(e);
+          }
           interrupted = true;
         } catch (ExecutionException e) {
           throw new NonStopToolkitInstantiationException(e.getCause());
@@ -47,13 +53,10 @@ public class AsyncToolkitInitializer {
 
   /**
    * returns toolkit If initialized or Null
-   * 
-   * @throws Exception
-   * @throws InterruptedException
    */
   public ToolkitInternal getToolkitOrNull() {
     if (toolkitDelegateFutureTask.isDone()) {
-      return getToolkit();
+      return getToolkit(false);
     } else {
       return null;
     }
