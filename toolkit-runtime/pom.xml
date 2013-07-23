@@ -370,8 +370,6 @@
 							<artifactSet>
 								<includes>
 									<include>org.terracotta.internal:toolkit-express-impl</include>
-									<include>org.terracotta.toolkit:terracotta-toolkit-api</include>
-									<include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
 									<include>org.terracotta.internal:build-data</include>
 								</includes>
 							</artifactSet>
