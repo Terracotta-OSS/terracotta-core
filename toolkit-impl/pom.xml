@@ -30,13 +30,8 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.toolkit</groupId>
-      <artifactId>terracotta-toolkit-api</artifactId>
-      <version>${toolkit-api.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.toolkit</groupId>
       <artifactId>terracotta-toolkit-api-internal</artifactId>
-      <version>${toolkit-api.version}</version>
+      <version>${toolkit-api-internal.version}</version>
     </dependency>
     <!-- Use ehcache-core to avoid a dependency cycle with 'ehcache' -->
     <dependency>

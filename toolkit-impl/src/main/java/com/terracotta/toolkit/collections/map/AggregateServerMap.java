@@ -481,7 +481,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       serverMap.destroy();
     }
     try {
-      schemaCreator.call().destroy();
+      getSearchSchema().destroy();
     } catch (Exception e) {
       throw new ToolkitRuntimeException(e);
     }
@@ -888,17 +888,27 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
+  public void setAttributeExtractor(ToolkitAttributeExtractor<K, V> attrExtractor) {
     // This race is okay to have, the only reason for the conditional is to avoid calling call() below
     attributeExtractor = attrExtractor;
     if (attrSchema.get() == null) {
       try {
-        attrSchema.compareAndSet(null, schemaCreator.call());
+        attrSchema.compareAndSet(null, getSearchSchema());
       } catch (Exception e) {
         throw new ToolkitRuntimeException(e);
       }
     }
     registerServerMapAttributeExtractor();
+  }
+
+  private ToolkitMap<String, String> getSearchSchema() throws Exception {
+    ToolkitMap<String, String> schema;
+    if (attributeExtractor instanceof ToolkitAttributeExtractorInternal) {
+      schema = ((ToolkitAttributeExtractorInternal) attributeExtractor).createAttributeMap();
+    } else {
+      schema = schemaCreator.call();
+    }
+    return schema;
   }
 
   private void registerServerMapAttributeExtractor() {
