@@ -21,14 +21,8 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.toolkit</groupId>
-      <artifactId>terracotta-toolkit-api</artifactId>
-      <version>${toolkit-api.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.toolkit</groupId>
       <artifactId>terracotta-toolkit-api-internal</artifactId>
-      <version>${toolkit-api.version}</version>
+      <version>${toolkit-api-internal.version}</version>
     </dependency>
     <dependency>
       <!-- XXX: This should really be a dependency on the core TC Client API -->
