@@ -1265,10 +1265,15 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public void cleanupOnDestroy() {
+    disposeLocally();
+  }
+
+  @Override
+  protected void doLogicalDestroy() {
+    super.doLogicalDestroy();
     MetaData destroyMetadata = createBaseMetaData();
     destroyMetadata.set(SearchMetaData.COMMAND, SearchCommand.DESTROY);
     addMetaData(destroyMetadata);
-    disposeLocally();
   }
 
   @Override
