@@ -163,8 +163,9 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
     @Override
     public void nodeError(DsoClusterEvent event) {
-      listener.onClusterEvent(translateEvent(event, Type.NODE_ERROR,
-                                             "NODE_ERROR: Node can never join back to the cluster"));
+      listener
+          .onClusterEvent(translateEvent(event, Type.NODE_ERROR,
+                                         "NODE_ERROR: Rejoin is not possible: Either Rejoin rejected or Rejoin not enabled"));
     }
 
     @Override
