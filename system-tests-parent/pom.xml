@@ -409,10 +409,28 @@
       <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
-        <skipTests>false</skipTests>
       </properties>     
       <build>
         <plugins>
+          <plugin>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections-maven</artifactId>
+            <version>0.9.9-RC1</version>
+            <configuration>
+              <scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
+              <destinations>${project.build.directory}/reflections.xml</destinations>
+              <tests>true</tests>
+              <parallel>true</parallel>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>reflections</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+              </execution>
+            </executions>
+          </plugin>        
           <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>

@@ -4,8 +4,12 @@
  */
 package com.tc.stats;
 
+import org.junit.experimental.categories.Category;
+import org.terracotta.test.categories.CheckShorts;
+
 import junit.framework.TestCase;
 
+@Category(CheckShorts.class)
 public class LossyStackTest extends TestCase {
 
   public void testException() {

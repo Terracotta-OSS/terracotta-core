@@ -729,10 +729,30 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections-maven</artifactId>
+            <version>0.9.9-RC1</version>
+            <configuration>
+              <scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
+              <destinations>${project.build.directory}/reflections.xml</destinations>
+              <tests>true</tests>
+              <parallel>true</parallel>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>reflections</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
             <configuration>
               <groups>org.terracotta.test.categories.CheckShorts</groups>
+              <failIfNoTests>false</failIfNoTests>
             </configuration>
           </plugin>
         </plugins>      
