@@ -7,17 +7,19 @@ import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopToolkitInstantiationException;
 import org.terracotta.toolkit.object.ToolkitObject;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.concurrent.ThreadUtil;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookupAsync;
 import com.terracotta.toolkit.nonstop.NonStopContext;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -29,11 +31,14 @@ public class NonStopInitializationService<T extends ToolkitObject> {
   private static final String   CORE_POOL_SIZE_CONFIG_STRING  = "com.tc.non.stop.toolkit.threadpool.core.size";
   private static final String   MAX_POOL_SIZE_CONFIG_STRING   = "com.tc.non.stop.toolkit.threadpool.max.size";
   private static final String   KEEP_ALIVE_TIME_CONFIG_STRING = "com.tc.non.stop.toolkit.threadpool.keep.alive";
-  private static final String   QUEUE_SIZE_CONFIG_STRING      = "com.tc.non.stop.toolkit.threadpool.queue.size";
+  private static final String   MAX_RETRIES_STRING               = "com.tc.non.stop.toolkit.initialization.max.retries";
+  private static final String   MAX_RETRY_TIMEOUT_MILLIS_STRING  = "com.tc.non.stop.toolkit.initialization.max.timeout.retries";
+
   private static final int      CORE_POOL_SIZE_DEFAULT  = 5;
   private static final int      MAX_POOL_SIZE_DEFAULT   = 50;
   private static final int      KEEP_ALIVE_TIME_DEFAULT = 60;
-  private static final int      QUEUE_SIZE_DEFAULT      = 100;
+  private static final int      MAX_RETRIES_DEFAULT              = 10;
+  private static final long     MAX_RETRY_TIMEOUT_MILLIS_DEFAULT = 300;
 
   private final ExecutorService threadPool;
   private final NonStopContext  context;
@@ -57,11 +62,33 @@ public class NonStopInitializationService<T extends ToolkitObject> {
   public void initialize(final AbstractToolkitObjectLookupAsync<T> toolkitObjectLookup,
                          NonStopConfiguration nonStopConfiguration) {
     if (nonStopConfiguration.isEnabled()) {
+
       // Create a separate Thread for creating toolkit object
       Callable<Boolean> callable = new Callable<Boolean>() {
+
         @Override
         public Boolean call() throws Exception {
-          return toolkitObjectLookup.initialize();
+
+          boolean result = false;
+          boolean recoverableException = false;
+          int retryCount = Integer.getInteger(MAX_RETRIES_STRING, MAX_RETRIES_DEFAULT);
+
+          do {
+            recoverableException = false;
+            try {
+              result = toolkitObjectLookup.initialize();
+            } catch (RejoinException e) {
+              LOGGER.error("Rejoin Exception", e);
+              recoverableException = retryCount-- > 0;
+              if (!recoverableException) {
+                throw e;
+              }
+              LOGGER.debug("Retrying NonStopServiceInitialization => Retry Count : " + retryCount);
+              waitForNextRetry();
+            }
+          } while (recoverableException);
+
+          return result;
         }
       };
 
@@ -77,11 +104,9 @@ public class NonStopInitializationService<T extends ToolkitObject> {
 
 
   /**
-   * This method holds the calling thread until the given Future returns the result
-   * or the Cluster operations get/are disabled.
-   * 
-   * In case the Cluster operations get disabled while waiting, the method call returns
-   * honoring the nonstop timeout.
+   * This method holds the calling thread until the given Future returns the result or the Cluster operations get/are
+   * disabled. In case the Cluster operations get disabled while waiting, the method call returns honoring the nonstop
+   * timeout.
    * 
    * @throws NonStopToolkitInstantiationException if any exception is thrown by the Future task.
    */
@@ -105,7 +130,7 @@ public class NonStopInitializationService<T extends ToolkitObject> {
           // Retry if operations are enabled
         }
       } while (!initializationCompletd && areOperationsEnabled());
-
+  
     } finally {
       if (interrupted) Thread.currentThread().interrupt();
     }
@@ -115,17 +140,20 @@ public class NonStopInitializationService<T extends ToolkitObject> {
     }
   }
 
-
   private boolean areOperationsEnabled() {
     return context.getNonStopClusterListener().areOperationsEnabled();
   }
 
+  private boolean waitForNextRetry() {
+    long sleepTime = Long.getLong(MAX_RETRY_TIMEOUT_MILLIS_STRING, MAX_RETRY_TIMEOUT_MILLIS_DEFAULT);
+    ThreadUtil.reallySleep(sleepTime); // delay between retry attempts
+    return true;
+  }
 
   private ExecutorService getThreadPool() {
     int corePoolSize = Integer.getInteger(CORE_POOL_SIZE_CONFIG_STRING, CORE_POOL_SIZE_DEFAULT);
     int maxPoolSize = Integer.getInteger(MAX_POOL_SIZE_CONFIG_STRING, MAX_POOL_SIZE_DEFAULT);
     int keepAliveTime = Integer.getInteger(KEEP_ALIVE_TIME_CONFIG_STRING, KEEP_ALIVE_TIME_DEFAULT);
-    int queueSize = Integer.getInteger(QUEUE_SIZE_CONFIG_STRING, QUEUE_SIZE_DEFAULT);
 
     ThreadFactory daemonThreadFactory = new ThreadFactory() {
       private final AtomicInteger threadID = new AtomicInteger();
@@ -138,7 +166,7 @@ public class NonStopInitializationService<T extends ToolkitObject> {
     };
 
     return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS,
-                                  new ArrayBlockingQueue<Runnable>(queueSize), daemonThreadFactory);
+                                  new LinkedBlockingQueue<Runnable>(), daemonThreadFactory);
   }
 
 }
