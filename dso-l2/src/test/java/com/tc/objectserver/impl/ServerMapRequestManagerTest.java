@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
-import static org.junit.matchers.JUnitMatchers.hasItem;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
