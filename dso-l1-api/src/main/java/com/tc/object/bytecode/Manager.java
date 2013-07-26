@@ -398,4 +398,6 @@ public interface Manager extends TerracottaLocking {
   void unregisterServerEventListener(ServerEventDestination destination);
 
   int getRejoinCount();
+
+  boolean isRejoinInProgress();
 }

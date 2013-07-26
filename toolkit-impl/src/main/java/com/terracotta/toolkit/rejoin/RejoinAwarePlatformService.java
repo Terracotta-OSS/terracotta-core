@@ -57,6 +57,7 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   @Override
   public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
+    assertRejoinNotInProgress();
     try {
       delegate.beginAtomicTransaction(lock, level);
     } catch (PlatformRejoinException e) {
@@ -520,6 +521,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public int getRejoinCount() {
     return delegate.getRejoinCount();
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    return delegate.isRejoinInProgress();
   }
 
 }

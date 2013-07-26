@@ -15,4 +15,6 @@ public interface RejoinManagerInternal extends RejoinManager {
   boolean thisNodeJoined(ClientID newNodeId);
 
   int getRejoinCount();
+
+  boolean isRejoinInProgress();
 }

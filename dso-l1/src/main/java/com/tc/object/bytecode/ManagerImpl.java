@@ -114,7 +114,7 @@ public class ManagerImpl implements Manager {
   private final PlatformServiceImpl                   platformService;
   private final RejoinManagerInternal                 rejoinManager;
   private final UUID                                  uuid;
-  private ServerEventListenerManager serverEventListenerManager;
+  private ServerEventListenerManager                  serverEventListenerManager;
   private final String                                L1VMShutdownHookName      = "L1 VM Shutdown Hook";
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
@@ -1005,7 +1005,11 @@ public class ManagerImpl implements Manager {
 
   @Override
   public int getRejoinCount() {
-
     return rejoinManager.getRejoinCount();
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    return rejoinManager.isRejoinInProgress();
   }
 }

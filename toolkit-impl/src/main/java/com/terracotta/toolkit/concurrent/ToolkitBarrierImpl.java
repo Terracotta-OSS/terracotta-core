@@ -84,7 +84,7 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
 
   @Override
   public void rejoinCompleted() {
-    status.incrementRejoinCount();
+    //
   }
 
   @Override

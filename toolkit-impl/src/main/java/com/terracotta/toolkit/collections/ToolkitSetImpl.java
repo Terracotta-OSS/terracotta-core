@@ -32,7 +32,6 @@ public class ToolkitSetImpl<E> implements ToolkitSet<E>, RejoinAwareToolkitObjec
   @Override
   public void rejoinStarted() {
     toolkitMap.rejoinStarted();
-    status.incrementRejoinCount();
   }
 
   @Override

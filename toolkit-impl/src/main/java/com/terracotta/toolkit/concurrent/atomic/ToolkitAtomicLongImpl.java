@@ -50,7 +50,7 @@ public class ToolkitAtomicLongImpl implements ToolkitAtomicLong, RejoinCallback 
 
   @Override
   public void rejoinCompleted() {
-    status.incrementRejoinCount();
+    //
   }
 
   @Override

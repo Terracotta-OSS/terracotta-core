@@ -338,4 +338,8 @@ public class PlatformServiceImpl implements PlatformService {
   public int getRejoinCount() {
     return manager.getRejoinCount();
   }
+
+  public boolean isRejoinInProgress() {
+    return manager.isRejoinInProgress();
+  }
 }

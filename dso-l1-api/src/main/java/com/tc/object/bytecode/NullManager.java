@@ -431,11 +431,6 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public Object registerObjectByNameIfAbsent(String name, Object object) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
     throw new ImplementMe();
   }
@@ -485,5 +480,15 @@ public class NullManager implements Manager {
   @Override
   public int getRejoinCount() {
     return 0;
+  }
+
+  @Override
+  public <T> T registerObjectByNameIfAbsent(String name, T object) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    throw new UnsupportedOperationException();
   }
 }

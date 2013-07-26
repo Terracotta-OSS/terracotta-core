@@ -347,6 +347,11 @@ public class ObjectStreamClassMappingTest {
       return 0;
     }
 
+    @Override
+    public boolean isRejoinInProgress() {
+      return false;
+    }
+
   }
 
 }

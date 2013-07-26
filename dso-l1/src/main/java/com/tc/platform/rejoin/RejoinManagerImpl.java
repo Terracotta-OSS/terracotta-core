@@ -91,13 +91,21 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
                 + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
-      if (rejoinInProgress.compareAndSet(true, false)) {
-        // take care of any cleanup/re-initialization
-        notifyRejoinComplete();
-        return true;
+      synchronized (rejoinInProgress) {
+        if (rejoinInProgress.get()) {
+          // take care of any cleanup/re-initialization
+          notifyRejoinComplete();
+          rejoinInProgress.set(false);
+          return true;
+        }
       }
     }
     return false;
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    return rejoinInProgress.get();
   }
 
   // only called by rejoin worker

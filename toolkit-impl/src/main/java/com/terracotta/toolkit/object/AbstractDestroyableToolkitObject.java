@@ -45,15 +45,12 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
   @Override
   public final void rejoinStarted() {
-    status.incrementRejoinCount();
-    status.setRejoinInProgress(true);
     doRejoinStarted();
   }
 
   @Override
   public final void rejoinCompleted() {
     doRejoinCompleted();
-    status.setRejoinInProgress(false);
   }
 
   protected abstract void doRejoinStarted();

@@ -32,9 +32,11 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     this.service = service;
   }
 
-  private void assertLockStateBeforeRejoin() {
+  private void assertLockAndRejoinState() {
     if (service.isLockedBeforeRejoin()) { throw new RejoinException(
                                                                     "Lock state not valid: lock was taken before rejoin"); }
+    if (service.isRejoinInProgress()) { throw new RejoinException(
+                                                                  "Operation can't be performed, as rejoin is in progress"); }
   }
 
   @Override
@@ -189,7 +191,7 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
 
   @Override
   public void logicalInvoke(int method, String methodSignature, Object[] params) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.logicalInvoke(method, methodSignature, params);
   }
 
@@ -256,109 +258,109 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
 
   @Override
   public void doLogicalRemove(TCServerMap map, Object lockID, Object key) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalRemove(map, lockID, key);
   }
 
   @Override
   public void doLogicalRemoveVersioned(final TCServerMap map, final Object lockID, final Object key, final long version) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalRemoveVersioned(map, lockID, key, version);
   }
 
   @Override
   public void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalRemoveUnlocked(map, key);
   }
 
   @Override
   public void doLogicalRemoveUnlockedVersioned(final TCServerMap map, final Object key, final long version) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalRemoveUnlockedVersioned(map, key, version);
   }
 
   @Override
   public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.doLogicalRemoveUnlocked(map, key, value);
   }
 
   @Override
   public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.doLogicalPutIfAbsentUnlocked(map, key, value);
   }
 
   @Override
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.doLogicalReplaceUnlocked(map, key, current, newValue);
   }
 
   @Override
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.doLogicalReplaceUnlocked(map, key, newValue);
   }
 
   @Override
   public void doLogicalPut(Object lockID, Object key, Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalPut(lockID, key, value);
   }
 
   @Override
   public void doLogicalPutVersioned(final TCServerMap map, final Object lockID, final Object key, final Object value, final long version) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalPutVersioned(map, lockID, key, value, version);
   }
 
   @Override
   public void doClear(TCServerMap map) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doClear(map);
   }
 
   @Override
   public void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalPutUnlocked(map, key, value);
   }
 
   @Override
   public void doLogicalPutUnlockedVersioned(final TCServerMap map, final Object key, final Object value, final long version) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalPutUnlockedVersioned(map, key, value, version);
   }
 
   @Override
   public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.getValueUnlocked(map, key);
   }
 
   @Override
   public Map getAllValuesUnlocked(Map mapIdToKeysMap) throws AbortedOperationException {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.getAllValuesUnlocked(mapIdToKeysMap);
   }
 
   @Override
   public Set keySet(TCServerMap map) throws AbortedOperationException {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.keySet(map);
   }
 
   @Override
   public Object getValue(TCServerMap map, Object lockID, Object key) throws AbortedOperationException {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.getValue(map, lockID, key);
   }
 
   @Override
   public long getAllSize(TCServerMap[] maps) throws AbortedOperationException {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.getAllSize(maps);
   }
 
@@ -464,19 +466,19 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
 
   @Override
   public void doLogicalSetLastAccessedTime(Object key, Object value, long lastAccessedTime) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalSetLastAccessedTime(key, value, lastAccessedTime);
   }
 
   @Override
   public void doLogicalExpire(final Object lockID, final Object key, final Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     delegate.doLogicalExpire(lockID, key, value);
   }
 
   @Override
   public boolean doLogicalExpireUnlocked(final TCServerMap map, final Object key, final Object value) {
-    assertLockStateBeforeRejoin();
+    assertLockAndRejoinState();
     return delegate.doLogicalExpireUnlocked(map, key, value);
   }
 

@@ -11,7 +11,6 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
-import com.terracotta.toolkit.util.ToolkitObjectStatusImpl;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -49,8 +48,6 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
   // capacity is immutable, so let's cache it locally
   private final int                             capacity;
 
-  private final ToolkitObjectStatusImpl         status;
-
   public ToolkitMapBlockingQueue(final String name, final ToolkitStore<String, E> map, final ToolkitReadWriteLock lock) {
     this(name, Integer.MAX_VALUE, map, lock);
   }
@@ -78,8 +75,6 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
     this.lock = lock;
     this.notEmptyOrFull = writeLock().getCondition();
     this.capacity = capacity;
-    this.status = new ToolkitObjectStatusImpl();
-
     final Integer oldCapacity = (Integer) map.get(CAPACITY_KEY);
     if (oldCapacity == null) {
       initNewMap();
@@ -750,11 +745,12 @@ public class ToolkitMapBlockingQueue<E> implements ToolkitBlockingQueue<E>, Rejo
 
   @Override
   public void rejoinStarted() {
-    status.incrementRejoinCount();
+    //
   }
 
   @Override
   public void rejoinCompleted() {
+    //
   }
 
   private final class SimpleMapBlockingQueueIterator implements Iterator<E> {

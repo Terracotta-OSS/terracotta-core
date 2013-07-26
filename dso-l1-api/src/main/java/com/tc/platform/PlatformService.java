@@ -123,4 +123,6 @@ public interface PlatformService {
   void unregisterServerEventListener(ServerEventDestination destination);
 
   int getRejoinCount();
+
+  boolean isRejoinInProgress();
 }

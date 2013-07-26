@@ -3,19 +3,16 @@
  */
 package com.terracotta.toolkit.util;
 
+import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 public class ToolkitObjectStatusImpl implements ToolkitObjectStatus {
-  private volatile int     rejoinCount;
-  private volatile boolean isDestroyed;
-  private volatile boolean isRejoinInProgress;
+  private volatile boolean      isDestroyed;
+  private final PlatformService service;
 
-  public int getRejoinCount() {
-    return rejoinCount;
-  }
-
-  public void incrementRejoinCount() {
-    this.rejoinCount++;
+  public ToolkitObjectStatusImpl() {
+    service = PlatformServiceProvider.getPlatformService();
   }
 
   public void setDestroyed() {
@@ -23,13 +20,9 @@ public class ToolkitObjectStatusImpl implements ToolkitObjectStatus {
     this.isDestroyed = true;
   }
 
-  public void setRejoinInProgress(boolean val) {
-    isRejoinInProgress = val;
-  }
-
   @Override
   public int getCurrentRejoinCount() {
-    return rejoinCount;
+    return service.getRejoinCount();
   }
 
   @Override
@@ -39,7 +32,7 @@ public class ToolkitObjectStatusImpl implements ToolkitObjectStatus {
 
   @Override
   public boolean isRejoinInProgress() {
-    return isRejoinInProgress;
+    return service.isRejoinInProgress();
   }
 
 }
