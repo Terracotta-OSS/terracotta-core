@@ -8,8 +8,8 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
+import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -245,4 +245,28 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     throw new UnsupportedOperationException("Implement me!");
   }
+
+  @Override
+  public boolean isBulkLoadEnabled() {
+    throw new UnsupportedOperationException("Implement me!");
+
+  }
+
+  @Override
+  public boolean isNodeBulkLoadEnabled() {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void setNodeBulkLoadEnabled(boolean enabledBulkLoad) {
+    throw new UnsupportedOperationException("Implement me!");
+
+  }
+
+  @Override
+  public void waitUntilBulkLoadComplete() throws InterruptedException {
+    throw new UnsupportedOperationException("Implement me!");
+
+  }
+
 }

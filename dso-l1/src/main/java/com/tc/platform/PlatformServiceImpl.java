@@ -270,6 +270,11 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
+  public void unregisterBeforeShutdownHook(Runnable hook) {
+    manager.unregisterBeforeShutdownHook(hook);
+  }
+
+  @Override
   public String getUUID() {
     return manager.getUUID();
   }

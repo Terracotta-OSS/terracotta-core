@@ -327,4 +327,25 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
     return immutationBehaviourResolver.unlockedGetAll(keys, quiet);
   }
+
+  @Override
+  public boolean isBulkLoadEnabled() {
+    return immutationBehaviourResolver.isBulkLoadEnabled();
+  }
+
+  @Override
+  public boolean isNodeBulkLoadEnabled() {
+    return immutationBehaviourResolver.isNodeBulkLoadEnabled();
+  }
+
+  @Override
+  public void setNodeBulkLoadEnabled(boolean enabledBulkLoad) {
+    mutationBehaviourResolver.setNodeBulkLoadEnabled(enabledBulkLoad);
+
+  }
+
+  @Override
+  public void waitUntilBulkLoadComplete() throws InterruptedException {
+    immutationBehaviourResolver.waitUntilBulkLoadComplete();
+  }
 }

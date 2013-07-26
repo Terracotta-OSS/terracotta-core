@@ -356,4 +356,24 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
     return getDelegate().unlockedGetAll(keys, quiet);
   }
+
+  @Override
+  public boolean isBulkLoadEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isNodeBulkLoadEnabled() {
+    return false;
+  }
+
+  @Override
+  public void setNodeBulkLoadEnabled(boolean enabledBulkLoad) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void waitUntilBulkLoadComplete() throws InterruptedException {
+    // do nothing
+  }
 }

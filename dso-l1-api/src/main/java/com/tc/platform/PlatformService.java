@@ -84,6 +84,8 @@ public interface PlatformService {
 
   void registerBeforeShutdownHook(Runnable hook);
 
+  void unregisterBeforeShutdownHook(Runnable hook);
+
   String getUUID();
 
   SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,

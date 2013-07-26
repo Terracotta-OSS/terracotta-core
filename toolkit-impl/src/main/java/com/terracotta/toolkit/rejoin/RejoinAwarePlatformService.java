@@ -528,4 +528,14 @@ public class RejoinAwarePlatformService implements PlatformService {
     return delegate.isRejoinInProgress();
   }
 
+  @Override
+  public void unregisterBeforeShutdownHook(Runnable hook) {
+    assertRejoinNotInProgress();
+    try {
+      delegate.unregisterBeforeShutdownHook(hook);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+  }
+
 }

@@ -22,39 +22,43 @@ public interface TCPropertiesConsts {
       "l2.nha.mcast.enabled", "l2.nha.tcgroupcomm.response.timelimit", "net.core.recv.buffer", "net.core.send.buffer",
       "l2.objectmanager.loadObjectID.measure.performance", "console.showObjectID", "l2.lfu.debug.enabled",
       "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad", "l2.objectmanager.loadObjectID.fastLoad",
-      "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize", "l2.objectmanager.dgc.young.enabled",
-      "l2.objectmanager.dgc.young.frequencyInMillis", "l2.objectmanager.dgc.enterpriseMarkStageInterval",
-      "l2.objectmanager.dgc.faulting.optimization", "l2.cachemanager.enabled", "l2.cachemanager.logging.enabled",
-      "l2.cachemanager.leastCount", "l2.cachemanager.percentageToEvict", "l2.cachemanager.sleepInterval", "l2.cachemanager.criticalThreshold",
+      "ehcache.incoherent.putsBatchSize", "ehcache.incoherent.throttlePutsAtSize",
+      "l2.objectmanager.dgc.young.enabled", "l2.objectmanager.dgc.young.frequencyInMillis",
+      "l2.objectmanager.dgc.enterpriseMarkStageInterval", "l2.objectmanager.dgc.faulting.optimization",
+      "l2.cachemanager.enabled", "l2.cachemanager.logging.enabled", "l2.cachemanager.leastCount",
+      "l2.cachemanager.percentageToEvict", "l2.cachemanager.sleepInterval", "l2.cachemanager.criticalThreshold",
       "l2.cachemanager.threshold", "l2.cachemanager.monitorOldGenOnly", "l2.cachemanager.criticalObjectThreshold",
-      "l2.cachemanager.resourcePollInterval", "l2.objectmanager.deleteBatchSize",
-      "l2.objectmanager.cachePolicy", "l2.objectmanager.maxObjectsToCommit", "l2.objectmanager.maxObjectsInTxnObjGrouping",
-      "l2.objectmanager.fault.logging.enabled", "l2.objectmanager.flush.logging.enabled", "l2.objectmanager.loadObjectID.longsPerDiskEntry",
-      "l2.objectmanager.loadObjectID.checkpoint.changes", "l2.objectmanager.loadObjectID.checkpoint.maxlimit",
-      "l2.objectmanager.loadObjectID.checkpoint.timeperiod", "l2.data.backup.throttle.timeInMillis", "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry",
+      "l2.cachemanager.resourcePollInterval", "l2.objectmanager.deleteBatchSize", "l2.objectmanager.cachePolicy",
+      "l2.objectmanager.maxObjectsToCommit", "l2.objectmanager.maxObjectsInTxnObjGrouping",
+      "l2.objectmanager.fault.logging.enabled", "l2.objectmanager.flush.logging.enabled",
+      "l2.objectmanager.loadObjectID.longsPerDiskEntry", "l2.objectmanager.loadObjectID.checkpoint.changes",
+      "l2.objectmanager.loadObjectID.checkpoint.maxlimit", "l2.objectmanager.loadObjectID.checkpoint.timeperiod",
+      "l2.data.backup.throttle.timeInMillis", "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry",
       "l2.objectmanager.loadObjectID.measure.performance", "l2.objectmanager.loadObjectID.checkpoint.maxsleep",
-      "l2.seda.faultstage.threads", "l2.seda.flushstage.threads", "l2.seda.commitstage.threads", "l2.seda.gcdeletestage.threads",
-      "l2.berkeleydb.je.lock.timeout", "l2.berkeleydb.je.maxMemoryPercent", "l2.berkeleydb.je.lock.nLockTables",
-      "l2.berkeleydb.je.cleaner.bytesInterval", "l2.berkeleydb.je.checkpointer.bytesInterval", "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage",
-      "l2.berkeleydb.je.cleaner.lookAheadCacheSize", "l2.berkeleydb.je.cleaner.minAge", "l2.derbydb.derby.storage.pageSize",
-      "l2.derbydb.derby.storage.pageCacheSize", "l2.derbydb.derby.system.durability", "l2.derbydb.derby.stream.error.method",
+      "l2.seda.faultstage.threads", "l2.seda.flushstage.threads", "l2.seda.commitstage.threads",
+      "l2.seda.gcdeletestage.threads", "l2.berkeleydb.je.lock.timeout", "l2.berkeleydb.je.maxMemoryPercent",
+      "l2.berkeleydb.je.lock.nLockTables", "l2.berkeleydb.je.cleaner.bytesInterval",
+      "l2.berkeleydb.je.checkpointer.bytesInterval", "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage",
+      "l2.berkeleydb.je.cleaner.lookAheadCacheSize", "l2.berkeleydb.je.cleaner.minAge",
+      "l2.derbydb.derby.storage.pageSize", "l2.derbydb.derby.storage.pageCacheSize",
+      "l2.derbydb.derby.system.durability", "l2.derbydb.derby.stream.error.method",
       "l2.derbydb.derby.maxMemoryPercent", "l2.derbydb.derby.storage.logBufferSize", "l2.derbydb.logDevice",
-      "l2.derbydb.derby.storage.checkpointInterval", "l2.derbydb.derby.storage.logSwitchInterval", "l2.derbydb.derby.locks.escalationThreshold",
-      "l2.derbydb.derby.locks.deadlockTimeout", "l2.derbydb.derby.locks.waitTimeout", "l2.derbydb.derby.locks.deadlockTrace",
-      "l2.lfu.agingFactor", "l2.lfu.recentlyAccessedIgnorePercentage", "aw.asmclassinfo.ignore.errors", "l2.offHeapCache.operator.event.generator.threshold",
-      "l2.offHeapCache.operator.event.generator.sleepInterval", "l2.offHeapCache.allocation.slow", "l2.offHeapCache.allocation.critical",
+      "l2.derbydb.derby.storage.checkpointInterval", "l2.derbydb.derby.storage.logSwitchInterval",
+      "l2.derbydb.derby.locks.escalationThreshold", "l2.derbydb.derby.locks.deadlockTimeout",
+      "l2.derbydb.derby.locks.waitTimeout", "l2.derbydb.derby.locks.deadlockTrace", "l2.lfu.agingFactor",
+      "l2.lfu.recentlyAccessedIgnorePercentage", "aw.asmclassinfo.ignore.errors",
+      "l2.offHeapCache.operator.event.generator.threshold", "l2.offHeapCache.operator.event.generator.sleepInterval",
+      "l2.offHeapCache.allocation.slow", "l2.offHeapCache.allocation.critical",
       "l2.offHeapCache.allocation.critical.halt", "l2.offHeapCache.min.page.size", "l2.offHeapCache.max.page.size",
       "l2.offHeapCache.max.page.count", "l2.offHeapCache.map.tableSize", "l2.offHeapCache.map.concurrency",
       "l2.offHeapCache.operator.event.generator.threshold", "l2.offHeapCache.operator.event.generator.sleepInterval",
       "l2.offHeapCache.max.chunk.size", "l2.offHeapCache.min.chunk.size", "l2.offHeapCache.object.initialDataSize",
       "l2.offHeapCache.object.tableSize", "l2.offHeapCache.object.concurrency",
-      "l2.offHeapCache.temp.swap.flush.to.disk.count",
-      "l2.offHeapCache.temp.swap.throttle.megaBytes", "l2.offHeapCache.skip.jvmarg.check",
-      "l1.cachemanager.enabled", "l1.cachemanager.logging.enabled",
+      "l2.offHeapCache.temp.swap.flush.to.disk.count", "l2.offHeapCache.temp.swap.throttle.megaBytes",
+      "l2.offHeapCache.skip.jvmarg.check", "l1.cachemanager.enabled", "l1.cachemanager.logging.enabled",
       "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
       "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
-      "l1.cachemanager.criticalObjectThreshold"
-  };
+      "l1.cachemanager.criticalObjectThreshold"                                            };
 
   /*********************************************************************************************************************
    * <code>
@@ -67,11 +71,11 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
-  public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
-  public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
-  public static final String L2_EVICTION_HALTTHRESHOLD                                  = "l2.eviction.haltThreshold";
-  public static final String L2_EVICTION_CRITICALUPPERBOUND                             = "l2.eviction.criticalUpperbound";
-  public static final String L2_EVICTION_CRITICALLOWERBOUND                             = "l2.eviction.criticalLowerbound";
+  public static final String L2_EVICTION_CRITICALTHRESHOLD                                  = "l2.eviction.criticalThreshold";
+  public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                            = "l2.eviction.resourcePollInterval";
+  public static final String L2_EVICTION_HALTTHRESHOLD                                      = "l2.eviction.haltThreshold";
+  public static final String L2_EVICTION_CRITICALUPPERBOUND                                 = "l2.eviction.criticalUpperbound";
+  public static final String L2_EVICTION_CRITICALLOWERBOUND                                 = "l2.eviction.criticalLowerbound";
 
   /*********************************************************************************************************************
    * <code>
@@ -158,12 +162,17 @@ public interface TCPropertiesConsts {
    * </code>
    * ******************************************************************************************************************
    */
-  public static final String L2_FRS_PREFIX                        = "l2.frs";
-  public static final String L2_FRS_COMPACTOR_POLICY              = L2_FRS_PREFIX + ".compactor.policy";
-  public static final String L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD     = L2_FRS_PREFIX + ".compactor.lsnGap.minLoad";
-  public static final String L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD     = L2_FRS_PREFIX + ".compactor.lsnGap.maxLoad";
-  public static final String L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD = L2_FRS_PREFIX + ".compactor.sizeBased.threshold";
-  public static final String L2_FRS_COMPACTOR_SIZEBASED_AMOUNT    = L2_FRS_PREFIX + ".compactor.sizeBased.amount";
+  public static final String L2_FRS_PREFIX                                                  = "l2.frs";
+  public static final String L2_FRS_COMPACTOR_POLICY                                        = L2_FRS_PREFIX
+                                                                                              + ".compactor.policy";
+  public static final String L2_FRS_COMPACTOR_LSNGAP_MIN_LOAD                               = L2_FRS_PREFIX
+                                                                                              + ".compactor.lsnGap.minLoad";
+  public static final String L2_FRS_COMPACTOR_LSNGAP_MAX_LOAD                               = L2_FRS_PREFIX
+                                                                                              + ".compactor.lsnGap.maxLoad";
+  public static final String L2_FRS_COMPACTOR_SIZEBASED_THRESHOLD                           = L2_FRS_PREFIX
+                                                                                              + ".compactor.sizeBased.threshold";
+  public static final String L2_FRS_COMPACTOR_SIZEBASED_AMOUNT                              = L2_FRS_PREFIX
+                                                                                              + ".compactor.sizeBased.amount";
 
   /*********************************************************************************************************************
    * <code>
@@ -311,7 +320,7 @@ public interface TCPropertiesConsts {
    * criticalThreshold   : % of memory used after which memory manager will evict aggressively
    * </code>
    ********************************************************************************************************************/
-  public static final String L1_MEMORYMANAGER_CRITICAL_THRESHOLD                             = "l1.memorymanager.criticalThreshold";
+  public static final String L1_MEMORYMANAGER_CRITICAL_THRESHOLD                            = "l1.memorymanager.criticalThreshold";
 
   /*********************************************************************************************************************
    * <code>
@@ -845,13 +854,26 @@ public interface TCPropertiesConsts {
   public static final String FILESYSTEM_BLOCK_SIZE                                          = "offHeapFilesystem.file.blockSize";
   public static final String FILESYSTEM_MAX_DATA_PAGE_SIZE                                  = "offHeapFileSystem.file.maxDataPageSize";
 
-
   /*********************************************************************************************************************
    * <code>
    * Section :  Server Event settings
    * </code>
    ********************************************************************************************************************/
-  String L2_SERVER_EVENT_BATCHER_INTERVAL_MS                                                = "l2.serverEvent.batcher.intervalInMillis";
-  String L2_SERVER_EVENT_BATCHER_QUEUE_SIZE                                                 = "l2.serverEvent.batcher.queueSize";
+  String                     L2_SERVER_EVENT_BATCHER_INTERVAL_MS                            = "l2.serverEvent.batcher.intervalInMillis";
+  String                     L2_SERVER_EVENT_BATCHER_QUEUE_SIZE                             = "l2.serverEvent.batcher.queueSize";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  BulkLoad Settings
+   * toolkit.bulkload.logging               - Enable logging of Bulkload
+   * toolkit.bulkload.minbatchbytesize      - Minimum batch size send to L2
+   * toolkit.bulkload.throttle.timeInmillis - Time in millis used for throttling
+   * toolkit.bulkload.throttle.threshold    - Maxmium size of buffer after which throttling will happen
+   * </code>
+   ********************************************************************************************************************/
+  public static final String TOOLKIT_BULKLOAD_LOGGING_ENABLED                               = "toolkit.bulkload.logging";
+  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_BYTE_SIZE                      = "toolkit.bulkload.minbatchbytesize";
+  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_BATCH_TIME_MILLIS                    = "toolkit.bulkload.throttle.timeInmillis";
+  public static final String TOOLKIT_LOCAL_BUFFER_PUTS_THROTTLE_BYTE_SIZE                   = "toolkit.bulkload.throttle.threshold";
 
 }

@@ -45,6 +45,12 @@ public class ClientShutdownManager {
     }
   }
 
+  public void unregisterBeforeShutdownHook(Runnable beforeShutdownHook) {
+    synchronized (beforeShutdown) {
+      beforeShutdown.remove(beforeShutdownHook);
+    }
+  }
+
   private void executeBeforeShutdownHooks() {
     Runnable[] beforeShutdowns;
     synchronized (beforeShutdown) {

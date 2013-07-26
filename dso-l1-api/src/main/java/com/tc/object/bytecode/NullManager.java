@@ -356,6 +356,11 @@ public class NullManager implements Manager {
   }
 
   @Override
+  public void unregisterBeforeShutdownHook(Runnable beforeShutdownHook) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public MetaDataDescriptor createMetaDataDescriptor(String category) {
     throw new UnsupportedOperationException();
   }

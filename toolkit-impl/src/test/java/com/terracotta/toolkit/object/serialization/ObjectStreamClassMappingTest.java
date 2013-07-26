@@ -352,6 +352,10 @@ public class ObjectStreamClassMappingTest {
       return false;
     }
 
+    @Override
+    public void unregisterBeforeShutdownHook(Runnable hook) {
+      //
+    }
   }
 
 }

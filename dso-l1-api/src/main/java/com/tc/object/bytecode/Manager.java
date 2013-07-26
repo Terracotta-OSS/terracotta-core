@@ -333,6 +333,8 @@ public interface Manager extends TerracottaLocking {
    */
   public void registerBeforeShutdownHook(Runnable beforeShutdownHook);
 
+  public void unregisterBeforeShutdownHook(Runnable beforeShutdownHook);
+
   MetaDataDescriptor createMetaDataDescriptor(String category);
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,

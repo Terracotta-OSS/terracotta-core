@@ -8,12 +8,15 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectServerMap;
+import com.tc.platform.PlatformService;
+import com.terracotta.toolkit.bulkload.BulkLoadToolkitCache;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
@@ -36,17 +39,20 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private volatile AggregateServerMap<K, V>        aggregateServerMap;
   private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
   private volatile ToolkitCacheImplInterface<K, V> localDelegate;
+  private volatile ToolkitCacheImplInterface<K, V> currentDelegate;
+  private volatile BulkLoadToolkitCache<K, V>      bulkloadCache;
   private final String                             name;
   private volatile OnGCCallable                    onGCCallable;
   // lock used to protect the state of activeDelegate and localDelegate.
   private final ReadWriteLock                      lock = new ReentrantReadWriteLock();
-
-  public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate) {
+  public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate,
+                          PlatformService platformService, ToolkitInternal toolkit) {
     super(factory);
     this.name = name;
     this.aggregateServerMap = delegate;
     this.activeDelegate = aggregateServerMap;
     this.localDelegate = aggregateServerMap;
+    this.bulkloadCache = new BulkLoadToolkitCache<K, V>(platformService, name, aggregateServerMap, toolkit);
     this.aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
     this.onGCCallable = new OnGCCallable(aggregateServerMap);
   }
@@ -71,8 +77,10 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void doRejoinStarted() {
     writeLock();
     try {
+      this.currentDelegate = this.activeDelegate;
       this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
       aggregateServerMap.rejoinStarted();
+      bulkloadCache.rejoinCleanUp();
     } finally {
       writeUnlock();
     }
@@ -84,8 +92,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     try {
       aggregateServerMap.rejoinCompleted();
       aggregateServerMap.setApplyDestroyCallback(getDestroyApplicator());
+      bulkloadCache.rejoinCompleted();
       if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
-        this.activeDelegate = aggregateServerMap;
+        this.activeDelegate = this.currentDelegate;
       } else {
         destroyApplicator.applyDestroy();
       }
@@ -554,7 +563,8 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime, final int customTTI, final int customTTL) {
+  public void unlockedPutNoReturnVersioned(final K k, final V v, final long version, final int createTime,
+                                           final int customTTI, final int customTTL) {
     activeDelegate.unlockedPutNoReturnVersioned(k, v, version, createTime, customTTI, customTTL);
   }
 
@@ -681,5 +691,40 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
       objectServerMap.clearAllLocalCacheInline();
       return null;
     }
+  }
+
+  @Override
+  public void setNodeBulkLoadEnabled(boolean enabledBulkLoad) {
+    lock.writeLock().lock();
+    try {
+      if (enabledBulkLoad && !isNodeBulkLoadEnabled()) {
+        this.activeDelegate = bulkloadCache;
+        this.localDelegate = bulkloadCache;
+        this.bulkloadCache.setNodeBulkLoadEnabled(enabledBulkLoad);
+      }
+
+      if (!enabledBulkLoad && isNodeBulkLoadEnabled()) {
+        this.activeDelegate = aggregateServerMap;
+        this.localDelegate = aggregateServerMap;
+        this.bulkloadCache.setNodeBulkLoadEnabled(enabledBulkLoad);
+      }
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void waitUntilBulkLoadComplete() throws InterruptedException {
+    bulkloadCache.waitUntilBulkLoadComplete();
+  }
+
+  @Override
+  public boolean isBulkLoadEnabled() {
+    return bulkloadCache.isBulkLoadEnabled();
+  }
+
+  @Override
+  public boolean isNodeBulkLoadEnabled() {
+    return bulkloadCache.isNodeBulkLoadEnabled();
   }
 }

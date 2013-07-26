@@ -294,6 +294,12 @@ public class ManagerImpl implements Manager {
       this.shutdownManager.registerBeforeShutdownHook(beforeShutdownHook);
     }
   }
+  @Override
+  public void unregisterBeforeShutdownHook(final Runnable beforeShutdownHook) {
+    if (this.shutdownManager != null) {
+      this.shutdownManager.unregisterBeforeShutdownHook(beforeShutdownHook);
+    }
+  }
 
   @Override
   public void stop() {
