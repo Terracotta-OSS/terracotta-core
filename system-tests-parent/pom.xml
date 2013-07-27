@@ -32,7 +32,7 @@
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
 
-    <maven-forge-plugin.version>1.1.1-SNAPSHOT</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.1.1</maven-forge-plugin.version>
     <surefire.version>2.15</surefire.version>
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
