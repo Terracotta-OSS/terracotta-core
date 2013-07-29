@@ -16,7 +16,6 @@ import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.NullTransactionProvider;
 import com.tc.objectserver.impl.ObjectManagerConfig;
-import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.util.Assert;
@@ -29,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
+import static org.mockito.Mockito.mock;
 
 public class GCStatsEventPublisherTest extends TestCase {
   protected long                           objectIDCounter     = 0;
@@ -50,7 +51,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
-    this.garbageCollectionManager = new TestGarbageCollectionManager();
+    this.garbageCollectionManager = mock(GarbageCollectionManager.class);
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true), this.objectManager,
                                                       new TestClientStateManager(), gcPublisher,

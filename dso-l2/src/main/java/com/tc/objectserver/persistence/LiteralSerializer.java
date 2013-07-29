@@ -308,6 +308,31 @@ public class LiteralSerializer extends Serializer<Object> {
       Class<?> toClass() {
         return CDSMValue.class;
       }
+    }, BOOLEAN {
+      @Override
+      public Boolean deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.get() != 0;
+      }
+
+      @Override
+      ByteBuffer serialize(final Object object) {
+        if (object instanceof Boolean) {
+          ByteBuffer buffer = ByteBuffer.allocate(2);
+          boolean b = (Boolean) object;
+          buffer.put((byte) ordinal()).put(b ? (byte) 1 : (byte) 0).flip();
+          return buffer;
+        } else {
+          throw new AssertionError();
+        }
+      }
+
+      @Override
+      Class<?> toClass() {
+        return Boolean.class;
+      }
     };
 
     abstract Object deserialize(ByteBuffer buffer);

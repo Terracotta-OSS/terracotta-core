@@ -6,7 +6,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
-import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.Transaction;
@@ -21,9 +20,6 @@ import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.test.TCTestCase;
-import com.tc.util.ObjectIDSet;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -46,8 +42,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     persistenceTransactionProvider = mock(PersistenceTransactionProvider.class);
     transaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(transaction);
-    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, true, false),
-        persistenceTransactionProvider);
+    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, true, false));
     gc = mock(GarbageCollector.class);
     objectManager = mock(ObjectManager.class);
     when(objectManager.getGarbageCollector()).thenReturn(gc);
@@ -64,17 +59,8 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   }
 
   public void testScheduleInline() throws Exception {
-    ObjectIDSet oids = new ObjectIDSet(Collections.singleton(new ObjectID(1)));
-    when(gcManager.nextObjectsToDelete()).thenReturn(oids);
-    when(objectManager.deleteObjects(oids)).thenReturn(oids);
-
     handler.handleEvent(new InlineGCContext());
-    verify(gcManager).nextObjectsToDelete();
-    verify(persistenceTransactionProvider).newTransaction();
-    verify(objectManager).deleteObjects(oids);
-    verify(transaction).commit();
-    verify(gcManager).missingObjectsToDelete(oids);
-    verify(gcManager).scheduleInlineGarbageCollectionIfNecessary();
+    verify(gcManager).inlineCleanup();
   }
 
   public void testSchedulePeriodicDGC() throws Exception {

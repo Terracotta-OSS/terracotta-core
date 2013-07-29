@@ -34,6 +34,7 @@ public class Persistor implements PrettyPrintable {
   private MutableSequence gidSequence;
   private ClientStatePersistor clientStatePersistor;
   private SequenceManager sequenceManager;
+  private InlineGCPersistor inlineGCPersistor;
   private final ObjectIDSetMaintainer objectIDSetMaintainer;
 
   private EvictionTransactionPersistor evictionTransactionPersistor;
@@ -84,12 +85,17 @@ public class Persistor implements PrettyPrintable {
 
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     evictionTransactionPersistor = createEvictionTransactionPersistor(storageManager);
+    inlineGCPersistor = createInlineGCPersistor(storageManager);
 
     started = true;
   }
 
   protected TransactionPersistor createTransactionPersistor(StorageManager storageManagerParam) {
     return new NullTransactionPersistor();
+  }
+
+  protected InlineGCPersistor createInlineGCPersistor(StorageManager storageManager) {
+    return new HeapInlineGCPersistor();
   }
 
   public void close() {
@@ -159,6 +165,11 @@ public class Persistor implements PrettyPrintable {
   public EvictionTransactionPersistor getEvictionTransactionPersistor() {
     checkStarted();
     return this.evictionTransactionPersistor;
+  }
+
+  public InlineGCPersistor getInlineGCPersistor() {
+    checkStarted();
+    return inlineGCPersistor;
   }
 
   @Override
