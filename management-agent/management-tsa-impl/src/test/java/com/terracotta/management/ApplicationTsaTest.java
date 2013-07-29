@@ -55,7 +55,7 @@ public class ApplicationTsaTest {
       }
     }
 
-    Assert.assertThat(annotatedClasses, equalTo(applicationClasses));
+    Assert.assertThat(applicationClasses, equalTo(annotatedClasses));
 
   }
 
