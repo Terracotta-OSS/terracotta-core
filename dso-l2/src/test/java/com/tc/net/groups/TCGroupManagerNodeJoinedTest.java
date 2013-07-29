@@ -45,114 +45,49 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private TCThreadGroup         threadGroup;
   private TCGroupManagerImpl[]  groupManagers;
   private MyListener[]          listeners;
-
-  public TCGroupManagerNodeJoinedTest() {
-    // disableAllUntil("2009-03-15");
-  }
+  private TestThrowableHandler  throwableHandler;
 
   @Override
   public void setUp() {
-    threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "TCGroupManagerNodeJoinedTest");
+    throwableHandler = new TestThrowableHandler(logger);
+    threadGroup = new TCThreadGroup(throwableHandler, "TCGroupManagerNodeJoinedTest");
+  }
+
+  @Override
+  protected void tcTestCaseTearDown(final Throwable testException) throws Throwable {
+    super.tcTestCaseTearDown(testException);
+    throwableHandler.throwIfNecessary();
   }
 
   public void testNodejoinedTwoServers() throws Exception {
-    Thread throwableThread = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          nodesSetupAndJoined(2);
-        } catch (Exception e) {
-          throw new RuntimeException("testStateManagerTwoServers failed! " + e);
-        }
-      }
-    });
-    throwableThread.start();
-    throwableThread.join();
+    nodesSetupAndJoined(2);
   }
 
   public void testNoConnectionThreadLeak() throws Exception {
-    Thread testDEV3101NoL2Reconnect = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          nodesSetupAndJoined_DEV3101(2);
-        } catch (Exception e) {
-          throw new RuntimeException("DEV-3101 without L2 Reconnect failed: " + e);
-        }
-      }
-    });
-
-    testDEV3101NoL2Reconnect.start();
-    testDEV3101NoL2Reconnect.join();
+    nodesSetupAndJoined_DEV3101(2);
   }
 
   public void testNoConnectionThreadLeakOnL2Reconnect() throws Exception {
-    Thread testDEV3101WithL2Reconnect = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-          nodesSetupAndJoined_DEV3101(2);
-          TCPropertiesImpl.getProperties()
-              .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-        } catch (Exception e) {
-          throw new RuntimeException("DEV-3101 without L2 Reconnect failed: " + e);
-        }
-      }
-    });
-
-    testDEV3101WithL2Reconnect.start();
-    testDEV3101WithL2Reconnect.join();
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+    nodesSetupAndJoined_DEV3101(2);
+    TCPropertiesImpl.getProperties()
+        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
   }
 
   // Test for DEV-4870
   public void testNodeJoinAfterCloseMember() throws Exception {
-    Thread testAfterCloseMemberWithL2Reconnect = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-          nodesSetupAndJoinedAfterCloseMember(2);
-          TCPropertiesImpl.getProperties()
-              .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-        } catch (Exception e) {
-          throw new RuntimeException("DEV-3101 without L2 Reconnect failed: " + e);
-        }
-      }
-    });
-
-    testAfterCloseMemberWithL2Reconnect.start();
-    testAfterCloseMemberWithL2Reconnect.join();
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+    nodesSetupAndJoinedAfterCloseMember(2);
+    TCPropertiesImpl.getProperties()
+        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
   }
 
   public void testNodejoinedThreeServers() throws Exception {
-    Thread throwableThread = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          nodesSetupAndJoined(3);
-        } catch (Exception e) {
-          throw new RuntimeException("testStateManagerTwoServers failed! " + e);
-        }
-      }
-    });
-    throwableThread.start();
-    throwableThread.join();
+    nodesSetupAndJoined(3);
   }
 
   public void testNodejoinedSixServers() throws Exception {
-    Thread throwableThread = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          nodesSetupAndJoined(6);
-        } catch (Exception e) {
-          throw new RuntimeException("testStateManagerTwoServers failed! " + e);
-        }
-      }
-    });
-    throwableThread.start();
-    throwableThread.join();
+    nodesSetupAndJoined(6);
   }
 
   // -----------------------------------------------------------------------
@@ -390,8 +325,11 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     Thread[] allThreads = ThreadDumpUtil.getAllThreads();
     int count = 0;
     for (Thread t : allThreads) {
-      System.out.println("XXX " + t);
       if (t.getName().contains(absentThreadName)) {
+        System.out.println("XXX " + t);
+        for (StackTraceElement ste : t.getStackTrace()) {
+          System.out.println("   " + ste);
+        }
         count++;
       }
     }
@@ -512,4 +450,33 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
   }
 
+  private static class TestThrowableHandler extends ThrowableHandler {
+    private volatile Throwable t;
+
+    /**
+     * Construct a new ThrowableHandler with a logger
+     *
+     * @param logger Logger
+     */
+    public TestThrowableHandler(final TCLogger logger) {
+      super(logger);
+    }
+
+    @Override
+    public void handleThrowable(final Thread thread, final Throwable t) {
+      this.t = t;
+      super.handleThrowable(thread, t);
+    }
+
+    void throwIfNecessary() throws Throwable {
+      if (t != null) {
+        throw t;
+      }
+    }
+
+    @Override
+    protected synchronized void exit(final int status) {
+      // don't do a system.exit.
+    }
+  }
 }
