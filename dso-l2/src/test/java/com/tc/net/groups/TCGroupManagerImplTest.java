@@ -25,20 +25,16 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
-import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.tc.util.CallableWaiter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.TCCollections;
@@ -56,7 +52,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -573,23 +568,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (TestGroupEventListener testGroupEventListener : groupEventListeners) {
       testGroupEventListener.waitForJoinedCount(members);
     }
-//    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
-//      @Override
-//      public Boolean call() throws Exception {
-//
-//        for (final TCGroupManagerImpl group : groups) {
-//          if (members != group.size()) {
-//            return false;
-//          }
-//          for (TCGroupMember member : group.getMembers()) {
-//            if (!member.isReady()) {
-//              return false;
-//            }
-//          }
-//        }
-//        return true;
-//      }
-//    });
   }
 
   private void checkMessagesOrdering(final TCGroupManagerImpl mgr1, final TestGroupMessageListener l1,
