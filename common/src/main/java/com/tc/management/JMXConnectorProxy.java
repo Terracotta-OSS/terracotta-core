@@ -3,6 +3,8 @@
  */
 package com.tc.management;
 
+import com.tc.net.util.TSASSLSocketFactory;
+
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.lang.reflect.InvocationHandler;
@@ -10,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.rmi.ConnectException;
+import java.rmi.server.RMIClientSocketFactory;
 import java.text.MessageFormat;
 import java.util.Map;
 
@@ -93,7 +96,12 @@ public class JMXConnectorProxy implements JMXConnector {
     JMXServiceURL url = new JMXServiceURL(getSecureJMXConnectorURL(m_host, m_port));
 
     if (m_secured) {
-      SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
+      RMIClientSocketFactory csf;
+      if (Boolean.getBoolean("tc.ssl.trustAllCerts")) {
+        csf = new TSASSLSocketFactory();
+      } else {
+        csf = new SslRMIClientSocketFactory();
+      }
       SslRMIServerSocketFactory ssf = new SslRMIServerSocketFactory();
       m_env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
       m_env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, ssf);

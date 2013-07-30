@@ -60,6 +60,7 @@ public class TCStop {
     commandLineBuilder.addOption("s", "secured", false, "secured", String.class, false);
     commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption("k", "ignoreSSLCert", false, "Ignore invalid SSL certificate", String.class, false);
 
     commandLineBuilder.parse();
     String[] arguments = commandLineBuilder.getArguments();
@@ -73,6 +74,10 @@ public class TCStop {
 
     if (commandLineBuilder.hasOption('h')) {
       commandLineBuilder.usageAndDie();
+    }
+
+    if (commandLineBuilder.hasOption('k')) {
+      System.setProperty("tc.ssl.trustAllCerts", "true");
     }
 
     String defaultName = StandardConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
