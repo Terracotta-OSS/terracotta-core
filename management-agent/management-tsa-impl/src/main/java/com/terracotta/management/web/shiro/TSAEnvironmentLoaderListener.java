@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.tc.net.util.TSASSLSocketFactory;
 import com.terracotta.management.keychain.URIKeyName;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
@@ -57,7 +58,6 @@ import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.service.impl.TsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.utils.TSAConfig;
-import com.terracotta.management.web.utils.TSASslSocketFactory;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -91,7 +91,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       TsaManagementClientService tsaManagementClientService;
       if (sslEnabled) {
-        final TSASslSocketFactory socketFactory = new TSASslSocketFactory();
+        final TSASSLSocketFactory socketFactory = new TSASSLSocketFactory();
         jmxConnectorPool = new JmxConnectorPool("service:jmx:rmi://{0}:{1}/jndi/rmi://{0}:{1}/jmxrmi") {
           @Override
           protected Map<String, Object> createJmxConnectorEnv(String host, int port) {

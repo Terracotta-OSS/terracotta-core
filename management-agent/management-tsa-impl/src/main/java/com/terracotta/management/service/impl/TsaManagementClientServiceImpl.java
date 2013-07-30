@@ -20,6 +20,7 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
+import com.tc.net.util.TSASSLSocketFactory;
 import com.tc.objectserver.api.BackupManager.BackupStatus;
 import com.tc.objectserver.api.GCStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -43,7 +44,6 @@ import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.utils.TSAConfig;
-import com.terracotta.management.web.utils.TSASslSocketFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1590,7 +1590,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         URL url = new URL(securityServiceLocation);
         HttpsURLConnection sslUrlConnection = (HttpsURLConnection) url.openConnection();
 
-        TSASslSocketFactory tsaSslSocketFactory = new TSASslSocketFactory();
+        TSASSLSocketFactory tsaSslSocketFactory = new TSASSLSocketFactory();
         sslUrlConnection.setSSLSocketFactory(tsaSslSocketFactory);
 
         Integer securityTimeout = TSAConfig.getSecurityTimeout();

@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.terracotta.management.web.utils;
+package com.tc.net.util;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.rmi.server.RMIClientSocketFactory;
 import java.security.cert.X509Certificate;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -17,11 +18,19 @@ import javax.net.ssl.X509TrustManager;
 /**
  * @author Ludovic Orban
  */
-public class TSASslSocketFactory extends SSLSocketFactory implements RMIClientSocketFactory {
+public class TSASSLSocketFactory extends SSLSocketFactory implements RMIClientSocketFactory {
   private final SSLSocketFactory socketFactory;
 
-  public TSASslSocketFactory() throws Exception {
-    SSLContext ctx = TSAConfig.getSSLContextFactory().create();
+  public static SocketFactory getDefault() {
+    try {
+      return new TSASSLSocketFactory();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public TSASSLSocketFactory() throws Exception {
+    SSLContext ctx = SSLContext.getInstance("TLS");
 
     TrustManager[] trustManagers = null;
     if (Boolean.getBoolean("tc.ssl.trustAllCerts")) {
