@@ -365,7 +365,7 @@ public class ClientConnectionEstablisher {
     }
 
     public void join() throws InterruptedException {
-      if (connectionEstablisherThread != null) {
+      if (connectionEstablisherThread != null && Thread.currentThread() != connectionEstablisherThread) {
         connectionEstablisherThread.join();
       }
 
