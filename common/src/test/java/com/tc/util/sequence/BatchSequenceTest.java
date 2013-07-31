@@ -19,19 +19,13 @@ public class BatchSequenceTest extends TestCase {
     final BatchSequence sequence = new BatchSequence(remote, 5);
     final BlockingQueue<Long> longs = new LinkedBlockingQueue<Long>();
 
-    FutureTask<Void> futureTask = new FutureTask<Void>(new Callable<Void>() {
-
+    Thread t = new Thread(new Runnable() {
       @Override
-      public Void call() throws Exception {
+      public void run() {
         longs.add(Long.valueOf(sequence.next()));
-        return null;
       }
-
-    });
-
-    Thread t = new Thread(futureTask, "BatchIDProviderTestThread");
+    }, "BatchIDProviderTestThread");
     t.start();
-    futureTask.get();
     assertTrue(longs.poll(2000, TimeUnit.MILLISECONDS) == null);
     assertTrue(remote.take() == sequence);
     assertTrue(remote.size == 5);
