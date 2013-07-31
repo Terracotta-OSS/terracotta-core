@@ -8,6 +8,7 @@ package com.tc.object;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -688,5 +689,40 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     for (int i = 0; i < 100; i++) {
       Assert.assertSame(tco.getObjectID(), this.mgr.lookupExistingObjectID(this.object));
     }
+  }
+
+  public void testCleanupDuringLookup() throws Exception {
+    final ObjectID id = new ObjectID(1);
+    final List errors = Collections.synchronizedList(new ArrayList());
+
+    final Runnable lookup = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ClientObjectManagerTest.this.mgr.lookup(id);
+        } catch (final Throwable t) {
+          System.err.println("got exception: " + t.getClass().getName());
+          errors.add(t);
+        }
+      }
+    };
+
+    final Thread t1 = new Thread(lookup);
+    t1.start();
+    final Thread t2 = new Thread(lookup);
+    t2.start();
+
+    ThreadUtil.reallySleep(2000);
+    ((ClientHandshakeCallback) this.mgr).pause(null, 0);
+    ((ClientHandshakeCallback) this.mgr).cleanup();
+    this.remoteObjectManager.cleanup();
+
+    t1.join();
+    t2.join();
+
+    assertEquals(2, errors.size());
+    assertEquals(PlatformRejoinException.class, errors.remove(0).getClass());
+    assertEquals(PlatformRejoinException.class, errors.remove(0).getClass());
+
   }
 }
