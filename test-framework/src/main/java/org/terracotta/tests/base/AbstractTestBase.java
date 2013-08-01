@@ -47,6 +47,7 @@ import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
+  private static final String              TC_TESTS_INFO_STANDALONE  = "tc.tests.info.standalone";
   private static final String              DEFAULT_CONFIG            = "default-config";
   public static final String               TC_CONFIG_PROXY_FILE_NAME = "tc-config-proxy.xml";
   protected static final String            SEP                       = File.pathSeparator;
@@ -85,6 +86,12 @@ public abstract class AbstractTestBase extends TCTestCase {
       testConfig.getClientConfig().addExtraClientJvmArg("-Dcom.tc.test.toolkit.devmode=true");
     }
 
+    if (Boolean.parseBoolean(TestConfigObject.getInstance().getProperty(TC_TESTS_INFO_STANDALONE))) {
+      testConfig.setStandAloneTest(true);
+      testConfig.getClientConfig().addExtraClientJvmArg("-D" + TC_TESTS_INFO_STANDALONE + "=true");
+      String tsaPort = TestConfigObject.getInstance().getProperty("tc.tests.info.tsa.port");
+      testConfig.getClientConfig().addExtraClientJvmArg("-Dtc.tests.info.tsa.port=" + tsaPort);
+    }
   }
 
   /**
