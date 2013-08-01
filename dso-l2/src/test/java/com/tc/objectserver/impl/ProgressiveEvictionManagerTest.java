@@ -25,8 +25,6 @@ import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.Future;
 import org.junit.After;

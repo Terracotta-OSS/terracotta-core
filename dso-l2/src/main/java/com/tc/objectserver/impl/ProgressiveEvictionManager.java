@@ -568,21 +568,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             logger.warn("resource usage at max");
           }
           stop(usage);
-      } else if (usage.getReservedMemory() >= usage.getMaxMemory() - (64l * 1024 * 1024)
-                 && usage.getUsedMemory() >= usage.getMaxMemory() - (96l * 1024 * 1024)
-                 && ( System.nanoTime() - throttlePoll > TimeUnit.SECONDS.toNanos(2) )) {
-          if ( this.throttle == 0 ) {
-            logger.warn("resource usage at throttle");
-          }
-          controlledThrottle(usage);
+      } else if (threshold.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) || 
+          (usage.getReservedMemory() >= usage.getMaxMemory() - (128l * 1024 * 1024)
+          && usage.getUsedMemory() >= usage.getMaxMemory() - (256l * 1024 * 1024) ) ) {
+            if ( System.nanoTime() - throttlePoll > TimeUnit.SECONDS.toNanos(2) ) {
+              if ( this.throttle == 0 ) {
+                logger.warn("resource usage at throttle");
+              }
+              controlledThrottle(usage);
+            }
       }
 
       if (throttle == 0f ) {
-          if ( threshold.shouldThrottle(usage, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
-            throttle(usage, 0.5f);
-          } else if ( this.notified > 0 && this.notified < System.currentTimeMillis() - (60 * 1000) ) {
-            notifyAllClear(usage);
-          }
+        if ( this.notified > 0 && this.notified < System.currentTimeMillis() - (60 * 1000) ) {
+          notifyAllClear(usage);
+        }
       }
     }
 
