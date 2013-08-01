@@ -126,4 +126,20 @@ public class MonitoringServerControl implements ServerControl {
   public static interface MonitoringServerControlExitCallback {
     boolean onExit(int exitCode);
   }
+
+  @Override
+  public void pauseServer(long pauseTimeMillis) throws InterruptedException {
+    serverControl.pauseServer(pauseTimeMillis);
+
+  }
+
+  @Override
+  public void pauseServer() throws InterruptedException {
+    serverControl.pauseServer();
+  }
+
+  @Override
+  public void unpauseServer() throws InterruptedException {
+    serverControl.unpauseServer();
+  }
 }

@@ -6,6 +6,7 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.test.util.JMXUtils;
+import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.Directories;
@@ -672,5 +673,21 @@ public class ExtraProcessServerControl extends ServerControlBase {
         }
       }
     }
+  }
+
+  @Override
+  public void pauseServer(long pauseTimeMillis) throws InterruptedException {
+    TestProcessUtil.pauseProcess(process, pauseTimeMillis);
+
+  }
+
+  @Override
+  public void pauseServer() throws InterruptedException {
+    TestProcessUtil.pauseProcess(process);
+  }
+
+  @Override
+  public void unpauseServer() throws InterruptedException {
+    TestProcessUtil.unpauseProcess(process);
   }
 }

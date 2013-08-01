@@ -21,6 +21,7 @@ import com.tc.test.setup.TestJMXServerManager;
 import com.tc.test.setup.TestServerManager;
 import com.tc.text.Banner;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
 import java.io.BufferedReader;
@@ -63,6 +64,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   private static final String              log4jPrefix               = "log4j.logger.";
   private final Map<String, LogLevel>      tcLoggingConfigs          = new HashMap<String, LogLevel>();
   private final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
+  private PauseManager                     pauseManager;
 
   public AbstractTestBase(TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -82,6 +84,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     if (Boolean.getBoolean("com.tc.test.toolkit.devmode")) {
       testConfig.getClientConfig().addExtraClientJvmArg("-Dcom.tc.test.toolkit.devmode=true");
     }
+
   }
 
   /**
@@ -99,6 +102,9 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
+    if (testConfig.isPauseFeatureEnabled() && !Os.isUnix()) {
+      disableTest();
+    }
     if (!"".equals(System.getProperty("com.tc.productkey.path"))) {
       if (!testConfig.getL2Config().isOffHeapEnabled() && testConfig.getL2Config().isAutoOffHeapEnable()) {
         System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
@@ -129,14 +135,18 @@ public abstract class AbstractTestBase extends TCTestCase {
         System.out.println("***************" + Calendar.getInstance().getTime() + " Starting Test with Test Profile : "
                            + testConfig.getConfigName() + " **************************");
         setJavaHome();
-        clientRunner = new TestClientManager(tempDir, this, this.testConfig);
+        pauseManager = new PauseManager(testConfig);
+        clientRunner = new TestClientManager(tempDir, this, this.testConfig, pauseManager);
+        pauseManager.setClientManager(clientRunner); // Adds a circular dependency
         if (!testConfig.isStandAloneTest()) {
           testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome,
                                                     new FailTestCallback());
+          pauseManager.setTestServerManager(testServerManager);
           writeProxyTcConfigFile();
           startServers();
         }
-        TestHandler testHandlerMBean = new TestHandler(testServerManager, clientRunner, testConfig);
+
+        TestHandler testHandlerMBean = new TestHandler(testServerManager, clientRunner, testConfig, pauseManager);
         jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
         jmxServerManager.startJMXServer();
         configureTestHandlerMBean(testHandlerMBean);
@@ -194,6 +204,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     testExecutionThread.setDaemon(true);
     testExecutionThread.start();
     try {
+      pauseManager.startServerPauseTasks();
       testExecutionThread.join();
     } catch (InterruptedException e) {
       testExecutionThread.interrupt(); // stop the test execution thread.

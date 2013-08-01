@@ -26,6 +26,7 @@ public class TestConfig {
   private boolean                                    dgcVerbose              = false;
   private boolean                                    restartable             = false;
   private int                                        clientReconnectWindow   = 15;
+  private boolean                                    pauseFeatureEnabled     = false;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -274,5 +275,13 @@ public class TestConfig {
 
   public void setDgcVerbose(boolean dgcVerbose) {
     this.dgcVerbose = dgcVerbose;
+  }
+
+  public boolean isPauseFeatureEnabled() {
+    return pauseFeatureEnabled;
+  }
+
+  public void setPauseFeatureEnabled(boolean pauseFeatureEnabled) {
+    this.pauseFeatureEnabled = pauseFeatureEnabled;
   }
 }

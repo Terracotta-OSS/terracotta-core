@@ -1,6 +1,7 @@
 package org.terracotta.tests.base;
 
 import org.terracotta.test.util.TestBaseUtil;
+import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
@@ -13,6 +14,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,12 +46,16 @@ public class TestClientManager {
   private final TestConfig              testConfig;
   private final SetOnceFlag             stopped                          = new SetOnceFlag();
   private final List<LinkedJavaProcess> runningClients                   = new ArrayList<LinkedJavaProcess>();
+  private final HashMap<Integer, LinkedJavaProcess> allClients                       = new HashMap<Integer, LinkedJavaProcess>();
   private volatile Throwable            exceptionFromClient;
+  private final PauseManager                        pauseManager;
 
-  public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig) {
+  public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig,
+                           final PauseManager pauseManager) {
     this.testConfig = testConfig;
     this.tempDir = tempDir;
     this.testBase = testBase;
+    this.pauseManager = pauseManager;
   }
 
   /**
@@ -66,6 +72,7 @@ public class TestClientManager {
     }
     ArrayList<String> jvmArgs = new ArrayList<String>();
     int debugPortOffset = clientIndex.getAndIncrement();
+    int localClientIndex = debugPortOffset;
     if (shouldDebugClient(debugPortOffset)) {
       int debugPort = 9000 + debugPortOffset;
       jvmArgs.add("-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=" + debugPort);
@@ -88,6 +95,7 @@ public class TestClientManager {
 
     List<String> clientMainArgs = new ArrayList<String>();
     clientMainArgs.add(client.getName());
+    clientMainArgs.add(Integer.toString(localClientIndex));
     clientMainArgs.add(Integer.toString(testBase.getTestControlMbeanPort()));
     clientMainArgs.addAll(extraClientMainArgs);
 
@@ -131,13 +139,16 @@ public class TestClientManager {
     synchronized (TestClientManager.class) {
       if (stopped.isSet()) { return; }
       runningClients.add(clientProcess);
+      allClients.put(localClientIndex, clientProcess);
       clientProcess.start();
+      pauseManager.startPauseConfig(localClientIndex);
     }
 
     Result result = Exec.execute(clientProcess, clientProcess.getCommand(), output.getAbsolutePath(), null, workDir);
     synchronized (TestClientManager.class) {
       if (stopped.isSet()) { return; }
       runningClients.remove(clientProcess);
+      allClients.remove(localClientIndex);
       try {
         testBase.evaluateClientOutput(client.getName(), result.getExitCode(), output);
       } catch (Throwable t) {
@@ -150,6 +161,7 @@ public class TestClientManager {
           throw new AssertionError(t);
         }
       }
+      pauseManager.stopPauseConfig(localClientIndex);
     }
   }
 
@@ -221,4 +233,30 @@ public class TestClientManager {
     exceptionFromClient = t;
   }
 
+  public int getClientCount() {
+    return clientIndex.get();
+  }
+
+  public void pauseProcess(int index, long pauseTimeMillis) throws InterruptedException {
+    LinkedJavaProcess process = getClientProcess(index);
+    if (process == null) { return; }
+    TestProcessUtil.pauseProcess(process, pauseTimeMillis);
+  }
+  
+  public void pauseClient(int index) throws InterruptedException {
+    LinkedJavaProcess process = getClientProcess(index);
+    if (process == null) { return; }
+    TestProcessUtil.pauseProcess(process);
+  }
+
+  public void unpauseClient(int index) throws InterruptedException {
+    LinkedJavaProcess process = getClientProcess(index);
+    if (process == null) { return; }
+    TestProcessUtil.unpauseProcess(process);
+  }
+
+  private synchronized LinkedJavaProcess getClientProcess(int index) {
+    LinkedJavaProcess javaProcess = allClients.get(index);
+    return javaProcess;
+  }
 }

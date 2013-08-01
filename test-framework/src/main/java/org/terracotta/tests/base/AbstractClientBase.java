@@ -22,11 +22,13 @@ public abstract class AbstractClientBase implements Runnable {
   private static final SimpleDateFormat DATE_FORMATTER         = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private final TestHandlerMBean        testControlMBean;
+  private final int                     clientIndex;
 
   abstract protected void doTest() throws Throwable;
 
   public AbstractClientBase(String args[]) {
     int index = 0;
+    clientIndex = Integer.parseInt(args[index++]);
     final int testControlMbeanPort = Integer.parseInt(args[index++]);
 
     try {
@@ -38,6 +40,10 @@ public abstract class AbstractClientBase implements Runnable {
       System.out.println("****** Exception while connecting to TestMBean Port[" + testControlMbeanPort + "]");
       throw new RuntimeException(e);
     }
+  }
+
+  public int getClientIndex() {
+    return clientIndex;
   }
 
   @Override

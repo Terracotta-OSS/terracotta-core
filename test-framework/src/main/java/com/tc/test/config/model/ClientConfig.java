@@ -3,7 +3,9 @@ package com.tc.test.config.model;
 import org.terracotta.tests.base.AbstractClientBase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration for each client <br>
@@ -21,9 +23,21 @@ public class ClientConfig {
   private int                                   maxHeap              = 128;
   private int                                   directMemorySize     = -1;
   private final BytemanConfig                   bytemanConfig        = new BytemanConfig();
+  private final Map<Integer, PauseConfig>       pauseConfigs;
 
   public ClientConfig() {
     extraClientJvmArgs = new ArrayList<String>();
+    pauseConfigs = new HashMap<Integer, PauseConfig>();
+  }
+
+  public void addClientPauseConfig(PauseConfig pauseConfig, int... clientIndexes) {
+    for (int clientIndex : clientIndexes) {
+      pauseConfigs.put(clientIndex, pauseConfig);
+    }
+  }
+  
+  public PauseConfig getClientPauseConfig(int clientIndex) {
+    return pauseConfigs.get(clientIndex);
   }
 
   /**

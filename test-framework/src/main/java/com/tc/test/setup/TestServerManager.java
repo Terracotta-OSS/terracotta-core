@@ -182,6 +182,10 @@ public class TestServerManager {
     return groups[groupIndex].isActivePresent();
   }
 
+  public int getActiveServerIndex(int groupIndex) {
+    return groups[groupIndex].getActiveServerIndex();
+  }
+
   public boolean isPassiveStandBy(int groupIndex) {
     return groups[groupIndex].isPassiveStandBy();
   }
@@ -289,4 +293,17 @@ public class TestServerManager {
     }
 
   }
+
+  public void pauseServer(int groupIndex, int serverIndex, long pauseTimeMillis) throws InterruptedException {
+    groups[groupIndex].pauseServer(serverIndex, pauseTimeMillis); // need to see how this will work out
+  }
+
+  public void pauseServer(int groupIndex, int serverIndex) throws InterruptedException {
+    groups[groupIndex].pauseServer(serverIndex);
+  }
+
+  public void unpauseServer(int groupIndex, int serverIndex) throws InterruptedException {
+    groups[groupIndex].unpauseServer(serverIndex);
+  }
+
 }

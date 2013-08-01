@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.control;
 
+
 public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
@@ -71,5 +72,20 @@ public class NullServerControl implements ServerControl {
   @Override
   public void waitUntilL2IsActiveOrPassive() throws Exception {
     //
+  }
+
+  @Override
+  public void pauseServer(long pauseTimeMillis) throws InterruptedException {
+    //
+  }
+
+  @Override
+  public void pauseServer() throws InterruptedException {
+
+  }
+
+  @Override
+  public void unpauseServer() throws InterruptedException {
+
   }
 }

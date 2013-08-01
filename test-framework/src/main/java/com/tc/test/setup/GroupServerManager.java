@@ -497,13 +497,53 @@ public class GroupServerManager {
     System.out.println("******* Done Crashing active server");
   }
 
-  private synchronized int getActiveServerIndex() {
+  synchronized int getActiveServerIndex() {
     System.out.println("Searching for active server... ");
     for (int index = 0; index < groupData.getServerCount(); index++) {
       if (isActive(index)) { return index; }
     }
     return -1;
 
+  }
+
+  // public void pauseActive(long pauseTimeMillis) throws InterruptedException {
+  // int activeIndex = getActiveServerIndex();
+  // if (activeIndex < 0) {
+  // System.out.println("Trying to pause active server when no active server is present");
+  // return;
+  // }
+  // pauseServer(activeIndex, pauseTimeMillis);
+  // }
+  //
+  // void pausePassive(int index, long pauseTimeMillis) throws InterruptedException {
+  // int activeIndex = getActiveServerIndex();
+  // if (index == activeIndex) { return; }
+  // pauseServer(index, pauseTimeMillis);
+  // }
+
+  public void pauseServer(final int index, final long pauseTimeMillis) throws InterruptedException {
+    if (isExpectedServerRunning(index)) {
+      serverControl[index].pauseServer(pauseTimeMillis);
+    }
+    System.out.println("******* Server Resume After Pause");
+  }
+  
+  void pauseServer(final int index) throws InterruptedException {
+    if (isExpectedServerRunning(index)) {
+      serverControl[index].pauseServer();
+    }
+    System.out.println("******* Server Paused Index : " + index);
+  }
+
+  void unpauseServer(final int index) throws InterruptedException {
+    if (isExpectedServerRunning(index)) {
+      serverControl[index].unpauseServer();
+    }
+    System.out.println("******* Server UnPaused Index : " + index);
+  }
+
+  private synchronized boolean isExpectedServerRunning(int index) {
+    return expectedServerRunning[index];
   }
 
   public void crashAllPassive() throws Exception {
@@ -812,4 +852,5 @@ public class GroupServerManager {
       stopL1Proxy(activeServerIndex);
     }
   }
+
 }

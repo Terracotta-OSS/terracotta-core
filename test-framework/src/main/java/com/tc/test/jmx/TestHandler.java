@@ -1,6 +1,7 @@
 package com.tc.test.jmx;
 
 import org.terracotta.test.util.TestBaseUtil;
+import org.terracotta.tests.base.PauseManager;
 import org.terracotta.tests.base.TestClientManager;
 
 import com.tc.test.config.model.TestConfig;
@@ -30,12 +31,15 @@ public class TestHandler implements TestHandlerMBean {
   private final TestServerManager        testServerManager;
   private final TestClientManager        testClientManager;
   private final TestConfig               testConfig;
+  private final PauseManager             pauseManager;
   private volatile CustomCommandExecutor executor;
 
-  public TestHandler(TestServerManager manager, final TestClientManager testClientManager, TestConfig testConfig) {
+  public TestHandler(TestServerManager manager, final TestClientManager testClientManager, TestConfig testConfig,
+                     PauseManager pauseManager) {
     this.testServerManager = manager;
     this.testClientManager = testClientManager;
     this.testConfig = testConfig;
+    this.pauseManager = pauseManager;
   }
 
   public int getNumberOfGroups() {
@@ -193,4 +197,30 @@ public class TestHandler implements TestHandlerMBean {
     testServerManager.startServerCrasher();
 
   }
+
+  @Override
+  public void pauseClient(int clientIndex) throws Exception {
+    pauseManager.pauseClient(clientIndex);
+  }
+
+  @Override
+  public void unpauseClient(int clientIndex) throws Exception {
+    pauseManager.unpauseClient(clientIndex);
+  }
+
+  @Override
+  public void pauseServer(int groupIndex, int serverIndex) throws Exception {
+    pauseManager.pauseServer(groupIndex, serverIndex);
+  }
+
+  @Override
+  public void unpauseServer(int groupIndex, int serverIndex) throws Exception {
+    pauseManager.unpauseServer(groupIndex, serverIndex);
+  }
+
+  @Override
+  public int getActiveServerIndex(int groupIndex) {
+    return testServerManager.getActiveServerIndex(groupIndex);
+  }
+
 }

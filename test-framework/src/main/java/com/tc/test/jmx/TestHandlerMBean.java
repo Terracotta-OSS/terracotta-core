@@ -224,6 +224,16 @@ public interface TestHandlerMBean {
    * starts server crasher, can be used in the tests that wants to start the crasher after doing some initialization
    * tasks
    */
-
   void startCrasher();
+
+  int getActiveServerIndex(int groupIndex);
+
+  void pauseClient(int clientIndex) throws Exception;
+
+  void unpauseClient(int clientIndex) throws Exception;
+
+  void pauseServer(int groupIndex, int serverIndex) throws Exception;
+
+  void unpauseServer(int groupIndex, int serverIndex) throws Exception;
+
 }

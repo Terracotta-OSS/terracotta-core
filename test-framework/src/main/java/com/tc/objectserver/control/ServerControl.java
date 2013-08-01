@@ -55,4 +55,10 @@ public interface ServerControl {
    * Wait until the L2 is started (either ACTIVE or fully synced PASSIVE-STANDBY)
    */
   public void waitUntilL2IsActiveOrPassive() throws Exception;
+
+  public void pauseServer(long pauseTimeMillis) throws InterruptedException;
+
+  public void pauseServer() throws InterruptedException;
+
+  public void unpauseServer() throws InterruptedException;
 }

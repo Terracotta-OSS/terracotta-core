@@ -30,6 +30,9 @@ public class L2Config {
 
   private final BytemanConfig     bytemanConfig        = new BytemanConfig();
   private boolean                 autoOffHeapEnable    = true;
+  private PauseConfig             pauseConfig;
+  private ServerPauseMode         pauseMode;
+
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -170,6 +173,22 @@ public class L2Config {
     if (minHeap > maxHeap) {
       minHeap = maxHeap;
     }
+  }
+
+
+  public void setServerPauseConfig(PauseConfig pauseConfig, ServerPauseMode pauseMode) {
+    if (pauseConfig == null || pauseMode == null) { throw new IllegalArgumentException(
+                                                                                       "pauseConfig or pauseMode should not be null"); }
+    this.pauseConfig = pauseConfig;
+    this.pauseMode = pauseMode;
+  }
+
+  public PauseConfig getPauseConfig() {
+    return pauseConfig;
+  }
+
+  public ServerPauseMode getPauseMode() {
+    return pauseMode;
   }
 
   /**
