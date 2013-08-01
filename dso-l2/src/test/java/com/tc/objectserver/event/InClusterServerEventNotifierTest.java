@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -129,6 +130,7 @@ public class InClusterServerEventNotifierTest {
 
   private static final class MockBatcher extends ServerEventBatcher {
     private final List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
+    private final AtomicInteger totalEvents = new AtomicInteger();
 
     public MockBatcher(final DSOChannelManager channelManager) {
       super(channelManager, Runners.newSingleThreadScheduledTaskRunner());
@@ -137,14 +139,11 @@ public class InClusterServerEventNotifierTest {
     @Override
     void send(final ClientID clientId, final List<ServerEvent> events) {
       messages.add(new Message(clientId, events));
+      totalEvents.addAndGet(events.size());
     }
 
     int getEventsCount() {
-      int count = 0;
-      for (Message message : messages) {
-        count += message.events.size();
-      }
-      return count;
+      return totalEvents.get();
     }
   }
 
