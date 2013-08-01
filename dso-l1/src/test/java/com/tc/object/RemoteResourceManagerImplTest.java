@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
+import com.tc.object.tx.RemoteTransactionManager;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +25,7 @@ public class RemoteResourceManagerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    remoteResourceManager = new RemoteResourceManagerImpl(Mockito.mock(AbortableOperationManager.class));
+    remoteResourceManager = new RemoteResourceManagerImpl(Mockito.mock(RemoteTransactionManager.class),Mockito.mock(AbortableOperationManager.class));
     groupID = new GroupID(1);
     objectID = new ObjectID(1);
   }

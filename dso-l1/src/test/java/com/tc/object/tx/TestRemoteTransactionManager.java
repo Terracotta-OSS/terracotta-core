@@ -131,4 +131,11 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public long getTxnCount() {
     return txnCounter;
   }
+
+  @Override
+  public void throttleProcessing(boolean processing) {
+    throw new ImplementMe();
+  }
+  
+  
 }

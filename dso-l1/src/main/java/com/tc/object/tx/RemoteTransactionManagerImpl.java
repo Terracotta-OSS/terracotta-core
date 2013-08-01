@@ -86,6 +86,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final GroupID                                  groupID;
 
   private volatile boolean                               isShutdown                  = false;
+  private volatile boolean                               isThrottled                  = false;
   private final AbortableOperationManager                abortableOperationManager;
 
   private final Timer                                    flusherTimer;
@@ -774,8 +775,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
 
     private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) {
+      int maxOutstanding = (isThrottled ) ? 1 : MAX_OUTSTANDING_BATCHES;
       if (ignoreMax
-          || (this.outStandingBatches < MAX_OUTSTANDING_BATCHES && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
+          || ( this.outStandingBatches < maxOutstanding && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
         ClientTransactionBatch batch = sequencer.getNextBatch();
         if (batch != null) {
           if (batch.numberOfTxnsBeforeFolding() == 0) { throw new AssertionError("no transactions"); }
@@ -902,5 +904,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   // for testing
   public boolean isShutdown() {
     return this.isShutdown;
+  }
+  
+  public void throttleProcessing(boolean yes) {
+    this.isThrottled = yes;
   }
 }

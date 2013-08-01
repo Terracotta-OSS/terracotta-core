@@ -336,9 +336,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public RemoteResourceManager createRemoteResourceManager(final DSOClientMessageChannel dsoChannel,
+  public RemoteResourceManager createRemoteResourceManager(final RemoteTransactionManager mgr, final DSOClientMessageChannel dsoChannel,
                                                            AbortableOperationManager abortableOperationManager) {
-    return new RemoteResourceManagerImpl(abortableOperationManager);
+    return new RemoteResourceManagerImpl(mgr, abortableOperationManager);
   }
 
   @Override

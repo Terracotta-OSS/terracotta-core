@@ -35,6 +35,8 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
   public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID);
 
   public void stopProcessing();
+  
+  public void throttleProcessing(boolean processing);
 
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
