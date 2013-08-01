@@ -394,5 +394,20 @@ public class RestartTestEnvironment {
       assertServerNotNull();
       server.waitUntilL2IsActiveOrPassive();
     }
+
+    @Override
+    public void pauseServer(long pauseTimeMillis) throws InterruptedException {
+      server.pauseServer(pauseTimeMillis);
+    }
+
+    @Override
+    public void pauseServer() throws InterruptedException {
+      server.pauseServer();
+    }
+
+    @Override
+    public void unpauseServer() throws InterruptedException {
+      server.unpauseServer();
+    }
   }
 }
