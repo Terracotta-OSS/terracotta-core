@@ -60,7 +60,7 @@ public class TCStop {
     commandLineBuilder.addOption("s", "secured", false, "secured", String.class, false);
     commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
-    commandLineBuilder.addOption("k", "ignoreSSLCert", false, "Ignore invalid SSL certificate", String.class, false);
+    commandLineBuilder.addOption("k", "ignoreSSLCert", false, "Ignore untrusted SSL certificate", String.class, false);
 
     commandLineBuilder.parse();
     String[] arguments = commandLineBuilder.getArguments();
@@ -210,6 +210,8 @@ public class TCStop {
       if (root instanceof ConnectException) {
         consoleLogger.error("Unable to connect to host '" + host + "', port " + port
                             + ". Are you sure there is a Terracotta server instance running there?");
+      } else {
+        consoleLogger.error("Unexpected error while stopping server: " + root.getMessage());
       }
       System.exit(1);
     }
