@@ -44,6 +44,7 @@ import com.tc.platform.PlatformService;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
+import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.bulkload.LocalBufferedMap.Value;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
@@ -63,11 +64,15 @@ import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.object.DestroyApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
+import com.terracotta.toolkit.object.serialization.SerializationStrategy;
+import com.terracotta.toolkit.object.serialization.SerializedMapValue;
+import com.terracotta.toolkit.object.serialization.SerializedMapValueParameters;
 import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.search.SearchableEntity;
 import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -123,7 +128,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final AtomicReference<ToolkitMap<String, String>>                attrSchema                         = new AtomicReference<ToolkitMap<String, String>>();
   private final LOCK_STRATEGY                                              lockStrategy;
   private volatile ToolkitAttributeExtractor                               attributeExtractor                 = null;
-  private final CopyOnWriteArrayList<VersionUpdateListener>                versionUpdateListeners;
+  private final CopyOnWriteArrayList<VersionUpdateListener<K, V>>          versionUpdateListeners;
   private final ToolkitLock                                                concurrentLock;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
@@ -153,7 +158,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     Preconditions.checkNotNull(schemaCreator);
     this.schemaCreator = schemaCreator;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
-    this.versionUpdateListeners = new CopyOnWriteArrayList<VersionUpdateListener>();
+    this.versionUpdateListeners = new CopyOnWriteArrayList<VersionUpdateListener<K, V>>();
 
     this.config = new UnclusteredConfiguration(config);
     this.consistency = Consistency.valueOf((String) InternalCacheConfigurationType.CONSISTENCY
@@ -886,20 +891,36 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void doHandleVersionUpdates(final VersionedServerEvent event) {
-    for (VersionUpdateListener listener : versionUpdateListeners) {
+    for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
+      final Object key = event.getKey();
+      final long version = event.getVersion();
       try {
         switch (event.getType()) {
           case PUT_LOCAL:
-            listener.onLocalPut(event.getKey(), event.getValue(), event.getVersion());
+            final V value = deserializeValue(key, event.getValue());
+            listener.onLocalPut((K)key, value, version);
             break;
           case REMOVE_LOCAL:
-            listener.onLocalRemove(event.getKey(), event.getVersion());
+            listener.onLocalRemove((K)key, version);
             break;
         }
       } catch (Exception e) {
         LOGGER.error("Cache mutation listener threw an exception.", e);
       }
     }
+  }
+
+  private V deserializeValue(final Object key, final byte[] value) throws IOException, ClassNotFoundException {
+    final int now = new SystemTimeSource().nowInSeconds();
+    final SerializedMapValueParameters<V> params = new SerializedMapValueParameters<V>()
+        .createTime(now).lastAccessedTime(now).serialized(value);
+    final SerializationStrategy serializationStrategy = platformService
+        .lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME,
+            SerializationStrategy.class);
+    final boolean compressionEnabled = serverMaps[0].isCompressionEnabled();
+
+    return (V)new SerializedMapValue(params).getDeserializedValue(
+        serializationStrategy, compressionEnabled, localCacheStore, key, false);
   }
 
   private static class AggregateServerMapIterator<E> implements Iterator<E> {
