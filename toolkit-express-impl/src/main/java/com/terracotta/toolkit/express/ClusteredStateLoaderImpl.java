@@ -13,7 +13,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -31,12 +35,12 @@ import java.util.Vector;
  * <li>use app loader for everything else.</li>
  */
 class ClusteredStateLoaderImpl extends ClusteredStateLoader {
-  private static final boolean USE_APP_JTA_CLASSES;
-  private static final String  TOOLKIT_CONTENT_RESOURCE = "/toolkit-content.txt";
-  private static final String  PRIVATE_CLASS_SUFFIX     = ".class_terracotta";
+  private static final boolean               USE_APP_JTA_CLASSES;
+  private static final String                TOOLKIT_CONTENT_RESOURCE = "/toolkit-content.txt";
+  private static final String                PRIVATE_CLASS_SUFFIX     = ".class_terracotta";
 
-  private final ClassLoader    appLoader;
-  private final List<String>   embeddedResourcePrefixes;
+  private final ClassLoader                  appLoader;
+  private final Map<String, HashSet<String>> internalResource;
 
   static {
     String prop = System.getProperty(ClusteredStateLoaderImpl.class.getName() + ".USE_APP_JTA_CLASSES", "true");
@@ -47,35 +51,54 @@ class ClusteredStateLoaderImpl extends ClusteredStateLoader {
   ClusteredStateLoaderImpl(AppClassLoader appLoader, boolean useEmbeddedEhcache) {
     super(null);
     this.appLoader = appLoader;
-    embeddedResourcePrefixes = loadPrefixes(useEmbeddedEhcache);
+    internalResource = loadResourceIndex(useEmbeddedEhcache);
   }
 
-  private List<String> loadPrefixes(boolean useEmbeddedEhcache) {
+  private Map<String, HashSet<String>> loadResourceIndex(boolean useEmbeddedEhcache) {
     InputStream in = ClusteredStateLoaderImpl.class.getResourceAsStream(TOOLKIT_CONTENT_RESOURCE);
     if (in == null) throw new RuntimeException("Couldn't load resource entries file at: " + TOOLKIT_CONTENT_RESOURCE);
     BufferedReader reader = null;
     try {
-      List<String> entries = new ArrayList<String>();
+      Map<String, HashSet<String>> content = new HashMap<String, HashSet<String>>();
       reader = new BufferedReader(new InputStreamReader(in));
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (line.length() > 0) {
-          if (!line.endsWith("/")) {
-            line = line + "/";
-          }
+        if (line.length() == 0) {
+          continue;
+        }
+        int secondSlash = line.indexOf("/", line.indexOf("/") + 1);
+        String prefix = line.substring(0, secondSlash + 1);
+        String resource = line.substring(secondSlash + 1);
+        HashSet<String> prefixSet = content.get(prefix);
+        if (prefixSet == null) {
+          prefixSet = new HashSet<String>();
+          content.put(prefix, prefixSet);
+        }
+        prefixSet.add(resource);
+      }
 
-          if (useEmbeddedEhcache) {
-            entries.add(line);
-          } else { // embedded ehcache not needed
-            if (!line.startsWith("ehcache/")) { // then don't add ehcache resources
-              entries.add(line);
-            }
+      // filter out ehcache resources if not needed
+      List<String> filteredPrefix = null;
+      if (useEmbeddedEhcache) {
+        filteredPrefix = new ArrayList<String>(content.keySet());
+      } else {
+        filteredPrefix = new ArrayList<String>();
+        for (String prefix : content.keySet()) {
+          if (!prefix.startsWith("ehcache/")) {
+            filteredPrefix.add(prefix);
           }
         }
       }
-      Collections.sort(entries);
-      return entries;
+      // we sort prefix so we can have a consistent lookup order
+      Collections.sort(filteredPrefix);
+
+      // reconstruct the map with sorted order of prefixes
+      Map<String, HashSet<String>> sortedContent = new LinkedHashMap<String, HashSet<String>>();
+      for (String prefix : filteredPrefix) {
+        sortedContent.put(prefix, content.get(prefix));
+      }
+      return sortedContent;
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     } finally {
@@ -171,23 +194,26 @@ class ClusteredStateLoaderImpl extends ClusteredStateLoader {
     }
   }
 
-  private URL findClassWithPrefix(String name) {
-    String resource = name.replace('.', '/').concat(PRIVATE_CLASS_SUFFIX);
-    for (String prefix : embeddedResourcePrefixes) {
-      URL url = appLoader.getResource(prefix + resource);
-      if (url != null) { return url; }
+  private String findInternalPrefix(String resource) {
+    for (Map.Entry<String, HashSet<String>> entry : internalResource.entrySet()) {
+      String prefix = entry.getKey();
+      HashSet<String> resources = entry.getValue();
+      if (resources.contains(resource)) { return prefix; }
     }
     return null;
+  }
+
+  private URL findClassWithPrefix(String name) {
+    String resource = name.replace('.', '/').concat(PRIVATE_CLASS_SUFFIX);
+    String prefix = findInternalPrefix(resource);
+    return prefix != null ? appLoader.getResource(prefix + resource) : null;
   }
 
   private URL findResourceWithPrefix(String name) {
     String resource = name.endsWith(".class") ? name.substring(0, name.lastIndexOf(".class")) + PRIVATE_CLASS_SUFFIX
         : name;
-    for (String prefix : embeddedResourcePrefixes) {
-      URL url = appLoader.getResource(prefix + resource);
-      if (url != null) { return url; }
-    }
-    return null;
+    String prefix = findInternalPrefix(resource);
+    return prefix != null ? appLoader.getResource(prefix + resource) : null;
   }
 
   private Enumeration<URL> findResourcesWithPrefix(String name) throws IOException {
@@ -195,7 +221,8 @@ class ClusteredStateLoaderImpl extends ClusteredStateLoader {
         : name;
 
     Vector<URL> urls = new Vector<URL>();
-    for (String prefix : embeddedResourcePrefixes) {
+    String prefix = findInternalPrefix(resource);
+    if (prefix != null) {
       Enumeration<URL> e = appLoader.getResources(prefix + resource);
       if (e != null) {
         while (e.hasMoreElements()) {
