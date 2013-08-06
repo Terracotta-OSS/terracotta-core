@@ -168,7 +168,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.timeSource = new SystemTimeSource();
     this.lockStrategy = getLockStrategyFromConfig(config);
     setupStripeObjects(stripeObjects);
-    concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT", platformService);
+    concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT_LOCK_FOR_BULKLOAD", platformService);
   }
 
   private void setupStripeObjects(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects) {
@@ -1068,7 +1068,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         for (Iterator iterator = a[i].iterator(); iterator.hasNext();) {
           Entry e = (Entry) iterator.next();
           Value value = (Value) e.getValue();
-          if (value.isVersioned()) {
+          if (!value.isVersioned()) {
             if (value.isRemove()) {
               serverMaps[i].unlockedRemoveNoReturn(e.getKey());
             } else {
