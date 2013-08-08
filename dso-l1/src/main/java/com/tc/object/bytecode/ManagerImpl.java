@@ -68,7 +68,9 @@ import com.tc.server.ServerEventType;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 import com.tc.util.Util;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
@@ -116,6 +118,7 @@ public class ManagerImpl implements Manager {
   private final UUID                                  uuid;
   private ServerEventListenerManager                  serverEventListenerManager;
   private final String                                L1VMShutdownHookName      = "L1 VM Shutdown Hook";
+  private volatile TaskRunner                         taskRunner;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -149,7 +152,6 @@ public class ManagerImpl implements Manager {
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
     this.dsoCluster = new DsoClusterImpl(rejoinManager);
     this.uuid = UUID.getUUID();
-
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
       // Register a shutdown hook for the terracotta client
@@ -161,6 +163,7 @@ public class ManagerImpl implements Manager {
 
     this.lockIdFactory = new LockIdFactory(this);
     this.platformService = new PlatformServiceImpl(this, isExpressRejoinMode);
+
     logger.info("manager created with rejoinEnabled=" + isExpressRejoinMode);
   }
 
@@ -249,7 +252,7 @@ public class ManagerImpl implements Manager {
                                                                    }
                                                                  });
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
-
+    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(group);
     final StartupAction action = new StartupHelper.StartupAction() {
       @Override
       public void execute() throws Throwable {
@@ -1017,5 +1020,10 @@ public class ManagerImpl implements Manager {
   @Override
   public boolean isRejoinInProgress() {
     return rejoinManager.isRejoinInProgress();
+  }
+
+  @Override
+  public TaskRunner getTastRunner() {
+    return taskRunner;
   }
 }

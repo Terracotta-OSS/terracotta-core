@@ -533,7 +533,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void disposeLocally() {
     writeLock();
     try {
-      localDelegate.disposeLocally();
+      bulkloadCache.disposeLocally();
       // do not use applicator as that will destroy the object in cluster also.
       applyDestroy();
       factory.dispose(this);

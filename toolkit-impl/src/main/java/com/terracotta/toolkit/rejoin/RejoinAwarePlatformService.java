@@ -26,6 +26,7 @@ import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.server.ServerEventType;
 import com.tc.util.VicariousThreadLocal;
+import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
@@ -538,4 +539,8 @@ public class RejoinAwarePlatformService implements PlatformService {
     }
   }
 
+  @Override
+  public TaskRunner getTaskRunner() {
+    return delegate.getTaskRunner();
+  }
 }

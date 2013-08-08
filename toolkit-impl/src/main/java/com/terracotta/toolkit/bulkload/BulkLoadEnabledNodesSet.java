@@ -12,6 +12,7 @@ import com.tc.cluster.DsoClusterEvent;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.platform.PlatformService;
+import com.tc.util.concurrent.Timer;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
@@ -19,7 +20,6 @@ import com.tcclient.cluster.OutOfBandDsoClusterListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +47,7 @@ public class BulkLoadEnabledNodesSet {
     bulkLoadEnabledNodesSet = toolkit.getSet(BULK_LOAD_NODES_SET_PREFIX + name, String.class);
     this.loggingEnabled = bulkLoadConstants.isLoggingEnabled();
     clusteredLock = bulkLoadEnabledNodesSet.getReadWriteLock().writeLock();
-    cleanupOnNodeLeftListener = new CleanupOnNodeLeftListener(this, dsoCluster, name);
+    cleanupOnNodeLeftListener = new CleanupOnNodeLeftListener(this, dsoCluster, name, platformService);
     dsoCluster.addClusterListener(cleanupOnNodeLeftListener);
     cleanupOfflineNodes();
   }
@@ -186,10 +186,10 @@ public class BulkLoadEnabledNodesSet {
     private static final long             NODE_LEFT_PROCESSING_DELAY = Long.getLong("nodeLeftProcessingDelay",
                                                                                     30 * 1000);
 
-    public CleanupOnNodeLeftListener(BulkLoadEnabledNodesSet nodesSet, DsoCluster dsoCluster, String name) {
+    public CleanupOnNodeLeftListener(BulkLoadEnabledNodesSet nodesSet, DsoCluster dsoCluster, String name,PlatformService platformService) {
       this.nodesSet = nodesSet;
       this.dsoCluster = dsoCluster;
-      this.timer = new Timer("Timer for Bulk Load Node Left Cache:" + name, true);
+      this.timer = platformService.getTaskRunner().newTimer("Timer for Bulk Load Node Left");
     }
 
     private void handleNodeRejoined(DsoClusterEvent event) {
@@ -237,7 +237,7 @@ public class BulkLoadEnabledNodesSet {
         public void run() {
           handleNodeLeft(event);
         }
-      }, NODE_LEFT_PROCESSING_DELAY);
+      }, NODE_LEFT_PROCESSING_DELAY, TimeUnit.MILLISECONDS);
     }
 
     @Override

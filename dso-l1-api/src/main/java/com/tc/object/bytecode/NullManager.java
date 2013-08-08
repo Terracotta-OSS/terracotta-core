@@ -28,6 +28,7 @@ import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.server.ServerEventType;
+import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -495,5 +496,10 @@ public class NullManager implements Manager {
   @Override
   public boolean isRejoinInProgress() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TaskRunner getTastRunner() {
+    return null;
   }
 }

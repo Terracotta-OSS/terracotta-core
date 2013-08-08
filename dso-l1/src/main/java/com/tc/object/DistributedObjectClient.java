@@ -181,7 +181,6 @@ import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
@@ -296,7 +295,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoClientBuilder = createClientBuilder();
     this.rejoinManager = rejoinManager;
     this.uuid = uuid;
-    this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
+    this.taskRunner = manager.getTastRunner();
   }
 
   protected DSOClientBuilder createClientBuilder() {

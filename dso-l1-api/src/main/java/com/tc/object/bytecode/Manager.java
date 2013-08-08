@@ -26,6 +26,7 @@ import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.server.ServerEventType;
+import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -402,4 +403,6 @@ public interface Manager extends TerracottaLocking {
   int getRejoinCount();
 
   boolean isRejoinInProgress();
+
+  TaskRunner getTastRunner();
 }
