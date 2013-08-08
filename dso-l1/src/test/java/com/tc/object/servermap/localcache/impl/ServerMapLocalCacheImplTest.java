@@ -28,6 +28,7 @@ import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.servermap.localcache.impl.ServerMapLocalCacheImpl.ValueOIDKeyTuple;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.OnCommitCallable;
@@ -291,10 +292,10 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     for (int i = 0; i < 50; i++) {
       AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
       assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ObjectID> list = cache.getLockdIDMappings().get(new LongLockID(i));
+      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
     }
 
     Set<LockID> evictLocks = new HashSet<LockID>();
@@ -319,7 +320,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       Set list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
     }
   }
 
@@ -338,7 +339,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       Set list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
     }
 
     Set<LockID> evictLocks = new HashSet<LockID>();
@@ -365,7 +366,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       Set list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
     }
   }
 
@@ -575,10 +576,10 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       int eventualId = count + i;
       AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
       assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ObjectID> list = cache.getLockdIDMappings().get(new LongLockID(i));
+      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
 
       value = cache.getLocalValue("key" + eventualId);
       assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
@@ -710,13 +711,20 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       Set list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
 
       value = cache.getLocalValue("key" + eventualId);
       assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
       String keyGot = (String) localCacheStore.get(new ObjectID(eventualId));
       Assert.assertEquals("key" + eventualId, keyGot);
     }
+  }
+
+  private void assertListContainsOid(Set<ValueOIDKeyTuple> list, ObjectID objectID) {
+    for (ValueOIDKeyTuple tuple : list) {
+      if (tuple.getValueObjectID().equals(objectID)) { return; }
+    }
+    Assert.fail();
   }
 
   public void testGlobalLocalCacheManagerShutdown() {
@@ -734,10 +742,10 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       int eventualId = count + i;
       AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
       assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ObjectID> list = cache.getLockdIDMappings().get(new LongLockID(i));
+      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
       Assert.assertNotNull(list);
       Assert.assertEquals(1, list.size());
-      Assert.assertTrue(list.contains(new ObjectID(i)));
+      assertListContainsOid(list, new ObjectID(i));
 
       value = cache.getLocalValue("key" + eventualId);
       assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
