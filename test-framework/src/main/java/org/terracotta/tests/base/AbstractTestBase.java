@@ -31,6 +31,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -487,18 +489,33 @@ public abstract class AbstractTestBase extends TCTestCase {
   @SuppressWarnings("restriction")
   protected void disableIfMemoryLowerThan(int physicalMemory) {
     try {
-      long gb = 1024 * 1024 * 1024;
-      MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
-      com.sun.management.OperatingSystemMXBean osMBean = ManagementFactory
-          .newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
-                                  com.sun.management.OperatingSystemMXBean.class);
-      if (osMBean.getTotalPhysicalMemorySize() < physicalMemory * gb) {
+      if (getTotalPhysicalMemory() < physicalMemory) {
         disableTest();
       }
     } catch (Exception e) {
-      throw new AssertionError(e);
+      System.out
+          .println("WARNING: test may fail because we are not able to determine the system memory and it may be < "
+                   + physicalMemory + " GB");
+      e.printStackTrace();
     }
 
+  }
+
+  /**
+   * returns Total physical Memory in GB or throws Exception if it not able to determine the physical memory
+   */
+  public long getTotalPhysicalMemory() throws Exception {
+    long gb = 1024 * 1024 * 1024;
+    long totalAvailableMem = -1l;
+    Class clazz = Class.forName("com.sun.management.OperatingSystemMXBean");
+    MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
+    OperatingSystemMXBean osMBean = (OperatingSystemMXBean) ManagementFactory
+        .newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, clazz);
+    Method method = osMBean.getClass().getMethod("getTotalPhysicalMemorySize", new Class[] {});
+    long totalBytes = (Long) method.invoke(osMBean, (Object[]) null);
+    System.out.println("XXXXX total mem: " + totalBytes);
+    totalAvailableMem = totalBytes / gb;
+    return totalAvailableMem;
   }
 
   public File getTcConfigFile() {
