@@ -128,6 +128,8 @@ public class TestBaseUtil {
     if (Vm.isJRockit()) {
       jvmArgs.add("-Xverbose:gcpause,gcreport");
       jvmArgs.add("-Xverboselog:" + verboseGcOutputFile.getAbsolutePath());
+    } else if (Vm.isIBM()) {
+      jvmArgs.add("-Xverbosegclog:" + verboseGcOutputFile.getAbsolutePath());
     } else {
       jvmArgs.add("-Xloggc:" + verboseGcOutputFile.getAbsolutePath());
       jvmArgs.add("-XX:+PrintGCTimeStamps");
