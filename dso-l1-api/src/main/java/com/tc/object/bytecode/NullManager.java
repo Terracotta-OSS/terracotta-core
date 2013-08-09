@@ -28,6 +28,7 @@ import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.server.ServerEventType;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
 
@@ -500,6 +501,6 @@ public class NullManager implements Manager {
 
   @Override
   public TaskRunner getTastRunner() {
-    return null;
+    return Runners.newDefaultCachedScheduledTaskRunner();
   }
 }
