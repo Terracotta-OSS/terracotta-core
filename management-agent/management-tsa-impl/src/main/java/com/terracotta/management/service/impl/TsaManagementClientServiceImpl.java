@@ -1681,7 +1681,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   // find the server where L1 Info MBeans are registered
   private JMXConnector getJMXConnectorWithL1MBeans() throws IOException, JMException, InterruptedException {
-    ObjectName objectName = new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*");
+    ObjectName objectName = new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,*");
     return getJmxConnectorWithMBeans(objectName);
   }
 
