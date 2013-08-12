@@ -11,6 +11,12 @@ import java.io.IOException;
 
 public class TCTestCaseTest extends TCTestCase {
 
+  public TCTestCaseTest() {
+    if (Vm.isIBM()) {
+      disableTest();
+    }
+  }
+
   public void testHeapDump() throws IOException {
     if (Vm.isJDK16Compliant()) {
       assertEquals(0, getHprofs().length);
