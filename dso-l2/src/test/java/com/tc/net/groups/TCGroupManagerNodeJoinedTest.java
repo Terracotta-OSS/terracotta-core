@@ -26,6 +26,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.CallableWaiter;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
@@ -37,6 +38,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
@@ -128,13 +130,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       NodesStore nodeStore = new NodesStoreImpl(nodeSet);
       groupManagers[i].join(allNodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(1000 * nodes);
-
-    // verification
-    for (int i = 0; i < nodes; ++i) {
-      // every node shall receive hello message from reset of nodes
-      assertEquals(nodes - 1, listeners[i].size());
-    }
+    waitForAllMessageCountsToReach(nodes - 1);
 
     System.out.println("VERIFIED");
     shutdown();
@@ -192,13 +188,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       groupManagers[i].join(allNodes[i], nodeStore);
     }
 
-    ThreadUtil.reallySleep(5000 + 1000 * nodes);
-
-    // verification
-    for (int i = 0; i < nodes; ++i) {
-      // every node shall receive hello message from reset of nodes
-      assertEquals(nodes - 1, listeners[i].size());
-    }
+    waitForAllMessageCountsToReach(nodes - 1);
 
     ThreadUtil.reallySleep(5000);
 
@@ -212,13 +202,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     proxy[0].stop();
     proxy[1].start();
 
-    ThreadUtil.reallySleep(5000 + 1000 * nodes);
+    waitForAllMessageCountsToReach(nodes);
 
-    // verification
-    for (int i = 0; i < nodes; ++i) {
-      // every node should have received one more hello message from reset of nodes
-      assertEquals(nodes, listeners[i].size());
-    }
     shutdown();
   }
 
@@ -270,16 +255,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       groupManagers[i].join(allNodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(2000 + 1000 * nodes);
 
-    // verification
-    for (int i = 0; i < nodes; ++i) {
-      // every node shall receive hello message from reset of nodes
-      while (nodes - 1 != listeners[i].size()) {
-        Thread.sleep(1000);
-        System.out.println("XXX waiting for msg receive");
-      }
-    }
+    waitForAllMessageCountsToReach(nodes - 1);
 
     System.out.println("XXX 1st verification done");
 
@@ -387,6 +364,22 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeLeft -> " + nodeID);
     }
+  }
+
+  private void waitForAllMessageCountsToReach(final int count) throws Exception {
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (MyListener listener : listeners) {
+          if (listener.size() < count) {
+            return false;
+          } else if (listener.size() > count) {
+            throw new AssertionError("Exceeded the expected count. Expected " + count + " got " + listener.size());
+          }
+        }
+        return true;
+      }
+    });
   }
 
   private static final class MyListener implements GroupMessageListener {
