@@ -6,6 +6,7 @@ package com.terracotta.toolkit.bulkload;
 import org.terracotta.toolkit.collections.ToolkitSet;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
@@ -186,7 +187,8 @@ public class BulkLoadEnabledNodesSet {
     private static final long             NODE_LEFT_PROCESSING_DELAY = Long.getLong("nodeLeftProcessingDelay",
                                                                                     30 * 1000);
 
-    public CleanupOnNodeLeftListener(BulkLoadEnabledNodesSet nodesSet, DsoCluster dsoCluster, String name,PlatformService platformService) {
+    public CleanupOnNodeLeftListener(BulkLoadEnabledNodesSet nodesSet, DsoCluster dsoCluster, String name,
+                                     PlatformService platformService) {
       this.nodesSet = nodesSet;
       this.dsoCluster = dsoCluster;
       this.timer = platformService.getTaskRunner().newTimer("Timer for Bulk Load Node Left");
@@ -194,6 +196,7 @@ public class BulkLoadEnabledNodesSet {
 
     private void handleNodeRejoined(DsoClusterEvent event) {
       nodesSet.addCurrentNodeInternal();
+      nodesSet.cleanupOfflineNodes();
     }
 
     private void handleNodeLeft(DsoClusterEvent event) {
@@ -211,12 +214,16 @@ public class BulkLoadEnabledNodesSet {
         LOGGER.warn("Ignoring node left of node: " + offlineNode + ", as current node is offline.");
         return;
       }
-      nodesSet.clusteredLock.lock();
       try {
-        nodesSet.removeNodeIdAndNotifyAll(offlineNode);
+        nodesSet.clusteredLock.lock();
+        try {
+          nodesSet.removeNodeIdAndNotifyAll(offlineNode);
 
-      } finally {
-        nodesSet.clusteredLock.unlock();
+        } finally {
+          nodesSet.clusteredLock.unlock();
+        }
+      } catch (RejoinException e) {
+        LOGGER.warn("Ignoring node left of node: " + offlineNode + ", as Rejoin in progress.");
       }
     }
 
@@ -256,7 +263,6 @@ public class BulkLoadEnabledNodesSet {
     public void nodeRejoined(DsoClusterEvent event) {
       handleNodeRejoined(event);
     }
-
 
     @Override
     public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
