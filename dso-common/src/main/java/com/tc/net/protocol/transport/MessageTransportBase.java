@@ -274,9 +274,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
     if (isSameConnection) {
       boolean forcedDisconnect = false;
+      boolean isSynSent = false;
       synchronized (status) {
         logger.warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
-        if (status.isEstablished() || status.isDisconnected()) {
+        if (status.isEstablished() || status.isDisconnected() || status.isSynSent()) {
+          if (status.isSynSent()) isSynSent = true;
           if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();
         } else {
@@ -284,7 +286,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
           return;
         }
       }
-
+      if (isSynSent) {
+        fireTransportClosedEvent();
+        return;
+      }
       if (forcedDisconnect) {
         fireTransportForcedDisconnectEvent();
       } else {
