@@ -23,6 +23,7 @@
   </licenses>
 
   <properties>
+  	<group>system</group>
   	<tcmaven.version>1.12.0-SNAPSHOT</tcmaven.version>
     <terracotta.core.version>4.2.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>

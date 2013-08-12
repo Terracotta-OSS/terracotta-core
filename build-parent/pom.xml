@@ -760,13 +760,6 @@
     </profile>   
 
     <profile>
-      <id>system-tests</id>
-      <properties>
-        <should_skip_tests>false</should_skip_tests>
-      </properties>
-    </profile>
-
-    <profile>
       <id>check</id>
       <build>
         <plugins>
