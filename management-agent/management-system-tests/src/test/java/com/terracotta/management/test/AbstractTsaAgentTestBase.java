@@ -1,12 +1,16 @@
 package com.terracotta.management.test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
+
 import org.apache.commons.io.IOUtils;
+import org.hamcrest.CoreMatchers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -35,9 +39,6 @@ import java.net.URLConnection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
 public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
   public AbstractTsaAgentTestBase(TestConfig testConfig) {
@@ -56,7 +57,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
   }
 
   @Override
-  protected String createClassPath(Class client) throws IOException {
+  protected String createClassPath(Class client) {
     String tk = TestBaseUtil.jarFor(ToolkitVersion.class);
     String common = TestBaseUtil.jarFor(Os.class);
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
@@ -69,7 +70,9 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
     String commonsIo = TestBaseUtil.jarFor(IOUtils.class);
     String ehcache = TestBaseUtil.jarFor(Ehcache.class);
-    return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J, commonsIo, ehcache);
+    String coreMatchers = TestBaseUtil.jarFor(CoreMatchers.class);
+    return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J,
+                         commonsIo, ehcache, coreMatchers);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
