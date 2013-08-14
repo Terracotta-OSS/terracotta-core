@@ -205,25 +205,24 @@ public class BulkLoadEnabledNodesSet {
       if (dsoCluster.getCurrentNode().getId().equals(offlineNode)) {
         // nothing to do on "this" node left
         if (nodesSet.loggingEnabled) {
-          LOGGER.info("Ignoring NodeLeft of current node itself - " + offlineNode);
+          LOGGER.info("Ignoring" + event + " for itself " + offlineNode);
         }
         return;
       }
       if (!dsoCluster.areOperationsEnabled()) {
         // no-op when current node is offline already
-        LOGGER.warn("Ignoring node left of node: " + offlineNode + ", as current node is offline.");
+        LOGGER.info("Ignoring " + event + " for node " + offlineNode + " because current node is offline");
         return;
       }
       try {
         nodesSet.clusteredLock.lock();
         try {
           nodesSet.removeNodeIdAndNotifyAll(offlineNode);
-
         } finally {
           nodesSet.clusteredLock.unlock();
         }
       } catch (RejoinException e) {
-        LOGGER.warn("Ignoring node left of node: " + offlineNode + ", as Rejoin in progress.");
+        LOGGER.info("Ignoring " + event + " for node " + offlineNode + " because REJOIN-IN-PROGRESS");
       }
     }
 
