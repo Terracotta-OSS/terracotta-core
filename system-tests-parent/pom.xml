@@ -176,7 +176,6 @@
                 <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
                 <useSystemClassLoader>true</useSystemClassLoader>
                 <workingDirectory>${project.build.directory}</workingDirectory>
-                <__TC_skipToolkitResolve>true</__TC_skipToolkitResolve>
                 <argLine>${surefire.argLine}</argLine>
                 <excludes>
                   <exclude>**/Abstract*.java</exclude>

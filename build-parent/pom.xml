@@ -387,6 +387,12 @@
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.junit</groupId>
+      <artifactId>test-listeners</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
     </dependency>    
   </dependencies>
 
@@ -489,6 +495,12 @@
                 <goal>test</goal>
               </goals>
               <configuration>
+                <properties>
+                  <property>
+                    <name>listener</name>
+                    <value>net.sf.ehcache.SystemExitListener</value>
+                  </property>
+                </properties>              
                 <failIfNoTests>false</failIfNoTests>
                 <printSummary>true</printSummary>
                 <reportFormat>plain</reportFormat>
@@ -500,7 +512,7 @@
                 <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
                 <useSystemClassLoader>true</useSystemClassLoader>
                 <workingDirectory>${project.build.directory}/temp</workingDirectory>
-                <__TC_devLog>true</__TC_devLog>
+                <devLog>true</devLog>
                 <argLine>${surefire.argLine}</argLine>
               </configuration>
             </execution>
