@@ -148,7 +148,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToPassiveState(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     if (state == START_STATE) {
-      state = winningEnrollment.isANewCandidate() ? PASSIVE_STANDBY : PASSIVE_UNINITIALIZED;
+      state = PASSIVE_UNINITIALIZED;
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
       stateChangeSink.add(new StateChangedEvent(START_STATE, state));
@@ -157,7 +157,7 @@ public class StateManagerImpl implements StateManager {
       throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
                                + " at least for now");
     } else {
-      debugInfo("Move to passive state ignored - state=" + state + ", winningEnrollMent: " + winningEnrollment);
+      debugInfo("Move to passive state ignored - state=" + state + ", winningEnrollment: " + winningEnrollment);
     }
   }
 

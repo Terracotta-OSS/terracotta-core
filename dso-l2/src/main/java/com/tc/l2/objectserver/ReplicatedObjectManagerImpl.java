@@ -234,17 +234,18 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListResponse(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
     Assert.assertTrue(this.stateManager.isActiveCoordinator());
 
-
-    if (!clusterMsg.isSyncAllowed() || !clusterMsg.isCleanDB()) {
-      final StringBuilder error = new StringBuilder();
-      if (!clusterMsg.isCleanDB()) {
-        error.append("Node with a stale Database is trying to join the cluster. isCleanDB: " + clusterMsg.isCleanDB());
-      } else {
-        error.append("Node joined after being partially synced with another active.");
-      }
-      logger.error(error.toString() + " Forcing node to Quit !!");
+    if (StateManager.PASSIVE_STANDBY.equals(clusterMsg.getCurrentState()) ) {
+      logger.error("Node " + nodeID + " joined as " + StateManager.PASSIVE_STANDBY + " without a sync.");
       this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
-                                error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+                                "Already passive standby. " + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+    } else if (!clusterMsg.isSyncAllowed()) {
+      logger.error("Node " + nodeID +" has declared that it is not allowed to sync. Zapping it so it can rejoin.");
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+          "Already synced once. " + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+    } else if (!clusterMsg.isCleanDB()) {
+      logger.error("Node " + nodeID +" does not have a clean db. Zapping it so it can rejoin.");
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+          "Dirty db " + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the re-sent
       // transactions. If we do that there is a race where passive can apply already applied transactions twice.
@@ -376,7 +377,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           // will trigger the other.
           boolean syncAllowed = syncedFrom.compareAndSet(null, clusterMsg.messageFrom()) || syncedFrom.get().equals(clusterMsg.messageFrom());
           logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + " isCleanDB="
-                      + isCleanDB + " currentState=" + clusterMsg.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
+                      + isCleanDB + " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
                       " resource total=" + getResourceTotal());
           try {
             groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
