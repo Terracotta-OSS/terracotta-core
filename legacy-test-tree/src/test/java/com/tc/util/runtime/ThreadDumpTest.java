@@ -18,7 +18,9 @@ import java.util.Set;
 public class ThreadDumpTest extends TCTestCase {
 
   public ThreadDumpTest() {
-    //
+    if (Vm.isIBM()) {
+      disableTest();
+    }
   }
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
