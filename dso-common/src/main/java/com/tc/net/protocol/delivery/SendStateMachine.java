@@ -24,6 +24,7 @@ public class SendStateMachine extends AbstractStateMachine {
   final State                              MESSAGE_WAIT_STATE    = new MessageWaitState();
   final State                              ACK_PROCESSING_STATE  = new AckProcessingState();
   final State                              SENDWINDOW_FULL_STATE = new SendWindowFullState();
+  final State                              PAUSED_STATE          = new PausedState();
 
   private final OOOProtocolMessageDelivery delivery;
   private final LinkedList<OOOProtocolMessage> outstandingMsgs       = new LinkedList<OOOProtocolMessage>();
@@ -53,6 +54,11 @@ public class SendStateMachine extends AbstractStateMachine {
   @Override
   protected void basicResume() {
     switchToState(initialState());
+  }
+
+  @Override
+  protected void basicPause() {
+    switchToState(PAUSED_STATE);
   }
 
   @Override
@@ -221,6 +227,16 @@ public class SendStateMachine extends AbstractStateMachine {
         Assert.failure("SEND_WINDOW_FULL_STATE doesn't expect this message: " + protocolMessage + ";\n" + this);
       }
 
+    }
+  }
+
+  /**
+   * Paused state entered after a disconnect. No messages can be sent and it won't automatically transition into
+   * another state.
+   */
+  private class PausedState extends AbstractState {
+    private PausedState() {
+      super("PAUSED_STATE");
     }
   }
 

@@ -257,8 +257,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       channelConnected.set(true);
       receiveLayer.notifyTransportConnected(this);
     } else {
-      DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId()
-                      + " -> not firing Tx connected event to channel");
+      debugLog("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId()
+               + " -> not firing Tx connected event to channel");
     }
     reconnectMode.set(false);
   }

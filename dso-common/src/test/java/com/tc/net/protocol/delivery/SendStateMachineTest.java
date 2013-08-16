@@ -62,6 +62,9 @@ public class SendStateMachineTest extends TCTestCase {
 
     ssm.pause();
     assertTrue(ssm.isPaused());
+    ssm.put(new PingMessage(monitor));
+    ssm.execute(tpm);
+    assertEquals(2, delivery.msg.getSent());
 
     // HAND SHAKE for RESEND
     delivery.clearAll();
@@ -76,13 +79,13 @@ public class SendStateMachineTest extends TCTestCase {
     tpm.ack = 0;
     ssm.execute(tpm); // dup ack=0
 
-    ssm.put(new PingMessage(monitor)); // msg 3
+    ssm.put(new PingMessage(monitor)); // msg 4
     ssm.execute(null);
-    assertTrue(delivery.msg.getSent() == 3);
+    assertEquals(4, delivery.msg.getSent());
 
     tpm.ack = 2;
     ssm.execute(tpm); // ack 2
-    assertTrue(delivery.msg.getSent() == 3);
+    assertEquals(4, delivery.msg.getSent());
 
   }
 }
