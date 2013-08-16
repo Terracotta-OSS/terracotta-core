@@ -54,8 +54,8 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     HEADER_LENGTH = (tmp + 3) / 4 * 4;
   }
 
-  OOOProtocolMessageHeader(short version, short type, long sequence, UUID sessionId) {
-    this(version, type, sequence, -1, sessionId);
+  OOOProtocolMessageHeader(short version, short type, long ackSequence, UUID sessionId) {
+    this(version, type, -1, ackSequence, sessionId);
   }
 
   OOOProtocolMessageHeader(short version, short type, long sequence, long ackSequence, UUID sessionId) {
