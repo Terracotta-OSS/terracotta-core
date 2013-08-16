@@ -444,7 +444,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   }
 
   private static class TestThrowableHandler extends ThrowableHandler {
-    private volatile Throwable t;
+    private volatile Throwable throwable;
 
     /**
      * Construct a new ThrowableHandler with a logger
@@ -457,13 +457,12 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     @Override
     public void handleThrowable(final Thread thread, final Throwable t) {
-      this.t = t;
+      this.throwable = t;
       super.handleThrowable(thread, t);
     }
 
     void throwIfNecessary() throws Throwable {
-      if (t != null) {
-        throw t;
+      if (throwable != null) { throw throwable;
       }
     }
 

@@ -94,7 +94,7 @@ public class Persistor implements PrettyPrintable {
     return new NullTransactionPersistor();
   }
 
-  protected InlineGCPersistor createInlineGCPersistor(StorageManager storageManager) {
+  protected InlineGCPersistor createInlineGCPersistor(StorageManager storageMgr) {
     return new HeapInlineGCPersistor();
   }
 
