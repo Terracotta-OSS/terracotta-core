@@ -164,6 +164,11 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
+  public void closeTsaProxyConnections(final int groupIndex) throws Exception {
+    testServerManager.closeTsaProxy(groupIndex);
+  }
+
+  @Override
   public void startTsaProxy(int groupIndex) throws Exception {
     testServerManager.startTsaProxy(groupIndex);
   }

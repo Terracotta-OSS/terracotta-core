@@ -185,6 +185,14 @@ public interface TestHandlerMBean {
   public void startTsaProxy(int groupIndex) throws Exception;
 
   /**
+   * Closes the connections between the clients and server for the given group
+   *
+   * @param groupIndex group to close connections on
+   * @throws Exception
+   */
+  public void closeTsaProxyConnections(int groupIndex) throws Exception;
+
+  /**
    * Execute custom command
    */
   public Serializable executeCustomCommand(String cmd, Serializable[] params);
