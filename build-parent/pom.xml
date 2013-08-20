@@ -709,6 +709,13 @@
 
   <profiles>
     <profile>
+      <id>system-tests</id>
+      <properties>
+        <should_skip_tests>false</should_skip_tests>
+      </properties>
+    </profile>
+  
+    <profile>
       <id>client-jvm</id>
       <properties>
         <surefire.jvm.mode>-client</surefire.jvm.mode>
