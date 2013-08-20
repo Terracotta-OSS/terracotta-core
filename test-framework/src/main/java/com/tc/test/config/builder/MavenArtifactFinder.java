@@ -30,7 +30,7 @@ public class MavenArtifactFinder {
   private static final Logger LOG = LoggerFactory.getLogger(MavenArtifactFinder.class);
 
   public static String findArtifactLocation(String gid, String aid, String ver, final String classifier, final String type) {
-    String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
+    String m2Root =  System.getProperty("localRepository") != null ? System.getProperty("localRepository") : System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
     if (System.getProperty("maven.repo.local") != null) {
       m2Root = System.getProperty("maven.repo.local");
       LOG.info("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);

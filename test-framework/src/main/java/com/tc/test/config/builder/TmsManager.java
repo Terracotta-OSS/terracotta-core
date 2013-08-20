@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.test.util.TestBaseUtil;
 
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -39,19 +40,20 @@ public class TmsManager {
 
     // those are the jetty-8.1.7.v20120910 dependencies
     URL[] urls = {
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.taglibs.standard.lang.jstl.VariableResolver"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.jstl.core.ConditionalTagSupport"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("com.sun.el.ExpressionFactoryImpl"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.el.ELException"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.JspApplicationContext"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.jasper.servlet.JspServlet"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.apache.xerces.jaxp.SAXParserFactoryImpl"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.ssl.SslSocketConnector"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.webapp.WebAppContext"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.util.Attributes"))),
-        new URL("file://" + TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.Server")))
+        new File(TestBaseUtil.jarFor(Class.forName("org.apache.taglibs.standard.lang.jstl.VariableResolver"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.jstl.core.ConditionalTagSupport"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("com.sun.el.ExpressionFactoryImpl"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("javax.el.ELException"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("javax.servlet.jsp.JspApplicationContext"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.apache.jasper.servlet.JspServlet"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.apache.xerces.jaxp.SAXParserFactoryImpl"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("javax.servlet.ServletContext"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.ssl.SslSocketConnector"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.webapp.WebAppContext"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.util.Attributes"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.objectweb.asm.ClassVisitor"))).toURI().toURL(),
+        new File(TestBaseUtil.jarFor(Class.forName("org.eclipse.jetty.server.Server"))).toURI().toURL()
     };
 
     ClassLoader classloader = new URLClassLoader(urls, null);
