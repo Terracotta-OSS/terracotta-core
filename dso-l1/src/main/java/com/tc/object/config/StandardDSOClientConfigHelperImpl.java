@@ -413,10 +413,10 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       if ((endTime - startTime) > CONFIGURATION_TOTAL_TIMEOUT) { throw new ConfigurationSetupException(
                                                                                                        "Timeout occured while trying to get Server Version, No Active server Found for : "
                                                                                                            + CONFIGURATION_TOTAL_TIMEOUT); }
-      if (!foundCompactibleActive) { throw new IllegalStateException(
-                                                                     "client Server Version mismatch occured: client version : "
-                                                                         + getClientVersion()
-                                                                         + " is not compatible with a server of Terracotta version: 4.0 or before"); }
+      // if (!foundCompactibleActive) { throw new IllegalStateException(
+      // "client Server Version mismatch occured: client version : "
+      // + getClientVersion()
+      // + " is not compatible with a server of Terracotta version: 4.0 or before"); }
     }
   }
 
