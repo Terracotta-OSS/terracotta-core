@@ -92,10 +92,10 @@ public class LockStatManagerTest extends TestCase {
       ThreadID s2 = new ThreadID(1);
 
       lockManager.lock(l1, cid1, s1, ServerLockLevel.WRITE);
-      Thread.sleep(5000);
+      ThreadUtil.reallySleep(5000);
       lockManager.unlock(l1, cid1, s1);
       lockManager.lock(l1, cid2, s2, ServerLockLevel.READ);
-      Thread.sleep(3000);
+      ThreadUtil.reallySleep(3000);
       lockManager.unlock(l1, cid2, s2);
       Collection c = lockStatManager.getLockSpecs();
       Assert.assertEquals(1, c.size());
