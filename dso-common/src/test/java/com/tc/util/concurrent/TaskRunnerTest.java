@@ -9,13 +9,17 @@ import org.junit.Test;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Eugene Shelestovich
@@ -52,21 +56,31 @@ public class TaskRunnerTest {
   }
 
   @Test
-  public void testShouldHandleUncaughtException() throws InterruptedException {
+  public void testShouldHandleUncaughtException() throws InterruptedException, TimeoutException, ExecutionException {
     final ThreadFactory factory = new ThreadFactoryBuilder()
         .setDaemon(true).setNameFormat(TIMER_NAME).build();
     final TestTaskRunner runner = new TestTaskRunner(1, factory);
-    final CountDownLatch latch = new CountDownLatch(1);
-
     assertFalse(runner.isExceptionOccured());
-    runner.submit(new Runnable() {
+
+    final Future<?> result = runner.submit(new Runnable() {
       @Override
       public void run() {
-        throw new RuntimeException("test-exception");
+        throw new TestException();
       }
     });
-    latch.await(5, TimeUnit.SECONDS);
-    assertTrue(runner.isExceptionOccured());
+
+    try {
+      result.get(5, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof TestException);
+    } catch (TimeoutException e) {
+      fail("Timeout waiting for the result from task");
+    }
+
+    // wait until unhandled exception handler invoked
+    while (!runner.isExceptionOccured()) {
+      Thread.sleep(50L);
+    }
   }
 
   @Test(expected = IllegalStateException.class)
@@ -91,6 +105,35 @@ public class TaskRunnerTest {
     timer.execute(noopTask);
   }
 
+  @Test
+  public void testShouldNotLoseTaskResultOnInterrupt() throws InterruptedException, TimeoutException, ExecutionException {
+    final TestTaskRunner runner = new TestTaskRunner(1);
+    assertFalse(runner.isExceptionOccured());
+
+    final Future<?> result = runner.submit(new Runnable() {
+      @Override
+      public void run() {
+        Thread.currentThread().interrupt();
+        // we still must get this exception no matter what the thread was interrupted
+        throw new TestException();
+      }
+    });
+
+    try {
+      result.get(5, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof TestException);
+    } catch (TimeoutException e) {
+      fail("Timeout waiting for the result from task");
+    }
+
+    // wait until unhandled exception handler invoked
+    while (!runner.isExceptionOccured()) {
+      Thread.sleep(50L);
+    }
+  }
+
+
   private static class TestTaskRunner extends ScheduledNamedTaskRunner {
 
     private volatile boolean exceptionOccured;
@@ -113,11 +156,31 @@ public class TaskRunnerTest {
 
     @Override
     protected void handleUncaughtException(final Throwable e) {
-      exceptionOccured = true;
+      if (e instanceof TestException) {
+        exceptionOccured = true;
+      }
     }
 
     public boolean isExceptionOccured() {
       return exceptionOccured;
+    }
+  }
+
+  private static final class TestException extends RuntimeException {
+
+    public TestException() {
+    }
+
+    public TestException(final String message) {
+      super(message);
+    }
+
+    public TestException(final String message, final Throwable cause) {
+      super(message, cause);
+    }
+
+    public TestException(final Throwable cause) {
+      super(cause);
     }
   }
 }

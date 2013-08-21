@@ -124,17 +124,13 @@ class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implements Ta
       try {
         Future<?> future = (Future<?>)r;
         if (future.isDone()) {
-          future.get();
+          uninterruptedGet(future);
         }
       } catch (CancellationException ce) {
         logger.debug("A task executed by '" + t.getName() + "' thread has been gracefully cancelled");
         // do nothing
       } catch (ExecutionException ee) {
         e = ee.getCause();
-      } catch (InterruptedException ie) {
-        logger.warn("A task executed by '" + t.getName() + "' thread has been interrupted");
-        e = ie;
-        //Thread.currentThread().interrupt();
       }
     }
 
@@ -151,6 +147,18 @@ class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implements Ta
       }
       // cleanup successfully executed task
       unregisterTimerTask(namedRunnable);
+    }
+  }
+
+  private static void uninterruptedGet(final Future<?> future) throws ExecutionException {
+    while (true) {
+      try {
+        future.get();
+        break;
+      } catch (InterruptedException ie) {
+        logger.debug("A task executed by '" + Thread.currentThread().getName() + "' thread has been interrupted", ie);
+        // clear interrupted flag and try to get the result again
+      }
     }
   }
 
