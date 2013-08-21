@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 public class ServerEventBatcherTest {
 
   @Test
-  public void testPartition() throws Exception {
+  public void testMustPartitionByClient() throws Exception {
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
     final ServerEventBatcher batcher = new ServerEventBatcher(channelManager, Runners.newSingleThreadScheduledTaskRunner());
     final List<ServerEventBatcher.ClientEnvelope> envelopes = new ArrayList<ServerEventBatcher.ClientEnvelope>(3);
@@ -40,6 +40,16 @@ public class ServerEventBatcherTest {
     assertEquals(1L, groups.get(clientId1).get(0).getKey());
     assertEquals(2L, groups.get(clientId1).get(1).getKey());
     assertEquals(3L, groups.get(clientId2).get(0).getKey());
+  }
+
+  @Test
+  public void testMustDrainOnAddIfQueueIsFull() {
+    //TODO
+  }
+
+  @Test
+  public void testMustDrainPeriodically() {
+    //TODO
   }
 
 }
