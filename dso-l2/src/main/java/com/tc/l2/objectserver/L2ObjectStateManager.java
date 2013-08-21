@@ -20,7 +20,7 @@ public interface L2ObjectStateManager {
 
   public void removeL2(NodeID nodeID);
 
-  public boolean addL2(NodeID nodeID, Set oids);
+  public boolean addL2(NodeID nodeID);
 
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count);
 

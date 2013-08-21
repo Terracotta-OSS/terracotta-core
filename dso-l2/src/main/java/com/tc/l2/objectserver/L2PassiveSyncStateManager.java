@@ -20,6 +20,6 @@ public interface L2PassiveSyncStateManager extends StateSyncManager {
   @Override
   public void removeL2(NodeID nodeID);
 
-  public boolean addL2(NodeID nodeID, Set oids, State l2State);
+  public boolean addL2(NodeID nodeID, State l2State);
 
 }

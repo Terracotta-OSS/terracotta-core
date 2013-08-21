@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
@@ -84,16 +83,15 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   @Override
-  public boolean addL2(final NodeID nodeID, final Set oids) {
+  public boolean addL2(final NodeID nodeID) {
     L2ObjectStateImpl l2State;
     synchronized (this.nodes) {
       l2State = this.nodes.get(nodeID);
       if (l2State != null) {
-        logger.warn("L2State already present for " + nodeID + ". " + l2State
-                    + " IGNORING setExistingObjectsList : oids count = " + oids.size());
+        logger.warn("L2State already present for " + nodeID + ". " + l2State);
         return false;
       }
-      l2State = new L2ObjectStateImpl(nodeID, oids, this.currentSessionId++);
+      l2State = new L2ObjectStateImpl(nodeID, this.currentSessionId++);
       this.nodes.put(nodeID, l2State);
     }
     final L2ObjectStateImpl _l2State = l2State;
@@ -213,7 +211,6 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private ObjectIDSet              missingOids;
     private Map                      missingRoots;
-    private Set<ObjectID>            existingOids;
 
     private volatile State           state          = START;
 
@@ -223,9 +220,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private int                      totalObjectsSynced;
     private final long               sessionId;
 
-    public L2ObjectStateImpl(final NodeID nodeID, final Set<ObjectID> oids, final long currentSessionId) {
+    public L2ObjectStateImpl(final NodeID nodeID, final long currentSessionId) {
       this.nodeID = nodeID;
-      this.existingOids = oids;
       this.sessionId = currentSessionId;
     }
 
@@ -285,7 +281,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         // Get some objects anyways
         addSomeMissingObjectIDsTo(oids, this.missingRoots.size());
       }
-      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, new HashMap(this.missingRoots), oids,
+      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, new HashMap<String, ObjectID>(this.missingRoots), oids,
                                                          !this.missingOids.isEmpty(), this.totalObjectsToSync,
                                                          this.totalObjectsSynced, this.sessionId);
       this.missingRoots.clear();
@@ -300,26 +296,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       this.missingOids = L2ObjectStateManagerImpl.this.objectManager.getAllObjectIDs();
       this.missingRoots = L2ObjectStateManagerImpl.this.objectManager.getRootNamesToIDsMap();
       final int objectCount = this.missingOids.size();
-      final ObjectIDSet missingHere = new ObjectIDSet();
-      for (ObjectID o : this.existingOids) {
-        if (!this.missingOids.remove(o)) {
-          missingHere.add(o);
-        }
-      }
       this.totalObjectsToSync = this.missingOids.size();
-      // NOTE :: Missing roots is calculated slightly differently to accommodate AA config, where all roots are present
-      // in the coordinator but not necessarily all root objects. Also it is possible that existing root id mapping are
-      // resent in partially synced passives case in AA since exisitingOids wont contain oid of other mirror groups. But
-      // this should not have any adverse effect as the are just rewritten on the passive end.
-      this.missingRoots.values().removeAll(this.existingOids);
-      this.existingOids = null; // Let DGC work for us
       logger.info(this.nodeID + " : is missing " + this.missingOids.size() + " out of " + objectCount
                   + " objects of which missing roots = " + this.missingRoots.size());
-      if (!missingHere.isEmpty()) {
-        // XXX:: This is possible because some message (Transaction message with new object creation or object delete
-        // message from DGC) from previous active reached the other node and not this node and the active crashed
-        logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere.toShortString());
-      }
       final int missingCount = this.missingOids.size();
       if (missingCount == 0) {
         this.state = IN_SYNC;

@@ -7,8 +7,6 @@ import com.tc.l2.state.StateSyncManager;
 import com.tc.net.NodeID;
 import com.tc.util.State;
 
-import java.util.Set;
-
 public class L2PassiveSyncStateManagerImpl implements L2PassiveSyncStateManager {
 
   protected final L2IndexStateManager  indexStateManager;
@@ -32,8 +30,8 @@ public class L2PassiveSyncStateManagerImpl implements L2PassiveSyncStateManager 
   }
 
   @Override
-  public synchronized boolean addL2(NodeID nodeID, Set oids, State l2State) {
-    boolean objectAddL2 = this.objectStateManager.addL2(nodeID, oids);
+  public synchronized boolean addL2(NodeID nodeID, State l2State) {
+    boolean objectAddL2 = this.objectStateManager.addL2(nodeID);
     boolean indexAddL2 = this.indexStateManager.addL2(nodeID, l2State);
     return objectAddL2 && indexAddL2;
   }
