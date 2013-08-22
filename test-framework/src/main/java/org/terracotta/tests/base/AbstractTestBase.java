@@ -94,6 +94,11 @@ public abstract class AbstractTestBase extends TCTestCase {
       String tsaPort = TestConfigObject.getInstance().getProperty("tc.tests.info.tsa.port");
       testConfig.getClientConfig().addExtraClientJvmArg("-Dtc.tests.info.tsa.port=" + tsaPort);
     }
+    // disable java awt pop-up for mac os x
+    testConfig.getClientConfig().addExtraClientJvmArg("-Djava.awt.headless=true");
+    testConfig.getL2Config().addExtraServerJvmArg("-Djava.awt.headless=true");
+    // testConfig.getClientConfig().addExtraClientJvmArg("-Dapple.awt.UIElement=true");
+    // testConfig.getL2Config().addExtraServerJvmArg("-Dapple.awt.UIElement=true");
   }
 
   /**
