@@ -567,7 +567,7 @@
       </dependencies>
       <build>
         <plugins>
-          <!-- increase websphere test timeout to 1800 seconds (30 minutes) -->
+          <!-- increase websphere test timeout to 2700 seconds (45 minutes) -->
           <plugin>
             <groupId>org.codehaus.gmaven</groupId>
             <artifactId>gmaven-plugin</artifactId>
@@ -583,7 +583,7 @@
                   <source><![CDATA[
                     import org.apache.maven.artifact.Artifact
                     if (project.properties['appserver'] =~ /websphere/) {
-                      project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '1800')
+                      project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '2700')
                       def cacheDir = System.getProperty("user.home") + File.separator + ".tc"
                       if (System.getProperty("os.name") =~ /Windows/) {
                         cacheDir = "c:/temp"
