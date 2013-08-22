@@ -185,19 +185,15 @@ public class StageImpl implements Stage {
           if (isTCNotRunningException(e)) {
             if (shutdownRequested()) {
               return;
-            } else {
-              tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
-                            + ctxt);
             }
-            return;
+            tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
+                          + ctxt);
           } else if (isRejoinInProgressException(e)) {
             if (shutdownRequested()) {
               return;
-            } else {
-              tcLogger.info("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
-                            + ctxt);
             }
-            return;
+            tcLogger.info("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
+                          + ctxt, e);
           } else {
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
