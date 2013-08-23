@@ -1,10 +1,12 @@
 package com.tc.objectserver.event;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.server.BasicServerEvent;
@@ -13,16 +15,10 @@ import com.tc.server.ServerEventType;
 
 import java.util.EnumSet;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
 /**
  * @author Eugene Shelestovich
  */
 public class InClusterServerEventNotifierTest {
-
-  private static final TCLogger LOGGER = TCLogging.getLogger(InClusterServerEventNotifierTest.class);
 
   private InClusterServerEventNotifier notifier;
   private ServerEventBatcher batcher;
