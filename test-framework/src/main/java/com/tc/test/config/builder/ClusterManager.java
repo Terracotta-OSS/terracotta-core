@@ -21,12 +21,10 @@ import com.terracottatech.config.TcConfigDocument;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -233,6 +231,23 @@ public class ClusterManager {
     }
   }
 
+  public void allServersWaitUntilL1ThroughTsaAgentInitialized () throws Exception {
+    Server[] servers = tcConfigBuilder.getServers();
+    for (Server server : servers) {
+      waitUntilL1ThroughTsaAgentInitialized(server.getTsaGroupPort().getIntValue());
+      LOG.debug("{} initialized", server.getName());
+    }
+  }
+
+
+  private void waitUntilL1ThroughTsaAgentInitialized(int port) throws Exception {
+    if (tcConfig.isSecure()) {
+     https_waitUntilL1ThroughTsaAgentInitialized(port);
+    } else {
+      http_waitUntilL1ThroughTsaAgentInitialized(port);
+    }
+  }
+
   private static void https_waitUntilTsaAgentInitialized(int port) throws Exception {
     HttpClient httpClient = new HttpClient(new SslContextFactory(true));
     try {
@@ -298,5 +313,83 @@ public class ClusterManager {
       }
     }
   }
+
+  private static void http_waitUntilL1ThroughTsaAgentInitialized(int port) {
+    for (int i = 0; i < 30; i++) {
+      try {
+        URL url = new URL("http://localhost:" + port + "/tc-management-api/agents");
+        URLConnection urlConnection = url.openConnection();
+        InputStream inputStream = urlConnection.getInputStream();
+        Writer writer = new StringWriter();
+        char[] buffer = new char[1024];
+        try {
+          Reader reader = new BufferedReader(new InputStreamReader(inputStream,
+                  Charset.forName("UTF-8")));
+          int n;
+          while ((n = reader.read(buffer)) != -1) {
+            writer.write(buffer, 0, n);
+          }
+        } finally {
+          inputStream.close();
+        }
+
+        String result = writer.toString();
+        boolean contains = result.contains("\"agencyOf\": \"Ehcache\"");
+        inputStream.close();
+        if(!contains) {
+          LOG.info("TSA agent NOT listening on port, we try again ", port);
+          ThreadUtil.reallySleep(1000L);
+          continue;
+        }
+        LOG.info("TSA agent aggregating L1 agent");
+        break;
+      } catch (IOException ioe) {
+        LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
+        ThreadUtil.reallySleep(1000L);
+      }
+    }
+  }
+
+
+  private static void https_waitUntilL1ThroughTsaAgentInitialized(int port) throws Exception {
+    HttpClient httpClient = new HttpClient(new SslContextFactory(true));
+    try {
+      httpClient.start();
+
+      for (int i = 0; i < 30; i++) {
+        final AtomicBoolean success = new AtomicBoolean(false);
+
+        ContentExchange exchange = new ContentExchange(true) {
+          protected void onResponseComplete() throws IOException {
+           if(getResponseContent().contains("\"agencyOf\": \"Ehcache\"")) {
+             success.set(true);
+           }
+          }
+
+          @Override
+          protected synchronized void onResponseHeader(Buffer name, Buffer value) throws IOException {
+            super.onResponseHeader(name, value);    //To change body of overridden methods use File | Settings | File Templates.
+          }
+        };
+        exchange.setMethod("GET");
+        exchange.setURL("https://localhost:" + port + "/tc-management-api/agents");
+
+        httpClient.send(exchange);
+        int exchangeState = exchange.waitForDone();
+
+        if (exchangeState == HttpExchange.STATUS_COMPLETED && success.get()) {
+          LOG.info("TSA agent listening on port {}", port);
+          break;
+        }
+
+        ThreadUtil.reallySleep(1000L);
+        LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
+      }
+
+    } finally {
+      httpClient.stop();
+    }
+  }
+
 
 }
