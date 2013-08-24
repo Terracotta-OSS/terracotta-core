@@ -15,6 +15,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.containsString;
+import static org.junit.matchers.JUnitMatchers.either;
 
 public class TopologyTest extends AbstractTsaAgentTestBase {
   private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
@@ -91,7 +92,7 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
         JSONObject clientEntity = (JSONObject)aClientEntitiesArray;
 
         JSONObject attributes = (JSONObject)clientEntity.get("attributes");
-        assertThat((String)attributes.get("RemoteAddress"), containsString("localhost"));
+        assertThat((String)attributes.get("RemoteAddress"), either(containsString("localhost")).or(containsString("127.0.0.1")));
         assertThat(attributes.get("ClientID"), notNullValue());
       }
     }
