@@ -31,10 +31,12 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
+import org.terracotta.toolkit.nonstop.NonStopException;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.platform.PlatformService;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookup;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookupAsync;
 import com.terracotta.toolkit.nonstop.NonStopClusterListener;
@@ -311,7 +313,11 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public void waitUntilAllTransactionsComplete() {
+    try {
     getInitializedToolkit().waitUntilAllTransactionsComplete();
+    } catch (ToolkitAbortableOperationException e) {
+      throw new NonStopException(e);
+    }
   }
 
   @Override
