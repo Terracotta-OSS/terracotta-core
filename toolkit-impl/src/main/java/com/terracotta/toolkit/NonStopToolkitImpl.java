@@ -314,7 +314,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
   @Override
   public void waitUntilAllTransactionsComplete() {
     try {
-    getInitializedToolkit().waitUntilAllTransactionsComplete();
+      getInitializedToolkit().waitUntilAllTransactionsComplete();
     } catch (ToolkitAbortableOperationException e) {
       throw new NonStopException(e);
     }
