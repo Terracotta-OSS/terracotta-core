@@ -38,7 +38,8 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
         .getName());
 
     if (!nonStopConfiguration.isEnabled()) {
-      return invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
+      Object returnValue = invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
+      return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     }
 
     if (LocalMethodUtil.isLocal(nonStopConfigurationLookup.getObjectType(), method.getName())) {

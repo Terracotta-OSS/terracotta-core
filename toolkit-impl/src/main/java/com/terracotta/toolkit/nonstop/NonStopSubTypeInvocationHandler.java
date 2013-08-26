@@ -33,12 +33,13 @@ public class NonStopSubTypeInvocationHandler<T> implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     NonStopConfiguration nonStopConfiguration = nonStopConfigurationLookup.getNonStopConfiguration();
 
-    if (!nonStopConfiguration.isEnabled()) { 
-      return invokeMethod(method, args, delegate); 
+    if (!nonStopConfiguration.isEnabled()) {
+      Object returnValue = invokeMethod(method, args, delegate);
+      return createNonStopSubtypeIfNecessary(returnValue, method.getReturnType());
     }
 
-    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) { 
-      return handleNonStopBehavior(method, args, nonStopConfiguration); 
+    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !context.getNonStopClusterListener().areOperationsEnabled()) {
+      return handleNonStopBehavior(method, args, nonStopConfiguration);
     }
     
     boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
