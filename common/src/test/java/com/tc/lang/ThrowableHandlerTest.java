@@ -8,6 +8,7 @@ import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogging;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
@@ -51,6 +52,18 @@ public class ThrowableHandlerTest extends TestCase {
     exitCode.set(-1);
     throwableHandler.handlePossibleOOME(new RuntimeException());
     assertEquals(-1, exitCode.get());
+  }
+
+  public void testHandleJMXThreadServiceTermination() throws Exception {
+    final AtomicBoolean exited = new AtomicBoolean(false);
+    ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+      @Override
+      protected synchronized void exit(final int status) {
+        exited.set(true);
+      }
+    };
+    throwableHandler.handleThrowable(Thread.currentThread(), new IllegalStateException("The Thread Service has been terminated."));
+    assertFalse(exited.get());
   }
 
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {

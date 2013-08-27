@@ -96,6 +96,11 @@ public class ThrowableHandler {
   public void handleThrowable(final Thread thread, final Throwable t) {
     handlePossibleOOME(t);
 
+    if (isJMXTerminatedException(t)) {
+      logger.warn("Ignoring a Thread Service termination error from JMX.", t);
+      return;
+    }
+
     if (isNotificationFetcherThread(thread)) {
       // DEV-5006 -- Do not exit L2.
       logger.warn("Got Exception in JMX Notification forwarding", t);
@@ -209,5 +214,10 @@ public class ThrowableHandler {
       return false;
     }
 
+  }
+
+  private static boolean isJMXTerminatedException(Throwable throwable) {
+    return throwable instanceof IllegalStateException &&
+           throwable.getMessage().contains("The Thread Service has been terminated.");
   }
 }
