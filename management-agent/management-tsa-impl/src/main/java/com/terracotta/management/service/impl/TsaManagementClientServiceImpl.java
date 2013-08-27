@@ -1693,13 +1693,16 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   private JMXConnector getJmxConnectorWithMBeans(final ObjectName objectName) throws JMException, IOException, InterruptedException {
     if (localServerContainsMBeans(objectName)) {
+      LOG.debug("local server contains MBeans : {}", objectName);
       return new LocalJMXConnector();
     } else {
       JMXConnector jmxConnector = findServerContainingMBeans(objectName);
       if (jmxConnector == null) {
+        LOG.debug("no server contains MBeans : {}", objectName);
         // there is no connected client
         return null;
       }
+      LOG.debug("a remote server contains MBeans : {}", objectName);
       return jmxConnector;
     }
   }
@@ -1711,27 +1714,54 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     for (L2Info l2Info : l2Infos) {
       String jmxHost = l2Info.host();
       int jmxPort = l2Info.jmxPort();
+      LOG.debug("querying server {}:{}", jmxHost, jmxPort);
 
       try {
         JMXConnector jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
 
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(objectName, null);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("server found {} MBeans", dsoClientObjectNames.size());
+          for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
+            LOG.debug("{}", dsoClientObjectName);
+          }
+          Set<ObjectName> terracottaObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:*"), null);
+          LOG.debug("server found {} terracotta MBeans", terracottaObjectNames.size());
+          for (ObjectName terracottaObjectName : terracottaObjectNames) {
+            LOG.debug("{}", terracottaObjectName);
+          }
+        }
         if (!dsoClientObjectNames.isEmpty()) {
+          LOG.debug("server {}:{} contains MBeans", jmxHost, jmxPort);
           return jmxConnector;
         } else {
+          LOG.debug("server {}:{} does NOT contain MBeans", jmxHost, jmxPort);
           jmxConnector.close();
         }
       } catch (IOException ioe) {
+        LOG.debug("server {}:{} failed to answer", jmxHost, jmxPort);
         // cannot connect to this L2, it might be down, just skip it
       }
     }
+    LOG.debug("no server has any of the searched objects in the cluster");
     return null; // no server has any of the searched objects in the cluster at the moment
   }
 
   private boolean localServerContainsMBeans(ObjectName objectName) throws JMException, IOException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> dsoClientObjectNames = mBeanServer.queryNames(objectName, null);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("local server found {} MBeans", dsoClientObjectNames.size());
+      for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
+        LOG.debug("{}", dsoClientObjectName);
+      }
+      Set<ObjectName> terracottaObjectNames = mBeanServer.queryNames(new ObjectName("org.terracotta:*"), null);
+      LOG.debug("local server found {} terracotta MBeans", terracottaObjectNames.size());
+      for (ObjectName terracottaObjectName : terracottaObjectNames) {
+        LOG.debug("{}", terracottaObjectName);
+      }
+    }
     return !dsoClientObjectNames.isEmpty();
   }
 
