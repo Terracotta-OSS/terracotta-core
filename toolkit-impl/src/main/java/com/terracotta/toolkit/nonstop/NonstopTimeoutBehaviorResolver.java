@@ -139,7 +139,7 @@ public class NonstopTimeoutBehaviorResolver {
 
   }
 
-  private Object resolveExceptionOnTimeoutBehavior(ToolkitObjectType objectType) {
+  Object resolveExceptionOnTimeoutBehavior(ToolkitObjectType objectType) {
     switch (objectType) {
       case ATOMIC_LONG:
         return exceptionOnTimeoutBehaviorResolver.resolve(ToolkitAtomicLong.class);

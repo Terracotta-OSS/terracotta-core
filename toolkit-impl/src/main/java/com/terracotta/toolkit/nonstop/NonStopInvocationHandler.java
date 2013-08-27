@@ -114,7 +114,7 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
                                                                                       .getObjectType());
   }
 
-  private Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
+  Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
     return context.getNonstopTimeoutBehaviorResolver()
         .resolveTimeoutBehavior(nonStopConfigurationLookup.getObjectType(), nonStopConfiguration, toolkitObjectLookup);
   }
@@ -135,7 +135,7 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
     }
   }
 
-  private Object invokeMethod(Method method, Object[] args, Object object) throws Throwable {
+  Object invokeMethod(Method method, Object[] args, Object object) throws Throwable {
     try {
       return method.invoke(object, args);
     } catch (InvocationTargetException t) {
