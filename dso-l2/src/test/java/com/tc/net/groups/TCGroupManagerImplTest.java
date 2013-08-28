@@ -534,20 +534,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     waitForMembersToJoin();
 
-    TestMessage msg1 = new TestMessage("Hello there");
-    TCGroupMember member = getMember(groups[0], 0);
-    groups[0].sendAll(msg1);
-    TestGroupMessageListener listener = listenerMap.get(member.getPeerNodeID());
-    TestMessage msg2 = (TestMessage) listener.getNextMessageFrom(groups[0].getLocalNodeID());
-    assertEquals(msg1, msg2);
-
-    TestMessage msg3 = new TestMessage("Hello back");
-    member = getMember(groups[1], 0);
-    groups[1].sendAll(msg3);
-    listener = listenerMap.get(member.getPeerNodeID());
-    TestMessage msg4 = (TestMessage) listener.getNextMessageFrom(groups[1].getLocalNodeID());
-    assertEquals(msg3, msg4);
-
     System.err.println("ZAPPING NODE : " + nodeIDs[1]);
     groups[0].zapNode(nodeIDs[1], 01, "test : Zap the other node " + nodeIDs[1] + " from " + nodeIDs[0]);
 
@@ -555,6 +541,13 @@ public class TCGroupManagerImplTest extends TCTestCase {
     Object r2 = zaps[1].incoming.take();
     assertEquals(r1, r2);
 
+    // It's possible for there to be a second zap due to the zapNode call running concurrently with the node join state machine
+    // We should just make sure that the zap reasons are the same (or null if it's not there)
+    r1 = zaps[0].outgoing.poll(500);
+    r2 = zaps[1].incoming.poll(500);
+    assertEquals(r1, r2);
+
+    // The limit is 2 zaps given the above case, make sure there's no 3rd zap going on.
     r1 = zaps[0].outgoing.poll(500);
     assertNull(r1);
     r2 = zaps[1].incoming.poll(500);
