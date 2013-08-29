@@ -28,7 +28,7 @@
     <core-storage-api.version>1.0</core-storage-api.version>
     <heap-core-storage.version>1.0.0</heap-core-storage.version>
     <bigmemory-core-storage.version>1.0.2</bigmemory-core-storage.version>
-    <jetty.version>8.1.9.v20130131</jetty.version>
+    <jetty.version>8.1.12.v20130726</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.6.6</slf4j.version>
     <offheap-store.version>1.1.2</offheap-store.version>
