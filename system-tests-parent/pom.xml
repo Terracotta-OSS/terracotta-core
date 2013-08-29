@@ -34,7 +34,6 @@
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
 
-    <maven-forge-plugin.version>1.1.4</maven-forge-plugin.version>
     <surefire.version>2.15</surefire.version>
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
@@ -50,7 +49,6 @@
     <tc.tests.info.data-root>${project.build.directory}/data</tc.tests.info.data-root>
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${tc.linked-child-process.version}/linked-child-process-${tc.linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
-    <tc.tests.info.forked-process-timeout-inseconds>1800</tc.tests.info.forked-process-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <jrockit-jvm-arguments/>
     <surefire.min-memory>64m</surefire.min-memory>
@@ -174,7 +172,7 @@
                 <skipTests>${skipTests}</skipTests>
                 <forkMode>always</forkMode>
                 <printSummary>true</printSummary>
-                <forkedProcessTimeoutInSeconds>${tc.tests.info.forked-process-timeout-inseconds}</forkedProcessTimeoutInSeconds>
+                <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
                 <useSystemClassLoader>true</useSystemClassLoader>
                 <workingDirectory>${project.build.directory}</workingDirectory>
                 <argLine>${surefire.argLine}</argLine>
