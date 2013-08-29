@@ -8,9 +8,11 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.terracotta.test.categories.CheckShorts;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopException;
@@ -25,6 +27,7 @@ import com.terracotta.toolkit.collections.map.ToolkitCacheImplInterface;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+@Category(CheckShorts.class)
 public class NonStopInvocationHandlerTest {
 
   private NonStopInvocationHandler<ToolkitCacheImpl> nonStopInvocationHandler;
@@ -172,11 +175,7 @@ public class NonStopInvocationHandlerTest {
 
   private NonStopInvocationHandler<ToolkitCacheImpl> getTestableNonStopInvocationHandler() {
     return new NonStopInvocationHandler<ToolkitCacheImpl>(context, nonStopConfigurationLookup, toolkitObjectLookup) {
-      // @Override
-      // Object invokeMethod(Method method, Object[] args, Object object) throws Throwable {
-      // return new Object();
-      // }
-      
+
       @Override
       Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
         return new NonstopTimeoutBehaviorResolver().resolveExceptionOnTimeoutBehavior(ToolkitObjectType.CACHE);

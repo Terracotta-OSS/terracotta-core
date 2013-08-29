@@ -26,7 +26,7 @@ public class NonStopManagerTest extends TestCase {
 
   public void testNonStopTimer() throws Exception {
     long startTime = System.currentTimeMillis();
-    int loopTmes = 50;
+    int loopTmes = 4;
     long timeout = 500;
     for (int i = 0; i < loopTmes; i++) {
       System.out.println("executing loop count" + i);

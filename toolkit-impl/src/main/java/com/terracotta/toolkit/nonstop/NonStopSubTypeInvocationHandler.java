@@ -72,7 +72,7 @@ public class NonStopSubTypeInvocationHandler<T> implements InvocationHandler {
     }
   }
 
-  private Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
+  Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
     return context.getNonstopTimeoutBehaviorResolver()
         .resolveTimeoutBehaviorForSubType(nonStopConfigurationLookup.getObjectType(), nonStopConfiguration, klazz);
   }
