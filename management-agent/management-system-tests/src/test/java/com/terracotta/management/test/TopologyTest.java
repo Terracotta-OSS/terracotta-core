@@ -1,6 +1,13 @@
 package com.terracotta.management.test;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -8,9 +15,8 @@ import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
 import java.io.IOException;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class TopologyTest extends AbstractTsaAgentTestBase {
   private static final int GROUP_COUNT = 1; // cannot have Active-Active with Open Source
@@ -80,14 +86,16 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
       }
     }
 
-    protected void parseAndAssertClientEntities(JSONObject o0) {
+    protected void parseAndAssertClientEntities(JSONObject o0) throws UnknownHostException {
       JSONArray clientEntitiesArray = (JSONArray)o0.get("clientEntities");
 
       for (Object aClientEntitiesArray : clientEntitiesArray) {
         JSONObject clientEntity = (JSONObject)aClientEntitiesArray;
 
         JSONObject attributes = (JSONObject)clientEntity.get("attributes");
-        assertThat((String)attributes.get("RemoteAddress"), anyOf(containsString("localhost"), containsString("127.0.0.1")));
+        assertThat((String) attributes.get("RemoteAddress"),
+                   anyOf(containsString("localhost"), containsString("127.0.0.1"), containsString(InetAddress
+                       .getLocalHost().getHostName())));
         assertThat(attributes.get("ClientID"), notNullValue());
       }
     }
