@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BulkLoadEnabledNodesSet {
 
@@ -38,7 +37,7 @@ public class BulkLoadEnabledNodesSet {
   private final String                    name;
   private final CleanupOnNodeLeftListener cleanupOnNodeLeftListener;
 
-  private final AtomicBoolean             currentNodeBulkLoadEnabled = new AtomicBoolean(false);
+  private volatile boolean                currentNodeBulkLoadEnabled = false;
   private final boolean                   loggingEnabled;
 
   protected BulkLoadEnabledNodesSet(PlatformService platformService, String name, ToolkitInternal toolkit,
@@ -54,7 +53,7 @@ public class BulkLoadEnabledNodesSet {
   }
 
   public boolean isBulkLoadEnabledInNode() {
-    return currentNodeBulkLoadEnabled.get();
+    return currentNodeBulkLoadEnabled;
   }
 
   private void debug(String msg) {
@@ -97,23 +96,37 @@ public class BulkLoadEnabledNodesSet {
    * Add the current node in the bulk-load enabled nodes set
    */
   public void addCurrentNode() {
-    if (currentNodeBulkLoadEnabled.compareAndSet(false, true)) {
-      addCurrentNodeInternal();
+    if (!currentNodeBulkLoadEnabled) {
+      clusteredLock.lock();
+      try {
+        if (!currentNodeBulkLoadEnabled) {
+          addCurrentNodeToBulkLoadSet();
+          currentNodeBulkLoadEnabled = true;
+        }
+      } finally {
+        clusteredLock.unlock();
+      }
     }
   }
 
-  private void addCurrentNodeInternal() {
-    clusteredLock.lock();
-    try {
-      if (currentNodeBulkLoadEnabled.get()) {
-        String currentNodeId = dsoCluster.getCurrentNode().getId();
-        bulkLoadEnabledNodesSet.add(currentNodeId);
-        if (loggingEnabled) {
-          debug("Added current node ('" + currentNodeId + "')");
+  public void addCurrentNodeInternal() {
+    if (currentNodeBulkLoadEnabled) {
+      clusteredLock.lock();
+      try {
+        if (currentNodeBulkLoadEnabled) {
+          addCurrentNodeToBulkLoadSet();
         }
+      } finally {
+        clusteredLock.unlock();
       }
-    } finally {
-      clusteredLock.unlock();
+    }
+  }
+
+  private void addCurrentNodeToBulkLoadSet() {
+    String currentNodeId = dsoCluster.getCurrentNode().getId();
+    bulkLoadEnabledNodesSet.add(currentNodeId);
+    if (loggingEnabled) {
+      debug("Added current node ('" + currentNodeId + "')");
     }
   }
 
@@ -121,10 +134,13 @@ public class BulkLoadEnabledNodesSet {
    * Remove the current node from the bulk-load enabled nodes set
    */
   public void removeCurrentNode() {
-    if (currentNodeBulkLoadEnabled.compareAndSet(true, false)) {
+    if (currentNodeBulkLoadEnabled) {
       clusteredLock.lock();
       try {
-        removeNodeIdAndNotifyAll(dsoCluster.getCurrentNode().getId());
+        if (currentNodeBulkLoadEnabled) {
+          removeNodeIdAndNotifyAll(dsoCluster.getCurrentNode().getId());
+          currentNodeBulkLoadEnabled = false;
+        }
       } finally {
         clusteredLock.unlock();
       }

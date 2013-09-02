@@ -520,12 +520,6 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   public void rejoinCompleted() {
-    addToBulkLoadEnableSet();
-  }
-
-  private void addToBulkLoadEnableSet() {
-    if (isNodeBulkLoadEnabled()) {
-      bulkLoadEnabledNodesSet.addCurrentNode();
-    }
+    bulkLoadEnabledNodesSet.addCurrentNodeInternal();
   }
 }
