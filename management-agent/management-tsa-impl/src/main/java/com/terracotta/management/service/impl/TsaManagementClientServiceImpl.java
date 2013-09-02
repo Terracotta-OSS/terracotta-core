@@ -778,6 +778,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
       if (jmxConnector == null) {
+        LOG.debug("There is no connected L1");
         // there is no connected client
         return Collections.emptySet();
       }
@@ -785,8 +786,18 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       Set<String> nodeNames = new HashSet<String>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("local server contains {} Ehcache MBeans", objectNames.size());
+        Set<ObjectName> ehcacheObjectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:*"), null);
+        LOG.debug("server found {} ehcache MBeans", ehcacheObjectNames.size());
+        for (ObjectName ehcacheObjectName : ehcacheObjectNames) {
+          LOG.debug("  {}", ehcacheObjectName);
+        }
+      }
       for (ObjectName objectName : objectNames) {
-        nodeNames.add(objectName.getKeyProperty("node"));
+        String node = objectName.getKeyProperty("node");
+        LOG.debug("Ehcache node name: {}", node);
+        nodeNames.add(node);
       }
       return nodeNames;
     } catch (Exception e) {
@@ -1724,12 +1735,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         if (LOG.isDebugEnabled()) {
           LOG.debug("server found {} MBeans", dsoClientObjectNames.size());
           for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
-            LOG.debug("{}", dsoClientObjectName);
+            LOG.debug("  {}", dsoClientObjectName);
           }
           Set<ObjectName> terracottaObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:*"), null);
           LOG.debug("server found {} terracotta MBeans", terracottaObjectNames.size());
           for (ObjectName terracottaObjectName : terracottaObjectNames) {
-            LOG.debug("{}", terracottaObjectName);
+            LOG.debug("  {}", terracottaObjectName);
           }
         }
         if (!dsoClientObjectNames.isEmpty()) {
@@ -1754,12 +1765,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     if (LOG.isDebugEnabled()) {
       LOG.debug("local server found {} MBeans", dsoClientObjectNames.size());
       for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
-        LOG.debug("{}", dsoClientObjectName);
+        LOG.debug("  {}", dsoClientObjectName);
       }
       Set<ObjectName> terracottaObjectNames = mBeanServer.queryNames(new ObjectName("org.terracotta:*"), null);
       LOG.debug("local server found {} terracotta MBeans", terracottaObjectNames.size());
       for (ObjectName terracottaObjectName : terracottaObjectNames) {
-        LOG.debug("{}", terracottaObjectName);
+        LOG.debug("  {}", terracottaObjectName);
       }
     }
     return !dsoClientObjectNames.isEmpty();
