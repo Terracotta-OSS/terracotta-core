@@ -10,6 +10,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.object.BaseDSOTestCase;
+import com.tc.objectserver.control.VerboseGCHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.JMXUtils;
 import com.tc.test.process.ExternalDsoClient;
@@ -190,6 +191,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
 
   private ExternalDsoServer createServer(final String serverName) throws IOException {
     ExternalDsoServer server = new ExternalDsoServer(getWorkDir(serverName), configBuilder.newInputStream(), serverName);
+    VerboseGCHelper.getInstance().setupTempDir(getTempDirectory());
     return server;
   }
 
