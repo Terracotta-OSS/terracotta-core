@@ -275,6 +275,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
           if (err instanceof IOException) {
             if (logger.isInfoEnabled()) {
               logger.info("error event on connection " + event.getSource() + ": " + err.getMessage());
+            } else if (logger.isDebugEnabled()) {
+              logger.debug("error event on connection " + event.getSource() + ": " + err.getMessage(), err);
             }
           } else {
             logger.error(err);
