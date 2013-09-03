@@ -1009,7 +1009,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
     // Arrive here only if interrupted
     abortAndRemove(remote, node);
-    throw new InterruptedException();
+    handleInterrupt(abortableOperationManager);
   }
 
   /*
@@ -1068,7 +1068,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
         if (Thread.interrupted()) {
           abortAndRemove(remote, node);
-          throw new InterruptedException();
+          handleInterrupt(abortableOperationManager);
         }
         if (node.isRejoinInProgress()) { throw new PlatformRejoinException(); }
         final long now = System.currentTimeMillis();
