@@ -4,7 +4,6 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -112,13 +111,14 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   private final JmxConnectorPool jmxConnectorPool;
   private final boolean secure;
   private final ExecutorService executorService;
-  private final long l1BridgeTimeout;
+  private final long defaultL1BridgeTimeout;
+  private final ThreadLocal<Long> l1BridgeTimeoutTl = new ThreadLocal<Long>();
 
-  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure, ExecutorService executorService, long l1BridgeTimeoutInMs) {
+  public TsaManagementClientServiceImpl(JmxConnectorPool jmxConnectorPool, boolean secure, ExecutorService executorService, long defaultL1BridgeTimeoutInMs) {
     this.jmxConnectorPool = jmxConnectorPool;
     this.secure = secure;
     this.executorService = executorService;
-    this.l1BridgeTimeout = l1BridgeTimeoutInMs;
+    this.defaultL1BridgeTimeout = defaultL1BridgeTimeoutInMs;
   }
 
   @Override
@@ -901,6 +901,25 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     } finally {
       closeConnector(jmxConnector);
     }
+  }
+
+  @Override
+  public long getCallTimeout() {
+    Long timeout = l1BridgeTimeoutTl.get();
+    if (timeout == null || timeout < 1) {
+      timeout = defaultL1BridgeTimeout;
+    }
+    return timeout;
+  }
+
+  @Override
+  public void setCallTimeout(long timeout) {
+    l1BridgeTimeoutTl.set(timeout);
+  }
+
+  @Override
+  public void clearCallTimeout() {
+    l1BridgeTimeoutTl.remove();
   }
 
   @Override
@@ -1795,7 +1814,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   private <T> T callWithTimeout(Callable<T> callable) throws ExecutionException {
     Future<T> future = executorService.submit(callable);
     try {
-      return future.get(l1BridgeTimeout, TimeUnit.MILLISECONDS);
+      return future.get(getCallTimeout(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException ie) {
       future.cancel(true);
       return null;

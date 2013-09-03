@@ -43,6 +43,7 @@ import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.LogsService;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.OperatorEventsService;
+import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.ShutdownService;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
@@ -116,9 +117,10 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         jmxConnectorPool = new JmxConnectorPool("service:jmx:jmxmp://{0}:{1}");
       }
       executorService = Executors.newCachedThreadPool();
-      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService, TSAConfig.getL1BridgeTimeout());
+      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService, TSAConfig.getDefaultL1BridgeTimeout());
 
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
+      serviceLocator.loadService(RemoteAgentBridgeService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));

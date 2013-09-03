@@ -18,7 +18,7 @@ import javax.management.ObjectName;
 public class TSAConfig {
 
   private static final int DEFAULT_SECURITY_TIMEOUT = 10000;
-  private static final int DEFAULT_L1_BRIDGE_TIMEOUT = 10000;
+  private static final int DEFAULT_L1_BRIDGE_TIMEOUT = 15000;
 
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
   private static final Object KEY_CHAIN_ACCESSOR_LOCK = new Object();
@@ -128,10 +128,9 @@ public class TSAConfig {
     }
   }
 
-  public static long getL1BridgeTimeout() {
-    // TODO: make this configurable in the TC config file?
+  public static long getDefaultL1BridgeTimeout() {
     try {
-      String timeoutString = System.getProperty("com.terracotta.agent.L1BridgeTimeout", "" + DEFAULT_L1_BRIDGE_TIMEOUT);
+      String timeoutString = System.getProperty("com.terracotta.agent.defaultL1BridgeTimeout", "" + DEFAULT_L1_BRIDGE_TIMEOUT);
       return Long.parseLong(timeoutString);
     } catch (NumberFormatException nfe) {
       return DEFAULT_L1_BRIDGE_TIMEOUT;

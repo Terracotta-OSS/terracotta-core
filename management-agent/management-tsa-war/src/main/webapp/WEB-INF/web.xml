@@ -19,6 +19,11 @@
     <filter-class>com.terracotta.management.web.shiro.TSASecurityFilter</filter-class>
   </filter>
 
+  <filter>
+    <filter-name>remoteAgentBridgeTimeoutExtractorFilter</filter-name>
+    <filter-class>com.terracotta.management.web.shiro.RemoteAgentBridgeTimeoutExtractorFilter</filter-class>
+  </filter>
+
   <filter-mapping>
     <filter-name>noIaFilter</filter-name>
     <url-pattern>/*</url-pattern>
@@ -30,6 +35,15 @@
 
   <filter-mapping>
     <filter-name>securityFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+    <dispatcher>FORWARD</dispatcher>
+    <dispatcher>INCLUDE</dispatcher>
+    <dispatcher>ERROR</dispatcher>
+  </filter-mapping>
+
+  <filter-mapping>
+    <filter-name>remoteAgentBridgeTimeoutExtractorFilter</filter-name>
     <url-pattern>/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
     <dispatcher>FORWARD</dispatcher>

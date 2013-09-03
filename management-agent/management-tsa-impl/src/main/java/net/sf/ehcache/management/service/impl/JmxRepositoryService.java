@@ -122,16 +122,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     Collection<Future<Collection<CacheManagerEntity>>> futures = new ArrayList<Future<Collection<CacheManagerEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
       Future<Collection<CacheManagerEntity>> future = executorService.submit(new Callable<Collection<CacheManagerEntity>>() {
         @Override
         public Collection<CacheManagerEntity> call() throws Exception {
           String ticket = ticketMonitor.issueRequestTicket();
           String token = userService.putUserInfo(userInfo);
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
-          return rewriteAgentId((Collection<CacheManagerEntity>)deserialize(bytes), node);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
+            return rewriteAgentId((Collection<CacheManagerEntity>)deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
       futures.add(future);
@@ -156,16 +162,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     Collection<Future<Collection<CacheManagerConfigEntity>>> futures = new ArrayList<Future<Collection<CacheManagerConfigEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
       Future<Collection<CacheManagerConfigEntity>> future = executorService.submit(new Callable<Collection<CacheManagerConfigEntity>>() {
         @Override
         public Collection<CacheManagerConfigEntity> call() throws Exception {
           String ticket = ticketMonitor.issueRequestTicket();
           String token = userService.putUserInfo(userInfo);
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
-          return rewriteAgentId((Collection<CacheManagerConfigEntity>)deserialize(bytes), node);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
+            return rewriteAgentId((Collection<CacheManagerConfigEntity>)deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
       futures.add(future);
@@ -190,16 +202,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     Collection<Future<Collection<CacheEntity>>> futures = new ArrayList<Future<Collection<CacheEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
       Future<Collection<CacheEntity>> future = executorService.submit(new Callable<Collection<CacheEntity>>() {
         @Override
         public Collection<CacheEntity> call() throws Exception {
           String token = userService.putUserInfo(userInfo);
           String ticket = ticketMonitor.issueRequestTicket();
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
-          return rewriteAgentId((Collection<CacheEntity>)deserialize(bytes), node);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
+            return rewriteAgentId((Collection<CacheEntity>)deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
 
@@ -225,16 +243,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     Collection<Future<Collection<CacheConfigEntity>>> futures = new ArrayList<Future<Collection<CacheConfigEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
       Future<Collection<CacheConfigEntity>> future = executorService.submit(new Callable<Collection<CacheConfigEntity>>() {
         @Override
         public Collection<CacheConfigEntity> call() throws Exception {
           String ticket = ticketMonitor.issueRequestTicket();
           String token = userService.putUserInfo(userInfo);
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
-          return rewriteAgentId((Collection<CacheConfigEntity>)deserialize(bytes), node);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
+            return rewriteAgentId((Collection<CacheConfigEntity>)deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
 
@@ -260,16 +284,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     Collection<Future<Collection<CacheStatisticSampleEntity>>> futures = new ArrayList<Future<Collection<CacheStatisticSampleEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
       Future<Collection<CacheStatisticSampleEntity>> f = executorService.submit(new Callable<Collection<CacheStatisticSampleEntity>>() {
         @Override
         public Collection<CacheStatisticSampleEntity> call() throws Exception {
           String token = userService.putUserInfo(userInfo);
           String ticket = ticketMonitor.issueRequestTicket();
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
-          return rewriteAgentId((Collection<CacheStatisticSampleEntity>)deserialize(bytes), node);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
+            return rewriteAgentId((Collection<CacheStatisticSampleEntity>)deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
 
@@ -304,16 +334,22 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     final UserInfo userInfo = contextService.getUserInfo();
     Collection<Future<Collection<AgentMetadataEntity>>> futures = new ArrayList<Future<Collection<AgentMetadataEntity>>>();
 
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String id : ids) {
       Future<Collection<AgentMetadataEntity>> future = executorService.submit(new Callable<Collection<AgentMetadataEntity>>() {
         @Override
         public Collection<AgentMetadataEntity> call() throws Exception {
           String ticket = ticketMonitor.issueRequestTicket();
           String token = userService.putUserInfo(userInfo);
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-          byte[] bytes = tsaManagementClientService.invokeMethod(id, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
-              .getSecurityCallbackUrl(), "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
-          return rewriteAgentId((Collection<AgentMetadataEntity>)deserialize(bytes), id);
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(id, DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+                .getSecurityCallbackUrl(), "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
+            return rewriteAgentId((Collection<AgentMetadataEntity>)deserialize(bytes), id);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
         }
       });
 

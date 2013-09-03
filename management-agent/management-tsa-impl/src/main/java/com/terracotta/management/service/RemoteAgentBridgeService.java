@@ -49,4 +49,24 @@ public interface RemoteAgentBridgeService {
   byte[] invokeMethod(String nodeName, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
                       String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException;
 
+  /**
+   * Get the remote agent call timeout previously set. If none was set, the default one is returned. The bridge will wait for at most the time
+   * returned by this method for bridged calls to return.
+   *
+   * @return the remote agent call timeout.
+   */
+  long getCallTimeout();
+
+  /**
+   * Set the remote agent call timeout for the current thread.
+   *
+   * @param timeout the remote agent call timeout.
+   */
+  void setCallTimeout(long timeout);
+
+  /**
+   * Clear the remote agent call timeout for the current thread.
+   */
+  void clearCallTimeout();
+
 }
