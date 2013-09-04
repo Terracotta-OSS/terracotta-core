@@ -28,10 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final TCObjectSelfStoreObjectIDSet                                           tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
+  private final TCObjectSelfStoreObjectIDSet                                     tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
   private final ReentrantReadWriteLock                                           tcObjectStoreLock     = new ReentrantReadWriteLock();
   private volatile TCObjectSelfCallback                                          tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>                                            tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  private final Map<ObjectID, TCObjectSelf>                                      tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
   private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches;
 
@@ -39,7 +39,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
                                                                                                            .getLogger(TCObjectSelfStoreImpl.class);
 
   private volatile boolean                                                       isShutdown            = false;
-  private volatile boolean                                                       isRejoinInProgress     = false;
+  private volatile boolean                                                       isRejoinInProgress    = false;
 
   public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches) {
     this.localCaches = localCaches;
@@ -87,72 +87,78 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
     long timePrev = System.currentTimeMillis();
     long startTime = timePrev;
-    while (true) {
-      Object rv = null;
-      tcObjectStoreLock.readLock().lock();
-      try {
-        TCObjectSelf self = tcObjectSelfTempCache.get(oid);
-        if (self != null) { return self; }
+    boolean interrupted = false;
+    try {
+      while (true) {
+        Object rv = null;
+        tcObjectStoreLock.readLock().lock();
+        try {
+          TCObjectSelf self = tcObjectSelfTempCache.get(oid);
+          if (self != null) { return self; }
 
-        if (!tcObjectSelfStoreOids.contains(oid)) {
+          if (!tcObjectSelfStoreOids.contains(oid)) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("XXX GetById failed at TCObjectSelfStoreIDs, ObjectID=" + oid);
+            }
+            return null;
+          }
+
+          for (ServerMapLocalCache localCache : this.localCaches.keySet()) {
+            Object key = localCache.getMappingUnlocked(oid);
+            if (key == null) {
+              continue;
+            }
+
+            AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache
+                .getMappingUnlocked(key);
+            rv = localCacheStoreValue == null ? null : localCacheStoreValue.getValueObject();
+            initTCObjectSelfIfRequired(rv);
+
+            if (rv == null && logger.isDebugEnabled()) {
+              logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
+            }
+            break;
+          }
+
           if (logger.isDebugEnabled()) {
-            logger.debug("XXX GetById failed at TCObjectSelfStoreIDs, ObjectID=" + oid);
+            logger.debug("XXX GetById failed when it couldn't find in any stores, ObjectID=" + oid);
           }
-          return null;
+        } finally {
+          tcObjectStoreLock.readLock().unlock();
         }
 
-        for (ServerMapLocalCache localCache : this.localCaches.keySet()) {
-          Object key = localCache.getMappingUnlocked(oid);
-          if (key == null) {
-            continue;
-          }
+        if (rv != null) { return rv; }
 
-          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache
-              .getMappingUnlocked(key);
-          rv = localCacheStoreValue == null ? null : localCacheStoreValue.getValueObject();
-          initTCObjectSelfIfRequired(rv);
-
-          if (rv == null && logger.isDebugEnabled()) {
-            logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
-          }
-          break;
+        long currTime = System.currentTimeMillis();
+        if ((currTime - timePrev) > (15 * 1000)) {
+          timePrev = currTime;
+          logger.warn("Still waiting to get the Object from local cache, ObjectID=" + oid + " , times spent="
+                      + ((currTime - startTime) / 1000) + "seconds");
         }
-
-        if (logger.isDebugEnabled()) {
-          logger.debug("XXX GetById failed when it couldn't find in any stores, ObjectID=" + oid);
+        try {
+          waitUntilNotified();
+        } catch (InterruptedException e) {
+          interrupted = true;
         }
-      } finally {
-        tcObjectStoreLock.readLock().unlock();
+        // Retry to get the object id.
+        // interrupt outside while loop for ENG-263, for not entering a tight loop.
       }
-
-      if (rv != null) { return rv; }
-
-      long currTime = System.currentTimeMillis();
-      if ((currTime - timePrev) > (15 * 1000)) {
-        timePrev = currTime;
-        logger.warn("Still waiting to get the Object from local cache, ObjectID=" + oid + " , times spent="
-                    + ((currTime - startTime) / 1000) + "seconds");
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
-      waitUntilNotified();
-      // Retry to get the object id
     }
   }
 
-  private void waitUntilNotified() {
+  private void waitUntilNotified() throws InterruptedException {
     isShutdownThenException();
     if (isRejoinInProgress) { throw new PlatformRejoinException(); }
-    boolean isInterrupted = false;
     try {
       // since i know I am going to wait, let me wait on client lock manager instead of this condition
       synchronized (tcObjectSelfRemovedFromStoreCallback) {
         tcObjectSelfRemovedFromStoreCallback.wait(1000);
       }
-    } catch (InterruptedException e) {
-      isInterrupted = true;
     } finally {
-      if (isInterrupted) {
-        Thread.currentThread().interrupt();
-      }
       isShutdownThenException();
       if (isRejoinInProgress) { throw new PlatformRejoinException(); }
     }
