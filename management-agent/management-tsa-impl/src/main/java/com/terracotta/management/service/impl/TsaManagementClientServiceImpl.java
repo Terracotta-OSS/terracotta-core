@@ -835,13 +835,15 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
             props.put("Agency", agency);
             return props;
           }
-        });
+        }, objectName.toString());
 
         if (attributes != null) {
           nodes.put(objectName.getKeyProperty("node"), attributes);
         }
       }
       return nodes;
+    } catch (ServiceExecutionException see) {
+      throw see;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     } finally {
@@ -895,7 +897,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
           DfltSamplerRepositoryServiceMBean proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, clazz);
           return proxy.invoke(ticket, token, securityCallbackUrl, methodName, paramClasses, params);
         }
-      });
+      }, finalObjectName.toString());
     } catch (ServiceExecutionException see) {
       throw see;
     } catch (Exception e) {
@@ -1875,16 +1877,16 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  private <T> T callWithTimeout(Callable<T> callable) throws ExecutionException {
+  private <T> T callWithTimeout(Callable<T> callable, String objectName) throws ExecutionException, ServiceExecutionException {
     Future<T> future = executorService.submit(callable);
     try {
       return future.get(getCallTimeout(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException ie) {
       future.cancel(true);
-      return null;
+      throw new ServiceExecutionException("L1 call to " + objectName + " interrupted");
     } catch (TimeoutException te) {
       future.cancel(true);
-      return null;
+      throw new ServiceExecutionException("L1 call to " + objectName + " timed out");
     }
   }
 

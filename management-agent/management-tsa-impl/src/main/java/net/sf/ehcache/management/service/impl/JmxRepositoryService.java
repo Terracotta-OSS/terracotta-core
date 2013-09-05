@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -148,8 +149,13 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
       try {
         Collection<CacheManagerEntity> cacheManagerEntities = future.get();
         globalResult.addAll(cacheManagerEntities);
-      } catch (Exception e) {
-        throw new ServiceExecutionException(e);
+      } catch (ExecutionException ee) {
+        if (ee.getCause() instanceof ServiceExecutionException) {
+          throw (ServiceExecutionException) ee.getCause();
+        }
+        throw new ServiceExecutionException(ee);
+      } catch (InterruptedException ie) {
+        throw new ServiceExecutionException(ie);
       }
     }
     return globalResult;
