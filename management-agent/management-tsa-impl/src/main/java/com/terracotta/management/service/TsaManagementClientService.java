@@ -9,6 +9,7 @@ import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.LogEntity;
+import com.terracotta.management.resource.MBeanEntity;
 import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
@@ -73,4 +74,5 @@ public interface TsaManagementClientService extends RemoteAgentBridgeService {
 
   List<String> performSecurityChecks();
 
+  Collection<MBeanEntity> queryMBeans(Set<String> serverNames, String query) throws ServiceExecutionException;
 }

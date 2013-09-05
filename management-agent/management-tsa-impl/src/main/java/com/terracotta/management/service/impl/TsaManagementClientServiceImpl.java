@@ -32,6 +32,7 @@ import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.LogEntity;
+import com.terracotta.management.resource.MBeanEntity;
 import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
@@ -84,6 +85,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
@@ -1678,6 +1680,68 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
 
     return errors;
+  }
+
+  @Override
+  public Collection<MBeanEntity> queryMBeans(Set<String> serverNames, final String query) throws ServiceExecutionException {
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      List<Future<Collection<MBeanEntity>>> futures = new ArrayList<Future<Collection<MBeanEntity>>>();
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (final L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+
+          final int jmxPort = member.jmxPort();
+          final String jmxHost = member.host();
+          final String sourceId = member.name();
+
+          Future<Collection<MBeanEntity>> future = executorService.submit(new Callable<Collection<MBeanEntity>>() {
+            @Override
+            public Collection<MBeanEntity> call() throws Exception {
+              return queryNodeMBeans(query, sourceId, jmxPort, jmxHost);
+            }
+          });
+          futures.add(future);
+        }
+      }
+
+      return collectEntitiesCollectionFromFutures(futures);
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting operator events", e);
+    }
+  }
+
+  private Collection<MBeanEntity> queryNodeMBeans(String query, String sourceId, int jmxPort, String jmxHost) {
+    Collection<MBeanEntity> mbeanEntities = new ArrayList<MBeanEntity>();
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = jmxConnectorPool.getConnector(jmxHost, jmxPort);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      if (query == null) {
+        query = "*:*";
+      }
+      Set<ObjectInstance> objectInstances = mBeanServerConnection.queryMBeans(new ObjectName(query), null);
+      for (ObjectInstance objectInstance : objectInstances) {
+        MBeanEntity mBeanEntity = new MBeanEntity();
+        mBeanEntity.setSourceId(sourceId);
+        mBeanEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+        mBeanEntity.setObjectName(objectInstance.getObjectName().toString());
+
+        mbeanEntities.add(mBeanEntity);
+      }
+    } catch (Exception e) {
+      //
+    } finally {
+      closeConnector(jmxConnector);
+    }
+    return mbeanEntities;
   }
 
   private ThreadDumpEntity threadDump(TCServerInfoMBean tcServerInfoMBean) throws IOException {

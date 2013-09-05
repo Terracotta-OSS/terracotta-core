@@ -6,6 +6,7 @@ import org.terracotta.management.application.DefaultApplication;
 import com.terracotta.management.resource.services.BackupResourceServiceImpl;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImpl;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImpl;
+import com.terracotta.management.resource.services.JmxResourceServiceImpl;
 import com.terracotta.management.resource.services.LogsResourceServiceImpl;
 import com.terracotta.management.resource.services.MonitoringResourceServiceImpl;
 import com.terracotta.management.resource.services.OperatorEventsResourceServiceImpl;
@@ -31,6 +32,7 @@ public class ApplicationTsa extends DefaultApplication {
     s.add(ShutdownResourceServiceImpl.class);
     s.add(TopologyResourceServiceImpl.class);
     s.add(IdentityAssertionResourceService.class);
+    s.add(JmxResourceServiceImpl.class);
 
     s.add(net.sf.ehcache.management.resource.services.CacheStatisticSamplesResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.CachesResourceServiceImpl.class);
