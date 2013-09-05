@@ -537,21 +537,20 @@ public class TCGroupManagerImplTest extends TCTestCase {
     System.err.println("ZAPPING NODE : " + nodeIDs[1]);
     groups[0].zapNode(nodeIDs[1], 01, "test : Zap the other node " + nodeIDs[1] + " from " + nodeIDs[0]);
 
-    Object r1 = zaps[0].outgoing.take();
-    Object r2 = zaps[1].incoming.take();
-    assertEquals(r1, r2);
+    Set<Object> zaps1 = new HashSet<Object>();
+    Set<Object> zaps2 = new HashSet<Object>();
 
-    // It's possible for there to be a second zap due to the zapNode call running concurrently with the node join state machine
-    // We should just make sure that the zap reasons are the same (or null if it's not there)
-    r1 = zaps[0].outgoing.poll(500);
-    r2 = zaps[1].incoming.poll(500);
-    assertEquals(r1, r2);
+    zaps1.add(zaps[0].outgoing.take());
+    zaps2.add(zaps[1].incoming.take());
+
+    zaps1.add(zaps[0].outgoing.poll(500));
+    zaps2.add(zaps[1].incoming.poll(500));
 
     // The limit is 2 zaps given the above case, make sure there's no 3rd zap going on.
-    r1 = zaps[0].outgoing.poll(500);
-    assertNull(r1);
-    r2 = zaps[1].incoming.poll(500);
-    assertNull(r2);
+    assertNull(zaps[0].outgoing.poll(500));
+    assertNull(zaps[1].incoming.poll(500));
+
+    assertEquals(zaps1, zaps2);
 
     tearGroups();
   }
