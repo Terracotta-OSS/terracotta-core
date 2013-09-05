@@ -101,11 +101,7 @@ public class TestServerManager {
     debugPrintln("***** stoppig server crashers");
     int grpCount = testConfig.getNumOfGroups();
     for (int i = 0; i < grpCount; i++) {
-      groups[i].stopCrasher();
-    }
-
-    for (int i = 0; i < grpCount; i++) {
-      groups[i].stopAllServers();
+      groups[i].stop();
     }
   }
 
