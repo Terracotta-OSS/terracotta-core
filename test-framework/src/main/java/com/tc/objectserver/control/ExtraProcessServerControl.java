@@ -6,6 +6,7 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.test.util.JMXUtils;
+import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.test.util.TestProcessUtil;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
@@ -410,7 +411,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   private void attemptForceShutdownInternal(boolean secured, String username, String passwd) throws Exception {
     System.out.println("Force Shutting down server (secured=" + secured
-                       + (username != null ? ", username: " + username : "") + (passwd != null ? ", passwd: " + passwd : "") + ")");
+                       + (username != null ? ", username: " + username : "")
+                       + (passwd != null ? ", passwd: " + passwd : "") + ")");
     List<String> mainClassArguments = new ArrayList<String>();
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
@@ -425,6 +427,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
+    TestBaseUtil.setHeapSizeArgs(mainClassArguments, 32, 64, -1, true);
+
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, jvmArgs);
     stopper.start();
 

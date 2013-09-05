@@ -196,7 +196,8 @@ public class GroupServerManager {
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
     TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
-    TestBaseUtil.setHeapSizeArgs(jvmArgs, l2config.getMinHeap(), l2config.getMaxHeap(), l2config.getDirectMemorySize());
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, l2config.getMinHeap(), l2config.getMaxHeap(), l2config.getDirectMemorySize(),
+                                 false);
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     l2config.getBytemanConfig().addTo(jvmArgs, tempDir);
     return new MonitoringServerControl(new ExtraProcessServerControl(HOST, dsoPort, jmxPort,

@@ -137,12 +137,17 @@ public class TestBaseUtil {
     }
   }
 
-  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize) {
+  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize,
+                                     boolean overrideParams) {
     Iterator<String> i = jvmArgs.iterator();
     List<String> illegalArgs = new ArrayList<String>();
     while (i.hasNext()) {
       String arg = i.next();
       if (arg.startsWith("-Xmx") || arg.startsWith("-Xms") || arg.startsWith("-XX:MaxDirectMemorySize")) {
+        if (overrideParams) {
+          i.remove();
+          continue;
+        }
         illegalArgs.add(arg);
       }
     }
