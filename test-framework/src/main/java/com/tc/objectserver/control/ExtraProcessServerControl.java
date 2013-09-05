@@ -414,6 +414,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
                        + (username != null ? ", username: " + username : "")
                        + (passwd != null ? ", passwd: " + passwd : "") + ")");
     List<String> mainClassArguments = new ArrayList<String>();
+    List<String> stopperJvmArgs = new ArrayList<String>(jvmArgs);
     mainClassArguments.addAll(getMainClassArguments());
     mainClassArguments.add("-force");
     if (secured) {
@@ -427,9 +428,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
       mainClassArguments.add("-w");
       mainClassArguments.add(passwd);
     }
-    TestBaseUtil.setHeapSizeArgs(mainClassArguments, 32, 64, -1, true);
+    TestBaseUtil.setHeapSizeArgs(stopperJvmArgs, 32, 64, -1, true);
 
-    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, jvmArgs);
+    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, stopperJvmArgs);
     stopper.start();
 
     ByteArrayOutputStream stopperLog = null;
