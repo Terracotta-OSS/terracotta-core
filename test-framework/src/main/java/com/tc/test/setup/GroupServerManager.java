@@ -77,6 +77,7 @@ public class GroupServerManager {
 
   private final TestFailureListener testFailureCallback;
   private final boolean             renameDataDir         = false;
+  private volatile boolean          stopped               = false;
 
   private final class ServerExitCallback implements MonitoringServerControl.MonitoringServerControlExitCallback {
 
@@ -316,6 +317,12 @@ public class GroupServerManager {
     }
   }
 
+  public void stop() throws Exception {
+    stopped = true;
+    stopCrasher();
+    stopAllServers();
+  }
+
   public void stopServer(int index) throws Exception {
     stopServerInternal(index);
   }
@@ -438,8 +445,23 @@ public class GroupServerManager {
 
   private void closeJMXConnectors() {
     for (int i = 0; i < jmxConnectors.length; i++) {
-      closeJMXConnector(i);
-      ThreadUtil.reallySleep(100);
+      final int n = i;
+      // Close JMX connectors in a separate thread, to avoid test timeouts in case the server has already crashed
+      // and won't be coming back
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          closeJMXConnector(n);
+        }
+      };
+      t.setDaemon(true);
+      t.start();
+      // Wait if necessary up to 1 sec, for good measure
+      try {
+        t.join(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -665,19 +687,19 @@ public class GroupServerManager {
   }
 
   public void waituntilPassiveStandBy() throws Exception {
-    while (!isPassiveStandBy()) {
+    while (!isPassiveStandBy() && !stopped) {
       Thread.sleep(1000);
     }
   }
 
   public void waituntilEveryPassiveStandBy() throws Exception {
-    while (!isEveryPassiveStandBy()) {
+    while (!isEveryPassiveStandBy() && !stopped) {
       Thread.sleep(1000);
     }
   }
 
   public void waitUntilActive() throws Exception {
-    while(!isActivePresent()) {
+    while (!isActivePresent() && !stopped) {
       Thread.sleep(1000);
     }
   }
