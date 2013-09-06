@@ -3,8 +3,6 @@
  */
 package com.terracotta.management.service.impl.util;
 
-import org.joda.time.DateTime;
-
 /**
  * @author Ludovic Orban
  */
@@ -13,26 +11,18 @@ public class TimeStringParser {
   public static long parseTime(String timeString) throws NumberFormatException {
       if (timeString.endsWith("d")) {
         String days = timeString.substring(0, timeString.length() - 1);
-
-        DateTime dateTime = new DateTime();
-        return dateTime.minusDays(Integer.parseInt(days)).getMillis();
+        return System.currentTimeMillis() - Integer.parseInt(days) * 24 * 60 * 60 * 1000L;
       } else if (timeString.endsWith("h")) {
         String hours = timeString.substring(0, timeString.length() - 1);
-
-        DateTime dateTime = new DateTime();
-        return dateTime.minusHours(Integer.parseInt(hours)).getMillis();
+        return System.currentTimeMillis() - Integer.parseInt(hours) * 60 * 60 * 1000L;
       } else if (timeString.endsWith("m")) {
         String minutes = timeString.substring(0, timeString.length() - 1);
-
-        DateTime dateTime = new DateTime();
-        return dateTime.minusMinutes(Integer.parseInt(minutes)).getMillis();
+        return System.currentTimeMillis() - Integer.parseInt(minutes) * 60 * 1000L;
       } else if (timeString.endsWith("s")) {
         String seconds = timeString.substring(0, timeString.length() - 1);
-
-        DateTime dateTime = new DateTime();
-        return dateTime.minusSeconds(Integer.parseInt(seconds)).getMillis();
+        return System.currentTimeMillis() - Integer.parseInt(seconds) * 1000L;
       } else {
-        return new DateTime(Long.parseLong(timeString)).getMillis();
+        return Long.parseLong(timeString);
       }
   }
 
