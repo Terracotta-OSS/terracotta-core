@@ -46,7 +46,7 @@ public class ThrowableHandler {
   private final Object                               dumpLock                        = new Object();
 
   private static final long                          TIME_OUT                        = TCPropertiesImpl
-                                                                                       .getProperties()
+                                                                                         .getProperties()
                                                                                        .getLong(TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT)
                                                                                        * 1000;
   private boolean                                    isExitScheduled;
@@ -96,6 +96,11 @@ public class ThrowableHandler {
   public void handleThrowable(final Thread thread, final Throwable t) {
     handlePossibleOOME(t);
 
+    if (isThreadGroupDestroyed(thread, t)) {
+      logger.warn("Ignoring an attempt to start a JMX thread during shutdown.", t);
+      return;
+    }
+
     if (isJMXTerminatedException(t)) {
       logger.warn("Ignoring a Thread Service termination error from JMX.", t);
       return;
@@ -129,6 +134,19 @@ public class ThrowableHandler {
     exit(throwableState);
   }
 
+  private static boolean isThreadGroupDestroyed(Thread thread, Throwable t) {
+    // see EHCTERR-32
+    if (t instanceof IllegalThreadStateException) {
+      StackTraceElement[] stack = t.getStackTrace();
+      StackTraceElement bottom = stack[stack.length - 1];
+      if (stack[0].getClassName().equals("java.lang.ThreadGroup") && stack[0].getMethodName().equals("addUnstarted")
+          && bottom.getClassName().equals("javax.management.remote.generic.GenericConnectorServer$Receiver")
+          && bottom.getMethodName().equals("run")) { return true; }
+    }
+
+    return false;
+  }
+
   /**
    * Makes sure we don't allocate any heap objects on OOME.
    * {@code -XX:+HeapDumpOnOutOfMemoryError} should take care of debug information.
@@ -140,7 +158,6 @@ public class ThrowableHandler {
       exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
     }
   }
-
 
   private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
     if (isExitScheduled) { return; }

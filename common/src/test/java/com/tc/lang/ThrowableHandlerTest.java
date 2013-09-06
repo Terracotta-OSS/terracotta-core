@@ -36,7 +36,7 @@ public class ThrowableHandlerTest extends TestCase {
   }
 
   public void testImmediatelyExitOnOOME() {
-    final AtomicInteger exitCode =  new AtomicInteger(-1);
+    final AtomicInteger exitCode = new AtomicInteger(-1);
     final ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(ThrowableHandlerTest.class)) {
       @Override
       protected void exit(int status) {
@@ -62,7 +62,47 @@ public class ThrowableHandlerTest extends TestCase {
         exited.set(true);
       }
     };
-    throwableHandler.handleThrowable(Thread.currentThread(), new IllegalStateException("The Thread Service has been terminated."));
+    throwableHandler.handleThrowable(Thread.currentThread(),
+                                     new IllegalStateException("The Thread Service has been terminated."));
+    assertFalse(exited.get());
+  }
+
+  public void testIsThreadGroupDestroyed() throws Exception {
+    final AtomicBoolean exited = new AtomicBoolean(false);
+    ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+      @Override
+      protected synchronized void exit(final int status) {
+        exited.set(true);
+      }
+    };
+
+    Runnable r = new Runnable() {
+      @Override
+      public void run() {
+        //
+
+      }
+    };
+
+    ThreadGroup threadGroup = new ThreadGroup("blah");
+    Thread thread = new Thread(threadGroup, r);
+    thread.start();
+    thread.join();
+    threadGroup.destroy();
+
+    Throwable t = null;
+    try {
+      new Thread(threadGroup, r);
+    } catch (Throwable th) {
+      t = th;
+    }
+
+    StackTraceElement[] stack = t.getStackTrace();
+    stack[stack.length - 1] = new StackTraceElement("javax.management.remote.generic.GenericConnectorServer$Receiver",
+                                                    "run", "Foo.java", 12);
+    t.setStackTrace(stack);
+
+    throwableHandler.handleThrowable(thread, t);
     assertFalse(exited.get());
   }
 
