@@ -3,13 +3,10 @@ package com.terracotta.management.service.impl.util;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Anthony Dahanne
