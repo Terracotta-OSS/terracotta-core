@@ -446,6 +446,7 @@
             <groupId>org.terracotta</groupId>
             <artifactId>maven-forge-plugin</artifactId>
             <configuration>
+              <useReflectionFile>true</useReflectionFile>
               <groups>org.terracotta.test.categories.CheckShorts</groups>
               <failIfNoTests>false</failIfNoTests>
               <printSummary>true</printSummary>
