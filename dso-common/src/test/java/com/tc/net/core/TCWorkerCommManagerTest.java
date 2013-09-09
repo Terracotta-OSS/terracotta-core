@@ -108,11 +108,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     client4.open();
 
     waitForConnected(client1, client2, client3, client4);
-
-    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
-    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(3));
+    
+    waitForWeight(commsMgr, 0, 1);
+    waitForWeight(commsMgr, 1, 1);
+    waitForWeight(commsMgr, 2, 1);
+    waitForWeight(commsMgr, 3, 1);
 
     for (int i = 0; i < 4; i++) {
       CoreNIOServices workerI = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWorkerComm(i);
