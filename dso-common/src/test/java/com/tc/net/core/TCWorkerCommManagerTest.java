@@ -426,7 +426,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private void waitForRead(final CoreNIOServices commThread) throws Exception {
+  private static void waitForRead(final CoreNIOServices commThread) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -435,7 +435,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     });
   }
 
-  private void waitForWritten(final CoreNIOServices commThread) throws Exception {
+  private static void waitForWritten(final CoreNIOServices commThread) throws Exception {
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
