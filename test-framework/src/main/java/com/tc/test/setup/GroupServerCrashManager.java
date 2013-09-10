@@ -85,7 +85,7 @@ public class GroupServerCrashManager implements Runnable {
     return testConfig.getCrashConfig();
   }
 
-  public synchronized void stop() {
+  public void stop() {
     this.done = true;
     debug("Stopping crasher");
   }

@@ -318,7 +318,7 @@ public class GroupServerManager {
     }
   }
 
-  public void stop() throws Exception {
+  public synchronized void stop() throws Exception {
     stopped = true;
     stopCrasher();
     stopAllServers();
@@ -846,7 +846,9 @@ public class GroupServerManager {
     if (crasherStarted.compareAndSet(false, true)) {
     if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)
         && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.CUSTOMIZED_CRASH)) {
-      new Thread(serverCrasher).start();
+        Thread crasherThread = new Thread(serverCrasher);
+        crasherThread.setDaemon(true);
+        crasherThread.start();
       }
     } else {
       throw new AssertionError("server Crasher already started");
