@@ -28,11 +28,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, V> {
-  private static final TCLogger          LOGGER        = TCLogging.getLogger(BulkLoadToolkitCache.class);
-  private final ReentrantReadWriteLock   readWriteLock = new ReentrantReadWriteLock();
+  private static final TCLogger          LOGGER                                 = TCLogging
+                                                                                    .getLogger(BulkLoadToolkitCache.class);
   private final AggregateServerMap<K, V> toolkitCache;
   private final BulkLoadEnabledNodesSet  bulkLoadEnabledNodesSet;
   private boolean                        localCacheEnabledBeforeBulkloadEnabled = false;
@@ -53,27 +52,11 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     this.bulkLoadShutdownHook = new BulkLoadShutdownHook(platformService);
     this.loggingEnabled = bulkLoadConstants.isLoggingEnabled();
 
-    this.localBufferedMap = new LocalBufferedMap(name, this, aggregateServerMap, toolkit, bulkLoadConstants);
+    this.localBufferedMap = new LocalBufferedMap(name, aggregateServerMap, toolkit, bulkLoadConstants);
   }
 
   public void debug(String msg) {
     LOGGER.debug("['" + name + "'] " + msg);
-  }
-
-  public void readLock() {
-    readWriteLock.readLock().lock();
-  }
-
-  public void writeLock() {
-    readWriteLock.writeLock().lock();
-  }
-
-  public void readUnlock() {
-    readWriteLock.readLock().unlock();
-  }
-
-  public void writeUnlock() {
-    readWriteLock.writeLock().unlock();
   }
 
   private void exitBulkLoadMode() {
@@ -196,8 +179,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   @Override
   public void setConfigField(String name, Serializable value) {
     if (name.equals(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME)) localCacheEnabledBeforeBulkloadEnabled = (Boolean) value;
-    else
-    toolkitCache.setConfigField(name, value);
+    else toolkitCache.setConfigField(name, value);
   }
 
   @Override
@@ -462,29 +444,24 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   @Override
   public void setNodeBulkLoadEnabled(boolean enabledBulkLoad) {
-    writeLock();
-    try {
-      if (enabledBulkLoad) {
-        // turning on bulk-load
-        if (!bulkLoadEnabledNodesSet.isBulkLoadEnabledInNode()) {
-          enterBulkLoadMode();
-        } else {
-          if (loggingEnabled) {
-            LOGGER.warn("Trying to enable bulk-load mode when already bulk-loading.");
-          }
-        }
+    if (enabledBulkLoad) {
+      // turning on bulk-load
+      if (!bulkLoadEnabledNodesSet.isBulkLoadEnabledInNode()) {
+        enterBulkLoadMode();
       } else {
-        // turning off bulk-load
-        if (bulkLoadEnabledNodesSet.isBulkLoadEnabledInNode()) {
-          exitBulkLoadMode();
-        } else {
-          if (loggingEnabled) {
-            LOGGER.warn("Trying to disable bulk-load mode when not bulk-loading.");
-          }
+        if (loggingEnabled) {
+          LOGGER.warn("Trying to enable bulk-load mode when already bulk-loading.");
         }
       }
-    } finally {
-      writeUnlock();
+    } else {
+      // turning off bulk-load
+      if (bulkLoadEnabledNodesSet.isBulkLoadEnabledInNode()) {
+        exitBulkLoadMode();
+      } else {
+        if (loggingEnabled) {
+          LOGGER.warn("Trying to disable bulk-load mode when not bulk-loading.");
+        }
+      }
     }
   }
 
@@ -506,7 +483,6 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     bulkLoadShutdownHook.registerCache(this);
 
     localBufferedMap.startBuffering();
-
 
   }
 

@@ -19,43 +19,44 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Abhishek Sanoujam
  */
 public class LocalBufferedMap<K, V> {
-  private static final int                 MAX_SIZEOF_DEPTH                        = 1000;
+  private static final int               MAX_SIZEOF_DEPTH           = 1000;
 
-  private static final String              CONCURRENT_TXN_LOCK_ID                  = "local-buffer-static-concurrent-txn-lock-id";
+  private static final String            CONCURRENT_TXN_LOCK_ID     = "local-buffer-static-concurrent-txn-lock-id";
 
-  private static final Map                 EMPTY_MAP                               = Collections.EMPTY_MAP;
+  private static final Map               EMPTY_MAP                  = Collections.EMPTY_MAP;
 
-  private static final int                 LOCAL_MAP_INITIAL_CAPACITY              = 128;
-  private static final float               LOCAL_MAP_LOAD_FACTOR                   = 0.75f;
-  private static final int                 LOCAL_MAP_INITIAL_SEGMENTS              = 128;
+  private static final int               LOCAL_MAP_INITIAL_CAPACITY = 128;
+  private static final float             LOCAL_MAP_LOAD_FACTOR      = 0.75f;
+  private static final int               LOCAL_MAP_INITIAL_SEGMENTS = 128;
 
-  private final FlushToServerThread        flushToServerThread;
-  private final BulkLoadToolkitCache<K, V> bulkLoadClusteredCache;
-  private final AggregateServerMap<K, V>   backend;
-  private final int                        putsBatchByteSize;
-  private final long                       batchTimeMillis;
-  private final long                       throttlePutsByteSize;
+  private final FlushToServerThread      flushToServerThread;
+  private final AggregateServerMap<K, V> backend;
+  private final int                      putsBatchByteSize;
+  private final long                     batchTimeMillis;
+  private final long                     throttlePutsByteSize;
 
-  private volatile Map<K, Value<V>>        collectBuffer;
-  private volatile Map<K, Value<V>>        flushBuffer;
-  private volatile boolean                 clearMap                                = false;
-  private volatile AtomicLong              pendingOpsSize                          = new AtomicLong();
-  private final SizeOfEngine               sizeOfEngine;
+  private volatile Map<K, Value<V>>      collectBuffer;
+  private volatile Map<K, Value<V>>      flushBuffer;
+  private volatile boolean               clearMap                   = false;
+  private volatile AtomicLong            pendingOpsSize             = new AtomicLong();
+  private final SizeOfEngine             sizeOfEngine;
+  private final ReadWriteLock            bufferSwitchLock           = new ReentrantReadWriteLock();
 
-  private final Lock                       concurrentTransactionLock;
-  public static int                        NO_VERSION                              = -1;
-  public static int                        NO_CREATETIME                           = -1;
-  public static int                        NO_TTI                                  = -1;
-  public static int                        NO_TTL                                  = -1;
+  private final Lock                     concurrentTransactionLock;
+  public static int                      NO_VERSION                 = -1;
+  public static int                      NO_CREATETIME              = -1;
+  public static int                      NO_TTI                     = -1;
+  public static int                      NO_TTL                     = -1;
 
-  public LocalBufferedMap(String name, BulkLoadToolkitCache<K, V> bulkLoadClusteredCache,
-                          AggregateServerMap<K, V> backend, ToolkitInternal toolkit, BulkLoadConstants bulkloadConstants) {
-    this.bulkLoadClusteredCache = bulkLoadClusteredCache;
+  public LocalBufferedMap(String name, AggregateServerMap<K, V> backend, ToolkitInternal toolkit,
+                          BulkLoadConstants bulkloadConstants) {
     this.backend = backend;
     this.collectBuffer = newMap();
     this.flushBuffer = EMPTY_MAP;
@@ -73,79 +74,124 @@ public class LocalBufferedMap<K, V> {
                                               LOCAL_MAP_INITIAL_SEGMENTS);
   }
 
-  // this method is called under read-lock from BulkLoadClusteredCache
-  public V get(Object key) {
-    // get from collectingBuffer or flushBuffer
-    Value<V> v = collectBuffer.get(key);
-    if (v != null && v.isRemove()) { return null; }
-    if (v != null) { return v.getValue(); }
-    v = flushBuffer.get(key);
-    if (v != null && v.isRemove()) { return null; }
-    return v == null ? null : v.getValue();
+  private void readUnlock() {
+    bufferSwitchLock.readLock().unlock();
   }
 
-  // this method is called under read-lock from BulkLoadClusteredCache
+  private void readLock() {
+    bufferSwitchLock.readLock().lock();
+  }
+
+  private void writeUnlock() {
+    bufferSwitchLock.writeLock().unlock();
+  }
+
+  private void writeLock() {
+    bufferSwitchLock.writeLock().lock();
+  }
+
+  public V get(Object key) {
+    readLock();
+    try {
+      // get from collectingBuffer or flushBuffer
+      Value<V> v = collectBuffer.get(key);
+      if (v != null && v.isRemove()) { return null; }
+      if (v != null) { return v.getValue(); }
+      v = flushBuffer.get(key);
+      if (v != null && v.isRemove()) { return null; }
+      return v == null ? null : v.getValue();
+    } finally {
+      readUnlock();
+    }
+  }
+
   public V remove(K key, final long version) {
     RemoveValue remove = new RemoveValue(version);
-    Value<V> old = collectBuffer.put(key, remove);
-    if (old == null) {
-      pendingOpsSize.addAndGet(sizeOfEngine.sizeOf(key, remove, null).getCalculated());
-      return null;
-    } else {
-      return old.isRemove() ? null : old.getValue();
+    readLock();
+    try {
+      Value<V> old = collectBuffer.put(key, remove);
+      if (old == null) {
+        pendingOpsSize.addAndGet(sizeOfEngine.sizeOf(key, remove, null).getCalculated());
+        return null;
+      } else {
+        return old.isRemove() ? null : old.getValue();
+      }
+    } finally {
+      readUnlock();
     }
   }
 
-  // this method is called under read-lock from BulkLoadClusteredCache
   public boolean containsKey(Object key) {
-    Value<V> v = collectBuffer.get(key);
-    if (v != null) { return !v.isRemove(); }
-    v = flushBuffer.get(key);
-    if (v == null || v.isRemove()) {
-      return false;
-    } else {
-      return true;
+    readLock();
+    try {
+      Value<V> v = collectBuffer.get(key);
+      if (v != null) { return !v.isRemove(); }
+      v = flushBuffer.get(key);
+      if (v == null || v.isRemove()) {
+        return false;
+      } else {
+        return true;
+      }
+    } finally {
+      readUnlock();
     }
   }
 
-  // this method is called under read-lock from BulkLoadClusteredCache
   public int getSize() {
     int size = 0;
-    Map<K, Value<V>> localCollectingMap = collectBuffer;
-    Map<K, Value<V>> localFlushMap = flushBuffer;
-    for (Entry<K, Value<V>> e : localCollectingMap.entrySet()) {
-      if (e.getValue() != null && !e.getValue().isRemove()) {
-        size++;
+    readLock();
+    try {
+      Map<K, Value<V>> localCollectingMap = collectBuffer;
+      Map<K, Value<V>> localFlushMap = flushBuffer;
+      for (Entry<K, Value<V>> e : localCollectingMap.entrySet()) {
+        if (e.getValue() != null && !e.getValue().isRemove()) {
+          size++;
+        }
       }
-    }
-    for (Entry<K, Value<V>> e : localFlushMap.entrySet()) {
-      if (e.getValue() != null && !e.getValue().isRemove()) {
-        size++;
+      for (Entry<K, Value<V>> e : localFlushMap.entrySet()) {
+        if (e.getValue() != null && !e.getValue().isRemove()) {
+          size++;
+        }
       }
+    } finally {
+      readUnlock();
     }
     return size;
   }
 
-  // this method is called under write-lock from BulkLoadClusteredCache
   public void clear() {
-    collectBuffer.clear();
-    flushBuffer.clear();
-    // mark the backend to be cleared
-    this.clearMap = true;
-    pendingOpsSize.set(0);
+    readLock();
+    try {
+      collectBuffer.clear();
+      flushBuffer.clear();
+      // mark the backend to be cleared
+      this.clearMap = true;
+      pendingOpsSize.set(0);
+    } finally {
+      readUnlock();
+    }
   }
 
-  // this method is called under read-lock from BulkLoadClusteredCache
   public Set<K> getKeys() {
-    Set<K> keySet = new HashSet<K>(collectBuffer.keySet());
-    keySet.addAll(flushBuffer.keySet());
-    return keySet;
+    readLock();
+    try {
+      Set<K> keySet = new HashSet<K>(collectBuffer.keySet());
+      keySet.addAll(flushBuffer.keySet());
+      return keySet;
+    } finally {
+      readUnlock();
+    }
   }
 
   public Set<Map.Entry<K, V>> entrySet() {
     Set<Entry<K, V>> rv = new HashSet<Map.Entry<K, V>>();
-    addEntriesToSet(rv, collectBuffer);
-    addEntriesToSet(rv, flushBuffer);
+    readLock();
+    try {
+      addEntriesToSet(rv, collectBuffer);
+      addEntriesToSet(rv, flushBuffer);
+    } finally {
+      readUnlock();
+    }
     return rv;
   }
 
@@ -180,9 +226,14 @@ public class LocalBufferedMap<K, V> {
   public V put(K key, V value, final long version, int createTimeInSecs, int customMaxTTISeconds,
                int customMaxTTLSeconds) {
     Value<V> wrappedValue = new Value(value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
-    Value<V> rv = collectBuffer.put(key, wrappedValue);
+    Value<V> rv = null;
+    readLock();
+    try {
+      rv = collectBuffer.put(key, wrappedValue);
+    } finally {
+      readUnlock();
+    }
     if (rv == null) {
-      // new put
       throttleIfNecessary(pendingOpsSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated()));
     }
     return rv == null ? null : rv.isRemove() ? null : rv.getValue();
@@ -203,67 +254,45 @@ public class LocalBufferedMap<K, V> {
     try {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
-      // ignore
+      // TODO: honour nonstop
     }
   }
 
-  /* package-private method, should be used for tests only */
-  Value<V> internalGetFromCollectingMap(K key) {
-    return collectBuffer.get(key);
-  }
-
-  /* package-private method, should be used for tests only */
-  void internalPutInFlushBuffer(K key, V value,final long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    flushBuffer.put(key, new Value(value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds));
-  }
-
-  /* package-private method, should be used for tests only */
-  void allowFlushBufferWrites() {
-    if (flushBuffer == EMPTY_MAP) {
-      flushBuffer = newMap();
-    }
-  }
-
-  // this method is called under write lock from BulkLoadClusteredCache
-  public void dispose() {
-    flushAndStopBuffering();
-    flushToServerThread.markFinish();
-  }
-
-  /**
-   * Does not flush the buffer even if there are pending changes. Requests to terminate the periodic flush thread
-   */
-  public void shutdown() {
-    flushToServerThread.markFinish();
-  }
-
-  // this method is called under write lock from BulkLoadClusteredCache
   // unpause the flush thread
   public void startBuffering() {
-    startThreadIfNecessary();
-    if (flushToServerThread.isFinished()) {
-      // sane formatter
-      throw new AssertionError("Start Buffering called when flush thread has already finished");
+    writeLock();
+    try {
+      startThreadIfNecessary();
+      if (flushToServerThread.isFinished()) {
+        // sane formatter
+        throw new AssertionError("Start Buffering called when flush thread has already finished");
+      }
+      flushToServerThread.unpause();
+    } finally {
+      writeUnlock();
     }
-    flushToServerThread.unpause();
   }
 
-  // this method is called under write lock
   // flushes pending buffers and pauses the flushing thread
   public void flushAndStopBuffering() {
-
-    // first flush contents of flushBuffer if flush already in progress.
-    // flush thread cannot start flush once another (app) thread has called
-    // this method as this is under same write-lock
-    flushToServerThread.waitUntilFlushCompleteAndPause();
-
-    // as no more puts can happen, directly drain the collectingMap to server
-    switchBuffers(newMap());
+    writeLock();
     try {
-      drainBufferToServer(flushBuffer);
+      // first flush contents of flushBuffer if flush already in progress.
+      // flush thread cannot start flush once another (app) thread has called
+      // this method as this is under same write-lock
+      flushToServerThread.waitUntilFlushCompleteAndPause();
+
+      // as no more puts can happen, directly drain the collectingMap to server
+      switchBuffers(newMap());
+      try {
+        drainBufferToServer(flushBuffer);
+      } finally {
+        flushBuffer = EMPTY_MAP;
+      }
     } finally {
-      flushBuffer = EMPTY_MAP;
+      writeUnlock();
     }
+
   }
 
   /**
@@ -273,14 +302,9 @@ public class LocalBufferedMap<K, V> {
    */
   private void doPeriodicFlush(FlushToServerThread thread) {
     Map<K, Value<V>> localMap = newMap();
-    bulkLoadClusteredCache.writeLock();
-    try {
-      // mark flush in progress, done under write-lock
-      if (!thread.markFlushInProgress()) return;
-      switchBuffers(localMap);
-    } finally {
-      bulkLoadClusteredCache.writeUnlock();
-    }
+    // mark flush in progress, done under write-lock
+    if (!thread.markFlushInProgress()) return;
+    switchBuffers(localMap);
     try {
       drainBufferToServer(flushBuffer);
     } finally {
@@ -291,9 +315,14 @@ public class LocalBufferedMap<K, V> {
 
   // This method is always called under write lock.
   private void switchBuffers(Map<K, Value<V>> newBuffer) {
-    flushBuffer = collectBuffer;
-    collectBuffer = newBuffer;
-    pendingOpsSize.set(0);
+    bufferSwitchLock.writeLock().lock();
+    try {
+      flushBuffer = collectBuffer;
+      collectBuffer = newBuffer;
+      pendingOpsSize.set(0);
+    } finally {
+      bufferSwitchLock.writeLock().unlock();
+    }
   }
 
   private void drainBufferToServer(final Map<K, Value<V>> buffer) {
@@ -461,6 +490,7 @@ public class LocalBufferedMap<K, V> {
     public RemoveValue(final long version) {
       super(null, version, NO_CREATETIME, NO_TTI, NO_TTL);
     }
+
     @Override
     public boolean isRemove() {
       return true;
@@ -468,9 +498,14 @@ public class LocalBufferedMap<K, V> {
   }
 
   public boolean isKeyBeingRemoved(Object obj) {
-    Value<V> v = collectBuffer.get(obj);
-    if (v != null && v.isRemove()) { return true; }
-    return false;
+    readLock();
+    try {
+      Value<V> v = collectBuffer.get(obj);
+      if (v != null && v.isRemove()) { return true; }
+      return false;
+    } finally {
+      readUnlock();
+    }
   }
 
 }
