@@ -116,11 +116,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     for (int i = 0; i < 4; i++) {
       CoreNIOServices workerI = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWorkerComm(i);
-      Assert.eval(workerI.getReaderComm().getTotalBytesRead() > 0);
+      waitForRead(workerI);
       Assert.eval(workerI.getReaderComm().getTotalBytesWritten() <= 0);
 
       Assert.eval(workerI.getWriterComm().getTotalBytesRead() <= 0);
-      Assert.eval(workerI.getWriterComm().getTotalBytesWritten() > 0);
+      waitForWritten(workerI);
 
       Assert.eval(workerI.getTotalBytesRead() > 0);
       Assert.eval(workerI.getTotalBytesWritten() > 0);
@@ -422,6 +422,24 @@ public class TCWorkerCommManagerTest extends TCTestCase {
               .getTcComm()).getWeightForWorkerComm(i);
         }
         return total == weight;
+      }
+    });
+  }
+
+  private void waitForRead(final CoreNIOServices commThread) throws Exception {
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return commThread.getReaderComm().getTotalBytesRead() > 0;
+      }
+    });
+  }
+
+  private void waitForWritten(final CoreNIOServices commThread) throws Exception {
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return commThread.getWriterComm().getTotalBytesWritten() > 0;
       }
     });
   }
