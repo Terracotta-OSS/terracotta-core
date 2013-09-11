@@ -635,13 +635,23 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void putVersioned(final K key, final V value, final long version) {
-    activeDelegate.putVersioned(key, value, version);
+    readLock();
+    try {
+      activeDelegate.putVersioned(key, value, version);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
   public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
                            final int customMaxTTISeconds, final int customMaxTTLSeconds) {
-    activeDelegate.putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    readLock();
+    try {
+      activeDelegate.putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
@@ -656,7 +666,12 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void removeVersioned(final Object key, final long version) {
-    activeDelegate.removeVersioned(key, version);
+    readLock();
+    try {
+      activeDelegate.removeVersioned(key, version);
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
