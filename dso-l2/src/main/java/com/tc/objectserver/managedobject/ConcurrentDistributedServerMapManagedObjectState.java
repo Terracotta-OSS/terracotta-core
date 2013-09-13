@@ -33,8 +33,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
-
 public class ConcurrentDistributedServerMapManagedObjectState extends PartialMapManagedObjectState implements
     EvictableMap {
 
@@ -229,6 +227,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.PUT_IF_ABSENT:
         applyPutIfAbsent(applyInfo, params);
         break;
+      case SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION:
+        applyPutIfAbsentOrOlderVersion(applyInfo, params);
+        break;
       case SerializationUtil.PUT_VERSIONED:
         applyPutVersioned(applyInfo, params);
         break;
@@ -326,6 +327,22 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     applyPutInternal(applyInfo, params, value, old);
     return old;
   }
+
+  private void applyPutIfAbsentOrOlderVersion(ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = params[0];
+    final ObjectID oid = (ObjectID) params[1];
+    final CDSMValue newValue = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4],
+                                             (Long) params[5], (Long) params[6]);
+    final CDSMValue oldValue = (CDSMValue) references.get(key);
+
+    if ((oldValue == null) || (newValue.getVersion() > oldValue.getVersion())) {
+      applyPutInternal(applyInfo, params, newValue, oldValue);
+    } else {
+      removedReferences(applyInfo, newValue);
+      addValue(applyInfo, newValue, false);
+    }
+  }
+
 
   private void applyPutInternal(final ApplyTransactionInfo applyInfo, final Object[] params, final CDSMValue value, final CDSMValue old) {
     final Object key = params[0];

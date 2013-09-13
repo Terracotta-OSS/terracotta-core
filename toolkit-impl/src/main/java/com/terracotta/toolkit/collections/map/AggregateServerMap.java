@@ -816,6 +816,19 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+    getServerMapForKey(key).putIfAbsentOrOlderVersion(key, value, version, timeSource.nowInSeconds(),
+                 ToolkitConfigFields.NO_MAX_TTI_SECONDS, ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+  }
+
+  @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                        int customMaxTTLSeconds) {
+    getServerMapForKey(key).putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+                                                      customMaxTTLSeconds);
+  }
+
+  @Override
   public void putVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                            int customMaxTTLSeconds) {
     getServerMapForKey(key).putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,

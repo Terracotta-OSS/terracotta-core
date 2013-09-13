@@ -109,6 +109,15 @@ public interface TCObjectServerMap<L> extends TCObject {
   void doLogicalPutVersioned(TCServerMap map, L lockID, Object key, Object value, long version);
 
   /**
+   * Does a logical put if absent or the version present is older
+   * 
+   * @param key Key Object
+   * @param value Object in the mapping
+   * @param version
+   */
+  void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version);
+
+  /**
    * Clear this map
    * 
    * @param map ServerTCMap
@@ -290,4 +299,5 @@ public interface TCObjectServerMap<L> extends TCObject {
    * progress to removeSet.
    */
   void addTxnInProgressKeys(Set addSet, Set removeSet);
+
 }

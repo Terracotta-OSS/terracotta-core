@@ -317,6 +317,12 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
+  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+    assertLockAndRejoinState();
+    delegate.doLogicalPutIfAbsentOrOlderVersion(key, value, version);
+  }
+
+  @Override
   public void doClear(TCServerMap map) {
     assertLockAndRejoinState();
     delegate.doClear(map);

@@ -109,6 +109,18 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+    toolkitCache.putIfAbsentOrOlderVersion(key, value, version);
+  }
+
+  @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                        int customMaxTTLSeconds) {
+    toolkitCache.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+                                           customMaxTTLSeconds);
+  }
+
+  @Override
   public V unsafeLocalGet(Object key) {
     V value = localBufferedMap.get(key);
     if (value == null) {
@@ -498,4 +510,5 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   public void rejoinCompleted() {
     bulkLoadEnabledNodesSet.addCurrentNodeInternal();
   }
+
 }

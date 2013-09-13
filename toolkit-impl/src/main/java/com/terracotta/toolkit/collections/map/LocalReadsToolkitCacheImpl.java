@@ -317,6 +317,17 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                        int customMaxTTLSeconds) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void disposeLocally() {
     // TODO: discuss
     throw new UnsupportedOperationException();
@@ -376,4 +387,5 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   public void waitUntilBulkLoadComplete() throws InterruptedException {
     // do nothing
   }
+
 }

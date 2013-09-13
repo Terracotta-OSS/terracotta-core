@@ -219,7 +219,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param version
    */
   @Override
-  public void doLogicalPutUnlockedVersioned(final TCServerMap map, final Object key, final Object value, final long version) {
+  public void doLogicalPutUnlockedVersioned(final TCServerMap map, final Object key, final Object value,
+                                            final long version) {
     final Lock lock = getLockForKey(key);
     lock.lock();
     try {
@@ -230,6 +231,18 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       } else {
         addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
       }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void doLogicalPutIfAbsentOrOlderVersion(final Object key, final Object value, final long version) {
+    Lock lock = getLockForKey(key);
+    lock.lock();
+    try {
+      invokeLogicalPutIfAbsentOrOlderVersion(key, value, version);
+      // TODO: Revisit and check whether we can simply omit addToCache(). It may have some serious implications
     } finally {
       lock.unlock();
     }
@@ -261,6 +274,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       lock.unlock();
     }
   }
+
 
   @Override
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
@@ -915,6 +929,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     final Object[] parameters = constructParamsVersioned(key, value, version);
 
     logicalInvoke(SerializationUtil.PUT_VERSIONED, SerializationUtil.PUT_VERSIONED_SIGNATURE, parameters);
+    return valueObjectID;
+  }
+
+  private ObjectID invokeLogicalPutIfAbsentOrOlderVersion(final Object key, final Object value, final long version) {
+    shareObject(key);
+    final ObjectID valueObjectID = shareObject(value);
+    final Object[] parameters = constructParamsVersioned(key, value, version);
+
+    logicalInvoke(SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION,
+                  SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION_SIGNATURE, parameters);
     return valueObjectID;
   }
 

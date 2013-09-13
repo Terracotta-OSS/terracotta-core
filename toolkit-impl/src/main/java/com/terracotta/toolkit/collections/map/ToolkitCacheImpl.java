@@ -644,6 +644,29 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+    readLock();
+    try {
+      activeDelegate.putIfAbsentOrOlderVersion(key, value, version);
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, 
+                         int customMaxTTISeconds, int customMaxTTLSeconds) {
+    readLock();
+    try {
+      activeDelegate.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, 
+                         customMaxTTISeconds, customMaxTTLSeconds);
+    } finally {
+      readUnlock();
+    }
+
+  }
+
+  @Override
   public void putVersioned(final K key, final V value, final long version, final int createTimeInSecs,
                            final int customMaxTTISeconds, final int customMaxTTLSeconds) {
     readLock();
@@ -742,4 +765,5 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public boolean isNodeBulkLoadEnabled() {
     return bulkloadCache.isNodeBulkLoadEnabled();
   }
+
 }

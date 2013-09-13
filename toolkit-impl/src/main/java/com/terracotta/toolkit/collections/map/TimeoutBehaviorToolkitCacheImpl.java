@@ -293,6 +293,18 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+    mutationBehaviourResolver.putIfAbsentOrOlderVersion(key, value, version);
+  }
+
+  @Override
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                        int customMaxTTLSeconds) {
+    mutationBehaviourResolver.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+                                                        customMaxTTLSeconds);
+  }
+
+  @Override
   public void disposeLocally() {
     // TODO: discuss
     mutationBehaviourResolver.disposeLocally();
@@ -348,4 +360,5 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   public void waitUntilBulkLoadComplete() throws InterruptedException {
     immutationBehaviourResolver.waitUntilBulkLoadComplete();
   }
+
 }
