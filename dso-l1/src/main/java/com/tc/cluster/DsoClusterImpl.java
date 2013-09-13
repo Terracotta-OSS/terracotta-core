@@ -208,14 +208,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   @Override
   public void fireThisNodeJoined(final ClientID nodeId, final ClientID[] clusterMembers) {
+    final ClientID newNodeId = nodeId;
+    final boolean rejoinHappened = rejoinManager.thisNodeJoined(newNodeId);
     stateWriteLock.lock();
-    boolean rejoinHappened = false;
     boolean fireThisNodeJoined = false;
     DsoNodeInternal oldNode = currentNode;
     try {
-      ClientID newNodeId = nodeId;
-      rejoinHappened = rejoinManager.thisNodeJoined(newNodeId);
-
       if (rejoinHappened) {
         // node rejoined, update current node
         currentClientID = newNodeId;

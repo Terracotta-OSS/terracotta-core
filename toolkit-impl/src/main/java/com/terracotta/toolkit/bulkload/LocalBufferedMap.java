@@ -8,7 +8,11 @@ import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.tc.exception.TCNotRunningException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 
 import java.util.Collections;
@@ -26,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Abhishek Sanoujam
  */
 public class LocalBufferedMap<K, V> {
+  private static final TCLogger          LOGGER                     = TCLogging.getLogger(LocalBufferedMap.class);
   private static final int               MAX_SIZEOF_DEPTH           = 1000;
 
   private static final String            CONCURRENT_TXN_LOCK_ID     = "local-buffer-static-concurrent-txn-lock-id";
@@ -286,6 +291,10 @@ public class LocalBufferedMap<K, V> {
       switchBuffers(newMap());
       try {
         drainBufferToServer(flushBuffer);
+      } catch (RejoinException e) {
+        LOGGER.warn("error during flushAndStopBuffering ", e);
+      } catch (TCNotRunningException e) {
+        LOGGER.info("Ignoring TCNotRunningException while flushAndStopBuffering ", e);
       } finally {
         flushBuffer = EMPTY_MAP;
       }
@@ -307,6 +316,10 @@ public class LocalBufferedMap<K, V> {
     switchBuffers(localMap);
     try {
       drainBufferToServer(flushBuffer);
+    } catch (RejoinException e) {
+      LOGGER.warn("error during doPeriodicFlush ", e);
+    } catch (TCNotRunningException e) {
+      LOGGER.info("Ignoring TCNotRunningException while doPeriodicFlush ", e);
     } finally {
       flushBuffer = EMPTY_MAP;
       thread.markFlushComplete();
@@ -384,10 +397,6 @@ public class LocalBufferedMap<K, V> {
       return (state == State.FINISHED);
     }
 
-    public void markFinish() {
-      moveTo(State.FINISHED);
-    }
-
     public boolean markFlushInProgress() {
       return moveTo(State.SLEEP, State.FLUSH);
     }
@@ -424,11 +433,6 @@ public class LocalBufferedMap<K, V> {
           throw new RuntimeException(e);
         }
       }
-    }
-
-    private synchronized void moveTo(State newState) {
-      state = newState;
-      notifyAll();
     }
 
     private synchronized boolean moveTo(State oldState, State newState) {
