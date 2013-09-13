@@ -824,21 +824,25 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
       for (final ObjectName objectName : objectNames) {
-        Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
-          @Override
-          public Map<String, String> call() throws Exception {
-            String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
-            String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
+        try {
+          Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
+            @Override
+            public Map<String, String> call() throws Exception {
+              String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
+              String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
 
-            Map<String, String> props = new HashMap<String, String>();
-            props.put("Version", version);
-            props.put("Agency", agency);
-            return props;
+              Map<String, String> props = new HashMap<String, String>();
+              props.put("Version", version);
+              props.put("Agency", agency);
+              return props;
+            }
+          }, objectName.toString());
+
+          if (attributes != null) {
+            nodes.put(objectName.getKeyProperty("node"), attributes);
           }
-        }, objectName.toString());
-
-        if (attributes != null) {
-          nodes.put(objectName.getKeyProperty("node"), attributes);
+        } catch (ExecutionException ee) {
+          LOG.warn("error collecting L1 agent node details of " + objectName, ee);
         }
       }
       return nodes;
