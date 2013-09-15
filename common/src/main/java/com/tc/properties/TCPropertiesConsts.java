@@ -412,6 +412,7 @@ public interface TCPropertiesConsts {
    *                  reconnect to L2 that has not crashed
    * maxDelayedAcks - Max number of messages received for which ack may not be sent
    * sendWindow     - Max number of messages that can be sent without getting an ack back
+   * rejoin.sleep.millis - Number of milliseconds to sleep before retry rejoin, if rejoin attempt was unsuccessful for some reason
    * </code>
    ********************************************************************************************************************/
   public static final String L2_L1RECONNECT_ENABLED                                         = "l2.l1reconnect.enabled";
@@ -419,6 +420,7 @@ public interface TCPropertiesConsts {
   public static final String L2_L1RECONNECT_SENDQUEUE_CAP                                   = "l2.l1reconnect.sendqueue.cap";
   public static final String L2_L1RECONNECT_MAX_DELAYEDACKS                                 = "l2.l1reconnect.maxDelayedAcks";
   public static final String L2_L1RECONNECT_SEND_WINDOW                                     = "l2.l1reconnect.sendWindow";
+  public static final String L2_L1REJOIN_SLEEP_MILLIS                                       = "l2.l1rejoin.sleep.millis";
 
   /*********************************************************************************************************************
    * <code>
