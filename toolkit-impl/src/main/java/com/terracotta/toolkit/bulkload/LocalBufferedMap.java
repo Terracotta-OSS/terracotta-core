@@ -292,7 +292,7 @@ public class LocalBufferedMap<K, V> {
       try {
         drainBufferToServer(flushBuffer);
       } catch (RejoinException e) {
-        LOGGER.warn("error during flushAndStopBuffering ", e);
+        LOGGER.warn("error during flushAndStopBuffering " + e.getMessage());
       } catch (TCNotRunningException e) {
         LOGGER.info("Ignoring TCNotRunningException while flushAndStopBuffering ", e);
       } finally {
@@ -317,7 +317,7 @@ public class LocalBufferedMap<K, V> {
     try {
       drainBufferToServer(flushBuffer);
     } catch (RejoinException e) {
-      LOGGER.warn("error during doPeriodicFlush ", e);
+      LOGGER.warn("error during doPeriodicFlush " + e.getMessage());
     } catch (TCNotRunningException e) {
       LOGGER.info("Ignoring TCNotRunningException while doPeriodicFlush ", e);
     } finally {
