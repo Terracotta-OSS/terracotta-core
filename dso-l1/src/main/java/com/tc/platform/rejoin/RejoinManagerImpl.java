@@ -86,7 +86,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     if (!rejoinInProgress.get()) {
       rejoinWorker.requestRejoin(channel);
     } else {
-      logger.info("Ignoring rejoin request as channel reopenInProgress");
+      logger.info("Ignoring rejoin request as channel rejoinInProgress");
     }
   }
 

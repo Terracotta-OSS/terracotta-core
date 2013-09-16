@@ -105,10 +105,14 @@ public class ServerClientHandshakeManager {
                                                              + " still not cleaned up."); }
 
       if (this.state == STARTED) {
-        if (handshake.getObjectIDs().size() > 0 || handshake.getObjectIDsToValidate().size() > 0) { throw new ClientHandshakeException(
-                                                                                                                                       "Client "
-                                                                                                                                           + clientID
-                                                                                                                                           + " connected after startup should have no existing object references."); }
+        int oidSize = handshake.getObjectIDs().size();
+        int validateSize = handshake.getObjectIDsToValidate().size();
+        if (oidSize > 0 || validateSize > 0) { throw new ClientHandshakeException(
+                                                                                  "Client "
+                                                                                      + clientID
+                                                                                      + " connected after startup should have no existing object references oidSize="
+                                                                                      + oidSize + "validateSize="
+                                                                                      + validateSize); }
 
         for (final ClientServerExchangeLockContext context : handshake.getLockContexts()) {
           if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) { throw new ClientHandshakeException(

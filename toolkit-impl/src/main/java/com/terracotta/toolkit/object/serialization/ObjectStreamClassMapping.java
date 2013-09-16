@@ -5,6 +5,7 @@ package com.terracotta.toolkit.object.serialization;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
@@ -170,6 +171,7 @@ public class ObjectStreamClassMapping {
         throw new ToolkitRuntimeException(e);
       }
     } catch (ExecutionException e) {
+      if (e.getCause() instanceof RejoinException) { throw (RejoinException) e.getCause(); }
       throw new ToolkitRuntimeException(e);
     }
   }
