@@ -4,9 +4,6 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -89,6 +86,7 @@ import com.tc.object.handler.ReceiveSyncWriteTransactionAckHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
 import com.tc.object.handler.ReceiveTransactionHandler;
 import com.tc.object.handler.ResourceManagerMessageHandler;
+import com.tc.object.handler.ServerEventDeliveryHandler;
 import com.tc.object.handler.ServerEventMessageHandler;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -206,6 +204,9 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * This is the main point of entry into the DSO client.
@@ -701,8 +702,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                          .getInt(TCPropertiesConsts.L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY));
 
     serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
+    final Stage serverEventDeliveryStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
+        new ServerEventDeliveryHandler(serverEventListenerManager), TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), maxSize);
     final Stage serverEventStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_STAGE,
-        new ServerEventMessageHandler(serverEventListenerManager), 1, maxSize);
+        new ServerEventMessageHandler(serverEventDeliveryStage.getSink()), 1, maxSize);
 
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);

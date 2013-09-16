@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -91,6 +89,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
     ServerEventDestination {
@@ -104,7 +104,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final static String                                              CONFIG_CHANGE_LOCK_ID              = "__tc_config_change_lock";
   private final static List<ToolkitObjectType>                             VALID_TYPES                        = Arrays
                                                                                                                   .asList(ToolkitObjectType.STORE,
-                                                                                                                          ToolkitObjectType.CACHE);
+                                                                                                                      ToolkitObjectType.CACHE);
 
   private final int                                                        getAllBatchSize;
 
@@ -812,7 +812,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void putVersioned(K key, V value, long version) {
     putVersioned(key, value, version, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-                 ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+        ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -832,13 +832,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void putVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                            int customMaxTTLSeconds) {
     getServerMapForKey(key).putVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
-                                         customMaxTTLSeconds);
+        customMaxTTLSeconds);
   }
 
   @Override
   public V put(K key, V value) {
     return put(key, value, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+        ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -898,28 +898,32 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         // Catch throwable here since the eviction listener will ultimately call user code.
         // That way we do not cause an unhandled exception to be thrown in a stage thread, bringing
         // down the L1.
-        LOGGER.error("Cache listener threw an exception.", t);
+        LOGGER.error("Cache listener threw an exception", t);
       }
     }
   }
 
   private void doHandleVersionUpdates(final VersionedServerEvent event) {
-    for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-      final Object key = event.getKey();
-      final long version = event.getVersion();
-      try {
-        switch (event.getType()) {
-          case PUT_LOCAL:
-            final V value = deserializeValue(key, event.getValue());
-            listener.onLocalPut((K)key, value, version);
-            break;
-          case REMOVE_LOCAL:
-            listener.onLocalRemove((K)key, version);
-            break;
-        }
-      } catch (Exception e) {
-        LOGGER.error("Cache mutation listener threw an exception.", e);
+    final Object key = event.getKey();
+    final long version = event.getVersion();
+    final ServerEventType type = event.getType();
+
+    try {
+      switch (type) {
+        case PUT_LOCAL:
+          final V value = deserializeValue(key, event.getValue());
+          for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
+            listener.onLocalPut((K) key, value, version);
+          }
+          break;
+        case REMOVE_LOCAL:
+          for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
+            listener.onLocalRemove((K) key, version);
+          }
+          break;
       }
+    } catch (Exception e) {
+      throw new RuntimeException("Cache version update listener threw an exception", e);
     }
   }
 
@@ -932,7 +936,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
             SerializationStrategy.class);
     final boolean compressionEnabled = serverMaps[0].isCompressionEnabled();
 
-    return (V)new SerializedMapValue(params).getDeserializedValue(
+    return (V) new SerializedMapValue(params).getDeserializedValue(
         serializationStrategy, compressionEnabled, localCacheStore, key, false);
   }
 
