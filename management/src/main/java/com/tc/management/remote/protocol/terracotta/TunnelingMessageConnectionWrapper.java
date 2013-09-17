@@ -11,7 +11,7 @@ import java.io.IOException;
 import javax.management.remote.message.Message;
 
 public class TunnelingMessageConnectionWrapper extends TunnelingMessageConnection {
-  private final RemoteJMXAttributeProcessor jmAttributeProcessor = new RemoteJMXAttributeProcessor(); 
+  private final RemoteJMXAttributeProcessor jmAttributeProcessor = new RemoteJMXAttributeProcessor();
 
   public TunnelingMessageConnectionWrapper(MessageChannel channel, boolean isJmxConnectionServer) {
     super(channel, isJmxConnectionServer);
@@ -23,5 +23,11 @@ public class TunnelingMessageConnectionWrapper extends TunnelingMessageConnectio
     
     JMXAttributeContext attributeContext = new JMXAttributeContext(this.channel, outboundMessage);
     jmAttributeProcessor.add(attributeContext);
+  }
+
+  @Override
+  public void close() {
+    super.close();
+    jmAttributeProcessor.close();
   }
 }

@@ -12,16 +12,15 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class RemoteJMXAttributeProcessor {
-  private final static TCLogger logger = TCLogging.getLogger(RemoteJMXAttributeProcessor.class);
+  private final static TCLogger    logger = TCLogging.getLogger(RemoteJMXAttributeProcessor.class);
 
-  private final Executor        executor;
+  private final ThreadPoolExecutor executor;
 
   public RemoteJMXAttributeProcessor() {
     int maxThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_REMOTEJMX_MAXTHREADS);
@@ -36,6 +35,7 @@ public class RemoteJMXAttributeProcessor {
       while (true) {
         try {
           executor.execute(new Runnable() {
+            @Override
             public void run() {
               JMXAttributeContext attributeContext = (JMXAttributeContext) context;
 
@@ -57,6 +57,10 @@ public class RemoteJMXAttributeProcessor {
     } catch (Throwable t) {
       logger.warn("Got an exception while trying to execute in thread pool: " + t.getMessage());
     }
+  }
+
+  public void close() {
+    executor.shutdownNow();
   }
 
 }
