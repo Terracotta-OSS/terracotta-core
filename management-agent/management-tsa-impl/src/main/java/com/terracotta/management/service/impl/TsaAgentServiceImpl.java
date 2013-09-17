@@ -3,10 +3,10 @@
  */
 package com.terracotta.management.service.impl;
 
-import net.sf.ehcache.management.service.AgentService;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
+import org.terracotta.management.resource.services.AgentService;
 
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.web.utils.TSAConfig;

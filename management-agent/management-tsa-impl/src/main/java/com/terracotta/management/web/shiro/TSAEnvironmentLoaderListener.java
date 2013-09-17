@@ -4,7 +4,6 @@
 package com.terracotta.management.web.shiro;
 
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
-import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
@@ -13,6 +12,7 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.services.AgentService;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.tc.net.util.TSASSLSocketFactory;

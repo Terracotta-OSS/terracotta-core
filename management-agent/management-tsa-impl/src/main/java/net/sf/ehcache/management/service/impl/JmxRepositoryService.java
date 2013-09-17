@@ -9,7 +9,6 @@ import net.sf.ehcache.management.resource.CacheManagerConfigEntity;
 import net.sf.ehcache.management.resource.CacheManagerEntity;
 import net.sf.ehcache.management.resource.CacheStatisticSampleEntity;
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
-import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
@@ -17,6 +16,7 @@ import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
 import org.terracotta.management.resource.Representable;
+import org.terracotta.management.resource.services.AgentService;
 
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
