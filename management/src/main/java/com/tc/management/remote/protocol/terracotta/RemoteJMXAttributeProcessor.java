@@ -10,6 +10,7 @@ import com.tc.management.JMXAttributeContext;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.concurrent.NamedThreadFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -26,7 +27,8 @@ public class RemoteJMXAttributeProcessor {
     int maxThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_REMOTEJMX_MAXTHREADS);
     int idleTime = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_REMOTEJMX_IDLETIME);
 
-    executor = new ThreadPoolExecutor(1, maxThreads, idleTime, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    executor = new ThreadPoolExecutor(1, maxThreads, idleTime, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
+                                      new NamedThreadFactory("RemoteJMXAttributeProcessorWorker"));
   }
 
   public void add(final EventContext context) {
