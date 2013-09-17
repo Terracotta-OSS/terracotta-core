@@ -68,6 +68,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.servlet.ServletContext;
@@ -118,7 +120,23 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       } else {
         jmxConnectorPool = new JmxConnectorPool("service:jmx:jmxmp://{0}:{1}");
       }
-      executorService = Executors.newCachedThreadPool();
+      executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+        private final ThreadGroup group = (System.getSecurityManager() != null) ?
+            System.getSecurityManager().getThreadGroup() : Thread.currentThread().getThreadGroup();
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread thread = new Thread(group, r, "Management-Agent-" + threadNumber.getAndIncrement(), 0);
+          if (thread.isDaemon()) {
+            thread.setDaemon(false);
+          }
+          if (thread.getPriority() != Thread.NORM_PRIORITY) {
+            thread.setPriority(Thread.NORM_PRIORITY);
+          }
+          return thread;
+        }
+      });
       tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService, TSAConfig.getDefaultL1BridgeTimeout());
 
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
@@ -214,4 +232,5 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
     super.contextDestroyed(sce);
   }
+
 }
