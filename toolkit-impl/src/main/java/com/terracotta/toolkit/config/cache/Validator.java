@@ -44,9 +44,9 @@ public final class Validator {
     }
   }
 
-  public static int integerOrLong(String name, Object value) {
+  public static long integerOrLong(String name, Object value) {
     if (value instanceof Integer || value instanceof Long) {
-      return ((Number) value).intValue();
+      return ((Number) value).longValue();
     } else {
       throw new IllegalArgumentException("Illegal type for '" + name + "' - should be int or long: "
                                          + value.getClass().getName());

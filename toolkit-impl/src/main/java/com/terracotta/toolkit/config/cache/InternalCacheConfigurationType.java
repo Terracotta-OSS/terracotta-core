@@ -618,7 +618,7 @@ public enum InternalCacheConfigurationType {
     return Validator.integer(name(), value);
   }
 
-  public int integerOrLong(Object value) {
+  public long integerOrLong(Object value) {
     return Validator.integerOrLong(name(), value);
   }
 
