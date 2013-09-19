@@ -5,6 +5,7 @@
 package com.tc.util.concurrent;
 
 import com.google.common.base.Preconditions;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +24,8 @@ public final class Runners {
   }
 
   public static TaskRunner newDefaultCachedScheduledTaskRunner(final ThreadGroup threadGroup) {
-    final ScheduledNamedTaskRunner runner = new ScheduledNamedTaskRunner(16, threadGroup);
+    final ScheduledNamedTaskRunner runner = new ScheduledNamedTaskRunner(TCPropertiesImpl.getProperties()
+        .getInt("default.taskrunner.core.pool.size", 16), threadGroup);
     runner.setKeepAliveTime(2L, TimeUnit.MINUTES); // automatically shrinks after some idle period
     runner.allowCoreThreadTimeOut(true); // allow removing core pool threads
     //runner.setRemoveOnCancelPolicy(true); // JDK 1.7 only

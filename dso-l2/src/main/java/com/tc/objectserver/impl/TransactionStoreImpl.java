@@ -15,7 +15,6 @@ import com.tc.objectserver.gtx.ServerTransactionIDBookKeeper;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.util.sequence.Sequence;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -39,35 +38,24 @@ public class TransactionStoreImpl implements TransactionStore {
     this.persistor = persistor;
     this.globalIDSequence = globalIDSequence;
     // We don't want to hit the DB (globalIDsequence) until all the stages are started.
-    for (Iterator i = this.persistor.loadAllGlobalTransactionDescriptors().iterator(); i.hasNext();) {
-      GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
+    for (Object element : this.persistor.loadAllGlobalTransactionDescriptors()) {
+      GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) element;
       basicAdd(gtx);
       gtx.commitComplete();
     }
   }
 
   @Override
-  public void commitAllTransactionDescriptor(Collection stxIDs) {
-    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-      ServerTransactionID stxnID = (ServerTransactionID) i.next();
-      GlobalTransactionDescriptor gtx = this.sids.get(stxnID);
-      if (stxnID.isServerGeneratedTransaction()) {
-        // XXX:: Since server Generated Transactions don't get completed ACKs, we don't persist these
-        this.sids.remove(stxnID);
-        this.ids.remove(gtx.getGlobalTransactionID());
-      } else {
-        this.persistor.saveGlobalTransactionDescriptor(gtx);
-        gtx.commitComplete();
-      }
-    }
-  }
-
-  // used only in tests
-  @Override
   public void commitTransactionDescriptor(ServerTransactionID stxID) {
-    ArrayList stxIDs = new ArrayList(1);
-    stxIDs.add(stxID);
-    commitAllTransactionDescriptor(stxIDs);
+    GlobalTransactionDescriptor gtx = this.sids.get(stxID);
+    if (stxID.isServerGeneratedTransaction()) {
+      // XXX:: Since server Generated Transactions don't get completed ACKs, we don't persist these
+      this.sids.remove(stxID);
+      this.ids.remove(gtx.getGlobalTransactionID());
+    } else {
+      this.persistor.saveGlobalTransactionDescriptor(gtx);
+      gtx.commitComplete();
+    }
   }
 
   @Override

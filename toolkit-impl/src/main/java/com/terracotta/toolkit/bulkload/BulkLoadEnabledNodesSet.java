@@ -6,14 +6,12 @@ package com.terracotta.toolkit.bulkload;
 import org.terracotta.toolkit.collections.ToolkitSet;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.ToolkitInternal;
-import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.platform.PlatformService;
-import com.tc.util.concurrent.Timer;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
@@ -21,7 +19,6 @@ import com.tcclient.cluster.OutOfBandDsoClusterListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class BulkLoadEnabledNodesSet {
@@ -35,7 +32,7 @@ public class BulkLoadEnabledNodesSet {
   private final ToolkitSet<String>        bulkLoadEnabledNodesSet;
   private final ToolkitLock               clusteredLock;
   private final String                    name;
-  private final CleanupOnNodeLeftListener cleanupOnNodeLeftListener;
+  private final CleanupOnRejoinListener cleanupOnNodeLeftListener;
 
   private volatile boolean                currentNodeBulkLoadEnabled = false;
   private final boolean                   loggingEnabled;
@@ -47,7 +44,7 @@ public class BulkLoadEnabledNodesSet {
     bulkLoadEnabledNodesSet = toolkit.getSet(BULK_LOAD_NODES_SET_PREFIX + name, String.class);
     this.loggingEnabled = bulkLoadConstants.isLoggingEnabled();
     clusteredLock = bulkLoadEnabledNodesSet.getReadWriteLock().writeLock();
-    cleanupOnNodeLeftListener = new CleanupOnNodeLeftListener(this, dsoCluster, name, platformService);
+    cleanupOnNodeLeftListener = new CleanupOnRejoinListener(this);
     dsoCluster.addClusterListener(cleanupOnNodeLeftListener);
     cleanupOfflineNodes();
   }
@@ -82,6 +79,9 @@ public class BulkLoadEnabledNodesSet {
       // clean up defunct nodes
       for (String nodeId : defunctNodes) {
         bulkLoadEnabledNodesSet.remove(nodeId);
+      }
+      if (defunctNodes.size() > 0) {
+        clusteredLock.getCondition().signalAll();
       }
 
       if (loggingEnabled) {
@@ -187,6 +187,7 @@ public class BulkLoadEnabledNodesSet {
   public boolean isBulkLoadEnabledInCluster() {
     clusteredLock.lock();
     try {
+      cleanupOfflineNodes();
       boolean rv = (bulkLoadEnabledNodesSet.size() != 0);
       return rv;
     } finally {
@@ -194,56 +195,17 @@ public class BulkLoadEnabledNodesSet {
     }
   }
 
-  private static class CleanupOnNodeLeftListener implements OutOfBandDsoClusterListener {
+  private static class CleanupOnRejoinListener implements OutOfBandDsoClusterListener {
 
     private final BulkLoadEnabledNodesSet nodesSet;
-    private final DsoCluster              dsoCluster;
-    private final Timer                   timer;
-    // We are adding a delay in processing NODE_LEFT to let rejoin happen in case the other node was rejoin enabled.
-    private static final long             NODE_LEFT_PROCESSING_DELAY = Long.getLong("nodeLeftProcessingDelay",
-                                                                                    30 * 1000);
 
-    public CleanupOnNodeLeftListener(BulkLoadEnabledNodesSet nodesSet, DsoCluster dsoCluster, String name,
-                                     PlatformService platformService) {
+    public CleanupOnRejoinListener(BulkLoadEnabledNodesSet nodesSet) {
       this.nodesSet = nodesSet;
-      this.dsoCluster = dsoCluster;
-      this.timer = platformService.getTaskRunner().newTimer("Timer for Bulk Load Node Left");
     }
 
     private void handleNodeRejoined(DsoClusterEvent event) {
       nodesSet.addCurrentNodeInternal();
       nodesSet.cleanupOfflineNodes();
-    }
-
-    private void handleNodeLeft(DsoClusterEvent event) {
-      String offlineNode = event.getNode().getId();
-      LOGGER.info("Received node left event for: " + offlineNode);
-      if (dsoCluster.getCurrentNode().getId().equals(offlineNode)) {
-        // nothing to do on "this" node left
-        if (nodesSet.loggingEnabled) {
-          LOGGER.info("Ignoring" + event + " for itself " + offlineNode);
-        }
-        return;
-      }
-      if (!dsoCluster.areOperationsEnabled()) {
-        // no-op when current node is offline already
-        LOGGER.info("Ignoring " + event + " for node " + offlineNode + " because current node is offline");
-        return;
-      }
-      try {
-        nodesSet.clusteredLock.lock();
-        try {
-          nodesSet.removeNodeIdAndNotifyAll(offlineNode);
-        } finally {
-          nodesSet.clusteredLock.unlock();
-        }
-      } catch (RejoinException e) {
-        LOGGER.info("Ignoring " + event + " for node " + offlineNode + " because REJOIN-IN-PROGRESS");
-      }
-    }
-
-    private void disposeLocally() {
-      timer.cancel();
     }
 
     @Override
@@ -254,12 +216,7 @@ public class BulkLoadEnabledNodesSet {
 
     @Override
     public void nodeLeft(final DsoClusterEvent event) {
-      timer.schedule(new TimerTask() {
-        @Override
-        public void run() {
-          handleNodeLeft(event);
-        }
-      }, NODE_LEFT_PROCESSING_DELAY, TimeUnit.MILLISECONDS);
+      // no operation
     }
 
     @Override
@@ -293,7 +250,6 @@ public class BulkLoadEnabledNodesSet {
 
   public void disposeLocally() {
     LOGGER.info("Cleaning up BulkLoadEnabledNodesSet");
-    cleanupOnNodeLeftListener.disposeLocally();
     dsoCluster.removeClusterListener(cleanupOnNodeLeftListener);
   }
 

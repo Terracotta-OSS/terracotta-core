@@ -15,7 +15,6 @@ import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -129,14 +128,6 @@ public class TestTransactionStore implements TransactionStore {
   @Override
   public void shutdownAllClientsExcept(Set cids) {
     throw new ImplementMe();
-  }
-
-  @Override
-  public void commitAllTransactionDescriptor(Collection stxIDs) {
-    for (final Object stxID : stxIDs) {
-      ServerTransactionID sid = (ServerTransactionID)stxID;
-      commitTransactionDescriptor(sid);
-    }
   }
 
   @Override

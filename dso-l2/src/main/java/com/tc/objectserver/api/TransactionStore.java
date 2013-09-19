@@ -9,7 +9,6 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
-import java.util.Collection;
 import java.util.Set;
 
 public interface TransactionStore {
@@ -37,7 +36,5 @@ public interface TransactionStore {
   public void shutdownAllClientsExcept(Set cids);
 
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
-
-  public void commitAllTransactionDescriptor(Collection stxIDs);
 
 }
