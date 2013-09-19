@@ -318,7 +318,7 @@ public class GroupServerManager {
     }
   }
 
-  public synchronized void stop() throws Exception {
+  public void stop() throws Exception {
     stopped = true;
     stopCrasher();
     stopAllServers();
@@ -404,11 +404,12 @@ public class GroupServerManager {
   }
 
   private TCServerInfoMBean getTcServerInfoMBean(int index) throws IOException {
-    if (jmxConnectors[index] != null) {
-      closeJMXConnector(index);
+    closeJMXConnector(index);
+    MBeanServerConnection mBeanServer;
+    synchronized (jmxConnectors) {
+      jmxConnectors[index] = getJMXConnector(serverControl[index].getAdminPort());
+      mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     }
-    jmxConnectors[index] = getJMXConnector(serverControl[index].getAdminPort());
-    MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     return MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
                                                          TCServerInfoMBean.class, true);
   }
@@ -433,14 +434,16 @@ public class GroupServerManager {
   }
 
   private void closeJMXConnector(int i) {
-    if (jmxConnectors[i] != null) {
-      try {
-        jmxConnectors[i].close();
-      } catch (Exception e) {
-        System.out.println("JMXConnector for server=[" + serverControl[i].getTsaPort() + "] already closed.");
-        e.printStackTrace();
+    synchronized (jmxConnectors) {
+      if (jmxConnectors[i] != null) {
+        try {
+          jmxConnectors[i].close();
+        } catch (Exception e) {
+          System.out.println("JMXConnector for server=[" + serverControl[i].getTsaPort() + "] already closed.");
+          e.printStackTrace();
+        }
+        jmxConnectors[i] = null;
       }
-      jmxConnectors[i] = null;
     }
   }
 
@@ -505,7 +508,7 @@ public class GroupServerManager {
     if (expectedRunningServerCount() > 0) {
       // wait for passive to take over only If passive was running.
       int activeServer = getActiveServerIndex();
-      while (activeServer < 0) {
+      while (activeServer < 0 && !stopped) {
         ThreadUtil.reallySleep(1000);
         activeServer = getActiveServerIndex();
       }
@@ -636,7 +639,7 @@ public class GroupServerManager {
     }
   }
 
-  public void restartLastCrashedServer() throws Exception {
+  public synchronized void restartLastCrashedServer() throws Exception {
     if (stopped) return;
     debugPrintln("*****  restarting last crashed server");
 
@@ -728,16 +731,18 @@ public class GroupServerManager {
       System.out.println("Dumping server=[" + serverControl[serverIndex].getTsaPort() + "]");
 
       MBeanServerConnection mbs;
-      try {
-        if (jmxConnectors[serverIndex] == null) {
+      synchronized (jmxConnectors) {
+        try {
+          if (jmxConnectors[serverIndex] == null) {
+            jmxConnectors[serverIndex] = getJMXConnector(serverControl[serverIndex].getAdminPort());
+          }
+          mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
+        } catch (IOException ioe) {
+          System.out.println("Need to recreate jmxConnector for server=[" + serverControl[serverIndex].getTsaPort()
+                             + "]...");
           jmxConnectors[serverIndex] = getJMXConnector(serverControl[serverIndex].getAdminPort());
+          mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
         }
-        mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
-      } catch (IOException ioe) {
-        System.out.println("Need to recreate jmxConnector for server=[" + serverControl[serverIndex].getTsaPort()
-                           + "]...");
-        jmxConnectors[serverIndex] = getJMXConnector(serverControl[serverIndex].getAdminPort());
-        mbs = jmxConnectors[serverIndex].getMBeanServerConnection();
       }
 
       L2DumperMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
