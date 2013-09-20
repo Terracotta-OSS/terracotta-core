@@ -11,9 +11,9 @@ public class PlatformServiceProvider {
 
   private static PlatformService createRejoinAwareIfNecessary() {
     try {
-    PlatformService service = ManagerUtil.getManager().getPlatformService();
-    if (service.isRejoinEnabled()) { return new RejoinAwarePlatformService(service); }
-    return service;
+      PlatformService service = ManagerUtil.getManager().getPlatformService();
+      if (service.isRejoinEnabled()) { return new RejoinAwarePlatformService(service); }
+      return service;
     } catch (Throwable e) {
       System.err.println(e.getMessage()); // lets the class Load
     }
