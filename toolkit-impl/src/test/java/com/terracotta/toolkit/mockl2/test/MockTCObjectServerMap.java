@@ -1,0 +1,540 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.terracotta.toolkit.mockl2.test;
+
+import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.ImplementMe;
+import com.tc.object.ObjectID;
+import com.tc.object.TCClass;
+import com.tc.object.TCObjectServerMap;
+import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.servermap.localcache.ServerMapLocalCache;
+import com.tc.object.util.ToggleableStrongReference;
+
+import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
+
+  Map<Object,Object> map = new ConcurrentHashMap<Object, Object>();
+  private volatile ServerMapLocalCache        cache;
+  private volatile boolean                    isEventual;
+  private volatile boolean                    localCacheEnabled;
+  private volatile PinnedEntryFaultCallback   callback;
+
+  private volatile L1ServerMapLocalCacheStore serverMapLocalStore;
+  
+  @Override
+  public ObjectID getObjectID() {
+    return ObjectID.NULL_ID;
+  }
+
+  @Override
+  public boolean isShared() {
+    if(true) {
+    throw new ImplementMe();
+    }
+    return false;
+  }
+
+  @Override
+  public Object getPeerObject() {
+    if(true) {
+      throw new ImplementMe();
+      }
+    return null;
+  }
+
+  @Override
+  public TCClass getTCClass() {
+    if(true) {
+      throw new ImplementMe();
+      }
+    return null;
+  }
+
+  @Override
+  public Object getResolveLock() {
+    if(true) {
+      throw new ImplementMe();
+      }
+    return null;
+  }
+
+  @Override
+  public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void objectArrayChanged(int startPos, Object[] array, int length) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void primitiveArrayChanged(int startPos, Object array, int length) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void literalValueChanged(Object newValue, Object oldValue) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void setLiteralValue(Object newValue) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void hydrate(DNA from, boolean force, WeakReference peer) throws ClassNotFoundException {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void resolveReference(String fieldName) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void unresolveReference(String fieldName) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void resolveArrayReference(int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void resolveAllReferences() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public ObjectID setReference(String fieldName, ObjectID id) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setArrayReference(int index, ObjectID id) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void clearReference(String fieldName) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void setValue(String fieldName, Object obj) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public long getVersion() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setVersion(long version) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public boolean isNew() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void logicalInvoke(int method, String methodSignature, Object[] params) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void disableAutoLocking() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public boolean autoLockingDisabled() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public ToggleableStrongReference getOrCreateToggleRef() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setNotNew() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void dehydrate(DNAWriter writer) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public String getFieldNameByOffset(long fieldOffset) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void clearAccessed() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public boolean recentlyAccessed() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void markAccessed() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public int accessCount(int factor) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxTotalCount, boolean invalidateOnChange,
+                         boolean localCacheEnabled) {
+   MockUtil.logInfo("Initalizing TCObjectServerMap");
+    
+  }
+
+  @Override
+  public void doLogicalRemove(Object lockID, Object key) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalRemoveVersioned(Object lockID, Object key, long version) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalRemoveUnlocked(Object key) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalRemoveUnlockedVersioned(Object key, long version) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public boolean doLogicalRemoveUnlocked(Object key, Object value) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Object doLogicalPutIfAbsentUnlocked(Object key, Object value) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean doLogicalReplaceUnlocked(Object key, Object current, Object newValue) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean doLogicalReplaceUnlocked(Object key, Object newValue) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void doLogicalPut(Object lockID, Object key, Object value) {
+    map.put(key, value);
+    MockUtil.logInfo("TCObjectServerMap:doLogicalPut > " + lockID+key+value );
+    
+  }
+
+  @Override
+  public void doLogicalPutVersioned(Object lockID, Object key, Object value, long version) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doClear() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalPutUnlocked( Object key, Object value) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalPutUnlockedVersioned(Object key, Object value, long version) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Map getAllValuesUnlocked(Map mapIdToKeysMap) throws AbortedOperationException {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Set keySet(TCServerMap map) throws AbortedOperationException {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Object getValue(TCServerMap tcmap, Object lockID, Object key) throws AbortedOperationException {
+    MockUtil.logInfo("TCObjectServerMap:getValue > " + lockID+key );
+    return  map.get(key);
+  }
+
+  @Override
+  public long getAllSize(TCServerMap[] maps) throws AbortedOperationException {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int getLocalSize() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public long getLocalOnHeapSizeInBytes() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public long getLocalOffHeapSizeInBytes() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int getLocalOnHeapSize() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public int getLocalOffHeapSize() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void clearLocalCache() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void cleanLocalState() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void clearAllLocalCacheInline() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void evictedInServer(Object key) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public Set getLocalKeySet() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean containsLocalKey(Object key) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean containsKeyLocalOnHeap(Object key) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean containsKeyLocalOffHeap(Object key) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Object getValueFromLocalCache(Object key) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void removeValueFromLocalCache(Object key) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void addMetaData(MetaDataDescriptor mdd) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore, PinnedEntryFaultCallback callback) {
+    // MockUtil.logInfo("SetUp Local Store");
+    this.callback = callback;
+    this.serverMapLocalStore = serverMapLocalStore;
+    setupLocalCache(serverMapLocalStore, callback);
+  }
+
+  private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore, PinnedEntryFaultCallback callback) {
+  //  this.cache = globalLocalCacheManager.getOrCreateLocalCache(this.objectID, objectManager, manager,
+    // localCacheEnabled, serverMapLocalStore, callback);
+  }
+
+  @Override
+  public void destroyLocalStore() {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void setLocalCacheEnabled(boolean enabled) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void recalculateLocalCacheSize(Object key) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalSetLastAccessedTime(Object key, Object value, long lastAccessedTime) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalExpire(Object lockID, Object key, Object value) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public boolean doLogicalExpireUnlocked(Object key, Object value) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void addTxnInProgressKeys(Set addSet, Set removeSet) {
+    throw new ImplementMe();
+    
+  }
+
+  @Override
+  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+    throw new ImplementMe();
+    
+  }
+
+}
