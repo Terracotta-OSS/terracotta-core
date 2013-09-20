@@ -40,7 +40,7 @@ import java.util.concurrent.TimeoutException;
  * @see Timer
  * @see Runners
  */
-class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implements TaskRunner {
+public class ScheduledNamedTaskRunner extends ScheduledThreadPoolExecutor implements TaskRunner {
 
   private static final TCLogger logger = TCLogging.getLogger(ScheduledNamedTaskRunner.class);
   // to restore the initial thread's name after a task execution
