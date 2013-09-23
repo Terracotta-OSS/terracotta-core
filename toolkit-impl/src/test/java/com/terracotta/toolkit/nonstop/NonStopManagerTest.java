@@ -45,7 +45,7 @@ public class NonStopManagerTest extends TestCase {
     }
     long timeTaken = System.currentTimeMillis() - startTime;
     System.out.println("time taken to execute operations " + timeTaken);
-    Assert.assertTrue((timeTaken > loopTmes * timeout) && timeTaken < (loopTmes * timeout + 2000));
+    Assert.assertTrue((timeTaken >= loopTmes * timeout) && timeTaken < (loopTmes * timeout + 2000));
   }
 
   public void testTryBegin() throws Throwable {
