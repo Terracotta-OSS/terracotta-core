@@ -65,7 +65,7 @@ public class LockAccounting implements ClearableCallback {
   public synchronized String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("Lock Accounting:\n");
-    builder.append("[tx2Locks=" + tx2Locks + ", lock2Txs=" + lock2Txs + "]");
+    builder.append("[tx2Locks=" + tx2Locks + "\nlock2Txs=" + lock2Txs + "]");
     return builder.toString();
   }
 
