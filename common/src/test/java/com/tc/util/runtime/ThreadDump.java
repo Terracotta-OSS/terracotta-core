@@ -17,6 +17,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,14 +122,40 @@ public class ThreadDump {
   private static void doJstack(PID pid) {
     File jstack = getProgram("jstack");
     if (jstack.isFile()) {
+      boolean success = false;
+      int count = 0;
+      do {
+        doJps();
+        try {
+          Result result = Exec.execute(new String[] { jstack.getAbsolutePath(), "-l", String.valueOf(pid.getPid()) },
+                                       TIMEOUT);
+          String output = result.getStdout() + result.getStderr();
+          System.err.println(output);
+          success = !output.contains("Connection refused");
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        ++count;
+        System.err.println("tried jstack count " + count + " success " + success);
+        ThreadUtil.reallySleep(TimeUnit.SECONDS.toMillis(1L));
+      } while (!success && count < 10);
+
+    } else {
+      Banner.warnBanner("jstack not found");
+    }
+  }
+
+  private static void doJps() {
+    File jps = getProgram("jps");
+    if (jps.isFile()) {
       try {
-        Result result = Exec.execute(new String[] { jstack.getAbsolutePath(), "-l", String.valueOf(pid.getPid()) }, TIMEOUT);
+        Result result = Exec.execute(new String[] { jps.getAbsolutePath(), "-q" }, TIMEOUT);
         System.err.println(result.getStdout() + result.getStderr());
       } catch (Exception e) {
         e.printStackTrace();
       }
     } else {
-      Banner.warnBanner("jstack not found");
+      Banner.warnBanner("jps not found");
     }
   }
 
@@ -153,7 +180,7 @@ public class ThreadDump {
       Banner.warnBanner("jps not found");
       return Collections.emptySet();
     }
-    
+
     Result result;
     try {
       result = Exec.execute(new String[] { jpsCmd.getAbsolutePath(), "-lmv"}, TIMEOUT);
