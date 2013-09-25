@@ -175,7 +175,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     isListeningForTunneledBeans = true;
   }
 
-  private void stopListeningForTunneledBeans() {
+  void stopListeningForTunneledBeans() {
     if (!isListeningForTunneledBeans) return;
     try {
       mbeanServer.removeNotificationListener(new ObjectName("JMImplementation:type=MBeanServerDelegate"), this,
