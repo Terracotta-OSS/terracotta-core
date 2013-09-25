@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+
 /**
  *
  * @author mscott
@@ -12,14 +13,21 @@ public class CompoundResponse {
     private final long lastAccessedTime;
     private final long timeToIdle;
     private final long timeToLive;
+    private final long version;
     private Object data;
 
-    public CompoundResponse(final Object data, final long creationTime, final long lastAccessedTime, final long timeToIdle, final long timeToLive) {
+    public CompoundResponse(final Object data, final long creationTime, final long lastAccessedTime,
+                            final long timeToIdle, final long timeToLive, final long version) {
       this.creationTime = creationTime;
       this.lastAccessedTime = lastAccessedTime;
       this.timeToIdle = timeToIdle;
       this.timeToLive = timeToLive;
       this.data = data;
+      this.version = version;
+    }
+    
+    public long getVersion() {
+      return this.version;
     }
 
     public long getCreationTime() {

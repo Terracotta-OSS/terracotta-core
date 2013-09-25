@@ -11,6 +11,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
@@ -257,6 +258,16 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   @Override
   public void removeVersioned(final Object key, final long version) {
     localBufferedMap.remove((K) key, version);
+  }
+
+  @Override
+  public Set<K> keySetForSegment(final int segmentIndex) {
+    return toolkitCache.keySetForSegment(segmentIndex);
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
+    return toolkitCache.getVersionedValue(key);
   }
 
   @Override

@@ -10,6 +10,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -654,11 +655,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, 
+  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs,
                          int customMaxTTISeconds, int customMaxTTLSeconds) {
     readLock();
     try {
-      activeDelegate.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, 
+      activeDelegate.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs,
                          customMaxTTISeconds, customMaxTTLSeconds);
     } finally {
       readUnlock();
@@ -700,6 +701,16 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     activeDelegate.registerVersionUpdateListener(listener);
+  }
+
+  @Override
+  public Set<K> keySetForSegment(final int segmentIndex) {
+    return activeDelegate.keySetForSegment(segmentIndex);
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
+    return activeDelegate.getVersionedValue(key);
   }
 
   @Override

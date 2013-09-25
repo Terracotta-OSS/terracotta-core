@@ -9,6 +9,7 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObjectServerMap;
+import com.tc.object.VersionedObject;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
@@ -491,6 +492,12 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   @Override
   public void addTxnInProgressKeys(Set addSet, Set removeSet) {
     delegate.addTxnInProgressKeys(addSet, removeSet);
+  }
+
+  @Override
+  public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
+    assertLockAndRejoinState();
+    return delegate.getVersionedValue(map, key);
   }
 
 }

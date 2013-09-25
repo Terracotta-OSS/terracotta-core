@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObjectServerMap;
+import com.tc.object.VersionedObject;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
@@ -535,6 +536,11 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
     throw new ImplementMe();
     
+  }
+
+  @Override
+  public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
+    throw new ImplementMe();
   }
 
 }

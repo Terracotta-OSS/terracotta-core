@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjectServerMap<L> {
 
   private final static TCLogger               logger                          = TCLogging
@@ -487,13 +488,26 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       item = this.cache.getLocalValueStrong(key);
       if (item != null) { return item.getValueObject(); }
 
-      Object value = getValueForKeyFromServer(map, key, false);
+      Object value = getValueForKeyFromServer(map, key, false, false);
 
       if (value != null) {
         addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
             objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public VersionedObject getVersionedValue(final TCServerMap map, final Object key)
+      throws AbortedOperationException {
+    if (!isCacheInitialized()) { return null; }
+    Lock lock = getLockForKey(key);
+    lock.lock();
+    try {
+      return (VersionedObject) getValueForKeyFromServer(map, key, true, true);
     } finally {
       lock.unlock();
     }
@@ -532,7 +546,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       item = getValueUnlockedFromCache(key);
       if (item != null) { return item.getValueObject(); }
 
-      Object value = getValueForKeyFromServer(map, key, true);
+      Object value = getValueForKeyFromServer(map, key, true, false);
       if (value != null) {
         updateLocalCacheIfNecessary(key, value);
       }
@@ -620,7 +634,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  private Object getValueForKeyFromServer(final TCServerMap map, final Object key, final boolean retry)
+  private Object getValueForKeyFromServer(final TCServerMap map, final Object key, final boolean retry,
+                                          final boolean versionRequired)
       throws AbortedOperationException {
     final TCObject tcObject = map.__tc_managed();
     if (tcObject == null) {
@@ -636,9 +651,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     // originally pointed to was deleted by DGC. If that happens we retry until we get a good value.
     long start = System.nanoTime();
     while (true) {
-      final CompoundResponse value = (CompoundResponse)this.serverMapManager.getMappingForKey(mapID, portableKey);
+      final CompoundResponse value = (CompoundResponse) this.serverMapManager.getMappingForKey(mapID, portableKey);
       try {
-        return lookupValue(value);
+        Object object = lookupValue(value);
+        if (versionRequired) {
+          object = new VersionedObject(object, value.getVersion());
+        }
+        return object;
       } catch (TCObjectNotFoundException e) {
         if (!retry) {
           logger.warn("TCObjectNotFoundException for object " + value + " on a locked get. Returning null.");

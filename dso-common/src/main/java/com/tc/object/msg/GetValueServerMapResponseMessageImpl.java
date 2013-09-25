@@ -106,6 +106,7 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
         encoder.encode(responseValue.getLastAccessedTime(), outStream);
         encoder.encode(responseValue.getTimeToIdle(), outStream);
         encoder.encode(responseValue.getTimeToLive(), outStream);
+        encoder.encode(responseValue.getVersion(), outStream);
       }
     }
   }
@@ -134,9 +135,10 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
               byte type = inputStream.readByte();
               if ( type == OBJECT_ID ) {
                 response.put(key, new ObjectID(inputStream.readLong()), false, (Long) decoder.decode(inputStream),
-                  (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
+                             (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream),
+                             (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
               } else {
-                if ( type != DNA_ID ) { 
+                if ( type != DNA_ID ) {
                   throw new AssertionError("bad type");
                 }
                 int length = inputStream.readInt();
@@ -145,7 +147,8 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
                 ObjectDNAImpl value = new ObjectDNAImpl(this.serializer, false);
                 value.deserializeFrom(new TCByteBufferInputStream(TCByteBufferFactory.wrap(grab)));
                 response.put(key, value.getObjectID(), true, (Long) decoder.decode(inputStream),
-                  (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
+                             (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream),
+                             (Long) decoder.decode(inputStream), (Long) decoder.decode(inputStream));
                 response.replace(value.getObjectID(), value);
               }
             }

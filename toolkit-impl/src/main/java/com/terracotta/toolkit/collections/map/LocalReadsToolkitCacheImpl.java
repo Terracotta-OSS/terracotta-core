@@ -8,6 +8,7 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -345,6 +346,16 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public Set<K> keySetForSegment(final int segmentIndex) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
     throw new UnsupportedOperationException("Implement me!");
   }
 

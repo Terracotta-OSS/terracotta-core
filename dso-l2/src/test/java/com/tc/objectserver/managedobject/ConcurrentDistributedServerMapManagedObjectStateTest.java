@@ -4,6 +4,16 @@
  */
 package com.tc.objectserver.managedobject;
 
+import static java.util.Arrays.asList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.terracotta.corestorage.KeyValueStorage;
 
 import com.google.common.eventbus.Subscribe;
@@ -19,16 +29,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Events;
 
 import java.util.HashSet;
-
-import static java.util.Arrays.asList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTestCase {
   static {
@@ -189,6 +189,45 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     when(keyValueStorage.containsKey(key)).thenReturn(false);
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[] { key, value.getObjectID() });
     verify(keyValueStorage).put(key, value);
+  }
+
+  public void testPutIfAbsentOrOlderVersionWhenMappingAbsent() throws Exception {
+    Object key = "key";
+    CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
+
+    // when the key mapping was absent
+    when(keyValueStorage.get(key)).thenReturn(null);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
+        key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
+    verify(keyValueStorage).put(key, newValue);
+  }
+
+  public void testPutIfAbsentOrOlderVersionWhenNewVersionIsComing() throws Exception {
+    Object key = "key";
+    CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
+    
+    // when new version is coming
+    CDSMValue oldValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 4);
+    when(keyValueStorage.get(key)).thenReturn(oldValue);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
+        key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
+    verify(keyValueStorage).put(key, newValue);
+
+  }
+
+  public void testPutIfAbsentOrOlderVersionWhenOldVersionIsComing() throws Exception {
+    Object key = "key";
+    CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
+
+    // when older version is coming
+    CDSMValue oldValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 6);
+    when(keyValueStorage.get(key)).thenReturn(oldValue);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
+        key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
+    verify(keyValueStorage, never()).put(key, newValue);
+    verify(applyTransactionInfo).deleteObject(newValue.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, newValue.getObjectID());
+
   }
 
   public void testSetLastAccessedTime() throws Exception {

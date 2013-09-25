@@ -77,6 +77,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Object portableKey = "key1";
     final ObjectID portableValue = new ObjectID(0);
     final ArrayList requests = new ArrayList();
+    final long version = 10;
     Set<Object> keys = new HashSet<Object>();
     keys.add(portableKey);
     requests.add(new ServerMapGetValueRequest(requestID, keys));
@@ -94,7 +95,7 @@ public class ServerMapRequestManagerTest extends TestCase {
 
     final ManagedObject mo = mock(ManagedObject.class);
     final ConcurrentDistributedServerMapManagedObjectState mos = mock(ConcurrentDistributedServerMapManagedObjectState.class);
-    when(mos.getValueForKey(portableKey)).thenReturn(new CDSMValue(portableValue, 0, 0, 0, 0));
+    when(mos.getValueForKey(portableKey)).thenReturn(new CDSMValue(portableValue, 0, 0, 0, 0, version));
     when(mo.getManagedObjectState()).thenReturn(mos);
     final MessageChannel messageChannel = mock(MessageChannel.class);
     try {
@@ -114,6 +115,7 @@ public class ServerMapRequestManagerTest extends TestCase {
 
     ServerMapGetValueResponse msg = capture.getValue().getAnswers().iterator().next();
     assertEquals(((CompoundResponse)msg.getValues().get(portableKey)).getData(),portableValue);
+    assertEquals(((CompoundResponse) msg.getValues().get(portableKey)).getVersion(), version);
   }
 
   public void testMultipleKeysRequests() {

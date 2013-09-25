@@ -228,8 +228,11 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
           if (shouldPrefetch) {
             clientStateManager.addReference(clientID, portableValue);
           }
+
           response.put(portableKey, portableValue, shouldPrefetch, wrappedValue.getCreationTime(),
-          wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive());
+                       wrappedValue.getLastAccessedTime(), wrappedValue.getTimeToIdle(), wrappedValue.getTimeToLive(),
+                       wrappedValue.getVersion());
+
         }
       }
       responses.addResponse(response);

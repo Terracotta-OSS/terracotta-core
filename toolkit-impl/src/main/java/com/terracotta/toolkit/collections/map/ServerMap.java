@@ -9,6 +9,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.rejoin.RejoinException;
@@ -30,6 +31,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
+import com.tc.object.VersionedObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -279,7 +281,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (obj instanceof SerializedMapValue) {
         return (SerializedMapValue) obj;
       } else {
-        //
         throw new AssertionError("Value is not instanceof SerializedMapValue: " + obj);
       }
     }
@@ -444,6 +445,16 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private Object doLogicalGetValueUnlocked(Object key) {
     try {
       return this.tcObjectServerMap.getValueUnlocked(this, key);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    } catch (PlatformRejoinException e) {
+      throw new RejoinException(e);
+    }
+  }
+
+  private VersionedObject doLogicalGetVersionedValue(Object key) {
+    try {
+      return this.tcObjectServerMap.getVersionedValue(this, key);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     } catch (PlatformRejoinException e) {
@@ -740,7 +751,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void putVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+  public void putVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                           int customMaxTTLSeconds) {
     internalPutNoReturn(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
@@ -1137,6 +1149,35 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public V get(Object key, boolean quiet) {
     return doGet(key, isEventual() ? GetType.UNLOCKED : GetType.LOCKED, quiet);
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
+    GetType getType = isEventual() ? GetType.UNLOCKED : GetType.LOCKED;
+    assertKeyLiteral(key);
+    SerializedMapValue serializedMapValue = null;
+    VersionedObject versionedObject = null;
+
+    if (isEventual()) {
+      versionedObject = doLogicalGetVersionedValue(key);
+      serializedMapValue = asSerializedMapValue(versionedObject.getObject());
+    } else {
+      final Object lockID = generateLockIdForKey(key);
+      beginLock(lockID, ToolkitLockTypeInternal.READ);
+      try {
+        versionedObject = doLogicalGetVersionedValue(key);
+        serializedMapValue = asSerializedMapValue(versionedObject.getObject());
+      } finally {
+        commitLock(lockID, ToolkitLockTypeInternal.READ);
+      }
+    }
+
+    V value = getNonExpiredValue(key, serializedMapValue, getType, true);  //TODO: Revisit this method. It may be wrong w.r.t WAN
+    if(value != null) {
+      return new VersionedValueImpl<V>(value, versionedObject.getVersion());
+    }
+    
+    return null;
   }
 
   @Override
@@ -1579,4 +1620,5 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public void addTxnInProgressKeys(Set<K> addSet, Set<K> removeSet) {
     tcObjectServerMap.addTxnInProgressKeys(addSet, removeSet);
   }
+
 }

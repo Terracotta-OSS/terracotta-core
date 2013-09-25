@@ -12,6 +12,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.search.ToolkitAttributeExtractorInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
@@ -1108,4 +1109,19 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
     }
   }
+
+  @Override
+  public Set<K> keySetForSegment(int segmentIndex) {
+    final int segmentCount = serverMaps.length;
+    Preconditions.checkArgument(segmentIndex >= 0 && segmentIndex < segmentCount,
+                                "Segment index must be in the range [0..%s)", segmentCount);
+
+    return serverMaps[segmentIndex].keySet();
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
+    return getServerMapForKey(key).getVersionedValue(key);
+  }
+
 }

@@ -157,6 +157,18 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   Object getValueUnlocked(final TCServerMap map, final Object key) throws AbortedOperationException;
 
+  /**
+   * Returns the VersionedObject for a particular key in a TCServerMap. It always fetches it from the server. LocalCache
+   * is not read.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
+   *        but not shared, it is not supported.
+   * @return value VersionedObject in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
+   */
+  VersionedObject getVersionedValue(final TCServerMap map, final Object key) throws AbortedOperationException;
+
   Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
       throws AbortedOperationException;
 
@@ -179,6 +191,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @throws AbortedOperationException
    */
   Object getValue(final TCServerMap map, final L lockID, final Object key) throws AbortedOperationException;
+
 
   /**
    * Returns total size of an array of ServerTCMap.

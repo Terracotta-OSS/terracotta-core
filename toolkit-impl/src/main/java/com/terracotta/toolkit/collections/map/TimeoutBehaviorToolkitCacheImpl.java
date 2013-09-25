@@ -8,6 +8,7 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
@@ -323,6 +324,16 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     mutationBehaviourResolver.registerVersionUpdateListener(listener);
+  }
+
+  @Override
+  public Set<K> keySetForSegment(final int segmentIndex) {
+    return mutationBehaviourResolver.keySetForSegment(segmentIndex);
+  }
+
+  @Override
+  public VersionedValue<V> getVersionedValue(Object key) {
+    return mutationBehaviourResolver.getVersionedValue(key);
   }
 
   @Override

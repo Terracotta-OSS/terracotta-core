@@ -9,6 +9,7 @@ import java.util.Set;
 
 public class ServerMapGetValueResponse {
 
+  private static final long                     DEFAULT_VERSION = -1L;
   private final ServerMapRequestID  requestID;
   private final Map<Object, Object> responseMap = new HashMap<Object, Object>();
   private final Map<ObjectID, CompoundResponse> replaceMap = new HashMap<ObjectID, CompoundResponse>();
@@ -26,8 +27,10 @@ public class ServerMapGetValueResponse {
     return this.responseMap;
   }
 
-  public void put(Object key, ObjectID value, boolean expectReplacement, long creationTime, long lastAccessedTime, long timeToIdle, long timeToLive) {
-    CompoundResponse setter = new CompoundResponse(value, creationTime, lastAccessedTime, timeToIdle, timeToLive);
+  public void put(Object key, ObjectID value, boolean expectReplacement, long creationTime, long lastAccessedTime,
+                  long timeToIdle, long timeToLive, long version) {
+    CompoundResponse setter = new CompoundResponse(value, creationTime, lastAccessedTime, timeToIdle, timeToLive,
+                                                   version);
     if ( expectReplacement ) {
       replaceMap.put(value, setter);
     }
@@ -35,7 +38,7 @@ public class ServerMapGetValueResponse {
   }
 
   public void put(Object key, ObjectID value) {
-    put(key, value, false, 0, 0, 0, 0);
+    put(key, value, false, 0, 0, 0, 0, DEFAULT_VERSION);
   }
   
   public Set<ObjectID> getObjectIDs() {

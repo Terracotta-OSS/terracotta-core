@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
@@ -49,6 +50,11 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
                               int customMaxTTLSeconds);
 
   V get(Object key, boolean quiet);
+
+  /**
+   * This will be a quite GET for the {@code VersionedValue}.
+   */
+  VersionedValue<V> getVersionedValue(Object key);
 
   void setConfigField(String name, Object value);
 
