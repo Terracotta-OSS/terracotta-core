@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -89,8 +91,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
@@ -914,12 +914,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         case PUT_LOCAL:
           final V value = deserializeValue(key, event.getValue());
           for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-            listener.onLocalPut((K) key, value, version);
+            listener.onLocalPut((K) key, value, version, getServerMapIndexForKey(key));
           }
           break;
         case REMOVE_LOCAL:
           for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-            listener.onLocalRemove((K) key, version);
+            listener.onLocalRemove((K) key, version, getServerMapIndexForKey(key));
           }
           break;
       }
