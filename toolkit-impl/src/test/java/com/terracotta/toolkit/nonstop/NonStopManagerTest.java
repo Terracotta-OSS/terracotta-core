@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.nonstop;
 
 import com.tc.abortable.AbortableOperationManagerImpl;
+import com.terracotta.toolkit.nonstop.NonStopManagerImpl.NonStopTaskWrapper;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -129,11 +130,11 @@ public class NonStopManagerTest extends TestCase {
       nonStopManager.begin(TimeUnit.MINUTES.toMillis(10));
       try {
 
-        Collection collection = nonStopManager.getTimerTasks().values();
+        Collection<NonStopTaskWrapper> collection = nonStopManager.getTimerTasks().values();
         Assert.assertEquals(1, collection.size());
 
-        Object o = collection.iterator().next();
-        weakReferences.add(new WeakReference(o));
+        NonStopTaskWrapper o = collection.iterator().next();
+        weakReferences.add(new WeakReference(o.getFuture()));
       } finally {
         nonStopManager.finish();
       }
