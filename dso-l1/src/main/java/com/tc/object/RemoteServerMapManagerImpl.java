@@ -109,21 +109,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(true);
     state = State.REJOIN_IN_PROGRESS;
     globalLocalCacheManager.rejoinInProgress(true);
     notifyAll();
-  }
-
-  private void throwExceptionIfNecessary(boolean throwExp) {
-    if (state != State.PAUSED) {
-      String message = "cleanup unexpected state: expected " + State.PAUSED + " but found " + state;
-      if (throwExp) {
-        throw new IllegalStateException(message);
-      } else {
-        logger.warn(message);
-      }
-    }
   }
 
   /**

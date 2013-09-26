@@ -13,7 +13,6 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.context.PauseContext;
-import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.CallStackTrace;
@@ -27,11 +26,11 @@ public class ClientChannelEventController {
   private final ClientHandshakeManager clientHandshakeManager;
   private final Sink                   pauseSink;
   private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
-  private final RejoinManager          rejoinManager;
+  private final RejoinManagerInternal   rejoinManager;
   private final DSOClientMessageChannel channel;
 
   public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
-                                      ClientHandshakeManager clientHandshakeManager, RejoinManager rejoinManager) {
+                                      ClientHandshakeManager clientHandshakeManager, RejoinManagerInternal rejoinManager) {
     this.pauseSink = pauseSink;
     this.clientHandshakeManager = clientHandshakeManager;
     this.rejoinManager = rejoinManager;
@@ -75,7 +74,7 @@ public class ClientChannelEventController {
   private void requestRejoin(ChannelEvent event) {
     clientHandshakeManager.reconnectionRejected(rejoinManager.isRejoinEnabled());
     if (rejoinManager.isRejoinEnabled()) {
-      pauseSink.add(new RejoinContext(channel.channel()));
+      rejoinManager.requestRejoin((channel.channel()));
     } else {
       LOGGER
           .fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");

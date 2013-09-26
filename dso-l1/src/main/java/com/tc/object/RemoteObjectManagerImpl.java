@@ -136,20 +136,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(true);
     state = State.REJOIN_IN_PROGRESS;
     notifyAll();
-  }
-
-  private void throwExceptionIfNecessary(boolean throwExp) {
-    if (state != State.PAUSED) {
-      String message = "cleanup unexpected state: expected " + State.PAUSED + " but found " + state;
-      if (throwExp) {
-        throw new IllegalStateException(message);
-      } else {
-        logger.warn(message);
-      }
-    }
   }
 
   @Override

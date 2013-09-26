@@ -106,20 +106,8 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(true);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
-  }
-
-  private void throwExceptionIfNecessary(boolean throwExp) {
-    if (state != PAUSED) {
-      String message = "cleanup unexpected state: expected " + PAUSED + " but found " + state;
-      if (throwExp) {
-        throw new IllegalStateException(message);
-      } else {
-        LOGGER.warn(message);
-      }
-    }
   }
 
   @Override

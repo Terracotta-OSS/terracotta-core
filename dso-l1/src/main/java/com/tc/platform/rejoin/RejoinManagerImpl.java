@@ -27,6 +27,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private final boolean                       rejoinEnabled;
   private final RejoinWorker                  rejoinWorker;
   private final AtomicBoolean                 rejoinInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean                 reopenInProgress    = new AtomicBoolean(false);
   private volatile int                        rejoinCount      = 0;
 
   public RejoinManagerImpl(boolean isRejoinEnabled) {
@@ -60,9 +61,10 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     if (!rejoinEnabled) { throw new AssertionError("Rejoin is not enabled"); }
   }
 
-  private void notifyRejoinStart() {
+  private void notifyRejoinStart(ClientMessageChannel channel) {
     assertRejoinEnabled();
-    logger.info("Notifying rejoin start... current rejoin count " + rejoinCount);
+    rejoinInProgress.set(true);
+    logger.info("Notifying rejoin start... " + channel + " rejoin count " + rejoinCount);
     rejoinCount++;
     // this calls cleanup for all ClearableCallbacks
     for (RejoinLifecycleListener listener : listeners) {
@@ -81,19 +83,14 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   @Override
-  public void initiateRejoin(ClientMessageChannel channel) {
+  public void requestRejoin(ClientMessageChannel channel) {
     assertRejoinEnabled();
-    if (!rejoinInProgress.get()) {
-      rejoinWorker.requestRejoin(channel);
-    } else {
-      logger.info("Ignoring rejoin request as channel rejoinInProgress");
-    }
+    rejoinWorker.requestRejoin(channel);
   }
 
   @Override
   public boolean thisNodeJoined(ClientID newNodeId) {
-    logger.info("This node joined the cluster - rejoinEnabled: " + rejoinEnabled + ", rejoin in progress:"
-                + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
+    logger.info("This node joined the cluster - rejoinEnabled: " + rejoinEnabled + " newNodeId: " + newNodeId);
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
       synchronized (rejoinInProgress) {
@@ -108,6 +105,14 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     return false;
   }
 
+  private void setReopenInProgress(boolean value) {
+    reopenInProgress.set(value);
+  }
+
+  private boolean isReopenInProgress() {
+    return reopenInProgress.get();
+  }
+
   @Override
   public boolean isRejoinInProgress() {
     return rejoinInProgress.get();
@@ -115,21 +120,24 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   // only called by rejoin worker
   private void doRejoin(ClientMessageChannel channel) {
-     logger.info("Doing rejoin for channel: " + channel + " rejoinInProgress " + rejoinInProgress);
-    if (rejoinInProgress.compareAndSet(false, true)) {
-      notifyRejoinStart();
-      while (true) {
+    notifyRejoinStart(channel);
+    doReopen(channel);
+  }
+
+  private void doReopen(ClientMessageChannel channel) {
+    while (true) {
+      try {
+        logger.info("rejoin request for channel: " + channel);
+        channel.reopen();
+        reopenInProgress.set(false);
+        break;
+      } catch (Throwable t) {
+        logger.warn("Error during channel open " + t);
         try {
-          channel.reopen();
-          break;
-        } catch (Throwable t) {
-          logger.warn("Error during channel open : " + channel, t);
-          try {
-            TimeUnit.MILLISECONDS.sleep(REJOIN_SLEEP_MILLIS);
-          } catch (InterruptedException e) {
-            logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
-            Thread.currentThread().interrupt();
-          }
+          TimeUnit.MILLISECONDS.sleep(REJOIN_SLEEP_MILLIS);
+        } catch (InterruptedException e) {
+          logger.warn("got inturrupted while sleeping before reopen of channel " + channel);
+          Thread.currentThread().interrupt();
         }
       }
     }
@@ -154,7 +162,11 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     private void requestRejoin(ClientMessageChannel channel) {
       synchronized (monitor) {
         if (shutdown) {
-          logger.info("Ignoring rejoin request as already shutdown - channel: " + channel);
+          logger.info("Ignoring rejoin request for channel " + channel + " as shutdown already");
+          return;
+        }
+        if (manager.isReopenInProgress()) {
+          logger.info("Ignoring rejoin request for channel " + channel + " as reopenInProgress already");
           return;
         }
         rejoinRequestedChannels.add(channel);
@@ -182,8 +194,9 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
             throw new RuntimeException(e);
           }
         }
+        manager.setReopenInProgress(true);
         ClientMessageChannel channel = rejoinRequestedChannels.remove();
-        // rejoinRequestedChannels.clear();
+        rejoinRequestedChannels.clear();
         return channel;
       }
     }

@@ -79,7 +79,6 @@ import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     PrettyPrintable {
-    
   private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = TimeUnit.SECONDS.toMillis(1L);
   // REFERENCE_MAP_SEG must be power of 2
   private static final int                      REFERENCE_MAP_SEGS           = 32;
@@ -200,20 +199,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void checkAndSetstate() {
-    throwExceptionIfNecessary(true);
     state = REJOIN_IN_PROGRESS;
     notifyAll();
-  }
-
-  private void throwExceptionIfNecessary(boolean throwExp) {
-    if (state != PAUSED) {
-      String message = "cleanup unexpected state: expected " + PAUSED + " but found " + state;
-      if (throwExp) {
-        throw new IllegalStateException(message);
-      } else {
-        logger.warn(message);
-      }
-    }
   }
 
   private void ensureKeyClassesLoaded() {
