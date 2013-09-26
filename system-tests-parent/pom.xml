@@ -559,6 +559,7 @@
                   <source><![CDATA[
                     import org.apache.maven.artifact.Artifact
                     if (project.properties['appserver'] =~ /websphere/) {
+                      project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '2700')
                       project.properties.setProperty('absolute-test-timeout-secs', '2700')
                       def cacheDir = System.getProperty("user.home") + File.separator + ".tc"
                       if (System.getProperty("os.name") =~ /Windows/) {
