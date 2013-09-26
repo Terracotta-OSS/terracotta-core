@@ -33,6 +33,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,6 +41,11 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 
 public class RemoteObjectManagerImplTest extends TCTestCase {
 
@@ -88,6 +94,52 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       // expected assertion
     }
 
+  }
+
+  public void testAddPrefetchedObject() throws Exception {
+    manager.addObject(new TestDNA(new ObjectID(1)));
+    assertNotNull(manager.retrieve(new ObjectID(1)));
+    assertEquals(0, rmomf.newMessageQueue.size());
+  }
+
+  public void testCleanPrefetchedObject() throws Exception {
+    manager.addObject(new TestDNA(new ObjectID(1)));
+    manager.cleanOutObject(new TestDNA(new ObjectID(1)));
+    TestRequestManagedObjectMessage requestManagedObjectMessage;
+    assertNotNull(requestManagedObjectMessage = (TestRequestManagedObjectMessage) rmomf.newMessageQueue.take());
+    requestManagedObjectMessage.sendQueue.take(); // wait for send
+    assertThat(requestManagedObjectMessage.getRemoved(), hasItem(new ObjectID(1)));
+  }
+
+  public void testCleanedPrefetchIsRetrievable() throws Exception {
+    manager.addObject(new TestDNA(new ObjectID(1)));
+    manager.cleanOutObject(new TestDNA(new ObjectID(1)));
+    final AtomicReference<Object> object = new AtomicReference<Object>();
+    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
+    Thread t = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          object.set(manager.retrieve(new ObjectID(1)));
+        } catch (Throwable t) {
+          throwable.set(t);
+        }
+      }
+    });
+    t.start();
+    while(true) {
+      TestRequestManagedObjectMessage requestManagedObjectMessage = (TestRequestManagedObjectMessage) rmomf.newMessageQueue.poll(5000);
+      requestManagedObjectMessage.sendQueue.take(); // wait till it's sent before checking.
+      if (requestManagedObjectMessage.getRequestedObjectIDs().contains(new ObjectID(1))) {
+        manager.addAllObjects(SessionID.NULL_ID, 1, Collections.singleton(new TestDNA(new ObjectID(1))), ClientID.NULL_ID);
+        break;
+      }
+    }
+    t.join();
+    if (throwable.get() != null) {
+      throw new RuntimeException(throwable.get());
+    }
+    assertNotNull(object.get());
   }
 
   public void testDNACacheClearing() {
@@ -606,7 +658,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public final NoExceptionLinkedQueue initializeQueue = new NoExceptionLinkedQueue();
     public final NoExceptionLinkedQueue sendQueue       = new NoExceptionLinkedQueue();
-    public Set                          objectIDs;
+    public ObjectIDSet                  objectIDs;
+    private ObjectIDSet removed = new ObjectIDSet();
 
     @Override
     public ObjectRequestID getRequestID() {
@@ -615,18 +668,19 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     @Override
     public ObjectIDSet getRequestedObjectIDs() {
-      throw new ImplementMe();
+      return objectIDs;
     }
 
     @Override
     public ObjectIDSet getRemoved() {
-      throw new ImplementMe();
+      return removed;
     }
 
     @Override
     public void initialize(final ObjectRequestID requestID, final Set<ObjectID> requestedObjectIDs,
                            final int requestDepth, final ObjectIDSet removeObjects) {
-      this.objectIDs = requestedObjectIDs;
+      this.objectIDs = new ObjectIDSet(requestedObjectIDs);
+      removed.addAll(removeObjects);
       this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }
 

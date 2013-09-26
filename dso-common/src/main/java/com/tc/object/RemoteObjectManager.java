@@ -33,6 +33,8 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
   
   public void addObject(DNA dna);
 
+  public void cleanOutObject(DNA dna);
+
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID);
 
   public void removed(ObjectID id);

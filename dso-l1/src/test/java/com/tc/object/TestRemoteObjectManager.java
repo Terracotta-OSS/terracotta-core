@@ -103,6 +103,11 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   @Override
+  public void cleanOutObject(final DNA dna) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
   public void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     throw new ImplementMe();
   }

@@ -388,6 +388,10 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     for (final ServerMapGetValueResponse r : responses) {
       setResultForRequest(sessionID, mapID, r.getRequestID(), r.getValues(), nodeID);
       addResponseToObjectManager(r.getValues());
+      if (getRequestContext(r.getRequestID()) == null) {
+        // Request was aborted, so we need to clean up.
+        cleanupObjectManagerOnAbort(r.getValues());
+      }
     }
     notifyAll();
   }
@@ -463,6 +467,21 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
   }
 
+  private void cleanupObjectManagerOnAbort(final Map<Object, Object> rv) {
+    if (rv == null) {
+      // Short circuit when there's no result, it'll get picked up later.
+      return;
+    }
+    for (Object value : rv.values()) {
+      if (value instanceof CompoundResponse) {
+        Object data = ((CompoundResponse)value).getData();
+        if (data instanceof DNA) {
+          remoteObjectManager.cleanOutObject((DNA) data);
+        }
+      }
+    }
+  }
+
   /**
    * To be used by methods which are called by the App thread.
    */
@@ -514,6 +533,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       throws AbortedOperationException {
     if (isAborted()) {
       removeRequestContext(context);
+      cleanupObjectManagerOnAbort(context.getResult());
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
     }
   }

@@ -548,6 +548,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
+  public synchronized void cleanOutObject(final DNA dna) {
+    removed(dna.getObjectID());
+  }
+
   // Used only for testing
   synchronized int getDNACacheSize() {
     return this.lru.size();
