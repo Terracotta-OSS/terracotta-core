@@ -23,8 +23,8 @@
   </licenses>
 
   <properties>
-  	<group>system</group>
-  	<tcmaven.version>1.12.0-SNAPSHOT</tcmaven.version>
+    <group>system</group>
+    <tcmaven.version>1.12.0-SNAPSHOT</tcmaven.version>
     <terracotta.core.version>4.2.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <productKeyPath/>
@@ -396,28 +396,6 @@
     </profile>
 
     <profile>
-      <id>system-tests</id>
-      <properties>
-        <skipTests>false</skipTests>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.terracotta</groupId>
-            <artifactId>maven-forge-plugin</artifactId>
-            <configuration>
-              <printSummary>true</printSummary>
-              <reportFormat>plain</reportFormat>
-              <excludes>
-                <exclude>**/Abstract*.java</exclude>
-              </excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    
-    <profile>
       <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
@@ -458,96 +436,94 @@
       </build>
     </profile>
 
-	<profile>
-		<id>single-server</id>
-		<properties>
-			<should_skip_tests>false</should_skip_tests>
-			<tc.tests.info.standalone>true</tc.tests.info.standalone>
-			<tc.tests.info.tsa.port>9910</tc.tests.info.tsa.port>
-		</properties>
-		<build>
-			<plugins>
-				<plugin>
-					<groupId>org.terracotta.maven.plugins</groupId>
-					<artifactId>tc-maven-plugin</artifactId>
-					<version>${tcmaven.version}</version>
-					<dependencies>
-						<dependency>
-							<groupId>org.terracotta</groupId>
-							<artifactId>terracotta-ee</artifactId>
-							<version>${terracotta.core.version}</version>
-						</dependency>
-						<dependency>
-							<groupId>org.terracotta.qa</groupId>
-							<artifactId>license-wrapper</artifactId>
-							<version>1.0.0-SNAPSHOT</version>
-						</dependency>
-					</dependencies>
-					<executions>
-						<execution>
-							<id>server1start</id>
-							<phase>pre-integration-test</phase>
-							<configuration>
-								<serverName>Server1</serverName>
-								<config>${project.build.directory}/test-classes/tc-config-single-server.xml</config>
-								<jvmargs>-Dlogs.path=${project.build.directory}/temp -Xms1g -Xmx1g</jvmargs>
-							</configuration>
-							<goals>
-								<goal>start</goal>
-							</goals>
-						</execution>
-						<execution>
-							<id>server1stop</id>
-							<phase>post-integration-test</phase>
-							<configuration>
-								<serverName>Server1</serverName>
-								<config>${project.build.directory}/test-classes/tc-config-single-server.xml</config>
-								<jvmargs>-Dlogs.path=${project.build.directory}/temp -Xms1g -Xmx1g</jvmargs>
-							</configuration>
-							<goals>
-								<goal>stop</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<startServer>false</startServer>
-					</configuration>
-				</plugin>
+    <profile>
+      <id>single-server</id>
+      <properties>
+        <should_skip_tests>false</should_skip_tests>
+        <tc.tests.info.standalone>true</tc.tests.info.standalone>
+        <tc.tests.info.tsa.port>9910</tc.tests.info.tsa.port>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta.maven.plugins</groupId>
+            <artifactId>tc-maven-plugin</artifactId>
+            <version>${tcmaven.version}</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.terracotta</groupId>
+                <artifactId>terracotta-ee</artifactId>
+                <version>${terracotta.core.version}</version>
+              </dependency>
+              <dependency>
+                <groupId>org.terracotta.qa</groupId>
+                <artifactId>license-wrapper</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>server1start</id>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <serverName>Server1</serverName>
+                  <config>${project.build.directory}/test-classes/tc-config-single-server.xml</config>
+                  <jvmargs>-Dlogs.path=${project.build.directory}/temp -Xms1g -Xmx1g</jvmargs>
+                </configuration>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>server1stop</id>
+                <phase>post-integration-test</phase>
+                <configuration>
+                  <serverName>Server1</serverName>
+                  <config>${project.build.directory}/test-classes/tc-config-single-server.xml</config>
+                  <jvmargs>-Dlogs.path=${project.build.directory}/temp -Xms1g -Xmx1g</jvmargs>
+                </configuration>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <startServer>false</startServer>
+            </configuration>
+          </plugin>
 
-				<plugin>
-					<groupId>org.reflections</groupId>
-					<artifactId>reflections-maven</artifactId>
-					<version>0.9.9-RC1</version>
-					<configuration>
-						<scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
-						<destinations>${project.build.directory}/reflections.xml</destinations>
-						<tests>true</tests>
-						<parallel>true</parallel>
-					</configuration>
-					<executions>
-						<execution>
-							<goals>
-								<goal>reflections</goal>
-							</goals>
-							<phase>process-test-classes</phase>
-						</execution>
-					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.terracotta</groupId>
-					<artifactId>maven-forge-plugin</artifactId>
-					<configuration>
-						<groups>org.terracotta.test.categories.SingleServer</groups>
-						<failIfNoTests>false</failIfNoTests>
-						<printSummary>true</printSummary>
-						<reportFormat>plain</reportFormat>
-					</configuration>
-				</plugin>
-			</plugins>
-		</build>
-	</profile>
-	
-		
+          <plugin>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections-maven</artifactId>
+            <version>0.9.9-RC1</version>
+            <configuration>
+              <scanners>org.reflections.scanners.TypeAnnotationsScanner</scanners>
+              <destinations>${project.build.directory}/reflections.xml</destinations>
+              <tests>true</tests>
+              <parallel>true</parallel>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>reflections</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <groups>org.terracotta.test.categories.SingleServer</groups>
+              <failIfNoTests>false</failIfNoTests>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
     <profile>
       <id>container-tests</id>
@@ -583,7 +559,7 @@
                   <source><![CDATA[
                     import org.apache.maven.artifact.Artifact
                     if (project.properties['appserver'] =~ /websphere/) {
-                      project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '2700')
+                      project.properties.setProperty('absolute-test-timeout-secs', '2700')
                       def cacheDir = System.getProperty("user.home") + File.separator + ".tc"
                       if (System.getProperty("os.name") =~ /Windows/) {
                         cacheDir = "c:/temp"
@@ -669,7 +645,7 @@
         <surefire.jvm.mode>-server</surefire.jvm.mode>
       </properties>
     </profile>
-    
+
     <profile>
       <id>check</id>
       <build>
@@ -703,6 +679,28 @@
             </executions>
           </plugin>         
         </plugins>          
+      </build>
+    </profile>    
+
+    <profile>
+      <id>system-tests</id>
+      <properties>
+        <skipTests>false</skipTests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>
+              <excludes>
+                <exclude>**/Abstract*.java</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+        </plugins>
       </build>
     </profile>    
   </profiles>
