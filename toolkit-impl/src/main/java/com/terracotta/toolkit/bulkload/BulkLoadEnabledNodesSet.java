@@ -6,9 +6,11 @@ package com.terracotta.toolkit.bulkload;
 import org.terracotta.toolkit.collections.ToolkitSet;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.platform.PlatformService;
@@ -233,7 +235,14 @@ public class BulkLoadEnabledNodesSet {
 
     @Override
     public void nodeRejoined(DsoClusterEvent event) {
-      handleNodeRejoined(event);
+      try {
+        handleNodeRejoined(event);
+      } catch (RejoinException e) {
+        LOGGER.warn("error during handleNodeRejoined " + e);
+      } catch (TCNotRunningException e) {
+        LOGGER.info("Ignoring TCNotRunningException in handleNodeRejoined " + e);
+      }
+
     }
 
     @Override
