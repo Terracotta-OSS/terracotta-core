@@ -441,6 +441,7 @@
 									net.sf.ehcache.store;resolution:=optional,
 									net.sf.ehcache.event;resolution:=optional,
                   net.sf.ehcache.constructs.classloader;resolution:=optional,
+                  net.sf.ehcache.util;resolution:=optional,
 									org.slf4j;resolution:=optional,
 									org.slf4j.impl;resolution:=optional,
 									javax.naming,
