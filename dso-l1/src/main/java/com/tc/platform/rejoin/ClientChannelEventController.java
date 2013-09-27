@@ -13,6 +13,7 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.context.PauseContext;
+import com.tc.object.context.RejoinContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.CallStackTrace;
@@ -74,7 +75,9 @@ public class ClientChannelEventController {
   private void requestRejoin(ChannelEvent event) {
     clientHandshakeManager.reconnectionRejected(rejoinManager.isRejoinEnabled());
     if (rejoinManager.isRejoinEnabled()) {
-      rejoinManager.requestRejoin((channel.channel()));
+      // all event TRANSPORT_CONNECTED_EVENT, TRANSPORT_DISCONNECTED_EVENT and TRANSPORT_RECONNECTION_REJECTED_EVENT has
+      // to handle sequentially to avoid race between ClientCoordinationHandler and RejoinWorker
+      pauseSink.add(new RejoinContext(channel.channel()));
     } else {
       LOGGER
           .fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
