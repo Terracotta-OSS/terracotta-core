@@ -59,7 +59,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
    * create an unopened MessageTransport.
-   * 
+   *
    * @param securityManager
    * @param addressProvider
    */
@@ -67,8 +67,8 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort,
-                                ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                final TCSecurityManager securityManager, final ConnectionAddressProvider addressProvider) {
+                                ReconnectionRejectedHandler reconnectionRejectedHandler, final TCSecurityManager securityManager,
+                                final ConnectionAddressProvider addressProvider) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
@@ -105,12 +105,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       this.isOpening.set(false);
       return (nid);
     }
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    connectionEstablisher.stop();
   }
 
   @Override
@@ -287,8 +281,7 @@ public class ClientMessageTransport extends MessageTransportBase {
         // Re-init the password
         ConnectionInfo connectionInfo = addressProvider.getIterator().next();
         connectionId.setPassword(securityManager.getPasswordForTC(connectionId.getUsername(),
-                                                                  connectionInfo.getHostname(),
-                                                                  connectionInfo.getPort()));
+                connectionInfo.getHostname(), connectionInfo.getPort()));
       }
       TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
                                                                     stackLayerFlags, this.callbackPort);
