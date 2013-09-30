@@ -787,10 +787,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       Set<String> nodeNames = new HashSet<String>();
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
       if (LOG.isDebugEnabled()) {
         LOG.debug("local server contains {} Ehcache MBeans", objectNames.size());
-        Set<ObjectName> ehcacheObjectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:*"), null);
+        Set<ObjectName> ehcacheObjectNames = mBeanServerConnection.queryNames(new ObjectName("*:*"), null);
         LOG.debug("server found {} ehcache MBeans", ehcacheObjectNames.size());
         for (ObjectName ehcacheObjectName : ehcacheObjectNames) {
           LOG.debug("  {}", ehcacheObjectName);
@@ -822,7 +822,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
 
       Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
       for (final ObjectName objectName : objectNames) {
         try {
           Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
@@ -882,7 +882,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
 
       ObjectName objectName = null;
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
       for (ObjectName on : objectNames) {
         String node = on.getKeyProperty("node");
         if (node.equals(nodeName)) {
@@ -1672,9 +1672,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       // Check that Ehcache can perform IA
       try {
-        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName("jmx:net.sf.ehcache:type=RepositoryService"));
+        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName("jmx:*:type=RepositoryService"));
         if (secret == null) {
-          errors.add("Missing keychain entry for Ehcache URI [jmx:net.sf.ehcache:type=RepositoryService]");
+          errors.add("Missing keychain entry for Ehcache URI [jmx:*:type=RepositoryService]");
         } else {
           Arrays.fill(secret, (byte)0);
         }
@@ -1797,7 +1797,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   // find the server where Ehcache MBeans are registered
   private JMXConnector getJMXConnectorWithEhcacheMBeans() throws IOException, JMException, InterruptedException {
-    ObjectName objectName = new ObjectName("net.sf.ehcache:type=RepositoryService,*");
+    ObjectName objectName = new ObjectName("*:type=RepositoryService,*");
     return getJmxConnectorWithMBeans(objectName);
   }
 
