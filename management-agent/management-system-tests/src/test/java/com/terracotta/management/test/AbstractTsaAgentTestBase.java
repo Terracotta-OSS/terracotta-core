@@ -88,7 +88,7 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       // wait for the TSA agent to finish up initialization
       boolean initSuccessful =  false;
       System.out.println("Starting test for " + getTerracottaUrl());
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 20; i++) {
         try {
           for (int j = 0; j < getGroupData(0).getServerCount(); j++) {
             httpGet("http://" + ConfigHelper.HOST + ":" + getGroupData(0).getTsaGroupPort(j) + "/tc-management-api/agents");
