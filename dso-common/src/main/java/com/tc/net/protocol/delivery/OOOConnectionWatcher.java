@@ -12,7 +12,7 @@ import com.tc.util.DebugUtil;
 
 public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageTransportListener {
 
-  private static final boolean                      debug = Boolean.getBoolean("ooo.logging.enabled");
+  private static final boolean                      debug  = Boolean.getBoolean("ooo.logging.enabled");
 
   protected final ClientMessageTransport            cmt;
   protected final ClientConnectionEstablisher       cce;
@@ -59,7 +59,6 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    cce.quitReconnectAttempts();
     oooLayer.notifyTransportClosed(transport);
   }
 
@@ -71,7 +70,6 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     log(transport, "Reconnection Rejected");
-    cce.quitReconnectAttempts();
     oooLayer.connectionRestoreFailed();
     oooLayer.notifyTransportReconnectionRejected(transport);
   }
