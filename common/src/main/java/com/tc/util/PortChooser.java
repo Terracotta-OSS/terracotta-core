@@ -9,6 +9,7 @@ import com.tc.net.EphemeralPorts.Range;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -74,7 +75,29 @@ public final class PortChooser {
   public boolean isPortUsed(int portNum) {
     final Integer port = Integer.valueOf(portNum);
     if (chosen.contains(port)) return true;
-    return !canBind(portNum);
+    return !canBind(portNum) && !canConnect(portNum);
+  }
+
+  private boolean canConnect(int portNumber) {
+    Socket sock = null;
+    boolean isFree = false;
+    try {
+      sock = new Socket("localhost", portNumber);
+      isFree = false;
+    } catch (IOException e) {
+        isFree = true;
+    } finally {
+      if (sock != null) {
+        while (!sock.isClosed()) {
+          try {
+            sock.close();
+          } catch (IOException e) {
+            // ignore
+          }
+        }
+      }
+    }
+    return isFree;
   }
 
   private boolean canBind(int portNum) {
@@ -108,7 +131,7 @@ public final class PortChooser {
       if (chosen.contains(Integer.valueOf(attempt))) {
         continue; // already picked at some point, try again
       }
-      if (canBind(attempt)) return attempt;
+      if (canBind(attempt) && canConnect(attempt)) return attempt;
     }
   }
 
