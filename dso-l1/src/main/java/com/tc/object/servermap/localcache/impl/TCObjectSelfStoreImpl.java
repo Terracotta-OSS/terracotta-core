@@ -169,7 +169,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
-    throwExceptionIfNecessary();
     if (tcoSelf != null) {
       tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(tcoSelf);
     }
