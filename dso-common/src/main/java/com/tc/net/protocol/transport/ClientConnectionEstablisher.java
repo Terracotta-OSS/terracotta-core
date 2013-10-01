@@ -50,7 +50,7 @@ public class ClientConnectionEstablisher {
   private final AtomicBoolean               asyncReconnecting     = new AtomicBoolean(false);
   private final AtomicBoolean               allowReconnects       = new AtomicBoolean(true);
 
-  private volatile AsyncReconnect           connectionEstablisher;
+  private volatile AsyncReconnect           asyncReconnect;
 
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
@@ -73,7 +73,7 @@ public class ClientConnectionEstablisher {
     this.maxReconnectTries = maxReconnectTries;
     this.timeout = timeout;
     this.reconnectionRejectedHandler = reconnectionRejectedHandler;
-    this.connectionEstablisher = new AsyncReconnect(this);
+    this.asyncReconnect = new AsyncReconnect(this);
 
     if (maxReconnectTries == 0) {
       this.desc = "none";
@@ -86,7 +86,7 @@ public class ClientConnectionEstablisher {
   }
 
   public void reset() {
-    this.connectionEstablisher = new AsyncReconnect(this);
+    this.asyncReconnect = new AsyncReconnect(this);
   }
 
   /**
@@ -317,23 +317,23 @@ public class ClientConnectionEstablisher {
   }
 
   private void putConnectionRequest(ConnectionRequest request) {
-    if (!this.allowReconnects.get() || connectionEstablisher.isStopped()) {
+    if (!this.allowReconnects.get() || asyncReconnect.isStopped()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + allowReconnects.get()
-                  + ", connectionEstablisher.isStopped(): " + connectionEstablisher.isStopped());
+                  + ", connectionEstablisher.isStopped(): " + asyncReconnect.isStopped());
       return;
     }
 
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
     if (request.getClientMessageTransport() != null && request.getClientMessageTransport().wasOpened()) {
-      connectionEstablisher.startThreadIfNecessary();
-      this.connectionEstablisher.putConnectionRequest(request);
+      asyncReconnect.startThreadIfNecessary();
+      this.asyncReconnect.putConnectionRequest(request);
     } else {
       LOGGER.info("Ignoring connection request as transport was not connected even once");
     }
   }
 
   public void quitReconnectAttempts() {
-    connectionEstablisher.stop();
+    asyncReconnect.stop();
     this.allowReconnects.set(false);
   }
 
