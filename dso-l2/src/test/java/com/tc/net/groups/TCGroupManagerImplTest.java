@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TCGroupManagerImplTest extends TCTestCase {
 
@@ -65,6 +66,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private TestGroupMessageListener listeners[];
   private TestGroupEventListener   groupEventListeners[];
   private Node                     nodes[];
+  private ThrowableHandler         throwableHandler;
+  private AtomicReference<Throwable> error;
 
   private void setupGroups(int n) throws Exception {
     ports = new int[n];
@@ -73,6 +76,15 @@ public class TCGroupManagerImplTest extends TCTestCase {
     listeners = new TestGroupMessageListener[n];
     groupEventListeners = new TestGroupEventListener[n];
     nodes = new Node[n];
+    error = new AtomicReference<Throwable>();
+    throwableHandler = new ThrowableHandler(TCLogging.getLogger(getClass())) {
+      @Override
+      public void handleThrowable(final Thread thread, final Throwable t) {
+        if (error.compareAndSet(null, t)) {
+          t.printStackTrace();
+        }
+      }
+    };
 
     PortChooser pc = new PortChooser();
     for (int i = 0; i < n; ++i) {
@@ -81,9 +93,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      StageManager stageManager = new StageManagerImpl(
-                                                       new TCThreadGroup(new ThrowableHandler(TCLogging
-                                                           .getLogger(TCGroupManagerImplTest.class))),
+      StageManager stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler),
                                                        new QueueFactory());
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
@@ -102,6 +112,20 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].shutdown();
     }
     ThreadUtil.reallySleep(200);
+    throwExceptionIfNecessary();
+  }
+
+  private void throwExceptionIfNecessary() {
+    Throwable t = error.get();
+    if (t != null) {
+      // Delete this block when ENG-418 is fixed
+      if (t instanceof AssertionError && t.getCause() instanceof InterruptedException) {
+        System.out.println("Ignoring exception until ENG-418 is fixed: ");
+        t.printStackTrace();
+        return;
+      }
+      throw new RuntimeException(t);
+    }
   }
 
   public void testBasicChannelOpenClose() throws Exception {
