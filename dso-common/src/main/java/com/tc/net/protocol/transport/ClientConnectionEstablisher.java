@@ -86,6 +86,8 @@ public class ClientConnectionEstablisher {
   }
 
   public void reset() {
+    quitReconnectAttempts();
+    this.asyncReconnect.waitforTermination();
     this.asyncReconnect = new AsyncReconnect(this);
   }
 
@@ -167,9 +169,10 @@ public class ClientConnectionEstablisher {
 
       this.asyncReconnecting.set(true);
       boolean reconnectionRejected = false;
-      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected; i++) {
+      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected
+                      && isReconnectBetweenL2s(); i++) {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
-        while (addresses.hasNext() && !connected) {
+        while (addresses.hasNext() && !connected && isReconnectBetweenL2s()) {
 
           if (reconnectionRejected) {
             if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
@@ -233,6 +236,10 @@ public class ClientConnectionEstablisher {
     }
   }
 
+  private boolean isReconnectBetweenL2s() {
+    return reconnectionRejectedHandler.isRetryOnReconnectionRejected() || !asyncReconnect.isStopped();
+  }
+
   private void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
                                  RestoreConnectionCallback callback) throws MaxConnectionsExceededException {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
@@ -245,7 +252,7 @@ public class ClientConnectionEstablisher {
     this.asyncReconnecting.set(true);
     try {
       boolean reconnectionRejected = false;
-      while (!connected) {
+      while (!connected && isReconnectBetweenL2s()) {
 
         if (reconnectionRejected) {
           if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
@@ -317,7 +324,10 @@ public class ClientConnectionEstablisher {
   }
 
   private void putConnectionRequest(ConnectionRequest request) {
-    if (!this.allowReconnects.get() || asyncReconnect.isStopped()) {
+
+    // we should ignore adding any connection request if allowReconnects is false and
+    // either this code is running for l2 or this CCE thread is not marked stopped
+    if (!this.allowReconnects.get() || !isReconnectBetweenL2s()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + allowReconnects.get()
                   + ", connectionEstablisher.isStopped(): " + asyncReconnect.isStopped());
       return;
@@ -343,6 +353,7 @@ public class ClientConnectionEstablisher {
     private final AtomicBoolean               threadStarted      = new AtomicBoolean(false);
     private volatile boolean                  stopped            = false;
     private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ClientConnectionEstablisher.ConnectionRequest>();
+    private Thread                            connectionEstablisherThread;
 
     public AsyncReconnect(ClientConnectionEstablisher cce) {
       this.cce = cce;
@@ -352,20 +363,41 @@ public class ClientConnectionEstablisher {
       return stopped;
     }
 
+    private void waitforTermination() {
+      synchronized (this) {
+        connectionRequests.clear();
+        this.connectionEstablisherThread.interrupt();
+      }
+      boolean isInterrupted = false;
+      try {
+        if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
+          connectionEstablisherThread.join();
+        }
+      } catch (InterruptedException e) {
+        LOGGER.warn("Got interrupted while waiting for connectionEstablisherThread to complete");
+        isInterrupted = true;
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
+      }
+
+    }
+
     public synchronized void stop() {
       stopped = true;
       this.notifyAll();
     }
 
     public synchronized void putConnectionRequest(ConnectionRequest request) {
-      connectionRequests.add(request);
+      if (this.cce.isReconnectBetweenL2s()) {
+        connectionRequests.add(request);
+      }
       this.notifyAll();
     }
 
     public synchronized ConnectionRequest waitUntilRequestAvailableOrStopped() {
       boolean isInterrupted = false;
       try {
-        while (!stopped && connectionRequests.isEmpty()) {
+        while (this.cce.isReconnectBetweenL2s() && connectionRequests.isEmpty()) {
           try {
             this.wait();
           } catch (InterruptedException e) {
@@ -385,6 +417,7 @@ public class ClientConnectionEstablisher {
         Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + cce.connAddressProvider.getGroupId());
         thread.setDaemon(true);
         thread.start();
+        connectionEstablisherThread = thread;
       }
     }
 

@@ -71,7 +71,6 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     log(transport, "Reconnection Rejected");
-    cce.quitReconnectAttempts();
     oooLayer.connectionRestoreFailed();
     oooLayer.notifyTransportReconnectionRejected(transport);
   }

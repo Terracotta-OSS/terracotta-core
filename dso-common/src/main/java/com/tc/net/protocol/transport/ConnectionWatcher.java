@@ -42,7 +42,6 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
-    cce.quitReconnectAttempts();
     target.notifyTransportReconnectionRejected(transport);
   }
 }
