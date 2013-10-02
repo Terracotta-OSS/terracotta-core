@@ -77,7 +77,6 @@
         <module>../ent-dso-l2</module>
         <module>../ent-deploy</module>
         <module>../ent-system-tests</module>
-        <module>../management-ent-system-tests</module>
         <module>../ent-active-active-tests</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>
@@ -86,6 +85,13 @@
         <module>../toolkit-runtime-ee</module>
         <module>../toolkit-ee-system-tests</module>
         <module>../toolkit-lrt-system-tests</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>system-tests</id>
+      <modules>
+        <module>../management-ent-system-tests</module>
       </modules>
     </profile>
 
