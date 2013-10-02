@@ -149,10 +149,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       CONSOLE_LOGGER.error(msg);
       dsoClusterEventsGun.fireNodeError();
       return;
-
     }
+    logger.warn("reconnection rejected or close from server, disconnecting from all groups");
     for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
-      logger.warn("reconnection rejected from server, disconnecting from " + groupId);
       disconnected(groupId);
     }
   }

@@ -49,7 +49,6 @@ public class ClientConnectionEstablisher {
   private final TCConnectionManager         connManager;
   private final AtomicBoolean               asyncReconnecting     = new AtomicBoolean(false);
   private final AtomicBoolean               allowReconnects       = new AtomicBoolean(true);
-
   private volatile AsyncReconnect           asyncReconnect;
 
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
@@ -87,7 +86,6 @@ public class ClientConnectionEstablisher {
 
   public void reset() {
     quitReconnectAttempts();
-    this.asyncReconnect.waitforTermination();
     this.asyncReconnect = new AsyncReconnect(this);
   }
 
@@ -343,8 +341,12 @@ public class ClientConnectionEstablisher {
   }
 
   public void quitReconnectAttempts() {
-    asyncReconnect.stop();
-    this.allowReconnects.set(false);
+    if (allowReconnects.compareAndSet(true, false)) {
+      asyncReconnect.stop();
+      if (!isReconnectBetweenL2s()) {
+        this.asyncReconnect.waitforTermination();
+      }
+    }
   }
 
   static class AsyncReconnect implements Runnable {
@@ -366,11 +368,11 @@ public class ClientConnectionEstablisher {
     private void waitforTermination() {
       synchronized (this) {
         connectionRequests.clear();
-        this.connectionEstablisherThread.interrupt();
       }
       boolean isInterrupted = false;
       try {
         if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
+          connectionEstablisherThread.interrupt();
           connectionEstablisherThread.join();
         }
       } catch (InterruptedException e) {
@@ -379,7 +381,6 @@ public class ClientConnectionEstablisher {
       } finally {
         Util.selfInterruptIfNeeded(isInterrupted);
       }
-
     }
 
     public synchronized void stop() {

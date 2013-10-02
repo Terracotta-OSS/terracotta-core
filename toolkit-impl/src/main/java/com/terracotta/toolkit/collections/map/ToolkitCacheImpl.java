@@ -78,8 +78,10 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void doRejoinStarted() {
     writeLock();
     try {
-      this.currentDelegate = this.activeDelegate;
-      this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
+      if (activeDelegate instanceof AggregateServerMap) {
+        this.currentDelegate = this.activeDelegate;
+        this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
+      }
       aggregateServerMap.rejoinStarted();
       bulkloadCache.rejoinCleanUp();
     } finally {
@@ -102,6 +104,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     } finally {
       writeUnlock();
     }
+
   }
 
   @Override
