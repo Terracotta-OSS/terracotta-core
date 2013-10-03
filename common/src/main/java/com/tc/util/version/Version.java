@@ -13,13 +13,16 @@ public class Version implements Comparable<Version> {
   // \d+ - 1 or more digits
   // \. - a dot
   // \d+ - 1 or more digits
+  // _ - an underscore
+  // \w+ - letters and/or numbers
   // - - just a dash
   // \w+ - letters and numbers
-  private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)(?:-(\\w+))?)?)?$");
+  private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+)?)?)?(?:_(\\w+))?(?:-(\\w+))?$");
 
   private final int            major;
   private final int            minor;
   private final int            micro;
+  private final String         specifier;
   private final String         qualifier;
 
   /**
@@ -36,16 +39,15 @@ public class Version implements Comparable<Version> {
       String microStr = m.group(3);
       if (microStr != null) {
         micro = Integer.parseInt(microStr);
-        qualifier = m.group(4);
       } else {
         micro = 0;
-        qualifier = null;
       }
     } else {
       minor = 0;
       micro = 0;
-      qualifier = null;
     }
+    specifier = m.group(4);
+    qualifier = m.group(5);
   }
 
   public static boolean isValidVersionString(String version) {
@@ -76,6 +78,10 @@ public class Version implements Comparable<Version> {
     return this.qualifier;
   }
 
+  public String specifier() {
+    return specifier;
+  }
+
   @Override
   public int compareTo(Version otherVersion) {
     int majorDiff = major - otherVersion.major();
@@ -86,6 +92,14 @@ public class Version implements Comparable<Version> {
 
     int microDiff = micro - otherVersion.micro();
     if (microDiff != 0) { return microDiff; }
+
+    if (specifier == null) {
+      if (otherVersion.specifier != null) { return 1; }
+    } else if (otherVersion.specifier == null) {
+      return -1;
+    } else if (specifier.compareTo(otherVersion.specifier) != 0) {
+      return specifier.compareTo(otherVersion.specifier);
+    }
 
     // Any version with a qualifier is considered "less than" a version without:
     // 1.0.0-SNAPSHOT < 1.0.0
@@ -116,6 +130,6 @@ public class Version implements Comparable<Version> {
 
   @Override
   public String toString() {
-    return major + "." + minor + "." + micro + (qualifier == null ? "" : "." + qualifier);
+    return major + "." + minor + "." + micro + (specifier == null ? "" : "." + specifier) + (qualifier == null ? "" : "." + qualifier);
   }
 }
