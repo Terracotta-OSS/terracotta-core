@@ -28,7 +28,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private static enum State {
@@ -48,7 +49,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private volatile int                              disconnected;
   private volatile boolean                          serverIsPersistent   = false;
   private volatile boolean                          isShutdown           = false;
-  private final AtomicBoolean                       transitionInProgress = new AtomicBoolean(false);
+  private final Lock                                lock                 = new ReentrantLock();
   private final DsoClusterInternalEventsGun         dsoClusterEventsGun;
   private final Collection<ClearableCallback>       clearCallbacks;
   protected Map<GroupID, StripeID>                  groupIDToStripeIDMap = new HashMap<GroupID, StripeID>();
@@ -72,23 +73,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     initGroupStates(State.PAUSED);
     pauseCallbacks(GroupID.ALL_GROUPS, this.disconnected);
     this.clearCallbacks = clearCallbacks;
-  }
-
-  private void waitForTransitionToComplete() {
-    while (transitionInProgress.get()) {
-      try {
-        transitionInProgress.wait();
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
-      }
-    }
-  }
-
-  private void notifyTransitionComplete() {
-    synchronized (transitionInProgress) {
-      transitionInProgress.set(false);
-      transitionInProgress.notifyAll();
-    }
   }
 
   @Override
@@ -118,16 +102,15 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void initiateHandshake(final NodeID remoteNode) {
     this.logger.debug("Initiating handshake...");
-    synchronized (transitionInProgress) {
-      waitForTransitionToComplete();
-      transitionInProgress.set(true);
+    ClientHandshakeMessage handshakeMessage;
+    lock.lock();
+    try {
+      changeToStarting(remoteNode);
+      handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode, this.clientVersion, isEnterpriseClient());
+      notifyCallbackOnHandshake(remoteNode, handshakeMessage);
+    } finally {
+      lock.unlock();
     }
-    changeToStarting(remoteNode);
-
-    ClientHandshakeMessage handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode, this.clientVersion,
-                                                                                  isEnterpriseClient());
-    notifyCallbackOnHandshake(remoteNode, handshakeMessage);
-    notifyTransitionComplete();
     this.logger.info("Sending handshake message with oids " + handshakeMessage.getObjectIDs().size() + " validate "
                      + handshakeMessage.getObjectIDsToValidate().size());
     handshakeMessage.send();
@@ -150,7 +133,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       dsoClusterEventsGun.fireNodeError();
       return;
     }
-    logger.warn("reconnection rejected or close from server, disconnecting from all groups");
+    logger.info("reconnection rejected or close from server, disconnecting from all groups");
     for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
       disconnected(groupId);
     }
@@ -159,28 +142,26 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void disconnected(final NodeID remoteNode) {
     if (checkShutdown()) return;
-    // Atomize manager and callbacks state changes
-    synchronized (transitionInProgress) {
-      waitForTransitionToComplete();
-      transitionInProgress.set(true);
+    lock.lock();
+    try {
+      boolean isPaused = changeToPaused(remoteNode);
+      if (isPaused) {
+        pauseCallbacks(remoteNode, getDisconnectedCount());
+        this.sessionManager.newSession(remoteNode);
+        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
+                         + " for remote node " + remoteNode);
+      }
+    } finally {
+      lock.unlock();
     }
-    boolean isPaused = changeToPaused(remoteNode);
-    if (isPaused) {
-      pauseCallbacks(remoteNode, getDisconnectedCount());
-      this.sessionManager.newSession(remoteNode);
-      this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
-                       + " for remote node " + remoteNode);
-    }
-    notifyTransitionComplete();
   }
 
   @Override
   public void connected(final NodeID remoteNode) {
     this.logger.info("Connected: Unpausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                      + ". Disconnect count : " + getDisconnectedCount());
-
     if (getState(remoteNode) != State.PAUSED) {
-      this.logger.warn("Unpause called while not PAUSED for " + remoteNode);
+      this.logger.warn("Ignoring unpause while " + getState(remoteNode) + " for " + remoteNode);
       return;
     }
     // drop handshaking if shutting down
@@ -227,20 +208,19 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
                                       final ClientID[] clusterMembers, final String serverVersion) {
     this.logger.info("Received Handshake ack from remote node :" + remoteID);
     if (getState(remoteID) != State.STARTING) {
-      this.logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));
+      this.logger.warn("Ignoring handshake acknowledgement while " + getState(remoteID) + " for " + remoteID);
       return;
     }
 
     checkClientServerVersionMatch(serverVersion);
     this.serverIsPersistent = persistentServer;
-    synchronized (transitionInProgress) {
-      waitForTransitionToComplete();
-      transitionInProgress.set(true);
+    lock.lock();
+    try {
+      changeToRunning(remoteID);
+      unpauseCallbacks(remoteID, getDisconnectedCount());
+    } finally {
+      lock.unlock();
     }
-    changeToRunning(remoteID);
-    unpauseCallbacks(remoteID, getDisconnectedCount());
-    notifyTransitionComplete();
-
     // only send out out these events when no groups are paused anymore
     if (areAllGroupsConnected()) {
       // first node joined event will also fire ops enabled event.
