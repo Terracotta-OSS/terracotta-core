@@ -14,6 +14,8 @@ import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectServerMap;
 import com.tc.platform.PlatformService;
@@ -37,6 +39,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
     OnGCCallable {
 
+  private static final TCLogger                    LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
   private volatile AggregateServerMap<K, V>        aggregateServerMap;
   private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
   private volatile ToolkitCacheImplInterface<K, V> localDelegate;
@@ -78,10 +81,8 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void doRejoinStarted() {
     writeLock();
     try {
-      if (activeDelegate instanceof AggregateServerMap) {
-        this.currentDelegate = this.activeDelegate;
-        this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
-      }
+      this.currentDelegate = this.activeDelegate;
+      this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
       aggregateServerMap.rejoinStarted();
       bulkloadCache.rejoinCleanUp();
     } finally {
