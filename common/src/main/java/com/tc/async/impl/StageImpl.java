@@ -193,7 +193,7 @@ public class StageImpl implements Stage {
               return;
             }
             tcLogger.warn("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
-                          + ctxt + " " + e);
+                          + ctxt + " ", e);
           } else {
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
