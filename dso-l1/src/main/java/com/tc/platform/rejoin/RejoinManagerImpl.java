@@ -125,7 +125,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   private void doReopen(ClientMessageChannel channel) {
-    while (true) {
+    while (!rejoinWorker.shutdown) {
       try {
         logger.info("rejoin request for channel: " + channel);
         channel.reopen();
