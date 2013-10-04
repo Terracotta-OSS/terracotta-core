@@ -99,11 +99,11 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
     try {
       eventFuture.get(EXECUTOR_MAX_WAIT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      logger.warn("clusterEventExecutor interrupted while waiting for result context :" + context);
+      logger.warn("clusterEventExecutor interrupted while waiting for result context :" + context, e);
     } catch (ExecutionException e) {
       throw new RuntimeException(e.getCause());
     } catch (TimeoutException e) {
-      logger.warn("clusterEventExecutor timedout while waiting for result context :" + context);
+      logger.warn("clusterEventExecutor timedout while waiting for result context :" + context, e);
     }
   }
 

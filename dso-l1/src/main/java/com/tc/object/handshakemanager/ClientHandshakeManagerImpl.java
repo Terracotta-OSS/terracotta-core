@@ -127,7 +127,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public void reconnectionRejected(boolean rejoinEnabled) {
     if (!rejoinEnabled) {
-      final String msg = "Reconnection Rejected By Server, But Rejoin Is Not Enabled, Client Can Never Join The Cluster Back ";
+      final String msg = "Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again";
       logger.error(msg);
       CONSOLE_LOGGER.error(msg);
       dsoClusterEventsGun.fireNodeError();

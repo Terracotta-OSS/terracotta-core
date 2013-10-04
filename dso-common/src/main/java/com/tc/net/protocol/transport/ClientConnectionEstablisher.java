@@ -234,6 +234,7 @@ public class ClientConnectionEstablisher {
     }
   }
 
+  // TRUE for L2, for L1 only if not stopped
   private boolean isReconnectBetweenL2s() {
     return reconnectionRejectedHandler.isRetryOnReconnectionRejected() || !asyncReconnect.isStopped();
   }
@@ -325,9 +326,9 @@ public class ClientConnectionEstablisher {
 
     // we should ignore adding any connection request if allowReconnects is false and
     // either this code is running for l2 or this CCE thread is not marked stopped
-    if (!this.allowReconnects.get() || !isReconnectBetweenL2s()) {
+    if (!this.allowReconnects.get() || asyncReconnect.isStopped()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + allowReconnects.get()
-                  + ", connectionEstablisher.isStopped(): " + asyncReconnect.isStopped());
+                  + ", asyncReconnect.isStopped(): " + asyncReconnect.isStopped());
       return;
     }
 
@@ -389,16 +390,14 @@ public class ClientConnectionEstablisher {
     }
 
     public synchronized void putConnectionRequest(ConnectionRequest request) {
-      if (this.cce.isReconnectBetweenL2s()) {
-        connectionRequests.add(request);
-      }
+      connectionRequests.add(request);
       this.notifyAll();
     }
 
     public synchronized ConnectionRequest waitUntilRequestAvailableOrStopped() {
       boolean isInterrupted = false;
       try {
-        while (this.cce.isReconnectBetweenL2s() && connectionRequests.isEmpty()) {
+        while (!stopped && connectionRequests.isEmpty()) {
           try {
             this.wait();
           } catch (InterruptedException e) {
