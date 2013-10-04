@@ -137,11 +137,10 @@ public class ExternalDsoServer {
 
   private void initStart() throws FileNotFoundException {
     logOutputStream = new FileOutputStream(serverLog);
-    serverProc = new ExtraProcessServerControl("localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false);
+    serverProc = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(),"localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false, jvmArgs);
     serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
-    serverProc.getJvmArgs().addAll(jvmArgs);
     inited = true;
   }
 
