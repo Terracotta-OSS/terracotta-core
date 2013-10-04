@@ -25,7 +25,6 @@ import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
-import com.tc.object.Portability;
 import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.SerializationUtil;
 import com.tc.object.ServerEventDestination;
@@ -105,7 +104,6 @@ public class ManagerImpl implements Manager {
   private DistributedObjectClient                     dso;
   private DmiManager                                  methodCallManager;
 
-  private volatile Portability                        portability;
   private volatile DSOClientConfigHelper              config;
   private volatile PreparedComponentsFromL2Connection connectionComponents;
 
@@ -142,7 +140,6 @@ public class ManagerImpl implements Manager {
                      final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
-    this.portability = config == null ? null : config.getPortability();
     this.txManager = txManager;
     this.lockManager = lockManager;
     this.searchRequestManager = searchRequestManager;
@@ -168,7 +165,6 @@ public class ManagerImpl implements Manager {
   }
 
   public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
-    this.portability = config.getPortability();
     this.config = config;
     this.connectionComponents = connectionComponents;
   }

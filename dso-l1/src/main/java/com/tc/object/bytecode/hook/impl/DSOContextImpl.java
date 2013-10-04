@@ -17,7 +17,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -35,8 +34,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
-  private static final TCLogger          logger = TCLogging.getLogger(DSOContextImpl.class);
-
   private final ManagerImpl              manager;
   private final String                   configSpec;
   private final TCSecurityManager        securityManager;
