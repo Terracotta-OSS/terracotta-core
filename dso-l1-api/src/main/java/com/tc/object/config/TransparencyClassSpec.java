@@ -191,30 +191,6 @@ public interface TransparencyClassSpec {
   public TransparencyClassSpec setHonorTransient(boolean b);
 
   /**
-   * Set call constructor on load flag
-   * 
-   * @param b New value
-   * @return this
-   */
-  public TransparencyClassSpec setCallConstructorOnLoad(boolean b);
-
-  /**
-   * Set execute script on load flag
-   * 
-   * @param script Script to load
-   * @return this
-   */
-  public TransparencyClassSpec setExecuteScriptOnLoad(String script);
-
-  /**
-   * Set method to call on load
-   * 
-   * @param method Method name
-   * @return this
-   */
-  public TransparencyClassSpec setCallMethodOnLoad(String method);
-
-  /**
    * Sets whether injection should happen on load
    * 
    * @param flag true or false
@@ -223,19 +199,9 @@ public interface TransparencyClassSpec {
   public TransparencyClassSpec setHasOnLoadInjection(boolean flag);
 
   /**
-   * @return True if call constructor flag is set
-   */
-  public boolean isCallConstructorSet();
-
-  /**
    * @return True if should honor transient
    */
   public boolean isHonorJavaTransient();
-
-  /**
-   * @return Get value of call constructor on load flag
-   */
-  public boolean isCallConstructorOnLoad();
 
   /**
    * @return True if is honor transient flag is set
@@ -251,26 +217,6 @@ public interface TransparencyClassSpec {
    * @return Transparency spec
    */
   public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock);
-
-  /**
-   * @return True if execute script on load flag is set
-   */
-  public boolean isExecuteScriptOnLoadSet();
-
-  /**
-   * @return True if call method on load flag is set
-   */
-  public boolean isCallMethodOnLoadSet();
-
-  /**
-   * @return Get on load method to call
-   */
-  public String getOnLoadMethod();
-
-  /**
-   * @return Get on load execute script to execute
-   */
-  public String getOnLoadExecuteScript();
 
   /**
    * @return True of injection should occur on class load

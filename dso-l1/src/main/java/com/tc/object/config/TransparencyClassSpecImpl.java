@@ -4,8 +4,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.object.config.schema.IncludeOnLoad;
-
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +30,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private ChangeApplicatorSpec                    changeApplicatorSpec;
   private boolean                                 isLogical;
   private boolean                                 onLoadInjection;
-  private final IncludeOnLoad                     onLoad                    = new IncludeOnLoad();
   private boolean                                 preInstrumented;
   private boolean                                 foreign;
 
@@ -239,41 +236,13 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this;
   }
 
-  @Override
-  public TransparencyClassSpec setCallConstructorOnLoad(final boolean b) {
-    onLoad.setToCallConstructorOnLoad(b);
-    return this;
-  }
-
-  @Override
-  public TransparencyClassSpec setExecuteScriptOnLoad(final String script) {
-    onLoad.setExecuteScriptOnLoad(script);
-    return this;
-  }
-
-  @Override
-  public TransparencyClassSpec setCallMethodOnLoad(final String method) {
-    onLoad.setMethodCallOnLoad(method);
-    return this;
-  }
-
   private boolean basicIsHonorJavaTransient() {
     return flags.get(HONOR_TRANSIENT_KEY);
   }
 
   @Override
-  public boolean isCallConstructorSet() {
-    return onLoad.isCallConstructorOnLoadType();
-  }
-
-  @Override
   public boolean isHonorJavaTransient() {
     return basicIsHonorJavaTransient();
-  }
-
-  @Override
-  public boolean isCallConstructorOnLoad() {
-    return onLoad.isCallConstructorOnLoad();
   }
 
   @Override
@@ -287,26 +256,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     if (spec != null) { return spec; }
     if (defaultCodeSpec != null) { return defaultCodeSpec; }
     return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock);
-  }
-
-  @Override
-  public boolean isExecuteScriptOnLoadSet() {
-    return onLoad.isExecuteScriptOnLoadType();
-  }
-
-  @Override
-  public boolean isCallMethodOnLoadSet() {
-    return onLoad.isCallMethodOnLoadType();
-  }
-
-  @Override
-  public String getOnLoadMethod() {
-    return onLoad.getMethod();
-  }
-
-  @Override
-  public String getOnLoadExecuteScript() {
-    return onLoad.getExecuteScript();
   }
 
   @Override

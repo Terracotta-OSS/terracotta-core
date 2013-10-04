@@ -113,10 +113,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   private void doAutoconfig() throws Exception {
-    TransparencyClassSpec spec;
-
-    spec = getOrCreateSpec("java.lang.Object");
-    spec.setCallConstructorOnLoad(true);
+    getOrCreateSpec("java.lang.Object");
   }
 
   @Override
