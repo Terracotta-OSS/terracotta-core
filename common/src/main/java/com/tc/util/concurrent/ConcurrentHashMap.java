@@ -70,7 +70,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Serializable {
+class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Serializable {
   private static final long      serialVersionUID          = 7249069246763182397L;
 
   /*
@@ -696,12 +696,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
     if (check != sum) { // Resort to locking all segments
       sum = 0;
-      for (int i = 0; i < segs.length; ++i)
-        segs[i].lock();
-      for (int i = 0; i < segs.length; ++i)
-        sum += segs[i].count;
-      for (int i = 0; i < segs.length; ++i)
-        segs[i].unlock();
+      for (Segment<K, V> seg : segs)
+        seg.lock();
+      for (Segment<K, V> seg : segs)
+        sum += seg.count;
+      for (Segment<K, V> seg : segs)
+        seg.unlock();
     }
     if (sum > Integer.MAX_VALUE) return Integer.MAX_VALUE;
     else return (int) sum;
@@ -776,19 +776,19 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       if (cleanSweep) return false;
     }
     // Resort to locking all segments
-    for (int i = 0; i < segs.length; ++i)
-      segs[i].lock();
+    for (Segment<K, V> seg : segs)
+      seg.lock();
     boolean found = false;
     try {
-      for (int i = 0; i < segs.length; ++i) {
-        if (segs[i].containsValue(value)) {
+      for (Segment<K, V> seg : segs) {
+        if (seg.containsValue(value)) {
           found = true;
           break;
         }
       }
     } finally {
-      for (int i = 0; i < segs.length; ++i)
-        segs[i].unlock();
+      for (Segment<K, V> seg : segs)
+        seg.unlock();
     }
     return found;
   }
@@ -907,8 +907,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    */
   @Override
   public void clear() {
-    for (int i = 0; i < segments.length; ++i)
-      segments[i].clear();
+    for (Segment<K, V> segment : segments)
+      segment.clear();
   }
 
   /**
@@ -1305,13 +1305,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   private void writeObject(java.io.ObjectOutputStream s) throws IOException {
     s.defaultWriteObject();
 
-    for (int k = 0; k < segments.length; ++k) {
-      Segment<K, V> seg = segments[k];
+    for (Segment<K, V> seg : segments) {
       seg.lock();
       try {
         HashEntry<K, V>[] tab = seg.table;
-        for (int i = 0; i < tab.length; ++i) {
-          for (HashEntry<K, V> e = tab[i]; e != null; e = e.next) {
+        for (HashEntry<K, V> element : tab) {
+          for (HashEntry<K, V> e = element; e != null; e = e.next) {
             s.writeObject(e.key);
             s.writeObject(e.value);
           }
@@ -1333,8 +1332,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     s.defaultReadObject();
 
     // Initialize each segment to be minimally sized, and let grow.
-    for (int i = 0; i < segments.length; ++i) {
-      segments[i].setTable(new HashEntry[1]);
+    for (Segment<K, V> segment : segments) {
+      segment.setTable(new HashEntry[1]);
     }
 
     // Read the keys and values, and put the mappings in the table

@@ -21,13 +21,13 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {

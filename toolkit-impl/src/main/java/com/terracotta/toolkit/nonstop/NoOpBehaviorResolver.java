@@ -3,9 +3,8 @@
  */
 package com.terracotta.toolkit.nonstop;
 
-import com.tc.util.concurrent.ConcurrentHashMap;
-
 import java.lang.reflect.Proxy;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NoOpBehaviorResolver {

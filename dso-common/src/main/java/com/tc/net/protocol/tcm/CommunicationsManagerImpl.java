@@ -48,7 +48,6 @@ import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -60,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
