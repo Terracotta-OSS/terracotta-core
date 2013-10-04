@@ -4,7 +4,6 @@
 package com.tc.object;
 
 import com.tc.exception.TCNonPortableObjectError;
-import com.tc.object.appevent.NonPortableEventContext;
 
 /**
  * @author steve
@@ -12,6 +11,6 @@ import com.tc.object.appevent.NonPortableEventContext;
 public interface TraverseTest {
   public boolean shouldTraverse(Object object);
 
-  public void checkPortability(TraversedReference obj, Class referringClass, NonPortableEventContext context)
+  public void checkPortability(TraversedReference obj, Class referringClass)
       throws TCNonPortableObjectError;
 }

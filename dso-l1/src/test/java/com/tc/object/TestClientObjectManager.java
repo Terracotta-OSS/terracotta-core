@@ -227,11 +227,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public Object cloneAndInvokeLogicalOperation(final Object pojo, final String methodName, final Object[] parameters) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
     throw new ImplementMe();
   }

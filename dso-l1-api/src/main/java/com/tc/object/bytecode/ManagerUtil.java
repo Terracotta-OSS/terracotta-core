@@ -103,16 +103,6 @@ public class ManagerUtil {
   }
 
   /**
-   * Determine whether this class is physically instrumented
-   *
-   * @param clazz Class
-   * @return True if physically instrumented
-   */
-  protected static boolean isPhysicallyInstrumented(final Class clazz) {
-    return getManager().isPhysicallyInstrumented(clazz);
-  }
-
-  /**
    * Get JVM Client identifier
    *
    * @return Client identifier

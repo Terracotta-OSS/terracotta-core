@@ -6,7 +6,6 @@ package com.tc.util;
 
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.impl.MockSink;
-import com.tc.exception.ImplementMe;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.BaseDSOTestCase;
@@ -136,11 +135,6 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class TestPortability implements Portability {
 
     @Override
-    public NonPortableReason getNonPortableReason(final Class topLevelClass) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public boolean isInstrumentationNotNeeded(final String name) {
       return false;
     }
@@ -148,11 +142,6 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     @Override
     public boolean isPortableClass(final Class clazz) {
       return true;
-    }
-
-    @Override
-    public boolean isClassPhysicallyInstrumented(final Class clazz) {
-      throw new ImplementMe();
     }
 
     @Override

@@ -609,11 +609,6 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean isPhysicallyInstrumented(final Class clazz) {
-    return this.portability.isClassPhysicallyInstrumented(clazz);
-  }
-
-  @Override
   public TCLogger getLogger(final String loggerName) {
     return TCLogging.getLogger(loggerName);
   }

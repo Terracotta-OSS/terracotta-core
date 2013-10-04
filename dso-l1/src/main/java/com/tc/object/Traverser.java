@@ -7,7 +7,6 @@ package com.tc.object;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.GroupID;
-import com.tc.object.appevent.NonPortableEventContext;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -28,8 +27,7 @@ public class Traverser {
     this.portableObjectProvider = portableObjectProvider;
   }
 
-  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest,
-                                    NonPortableEventContext context) {
+  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest) {
     Class clazz = start.getClass();
 
     while (clazz != null) {
@@ -45,7 +43,7 @@ public class Traverser {
             continue;
           }
 
-          traverseTest.checkPortability(currentReference, start.getClass(), context);
+          traverseTest.checkPortability(currentReference, start.getClass());
 
           toBeVisited.put(currentObject, null);
         } catch (IllegalArgumentException e) {
@@ -69,10 +67,10 @@ public class Traverser {
 
   // package protected - used for tests only
   void traverse(Object object, TraversalAction action) throws AbortedOperationException {
-    traverse(object, NULL_TEST, null, action, GroupID.NULL_ID);
+    traverse(object, NULL_TEST, action, GroupID.NULL_ID);
   }
 
-  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx, TraversalAction action,
+  public void traverse(Object object, TraverseTest traverseTest, TraversalAction action,
                        GroupID gid) throws AbortedOperationException {
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
@@ -80,7 +78,7 @@ public class Traverser {
     visited.put(object, null);
 
     IdentityHashMap toBeVisited = new IdentityHashMap();
-    addReferencedObjects(toBeVisited, object, visited, traverseTest, ctx);
+    addReferencedObjects(toBeVisited, object, visited, traverseTest);
     toAdd.add(object);
 
     while (!toBeVisited.isEmpty()) {
@@ -88,7 +86,7 @@ public class Traverser {
         Object obj = i.next();
         visited.put(obj, null);
         toBeVisited.remove(obj);
-        addReferencedObjects(toBeVisited, obj, visited, traverseTest, ctx);
+        addReferencedObjects(toBeVisited, obj, visited, traverseTest);
         toAdd.add(obj); // action.visit() to be taken place after addReferencedObjects() so that
         // the manager of the referenced objects will only be set after the referenced
         // objects are obtained.

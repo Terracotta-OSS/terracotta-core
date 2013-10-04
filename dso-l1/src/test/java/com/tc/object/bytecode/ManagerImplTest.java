@@ -4,7 +4,6 @@
  */
 package com.tc.object.bytecode;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
@@ -388,11 +387,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public Object cloneAndInvokeLogicalOperation(final Object pojo, final String methodName, final Object[] parameters) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
       throw new ImplementMe();
     }
@@ -435,12 +429,12 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
+    public TCObject lookupQuiet(final ObjectID id) {
       throw new ImplementMe();
     }
 
     @Override
-    public TCObject addLocalPrefetch(DNA object) throws ClassNotFoundException {
+    public TCObject addLocalPrefetch(DNA object) {
       throw new ImplementMe();
     }
   }

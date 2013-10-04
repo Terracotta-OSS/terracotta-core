@@ -153,11 +153,6 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public boolean isPhysicallyInstrumented(Class clazz) {
-    return false;
-  }
-
-  @Override
   public String getClientID() {
     throw new UnsupportedOperationException();
   }

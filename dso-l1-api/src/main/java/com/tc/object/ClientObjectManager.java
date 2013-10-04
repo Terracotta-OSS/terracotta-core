@@ -329,16 +329,6 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
   public Object createOrReplaceRoot(String rootName, Object root);
 
   /**
-   * Clone logicalPojo and then apply the specified logical operation, returning the clone.
-   * 
-   * @param logicalPojo The logical object
-   * @param methodName The method name on the logical object
-   * @param parameters The parameter values
-   * @return The cloned object
-   */
-  Object cloneAndInvokeLogicalOperation(Object logicalPojo, String methodName, Object[] parameters);
-
-  /**
    * Get or create the toggle reference for the given TCObject
    * 
    * @param objectID The TCObjet

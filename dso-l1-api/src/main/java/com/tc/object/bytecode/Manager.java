@@ -41,19 +41,6 @@ import javax.management.MBeanServer;
  */
 public interface Manager extends TerracottaLocking {
 
-  /** This class's class path: com/tc/object/bytecode/Manager */
-  public static final String CLASS = "com/tc/object/bytecode/Manager";
-  /** Bytecode type definition for this class */
-  public static final String TYPE  = "L" + CLASS + ";";
-
-  /**
-   * Determine whether this class is physically instrumented
-   * 
-   * @param clazz Class
-   * @return True if physically instrumented
-   */
-  public boolean isPhysicallyInstrumented(Class clazz);
-
   /**
    * Initialize the Manager
    */
