@@ -180,7 +180,7 @@ public class TCStop {
 
       CommonL2Config serverConfig = manager.commonL2ConfigFor(name);
 
-      host = serverConfig.host();
+      host = serverConfig.jmxPort().getBind();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
       port = serverConfig.jmxPort().getIntValue();
