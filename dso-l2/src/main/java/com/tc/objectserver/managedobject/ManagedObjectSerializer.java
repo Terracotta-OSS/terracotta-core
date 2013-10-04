@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
