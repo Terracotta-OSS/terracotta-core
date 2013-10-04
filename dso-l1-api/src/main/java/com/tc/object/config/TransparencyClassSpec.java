@@ -10,17 +10,6 @@ package com.tc.object.config;
  */
 public interface TransparencyClassSpec {
 
-  public static final byte NOT_SET       = 0x00;
-
-  public static final byte NOT_ADAPTABLE = 0x01;
-
-  // For classes are not PORTABLE by themselves, but logical classes subclasses them.
-  // We dont want them to get tc fields, TransparentAccess interfaces etc. but we do want them
-  // to be instrumented for Array manipulations, clone(), wait(), notify() calls etc.
-  public static final byte ADAPTABLE     = 0x02;
-
-  public static final byte PORTABLE      = 0x03;
-
   /**
    * Mark method as not instrumented
    * 
@@ -234,20 +223,6 @@ public interface TransparencyClassSpec {
    * @param useNonDefaultConstructor True to use non-default
    */
   public void setUseNonDefaultConstructor(boolean useNonDefaultConstructor);
-
-  /**
-   * Set instrumentation action
-   * 
-   * @param action Action constants defined in TransparencyClassSpecImpl
-   */
-  public void setInstrumentationAction(byte action);
-
-  /**
-   * Get instrumentation action
-   * 
-   * @return Action code ADAPTABLE, etc
-   */
-  public byte getInstrumentationAction();
 
   /**
    * Get method to call prior to create

@@ -35,8 +35,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
   private boolean                                 useNonDefaultConstructor  = false;
 
-  private byte                                    instrumentationAction     = NOT_SET;
-
   private String                                  postCreateMethod          = null;
   private String                                  preCreateMethod           = null;
   private String                                  logicalExtendingClassName = null;
@@ -266,16 +264,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   @Override
   public void setUseNonDefaultConstructor(final boolean useNonDefaultConstructor) {
     this.useNonDefaultConstructor = useNonDefaultConstructor;
-  }
-
-  @Override
-  public void setInstrumentationAction(final byte action) {
-    this.instrumentationAction = action;
-  }
-
-  @Override
-  public byte getInstrumentationAction() {
-    return this.instrumentationAction;
   }
 
   @Override
