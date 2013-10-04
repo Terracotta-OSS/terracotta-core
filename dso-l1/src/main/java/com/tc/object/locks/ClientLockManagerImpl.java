@@ -8,7 +8,6 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
-import com.tc.management.ClientLockStatManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -56,9 +55,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
   private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
 
-  @Deprecated
-  private final ClientLockStatManager             statManager;
-
   private final AbortableOperationManager         abortableOperationManager;
 
   private final Timer                             gcTimer;
@@ -66,14 +62,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
-                               final ClientLockManagerConfig config, final ClientLockStatManager statManager,
+                               final ClientLockManagerConfig config,
                                final AbortableOperationManager abortableOperationManager, final TaskRunner taskRunner) {
     this.logger = logger;
     this.remoteLockManager = remoteLockManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
     this.abortableOperationManager = abortableOperationManager;
-    this.statManager = statManager;
     this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
     final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
     this.gcTimer = taskRunner.newTimer("ClientLockManager LockGC");
@@ -127,8 +122,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
 
-    fireLockAttempted(lock);
-
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -140,22 +133,17 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         this.logger.info("Hitting garbage lock state during lock on " + lock);
       }
     }
-
-    fireLockSucceeded(lock);
   }
 
   @Override
   public boolean tryLock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
 
-    fireLockAttempted(lock);
-
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
         if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
                               level)) {
-          fireLockSucceeded(lock);
           return true;
         } else {
           return false;
@@ -175,14 +163,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
     waitUntilRunning();
 
-    fireLockAttempted(lock);
-
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
         if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
                               level, timeout)) {
-          fireLockSucceeded(lock);
           return true;
         } else {
           return false;
@@ -200,8 +185,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       AbortedOperationException {
     waitUntilRunning();
 
-    fireLockAttempted(lock);
-
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -214,8 +197,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         this.logger.info("Hitting garbage lock state during lockInterruptibly on " + lock);
       }
     }
-
-    fireLockSucceeded(lock);
   }
 
   @Override
@@ -223,8 +204,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     checkState();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     lockState.unlock(this.remoteLockManager, this.threadManager.getThreadID(), level);
-
-    fireUnlock(lock);
   }
 
   @Override
@@ -557,7 +536,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
       }
-      fireRefused(lock);
 
       final ClientLock lockState = getClientLockState(lock);
       if (lockState != null) {
@@ -1031,34 +1009,5 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     return this.locks.size();
   }
 
-  @Deprecated
-  private void fireLockAttempted(final LockID lock) {
-    if (this.statManager.isEnabled()) {
-      final ClientLock lockState = getClientLockState(lock);
-      final int pendingCount = lockState == null ? 0 : lockState.pendingCount();
-      this.statManager.recordLockRequested(lock, this.threadManager.getThreadID(), "", pendingCount);
-    }
-  }
-
-  @Deprecated
-  private void fireLockSucceeded(final LockID lock) {
-    if (this.statManager.isEnabled()) {
-      this.statManager.recordLockAwarded(lock, this.threadManager.getThreadID());
-    }
-  }
-
-  @Deprecated
-  private void fireUnlock(final LockID lock) {
-    if (this.statManager.isEnabled()) {
-      this.statManager.recordLockReleased(lock, this.threadManager.getThreadID());
-    }
-  }
-
-  @Deprecated
-  private void fireRefused(final LockID lock) {
-    if (this.statManager.isEnabled()) {
-      this.statManager.recordLockRejected(lock, this.threadManager.getThreadID());
-    }
-  }
 
 }

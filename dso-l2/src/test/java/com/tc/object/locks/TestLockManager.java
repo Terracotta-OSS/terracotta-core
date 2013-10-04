@@ -100,12 +100,6 @@ public class TestLockManager implements LockManager {
   }
 
   @Override
-  public void enableLockStatsForNodeIfNeeded(ClientID cid) {
-    throw new ImplementMe();
-
-  }
-
-  @Override
   public void interrupt(LockID lid, ClientID cid, ThreadID threadID) {
     throw new ImplementMe();
 

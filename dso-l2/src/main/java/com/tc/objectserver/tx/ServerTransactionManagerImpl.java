@@ -223,7 +223,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   @Override
   public void nodeConnected(final NodeID nodeID) {
-    this.lockManager.enableLockStatsForNodeIfNeeded((ClientID) nodeID);
+    //
   }
 
   @Override

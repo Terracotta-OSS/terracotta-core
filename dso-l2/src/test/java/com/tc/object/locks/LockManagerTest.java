@@ -5,22 +5,14 @@
 package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
-import com.tc.management.L2LockStatsManager;
-import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.ServerLockContext.State;
-import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.TestSink;
-import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
-import com.tc.stats.counter.CounterManager;
-import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -55,15 +47,6 @@ public class LockManagerTest extends TestCase {
     if (start) {
       lockManager.start();
     }
-    final CounterManager counterManager = new CounterManagerImpl();
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
-    final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
-
-    DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null,
-        lockRecallCounter, null, null, lockCounter, null, null);
-    L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(new NullChannelManager(), serverStats,
-                                                               ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }
 
   @Override
@@ -81,7 +64,6 @@ public class LockManagerTest extends TestCase {
     LockID lid3 = new StringLockID("3");
     ThreadID tid1 = new ThreadID(1);
     ThreadID tid2 = new ThreadID(2);
-    L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
     lockManager = new LockManagerImpl(sink, new NullChannelManager() {
       @Override
       public String getChannelAddress(NodeID nid) {
@@ -89,10 +71,8 @@ public class LockManagerTest extends TestCase {
         return "no longer connected";
       }
     }, new NonGreedyLockPolicyFactory());
-    lockManager.setLockStatisticsEnabled(true, lockStatsManager);
 
     lockManager.start();
-    lockStatsManager.start(new NullChannelManager(), null, ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
 
     lockManager.lock(lid1, cid1, tid1, ServerLockLevel.WRITE); // hold
     lockManager.lock(lid1, cid2, tid2, ServerLockLevel.WRITE); // pending

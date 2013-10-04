@@ -190,8 +190,6 @@ public final class ServerLockImpl extends AbstractServerLock {
     if (greedyHolder == null) { throw new AssertionError("No Greedy Holder Exists For " + cid + " on " + lockID
                                                          + " Lock State: " + this.toString()); }
 
-    recordLockReleaseStat(cid, ThreadID.VM_ID, helper);
-
     boolean hasGreedyReadHolder = false;
 
     for (ClientServerExchangeLockContext cselc : serverLockContexts) {
@@ -269,8 +267,6 @@ public final class ServerLockImpl extends AbstractServerLock {
       helper.getLockSink().add(lrc);
       isRecalled = true;
     }
-
-    recordLockHop(helper);
   }
 
   private void awardLockGreedily(LockHelper helper, ServerLockContext request) {

@@ -26,11 +26,8 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
-import com.tc.management.lock.stats.LockStatisticsMessage;
-import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
@@ -78,8 +75,6 @@ import com.tc.object.handler.ClusterMetaDataHandler;
 import com.tc.object.handler.DmiHandler;
 import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.handler.LockResponseHandler;
-import com.tc.object.handler.LockStatisticsEnableDisableHandler;
-import com.tc.object.handler.LockStatisticsResponseHandler;
 import com.tc.object.handler.ReceiveInvalidationHandler;
 import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
@@ -603,11 +598,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoClientBuilder.registerForOperatorEvents(this.l1Management);
 
     // Setup the lock manager
-    final ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
     this.lockManager = this.dsoClientBuilder
         .createLockManager(this.channel,
                            new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-                               .getLogger(ClientLockManager.class)), sessionManager, lockStatManager, this.channel
+                               .getLogger(ClientLockManager.class)), sessionManager, this.channel
                                .getLockRequestMessageFactory(), this.threadIDManager, gtxManager,
                            new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")),
                            abortableOperationManager, this.taskRunner);
@@ -679,15 +673,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Stage clusterMetaDataStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_METADATA_STAGE,
                                                                 new ClusterMetaDataHandler(), 1, maxSize);
 
-    // Lock statistics
-    final Stage lockStatisticsStage = stageManager
-        .createStage(ClientConfigurationContext.LOCK_STATISTICS_RESPONSE_STAGE, new LockStatisticsResponseHandler(), 1,
-                     1);
-    final Stage lockStatisticsEnableDisableStage = stageManager
-        .createStage(ClientConfigurationContext.LOCK_STATISTICS_ENABLE_DISABLE_STAGE,
-                     new LockStatisticsEnableDisableHandler(lockStatManager), 1, 1);
-    lockStatManager.start(this.channel, lockStatisticsStage.getSink());
-
     final Stage syncWriteBatchRecvdHandler = stageManager
         .createStage(ClientConfigurationContext.RECEIVED_SYNC_WRITE_TRANSACTION_ACK_STAGE,
                      new ReceiveSyncWriteTransactionAckHandler(this.remoteTxnManager),
@@ -743,7 +728,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // DO NOT create any stages after this call
     stageManager.startAll(cc, Collections.EMPTY_LIST);
 
-    initChannelMessageRouter(messageRouter, hydrateStage, lockResponse, lockStatisticsEnableDisableStage,
+    initChannelMessageRouter(messageRouter, hydrateStage, lockResponse,
                              receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
                              batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
                              clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage,
@@ -872,9 +857,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    messageTypeClassMapping
-        .put(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
@@ -930,7 +912,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   private void initChannelMessageRouter(TCMessageRouter messageRouter, Stage hydrateStage, Stage lockResponse,
-                                        Stage lockStatisticsEnableDisableStage, Stage receiveRootID,
+                                        Stage receiveRootID,
                                         Stage receiveObject, Stage receiveTransaction, Stage oidRequestResponse,
                                         Stage transactionResponse, Stage batchTxnAckStage, Stage pauseStage,
                                         Stage jmxRemoteTunnelStage, Stage clusterMembershipEventStage,
@@ -941,8 +923,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Sink hydrateSink = hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.LOCK_STAT_MESSAGE, lockStatisticsEnableDisableStage.getSink(),
-                                   hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_RECALL_MESSAGE, lockResponse.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, receiveRootID.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE, receiveObject.getSink(),

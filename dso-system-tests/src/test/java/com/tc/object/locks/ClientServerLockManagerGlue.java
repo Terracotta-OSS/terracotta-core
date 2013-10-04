@@ -6,26 +6,19 @@ package com.tc.object.locks;
 
 import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
-import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.TestSink;
-import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.locks.LockFactory;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
-import com.tc.stats.counter.CounterManager;
-import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -105,15 +98,6 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     this.clientLockManager = clmgr;
     this.serverLockManager = slmgr;
     this.serverLockManager.start();
-    final CounterManager counterManager = new CounterManagerImpl();
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
-    final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
-
-    DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null,
-        lockRecallCounter, null, null, lockCounter, null, null);
-    L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(new NullChannelManager(), serverStats,
-                                                               ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }
 
   @Override

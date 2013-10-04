@@ -22,7 +22,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
@@ -58,7 +57,6 @@ public class L2Management extends TerracottaManagement {
   private final TCServerInfoMBean             tcServerInfo;
   private final TCDumper                      tcDumper;
   private final ObjectManagementMonitor       objectManagementBean;
-  private final LockStatisticsMonitorMBean    lockStatistics;
   protected final int                         jmxPort;
   protected final InetAddress                 bindAddress;
   private final Sink                          remoteEventsSink;
@@ -70,12 +68,11 @@ public class L2Management extends TerracottaManagement {
     Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
   }
 
-  public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
+  public L2Management(TCServerInfoMBean tcServerInfo,
                       L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper, InetAddress bindAddr,
                       int port, Sink remoteEventsSink) throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
-    this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
     this.tcDumper = tcDumper;
     this.bindAddress = bindAddr;
@@ -162,7 +159,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
-    mBeanServer.registerMBean(lockStatistics, L2MBeanNames.LOCK_STATISTICS);
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 
@@ -170,7 +166,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
-    mBeanServer.unregisterMBean(L2MBeanNames.LOCK_STATISTICS);
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
   }
 

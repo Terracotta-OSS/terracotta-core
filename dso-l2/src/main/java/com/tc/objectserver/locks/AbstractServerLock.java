@@ -6,16 +6,14 @@ package com.tc.objectserver.locks;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockContext;
-import com.tc.object.locks.ServerLockLevel;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
@@ -51,15 +49,13 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
 
   @Override
   public void lock(ClientID cid, ThreadID tid, ServerLockLevel level, LockHelper helper) {
-    int noOfPendingRequests = validateAndGetNumberOfPending(cid, tid, level);
-    recordLockRequestStat(cid, tid, noOfPendingRequests, helper);
+    validateAndGetNumberOfPending(cid, tid, level);
     requestLock(cid, tid, level, Type.PENDING, -1, helper);
   }
 
   @Override
   public void tryLock(ClientID cid, ThreadID tid, ServerLockLevel level, long timeout, LockHelper helper) {
-    int noOfPendingRequests = validateAndGetNumberOfPending(cid, tid, level);
-    recordLockRequestStat(cid, tid, noOfPendingRequests, helper);
+    validateAndGetNumberOfPending(cid, tid, level);
 
     if (timeout <= 0 && !canAwardRequest(level)) {
       refuseTryRequestWithNoTimeout(cid, tid, level, helper);
@@ -164,7 +160,6 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   public void unlock(ClientID cid, ThreadID tid, LockHelper helper) {
     // remove current hold
     ServerLockContext context = remove(cid, tid, SET_OF_HOLDERS);
-    recordLockReleaseStat(cid, tid, helper);
 
     if (context == null) { return; }
     Assert.assertTrue(context.isHolder());
@@ -301,7 +296,6 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     ServerLockContext holder = remove(cid, tid, SET_OF_HOLDERS);
     validateWaitNotifyState(cid, tid, holder, helper);
 
-    recordLockReleaseStat(cid, tid, helper);
     WaitServerLockContext waiter = createWaitOrTryPendingServerLockContext(cid, tid, State.WAITER, timeout, helper);
     if (timeout > 0) {
       LockTimerContext ltc = new LockTimerContext(lockID, tid, cid, helper);
@@ -430,8 +424,6 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   }
 
   protected void moveWaiterToPending(ServerLockContext waiter, LockHelper helper) {
-    int noOfPendingRequests = getNoOfPendingRequests();
-    recordLockRequestStat(waiter.getClientID(), waiter.getThreadID(), noOfPendingRequests, helper);
     cancelTryLockOrWaitTimer(waiter, helper);
     // Add a pending request
     queue(waiter.getClientID(), waiter.getThreadID(), waiter.getState().getLockLevel(), Type.PENDING, -1, helper);
@@ -460,15 +452,10 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
    * Assumption that this context has already been removed from the list
    */
   protected void awardLock(LockHelper helper, ServerLockContext request, State state, boolean toRespond) {
-    ThreadID tid = request.getThreadID();
-
     // add this request to the front of the list
     cancelTryLockOrWaitTimer(request, helper);
     request = changeStateToHolder(request, state, helper);
     addHolder(request, helper);
-
-    // record award to the stats
-    recordLockAward(helper, request, tid);
 
     if (toRespond) {
       // create a lock response context and add it to the sink
@@ -489,7 +476,6 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     LockResponseContext lrc = LockResponseContextFactory.createLockRejectedResponseContext(this.lockID, cid, tid,
                                                                                            requestedLockLevel);
     helper.getLockSink().add(lrc);
-    recordLockRejectStat(cid, tid, helper);
   }
 
   protected void add(ServerLockContext request, LockHelper helper) {
@@ -729,34 +715,6 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     WaitServerLockContext context = new WaitServerLockContext(cid, tid, timeout);
     context.setState(helper.getContextStateMachine(), state);
     return context;
-  }
-
-  // record stats
-  protected void recordLockAward(LockHelper helper, ServerLockContext request, ThreadID tid) {
-    L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockAwarded(lockID, request.getClientID(), tid, request.isGreedyHolder(), System
-        .currentTimeMillis());
-  }
-
-  protected void recordLockHop(LockHelper helper) {
-    L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockHopRequested(lockID);
-  }
-
-  protected void recordLockRequestStat(final ClientID cid, final ThreadID threadID, int noOfPendingRequests,
-                                       LockHelper helper) {
-    L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockRequested(lockID, cid, threadID, noOfPendingRequests);
-  }
-
-  protected void recordLockRejectStat(final ClientID cid, final ThreadID threadID, LockHelper helper) {
-    L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockRejected(lockID, cid, threadID);
-  }
-
-  protected void recordLockReleaseStat(final NodeID nodeID, final ThreadID threadID, LockHelper helper) {
-    L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockReleased(lockID, nodeID, threadID);
   }
 
   // Helper methods

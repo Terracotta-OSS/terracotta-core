@@ -8,10 +8,8 @@ import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
-import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
@@ -191,7 +189,6 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   @Override
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
                                              final ClientIDLogger clientIDLogger, final SessionManager sessionManager,
-                                             final ClientLockStatManager lockStatManager,
                                              final LockRequestMessageFactory lockRequestMessageFactory,
                                              final ThreadIDManager threadManager,
                                              final ClientGlobalTransactionManager gtxManager,
@@ -203,15 +200,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     Assert.assertEquals(1, defaultGroups.length);
     final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
                                                                       defaultGroups[0], lockRequestMessageFactory,
-                                                                      gtxManager, lockStatManager, taskRunner);
+                                                                          gtxManager, taskRunner);
     return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteLockManager, threadManager, config,
-                                     lockStatManager, abortableOperationManager, taskRunner);
-  }
-
-  @Override
-  @Deprecated
-  public ClientLockStatManager createLockStatsManager() {
-    return new ClientLockStatisticsManagerImpl(null);
+                                     abortableOperationManager, taskRunner);
   }
 
   @Override

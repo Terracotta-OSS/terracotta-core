@@ -115,13 +115,6 @@ public interface LockManager {
   void clearAllLocksFor(ClientID cid);
 
   /**
-   * This will enable the statistics for the particular client passed.
-   * 
-   * @param cid - Id of the client requesting
-   */
-  void enableLockStatsForNodeIfNeeded(ClientID cid);
-
-  /**
    * This method will be called once the handshake process for the client gets completed. This will start the wait
    * timers and start processing of the pending requests.
    */

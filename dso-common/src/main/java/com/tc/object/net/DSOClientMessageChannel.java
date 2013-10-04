@@ -3,7 +3,6 @@
  */
 package com.tc.object.net;
 
-import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
@@ -72,8 +71,6 @@ public interface DSOClientMessageChannel {
   public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory();
 
   public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory();
-
-  public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory();
 
   public GroupID[] getGroupIDs();
 

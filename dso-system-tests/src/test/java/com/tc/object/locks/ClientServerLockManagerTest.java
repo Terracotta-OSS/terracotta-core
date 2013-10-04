@@ -8,7 +8,6 @@ package com.tc.object.locks;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.logging.NullTCLogger;
-import com.tc.management.ClientLockStatManager;
 import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.object.session.TestSessionManager;
 import com.tc.objectserver.api.TestSink;
@@ -47,7 +46,6 @@ public class ClientServerLockManagerTest extends TestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                   new NullAbortableOperationManager(),
                                                   Runners.newSingleThreadScheduledTaskRunner());
 

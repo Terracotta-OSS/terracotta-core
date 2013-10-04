@@ -7,7 +7,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
-import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
@@ -128,16 +127,13 @@ public interface DSOClientBuilder {
                                               AbortableOperationManager abortableOperationManager);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
-                                      final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+                                      final SessionManager sessionManager,
                                       final LockRequestMessageFactory lockRequestMessageFactory,
                                       final ThreadIDManager threadManager,
                                       final ClientGlobalTransactionManager clientGlobalTransactionManager,
                                       final ClientLockManagerConfig clientLockManagerConfig,
                                       final AbortableOperationManager abortableOperationManager,
                                       final TaskRunner taskRunner);
-
-  @Deprecated
-  ClientLockStatManager createLockStatsManager();
 
   RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                           final DNAEncodingInternal encoding,

@@ -21,7 +21,6 @@ import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
 import com.tc.management.beans.L2State;
-import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
@@ -150,7 +149,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
                                       final Offheap offheapConfig, int electionTimeInSecs);
 
-  L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
+  L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
                                   Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,

@@ -11,17 +11,11 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.MockStage;
 import com.tc.async.impl.TestClientConfigurationContext;
-import com.tc.exception.ImplementMe;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.management.ClientLockStatManager;
-import com.tc.management.L2LockStatsManager;
-import com.tc.management.lock.stats.LockSpec;
-import com.tc.management.lock.stats.TCStackTraceElement;
 import com.tc.net.GroupID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -43,12 +37,9 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.LockResponseMessage;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.MockChannelManager;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
-import com.tc.objectserver.api.ObjectStatsManager;
-import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
@@ -56,13 +47,11 @@ import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.NullChannelManager;
-import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -90,7 +79,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(logger, new NullSessionManager(), rmtLockManager, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                   new NullAbortableOperationManager(),
                                                   Runners.newSingleThreadScheduledTaskRunner());
 
@@ -99,7 +87,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     TestServerConfigurationContext serverLockUnlockContext = new TestServerConfigurationContext();
     MockStage serverStage = new MockStage("LockManagerSystemTest");
     LockManager serverLockManager = new LockManagerImpl(serverStage.sink, new MockChannelManager());
-    ((LockManagerImpl) serverLockManager).setLockStatisticsEnabled(true, new MockL2LockStatsManager());
 
     serverLockUnlockContext.addStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, serverStage);
     serverLockUnlockContext.lockManager = serverLockManager;
@@ -513,8 +500,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     public TestRemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager,
                                      BlockingQueue<EventContext> clientLockRequestQueue) {
-      super(new ClientIDProviderImpl(new TestChannelIDProvider()), GroupID.NULL_ID, lrmf, gtxManager,
-            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, Runners.newSingleThreadScheduledTaskRunner());
+      super(new ClientIDProviderImpl(new TestChannelIDProvider()), GroupID.NULL_ID, lrmf, gtxManager, Runners
+          .newSingleThreadScheduledTaskRunner());
       this.clientLockRequestQueue = clientLockRequestQueue;
     }
 
@@ -525,111 +512,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       } catch (Exception e) {
         throw new AssertionError(e);
       }
-    }
-  }
-
-  private static class MockL2LockStatsManager implements L2LockStatsManager {
-
-    @Override
-    public void clearAllStatsFor(NodeID nodeID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void enableStatsForNodeIfNeeded(NodeID nodeID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public int getGatherInterval() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public Collection<LockSpec> getLockSpecs() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public long getNumberOfLockHopRequests(LockID lockID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public long getNumberOfLockReleased(LockID lockID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public long getNumberOfLockRequested(LockID lockID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public long getNumberOfPendingRequests(LockID lockID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public int getTraceDepth() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public boolean isLockStatisticsEnabled() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> lockStatElements) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
-                                  long lockAwardTimestamp) {
-      //
-    }
-
-    @Override
-    public void recordLockHopRequested(LockID lockID) {
-      //
-    }
-
-    @Override
-    public void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
-      //
-    }
-
-    @Override
-    public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int numberOfPendingRequests) {
-      //
-    }
-
-    @Override
-    public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void setLockStatisticsEnabled(boolean lockStatsEnabled) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats,
-                      ObjectStatsManager objectManager) {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
-      return null;
     }
   }
 

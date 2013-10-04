@@ -6,7 +6,6 @@ package com.tc.object.locks;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.ClientLockStatManager;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.ClientIDProvider;
@@ -37,9 +36,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
   private boolean                              shutdown;
 
-  @Deprecated
-  private final ClientLockStatManager          statManager;
-
   private final Timer                          batchRecallTimer;
   private ScheduledFuture<?>                   batchRecallTask;
 
@@ -47,13 +43,11 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   public RemoteLockManagerImpl(final ClientIDProvider clientIdProvider, final GroupID group,
                                final LockRequestMessageFactory messageFactory,
                                final ClientGlobalTransactionManager clientGlobalTxnManager,
-                               final ClientLockStatManager statManager,
                                final TaskRunner taskRunner) {
     this.messageFactory = messageFactory;
     this.clientGlobalTxnManager = clientGlobalTxnManager;
     this.group = group;
     this.clientIdProvider = clientIdProvider;
-    this.statManager = statManager;
     this.batchRecallTimer = taskRunner.newTimer("Batch Recall Timer");
   }
 
@@ -98,8 +92,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
     sendPendingRecallCommits();
 
-    fireRemoteCall(lock, thread);
-
     final LockRequestMessage msg = createMessage();
     msg.initializeLock(lock, thread, level);
     sendMessage(msg);
@@ -117,8 +109,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   @Override
   public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
     sendPendingRecallCommits();
-
-    fireRemoteCall(lock, thread);
 
     final LockRequestMessage msg = createMessage();
     msg.initializeTryLock(lock, thread, timeout, level);
@@ -226,13 +216,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
 
   protected void sendMessage(final LockRequestMessage msg) {
     msg.send();
-  }
-
-  @Deprecated
-  private void fireRemoteCall(final LockID lock, final ThreadID thread) {
-    if (this.statManager.isEnabled()) {
-      this.statManager.recordLockHopped(lock, thread);
-    }
   }
 
   private class BatchRecallCommitsTask implements Runnable {

@@ -19,7 +19,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Info;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -91,7 +90,6 @@ public class ClientLockManagerTest extends TCTestCase {
 
     lockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, rmtLockManager, threadManager,
                                             new NullClientLockManagerConfig(),
-                                            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                             ABORTABLE_OPERATION_MANAGER,
                                             taskRunner);
     rmtLockManager.setClientLockManager(lockManager);
@@ -106,7 +104,6 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                                   rmtLockManager,
                                                                                   threadManager,
                                                                                   testClientLockManagerConfig,
-                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                                                   ABORTABLE_OPERATION_MANAGER,
                                                                                   taskRunner);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
@@ -156,7 +153,6 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                                   rmtLockManager,
                                                                                   threadManager,
                                                                                   testClientLockManagerConfig,
-                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                                                   ABORTABLE_OPERATION_MANAGER,
                                                                                   taskRunner);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
@@ -392,7 +388,7 @@ public class ClientLockManagerTest extends TCTestCase {
                                       final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
                                       final CyclicBarrier awardBarrier) {
         super(logger, sessionManager, remoteLockManager, threadManager, new NullClientLockManagerConfig(),
-              ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, ABORTABLE_OPERATION_MANAGER, taskRunner);
+              ABORTABLE_OPERATION_MANAGER, taskRunner);
         this.awardBarrier = awardBarrier;
       }
 
@@ -941,7 +937,6 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                           remote,
                                                                           new ThreadIDManagerImpl(threadIDMap),
                                                                           new NullClientLockManagerConfig(),
-                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                                           ABORTABLE_OPERATION_MANAGER,
                                                                           taskRunner);
     remote.setClientLockManager(clientLockManager);
@@ -1108,7 +1103,6 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                           remote,
                                                                           new ThreadIDManagerImpl(threadIDMap),
                                                                           new NullClientLockManagerConfig(),
-                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                                           ABORTABLE_OPERATION_MANAGER,
                                                                           taskRunner);
     remote.setClientLockManager(clientLockManager);
@@ -1281,7 +1275,6 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                                   rmtLockManager,
                                                                                   threadManager,
                                                                                   testClientLockManagerConfig,
-                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                                                   ABORTABLE_OPERATION_MANAGER,
                                                                                   taskRunner);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);

@@ -2,7 +2,6 @@ package com.tc.object.net;
 
 import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.TestClientMessageChannel;
@@ -148,11 +147,6 @@ public class MockChannel implements DSOClientMessageChannel {
 
   @Override
   public ServerEventListenerMessageFactory getServerEventListenerMessageFactory() {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
     throw new ImplementMe();
   }
 

@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
-import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
@@ -54,7 +52,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
     CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, ServerMapMessageFactory,
-    KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory, LockStatisticsReponseMessageFactory,
+    KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory,
     SearchRequestMessageFactory, NodesWithKeysMessageFactory, ServerEventListenerMessageFactory {
 
   private final ClientMessageChannel channel;
@@ -241,16 +239,6 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   @Override
   public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
-    return this;
-  }
-
-  @Override
-  public LockStatisticsResponseMessage newLockStatisticsResponseMessage(final NodeID remoteID) {
-    return (LockStatisticsResponseMessage) this.channel.createMessage(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE);
-  }
-
-  @Override
-  public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
     return this;
   }
 

@@ -27,8 +27,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
   public static final String             JMXREMOTE_TUNNEL_STAGE                      = "jmxremote_tunnel_stage";
   public static final String             DMI_STAGE                                   = "dmi_stage";
-  public static final String             LOCK_STATISTICS_RESPONSE_STAGE              = "lock_statistics_response_stage";
-  public static final String             LOCK_STATISTICS_ENABLE_DISABLE_STAGE        = "lock_statistics_enable_disable_stage";
   public static final String             OOO_NET_SEND_STAGE                          = "ooo_net_send_stage";
   public static final String             OOO_NET_RECEIVE_STAGE                       = "ooo_net_receive_stage";
   public static final String             CLUSTER_METADATA_STAGE                      = "cluster_metadata_stage";

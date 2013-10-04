@@ -28,7 +28,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2Management;
 import com.tc.management.beans.L2State;
-import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
@@ -267,13 +266,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,
-                                         final LockStatisticsMonitor lockStatisticsMBean,
                                          final L2ConfigurationSetupManager configSetupManager,
                                          final DistributedObjectServer distributedObjectServer, final InetAddress bind,
                                          final int jmxPort, final Sink remoteEventsSink,
                                          final ServerConnectionValidator serverConnectionValidator,
                                          final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
-    return new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, distributedObjectServer, bind,
+    return new L2Management(tcServerInfoMBean, configSetupManager, distributedObjectServer, bind,
                             jmxPort, remoteEventsSink);
   }
 
