@@ -177,10 +177,12 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
   @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
+    //
   }
 
   @Override
   public void shutdown(boolean fromShutdownHook) {
+    //
   }
 
 }
