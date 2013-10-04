@@ -5,23 +5,19 @@
 package com.tc.management.lock.stats;
 
 import com.tc.async.api.Sink;
-import com.tc.exception.TCRuntimeException;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.locks.LockDistributionStrategy;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOClientMessageChannel;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -147,8 +143,6 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
   }
 
   private StackTraceElement[] filterStackTracesElement(StackTraceElement[] stackTraces, int stackTraceDepth) {
-    stackTraces = fixTCInstrumentationStackTraces(stackTraces);
-
     List list = new ArrayList();
     int numOfStackTraceCollected = 0;
     for (StackTraceElement stackTrace : stackTraces) {
@@ -163,46 +157,6 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     }
     StackTraceElement[] rv = new StackTraceElement[list.size()];
     return (StackTraceElement[]) list.toArray(rv);
-  }
-
-  private StackTraceElement[] fixTCInstrumentationStackTraces(StackTraceElement[] stackTraces) {
-    LinkedList list = new LinkedList();
-    for (int i = 0; i < stackTraces.length; i++) {
-      if (isTCInstrumentationStackTrace(stackTraces, i)) {
-        setStackTraceLineNumber(stackTraces[i + 1], stackTraces[i].getLineNumber());
-        list.addLast(stackTraces[i + 1]);
-        i++;
-      } else {
-        list.addLast(stackTraces[i]);
-      }
-    }
-    StackTraceElement[] rv = new StackTraceElement[list.size()];
-    return (StackTraceElement[]) list.toArray(rv);
-  }
-
-  private boolean isTCInstrumentationStackTrace(StackTraceElement[] stackTraces, int index) {
-    if (stackTraces[index].getMethodName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
-      if (!stackTraces[index + 1].getMethodName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
-        if (stackTraces[index].getMethodName().endsWith(stackTraces[index + 1].getMethodName())) { return true; }
-      }
-    }
-    return false;
-  }
-
-  private void setStackTraceLineNumber(StackTraceElement se, int newLineNumber) {
-    try {
-      Field f = StackTraceElement.class.getDeclaredField("lineNumber");
-      f.setAccessible(true);
-      f.set(se, Integer.valueOf(newLineNumber));
-    } catch (SecurityException e) {
-      throw new TCRuntimeException(e);
-    } catch (NoSuchFieldException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalArgumentException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new TCRuntimeException(e);
-    }
   }
 
   private boolean shouldIgnoreClass(String className) {

@@ -4,8 +4,6 @@
  */
 package com.tc.object.walker;
 
-import com.tc.object.bytecode.ByteCodeUtil;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -16,9 +14,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 class AllFields {
-  private static final Class OBJECT = Object.class;
 
-  private final Set          fields = new TreeSet();
+  private static final String TC_FIELD_PREFIX = "$__tc_";
+
+  private static final Class  OBJECT          = Object.class;
+
+  private final Set           fields          = new TreeSet();
 
   Iterator getFields() {
     return Collections.unmodifiableSet(fields).iterator();
@@ -27,7 +28,7 @@ class AllFields {
   static AllFields getAllFields(Object o, boolean ignoreTC) {
     return getAllFields(o, ignoreTC, null);
   }
-  
+
   static AllFields getAllFields(Object o, boolean ignoreTC, WalkTest walkTest) {
     // XXX: cache?
 
@@ -38,14 +39,12 @@ class AllFields {
     Class c = o.getClass();
     while (c != OBJECT && (walkTest == null || walkTest.includeFieldsForType(c))) {
       Field[] fields = c.getDeclaredFields();
-      for (int i = 0; i < fields.length; i++) {
-        Field f = fields[i];
-
+      for (Field f : fields) {
         if (Modifier.isStatic(f.getModifiers())) {
           continue;
         }
 
-        if (ignoreTC && f.getName().startsWith(ByteCodeUtil.TC_FIELD_PREFIX)) {
+        if (ignoreTC && f.getName().startsWith(TC_FIELD_PREFIX)) {
           continue;
         }
 
