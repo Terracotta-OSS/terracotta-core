@@ -8,7 +8,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCClassNotFoundException;
-import com.tc.exception.TCError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -185,9 +184,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("5) A lock has been specified but was applied to an object before that object was shared.");
     errorMsg.append(StringUtil.LINE_SEPARATOR).append(StringUtil.LINE_SEPARATOR);
-    errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:");
-    errorMsg.append(StringUtil.LINE_SEPARATOR);
-    errorMsg.append(TCError.TROUBLE_SHOOTING_GUIDE);
 
     return Util.getFormattedMessage(errorMsg.toString());
   }

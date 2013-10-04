@@ -8,8 +8,6 @@ package com.tc.exception;
  * The base class for all Terracotta errors.
  */
 public class TCError extends Error {
-  
-  public static final String TROUBLE_SHOOTING_GUIDE = "http://www.terracotta.org/confluence/display/docs/Troubleshooting+Guide";
 
   public TCError() {
     super();
