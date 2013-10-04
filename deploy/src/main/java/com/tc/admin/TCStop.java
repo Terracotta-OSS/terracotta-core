@@ -28,7 +28,6 @@ import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -181,6 +180,7 @@ public class TCStop {
       CommonL2Config serverConfig = manager.commonL2ConfigFor(name);
 
       host = serverConfig.jmxPort().getBind();
+      if (host == null || host.equals("0.0.0.0")) host = serverConfig.host();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
       port = serverConfig.jmxPort().getIntValue();
@@ -291,24 +291,13 @@ public class TCStop {
 
   private ServerGroupInfo getCurrentServerGroup(TCServerInfoMBean tcServerInfo) throws UnknownHostException {
     ServerGroupInfo[] serverGroupInfos = tcServerInfo.getServerGroupInfo();
-    InetAddress ipAddress = null;
-    ipAddress = getIpAddressOfServer(host);
     for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
       L2Info[] members = serverGroupInfo.members();
       for (L2Info l2Info : members) {
-        if (l2Info.getInetAddress().equals(ipAddress) && l2Info.jmxPort() == port) { return serverGroupInfo; }
+        if (l2Info.name().equals(tcServerInfo.getL2Identifier())) { return serverGroupInfo; }
       }
     }
     return null;
-  }
-
-  private InetAddress getIpAddressOfServer(final String name) throws UnknownHostException {
-    InetAddress address;
-    address = InetAddress.getByName(name);
-    if (address.isLoopbackAddress()) {
-      address = InetAddress.getLocalHost();
-    }
-    return address;
   }
 
   private boolean isPassiveStandBy(L2Info l2Info) throws Exception {
