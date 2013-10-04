@@ -14,8 +14,6 @@ import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectServerMap;
 import com.tc.platform.PlatformService;
@@ -32,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -39,7 +38,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
     OnGCCallable {
 
-  private static final TCLogger                    LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
+  // private static final TCLogger LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
   private volatile AggregateServerMap<K, V>        aggregateServerMap;
   private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
   private volatile ToolkitCacheImplInterface<K, V> localDelegate;
@@ -47,6 +46,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private volatile BulkLoadToolkitCache<K, V>      bulkloadCache;
   private final String                             name;
   private volatile OnGCCallable                    onGCCallable;
+  private final AtomicBoolean                      delegateSwitched = new AtomicBoolean(false);
   // lock used to protect the state of activeDelegate and localDelegate.
   private final ReadWriteLock                      lock = new ReentrantReadWriteLock();
   public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate,
@@ -81,8 +81,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void doRejoinStarted() {
     writeLock();
     try {
-      this.currentDelegate = this.activeDelegate;
-      this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
+      if (!delegateSwitched.get()) {
+        this.currentDelegate = this.activeDelegate;
+        this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheImplInterface.class);
+        delegateSwitched.set(true);
+      }
       aggregateServerMap.rejoinStarted();
       bulkloadCache.rejoinCleanUp();
     } finally {
@@ -99,6 +102,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
       bulkloadCache.rejoinCompleted();
       if (aggregateServerMap.isLookupSuccessfulAfterRejoin()) {
         this.activeDelegate = this.currentDelegate;
+        delegateSwitched.set(false);
       } else {
         destroyApplicator.applyDestroy();
       }
