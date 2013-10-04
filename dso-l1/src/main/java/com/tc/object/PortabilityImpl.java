@@ -12,8 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PortabilityImpl implements Portability {
 
-  private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
-
   private final Map<Class, Boolean>           portableCache          = new ConcurrentHashMap();
   private final DSOClientConfigHelper         config;
 
@@ -38,10 +36,6 @@ public class PortabilityImpl implements Portability {
     return bool;
   }
 
-  @Override
-  public boolean isInstrumentationNotNeeded(String clazzName) {
-    return nonInstrumentedClasses.isInstrumentationNotNeeded(clazzName);
-  }
 
   @Override
   public boolean isPortableInstance(Object obj) {

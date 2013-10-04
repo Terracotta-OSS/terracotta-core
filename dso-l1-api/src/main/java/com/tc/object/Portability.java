@@ -8,8 +8,6 @@ public interface Portability {
 
   public boolean isPortableClass(Class clazz);
 
-  public boolean isInstrumentationNotNeeded(String name);
-
   public boolean isPortableInstance(Object obj);
 
 }

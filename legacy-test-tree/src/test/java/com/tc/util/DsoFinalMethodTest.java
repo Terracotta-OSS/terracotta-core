@@ -135,11 +135,6 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class TestPortability implements Portability {
 
     @Override
-    public boolean isInstrumentationNotNeeded(final String name) {
-      return false;
-    }
-
-    @Override
     public boolean isPortableClass(final Class clazz) {
       return true;
     }
