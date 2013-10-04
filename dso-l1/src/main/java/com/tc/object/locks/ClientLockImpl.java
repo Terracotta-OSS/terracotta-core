@@ -1290,7 +1290,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       if (this.greediness.isGarbage()) {
         return true;
       } else {
-        recall(remote, ServerLockLevel.WRITE, -1, true);
+        // batching can cause race explained in ENG-422
+        recall(remote, ServerLockLevel.WRITE, -1, false);
         return false;
       }
     } else {

@@ -28,7 +28,8 @@ public class LockRecallHandler extends AbstractEventHandler implements LockRecal
   @Override
   public void recallLocksInline(final Set<LockID> locks) {
     for (final LockID lock : locks) {
-      this.lockManager.recall(null, null, lock, ServerLockLevel.WRITE, -1, true);
+      // batching can cause race explained in ENG-422
+      this.lockManager.recall(null, null, lock, ServerLockLevel.WRITE, -1, false);
     }
   }
 

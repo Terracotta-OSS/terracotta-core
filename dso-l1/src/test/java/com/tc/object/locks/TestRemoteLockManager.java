@@ -147,6 +147,8 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   @Override
   public void recallCommit(LockID lockID, Collection contexts, boolean batch) {
+    // eng-422 batching has a race and should not be used
+    Assert.assertFalse(batch);
     return;
   }
 

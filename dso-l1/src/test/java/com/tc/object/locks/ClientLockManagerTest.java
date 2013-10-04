@@ -4,6 +4,10 @@
  */
 package com.tc.object.locks;
 
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
@@ -20,6 +24,8 @@ import com.tc.management.L1Info;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.object.ClientConfigurationContext;
+import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.object.locks.TestRemoteLockManager.LockResponder;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -43,6 +49,7 @@ import com.tc.util.runtime.ThreadIDMapImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -1263,6 +1270,56 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
     lockManager.unlock(lid0, LockLevel.WRITE);
+  }
+
+  public void testLockRecallHandlerNotUseBatching() throws Exception {
+    NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(Integer.MAX_VALUE);
+
+    final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(
+                                                                                  new NullTCLogger(),
+                                                                                  sessionManager,
+                                                                                  rmtLockManager,
+                                                                                  threadManager,
+                                                                                  testClientLockManagerConfig,
+                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                                  ABORTABLE_OPERATION_MANAGER,
+                                                                                  taskRunner);
+    rmtLockManager.setClientLockManager(clientLockManagerImpl);
+
+    final LockID lockID1 = new StringLockID("1");
+    final ThreadID threadID1 = new ThreadID(1);
+
+    rmtLockManager.lockResponder = new LockResponder() {
+
+      @Override
+      public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+        new Thread() {
+          @Override
+          public void run() {
+            clientLockManagerImpl.award(gid, sessionManager.getSessionID(gid), lock, ThreadID.VM_ID, level);
+          }
+        }.start();
+      }
+    };
+
+    threadManager.setThreadID(threadID1);
+    clientLockManagerImpl.lock(lockID1, LockLevel.WRITE);
+    clientLockManagerImpl.unlock(lockID1, LockLevel.WRITE);
+    LockRecallHandler recallHandler = new LockRecallHandler();
+    ClientConfigurationContext configurationContext = Mockito.mock(ClientConfigurationContext.class);
+    Mockito.when(configurationContext.getLockManager()).thenAnswer(new Answer<ClientLockManager>() {
+
+      @Override
+      public ClientLockManager answer(InvocationOnMock invocation) throws Throwable {
+        return clientLockManagerImpl;
+      }
+    });
+    recallHandler.initialize(configurationContext);
+    HashSet<LockID> set = new HashSet<LockID>();
+    set.add(lockID1);
+    recallHandler.recallLocksInline(set);
+
+    assertEquals(0, clientLockManagerImpl.getAllLockContexts().size());
   }
 
   private void pause() {
