@@ -34,25 +34,4 @@ public class ThreadUtil {
       }
     }
   }
-
-  /**
-   * @return <code>true</code> if the call to Thread.sleep() was successful, <code>false</code> if the call was
-   *         interrupted.
-   */
-  public static boolean tryToSleep(long millis) {
-    boolean slept = false;
-    try {
-      Thread.sleep(millis);
-      slept = true;
-    } catch (InterruptedException ie) {
-      slept = false;
-    }
-    return slept;
-  }
-
-  public static void printStackTrace(StackTraceElement ste[]) {
-    for (int i = 0; i < ste.length; i++) {
-      System.err.println("\tat " + ste[i]);
-    }
-  }
 }

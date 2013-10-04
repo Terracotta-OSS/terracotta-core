@@ -3,9 +3,6 @@
  */
 package com.tc.util.runtime;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -223,43 +220,7 @@ public final class VmVersion {
   }
 
   private static String runtimeVersion(Properties props) {
-    if (thisVMisIBM()) {
-      // It's not safe to read "java.runtime.version" from system properties
-      // until a certain point in startup
-      // Specifically there is a race to set this prop in
-      // com.ibm.misc.SystemIntialization.lastChanceHook() and the
-      // start of the management agent thread there (MNK-393)
-      return getIBMRuntimeVersion();
-    } else {
-      return props.getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>");
-    }
-  }
-
-  static boolean thisVMisIBM() {
-    return isIBM(System.getProperties());
-  }
-
-  private static String getIBMRuntimeVersion() {
-    Properties props = new Properties();
-    try {
-      InputStream is = Class.class.getResourceAsStream("/javasdkversion.properties");
-      if (is != null) {
-        props.load(is);
-        String version = props.getProperty("sdk.version");
-        if (version != null) { return version; }
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      Class c = Class.forName("com.ibm.misc.JavaRuntimeVersion");
-      Method m = c.getDeclaredMethod("getValue", new Class[] {});
-      m.setAccessible(true);
-      return (String) m.invoke(c, new Object[] {});
-    } catch (Throwable t) {
-      throw new RuntimeException(t);
-    }
+    return props.getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>");
   }
 
   private static boolean isAzul(Properties props) {
