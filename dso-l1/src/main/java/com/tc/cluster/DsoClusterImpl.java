@@ -6,7 +6,6 @@ package com.tc.cluster;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -126,8 +125,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
-      throws UnclusteredObjectException {
+  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys) {
     Assert.assertNotNull(clusterMetaDataManager);
 
     if (null == keys || 0 == keys.size() || null == map) { return Collections.emptyMap(); }

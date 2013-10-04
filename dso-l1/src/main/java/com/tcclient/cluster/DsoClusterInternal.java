@@ -6,7 +6,6 @@ package com.tcclient.cluster;
 
 import com.tc.async.api.Stage;
 import com.tc.cluster.DsoCluster;
-import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.object.ClearableCallback;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
@@ -41,7 +40,6 @@ public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEvents
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node);
 
-  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
-      throws UnclusteredObjectException;
+  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys);
 
 }

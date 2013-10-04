@@ -6,7 +6,6 @@ package com.tctest.jdk15;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.ImplementMe;
 import com.tcclient.cluster.DsoNode;
 
@@ -37,23 +36,23 @@ public class DummyDsoCluster implements DsoCluster {
     throw new ImplementMe();
   }
 
-  public <K> Set<K> getKeysForLocalValues(Map<K, ?> map) throws UnclusteredObjectException {
+  public <K> Set<K> getKeysForLocalValues(Map<K, ?> map) {
     throw new ImplementMe();
   }
 
-  public <K> Set<K> getKeysForOrphanedValues(Map<K, ?> map) throws UnclusteredObjectException {
+  public <K> Set<K> getKeysForOrphanedValues(Map<K, ?> map) {
     throw new ImplementMe();
   }
 
-  public Set<DsoNode> getNodesWithObject(Object object) throws UnclusteredObjectException {
+  public Set<DsoNode> getNodesWithObject(Object object) {
     throw new ImplementMe();
   }
 
-  public Map<?, Set<DsoNode>> getNodesWithObjects(Object... objects) throws UnclusteredObjectException {
+  public Map<?, Set<DsoNode>> getNodesWithObjects(Object... objects) {
     throw new ImplementMe();
   }
 
-  public Map<?, Set<DsoNode>> getNodesWithObjects(Collection<?> objects) throws UnclusteredObjectException {
+  public Map<?, Set<DsoNode>> getNodesWithObjects(Collection<?> objects) {
     throw new ImplementMe();
   }
 
