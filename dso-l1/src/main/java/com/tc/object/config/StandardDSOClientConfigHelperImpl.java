@@ -98,10 +98,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return this.portability;
   }
 
-  public LockDefinition createLockDefinition(final String name, final ConfigLockLevel level) {
-    return new LockDefinitionImpl(name, level);
-  }
-
   @Override
   public CommonL1Config getNewCommonL1Config() {
     return configSetupManager.commonL1Config();

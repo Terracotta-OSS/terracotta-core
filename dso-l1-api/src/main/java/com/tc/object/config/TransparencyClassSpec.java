@@ -53,22 +53,6 @@ public interface TransparencyClassSpec {
   public boolean isForeign();
 
   /**
-   * Examine lock definitions to find the the one that makes the method autolocked
-   * 
-   * @param lds Lock defs
-   * @return null if no LockDefinitions exists that makes the method autolocked.
-   */
-  public LockDefinition getAutoLockDefinition(LockDefinition lds[]);
-
-  /**
-   * Find lock definition that makes method not autolocked
-   * 
-   * @param lds Lock defs
-   * @return Lock def or null if none
-   */
-  public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]);
-
-  /**
    * Get the class name for this spec
    * 
    * @return Name
@@ -96,15 +80,6 @@ public interface TransparencyClassSpec {
    * @return True if ignoreRewrite
    */
   public boolean isIgnoreRewrite();
-
-  /**
-   * Get lock definition for locked method
-   * 
-   * @param access Access modifiers
-   * @param lds Lock defs
-   * @return Lock definition
-   */
-  public LockDefinition getLockMethodLockDefinition(int access, LockDefinition lds[]);
 
   /**
    * @return Change applicator specification

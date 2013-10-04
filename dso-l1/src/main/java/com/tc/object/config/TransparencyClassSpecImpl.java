@@ -4,7 +4,6 @@
  */
 package com.tc.object.config;
 
-import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,27 +95,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return preInstrumented;
   }
 
-  /**
-   * returns null if no LockDefinitions exists that makes the method autolocked.
-   */
-  @Override
-  public LockDefinition getAutoLockDefinition(final LockDefinition lds[]) {
-    if (lds == null) return null;
-    for (LockDefinition ld : lds) {
-      if (ld.isAutolock()) { return ld; }
-    }
-    return null;
-  }
-
-  @Override
-  public LockDefinition getNonAutoLockDefinition(final LockDefinition lds[]) {
-    if (lds == null) return null;
-    for (int i = 0; i < lds.length; i++) {
-      if (!lds[i].isAutolock()) { return lds[i]; }
-    }
-    return null;
-  }
-
   @Override
   public String getClassName() {
     return className;
@@ -135,19 +113,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   @Override
   public boolean ignoreChecks() {
     return TransparencyClassSpecUtil.ignoreChecks(className);
-  }
-
-  /**
-   * returns null if no LockDefinitions exists that makes the method locked.
-   */
-  @Override
-  public LockDefinition getLockMethodLockDefinition(final int access, final LockDefinition lds[]) {
-    if (lds == null) return null;
-    for (int i = 0; i < lds.length; i++) {
-      if ((lds[i].isAutolock() && Modifier.isSynchronized(access) && !Modifier.isStatic(access))
-          || !lds[i].isAutolock()) { return lds[i]; }
-    }
-    return null;
   }
 
   @Override
