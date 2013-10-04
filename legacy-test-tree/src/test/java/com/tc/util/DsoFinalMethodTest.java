@@ -25,7 +25,6 @@ import com.tc.object.TestClassFactory;
 import com.tc.object.TestObjectFactory;
 import com.tc.object.TestRemoteObjectManager;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.loaders.ClassProvider;
@@ -57,7 +56,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                                                                      new MockSink());
     objectFactory.peerObject = this.rootObject;
     objectFactory.tcObject = tcObject;
-    this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
+    this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(),
                                                          new ObjectIDProviderImpl(new SimpleSequence()),
                                                          new ClientIDProviderImpl(new TestChannelIDProvider()),
                                                          new MockClassProvider(), new TestClassFactory(),
@@ -95,13 +94,12 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
 
   private static class MockClientObjectManagerImpl extends ClientObjectManagerImpl {
     public MockClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
-                                       final DSOClientConfigHelper clientConfiguration,
                                        final ObjectIDProvider idProvider,
                                        final ClientIDProvider provider, final ClassProvider classProvider,
                                        final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                        final TCObjectSelfStore tcObjectSelfStore) {
-      super(remoteObjectManager, clientConfiguration, idProvider, provider, classProvider, classFactory,
-            objectFactory, new TestPortability(), null, null, tcObjectSelfStore, new NullAbortableOperationManager());
+      super(remoteObjectManager, idProvider, provider, classProvider, classFactory, objectFactory,
+            new TestPortability(), null, tcObjectSelfStore, new NullAbortableOperationManager());
     }
 
     @Override

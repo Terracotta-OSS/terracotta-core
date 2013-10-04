@@ -96,7 +96,7 @@ public interface DSOClientBuilder {
                                                 final AbortableOperationManager abortableOperationManager,
                                                 final TaskRunner taskRunner);
 
-  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, 
+  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                       final RemoteObjectManager remote,
                                                       final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
@@ -118,11 +118,11 @@ public interface DSOClientBuilder {
                                                       final NodesWithKeysMessageFactory nwkmFactory);
 
   ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
-                                              final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,
+                                              final ObjectIDProvider idProvider,
                                               final ClientIDProvider clientIDProvider,
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
-                                              final Portability portability, final DSOClientMessageChannel dsoChannel,
+                                              final Portability portability,
                                               final ToggleableReferenceManager toggleRefMgr,
                                               TCObjectSelfStore tcObjectSelfStore,
                                               AbortableOperationManager abortableOperationManager);

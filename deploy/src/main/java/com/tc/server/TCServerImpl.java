@@ -782,7 +782,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServerConfigurationContext configContext = this.dsoServer.getContext();
     MBeanServer mBeanServer = this.dsoServer.getMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, mBeanServer);
-    mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
   }
 
   protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,

@@ -19,11 +19,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
-import com.tc.object.appevent.NonPortableEventContextFactory;
-import com.tc.object.appevent.ReadOnlyObjectEvent;
-import com.tc.object.appevent.ReadOnlyObjectEventContext;
-import com.tc.object.appevent.UnlockedSharedObjectEvent;
-import com.tc.object.appevent.UnlockedSharedObjectEventContext;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -71,13 +66,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private final RemoteTransactionManager       remoteTxnManager;
   private final ClientObjectManager            clientObjectManager;
   private final ClientLockManager              clientLockManager;
-  private final NonPortableEventContextFactory appEventContextFactory;
 
   private final ClientIDProvider               cidProvider;
 
   private final SampledCounter                 txCounter;
 
-  private final boolean                        sendErrors  = System.getProperty("project.name") != null;
   private final TCObjectSelfStore              tcObjectSelfStore;
   private final AbortableOperationManager      abortableOperationManager;
   private volatile int                         session     = 0;
@@ -96,7 +89,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     this.clientObjectManager = clientObjectManager;
     this.clientObjectManager.setTransactionManager(this);
     this.txCounter = txCounter;
-    this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
     this.tcObjectSelfStore = tcObjectSelfStore;
     this.abortableOperationManager = abortableOperationManager;
   }
@@ -670,18 +662,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                                        final String details, final Object context) {
     if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
       final ReadOnlyException roe = makeReadOnlyException(details);
-      if (this.sendErrors) {
-        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
-            .createReadOnlyObjectEventContext(context, roe);
-        this.clientObjectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
-      }
       return roe;
     } else {
-      if (this.sendErrors) {
-        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
-            .createUnlockedSharedObjectEventContext(context, usoe);
-        this.clientObjectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
-      }
       return usoe;
     }
   }
@@ -691,18 +673,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                                        final String classname, final String fieldname) {
     if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
       final ReadOnlyException roe = makeReadOnlyException(details);
-      if (this.sendErrors) {
-        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
-            .createReadOnlyObjectEventContext(context, classname, fieldname, roe);
-        this.clientObjectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
-      }
       return roe;
     } else {
-      if (this.sendErrors) {
-        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
-            .createUnlockedSharedObjectEventContext(context, classname, fieldname, usoe);
-        this.clientObjectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
-      }
       return usoe;
     }
   }
@@ -713,20 +685,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                                        final Object[] parameters) {
     if (this.clientLockManager.isLockedByCurrentThread(LockLevel.READ)) {
       final ReadOnlyException roe = makeReadOnlyException(details);
-      if (this.sendErrors) {
-        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
-            .createReadOnlyObjectEventContext(context, roe);
-        context = this.clientObjectManager.cloneAndInvokeLogicalOperation(context, methodName, parameters);
-        this.clientObjectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
-      }
       return roe;
     } else {
-      if (this.sendErrors) {
-        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
-            .createUnlockedSharedObjectEventContext(context, usoe);
-        context = this.clientObjectManager.cloneAndInvokeLogicalOperation(context, methodName, parameters);
-        this.clientObjectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
-      }
       return usoe;
     }
   }

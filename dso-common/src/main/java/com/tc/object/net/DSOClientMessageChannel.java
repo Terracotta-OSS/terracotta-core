@@ -14,8 +14,6 @@ import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -25,6 +23,7 @@ import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.msg.SearchRequestMessageFactory;
+import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.util.TCTimeoutException;
 
@@ -75,8 +74,6 @@ public interface DSOClientMessageChannel {
   public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory();
 
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory();
-
-  public JMXMessage getJMXMessage();
 
   public GroupID[] getGroupIDs();
 

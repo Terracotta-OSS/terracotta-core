@@ -21,8 +21,6 @@ import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessage;
@@ -42,6 +40,7 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.msg.SearchQueryRequestMessage;
 import com.tc.object.msg.SearchRequestMessageFactory;
+import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
@@ -187,11 +186,6 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   @Override
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) this.channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
-  }
-
-  @Override
-  public JMXMessage getJMXMessage() {
-    return (JMXMessage) this.channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
   @Override

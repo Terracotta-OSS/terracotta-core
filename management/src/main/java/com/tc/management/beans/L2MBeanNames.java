@@ -19,7 +19,6 @@ public class L2MBeanNames {
 
   //XXX: this for test, to read server data when active-active is running.
   public static final ObjectName LOCAL_DGC_STATS;
-  public static final ObjectName DSO_APP_EVENTS;
   public static final ObjectName OBJECT_MANAGEMENT;
   public static final ObjectName DUMPER;
   public static final ObjectName LOCK_STATISTICS;
@@ -32,7 +31,6 @@ public class L2MBeanNames {
       LOGGER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Logger", TerracottaManagement.MBeanDomain.INTERNAL);
       DSO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
       LOCAL_DGC_STATS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "DSO Server", TerracottaManagement.MBeanDomain.PUBLIC);
-      DSO_APP_EVENTS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Application Events", TerracottaManagement.MBeanDomain.INTERNAL);
       OBJECT_MANAGEMENT = TerracottaManagement.createObjectName(Type.Server, Subsystem.ObjectManagement, null, "ObjectManagement", TerracottaManagement.MBeanDomain.PUBLIC);
       DUMPER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "L2Dumper", TerracottaManagement.MBeanDomain.INTERNAL);
       LOCK_STATISTICS = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Lock Statistics", TerracottaManagement.MBeanDomain.INTERNAL);

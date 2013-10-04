@@ -20,8 +20,6 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -31,6 +29,7 @@ import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.msg.SearchRequestMessageFactory;
+import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.session.SessionID;
@@ -119,11 +118,6 @@ public class MockChannel implements DSOClientMessageChannel {
 
   @Override
   public void open(final char[] password) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public JMXMessage getJMXMessage() {
     throw new ImplementMe();
   }
 

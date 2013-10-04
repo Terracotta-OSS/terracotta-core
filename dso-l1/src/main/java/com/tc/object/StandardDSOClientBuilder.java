@@ -174,19 +174,17 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   @Override
   public ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
-                                                     final DSOClientConfigHelper dsoConfig,
                                                      final ObjectIDProvider idProvider,
                                                      final ClientIDProvider clientIDProvider,
                                                      final ClassProvider classProviderLocal,
                                                      final TCClassFactory classFactory,
                                                      final TCObjectFactory objectFactory,
                                                      final Portability portability,
-                                                     final DSOClientMessageChannel dsoChannel,
                                                      final ToggleableReferenceManager toggleRefMgr,
                                                      TCObjectSelfStore tcObjectSelfStore,
                                                      AbortableOperationManager abortableOperationManager) {
-    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, clientIDProvider,
-                                       classProviderLocal, classFactory, objectFactory, portability, dsoChannel,
+    return new ClientObjectManagerImpl(remoteObjectManager, idProvider, clientIDProvider, classProviderLocal,
+                                       classFactory, objectFactory, portability,
                                        toggleRefMgr, tcObjectSelfStore, abortableOperationManager);
   }
 
@@ -317,7 +315,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, remoteObjectManager, dsoChannel.getServerMapMessageFactory(), 
+    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, remoteObjectManager, dsoChannel.getServerMapMessageFactory(),
                                           sessionManager, globalLocalCacheManager, abortableOperationManager,
                                           taskRunner);
   }
