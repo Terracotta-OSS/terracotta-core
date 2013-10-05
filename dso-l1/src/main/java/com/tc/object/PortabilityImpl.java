@@ -5,7 +5,6 @@
 package com.tc.object;
 
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.util.ClassUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +30,7 @@ public class PortabilityImpl implements Portability {
     String clazzName = clazz.getName();
 
     boolean bool = LiteralValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
-                   || ClassUtils.isPortableReflectionClass(clazz);
+                   || clazz == Object.class;
     portableCache.put(clazz, Boolean.valueOf(bool));
     return bool;
   }

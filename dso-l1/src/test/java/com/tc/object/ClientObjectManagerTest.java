@@ -64,6 +64,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.classProvider = new MockClassProvider();
     this.classFactory = new TestClassFactory();
     this.objectFactory = new TestObjectFactory();
+    this.clientConfiguration = configHelper();
     this.tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(), new MockSink(),
                                                                   new MockSink(), new MockSink());
 

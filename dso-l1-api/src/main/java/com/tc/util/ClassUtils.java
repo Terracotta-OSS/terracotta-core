@@ -4,19 +4,12 @@
  */
 package com.tc.util;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.text.ParseException;
 
 /**
  * Class utility methods
  */
 public class ClassUtils {
-
-  private static final Class METHOD_CLASS = Method.class;
-  private static final Class CONSTRUCTOR_CLASS = Constructor.class;
-  private static final Class FIELD_CLASS = Field.class;
 
   /**
    * Convert fully-qualified field name like "mypackage.MyClass.myField" into a specification which
@@ -88,15 +81,6 @@ public class ClassUtils {
       c = c.getSuperclass();
     }
     return false;
-  }
-
-  /**
-   * Check whether c is a portable java reflection class like Method, Constructor, or Field
-   * @param c Class
-   * @return True if portable
-   */
-  public static boolean isPortableReflectionClass(Class c) {
-    return METHOD_CLASS == c || CONSTRUCTOR_CLASS == c || FIELD_CLASS == c;
   }
 
   /**
