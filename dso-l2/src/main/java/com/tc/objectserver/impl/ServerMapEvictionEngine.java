@@ -31,7 +31,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -200,7 +199,7 @@ public class ServerMapEvictionEngine extends AbstractServerTransactionListener {
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print("isStarted:" + this.isStarted).flush();
-    out.indent().print("currentlyEvicting:" + this.currentlyEvicting).flush();
+    out.indent().print("currentlyEvicting:" + currentlyEvicting()).flush();
     return out;
   }
 
