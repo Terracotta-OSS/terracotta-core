@@ -323,15 +323,11 @@ public class ClientConnectionEstablisher {
   }
 
   private void putConnectionRequest(ConnectionRequest request) {
-
-    // we should ignore adding any connection request if allowReconnects is false and
-    // either this code is running for l2 or this CCE thread is not marked stopped
     if (!this.allowReconnects.get() || asyncReconnect.isStopped()) {
       LOGGER.info("Ignoring connection request: " + request + " as allowReconnects: " + allowReconnects.get()
                   + ", asyncReconnect.isStopped(): " + asyncReconnect.isStopped());
       return;
     }
-
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
     if (request.getClientMessageTransport() != null && request.getClientMessageTransport().wasOpened()) {
       asyncReconnect.startThreadIfNecessary();
@@ -342,11 +338,10 @@ public class ClientConnectionEstablisher {
   }
 
   public void quitReconnectAttempts() {
-    if (allowReconnects.compareAndSet(true, false)) {
-      asyncReconnect.stop();
-      if (!isReconnectBetweenL2s()) {
-        this.asyncReconnect.waitforTermination();
-      }
+    allowReconnects.set(false);
+    asyncReconnect.stop();
+    if (!isReconnectBetweenL2s()) {
+      this.asyncReconnect.awaitTermination(true);
     }
   }
 
@@ -366,14 +361,17 @@ public class ClientConnectionEstablisher {
       return stopped;
     }
 
-    private void waitforTermination() {
+    private void awaitTermination(final boolean mayInterruptIfRunning) {
       synchronized (this) {
         connectionRequests.clear();
       }
+      LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
       boolean isInterrupted = false;
       try {
         if (Thread.currentThread() != connectionEstablisherThread && connectionEstablisherThread != null) {
-          connectionEstablisherThread.interrupt();
+          if (mayInterruptIfRunning) {
+            connectionEstablisherThread.interrupt();
+          }
           connectionEstablisherThread.join();
         }
       } catch (InterruptedException e) {

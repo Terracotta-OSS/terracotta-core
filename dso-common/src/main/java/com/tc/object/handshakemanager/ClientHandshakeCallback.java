@@ -9,6 +9,9 @@ import com.tc.object.msg.ClientHandshakeMessage;
 
 public interface ClientHandshakeCallback extends ClearableCallback {
 
+  /**
+   * Pauses this callback, should be UnInterruptable.
+   */
   public void pause(NodeID remoteNode, int disconnected);
 
   public void unpause(NodeID remoteNode, int disconnected);

@@ -169,6 +169,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   @Override
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
+    if (isShutdown) { throw new TCNotRunningException("TCObjectSelfStore already shutdown"); }
     if (tcoSelf != null) {
       tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(tcoSelf);
     }

@@ -174,11 +174,16 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       if (this.status == PAUSED) { throw new AssertionError("Attempt to pause while already paused state."); }
       this.status = PAUSED;
     }
-    try {
-      batchManager.stop();
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
+    boolean isInterrupted = false;
+    while (true) {
+      try {
+        batchManager.stop();
+        break;
+      } catch (InterruptedException ie) {
+        isInterrupted = true;
+      }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   @Override
@@ -749,6 +754,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
           }
         }
       }, "Batch dispatch thread");
+      stopping = false;
       agent.setDaemon(true);
       agent.start();
     }
