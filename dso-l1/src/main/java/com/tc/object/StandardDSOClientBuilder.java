@@ -73,7 +73,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
-import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
@@ -178,12 +177,11 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                      final TCClassFactory classFactory,
                                                      final TCObjectFactory objectFactory,
                                                      final Portability portability,
-                                                     final ToggleableReferenceManager toggleRefMgr,
                                                      TCObjectSelfStore tcObjectSelfStore,
                                                      AbortableOperationManager abortableOperationManager) {
     return new ClientObjectManagerImpl(remoteObjectManager, idProvider, clientIDProvider, classProviderLocal,
-                                       classFactory, objectFactory, portability,
-                                       toggleRefMgr, tcObjectSelfStore, abortableOperationManager);
+                                       classFactory, objectFactory, portability, tcObjectSelfStore,
+                                       abortableOperationManager);
   }
 
   @Override
@@ -199,7 +197,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
     final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
-                                                                      defaultGroups[0], lockRequestMessageFactory,
+                                                                          defaultGroups[0], lockRequestMessageFactory,
                                                                           gtxManager, taskRunner);
     return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteLockManager, threadManager, config,
                                      abortableOperationManager, taskRunner);
@@ -306,9 +304,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, remoteObjectManager, dsoChannel.getServerMapMessageFactory(),
-                                          sessionManager, globalLocalCacheManager, abortableOperationManager,
-                                          taskRunner);
+    return new RemoteServerMapManagerImpl(defaultGroups[0], logger, remoteObjectManager,
+                                          dsoChannel.getServerMapMessageFactory(), sessionManager,
+                                          globalLocalCacheManager, abortableOperationManager, taskRunner);
   }
 
   @Override
@@ -325,7 +323,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public RemoteResourceManager createRemoteResourceManager(final RemoteTransactionManager mgr, final DSOClientMessageChannel dsoChannel,
+  public RemoteResourceManager createRemoteResourceManager(final RemoteTransactionManager mgr,
+                                                           final DSOClientMessageChannel dsoChannel,
                                                            AbortableOperationManager abortableOperationManager) {
     return new RemoteResourceManagerImpl(mgr, abortableOperationManager);
   }

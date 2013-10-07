@@ -26,7 +26,6 @@ import com.tc.object.loaders.Namespace;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -35,7 +34,6 @@ import com.tc.util.AbortedOperationUtil;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.State;
-import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.Util;
 import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.StoppableThread;
@@ -97,7 +95,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final TCLogger                         logger;
 
   private final Portability                      portability;
-  private final ToggleableReferenceManager       referenceManager;
   private final ReferenceQueue                   referenceQueue               = new ReferenceQueue();
 
   private final Map<ObjectID, ObjectLookupState> objectLatchStateMap          = new HashMap<ObjectID, ObjectLookupState>();
@@ -116,25 +113,23 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager, final ObjectIDProvider idProvider,
                                  final ClientIDProvider provider, final ClassProvider classProvider,
                                  final TCClassFactory classFactory, final TCObjectFactory objectFactory,
-                                 final Portability portability, final ToggleableReferenceManager referenceManager,
-                                 TCObjectSelfStore tcObjectSelfStore,
+                                 final Portability portability, TCObjectSelfStore tcObjectSelfStore,
                                  AbortableOperationManager abortableOperationManager) {
     this(remoteObjectManager, idProvider, provider, classProvider, classFactory, objectFactory, portability,
-         referenceManager, tcObjectSelfStore, new RootsHolder(new GroupID[] { new GroupID(0) }),
+         tcObjectSelfStore, new RootsHolder(new GroupID[] { new GroupID(0) }),
          abortableOperationManager);
   }
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager, final ObjectIDProvider idProvider,
                                  final ClientIDProvider provider, final ClassProvider classProvider,
                                  final TCClassFactory classFactory, final TCObjectFactory objectFactory,
-                                 final Portability portability, final ToggleableReferenceManager referenceManager,
-                                 TCObjectSelfStore tcObjectSelfStore, RootsHolder holder,
+                                 final Portability portability, TCObjectSelfStore tcObjectSelfStore,
+                                 RootsHolder holder,
                                  AbortableOperationManager abortableOperationManager) {
     this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
     this.idProvider = idProvider;
     this.portability = portability;
-    this.referenceManager = referenceManager;
     this.logger = new ClientIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
     this.traverseTest = new NewObjectTraverseTest();
@@ -963,12 +958,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (exception != null) {
       wrapIfNeededAndThrow(exception);
     }
-  }
-
-  @Override
-  public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-    // We don't need ObjectID param anymore, but it is useful when debugging so I didn't remove it
-    return this.referenceManager.getOrCreateFor(peer);
   }
 
   private class AddManagedObjectAction implements TraversalAction, PostCreateMethodGatherer {

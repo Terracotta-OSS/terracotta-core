@@ -53,7 +53,6 @@ import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadIDManager;
@@ -122,7 +121,6 @@ public interface DSOClientBuilder {
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                               final Portability portability,
-                                              final ToggleableReferenceManager toggleRefMgr,
                                               TCObjectSelfStore tcObjectSelfStore,
                                               AbortableOperationManager abortableOperationManager);
 

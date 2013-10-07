@@ -25,7 +25,6 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 
 import java.lang.ref.WeakReference;
@@ -386,10 +385,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    @Override
-    public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-      throw new ImplementMe();
-    }
 
     @Override
     public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {

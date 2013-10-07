@@ -7,7 +7,6 @@ package com.tc.object;
 import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
@@ -278,11 +277,6 @@ public class MockTCObject implements TCObject {
   }
 
   public boolean isFieldPortableByOffset(final long fieldOffset) {
-    throw new ImplementMe();
-  }
-
-  @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
     throw new ImplementMe();
   }
 

@@ -16,7 +16,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.platform.PlatformService;
 
 import java.lang.ref.WeakReference;
@@ -204,11 +203,6 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   @Override
   public boolean autoLockingDisabled() {
     return delegate.autoLockingDisabled();
-  }
-
-  @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
-    return delegate.getOrCreateToggleRef();
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
 
@@ -327,15 +326,6 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param root New root value
    */
   public Object createOrReplaceRoot(String rootName, Object root);
-
-  /**
-   * Get or create the toggle reference for the given TCObject
-   * 
-   * @param objectID The TCObjet
-   * @param peer The peer object
-   * @return the toggle reference
-   */
-  ToggleableStrongReference getOrCreateToggleRef(ObjectID objectID, Object peer);
 
   /**
    * Create new WeakReference wrapper for the given id and peer object.

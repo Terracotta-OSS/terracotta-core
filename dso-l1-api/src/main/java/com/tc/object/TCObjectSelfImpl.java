@@ -8,7 +8,6 @@ import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.util.ToggleableStrongReference;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -207,11 +206,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
   @Override
   public void disableAutoLocking() {
     // No-op
-  }
-
-  @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
-    throw new UnsupportedOperationException();
   }
 
   public boolean isFieldPortableByOffset(long arg0) {
