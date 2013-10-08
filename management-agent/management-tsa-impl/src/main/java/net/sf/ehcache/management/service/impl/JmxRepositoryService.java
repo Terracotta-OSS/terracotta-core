@@ -19,6 +19,7 @@ import org.terracotta.management.resource.AgentMetadataEntity;
 import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.services.AgentService;
 import org.terracotta.session.management.SessionsService;
+import org.terracotta.session.management.resource.SessionDetailEntity;
 import org.terracotta.session.management.resource.SessionEntity;
 import org.terracotta.session.management.resource.SessionMetaDataEntity;
 
@@ -490,10 +491,9 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     }
     return globalResult;
   }
-  
+
   @Override
-  public Collection<SessionEntity> getSessionEntities(final Set<String> contextPaths)
-      throws ServiceExecutionException {
+  public Collection<SessionEntity> getSessionEntities(final String contextPath) throws ServiceExecutionException {
     Set<String> nodes = requestValidator.getValidatedNodes();
     final UserInfo userInfo = contextService.getUserInfo();
 
@@ -501,27 +501,25 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
     final long callTimeout = tsaManagementClientService.getCallTimeout();
     for (final String node : nodes) {
-      Future<Collection<SessionEntity>> future = executorService
-          .submit(new Callable<Collection<SessionEntity>>() {
-            @Override
-            public Collection<SessionEntity> call() throws Exception {
-              String token = userService.putUserInfo(userInfo);
-              String ticket = ticketMonitor.issueRequestTicket();
-              tsaManagementClientService.setCallTimeout(callTimeout);
+      Future<Collection<SessionEntity>> future = executorService.submit(new Callable<Collection<SessionEntity>>() {
+        @Override
+        public Collection<SessionEntity> call() throws Exception {
+          String token = userService.putUserInfo(userInfo);
+          String ticket = ticketMonitor.issueRequestTicket();
+          tsaManagementClientService.setCallTimeout(callTimeout);
 
-              try {
-                byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class,
-                                                                       ticket, token,
-                                                                       TSAConfig.getSecurityCallbackUrl(),
-                                                                       "getSessionEntities",
-                                                                       new Class<?>[] { Set.class },
-                                                                       new Object[] { contextPaths });
-                return rewriteAgentId((Collection<SessionEntity>) deserialize(bytes), node);
-              } finally {
-                tsaManagementClientService.clearCallTimeout();
-              }
-            }
-          });
+          try {
+            byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class,
+                                                                   ticket, token, TSAConfig.getSecurityCallbackUrl(),
+                                                                   "getSessionEntities",
+                                                                   new Class<?>[] { String.class },
+                                                                   new Object[] { contextPath });
+            return rewriteAgentId((Collection<SessionEntity>) deserialize(bytes), node);
+          } finally {
+            tsaManagementClientService.clearCallTimeout();
+          }
+        }
+      });
 
       futures.add(future);
     }
@@ -537,4 +535,85 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     }
     return globalResult;
   }
+
+  @Override
+  public Collection<SessionDetailEntity> getSessionDetailEntities(final String contextPath, final String sessionId)
+      throws ServiceExecutionException {
+    Set<String> nodes = requestValidator.getValidatedNodes();
+    final UserInfo userInfo = contextService.getUserInfo();
+
+    Collection<Future<Collection<SessionDetailEntity>>> futures = new ArrayList<Future<Collection<SessionDetailEntity>>>();
+
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
+    for (final String node : nodes) {
+      Future<Collection<SessionDetailEntity>> future = executorService
+          .submit(new Callable<Collection<SessionDetailEntity>>() {
+            @Override
+            public Collection<SessionDetailEntity> call() throws Exception {
+              String token = userService.putUserInfo(userInfo);
+              String ticket = ticketMonitor.issueRequestTicket();
+              tsaManagementClientService.setCallTimeout(callTimeout);
+
+              try {
+                byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class,
+                                                                       ticket, token,
+                                                                       TSAConfig.getSecurityCallbackUrl(),
+                                                                       "getSessionDetailEntities", new Class<?>[] {
+                                                                           String.class, String.class }, new Object[] {
+                                                                           contextPath, sessionId });
+                return rewriteAgentId((Collection<SessionDetailEntity>) deserialize(bytes), node);
+              } finally {
+                tsaManagementClientService.clearCallTimeout();
+              }
+            }
+          });
+
+      futures.add(future);
+    }
+
+    Collection<SessionDetailEntity> globalResult = new ArrayList<SessionDetailEntity>();
+    for (Future<Collection<SessionDetailEntity>> future : futures) {
+      try {
+        Collection<SessionDetailEntity> sessionDetailEntities = future.get();
+        globalResult.addAll(sessionDetailEntities);
+      } catch (Exception e) {
+        throw new ServiceExecutionException(e);
+      }
+    }
+    return globalResult;
+  }
+
+  @Override
+  public void invalidateSession(final String contextPath, final String sessionId) throws ServiceExecutionException {
+    final String node = requestValidator.getSingleValidatedNode();
+    final UserInfo userInfo = contextService.getUserInfo();
+
+    final long callTimeout = tsaManagementClientService.getCallTimeout();
+    Future<Boolean> future = executorService.submit(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        String token = userService.putUserInfo(userInfo);
+        String ticket = ticketMonitor.issueRequestTicket();
+        tsaManagementClientService.setCallTimeout(callTimeout);
+
+        try {
+          byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket,
+                                                                 token, TSAConfig.getSecurityCallbackUrl(),
+                                                                 "invalidateSession", new Class<?>[] { String.class,
+                                                                     String.class }, new Object[] { contextPath,
+                                                                     sessionId });
+          return (Boolean) deserialize(bytes);
+        } finally {
+          tsaManagementClientService.clearCallTimeout();
+        }
+      }
+    });
+    
+    try {
+      future.get();
+    } catch (Exception e) {
+      throw new ServiceExecutionException(e);
+    }
+  }
+
 }
