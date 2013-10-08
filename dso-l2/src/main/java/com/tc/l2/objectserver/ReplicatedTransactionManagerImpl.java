@@ -345,7 +345,11 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
             PendingRecord pr = (PendingRecord) j.next();
             long version = pr.getGlobalTransactionID().toLong();
             // XXX:: This should be true since we maintain the order in the List.
-            Assert.assertTrue(lastVersion < version);
+            if (lastVersion >= version) {
+              logger.error("Change versions received out of order. lastVersion=" + lastVersion + " version=" + version
+                           + ". Changes " + moreChanges);
+              Assert.assertTrue("lastVersion=" + lastVersion + " version=" + version, lastVersion < version);
+            }
             compoundChanges.add(new VersionizedDNAWrapper(pr.getChange(), version));
 
             lastVersion = version;
@@ -385,7 +389,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     private final Multimap<GlobalTransactionID, PendingRecord> gid2Changes = HashMultimap.create();
 
     void addToPending(ServerTransaction st, DNA dna) {
-      PendingRecord pr = new PendingRecord(dna, st.getGlobalTransactionID());
+      PendingRecord pr = new PendingRecord(st.getServerTransactionID(), dna, st.getGlobalTransactionID());
       ObjectID oid = dna.getObjectID();
       oid2Changes.put(oid, pr);
       gid2Changes.put(st.getGlobalTransactionID(), pr);
@@ -411,10 +415,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private static final class PendingRecord {
 
+    private final ServerTransactionID serverTransactionID;
     private final DNA                 dna;
     private final GlobalTransactionID gid;
 
-    public PendingRecord(DNA dna, GlobalTransactionID gid) {
+    public PendingRecord(final ServerTransactionID serverTransactionID, DNA dna, GlobalTransactionID gid) {
+      this.serverTransactionID = serverTransactionID;
       this.dna = dna;
       this.gid = gid;
     }
@@ -429,9 +435,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
     @Override
     public String toString() {
-      return String.format("DNA: %s, GID: %s", dna, gid);
+      return String.format("DNA: %s, GID: %s, SID: %s", dna, gid, serverTransactionID);
     }
-
   }
 
 }
