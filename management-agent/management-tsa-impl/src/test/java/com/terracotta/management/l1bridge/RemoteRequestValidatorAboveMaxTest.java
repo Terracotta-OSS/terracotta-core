@@ -1,17 +1,19 @@
-package net.sf.ehcache.management.resource.services.validator.impl;
+package com.terracotta.management.l1bridge;
 
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.terracotta.management.service.TsaManagementClientService;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -19,12 +21,12 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Anthony Dahanne
- *         This class is the same as JmxEhcacheRequestValidatorTest ;  but I had to separate the methods because of the use a
+ *         This class is the same as RemoteRequestValidatorTest ;  but I had to separate the methods because of the use a
  *         VM argument that sets a static field
  */
-public class JmxEhcacheRequestValidatorAboveMaxTest {
+public class RemoteRequestValidatorAboveMaxTest {
 
-  private JmxEhcacheRequestValidator requestValidator;
+  private RemoteRequestValidator requestValidator;
 
   @BeforeClass
   public static void staticSetUp() {
@@ -33,15 +35,15 @@ public class JmxEhcacheRequestValidatorAboveMaxTest {
 
   @Before
   public void setUp() throws Exception {
-    TsaManagementClientService tsaManagementClientService = mock(TsaManagementClientService.class);
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     HashSet<String> agentNodeNames = new HashSet<String>();
     agentNodeNames.add("localhost.home_59822");
     agentNodeNames.add("localhost.home_1212");
     agentNodeNames.add("localhost.home_4343");
     agentNodeNames.add("localhost.home_4545");
 
-    when(tsaManagementClientService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
-    requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
+    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
     requestValidator.setValidatedNodes(new HashSet<String>());
   }
 

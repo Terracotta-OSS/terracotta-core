@@ -3,37 +3,36 @@
  * notice. All rights reserved.
  */
 
-package net.sf.ehcache.management.resource.services.validator.impl;
+package com.terracotta.management.l1bridge;
 
-import com.terracotta.management.service.TsaManagementClientService;
-import net.sf.ehcache.management.resource.services.validator.AbstractEhcacheRequestValidator;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
+import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
 /**
- * <p/>
- * {@inheritDoc}
- *
  * @author Ludovic Orban
  */
-public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestValidator {
+public final class RemoteRequestValidator implements RequestValidator {
 
   private static final int MAXIMUM_CLIENTS_TO_DISPLAY = Integer.getInteger("com.terracotta.agent.defaultMaxClientsToDisplay", 64);
-  private final TsaManagementClientService tsaManagementClientService;
+  private final RemoteAgentBridgeService remoteAgentBridgeService;
 
   private static final ThreadLocal<Set<String>> tlNode = new ThreadLocal<Set<String>>();
 
-  public JmxEhcacheRequestValidator(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public RemoteRequestValidator(RemoteAgentBridgeService remoteAgentBridgeService) {
+    this.remoteAgentBridgeService = remoteAgentBridgeService;
   }
 
   /**
@@ -44,15 +43,16 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
     validateAgentSegment(info.getPathSegments());
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
+  public void validate(UriInfo info) {
+    validateAgentSegment(info.getPathSegments());
+  }
+
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
     String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
 
     try {
-      Set<String> nodes = tsaManagementClientService.getRemoteAgentNodeNames();
+      Set<String> nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
       if (ids == null) {
         // the user did not specify which clients to display; let's return them all if there aren't too many
         if (nodes.size() <= MAXIMUM_CLIENTS_TO_DISPLAY) {

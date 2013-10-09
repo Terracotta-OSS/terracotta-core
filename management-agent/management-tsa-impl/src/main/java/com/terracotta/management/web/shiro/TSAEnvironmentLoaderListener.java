@@ -3,11 +3,10 @@
  */
 package com.terracotta.management.web.shiro;
 
-import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
+import com.terracotta.management.l1bridge.RemoteRequestValidator;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
-import net.sf.ehcache.management.service.impl.JmxRepositoryService;
 
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.slf4j.Logger;
@@ -19,6 +18,8 @@ import org.terracotta.session.management.SessionsService;
 
 import com.tc.net.util.TSASSLSocketFactory;
 import com.terracotta.management.keychain.URIKeyName;
+import com.terracotta.management.l1bridge.RemoteAgentService;
+import com.terracotta.management.l1bridge.RemoteServiceStubGenerator;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.IdentityAssertionServiceClient;
@@ -93,10 +94,9 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       boolean sslEnabled = TSAConfig.isSslEnabled();
       ServiceLocator serviceLocator = new ServiceLocator();
 
-      // The following services are for monitoring the TSA itself
-      serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
+      /// TSA services ///
 
-      TsaManagementClientService tsaManagementClientService;
+      TsaManagementClientServiceImpl tsaManagementClientService;
       if (sslEnabled) {
         final TSASSLSocketFactory socketFactory = new TSASSLSocketFactory();
         jmxConnectorPool = new JmxConnectorPool("service:jmx:rmi://{0}:{1}/jndi/rmi://{0}:{1}/jmxrmi") {
@@ -141,8 +141,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       });
       tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, executorService, TSAConfig.getDefaultL1BridgeTimeout());
 
+      serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
-      serviceLocator.loadService(RemoteAgentBridgeService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
@@ -153,59 +153,66 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(ShutdownService.class, new ShutdownServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(JmxService.class, new JmxServiceImpl(tsaManagementClientService));
 
-      JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
-      AgentService l1Agent;
-      JmxRepositoryService repoSvc;
+      /// L1 bridge and Security Services ///
+
+      KeyChainAccessor kcAccessor;
+      IdentityAssertionServiceClient identityAssertionServiceClient;
+      ContextService contextService;
+      UserService userService;
+      RequestTicketMonitor requestTicketMonitor;
+      RequestIdentityAsserter identityAsserter;
 
       if (sslEnabled) {
-        KeyChainAccessor kcAccessor = TSAConfig.getKeyChain();
+        kcAccessor = TSAConfig.getKeyChain();
         String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
         Integer securityTimeout = TSAConfig.getSecurityTimeout();
         SSLContextFactory sslCtxtFactory = TSAConfig.getSSLContextFactory();
 
-        ContextService contextService = new DfltContextService();
-        UserService userService = new DfltUserService();
+        contextService = new DfltContextService();
+        userService = new DfltUserService();
         URI securityServiceLocationUri = securityServiceLocation == null ? null : new URI(securityServiceLocation);
         SecurityServiceDirectory securityServiceDirectory = new ConstantSecurityServiceDirectory(securityServiceLocationUri, securityTimeout);
-        IdentityAssertionServiceClient identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceDirectory, contextService);
-        RequestTicketMonitor requestTicketMonitor = new DfltRequestTicketMonitor();
-        TSAIdentityAsserter identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
-
-        repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService, executorService);
-        l1Agent = repoSvc;
-
-        serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
-        serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
-        serviceLocator.loadService(ContextService.class, contextService);
-        serviceLocator.loadService(UserService.class, userService);
-        serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
-        serviceLocator.loadService(RequestValidator.class, requestValidator);
-        serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
-        serviceLocator.loadService(CacheManagerService.class, repoSvc);
-        serviceLocator.loadService(CacheService.class, repoSvc);
-        serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
+        identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceDirectory, contextService);
+        requestTicketMonitor = new DfltRequestTicketMonitor();
+        identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
       } else {
-        ContextService contextService = new NullContextService();
-        UserService userService = new NullUserService();
-        RequestTicketMonitor requestTicketMonitor = new NullRequestTicketMonitor();
-        RequestIdentityAsserter identityAsserter = new NullIdentityAsserter();
-
-        repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService, executorService);
-        l1Agent = repoSvc;
-
-        serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
-        serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
-        serviceLocator.loadService(ContextService.class, contextService);
-        serviceLocator.loadService(UserService.class, userService);
-        serviceLocator.loadService(RequestValidator.class, requestValidator);
-        serviceLocator.loadService(CacheManagerService.class, repoSvc);
-        serviceLocator.loadService(CacheService.class, repoSvc);
-        serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
+        identityAssertionServiceClient = null;
+        kcAccessor = null;
+        contextService = new NullContextService();
+        userService = new NullUserService();
+        requestTicketMonitor = new NullRequestTicketMonitor();
+        identityAsserter = new NullIdentityAsserter();
       }
 
-      serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, l1Agent));
-      serviceLocator.loadService(SessionsService.class, repoSvc);
-      
+      RemoteRequestValidator requestValidator = new RemoteRequestValidator(tsaManagementClientService);
+      RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor, userService, contextService, requestValidator, tsaManagementClientService, executorService);
+
+      serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
+      serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
+      serviceLocator.loadService(ContextService.class, contextService);
+      serviceLocator.loadService(UserService.class, userService);
+      serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
+      serviceLocator.loadService(RequestValidator.class, requestValidator);
+      serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
+      serviceLocator.loadService(RemoteAgentBridgeService.class, tsaManagementClientService);
+
+      /// Compound Agent Service ///
+
+      RemoteAgentService remoteAgentService = new RemoteAgentService(tsaManagementClientService, contextService, executorService, requestTicketMonitor, userService);
+      serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, tsaManagementClientService, remoteAgentService));
+
+      /// Ehcache Services ///
+
+      serviceLocator.loadService(CacheManagerService.class, remoteServiceStubGenerator.newRemoteService(CacheManagerService.class));
+      serviceLocator.loadService(CacheService.class, remoteServiceStubGenerator.newRemoteService(CacheService.class));
+      serviceLocator.loadService(EntityResourceFactory.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactory.class));
+
+      /// Sessions Services ///
+
+      serviceLocator.loadService(SessionsService.class, remoteServiceStubGenerator.newRemoteService(SessionsService.class));
+
+      /// <end of services> ///
+
       ServiceLocator.load(serviceLocator);
 
       List<String> strings = tsaManagementClientService.performSecurityChecks();
@@ -215,7 +222,6 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       super.contextInitialized(sce);
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException("Error initializing TSAEnvironmentLoaderListener", e);
     }
   }

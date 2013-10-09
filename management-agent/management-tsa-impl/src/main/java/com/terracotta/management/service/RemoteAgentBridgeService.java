@@ -3,8 +3,9 @@
  */
 package com.terracotta.management.service;
 
-import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
+import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 
 import java.util.Map;
 import java.util.Set;
@@ -37,17 +38,11 @@ public interface RemoteAgentBridgeService {
    *
    * @param nodeName the remote agent node name.
    * @param clazz the interface of the remote agent MBean bridging calls.
-   * @param ticket the security ticket, can be null when no security is required.
-   * @param token the security token, can be null when no security is required.
-   * @param securityCallbackUrl the security IA service URL the remote agent must call, can be null when no security is required.
-   * @param methodName the name of the method to call.
-   * @param paramClasses the classes of the called method's parameters.
-   * @param params the called method's parameters.
+   * @param remoteCallDescriptor the remote call descriptor.
    * @return the serialized response.
    * @throws ServiceExecutionException
    */
-  byte[] invokeMethod(String nodeName, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
-                      String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException;
+  byte[] invokeRemoteMethod(String nodeName, Class<? extends RemoteAgentEndpoint> clazz, RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException;
 
   /**
    * Get the remote agent call timeout previously set. If none was set, the default one is returned. The bridge will wait for at most the time

@@ -8,6 +8,7 @@ import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
 import org.terracotta.management.resource.services.AgentService;
 
+import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.web.utils.TSAConfig;
 
@@ -24,10 +25,12 @@ public class TsaAgentServiceImpl implements AgentService {
   private static final String AGENCY = "TSA";
 
   private final TsaManagementClientService tsaManagementClientService;
+  private final RemoteAgentBridgeService remoteAgentBridgeService;
   private final AgentService l1Agent;
 
-  public TsaAgentServiceImpl(TsaManagementClientService tsaManagementClientService, AgentService l1Agent) {
+  public TsaAgentServiceImpl(TsaManagementClientService tsaManagementClientService, RemoteAgentBridgeService remoteAgentBridgeService, AgentService l1Agent) {
     this.tsaManagementClientService = tsaManagementClientService;
+    this.remoteAgentBridgeService = remoteAgentBridgeService;
     this.l1Agent = l1Agent;
   }
 
@@ -47,7 +50,7 @@ public class TsaAgentServiceImpl implements AgentService {
             agentEntities.add(buildAgentEntity());
           } else {
             if (l1Nodes == null) {
-              l1Nodes = tsaManagementClientService.getRemoteAgentNodeNames();
+              l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
             }
             if (l1Nodes.contains(id)) {
               remoteIds.add(id);
@@ -86,7 +89,7 @@ public class TsaAgentServiceImpl implements AgentService {
             agentMetadataEntities.add(buildAgentMetadata());
           } else {
             if (l1Nodes == null) {
-              l1Nodes = tsaManagementClientService.getRemoteAgentNodeNames();
+              l1Nodes = remoteAgentBridgeService.getRemoteAgentNodeNames();
             }
             if (l1Nodes.contains(id)) {
               remoteIds.add(id);

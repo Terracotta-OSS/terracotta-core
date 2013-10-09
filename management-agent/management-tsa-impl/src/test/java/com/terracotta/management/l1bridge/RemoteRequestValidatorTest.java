@@ -1,18 +1,20 @@
-package net.sf.ehcache.management.resource.services.validator.impl;
+package com.terracotta.management.l1bridge;
 
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.terracotta.management.service.TsaManagementClientService;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -23,21 +25,21 @@ import static org.mockito.Mockito.when;
 /**
  * @author Anthony Dahanne
  */
-public class JmxEhcacheRequestValidatorTest {
+public class RemoteRequestValidatorTest {
 
-  private JmxEhcacheRequestValidator requestValidator;
+  private RemoteRequestValidator requestValidator;
 
   @Before
   public void setUp() throws Exception {
-    TsaManagementClientService tsaManagementClientService = mock(TsaManagementClientService.class);
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     HashSet<String> agentNodeNames = new HashSet<String>();
     agentNodeNames.add("localhost.home_59822");
     agentNodeNames.add("localhost.home_1212");
     agentNodeNames.add("localhost.home_4343");
     agentNodeNames.add("localhost.home_4545");
 
-    when(tsaManagementClientService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
-    requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(agentNodeNames);
+    requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
     requestValidator.setValidatedNodes(new HashSet<String>());
   }
 
