@@ -60,6 +60,26 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     applyTransactionInfo = searchableApplyInfo();
   }
 
+  public void testCapacityEvictionWhenOverLimit() throws Exception {
+    when(keyValueStorage.size()).thenReturn(115L);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
+        100, false), oid, applyTransactionInfo);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME, true, false),
+        oid, applyTransactionInfo);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "a", oid });
+    verify(applyTransactionInfo).initiateEvictionFor(any(ObjectID.class));
+  }
+
+  public void testNoCapacityEvictionWhenUnderLimit() throws Exception {
+    when(keyValueStorage.size()).thenReturn(114L);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
+        100, false), oid, applyTransactionInfo);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME, true, false),
+        oid, applyTransactionInfo);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "a", oid });
+    verify(applyTransactionInfo, never()).initiateEvictionFor(any(ObjectID.class));
+  }
+
   public void testL2SyncDehyrdate() throws Exception {
     CDSMValue value1 = new CDSMValue(new ObjectID(2), 2, 2, 3, 4);
     CDSMValue value2 = new CDSMValue(new ObjectID(3), 3, 3, 2, 1);
@@ -324,6 +344,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
 
   private static ApplyTransactionInfo searchableApplyInfo() {
     final ApplyTransactionInfo info = mock(ApplyTransactionInfo.class);
+    when(info.isActiveTxn()).thenReturn(true);
     when(info.isSearchEnabled()).thenReturn(true);
     when(info.getServerEventRecorder()).thenReturn(new DefaultServerEventRecorder());
     return info;
