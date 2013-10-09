@@ -4,7 +4,6 @@
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 
 import java.util.Map;
@@ -37,12 +36,11 @@ public interface RemoteAgentBridgeService {
    * Invoke an method on the remote agent.
    *
    * @param nodeName the remote agent node name.
-   * @param clazz the interface of the remote agent MBean bridging calls.
    * @param remoteCallDescriptor the remote call descriptor.
    * @return the serialized response.
    * @throws ServiceExecutionException
    */
-  byte[] invokeRemoteMethod(String nodeName, Class<? extends RemoteAgentEndpoint> clazz, RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException;
+  byte[] invokeRemoteMethod(String nodeName, RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException;
 
   /**
    * Get the remote agent call timeout previously set. If none was set, the default one is returned. The bridge will wait for at most the time

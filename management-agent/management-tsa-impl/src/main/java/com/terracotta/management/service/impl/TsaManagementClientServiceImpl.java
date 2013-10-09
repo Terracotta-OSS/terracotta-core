@@ -872,7 +872,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public byte[] invokeRemoteMethod(String nodeName, final Class<? extends RemoteAgentEndpoint> clazz, final RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException {
+  public byte[] invokeRemoteMethod(String nodeName, final RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithRemoteAgentBridgeMBeans();
@@ -900,7 +900,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       return callWithTimeout(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          RemoteAgentEndpoint proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, clazz);
+          RemoteAgentEndpoint proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, RemoteAgentEndpoint.class);
           return proxy.invoke(remoteCallDescriptor);
         }
       }, finalObjectName.toString());

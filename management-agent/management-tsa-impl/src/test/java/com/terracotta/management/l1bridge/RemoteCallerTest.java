@@ -109,14 +109,14 @@ public class RemoteCallerTest {
     when(contextService.getUserInfo()).thenReturn(userInfo);
     when(userService.putUserInfo(userInfo)).thenReturn("test-token");
     String nodeName = "test-nodename";
-    when(remoteAgentBridgeService.invokeRemoteMethod(eq(nodeName), eq(RemoteAgentEndpoint.class), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY);
+    when(remoteAgentBridgeService.invokeRemoteMethod(eq(nodeName), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY);
 
     Object response = remoteCaller.call(nodeName, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     assertThat(((AgentEntity) response).getAgentId(), equalTo(nodeName));
   }
 
   @Test
-  public void when_fanOutCollectionCall_with_3_nodes_then_remote_collection_has_3_corresponding_agentIds() throws Exception {
+  public void when_fanOutCollectionCall_any_agency_with_3_nodes_then_remote_collection_has_3_corresponding_agentIds() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     ContextService contextService = mock(ContextService.class);
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -124,6 +124,20 @@ public class RemoteCallerTest {
     UserService userService = mock(UserService.class);
     RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
 
+    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
+    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
@@ -133,9 +147,9 @@ public class RemoteCallerTest {
       add("test-nodename-2");
       add("test-nodename-3");
     }};
-    when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), eq(RemoteAgentEndpoint.class), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+    when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
 
-    Object response = remoteCaller.fanOutCollectionCall(nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
+    Object response = remoteCaller.fanOutCollectionCall(null, nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
 
     Set<String> remoteAgentIds = new HashSet<String>();
@@ -147,5 +161,101 @@ public class RemoteCallerTest {
     assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3"));
   }
 
+  @Test
+  public void when_fanOutCollectionCall_filtering_agencies_with_3_nodes_then_remote_collection_has_3_corresponding_agentIds() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ContextService contextService = mock(ContextService.class);
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
+    UserService userService = mock(UserService.class);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
+
+    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
+    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
+    when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
+    DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
+    when(contextService.getUserInfo()).thenReturn(userInfo);
+    when(userService.putUserInfo(userInfo)).thenReturn("test-token");
+    Set<String> nodeNames = new HashSet<String>() {{
+      add("test-nodename-1");
+      add("test-nodename-2");
+      add("test-nodename-3");
+    }};
+    when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+
+    Object response = remoteCaller.fanOutCollectionCall("test", nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
+    Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
+
+    Set<String> remoteAgentIds = new HashSet<String>();
+    for (AgentEntity agentEntity : responseCollection) {
+      String agentId = agentEntity.getAgentId();
+      remoteAgentIds.add(agentId);
+    }
+
+    assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3"));
+  }
+
+  @Test
+  public void when_fanOutCollectionCall_filtering_agencies_with_4_nodes_filtering_out_1_then_remote_collection_has_3_corresponding_agentIds() throws Exception {
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ContextService contextService = mock(ContextService.class);
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
+    UserService userService = mock(UserService.class);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
+
+    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
+    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "test");
+    }});
+    agentNodeDetails.put("test-nodename-4", new HashMap<String, String>() {{
+      put("Version", "123");
+      put("Agency", "notTest");
+    }});
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
+    when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
+    DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
+    when(contextService.getUserInfo()).thenReturn(userInfo);
+    when(userService.putUserInfo(userInfo)).thenReturn("test-token");
+    Set<String> nodeNames = new HashSet<String>() {{
+      add("test-nodename-1");
+      add("test-nodename-2");
+      add("test-nodename-3");
+      add("test-nodename-4");
+    }};
+    when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+
+    Object response = remoteCaller.fanOutCollectionCall("test", nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
+    Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
+
+    Set<String> remoteAgentIds = new HashSet<String>();
+    for (AgentEntity agentEntity : responseCollection) {
+      String agentId = agentEntity.getAgentId();
+      remoteAgentIds.add(agentId);
+    }
+
+    assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3"));
+  }
 
 }

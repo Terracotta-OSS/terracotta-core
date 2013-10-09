@@ -27,16 +27,18 @@ public class RemoteServiceStubGenerator {
     this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
   }
 
-  public <T> T newRemoteService(Class<T> clazz) {
-    return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { clazz }, new RemoteInvocationHandler(clazz.getName()));
+  public <T> T newRemoteService(Class<T> clazz, String agency) {
+    return (T) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { clazz }, new RemoteInvocationHandler(clazz.getName(), agency));
   }
 
   private final class RemoteInvocationHandler implements InvocationHandler {
 
     private final String serviceName;
+    private final String agency;
 
-    private RemoteInvocationHandler(String serviceName) {
+    private RemoteInvocationHandler(String serviceName, String agency) {
       this.serviceName = serviceName;
+      this.agency = agency;
     }
 
     @Override
@@ -46,7 +48,7 @@ public class RemoteServiceStubGenerator {
         if (nodes == null) {
           throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
         }
-        return remoteCaller.fanOutCollectionCall(nodes, serviceName, method, args);
+        return remoteCaller.fanOutCollectionCall(agency, nodes, serviceName, method, args);
       } else {
         String node = requestValidator.getSingleValidatedNode();
         if (node == null) {

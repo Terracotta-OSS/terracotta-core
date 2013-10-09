@@ -4,7 +4,6 @@
 package com.terracotta.management.l1bridge;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.Representable;
 
@@ -56,24 +55,37 @@ public class RemoteCaller {
     return remoteAgentBridgeService.getRemoteAgentNodeDetails();
   }
 
-  public Object call(String node, String serviceName, Method method, Object[] args) throws ServiceExecutionException, IOException, ClassNotFoundException {
+  public Object call(String node, String serviceName, Method method, Object[] args) throws ServiceExecutionException {
     String ticket = requestTicketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
 
     RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
         serviceName, method.getName(), method.getParameterTypes(), args);
-    byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, RemoteAgentEndpoint.class, remoteCallDescriptor);
-    Object result = deserialize(bytes);
-    if (result instanceof Representable) {
-      rewriteAgentId(Collections.singleton((Representable)result), node);
+    byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
+    try {
+      Object result = deserialize(bytes);
+      if (result instanceof Representable) {
+        rewriteAgentId(Collections.singleton((Representable)result), node);
+      }
+      return result;
+    } catch (IOException ioe) {
+      throw new ServiceExecutionException("Error deserializing remote response", ioe);
+    } catch (ClassNotFoundException cnfe) {
+      throw new ServiceExecutionException("Error mapping remote response to local class", cnfe);
     }
-    return result;
   }
 
-  public <T extends Representable> Collection<T> fanOutCollectionCall(Set<String> nodes, final String serviceName, final Method method, final Object[] args) throws ServiceExecutionException {
+  public <T extends Representable> Collection<T> fanOutCollectionCall(final String serviceAgency, Set<String> nodes, final String serviceName, final Method method, final Object[] args) throws ServiceExecutionException {
     final UserInfo userInfo = contextService.getUserInfo();
 
     Collection<Future<Collection<T>>> futures = new ArrayList<Future<Collection<T>>>();
+
+    final Map<String, Map<String, String>> remoteAgentNodeDetails;
+    if (serviceAgency != null) {
+      remoteAgentNodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails();
+    } else {
+      remoteAgentNodeDetails = null;
+    }
 
     final long callTimeout = remoteAgentBridgeService.getCallTimeout();
     for (final String node : nodes) {
@@ -85,10 +97,23 @@ public class RemoteCaller {
               String token = userService.putUserInfo(userInfo);
               remoteAgentBridgeService.setCallTimeout(callTimeout);
 
+              if (serviceAgency != null) {
+                Map<String, String> nodeDetails = remoteAgentNodeDetails.get(node);
+
+                if (nodeDetails == null) {
+                  return Collections.emptySet();
+                }
+
+                String nodeAgency = nodeDetails.get("Agency");
+                if (!nodeAgency.equals(serviceAgency)) {
+                  return Collections.emptySet();
+                }
+              }
+
               try {
                 RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
                     serviceName, method.getName(), method.getParameterTypes(), args);
-                byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, RemoteAgentEndpoint.class, remoteCallDescriptor);
+                byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
                 return rewriteAgentId((Collection<T>)deserialize(bytes), node);
               } finally {
                 remoteAgentBridgeService.clearCallTimeout();

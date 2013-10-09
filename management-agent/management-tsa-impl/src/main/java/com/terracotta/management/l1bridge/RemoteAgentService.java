@@ -46,7 +46,7 @@ public class RemoteAgentService implements AgentService {
     if (!unknownIds.isEmpty()) { throw new ServiceExecutionException("Unknown agent IDs : " + unknownIds); }
 
     try {
-      return remoteCaller.fanOutCollectionCall(nodes, AgentService.class.getName(), AgentService.class.getMethod("getAgentsMetadata", Set.class), new Object[] {Collections.emptySet()});
+      return remoteCaller.fanOutCollectionCall(null, nodes, AgentService.class.getName(), AgentService.class.getMethod("getAgentsMetadata", Set.class), new Object[] {Collections.emptySet()});
     } catch (NoSuchMethodException nsme) {
       throw new ServiceExecutionException("Error executing remote call", nsme);
     }

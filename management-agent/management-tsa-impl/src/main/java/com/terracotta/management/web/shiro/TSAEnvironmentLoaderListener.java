@@ -203,13 +203,13 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       /// Ehcache Services ///
 
-      serviceLocator.loadService(CacheManagerService.class, remoteServiceStubGenerator.newRemoteService(CacheManagerService.class));
-      serviceLocator.loadService(CacheService.class, remoteServiceStubGenerator.newRemoteService(CacheService.class));
-      serviceLocator.loadService(EntityResourceFactory.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactory.class));
+      serviceLocator.loadService(CacheManagerService.class, remoteServiceStubGenerator.newRemoteService(CacheManagerService.class, "Ehcache"));
+      serviceLocator.loadService(CacheService.class, remoteServiceStubGenerator.newRemoteService(CacheService.class, "Ehcache"));
+      serviceLocator.loadService(EntityResourceFactory.class, remoteServiceStubGenerator.newRemoteService(EntityResourceFactory.class, "Ehcache"));
 
       /// Sessions Services ///
 
-      serviceLocator.loadService(SessionsService.class, remoteServiceStubGenerator.newRemoteService(SessionsService.class));
+      serviceLocator.loadService(SessionsService.class, remoteServiceStubGenerator.newRemoteService(SessionsService.class, "Sessions"));
 
       /// <end of services> ///
 
