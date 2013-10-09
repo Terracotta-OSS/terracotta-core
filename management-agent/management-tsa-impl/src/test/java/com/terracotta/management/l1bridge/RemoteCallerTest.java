@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -63,13 +63,9 @@ public class RemoteCallerTest {
 
 
   @Test
-  public void test_getRemoteAgentNodeNames_delegates_to_RemoteAgentBridgeService() throws Exception {
+  public void when_getRemoteAgentNodeNames_then_call_is_delegated_to_RemoteAgentBridgeService() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ContextService contextService = null;
-    ExecutorService executorService = null;
-    RequestTicketMonitor requestTicketMonitor = null;
-    UserService userService = null;
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, null, null, null, null);
 
     Set<String> agentNodeNames = new HashSet<String>();
     agentNodeNames.add("localhost.home_59822");
@@ -82,13 +78,9 @@ public class RemoteCallerTest {
   }
 
   @Test
-  public void test_getRemoteAgentNodeDetails_delegates_to_RemoteAgentBridgeService() throws Exception {
+  public void when_getRemoteAgentNodeDetails_then_call_is_delegated_to_RemoteAgentBridgeService() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    ContextService contextService = null;
-    ExecutorService executorService = null;
-    RequestTicketMonitor requestTicketMonitor = null;
-    UserService userService = null;
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, null, null, null, null);
 
     Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
     agentNodeDetails.put("localhost.home_59822", new HashMap<String, String>() {{
@@ -104,7 +96,7 @@ public class RemoteCallerTest {
   }
 
   @Test
-  public void test_call_returns_remote_object() throws Exception {
+  public void when_call_then_remote_collection_has_corresponding_agentId() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     ContextService contextService = mock(ContextService.class);
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -116,7 +108,6 @@ public class RemoteCallerTest {
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
     when(userService.putUserInfo(userInfo)).thenReturn("test-token");
-
     String nodeName = "test-nodename";
     when(remoteAgentBridgeService.invokeRemoteMethod(eq(nodeName), eq(RemoteAgentEndpoint.class), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY);
 
@@ -125,7 +116,7 @@ public class RemoteCallerTest {
   }
 
   @Test
-  public void test_fanOutCollectionCall_returns_remote_object() throws Exception {
+  public void when_fanOutCollectionCall_with_3_nodes_then_remote_collection_has_3_corresponding_agentIds() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     ContextService contextService = mock(ContextService.class);
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -137,7 +128,6 @@ public class RemoteCallerTest {
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
     when(userService.putUserInfo(userInfo)).thenReturn("test-token");
-
     Set<String> nodeNames = new HashSet<String>() {{
       add("test-nodename-1");
       add("test-nodename-2");
@@ -147,11 +137,14 @@ public class RemoteCallerTest {
 
     Object response = remoteCaller.fanOutCollectionCall(nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
-    assertThat(responseCollection.size(), equalTo(nodeNames.size()));
 
+    Set<String> remoteAgentIds = new HashSet<String>();
     for (AgentEntity agentEntity : responseCollection) {
-      assertThat(agentEntity.getAgentId(), isIn(nodeNames));
+      String agentId = agentEntity.getAgentId();
+      remoteAgentIds.add(agentId);
     }
+
+    assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3"));
   }
 
 
