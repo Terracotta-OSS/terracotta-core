@@ -26,7 +26,7 @@ public class NonStopManagerTest extends TestCase {
   }
 
   public void testNonStopTimer() throws Exception {
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
     int loopTmes = 4;
     long timeout = 500;
     for (int i = 0; i < loopTmes; i++) {
@@ -44,9 +44,13 @@ public class NonStopManagerTest extends TestCase {
         Assert.assertFalse(Thread.interrupted());
       }
     }
-    long timeTaken = System.currentTimeMillis() - startTime;
+    long timeTaken = System.nanoTime() - startTime;
     System.out.println("time taken to execute operations " + timeTaken);
-    Assert.assertTrue((timeTaken >= loopTmes * timeout) && timeTaken < (loopTmes * timeout + 2000));
+    Assert
+        .assertTrue((timeTaken >= loopTmes * TimeUnit.MILLISECONDS.toNanos(timeout) && timeTaken < (loopTmes
+                                                                                                    * TimeUnit.MILLISECONDS
+                                                                                                        .toNanos(timeout) + TimeUnit.SECONDS
+            .toNanos(2))));
   }
 
   public void testTryBegin() throws Throwable {
