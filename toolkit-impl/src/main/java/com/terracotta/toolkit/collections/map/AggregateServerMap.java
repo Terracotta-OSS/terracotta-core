@@ -351,6 +351,19 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
+  public void clearVersioned() {
+    for (InternalToolkitMap<K, V> map : serverMaps) {
+      map.clear();
+    }
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
+    clearLocalCache();
+  }
+
+  @Override
   public Set<K> keySet() {
     return new ClusteredMapAggregateKeySet<K, V>(this);
   }
@@ -817,15 +830,15 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
-    getServerMapForKey(key).putIfAbsentOrOlderVersion(key, value, version, timeSource.nowInSeconds(),
+  public void putIfAbsentVersioned(K key, V value, long version) {
+    getServerMapForKey(key).putIfAbsentVersioned(key, value, version, timeSource.nowInSeconds(),
                  ToolkitConfigFields.NO_MAX_TTI_SECONDS, ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
-    getServerMapForKey(key).putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+    getServerMapForKey(key).putIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
                                                       customMaxTTLSeconds);
   }
 

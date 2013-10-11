@@ -178,6 +178,11 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public void clearVersioned() {
+    mutationBehaviourResolver.clearVersioned();
+  }
+
+  @Override
   public Set<K> keySet() {
     return immutationBehaviourResolver.keySet();
   }
@@ -294,14 +299,14 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
-    mutationBehaviourResolver.putIfAbsentOrOlderVersion(key, value, version);
+  public void putIfAbsentVersioned(K key, V value, long version) {
+    mutationBehaviourResolver.putIfAbsentVersioned(key, value, version);
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
-    mutationBehaviourResolver.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+    mutationBehaviourResolver.putIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
                                                         customMaxTTLSeconds);
   }
 

@@ -312,9 +312,9 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+  public void doLogicalPutIfAbsentVersioned(Object key, Object value, long version) {
     assertLockAndRejoinState();
-    delegate.doLogicalPutIfAbsentOrOlderVersion(key, value, version);
+    delegate.doLogicalPutIfAbsentVersioned(key, value, version);
   }
 
   @Override
@@ -492,6 +492,13 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.getVersionedValue(map, key);
+  }
+
+  @Override
+  public void doClearVersioned() {
+    assertLockAndRejoinState();
+    delegate.doClearVersioned();
+
   }
 
 }

@@ -227,8 +227,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.PUT_IF_ABSENT:
         applyPutIfAbsent(applyInfo, params);
         break;
-      case SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION:
-        applyPutIfAbsentOrOlderVersion(applyInfo, params);
+      case SerializationUtil.PUT_IF_ABSENT_VERSIONED:
+        applyPutIfAbsentVersioned(applyInfo, params);
         break;
       case SerializationUtil.PUT_VERSIONED:
         applyPutVersioned(applyInfo, params);
@@ -249,6 +249,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         startCapacityEvictionIfNeccessary(applyInfo);
        break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
+        break;
+      case SerializationUtil.CLEAR_VERSIONED:
+        applyClearVersioned(applyInfo);
         break;
       default:
         super.applyLogicalAction(objectID, applyInfo, method, params);
@@ -328,14 +331,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return old;
   }
 
-  private void applyPutIfAbsentOrOlderVersion(ApplyTransactionInfo applyInfo, Object[] params) {
+  private void applyPutIfAbsentVersioned(ApplyTransactionInfo applyInfo, Object[] params) {
     final Object key = params[0];
     final ObjectID oid = (ObjectID) params[1];
     final CDSMValue newValue = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4],
                                              (Long) params[5], (Long) params[6]);
     final CDSMValue oldValue = (CDSMValue) references.get(key);
 
-    if ((oldValue == null) || (newValue.getVersion() > oldValue.getVersion())) {
+    if (oldValue == null) {
       applyPutInternal(applyInfo, params, newValue, oldValue);
     } else {
       removedReferences(applyInfo, newValue);
@@ -474,6 +477,15 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void applyClear(final ApplyTransactionInfo applyInfo) {
     removedReferences(applyInfo, references.values());
     references.clear();
+  }
+
+  /**
+   * This method will be called by Orchestrator hence it should not generate any server events
+   */
+  private void applyClearVersioned(ApplyTransactionInfo applyInfo) {
+    removedReferences(applyInfo, references.values());
+    this.references.clear();
+    // TODO: should we send REMOVE events?
   }
 
   @Override

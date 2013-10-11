@@ -46,7 +46,7 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   V putIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
-  void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                               int customMaxTTLSeconds);
 
   V get(Object key, boolean quiet);
@@ -126,4 +126,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   Collection<V> values(Set<K> filterSet);
 
   Set<Entry<K, V>> entrySet(Set<K> filterSet);
+
+  void clearVersioned();
 }

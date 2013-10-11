@@ -341,6 +341,11 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
+  public void doClearVersioned() {
+    throw new ImplementMe();
+  }
+
+  @Override
   public void doLogicalPutUnlocked(TCServerMap serverMap, Object key, Object value) {
     throw new ImplementMe();
     
@@ -517,7 +522,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+  public void doLogicalPutIfAbsentVersioned(Object key, Object value, long version) {
     throw new ImplementMe();
     
   }
