@@ -109,44 +109,46 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
    * returns nobody is allowed to join the cluster with existing objects.
    */
   @Override
-  public synchronized void sync() {
+  public void sync() {
     try {
       final GroupResponse gr = this.groupManager.sendAllAndWaitForResponse(ObjectListSyncMessageFactory
           .createObjectListSyncRequestMessage());
-      final Map<NodeID, PassiveSyncState> nodeIDSyncingPassives = new LinkedHashMap<NodeID, PassiveSyncState>();
-      for (GroupMessage groupMessage : gr.getResponses()) {
-        final ObjectListSyncMessage msg = (ObjectListSyncMessage)groupMessage;
-        if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
-          State curState = msg.getCurrentState();
-          if (gcMonitor.isPassiveSyncedOrSyncing(msg.messageFrom())) {
-            logger.info("Passive " + msg.messageFrom() + " is already syncing.");
-          } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isSyncAllowed()) {
-            // Zap all uninitialized passives joining with # of objects > 0
-            logger.error("Syncing to partially synced passives not supported, msg: " + msg);
-            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
-                "Passive : " + msg.messageFrom() + " joined in partially synced state. "
+      synchronized (this) {
+        final Map<NodeID, PassiveSyncState> nodeIDSyncingPassives = new LinkedHashMap<NodeID, PassiveSyncState>();
+        for (GroupMessage groupMessage : gr.getResponses()) {
+          final ObjectListSyncMessage msg = (ObjectListSyncMessage)groupMessage;
+          if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
+            State curState = msg.getCurrentState();
+            if (gcMonitor.isPassiveSyncedOrSyncing(msg.messageFrom())) {
+              logger.info("Passive " + msg.messageFrom() + " is already syncing.");
+            } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isSyncAllowed()) {
+              // Zap all uninitialized passives joining with # of objects > 0
+              logger.error("Syncing to partially synced passives not supported, msg: " + msg);
+              this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
+                  "Passive : " + msg.messageFrom() + " joined in partially synced state. "
+                  + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+            } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isCleanDB()) {
+              logger.error("Syncing to passives which were restarted before active is not supported. msg : " + msg);
+              this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+                  "Passive : " + msg.messageFrom() + " was restarted before active." +
+                  L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+            } else if (checkForSufficientResources(msg)) {
+              nodeIDSyncingPassives.put(msg.messageFrom(), new PassiveSyncState(curState));
+            }
+          } else {
+            logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
+                         + " : msg : " + msg);
+            this.groupManager.zapNode(msg.messageFrom(),
+                L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+                "Recd wrong response from : " + msg.messageFrom()
+                + " for ObjectListSyncMessage Request"
                 + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-          } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isCleanDB()) {
-            logger.error("Syncing to passives which were restarted before active is not supported. msg : " + msg);
-            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
-                "Passive : " + msg.messageFrom() + " was restarted before active." +
-                L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-          } else if (checkForSufficientResources(msg)) {
-            nodeIDSyncingPassives.put(msg.messageFrom(), new PassiveSyncState(curState));
           }
-        } else {
-          logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
-                       + " : msg : " + msg);
-          this.groupManager.zapNode(msg.messageFrom(),
-              L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
-              "Recd wrong response from : " + msg.messageFrom()
-              + " for ObjectListSyncMessage Request"
-              + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
         }
-      }
 
-      if (!nodeIDSyncingPassives.isEmpty()) {
-        this.gcMonitor.disableAndAdd2L2StateManager(nodeIDSyncingPassives);
+        if (!nodeIDSyncingPassives.isEmpty()) {
+          this.gcMonitor.disableAndAdd2L2StateManager(nodeIDSyncingPassives);
+        }
       }
     } catch (final GroupException e) {
       logger.error(e);
