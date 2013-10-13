@@ -377,4 +377,14 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
     immutationBehaviourResolver.waitUntilBulkLoadComplete();
   }
 
+  @Override
+  public void quickClear() {
+    mutationBehaviourResolver.quickClear();
+    mutationBehaviourResolver.clearLocalCache();
+  }
+
+  @Override
+  public int quickSize() {
+    return immutationBehaviourResolver.quickSize();
+  }
 }

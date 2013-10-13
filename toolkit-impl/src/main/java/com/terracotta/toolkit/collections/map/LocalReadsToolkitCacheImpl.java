@@ -404,4 +404,13 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
     // do nothing
   }
 
+  @Override
+  public void quickClear() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int quickSize() {
+    return getDelegate().localSize();
+  }
 }

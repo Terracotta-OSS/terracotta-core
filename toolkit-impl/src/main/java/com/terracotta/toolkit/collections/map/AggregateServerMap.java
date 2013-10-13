@@ -286,11 +286,19 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public int size() {
     // wait and then tell me more accurate size
+    waitForAllCurrentTransactionsToComplete();
+    return getSize();
+  }
+
+  private void waitForAllCurrentTransactionsToComplete() {
     try {
       platformService.waitForAllCurrentTransactionsToComplete();
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }
+  }
+
+  private int getSize() {
     long sum;
     try {
       sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
@@ -339,27 +347,21 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void clear() {
+    doClear();
+    waitForAllCurrentTransactionsToComplete();
+    clearLocalCache();
+  }
+
+  private void doClear() {
     for (InternalToolkitMap<K, V> map : serverMaps) {
       map.clear();
     }
-    try {
-      platformService.waitForAllCurrentTransactionsToComplete();
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
-    clearLocalCache();
   }
 
   @Override
   public void clearVersioned() {
-    for (InternalToolkitMap<K, V> map : serverMaps) {
-      map.clear();
-    }
-    try {
-      platformService.waitForAllCurrentTransactionsToComplete();
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
+    doClear();
+    waitForAllCurrentTransactionsToComplete();
     clearLocalCache();
   }
 
@@ -519,12 +521,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     // Need to wait for all transactions to complete since there could still be in-flight transactions dependent on the
     // local cache.
     try {
-      platformService.waitForAllCurrentTransactionsToComplete();
+      waitForAllCurrentTransactionsToComplete();
     } catch (TCNotRunningException e) {
       LOGGER.info("Ignoring " + TCNotRunningException.class.getName()
                   + " while waiting for all current txns to complete");
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
     } finally {
       try {
         getAnyServerMap().disposeLocally();
@@ -1137,4 +1137,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return getServerMapForKey(key).getVersionedValue(key);
   }
 
+  @Override
+  public void quickClear() {
+    doClear();
+    clearLocalCache();
+  }
+
+  @Override
+  public int quickSize() {
+    return getSize();
+  }
 }

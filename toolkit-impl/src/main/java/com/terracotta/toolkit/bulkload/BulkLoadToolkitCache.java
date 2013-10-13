@@ -528,4 +528,15 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     bulkLoadEnabledNodesSet.addCurrentNodeInternal();
   }
 
+  @Override
+  public void quickClear() {
+    toolkitCache.quickClear();
+    localBufferedMap.clear();
+  }
+
+  @Override
+  public int quickSize() {
+    return localBufferedMap.getSize() + toolkitCache.quickSize();
+  }
+
 }

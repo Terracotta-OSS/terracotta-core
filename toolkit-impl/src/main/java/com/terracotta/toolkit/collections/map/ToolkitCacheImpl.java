@@ -795,4 +795,25 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     return bulkloadCache.isNodeBulkLoadEnabled();
   }
 
+  @Override
+  public void quickClear() {
+    readLock();
+    try {
+      activeDelegate.quickClear();
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public int quickSize() {
+    readLock();
+    try {
+      return activeDelegate.quickSize();
+    } finally {
+      readUnlock();
+    }
+  }
+
+
 }

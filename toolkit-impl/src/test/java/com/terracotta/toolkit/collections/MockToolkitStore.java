@@ -296,4 +296,15 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
     throw new UnsupportedOperationException("Implement me!");
   }
 
+  @Override
+  public void quickClear() {
+    throw new UnsupportedOperationException("Implement me!");
+
+  }
+
+  @Override
+  public int quickSize() {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
 }
