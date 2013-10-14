@@ -480,12 +480,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   /**
-   * This method will be called by Orchestrator hence it should not generate any server events
+   * This method will be called by Orchestrator hence it should not generate REMOVE_LOCAL events
    */
   private void applyClearVersioned(ApplyTransactionInfo applyInfo) {
     removedReferences(applyInfo, references.values());
+    for (Object key : references.keySet()) {
+      CDSMValue value = getValueForKey(key);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, value.getObjectID(), cacheName);
+    }
+
     this.references.clear();
-    // TODO: should we send REMOVE events?
   }
 
   @Override

@@ -360,7 +360,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void clearVersioned() {
-    doClear();
+    for (InternalToolkitMap<K, V> map : serverMaps) {
+      map.clearVersioned();
+    }
     waitForAllCurrentTransactionsToComplete();
     clearLocalCache();
   }

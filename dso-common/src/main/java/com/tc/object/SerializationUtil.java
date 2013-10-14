@@ -67,7 +67,6 @@ public class SerializationUtil {
   public final static String         ADD_LAST_SIGNATURE                       = "addLast(Ljava/lang/Object;)V";
   public final static String         ADD_FIRST_SIGNATURE                      = "addFirst(Ljava/lang/Object;)V";
   public final static String         CLEAR_SIGNATURE                          = "clear()V";
-  public final static String         CLEAR_VERSIONED_SIGNATURE                = "clearVersioned()V";
   public final static String         CLEAR_LOCAL_CACHE_SIGNATURE              = "clearLocalCache()V";
   public final static String         SET_TARGET_MAX_TOTAL_COUNT_SIGNATURE     = "setTargetMaxTotalCount(I)V";
   public final static String         SET_MAX_TTI_SIGNATURE                    = "setMaxTTI(I)V";
@@ -142,6 +141,7 @@ public class SerializationUtil {
   public final static String         PUT_VERSIONED_SIGNATURE                  = "putVersioned(Ljava/lang/Object;Ljava/lang/Object;)Z";
   public final static String         REMOVE_VERSIONED_SIGNATURE               = "removeVersioned(Ljava/lang/Object;Ljava/lang/Object;)Z";
   public final static String         PUT_IF_ABSENT_VERSIONED_SIGNATURE = "putIfAbsentOrOlderVersion(Ljava/lang/Object;Ljava/lang/Object;J)V";
+  public final static String         CLEAR_VERSIONED_SIGNATURE            = "clearVersioned()V";
 
   private final Map<String, Integer> mappings                          = new HashMap<String, Integer>();
 
