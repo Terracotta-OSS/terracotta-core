@@ -6,15 +6,14 @@ package com.tc.handler;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
-import com.tc.object.persistence.api.ClusterStatePersistentMapStore;
-import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 
 public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandler {
 
-  private final TCLogger           logger;
-  private final PersistentMapStore clusterStateStore;
+  private final TCLogger              logger;
+  private final ClusterStatePersistor clusterStateStore;
 
-  public CallbackDirtyDatabaseCleanUpAdapter(TCLogger logger, PersistentMapStore clusterStateStore) {
+  public CallbackDirtyDatabaseCleanUpAdapter(TCLogger logger, ClusterStatePersistor clusterStateStore) {
     this.logger = logger;
     this.clusterStateStore = clusterStateStore;
   }
@@ -23,7 +22,6 @@ public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandle
   public void callbackOnExit(CallbackOnExitState state) {
     logger.error("Marking the object db as dirty ...");
     state.setRestartNeeded();
-    // there is no harm in marking this even for non-persistent dbs, except it has no effect :)
-    clusterStateStore.put(ClusterStatePersistentMapStore.DBKEY_STATE, ClusterStatePersistentMapStore.DB_STATE_DIRTY);
+    clusterStateStore.setDBClean(false);
   }
 }

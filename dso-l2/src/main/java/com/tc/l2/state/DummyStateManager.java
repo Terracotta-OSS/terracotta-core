@@ -55,7 +55,7 @@ public class DummyStateManager implements StateManager {
   }
 
   @Override
-  public void startElection(boolean isNew) {
+  public void startElection() {
     // No need to start election, if we are here, we are active, notify it.
     fireStateChangedEvent(new StateChangedEvent(StateManager.PASSIVE_STANDBY, StateManager.ACTIVE_COORDINATOR));
   }

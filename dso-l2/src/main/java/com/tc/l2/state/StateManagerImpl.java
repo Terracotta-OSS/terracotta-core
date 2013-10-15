@@ -19,6 +19,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
@@ -39,6 +40,7 @@ public class StateManagerImpl implements StateManager {
 
   private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<StateChangeListener>();
   private final Object                 electionLock        = new Object();
+  private final ClusterStatePersistor  clusterStatePersistor;
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private volatile State               state               = START_STATE;
@@ -46,12 +48,14 @@ public class StateManagerImpl implements StateManager {
   TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
-                          StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory) {
+                          StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
+                          final ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
     this.weightsFactory = weightFactory;
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
+    this.clusterStatePersistor = clusterStatePersistor;
   }
 
   @Override
@@ -64,15 +68,20 @@ public class StateManagerImpl implements StateManager {
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
   @Override
-  public void startElection(boolean isNew) {
+  public void startElection() {
     debugInfo("Starting election");
     synchronized (electionLock) {
       if (electionInProgress) return;
       electionInProgress = true;
     }
     try {
-      if (state == START_STATE || state == PASSIVE_STANDBY) {
-        runElection(isNew);
+      State initial = clusterStatePersistor.getInitialState();
+      // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
+      // the election and wait for a zap.
+      if (initial != null && !initial.equals(ACTIVE_COORDINATOR)) {
+        info("Skipping election and waiting for the active to zap since this this L2 did not go down as active.");
+      } else if (state == START_STATE || state == PASSIVE_STANDBY) {
+        runElection();
       } else {
         info("Ignoring Election request since not in right state");
       }
@@ -83,10 +92,13 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-  private void runElection(boolean isNew) {
+  private void runElection() {
     NodeID myNodeID = getLocalNodeID();
     NodeID winner = ServerID.NULL_ID;
     int count = 0;
+    // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
+    // concluded)
+    boolean isNew = state == START_STATE && clusterStatePersistor.getInitialState() == null;
     while (getActiveNodeID().isNull()) {
       if (++count > 1) {
         logger.info("Rerunning election since node " + winner + " never declared itself as ACTIVE !");
@@ -376,7 +388,7 @@ public class StateManagerImpl implements StateManager {
     }
     if (elect) {
       info("Starting Election to determine cluser wide ACTIVE L2");
-      startElection(false);
+      startElection();
     } else {
       debugInfo("Not starting election even though node left: " + disconnectedNode);
     }

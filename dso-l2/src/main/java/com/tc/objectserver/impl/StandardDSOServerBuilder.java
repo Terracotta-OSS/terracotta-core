@@ -41,7 +41,6 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.BackupManager;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
@@ -58,6 +57,7 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.search.IndexHACoordinator;
@@ -239,7 +239,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   @Override
   public L2Coordinator createL2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                                              final StageManager stageManager, final GroupManager groupCommsManager,
-                                             final PersistentMapStore persistentMapStore,
+                                             final ClusterStatePersistor clusterStatePersistor,
                                              final L2PassiveSyncStateManager l2PassiveSyncStateManager,
                                              final L2ObjectStateManager l2ObjectStateManager,
                                              final L2IndexStateManager l2IndexStateManager,
@@ -256,7 +256,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final SequenceGenerator indexSequenceGenerator,
                                              final ObjectIDSequence objectIDSequence, final Offheap offheapConfig,
                                              int electionTimeInSecs) {
-    return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
+    return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,

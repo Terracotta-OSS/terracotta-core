@@ -32,6 +32,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
@@ -69,10 +70,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final SequenceGenerator            sequenceGenerator;
   private final SequenceGenerator            indexSequenceGenerator;
   private final GCMonitor                    gcMonitor;
-  private final boolean                      isCleanDB;
   private final L2PassiveSyncStateManager    passiveSyncStateManager;
   private final L2ObjectStateManager         l2ObjectStateManager;
   private final Offheap                      offheapConfig;
+  private final ClusterStatePersistor        clusterStatePersistor;
 
   private final AtomicBoolean                syncStarted = new AtomicBoolean();
 
@@ -83,7 +84,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
                                      final Sink transactionRelaySink, final SequenceGenerator sequenceGenerator,
-                                     final SequenceGenerator indexSequenceGenerator, final boolean isCleanDB, final Offheap offheapConfig) {
+                                     final SequenceGenerator indexSequenceGenerator, final Offheap offheapConfig,
+                                     final ClusterStatePersistor clusterStatePersistor) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.objectManager = objectManager;
@@ -93,12 +95,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.transactionRelaySink = transactionRelaySink;
     this.sequenceGenerator = sequenceGenerator;
     this.indexSequenceGenerator = indexSequenceGenerator;
+    this.clusterStatePersistor = clusterStatePersistor;
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(this.gcMonitor);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
     this.groupManager.registerForMessages(ObjectSyncCompleteAckMessage.class, this);
     this.groupManager.registerForMessages(IndexSyncCompleteAckMessage.class, this);
-    this.isCleanDB = isCleanDB;
     this.passiveSyncStateManager = l2PassiveSyncStateManager;
     this.l2ObjectStateManager = l2ObjectStateManager;
     this.offheapConfig = offheapConfig;
@@ -127,11 +129,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
               this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
                   "Passive : " + msg.messageFrom() + " joined in partially synced state. "
                   + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-            } else if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && !msg.isCleanDB()) {
-              logger.error("Syncing to passives which were restarted before active is not supported. msg : " + msg);
-              this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
-                  "Passive : " + msg.messageFrom() + " was restarted before active." +
-                  L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
             } else if (checkForSufficientResources(msg)) {
               nodeIDSyncingPassives.put(msg.messageFrom(), new PassiveSyncState(curState));
             }
@@ -251,10 +248,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       logger.error("Node " + nodeID +" has declared that it is not allowed to sync. Zapping it so it can rejoin.");
       this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
           "Already synced once. " + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
-    } else if (!clusterMsg.isCleanDB()) {
-      logger.error("Node " + nodeID +" does not have a clean db. Zapping it so it can rejoin.");
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
-          "Dirty db " + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the re-sent
       // transactions. If we do that there is a race where passive can apply already applied transactions twice.
@@ -376,14 +369,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           // Handle requests multiple list requests from the same instance of the active. This could happen when the active
           // first starts up. This node joining could trigger one object list request while the active running the sync() method
           // will trigger the other.
-          boolean syncAllowed = syncStarted.compareAndSet(false, true);
-          logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + " isCleanDB="
-                      + isCleanDB + " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
+          boolean syncAllowed = syncStarted.compareAndSet(false, true) && clusterStatePersistor.getInitialState() == null;
+          logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + 
+                      " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
                       " resource total=" + getResourceTotal());
           try {
             groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
                 .createObjectListSyncResponseMessage(clusterMsg, stateManager.getCurrentState(), syncAllowed,
-                    isCleanDB, offheapConfig.getEnabled(), getResourceTotal()));
+                    offheapConfig.getEnabled(), getResourceTotal()));
           } catch (GroupException e) {
             logger.error("Failed to send object list response to the active.", e);
             throw new AssertionError(e);

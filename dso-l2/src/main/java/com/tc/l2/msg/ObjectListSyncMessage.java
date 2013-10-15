@@ -20,7 +20,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
 
   private boolean         syncAllowed;
   private State           currentState;
-  private boolean         isCleanDB;
   private boolean         offheapEnabled;
   private long            resourceSize;
 
@@ -33,11 +32,10 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, boolean isCleanDB, final boolean offheapEnabled, final long resourceSize) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, final boolean offheapEnabled, final long resourceSize) {
     super(type, messageID);
     this.syncAllowed = syncAllowed;
     this.currentState = currentState;
-    this.isCleanDB = isCleanDB;
     this.offheapEnabled = offheapEnabled;
     this.resourceSize = resourceSize;
   }
@@ -54,7 +52,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         // Nothing to read
         break;
       case RESPONSE:
-        isCleanDB = in.readBoolean();
         currentState = new State(in.readString());
         syncAllowed = in.readBoolean();
         offheapEnabled = in.readBoolean();
@@ -73,7 +70,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         // Nothing to write
         break;
       case RESPONSE:
-        out.writeBoolean(isCleanDB);
         out.writeString(this.currentState.getName());
         out.writeBoolean(syncAllowed);
         out.writeBoolean(offheapEnabled);
@@ -82,10 +78,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
       default:
         throw new AssertionError("Unknown Message Type : " + getType());
     }
-  }
-
-  public boolean isCleanDB() {
-    return this.isCleanDB;
   }
 
   public State getCurrentState() {
@@ -110,7 +102,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
            "type=" + getTypeString() +
            ", syncAllowed=" + syncAllowed +
            ", currentState=" + currentState +
-           ", isCleanDB=" + isCleanDB +
            ", offheapEnabled=" + offheapEnabled +
            ", resourceSize=" + resourceSize +
            '}';

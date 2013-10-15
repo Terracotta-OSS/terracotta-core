@@ -13,10 +13,10 @@ public class ObjectListSyncMessageFactory {
   }
 
   public static ObjectListSyncMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
-                                                                 State currentState, boolean syncAllowed, boolean isCleanDB,
-                                                                 final boolean offheapEnabled, final long totalSize) {
+                                                                          State currentState, boolean syncAllowed,
+                                                                          final boolean offheapEnabled, final long totalSize) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
-        syncAllowed, isCleanDB, offheapEnabled, totalSize);
+        syncAllowed, offheapEnabled, totalSize);
   }
 
   public static ObjectListSyncMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {

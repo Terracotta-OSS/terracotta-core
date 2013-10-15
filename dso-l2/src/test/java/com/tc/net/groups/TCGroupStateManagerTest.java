@@ -25,6 +25,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.objectserver.persistence.TestClusterStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
@@ -325,7 +326,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     Collections.addAll(nodeSet, allNodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     ids[0] = groupMgr[0].join(allNodes[0], nodeStore);
-    managers[0].startElection(true);
+    managers[0].startElection();
     ThreadUtil.reallySleep(100);
 
     // move following join nodes to passive-standby
@@ -422,7 +423,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory
-        .createDefaultFactory());
+        .createDefaultFactory(), new TestClusterStatePersistor());
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();
@@ -483,7 +484,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     @Override
     public void run() {
-      mgr.startElection(true);
+      mgr.startElection();
     }
   }
 
