@@ -103,7 +103,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     ApplyTransactionContext atc = (ApplyTransactionContext) context;
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
-    ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
+    ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled(),
+                                                              txn.isBroadcastResult());
 
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
@@ -164,7 +165,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private void commit(ApplyTransactionContext atc, ApplyTransactionInfo applyInfo) {
     if (atc.needsApply()) {
-      commit(applyInfo.getObjectsToRelease(), atc.getTxn().getNewRoots(), 
+      commit(applyInfo.getObjectsToRelease(), atc.getTxn().getNewRoots(),
               atc.getTxn().getServerTransactionID(), applyInfo.isCommitNow());
     } else {
       commit(applyInfo.getObjectsToRelease(), applyInfo.isCommitNow());

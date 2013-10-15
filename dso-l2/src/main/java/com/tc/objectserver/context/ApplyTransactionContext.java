@@ -60,4 +60,8 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
   public Object getKey() {
     return grouping;
   }
+
+  public boolean isBroadcastResult() {
+    return txn.isBroadcastResult();
+  }
 }

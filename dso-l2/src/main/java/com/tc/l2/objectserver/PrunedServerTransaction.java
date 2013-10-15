@@ -70,7 +70,7 @@ public class PrunedServerTransaction implements ServerTransaction {
 
   @Override
   public MetaDataReader[] getMetaDataReaders() {
-    // Use metadata from changes (if any), NOT from original txn! Reason being that txn carries metadata for containing maps, 
+    // Use metadata from changes (if any), NOT from original txn! Reason being that txn carries metadata for containing maps,
     // pruned changes in this case are applied as they are relayed, while metadata must be saved off with pending changes to await
     // object sync txns
     return Iterables.toArray(Iterables.transform(prunedChanges, new Function<DNAInternal, MetaDataReader>() {
@@ -167,6 +167,11 @@ public class PrunedServerTransaction implements ServerTransaction {
   @Override
   public boolean isEviction() {
     return this.orgTxn.isEviction();
+  }
+
+  @Override
+  public boolean isBroadcastResult() {
+    return orgTxn.isBroadcastResult();
   }
 
 }

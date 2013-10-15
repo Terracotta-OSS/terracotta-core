@@ -90,6 +90,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
             .getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
       }
 
+      Map results = clientID.equals(committerID) ? bcc.getApplyInfo().getApplyResultRecorder().getResults()
+          : Collections.emptyMap();
+
       if (!invalidateObjectIDs.isEmpty()) {
         invalidateObjMgr.invalidateObjectFor(clientID, invalidateObjectIDs);
       }

@@ -169,4 +169,9 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   public boolean isEviction() {
     return false;
   }
+
+  @Override
+  public boolean isBroadcastResult() {
+    return false;
+  }
 }

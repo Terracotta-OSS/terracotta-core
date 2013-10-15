@@ -48,7 +48,8 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
         final LogicalAction logicalAction = (LogicalAction)action;
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
-        applyLogicalAction(objectID, applyInfo, method, params);
+        Object result = applyLogicalAction(objectID, applyInfo, method, params);
+        applyInfo.getApplyResultRecorder().recordResult(objectID, result);
       }
     }
     if (eventCount != 0) {

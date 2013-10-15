@@ -25,33 +25,36 @@ import java.util.SortedSet;
 
 public class ApplyTransactionInfo {
 
-  private final Map<ObjectID, Node> nodes;
-  private final Set<ObjectID>       parents;
-  private final ServerTransactionID stxnID;
-  private final boolean             isActiveTxn;
-  private Set<ObjectID>             ignoreBroadcasts   = Collections.emptySet();
-  private Set<ObjectID>             initiateEviction   = Collections.emptySet();
-  private SortedSet<ObjectID>       deleteObjects      = TCCollections.EMPTY_SORTED_SET;
+  private final Map<ObjectID, Node>    nodes;
+  private final Set<ObjectID>          parents;
+  private final ServerTransactionID    stxnID;
+  private final boolean                isActiveTxn;
+  private Set<ObjectID>                ignoreBroadcasts   = Collections.emptySet();
+  private Set<ObjectID>                initiateEviction   = Collections.emptySet();
+  private SortedSet<ObjectID>          deleteObjects      = TCCollections.EMPTY_SORTED_SET;
   // TODO: This is probably not the place to pass releaseable objects...
-  private Collection<ManagedObject> objectsToRelease = Collections.emptySet();
-  private Invalidations             invalidate;
-  private final boolean             isSearchEnabled;
+  private Collection<ManagedObject>    objectsToRelease   = Collections.emptySet();
+  private Invalidations                invalidate;
+  private final boolean                isSearchEnabled;
   private final Map<ObjectID, Boolean> keyPresentForValue = new HashMap<ObjectID, Boolean>();
-  private boolean                   commitNow;
-  private final ServerEventRecorder serverEventRecorder;
+  private boolean                      commitNow;
+  private final ServerEventRecorder    serverEventRecorder;
+  private final ApplyResultRecorder    resultRecorder;
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false);
+    this(true, ServerTransactionID.NULL_ID, false, false);
   }
 
-  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID, final boolean isSearchEnabled) {
+  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
+                              final boolean isSearchEnabled, boolean broadcastResult) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
     this.serverEventRecorder = isActiveTxn ? new DefaultServerEventRecorder() : new NullServerEventRecorder();
+    this.resultRecorder = broadcastResult ? new DefaultResultRecorderImpl() : new NullResultRecorderImpl();
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {
@@ -228,5 +231,9 @@ public class ApplyTransactionInfo {
 
   public ServerEventRecorder getServerEventRecorder() {
     return serverEventRecorder;
+  }
+
+  public ApplyResultRecorder getApplyResultRecorder() {
+    return resultRecorder;
   }
 }

@@ -247,6 +247,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public boolean isResent() {
       return false;
     }
+
+    @Override
+    public boolean isBroadcastResult() {
+      return false;
+    }
   }
 
   private static class TestServerConfigurationContext implements ServerConfigurationContext {
