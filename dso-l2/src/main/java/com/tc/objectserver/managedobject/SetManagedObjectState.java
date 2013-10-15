@@ -11,6 +11,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.objectserver.api.Destroyable;
+import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.ObjectNotFoundException;
@@ -47,26 +48,26 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   @Override
-  protected void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+  protected Object applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                                     final Object[] params) {
     switch (method) {
       case SerializationUtil.ADD:
         Object v = params[0];
         addChangeToCollector(objectID, v, applyInfo);
         references.put(v, true);
-        break;
+        return ManagedObjectState.SUCCESS_RESULT;
       case SerializationUtil.REMOVE:
         references.remove(params[0]);
-        break;
+        return ManagedObjectState.SUCCESS_RESULT;
       case SerializationUtil.REMOVE_ALL:
         references.removeAll(Arrays.asList(params));
-        break;
+        return ManagedObjectState.SUCCESS_RESULT;
       case SerializationUtil.CLEAR:
         references.clear();
-        break;
+        return ManagedObjectState.SUCCESS_RESULT;
       case SerializationUtil.DESTROY:
         references.clear();
-        break;
+        return ManagedObjectState.SUCCESS_RESULT;
       default:
         throw new AssertionError("Invalid action:" + method);
     }

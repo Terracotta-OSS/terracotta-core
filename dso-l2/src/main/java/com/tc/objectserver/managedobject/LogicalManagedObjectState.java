@@ -60,7 +60,8 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
     // to be optionally implemented by subclasses
   }
 
-  protected abstract void applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+  protected abstract Object applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo,
+                                               final int method,
                                              final Object[] params);
 
   protected abstract void addAllObjectReferencesTo(Set refs);
