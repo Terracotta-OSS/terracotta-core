@@ -19,6 +19,8 @@ import com.tc.l2.msg.ObjectListSyncMessageFactory;
 import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
+import com.tc.l2.msg.PassiveSyncBeginMessage;
+import com.tc.l2.msg.PassiveSyncBeginMessageFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -98,6 +100,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.clusterStatePersistor = clusterStatePersistor;
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(this.gcMonitor);
+    this.groupManager.registerForMessages(PassiveSyncBeginMessage.class, this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
     this.groupManager.registerForMessages(ObjectSyncCompleteAckMessage.class, this);
     this.groupManager.registerForMessages(IndexSyncCompleteAckMessage.class, this);
@@ -167,8 +170,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   @Override
   public void messageReceived(final NodeID fromNode, final GroupMessage msg) {
-    if (msg instanceof ObjectListSyncMessage) {
-      final ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage) msg;
+    if (msg instanceof PassiveSyncBeginMessage) {
+      PassiveSyncBeginMessage message = (PassiveSyncBeginMessage) msg;
+      handlePassiveSyncBeginMessage(fromNode, message);
+    } else if (msg instanceof ObjectListSyncMessage) {
+      final ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage)msg;
       handleClusterObjectMessage(fromNode, clusterMsg);
     } else if (msg instanceof ObjectSyncCompleteAckMessage) {
       NodeID nodeID = msg.messageFrom();
@@ -184,6 +190,29 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                + " : " + msg);
     }
   }
+
+  private void handlePassiveSyncBeginMessage(final NodeID fromNode, final PassiveSyncBeginMessage message) {
+    if (message.isRequest()) {
+      // Reject subsequent sync begin requests
+      try {
+        if (syncStarted.compareAndSet(false, true)) {
+          groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginResponse(clusterStatePersistor.getCurrentL2State()));
+        } else {
+          groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginError());
+        }
+      } catch (GroupException e) {
+        throw new RuntimeException(e);
+      }
+    } else if (message.isResponse()) {
+      if (!add2L2StateManager(fromNode, message.getCurrentState())) {
+        logger.info("Passive sync is already completed for node " + fromNode);
+        gcMonitor.syncCompleteFor(fromNode);
+      }
+    } else {
+      groupManager.zapNode(fromNode, L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+          "Incorrect response received from passive to sync begin. msg=" + message );
+    }
+   }
 
   private void moveNodeToPassiveStandByIfPossible(NodeID nodeID) {
     if (this.passiveSyncStateManager.isSyncComplete(nodeID)) {
@@ -256,6 +285,15 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         return;   // Only check for sufficient resources on the new passive if it was shut down after the active and is not a candidate for zapping due to dirty db.
       }
       gcMonitor.addL2StateOnTransactionCompletion(nodeID, clusterMsg.getCurrentState());
+    }
+  }
+
+  private void startSyncFor(final NodeID nodeID) {
+    try {
+      groupManager.sendTo(nodeID, PassiveSyncBeginMessageFactory.beginRequest());
+    } catch (GroupException e) {
+      logger.error("Failed to send begin sync message to node " + nodeID);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "Failed to send being sync message.");
     }
   }
 
@@ -369,7 +407,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           // Handle requests multiple list requests from the same instance of the active. This could happen when the active
           // first starts up. This node joining could trigger one object list request while the active running the sync() method
           // will trigger the other.
-          boolean syncAllowed = syncStarted.compareAndSet(false, true) && clusterStatePersistor.getInitialState() == null;
+          boolean syncAllowed = !syncStarted.get() && clusterStatePersistor.getInitialState() == null;
           logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + 
                       " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
                       " resource total=" + getResourceTotal());
@@ -511,10 +549,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       for (Entry<NodeID, PassiveSyncState> e : toAdd.entrySet()) {
         final NodeID nodeID = e.getKey();
         final PassiveSyncState value = e.getValue();
-        if (!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, value.getCurrentState())) {
-          logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
-          syncCompleteFor(nodeID);
-        }
+        startSyncFor(nodeID);
       }
     }
 
@@ -553,10 +588,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       if (toAdd) {
-        if (!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, currentState)) {
-          logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
-          syncCompleteFor(nodeID);
-        }
+        startSyncFor(nodeID);
       }
     }
 

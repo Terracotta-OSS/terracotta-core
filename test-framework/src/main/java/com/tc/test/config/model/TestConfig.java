@@ -20,7 +20,7 @@ public class TestConfig {
   private final ClientConfig                         clientConfig            = new ClientConfig();
   private final Map<String, String>                  tcPropertiesMap;
   private boolean                                    isStandAloneTest        = false;
-  private Boolean                                    restartZappedL2         = true; // Temporarily make this true until MNK-5677 is fixed
+  private Boolean                                    restartZappedL2;
   private Boolean                                    dgcEnabled              = null; // 'null' means gc configuration is omitted
   private int                                        dgcIntervalInSec        = 3600;
   private boolean                                    dgcVerbose              = false;
