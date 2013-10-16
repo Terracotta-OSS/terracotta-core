@@ -196,7 +196,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       // Reject subsequent sync begin requests
       try {
         if (syncStarted.compareAndSet(false, true)) {
-          groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginResponse(clusterStatePersistor.getCurrentL2State()));
+          groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginResponse(stateManager.getCurrentState()));
         } else {
           groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginError());
         }
