@@ -16,7 +16,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.platform.PlatformService;
 
 import java.lang.ref.WeakReference;
@@ -207,11 +206,6 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
-    return delegate.getOrCreateToggleRef();
-  }
-
-  @Override
   public void setNotNew() {
     delegate.setNotNew();
   }
@@ -318,9 +312,9 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+  public void doLogicalPutIfAbsentVersioned(Object key, Object value, long version) {
     assertLockAndRejoinState();
-    delegate.doLogicalPutIfAbsentOrOlderVersion(key, value, version);
+    delegate.doLogicalPutIfAbsentVersioned(key, value, version);
   }
 
   @Override
@@ -498,6 +492,13 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.getVersionedValue(map, key);
+  }
+
+  @Override
+  public void doClearVersioned() {
+    assertLockAndRejoinState();
+    delegate.doClearVersioned();
+
   }
 
 }

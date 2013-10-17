@@ -4,14 +4,12 @@
  */
 package com.tc.object;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
@@ -111,7 +109,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public TCObject lookupQuiet(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
+  public TCObject lookupQuiet(final ObjectID id) {
     return lookup(id);
   }
 
@@ -227,11 +225,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-    throw new ImplementMe();
-  }
-
-  @Override
   public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {
     return new WeakObjectReference(objectID, peer, this.referenceQueue);
   }
@@ -268,7 +261,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   @Override
-  public TCObject addLocalPrefetch(DNA object) throws ClassNotFoundException {
+  public TCObject addLocalPrefetch(DNA object) {
     throw new ImplementMe();
   }
 }

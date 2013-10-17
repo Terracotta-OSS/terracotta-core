@@ -128,12 +128,11 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
         final JMXConnector jmxConnector;
         try {
-          jmxConnector = JMXConnectorFactory.connect(serviceURL, environment);
+          jmxConnector = getJmxConnector(serviceURL, environment);
 
           final MBeanServerConnection l1MBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
-          ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, msg.getUUID(), msg.getTunneledDomains(),
-                                                l1MBeanServerConnection);
+          ClientBeanBag bag = createClientBeanBag(msg, channel, l2MBeanServer, l1MBeanServerConnection);
           clientBeanBags.put(channel.getChannelID(), bag);
 
           if (bag.updateRegisteredBeans()) {
@@ -162,6 +161,17 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
   }
 
+  protected ClientBeanBag createClientBeanBag(final L1ConnectionMessage msg, final MessageChannel channel,
+                                              final MBeanServer l2MBeanServer,
+                                              final MBeanServerConnection l1MBeanServerConnection) {
+    return new ClientBeanBag(l2MBeanServer, channel, msg.getUUID(), msg.getTunneledDomains(),
+                                          l1MBeanServerConnection);
+  }
+
+  protected JMXConnector getJmxConnector(JMXServiceURL serviceURL, Map environment) throws IOException {
+    return JMXConnectorFactory.connect(serviceURL, environment);
+  }
+
   private void removeJmxConnection(final L1ConnectionMessage msg) {
     final MessageChannel channel = msg.getChannel();
     ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
@@ -178,6 +188,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
     try {
       final JMXConnector jmxConnector = channelIdToJmxConnector.remove(channel.getChannelID());
+      clientBeanBags.remove(channel.getChannelID());
       if (jmxConnector != null) {
         try {
           jmxConnector.close();

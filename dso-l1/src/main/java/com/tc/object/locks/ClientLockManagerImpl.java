@@ -98,14 +98,19 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   private ClientLock getOrCreateClientLockState(final LockID lock) {
-    ClientLock lockState = this.locks.get(lock);
-    if (lockState == null) {
-      lockState = new ClientLockImpl(lock);
-      final ClientLock racer = this.locks.putIfAbsent(lock, lockState);
-      if (racer != null) { return racer; }
+    stateGuard.readLock().lock();
+    try {
+      throwExceptionIfNecessary();
+      ClientLock lockState = this.locks.get(lock);
+      if (lockState == null) {
+        lockState = new ClientLockImpl(lock);
+        final ClientLock racer = this.locks.putIfAbsent(lock, lockState);
+        if (racer != null) { return racer; }
+      }
+      return lockState;
+    } finally {
+      stateGuard.readLock().unlock();
     }
-
-    return lockState;
   }
 
   private ClientLock getClientLockState(final LockID lock) {
@@ -201,7 +206,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
-    checkState();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     lockState.unlock(this.remoteLockManager, this.threadManager.getThreadID(), level);
   }
@@ -695,14 +699,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
-  private void checkState() {
-    this.stateGuard.readLock().lock();
-    try {
-      if (isShutdown()) { throw new TCNotRunningException(); }
-      if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
-    } finally {
-      this.stateGuard.readLock().unlock();
-    }
+  /**
+   * Should be called under read lock
+   */
+  private void throwExceptionIfNecessary() {
+    if (isShutdown()) { throw new TCNotRunningException(); }
+    if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
   /**

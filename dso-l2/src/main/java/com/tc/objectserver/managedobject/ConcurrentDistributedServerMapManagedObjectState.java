@@ -231,9 +231,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
       case SerializationUtil.PUT_IF_ABSENT:
         return applyPutIfAbsent(applyInfo, params);
-
-      case SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION:
-        return applyPutIfAbsentOrOlderVersion(applyInfo, params);
+      case SerializationUtil.PUT_IF_ABSENT_VERSIONED:
+        return applyPutIfAbsentVersioned(applyInfo, params);
       case SerializationUtil.PUT_VERSIONED:
         applyPutVersioned(applyInfo, params);
         return ManagedObjectState.SUCCESS_RESULT;
@@ -252,6 +251,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         startCapacityEvictionIfNeccessary(applyInfo);
         return ManagedObjectState.SUCCESS_RESULT;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
+        return ManagedObjectState.SUCCESS_RESULT;
+      case SerializationUtil.CLEAR_VERSIONED:
+        applyClearVersioned(applyInfo);
         return ManagedObjectState.SUCCESS_RESULT;
       default:
         return super.applyLogicalAction(objectID, applyInfo, method, params);
@@ -332,14 +334,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return old;
   }
 
-  private Object applyPutIfAbsentOrOlderVersion(ApplyTransactionInfo applyInfo, Object[] params) {
+  private Object applyPutIfAbsentVersioned(ApplyTransactionInfo applyInfo, Object[] params) {
     final Object key = params[0];
     final ObjectID oid = (ObjectID) params[1];
     final CDSMValue newValue = new CDSMValue(oid, (Long) params[2], (Long) params[3], (Long) params[4],
                                              (Long) params[5], (Long) params[6]);
     final CDSMValue oldValue = (CDSMValue) references.get(key);
 
-    if ((oldValue == null) || (newValue.getVersion() > oldValue.getVersion())) {
+    if (oldValue == null) {
       applyPutInternal(applyInfo, params, newValue, oldValue);
       return ManagedObjectState.SUCCESS_RESULT;
     } else {
@@ -493,6 +495,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void applyClear(final ApplyTransactionInfo applyInfo) {
     removedReferences(applyInfo, references.values());
     references.clear();
+  }
+
+  /**
+   * This method will be called by Orchestrator hence it should not generate REMOVE_LOCAL events
+   */
+  private void applyClearVersioned(ApplyTransactionInfo applyInfo) {
+    removedReferences(applyInfo, references.values());
+    for (Object key : references.keySet()) {
+      CDSMValue value = getValueForKey(key);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, value.getObjectID(), cacheName);
+    }
+
+    this.references.clear();
   }
 
   @Override

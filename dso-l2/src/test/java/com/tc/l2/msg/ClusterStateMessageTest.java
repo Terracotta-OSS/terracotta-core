@@ -12,10 +12,10 @@ import com.tc.net.groups.DummyStripeIDStateManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
@@ -49,7 +49,7 @@ public class ClusterStateMessageTest extends TestCase {
   private void resetClusterState(int clusterState) {
     Persistor persistor =  new Persistor(HeapStorageManagerFactory.INSTANCE);
     persistor.start();
-    PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
+    ClusterStatePersistor clusterStateStore = persistor.getClusterStatePersistor();
     ObjectIDSequence oidSequence = persistor.getManagedObjectPersistor().getObjectIDSequence();
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(

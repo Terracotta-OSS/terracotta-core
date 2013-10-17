@@ -1,15 +1,23 @@
 package com.terracotta.management.test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.TerracottaClientConfiguration;
 import net.sf.ehcache.config.TerracottaConfiguration;
-
+import org.apache.commons.codec.Encoder;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.hamcrest.CoreMatchers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -28,16 +36,12 @@ import com.tc.test.config.model.TestConfig;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
@@ -70,14 +74,22 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     String slf4J = TestBaseUtil.jarFor(LoggerFactory.class);
     String commonsIo = TestBaseUtil.jarFor(IOUtils.class);
     String ehcache = TestBaseUtil.jarFor(Ehcache.class);
+    String httpClient = TestBaseUtil.jarFor(HttpClient.class);
+    String httpCore = TestBaseUtil.jarFor(HttpVersion.class);
+    String commonsCodec = TestBaseUtil.jarFor(Encoder.class);
+    String commonsLogging = TestBaseUtil.jarFor(Log.class);
     String coreMatchers = TestBaseUtil.jarFor(CoreMatchers.class);
     return makeClasspath(tk, common, expressRuntime, fs, l1, clientBase, l2Mbean, jsonParser, ehCache, slf4J,
-                         commonsIo, ehcache, coreMatchers);
+            commonsIo, ehcache,
+        httpClient, httpCore, commonsCodec, commonsLogging,
+        coreMatchers);
   }
 
   public abstract static class AbstractTsaClient extends AbstractClientBase {
 
     protected static final String TSA_TEST_CACHE = "tsaTest";
+
+    private static CloseableHttpClient httpClient;
 
     protected String guessVersion() {
       return guessMavenArtifactVersion();
@@ -85,6 +97,8 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
     @Override
     protected final void doTest() throws Throwable {
+      httpClient = HttpClients.createDefault();
+
       // wait for the TSA agent to finish up initialization
       boolean initSuccessful =  false;
       System.out.println("Starting test for " + getTerracottaUrl());
@@ -101,7 +115,11 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       }
       assertThat("Server initialization issue", initSuccessful, is(true));
 
-      doTsaTest();
+      try {
+        doTsaTest();
+      } finally {
+        httpClient.close();
+      }
     }
 
     protected abstract void doTsaTest() throws Throwable;
@@ -118,80 +136,67 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
     }
 
     protected byte[] httpRawGet(String urlString, Map<String,String> headers) throws IOException {
-      URL url = new URL(urlString);
-      URLConnection urlConnection = url.openConnection();
-
+      HttpGet httpGet = new HttpGet(urlString);
       if (headers != null) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-          urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
+          httpGet.addHeader(entry.getKey(), entry.getValue());
         }
       }
 
-      InputStream inputStream = urlConnection.getInputStream();
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      CloseableHttpResponse response = httpClient.execute(httpGet);
 
-      while (true) {
-        int read = inputStream.read();
-        if (read == -1) break;
-        baos.write(read);
+      try {
+        if (response.getStatusLine().getStatusCode() != 200) {
+          HttpEntity entity2 = response.getEntity();
+          EntityUtils.consume(entity2);
+          throw new IOException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+        }
+
+        HttpEntity entity = response.getEntity();
+        return EntityUtils.toByteArray(entity);
+      } finally {
+        response.close();
       }
-
-      baos.close();
-      return baos.toByteArray();
     }
 
     protected String httpGet(String urlString) throws IOException {
-      URL url = new URL(urlString);
-      InputStream inputStream = url.openStream();
+      HttpGet httpGet = new HttpGet(urlString);
+      httpGet.addHeader("Accept", "application/json");
+      CloseableHttpResponse response = httpClient.execute(httpGet);
 
-      StringBuilder sb = new StringBuilder();
-      BufferedReader bufferedReader = null;
       try {
-        bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
-        while (true) {
-          String line = bufferedReader.readLine();
-          if (line == null) {
-            break;
-          }
-          sb.append(line).append("\n");
+        if (response.getStatusLine().getStatusCode() != 200) {
+          HttpEntity entity2 = response.getEntity();
+          EntityUtils.consume(entity2);
+          throw new IOException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
         }
 
+        HttpEntity entity = response.getEntity();
+        return EntityUtils.toString(entity);
       } finally {
-        if (bufferedReader != null) {
-          bufferedReader.close();
-        }
+        response.close();
       }
-
-      return sb.toString();
     }
 
     protected String httpPost(String urlString) throws IOException {
-      HttpURLConnection httpConnection = (HttpURLConnection) new URL(urlString).openConnection();
+      HttpPost httpPost = new HttpPost(urlString);
+      String charset = "UTF-8";
+      httpPost.addHeader("Accept-Charset", charset);
+      httpPost.addHeader("Content-Type", "application/json;charset=" + charset);
+      CloseableHttpResponse response = httpClient.execute(httpPost);
+
       try {
-        httpConnection.setRequestMethod("POST");
-        httpConnection.setDoOutput(true); // Triggers POST.
-        String charset = "UTF-8";
-        httpConnection.setRequestProperty("Accept-Charset", charset);
-        httpConnection.setRequestProperty("Content-Type", "application/json;charset=" + charset);
-
-        if (httpConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-          throw new RuntimeException("Failed : HTTP error code : " + httpConnection.getResponseCode());
+        if (response.getStatusLine().getStatusCode() != 200) {
+          HttpEntity entity2 = response.getEntity();
+          EntityUtils.consume(entity2);
+          throw new IOException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
         }
 
-        BufferedReader br = new BufferedReader(new InputStreamReader((httpConnection.getInputStream())));
-
-        StringBuilder sb = new StringBuilder();
-        System.out.println("Output from Server .... \n");
-        String output;
-        while ((output = br.readLine()) != null) {
-          sb.append(output).append('\n');
-        }
-        return sb.toString();
+        HttpEntity entity = response.getEntity();
+        return EntityUtils.toString(entity);
       } finally {
-        httpConnection.disconnect();
+        response.close();
       }
-
     }
 
     protected void waitUntilServerAgentUp(int port) {

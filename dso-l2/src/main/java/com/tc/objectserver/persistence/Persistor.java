@@ -4,7 +4,6 @@ import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Conversion;
@@ -25,9 +24,9 @@ public class Persistor implements PrettyPrintable {
 
   private volatile boolean started = false;
 
-  private final PersistentMapStore persistentMapStore;
   private final PersistentObjectFactory persistentObjectFactory;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
+  private final ClusterStatePersistor clusterStatePersistor;
 
   private TransactionPersistor transactionPersistor;
   private ManagedObjectPersistor managedObjectPersistor;
@@ -51,7 +50,7 @@ public class Persistor implements PrettyPrintable {
 
     persistenceTransactionProvider = new PersistenceTransactionProvider(storageManager);
     persistentObjectFactory = new PersistentObjectFactory(storageManager, storageManagerFactory);
-    persistentMapStore = new PersistentMapStoreImpl(storageManager);
+    clusterStatePersistor = new ClusterStatePersistor(storageManager);
   }
 
   public StorageManager getStorageManager() {
@@ -138,8 +137,8 @@ public class Persistor implements PrettyPrintable {
     return gidSequence;
   }
 
-  public PersistentMapStore getPersistentStateStore() {
-    return persistentMapStore;
+  public ClusterStatePersistor getClusterStatePersistor() {
+    return clusterStatePersistor;
   }
 
   public PersistentObjectFactory getPersistentObjectFactory() {

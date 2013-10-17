@@ -11,8 +11,8 @@ import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.UUID;
@@ -24,14 +24,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.CLUSTER_ID_KEY;
-import static com.tc.l2.ha.ClusterStateDBKeyNames.L2_STATE_KEY;
-
 public class ClusterState {
 
   private static final TCLogger                     logger                 = TCLogging.getLogger(ClusterState.class);
 
-  private final PersistentMapStore                  persistentStateStore;
+  private final ClusterStatePersistor               clusterStatePersistor;
   private final ObjectIDSequence                    oidSequence;
   private final ConnectionIDFactory                 connectionIdFactory;
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
@@ -51,19 +48,18 @@ public class ClusterState {
   private boolean                                   nextGlobalTxnIDChanged = false;
   private boolean                                   nextDGCIDChanged       = false;
 
-  public ClusterState(PersistentMapStore persistentStateStore, ObjectIDSequence oidSequence,
+  public ClusterState(ClusterStatePersistor clusterStatePersistor, ObjectIDSequence oidSequence,
                       ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider,
                       GroupID thisGroupID, StripeIDStateManager stripeIDStateManager,
                       DGCSequenceProvider dgcSequenceProvider) {
-    this.persistentStateStore = persistentStateStore;
+    this.clusterStatePersistor = clusterStatePersistor;
     this.oidSequence = oidSequence;
     this.connectionIdFactory = connectionIdFactory;
     this.gidSequenceProvider = gidSequenceProvider;
     this.thisGroupID = thisGroupID;
     this.stripeIDStateManager = stripeIDStateManager;
     this.dgcSequenceProvider = dgcSequenceProvider;
-    String sid = persistentStateStore.get(CLUSTER_ID_KEY);
-    this.stripeID = (sid != null) ? new StripeID(sid) : StripeID.NULL_ID;
+    this.stripeID = clusterStatePersistor.getThisStripeID();
     this.nextAvailObjectID = this.oidSequence.currentObjectIDValue();
     this.nextAvailGlobalTxnID = this.gidSequenceProvider.currentGID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
@@ -171,7 +167,7 @@ public class ClusterState {
   }
 
   private void syncStripeIDToDB() {
-    persistentStateStore.put(CLUSTER_ID_KEY, stripeID.getName());
+    clusterStatePersistor.setThisStripeID(stripeID);
   }
 
   private void syncOIDSequenceToDisk() {
@@ -204,7 +200,7 @@ public class ClusterState {
   }
 
   private void syncCurrentStateToDB() {
-    persistentStateStore.put(L2_STATE_KEY, currentState.getName());
+    clusterStatePersistor.setCurrentL2State(currentState);
   }
 
   public void addNewConnection(ConnectionID connID) {
@@ -223,10 +219,6 @@ public class ClusterState {
 
   public Set getAllConnections() {
     return new HashSet(connections);
-  }
-
-  public static final String getL2StateKey() {
-    return L2_STATE_KEY;
   }
 
   public void generateStripeIDIfNeeded() {

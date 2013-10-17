@@ -5,7 +5,7 @@ package com.tc.handler;
 
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
-import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 
 public class CallbackZapServerNodeExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
@@ -16,7 +16,7 @@ public class CallbackZapServerNodeExceptionAdapter extends CallbackDirtyDatabase
                                           + "it can be started and allowed to rejoin the cluster.";
 
   public CallbackZapServerNodeExceptionAdapter(TCLogger logger, TCLogger consoleLogger,
-                                               PersistentMapStore clusterStateStore) {
+                                               ClusterStatePersistor clusterStateStore) {
     super(logger, clusterStateStore);
     this.consoleLogger = consoleLogger;
   }
@@ -26,5 +26,4 @@ public class CallbackZapServerNodeExceptionAdapter extends CallbackDirtyDatabase
     super.callbackOnExit(state);
     consoleLogger.error(consoleMessage + "\n");
   }
-
 }

@@ -702,10 +702,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       NodesStore nodeStore = new NodesStoreImpl(nodeSet);
       nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(1000);
-    for (int i = 0; i < nGrp; ++i) {
-      assertEquals(nGrp - 1, groups[i].size());
-    }
+    waitForMembersToJoin();
 
     try {
       checkMessagesOrdering(groups[0], listeners[0], groups[1], listeners[1]);

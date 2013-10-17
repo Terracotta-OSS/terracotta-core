@@ -174,7 +174,6 @@ import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
@@ -497,8 +496,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .createObjectIdProvider(sequences, this.channel.getClientIDProvider());
     remoteIDProvider.setBatchSequenceReceiver(batchSequenceReceiver);
 
-    final ToggleableReferenceManager toggleRefMgr = new ToggleableReferenceManager();
-
     // for SRA L1 Tx count
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     final SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
@@ -561,7 +558,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                    this.channel.getClientIDProvider(),
                                                                    this.classProvider, classFactory, objectFactory,
                                                                    this.config.getPortability(),
-                                                                   toggleRefMgr, globalLocalCacheManager,
+                                                                   globalLocalCacheManager,
                                                                    abortableOperationManager);
     this.globalLocalCacheManager.initializeTCObjectSelfStore(objectManager);
 

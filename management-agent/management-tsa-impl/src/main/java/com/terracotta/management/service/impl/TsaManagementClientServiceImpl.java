@@ -3,10 +3,11 @@
  */
 package com.terracotta.management.service.impl;
 
-import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
+import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.VersionedEntity;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
@@ -41,6 +42,7 @@ import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.ThreadDumpEntity.NodeType;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.security.KeychainInitializationException;
+import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.utils.TSAConfig;
@@ -50,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -95,7 +98,7 @@ import javax.security.auth.Subject;
 /**
  * @author Ludovic Orban
  */
-public class TsaManagementClientServiceImpl implements TsaManagementClientService {
+public class TsaManagementClientServiceImpl implements TsaManagementClientService, RemoteAgentBridgeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TsaManagementClientServiceImpl.class);
 
@@ -787,7 +790,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       Set<String> nodeNames = new HashSet<String>();
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
       if (LOG.isDebugEnabled()) {
         LOG.debug("local server contains {} Ehcache MBeans", objectNames.size());
         Set<ObjectName> ehcacheObjectNames = mBeanServerConnection.queryNames(new ObjectName("*:*"), null);
@@ -822,7 +825,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
 
       Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
       for (final ObjectName objectName : objectNames) {
         try {
           Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
@@ -869,11 +872,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public byte[] invokeMethod(String nodeName, final Class<DfltSamplerRepositoryServiceMBean> clazz, final String ticket, final String token,
-                              final String securityCallbackUrl, final String methodName, final Class<?>[] paramClasses, final Object[] params) throws ServiceExecutionException {
+  public byte[] invokeRemoteMethod(String nodeName, final RemoteCallDescriptor remoteCallDescriptor) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
-      jmxConnector = getJMXConnectorWithEhcacheMBeans();
+      jmxConnector = getJMXConnectorWithRemoteAgentBridgeMBeans();
       if (jmxConnector == null) {
         // there is no connected client
         return null;
@@ -882,7 +884,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
 
       ObjectName objectName = null;
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=RepositoryService,*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
       for (ObjectName on : objectNames) {
         String node = on.getKeyProperty("node");
         if (node.equals(nodeName)) {
@@ -898,17 +900,26 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       return callWithTimeout(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          DfltSamplerRepositoryServiceMBean proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, clazz);
-          return proxy.invoke(ticket, token, securityCallbackUrl, methodName, paramClasses, params);
+          RemoteAgentEndpoint proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, RemoteAgentEndpoint.class);
+          return proxy.invoke(remoteCallDescriptor);
         }
       }, finalObjectName.toString());
     } catch (ServiceExecutionException see) {
       throw see;
+    } catch (ExecutionException ee) {
+      throw new ServiceExecutionException("Error making remote L1 call", filterException(ee));
     } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", ExceptionUtils.getRootCause(e));
+      throw new ServiceExecutionException("Error making remote L1 call", e);
     } finally {
       closeConnector(jmxConnector);
     }
+  }
+
+  private static Throwable filterException(Throwable throwable) {
+    if (throwable instanceof ExecutionException || throwable instanceof UndeclaredThrowableException) {
+      return filterException(throwable.getCause());
+    }
+    return throwable;
   }
 
   @Override
@@ -1672,9 +1683,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       // Check that Ehcache can perform IA
       try {
-        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName("jmx:*:type=RepositoryService"));
+        byte[] secret = TSAConfig.getKeyChain().retrieveSecret(new URIKeyName("jmx:net.sf.ehcache:type=" + RemoteAgentEndpoint.IDENTIFIER));
         if (secret == null) {
-          errors.add("Missing keychain entry for Ehcache URI [jmx:*:type=RepositoryService]");
+          errors.add("Missing keychain entry for Ehcache URI [jmx:net.sf.ehcache:type=" + RemoteAgentEndpoint.IDENTIFIER + "]");
         } else {
           Arrays.fill(secret, (byte)0);
         }
@@ -1795,9 +1806,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     return getJmxConnectorWithMBeans(objectName);
   }
 
-  // find the server where Ehcache MBeans are registered
-  private JMXConnector getJMXConnectorWithEhcacheMBeans() throws IOException, JMException, InterruptedException {
-    ObjectName objectName = new ObjectName("*:type=RepositoryService,*");
+  // find the server where Agent MBeans are registered
+  private JMXConnector getJMXConnectorWithRemoteAgentBridgeMBeans() throws IOException, JMException, InterruptedException {
+    ObjectName objectName = new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*");
     return getJmxConnectorWithMBeans(objectName);
   }
 

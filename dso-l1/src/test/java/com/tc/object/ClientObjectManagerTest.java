@@ -78,7 +78,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.mgr = new ClientObjectManagerImpl(this.remoteObjectManager, this.idProvider,
                                            new ClientIDProviderImpl(new TestChannelIDProvider()),
                                            this.classProvider, this.classFactory, this.objectFactory,
-                                           new PortabilityImpl(this.clientConfiguration), null,
+                                           new PortabilityImpl(this.clientConfiguration),
                                            this.tcObjectSelfStore, new NullAbortableOperationManager());
     this.mgr.setTransactionManager(new MockTransactionManager());
   }
@@ -186,7 +186,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                                                                     testMutualReferenceObjectFactory,
                                                                                     new PortabilityImpl(
                                                                                                         this.clientConfiguration),
-                                                                                    null, this.tcObjectSelfStore,
+                                                                                    this.tcObjectSelfStore,
                                                                                     new NullAbortableOperationManager());
     this.mgr = clientObjectManager;
     final MockTransactionManager mockTransactionManager = new MockTransactionManager();

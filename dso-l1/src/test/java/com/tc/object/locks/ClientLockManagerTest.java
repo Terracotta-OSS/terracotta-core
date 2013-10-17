@@ -11,6 +11,7 @@ import org.mockito.stubbing.Answer;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.handler.LockInfoDumpHandler;
@@ -93,6 +94,34 @@ public class ClientLockManagerTest extends TCTestCase {
                                             ABORTABLE_OPERATION_MANAGER,
                                             taskRunner);
     rmtLockManager.setClientLockManager(lockManager);
+  }
+
+  public void testLockAfterCleanup() throws Exception {
+    pause();
+    lockManager.cleanup();
+    final LockID lockId = new StringLockID("1");
+    try {
+      lockManager.lock(lockId, LockLevel.READ);
+      Assert.fail("should see PlatformRejoinException after cleanup");
+    } catch (PlatformRejoinException e) {
+      // expected
+    }
+
+    unpause();
+    assertEquals(0, rmtLockManager.getLockRequestCount());
+    assertEquals(0, rmtLockManager.getUnlockRequestCount());
+    ThreadID tid0 = new ThreadID(0);
+    LockID lid0 = new StringLockID("0");
+
+    threadManager.setThreadID(tid0);
+    lockManager.lock(lid0, LockLevel.READ);
+    assertEquals(1, rmtLockManager.getLockRequestCount());
+    assertEquals(0, rmtLockManager.getUnlockRequestCount());
+
+    lockManager.unlock(lid0, LockLevel.READ);
+    assertEquals(1, rmtLockManager.getLockRequestCount());
+    assertEquals(1, rmtLockManager.getUnlockRequestCount());
+
   }
 
   public void testRunGC() throws Exception {

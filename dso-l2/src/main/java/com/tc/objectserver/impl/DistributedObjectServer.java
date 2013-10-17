@@ -227,9 +227,7 @@ import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.operatorevent.DsoOperatorEventHistoryProvider;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
@@ -521,12 +519,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
-                                               .getPersistentStateStore()));
+                                               .getClusterStatePersistor()));
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapServerNodeException.class,
                                            new CallbackZapServerNodeExceptionAdapter(logger, consoleLogger,
                                                                                      this.persistor
-                                                                                         .getPersistentStateStore()));
+                                                                                         .getClusterStatePersistor()));
 
     MutableSequence gidSequence;
     TransactionPersistor transactionPersistor = this.persistor.getTransactionPersistor();
@@ -625,7 +623,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 this.connectionIdFactory, this.httpSink);
 
     final ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
-    this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getPersistentStateStore());
+    this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getClusterStatePersistor());
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 
@@ -971,7 +969,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                   this.groupCommManager, this.persistor
-                                                                      .getPersistentStateStore(),
+                                                                      .getClusterStatePersistor(),
                                                                   l2PassiveSyncStateManager, l2ObjectStateManager,
                                                                   l2IndexStateManager, this.objectManager,
                                                                   this.indexHACoordinator, this.transactionManager,
@@ -1039,11 +1037,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     startGroupManagers();
     this.l2Coordinator.start();
-    if (!this.l2Coordinator.isStartedWithCleanDB() && this.l2Coordinator.getStateManager().isActiveCoordinator()) {
-      TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
-      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-          .createActiveServerWithOldDataBaseEvent(l2DSOConfig.serverName()));
-    }
     setLoggerOnExit();
   }
 

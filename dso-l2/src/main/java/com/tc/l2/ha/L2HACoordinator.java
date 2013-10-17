@@ -59,17 +59,16 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.object.msg.MessageRecycler;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.State;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
@@ -78,11 +77,7 @@ import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 import com.terracottatech.config.Offheap;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
 
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
 
@@ -105,12 +100,11 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
   private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
   private final L2ObjectStateManager                      l2ObjectStateManager;
-  private boolean                                         isCleanDB;
-  private final PersistentMapStore                        persistentStateStore;
+  private final ClusterStatePersistor                     clusterStatePersistor;
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                          final StageManager stageManager, final GroupManager groupCommsManager,
-                         final PersistentMapStore persistentStateStore, final ObjectManager objectManager,
+                         final ClusterStatePersistor clusterStatePersistor, final ObjectManager objectManager,
                          final IndexHACoordinator indexHACoordinator,
                          final L2PassiveSyncStateManager l2PassiveSyncStateManager,
                          final L2ObjectStateManager l2ObjectStateManager,
@@ -131,14 +125,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.l2ObjectStateManager = l2ObjectStateManager;
-    this.persistentStateStore = persistentStateStore;
+    this.clusterStatePersistor = clusterStatePersistor;
 
-    init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
+    init(stageManager, clusterStatePersistor, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
          serverTransactionFactory, dgcSequenceProvider, objectIDSequence, offheapConfig, electionTimInSecs);
   }
 
-  private void init(final StageManager stageManager, final PersistentMapStore perstStateStore,
+  private void init(final StageManager stageManager, final ClusterStatePersistor clusterStatePersistor,
                     L2ObjectStateManager objectStateManager, L2IndexStateManager l2IndexStateManager,
                     final ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
@@ -149,11 +143,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     registerForStateChangeEvents(indexHACoordinator);
 
-    isCleanDB = isCleanDB(perstStateStore);
-
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(perstStateStore, objectIDSequence,
+    final ClusterState clusterState = new ClusterState(clusterStatePersistor, objectIDSequence,
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);
@@ -163,14 +155,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
-                                             createWeightGeneratorFactoryForStateManager(gtxm));
+                                             createWeightGeneratorFactoryForStateManager(gtxm), clusterStatePersistor);
     this.sequenceGenerator = new SequenceGenerator(this);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     perstStateStore);
+                                                                                     clusterStatePersistor);
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
@@ -231,7 +223,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                           objectManager, transactionManager,
                                                           objectsSyncRequestSink, indexSyncRequestSink,
                                                           transactionRelaySink, this.sequenceGenerator,
-                                                          this.indexSequenceGenerator, isCleanDB, offheapConfig);
+                                                          this.indexSequenceGenerator, offheapConfig, clusterStatePersistor);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);
@@ -278,32 +270,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
   @Override
   public void start() {
-    State b4Shutdown = getStateBeforeRestart();
-    boolean isNew = true;
-    if (b4Shutdown != null) {
-      isNew = false;
-      if (!StateManager.ACTIVE_COORDINATOR.equals(b4Shutdown)) {
-        while (true) {
-          try {
-            consoleLogger.warn("Waiting for ACTIVE server to start...");
-            logger
-                .warn("Detected that this server was shutdown and restarted in a state other than ACTIVE-COORDINATOR."
-                      + " Sleeping until ACTIVE-COORDINATOR server zaps it.");
-            Thread.sleep(60 * 1000);
-          } catch (InterruptedException e) {
-            // ignore
-          }
-        }
-      }
-    }
-    this.stateManager.startElection(isNew);
-  }
-
-  private State getStateBeforeRestart() {
-    String stateStr = persistentStateStore.get(ClusterStateDBKeyNames.L2_STATE_KEY);
-
-    return stateStr == null /* case when Server is started for the first time */
-    ? null : new State(stateStr);
+    this.stateManager.startElection();
   }
 
   @Override
@@ -431,16 +398,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     // NOP
   }
 
-  private boolean isCleanDB(final PersistentMapStore clusterStateStore) {
-    if (clusterStateStore.get(DATABASE_CREATION_TIMESTAMP_KEY) == null) {
-      final Calendar cal = Calendar.getInstance();
-      final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-      clusterStateStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
-      return true;
-    }
-    return false;
-  }
-
   @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     final StringBuilder strBuilder = new StringBuilder();
@@ -457,8 +414,4 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     return this.l2PassiveSyncStateManager;
   }
 
-  @Override
-  public boolean isStartedWithCleanDB() {
-    return this.isCleanDB;
-  }
 }

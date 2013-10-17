@@ -784,14 +784,15 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                   int customMaxTTLSeconds) {
     assertNotNull(value);
     throttleIfNecessary();
 
     if (isEventual()) {
       eventualConcurrentLock.lock();
       try {
-        doLogicalPutIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
                                            customMaxTTLSeconds);
       } finally {
         eventualConcurrentLock.unlock();
@@ -800,7 +801,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       final Object lockID = generateLockIdForKey(key);
       beginLock(lockID, getEffectiveLockType());
       try {
-        doLogicalPutIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
                                            customMaxTTLSeconds);
       } finally {
         commitLock(lockID, getEffectiveLockType());
@@ -808,14 +809,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
-  private void doLogicalPutIfAbsentOrOlderVersion(final K key, final V value, final long version, int createTimeInSecs,
+  private void doLogicalPutIfAbsentVersioned(final K key, final V value, final long version, int createTimeInSecs,
                                                   int customMaxTTISeconds, int customMaxTTLSeconds) {
     final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
     final K portableKey = (K) assertKeyLiteral(key);
     final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
                                                                            customMaxTTISeconds, customMaxTTLSeconds);
 
-    this.tcObjectServerMap.doLogicalPutIfAbsentOrOlderVersion(portableKey, serializedMapValue, version);
+    this.tcObjectServerMap.doLogicalPutIfAbsentVersioned(portableKey, serializedMapValue, version);
 
     if (metaData != null) {
       metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
@@ -1114,6 +1115,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void unlockedClear() {
     tcObjectServerMap.doClear(this);
+    updateSearchMetadataForClear();
+  }
+  
+  private void updateSearchMetadataForClear() {
     MetaData metaData = createClearSearchMetaData();
     if (metaData != null) {
       metaData.set(SearchMetaData.COMMAND, SearchCommand.CLEAR);
@@ -1126,6 +1131,17 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     beginLock(getInstanceDsoLockName(), this.lockType);
     try {
       unlockedClear();
+    } finally {
+      commitLock(getInstanceDsoLockName(), this.lockType);
+    }
+  }
+  
+  @Override
+  public void clearVersioned() {
+    beginLock(getInstanceDsoLockName(), this.lockType);
+    try {
+      tcObjectServerMap.doClearVersioned();
+      updateSearchMetadataForClear();
     } finally {
       commitLock(getInstanceDsoLockName(), this.lockType);
     }

@@ -3,8 +3,6 @@
  */
 package com.tc.l2.ha;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.STRIPE_KEY_PREFIX;
-
 import com.tc.config.HaConfig;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -12,7 +10,7 @@ import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDEventListener;
 import com.tc.net.groups.StripeIDStateManager;
-import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -32,12 +30,12 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
   private final CopyOnWriteArrayList<StripeIDEventListener> listeners            = new CopyOnWriteArrayList<StripeIDEventListener>();
   private final Map<GroupID, StripeID>                      groupIDToStripeIDMap = new ConcurrentHashMap<GroupID, StripeID>();
   private final AtomicInteger                               unKnownIDCount       = new AtomicInteger(0);
-  private final PersistentMapStore                          persistentStateStore;
   private final boolean                                     isAACoordinator;
   private final GroupID                                     thisGroupID;
+  private final ClusterStatePersistor                       clusterStatePersistor;
 
-  public StripeIDStateManagerImpl(HaConfig haConfig, PersistentMapStore persistentStateStore) {
-    this.persistentStateStore = persistentStateStore;
+  public StripeIDStateManagerImpl(HaConfig haConfig, ClusterStatePersistor clusterStatePersistor) {
+    this.clusterStatePersistor = clusterStatePersistor;
     this.isAACoordinator = haConfig.isActiveCoordinatorGroup();
     this.thisGroupID = haConfig.getThisGroupID();
     this.unKnownIDCount.set(loadStripeIDFromDB(haConfig));
@@ -47,13 +45,9 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     GroupID[] groupIDs = haConfig.getGroupIDs();
     int count = groupIDs.length;
     for (GroupID gid : groupIDs) {
-      String id = getFromStore(gid);
-      StripeID stripeID;
-      if (id != null) {
-        stripeID = new StripeID(id);
+      StripeID stripeID = clusterStatePersistor.getStripeID(gid);
+      if (!stripeID.isNull()) {
         --count;
-      } else {
-        stripeID = StripeID.NULL_ID;
       }
       groupIDToStripeIDMap.put(gid, stripeID);
     }
@@ -72,18 +66,10 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
         : new HashMap<GroupID, StripeID>();
   }
 
-  private String prefixKey(String key) {
-    return STRIPE_KEY_PREFIX + key;
-  }
-
-  private String getFromStore(GroupID groupID) {
-    return persistentStateStore.get(prefixKey(groupID.toString()));
-  }
-
   private void putToStore(GroupID groupID, StripeID stripeID) {
     logger.info("putToStore " + groupID + " " + stripeID);
     groupIDToStripeIDMap.put(groupID, stripeID);
-    persistentStateStore.put(prefixKey(groupID.toString()), stripeID.getName());
+    clusterStatePersistor.setStripeID(groupID, stripeID);
   }
 
   @Override

@@ -26,7 +26,7 @@ public interface StateManager {
                                                            .asList(START_STATE, PASSIVE_UNINITIALIZED, PASSIVE_STANDBY,
                                                                    ACTIVE_COORDINATOR, STOP_STATE, RECOVERING));
 
-  public void startElection(boolean isNew);
+  public void startElection();
 
   public State getCurrentState();
 

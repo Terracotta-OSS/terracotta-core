@@ -11,7 +11,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Conversion;
 import com.tc.util.Util;
 
@@ -373,14 +372,6 @@ public abstract class TCObjectImpl implements TCObject {
   @Override
   public boolean autoLockingDisabled() {
     return getFlag(AUTOLOCKS_DISABLED_OFFSET);
-  }
-
-  @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
-    final Object peer = getPeerObject();
-    if (peer == null) { throw new AssertionError("cannot create a toggle reference if peer object is gone"); }
-
-    return getObjectManager().getOrCreateToggleRef(this.objectID, peer);
   }
 
 }

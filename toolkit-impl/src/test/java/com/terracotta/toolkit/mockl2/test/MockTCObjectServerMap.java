@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.mockl2.test;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
@@ -15,8 +14,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.servermap.localcache.ServerMapLocalCache;
-import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -26,12 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
 
   Map<Object,Object> map = new ConcurrentHashMap<Object, Object>();
-  private volatile ServerMapLocalCache        cache;
-  private volatile boolean                    isEventual;
-  private volatile boolean                    localCacheEnabled;
-  private volatile PinnedEntryFaultCallback   callback;
-
-  private volatile L1ServerMapLocalCacheStore serverMapLocalStore;
   
   @Override
   public ObjectID getObjectID() {
@@ -149,7 +140,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void hydrate(DNA from, boolean force, WeakReference peer) throws ClassNotFoundException {
+  public void hydrate(DNA from, boolean force, WeakReference peer) {
     throw new ImplementMe();
     
   }
@@ -235,11 +226,6 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public ToggleableStrongReference getOrCreateToggleRef() {
-    throw new ImplementMe();
-  }
-
-  @Override
   public void setNotNew() {
     throw new ImplementMe();
     
@@ -292,46 +278,46 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void doLogicalRemove(TCServerMap map, Object lockID, Object key) {
+  public void doLogicalRemove(TCServerMap serverMap, Object lockID, Object key) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doLogicalRemoveVersioned(TCServerMap map, Object lockID, Object key, long version) {
+  public void doLogicalRemoveVersioned(TCServerMap serverMap, Object lockID, Object key, long version) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
+  public void doLogicalRemoveUnlocked(TCServerMap serverMap, Object key) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doLogicalRemoveUnlockedVersioned(TCServerMap map, Object key, long version) {
+  public void doLogicalRemoveUnlockedVersioned(TCServerMap serverMap, Object key, long version) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalRemoveUnlocked(TCServerMap serverMap, Object key, Object value) {
     throw new ImplementMe();
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
+  public Object doLogicalPutIfAbsentUnlocked(TCServerMap serverMap, Object key, Object value) {
     throw new ImplementMe();
   }
 
   @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
+  public boolean doLogicalReplaceUnlocked(TCServerMap serverMap, Object key, Object current, Object newValue) {
     throw new ImplementMe();
   }
 
   @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue) {
+  public boolean doLogicalReplaceUnlocked(TCServerMap serverMap, Object key, Object newValue) {
     throw new ImplementMe();
   }
 
@@ -343,52 +329,57 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void doLogicalPutVersioned(TCServerMap map, Object lockID, Object key, Object value, long version) {
+  public void doLogicalPutVersioned(TCServerMap serverMap, Object lockID, Object key, Object value, long version) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doClear(TCServerMap map) {
+  public void doClear(TCServerMap serverMap) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
+  public void doClearVersioned() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void doLogicalPutUnlocked(TCServerMap serverMap, Object key, Object value) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public void doLogicalPutUnlockedVersioned(TCServerMap map, Object key, Object value, long version) {
+  public void doLogicalPutUnlockedVersioned(TCServerMap serverMap, Object key, Object value, long version) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
+  public Object getValueUnlocked(TCServerMap serverMap, Object key) {
     throw new ImplementMe();
   }
 
   @Override
-  public Map getAllValuesUnlocked(Map mapIdToKeysMap) throws AbortedOperationException {
+  public Map getAllValuesUnlocked(Map mapIdToKeysMap) {
     throw new ImplementMe();
   }
 
   @Override
-  public Set keySet(TCServerMap map) throws AbortedOperationException {
+  public Set keySet(TCServerMap serverMap) {
     throw new ImplementMe();
   }
 
   @Override
-  public Object getValue(TCServerMap tcmap, Object lockID, Object key) throws AbortedOperationException {
+  public Object getValue(TCServerMap tcmap, Object lockID, Object key) {
     MockUtil.logInfo("TCObjectServerMap:getValue > " + lockID+key );
     return  map.get(key);
   }
 
   @Override
-  public long getAllSize(TCServerMap[] maps) throws AbortedOperationException {
+  public long getAllSize(TCServerMap[] maps) {
     throw new ImplementMe();
   }
 
@@ -418,7 +409,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void clearLocalCache(TCServerMap map) {
+  public void clearLocalCache(TCServerMap serverMap) {
     throw new ImplementMe();
     
   }
@@ -481,8 +472,6 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   @Override
   public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore, PinnedEntryFaultCallback callback) {
     // MockUtil.logInfo("SetUp Local Store");
-    this.callback = callback;
-    this.serverMapLocalStore = serverMapLocalStore;
     setupLocalCache(serverMapLocalStore, callback);
   }
 
@@ -522,7 +511,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public boolean doLogicalExpireUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalExpireUnlocked(TCServerMap serverMap, Object key, Object value) {
     throw new ImplementMe();
   }
 
@@ -533,13 +522,13 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version) {
+  public void doLogicalPutIfAbsentVersioned(Object key, Object value, long version) {
     throw new ImplementMe();
     
   }
 
   @Override
-  public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
+  public VersionedObject getVersionedValue(TCServerMap serverMap, Object key) {
     throw new ImplementMe();
   }
 

@@ -23,11 +23,14 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.objectserver.event.DefaultServerEventRecorder;
+import com.tc.objectserver.event.ServerEventRecorder;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
+import com.tc.server.ServerEventType;
 import com.tc.test.TCTestCase;
 import com.tc.util.Events;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTestCase {
@@ -41,6 +44,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   private ConcurrentDistributedServerMapManagedObjectState state;
   private ManagedObjectChangeListener changeListener;
   private ApplyTransactionInfo applyTransactionInfo;
+  private ServerEventRecorder                              serverEventRecorder;
 
   @Override
   public void setUp() throws Exception {
@@ -58,6 +62,28 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     ManagedObjectStateFactory.createInstance(listenerProvider, persistentObjectFactory);
 
     applyTransactionInfo = searchableApplyInfo();
+    serverEventRecorder = mock(ServerEventRecorder.class);
+    when(applyTransactionInfo.getServerEventRecorder()).thenReturn(serverEventRecorder);
+  }
+
+  public void testCapacityEvictionWhenOverLimit() throws Exception {
+    when(keyValueStorage.size()).thenReturn(115L);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
+        100, false), oid, applyTransactionInfo);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME, true, false),
+        oid, applyTransactionInfo);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "a", oid });
+    verify(applyTransactionInfo).initiateEvictionFor(any(ObjectID.class));
+  }
+
+  public void testNoCapacityEvictionWhenUnderLimit() throws Exception {
+    when(keyValueStorage.size()).thenReturn(114L);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
+        100, false), oid, applyTransactionInfo);
+    state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.EVICTION_ENABLED_FIELDNAME, true, false),
+        oid, applyTransactionInfo);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT, new Object[] { "a", oid });
+    verify(applyTransactionInfo, never()).initiateEvictionFor(any(ObjectID.class));
   }
 
   public void testL2SyncDehyrdate() throws Exception {
@@ -191,43 +217,43 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(keyValueStorage).put(key, value);
   }
 
-  public void testPutIfAbsentOrOlderVersionWhenMappingAbsent() throws Exception {
+
+  public void testPutIfAbsentVersioned() throws Exception {
     Object key = "key";
     CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
 
-    // when the key mapping was absent
-    when(keyValueStorage.get(key)).thenReturn(null);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
-        key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
-    verify(keyValueStorage).put(key, newValue);
-  }
-
-  public void testPutIfAbsentOrOlderVersionWhenNewVersionIsComing() throws Exception {
-    Object key = "key";
-    CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
-    
-    // when new version is coming
-    CDSMValue oldValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 4);
-    when(keyValueStorage.get(key)).thenReturn(oldValue);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
-        key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
-    verify(keyValueStorage).put(key, newValue);
-
-  }
-
-  public void testPutIfAbsentOrOlderVersionWhenOldVersionIsComing() throws Exception {
-    Object key = "key";
-    CDSMValue newValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 5);
-
-    // when older version is coming
+    // when the key mapping was present
     CDSMValue oldValue = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 6);
     when(keyValueStorage.get(key)).thenReturn(oldValue);
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION, new Object[] {
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_VERSIONED, new Object[] {
         key, newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
     verify(keyValueStorage, never()).put(key, newValue);
     verify(applyTransactionInfo).deleteObject(newValue.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, newValue.getObjectID());
 
+    // when the key mapping was absent
+    when(keyValueStorage.get(key)).thenReturn(null);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT_VERSIONED, new Object[] { key,
+        newValue.getObjectID(), 0L, 0L, 0L, 0L, 5L });
+    verify(keyValueStorage).put(key, newValue);
+
+  }
+
+  public void testClearVersioned() throws Exception {
+    Collection<Object> values = new ArrayList<Object>();
+    values.add(new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 1));
+    values.add(new CDSMValue(new ObjectID(2), 0, 0, 0, 0, 2));
+    when(keyValueStorage.values()).thenReturn(values);
+
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR_VERSIONED, new Object[] {});
+
+    for (Object value : values) {
+      verify(applyTransactionInfo).deleteObject(((CDSMValue) value).getObjectID());
+      verify(applyTransactionInfo).invalidate(oid, ((CDSMValue) value).getObjectID());
+    }
+    
+    verify(serverEventRecorder, never()).recordEvent(any(ServerEventType.class), any(), any(ObjectID.class),
+                                                     any(Long.class), anyString());
   }
 
   public void testSetLastAccessedTime() throws Exception {
@@ -324,8 +350,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
 
   private static ApplyTransactionInfo searchableApplyInfo() {
     final ApplyTransactionInfo info = mock(ApplyTransactionInfo.class);
+    when(info.isActiveTxn()).thenReturn(true);
     when(info.isSearchEnabled()).thenReturn(true);
-    when(info.getServerEventRecorder()).thenReturn(new DefaultServerEventRecorder());
     return info;
   }
 

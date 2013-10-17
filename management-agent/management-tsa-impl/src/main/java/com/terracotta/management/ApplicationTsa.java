@@ -42,8 +42,10 @@ public class ApplicationTsa extends DefaultApplication {
     s.add(net.sf.ehcache.management.resource.services.CacheManagerConfigsResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.CacheConfigsResourceServiceImpl.class);
     s.add(net.sf.ehcache.management.resource.services.AgentsResourceServiceImpl.class);
+    s.add(net.sf.ehcache.management.resource.services.QueryResourceServiceImpl.class);
     
     s.add(org.terracotta.session.management.SessionsResourceServiceImpl.class);
+
     return s;
   }
 

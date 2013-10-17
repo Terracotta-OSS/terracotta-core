@@ -228,12 +228,12 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+  public void putIfAbsentVersioned(K key, V value, long version) {
     throw new UnsupportedOperationException("Implement me!");
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
     throw new UnsupportedOperationException("Implement me!");
   }
@@ -289,6 +289,22 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   public void waitUntilBulkLoadComplete() throws InterruptedException {
     throw new UnsupportedOperationException("Implement me!");
 
+  }
+
+  @Override
+  public void clearVersioned() {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public void quickClear() {
+    throw new UnsupportedOperationException("Implement me!");
+
+  }
+
+  @Override
+  public int quickSize() {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
 }

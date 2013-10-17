@@ -5,7 +5,7 @@ package com.tc.handler;
 
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
-import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -16,7 +16,7 @@ public class CallbackZapDirtyDbExceptionAdapter extends CallbackDirtyDatabaseCle
   private final TCLogger            consoleLogger;
 
   public CallbackZapDirtyDbExceptionAdapter(TCLogger logger, TCLogger consoleLogger,
-                                            PersistentMapStore clusterStateStore) {
+                                            ClusterStatePersistor clusterStateStore) {
     super(logger, clusterStateStore);
     this.consoleLogger = consoleLogger;
   }

@@ -26,7 +26,7 @@ import java.util.Set;
  *
  * @author Ludovic Orban
  */
-public interface TsaManagementClientService extends RemoteAgentBridgeService {
+public interface TsaManagementClientService {
 
   Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException;
 

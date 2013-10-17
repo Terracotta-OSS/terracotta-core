@@ -181,7 +181,17 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void doClear(TCServerMap map) {
     lockAll();
     try {
-      logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.PUT_SIGNATURE, NO_ARGS);
+      logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.CLEAR_SIGNATURE, NO_ARGS);
+    } finally {
+      unlockAll();
+    }
+  }
+
+  @Override
+  public void doClearVersioned() {
+    lockAll();
+    try {
+      logicalInvoke(SerializationUtil.CLEAR_VERSIONED, SerializationUtil.CLEAR_VERSIONED_SIGNATURE, NO_ARGS);
     } finally {
       unlockAll();
     }
@@ -238,11 +248,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public void doLogicalPutIfAbsentOrOlderVersion(final Object key, final Object value, final long version) {
+  public void doLogicalPutIfAbsentVersioned(final Object key, final Object value, final long version) {
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
-      invokeLogicalPutIfAbsentOrOlderVersion(key, value, version);
+      invokeLogicalPutIfAbsentVersioned(key, value, version);
       // TODO: Revisit and check whether we can simply omit addToCache(). It may have some serious implications
     } finally {
       lock.unlock();
@@ -951,13 +961,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return valueObjectID;
   }
 
-  private ObjectID invokeLogicalPutIfAbsentOrOlderVersion(final Object key, final Object value, final long version) {
+  private ObjectID invokeLogicalPutIfAbsentVersioned(final Object key, final Object value, final long version) {
     shareObject(key);
     final ObjectID valueObjectID = shareObject(value);
     final Object[] parameters = constructParamsVersioned(key, value, version);
 
-    logicalInvoke(SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION,
-                  SerializationUtil.PUT_IF_ABSENT_OR_OLDER_VERSION_SIGNATURE, parameters);
+    logicalInvoke(SerializationUtil.PUT_IF_ABSENT_VERSIONED, SerializationUtil.PUT_IF_ABSENT_VERSIONED_SIGNATURE,
+                  parameters);
     return valueObjectID;
   }
 

@@ -6,7 +6,6 @@ package com.tc.object;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
 
@@ -278,12 +277,6 @@ public interface TCObject extends Cacheable {
    * @return True if auto locking enabled.
    */
   public boolean autoLockingDisabled();
-
-  /**
-   * Get or create the toggleable strong reference for this shared object. The returned object can be used to ensure the
-   * peer object is strongly reachable and thus cannot be flushed by the memory manager
-   */
-  public ToggleableStrongReference getOrCreateToggleRef();
 
   /**
    * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits

@@ -289,6 +289,16 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
+  public void clearVersioned() {
+    readLock();
+    try {
+      activeDelegate.clearVersioned();
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
   public Set<K> keySet() {
     readLock();
     try {
@@ -653,21 +663,21 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+  public void putIfAbsentVersioned(K key, V value, long version) {
     readLock();
     try {
-      activeDelegate.putIfAbsentOrOlderVersion(key, value, version);
+      activeDelegate.putIfAbsentVersioned(key, value, version);
     } finally {
       readUnlock();
     }
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs,
                          int customMaxTTISeconds, int customMaxTTLSeconds) {
     readLock();
     try {
-      activeDelegate.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs,
+      activeDelegate.putIfAbsentVersioned(key, value, version, createTimeInSecs,
                          customMaxTTISeconds, customMaxTTLSeconds);
     } finally {
       readUnlock();
@@ -784,5 +794,26 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public boolean isNodeBulkLoadEnabled() {
     return bulkloadCache.isNodeBulkLoadEnabled();
   }
+
+  @Override
+  public void quickClear() {
+    readLock();
+    try {
+      activeDelegate.quickClear();
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public int quickSize() {
+    readLock();
+    try {
+      return activeDelegate.quickSize();
+    } finally {
+      readUnlock();
+    }
+  }
+
 
 }

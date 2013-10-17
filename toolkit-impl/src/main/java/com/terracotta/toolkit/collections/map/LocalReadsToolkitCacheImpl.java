@@ -191,6 +191,11 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
+  public void clearVersioned() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Set<K> keySet() {
     return getDelegate().localKeySet();
   }
@@ -318,12 +323,12 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
+  public void putIfAbsentVersioned(K key, V value, long version) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
     throw new UnsupportedOperationException();
   }
@@ -399,4 +404,13 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
     // do nothing
   }
 
+  @Override
+  public void quickClear() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int quickSize() {
+    return getDelegate().localSize();
+  }
 }

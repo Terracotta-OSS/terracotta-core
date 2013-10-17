@@ -115,7 +115,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param value Object in the mapping
    * @param version
    */
-  void doLogicalPutIfAbsentOrOlderVersion(Object key, Object value, long version);
+  void doLogicalPutIfAbsentVersioned(Object key, Object value, long version);
 
   /**
    * Clear this map
@@ -312,5 +312,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * progress to removeSet.
    */
   void addTxnInProgressKeys(Set addSet, Set removeSet);
+
+  void doClearVersioned();
 
 }

@@ -51,7 +51,8 @@ public class SerializationUtil {
   public final static int            EXPIRE_IF_VALUE_EQUAL                    = 36;
   public final static int            PUT_VERSIONED                            = 37;
   public final static int            REMOVE_VERSIONED                         = 38;
-  public final static int            PUT_IF_ABSENT_OR_OLDER_VERSION           = 39;
+  public final static int            PUT_IF_ABSENT_VERSIONED                  = 39;
+  public final static int            CLEAR_VERSIONED                          = 40;
 
   public final static String         PUSH_SIGNATURE                           = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String         POP_SIGNATURE                            = "pop()java/lang/Object;";
@@ -139,7 +140,8 @@ public class SerializationUtil {
   public final static String         EXPIRE_IF_VALUE_EQUAL_SIGNATURE          = "expireIfValueEqual(Ljava/lang/Object;Ljava/lang/Object;)Z";
   public final static String         PUT_VERSIONED_SIGNATURE                  = "putVersioned(Ljava/lang/Object;Ljava/lang/Object;)Z";
   public final static String         REMOVE_VERSIONED_SIGNATURE               = "removeVersioned(Ljava/lang/Object;Ljava/lang/Object;)Z";
-  public final static String         PUT_IF_ABSENT_OR_OLDER_VERSION_SIGNATURE = "putIfAbsentOrOlderVersion(Ljava/lang/Object;Ljava/lang/Object;J)V";
+  public final static String         PUT_IF_ABSENT_VERSIONED_SIGNATURE = "putIfAbsentOrOlderVersion(Ljava/lang/Object;Ljava/lang/Object;J)V";
+  public final static String         CLEAR_VERSIONED_SIGNATURE            = "clearVersioned()V";
 
   private final Map<String, Integer> mappings                          = new HashMap<String, Integer>();
 

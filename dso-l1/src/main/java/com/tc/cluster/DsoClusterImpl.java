@@ -95,7 +95,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
         fireEvent(DsoClusterEventType.NODE_LEFT, new DsoClusterEventImpl(currentNode), listener);
       } else {
         if (nodeStatus.getState().isNodeJoined()) {
-          fireNodeJoinedInternal(currentNode, new DsoClusterEventImpl(currentNode), listener);
+          fireEvent(DsoClusterEventType.NODE_JOIN, new DsoClusterEventImpl(currentNode), listener);
         }
         if (nodeStatus.getState().areOperationsEnabled()) {
           fireEvent(DsoClusterEventType.OPERATIONS_ENABLED, new DsoClusterEventImpl(currentNode), listener);
@@ -308,17 +308,11 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     if (node != null && clusterMetaDataManager != null) {
       retrieveMetaDataForDsoNode(node);
     }
-    for (DsoClusterListener listener : listeners) {
-      fireNodeJoinedInternal(node, event, listener);
-    }
-  }
-
-  private void fireNodeJoinedInternal(final DsoNodeInternal node, final DsoClusterEvent event,
-                                      final DsoClusterListener listener) {
-    fireEvent(DsoClusterEventType.NODE_JOIN, event, listener);
+    fireEventToAllListeners(DsoClusterEventType.NODE_JOIN, event);
   }
 
   private void fireEventToAllListeners(final DsoClusterEventType eventType, final DsoClusterEvent event) {
+    LOGGER.debug("event fired |" + eventType + "|" + event.getNode());
     for (DsoClusterListener l : listeners) {
       fireEvent(eventType, event, l);
     }
@@ -329,19 +323,13 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     DsoNodeInternal node = topology.getAndRemoveDsoNode(nodeId);
     if (node == null) { return; }
     final DsoClusterEvent event = new DsoClusterEventImpl(node);
-
-    for (DsoClusterListener listener : listeners) {
-      fireEvent(DsoClusterEventType.NODE_LEFT, event, listener);
-    }
+    fireEventToAllListeners(DsoClusterEventType.NODE_LEFT, event);
   }
 
   @Override
   public void fireNodeError() {
     final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
-
-    for (DsoClusterListener listener : listeners) {
-      fireEvent(DsoClusterEventType.NODE_ERROR, event, listener);
-    }
+    fireEventToAllListeners(DsoClusterEventType.NODE_ERROR, event);
   }
 
   @Override
@@ -360,9 +348,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       }
 
       final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
-      for (DsoClusterListener listener : listeners) {
-        fireEvent(DsoClusterEventType.OPERATIONS_ENABLED, event, listener);
-      }
+      fireEventToAllListeners(DsoClusterEventType.OPERATIONS_ENABLED, event);
       firedEventsStatus.operationsEnabledFired();
     }
   }
@@ -385,9 +371,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   private void fireOperationsDisabledNoCheck() {
     final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
-    for (DsoClusterListener listener : listeners) {
-      fireEvent(DsoClusterEventType.OPERATIONS_DISABLED, event, listener);
-    }
+    fireEventToAllListeners(DsoClusterEventType.OPERATIONS_DISABLED, event);
     firedEventsStatus.operationsDisabledFired();
   }
 
@@ -398,7 +382,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
      * process the cluster event.
      */
     boolean useOOB = useOOBNotification(eventType, event, listener);
-    LOGGER.info("event fired |" + eventType + "|" + event.getNode() + "|OOB Notification " + useOOB);
     if (useOOB) {
       outOfBandNotifier.submit(new Runnable() {
         @Override

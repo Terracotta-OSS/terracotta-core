@@ -110,14 +110,14 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version) {
-    toolkitCache.putIfAbsentOrOlderVersion(key, value, version);
+  public void putIfAbsentVersioned(K key, V value, long version) {
+    toolkitCache.putIfAbsentVersioned(key, value, version);
   }
 
   @Override
-  public void putIfAbsentOrOlderVersion(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+  public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
-    toolkitCache.putIfAbsentOrOlderVersion(key, value, version, createTimeInSecs, customMaxTTISeconds,
+    toolkitCache.putIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
                                            customMaxTTLSeconds);
   }
 
@@ -335,6 +335,12 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   @Override
+  public void clearVersioned() {
+    localBufferedMap.clear();
+    toolkitCache.clearVersioned();
+  }
+
+  @Override
   public void removeNoReturn(Object key) {
     remove(key);
   }
@@ -520,6 +526,17 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   public void rejoinCompleted() {
     bulkLoadEnabledNodesSet.addCurrentNodeInternal();
+  }
+
+  @Override
+  public void quickClear() {
+    toolkitCache.quickClear();
+    localBufferedMap.clear();
+  }
+
+  @Override
+  public int quickSize() {
+    return localBufferedMap.getSize() + toolkitCache.quickSize();
   }
 
 }
