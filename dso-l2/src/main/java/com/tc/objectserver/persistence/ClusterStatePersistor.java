@@ -5,6 +5,7 @@ import org.terracotta.corestorage.StorageManager;
 import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.util.State;
+import com.tc.util.version.Version;
 
 import java.util.Map;
 
@@ -16,6 +17,7 @@ public class ClusterStatePersistor {
   private static final String L2_STATE_KEY = "l2state";
   private static final String STRIPE_ID_KEY = "stripeid";
   private static final String GROUP_STRIPE_ID_PREFIX = "stripeid-for-";
+  private static final String VERSION_KEY = "version";
 
   private final Map<String, String> map;
   private final State initialState;
@@ -59,6 +61,15 @@ public class ClusterStatePersistor {
   public boolean isDBClean() {
     String s = map.get(DB_CLEAN_KEY);
     return s == null || Boolean.valueOf(s);
+  }
+
+  public Version getVersion() {
+    String v = map.get(VERSION_KEY);
+    return v == null ? null : new Version(v);
+  }
+
+  public void setVersion(Version v) {
+    map.put(VERSION_KEY, v.major() + "." + v.minor() + "." + v.micro());
   }
 
   public void setDBClean(boolean dbClean) {
