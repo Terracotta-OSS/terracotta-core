@@ -153,9 +153,17 @@ public class ThrowableHandler {
    * Considering {@code -XX:OnOutOfMemoryError=<cmd>} option might be also a good idea.
    */
   void handlePossibleOOME(final Throwable t) {
-    if (Throwables.getRootCause(t) instanceof OutOfMemoryError) {
-      logger.error(OOME_ERROR_MSG);
-      exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
+    Throwable rootCause = Throwables.getRootCause(t);
+    if (rootCause instanceof OutOfMemoryError) {
+      try {
+        logger.error(OOME_ERROR_MSG);
+        String msg = rootCause.getMessage();
+        if (msg != null && msg.length() > 0) {
+          logger.error(msg);
+        }
+      } finally {
+        exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
+      }
     }
   }
 
