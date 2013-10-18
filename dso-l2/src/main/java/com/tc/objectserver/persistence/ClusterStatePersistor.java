@@ -13,6 +13,8 @@ import java.util.Map;
  * @author tim
  */
 public class ClusterStatePersistor {
+  private static final String MAX_DATA_SIZE_KEY = "maxdatasize";
+  private static final String GROUP_ID_KEY = "groupid";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
   private static final String STRIPE_ID_KEY = "stripeid";
@@ -25,6 +27,24 @@ public class ClusterStatePersistor {
   public ClusterStatePersistor(final StorageManager storageManager) {
     this.map = storageManager.getProperties();
     this.initialState = getCurrentL2State();
+  }
+
+  public void setMaxDataSize(long size) {
+    map.put(MAX_DATA_SIZE_KEY, String.valueOf(size));
+  }
+
+  public Long getMaxDataSize() {
+    String l = map.get(MAX_DATA_SIZE_KEY);
+    return l == null ? null : Long.valueOf(l);
+  }
+
+  public void setGroupId(GroupID groupId) {
+    map.put(GROUP_ID_KEY, String.valueOf(groupId.toInt()));
+  }
+
+  public GroupID getGroupId() {
+    String g = map.get(GROUP_ID_KEY);
+    return g == null ? GroupID.NULL_ID : new GroupID(Integer.valueOf(g));
   }
 
   public void setStripeID(GroupID groupID, StripeID stripeID) {
