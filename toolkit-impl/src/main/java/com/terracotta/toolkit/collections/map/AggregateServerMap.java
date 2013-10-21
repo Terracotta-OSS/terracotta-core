@@ -132,7 +132,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final CopyOnWriteArrayList<VersionUpdateListener<K, V>>          versionUpdateListeners;
   private final ToolkitLock                                                concurrentLock;
 
-  private int getTerracottaProperty(String propName, int defaultValue) {
+  protected int getTerracottaProperty(String propName, int defaultValue) {
     try {
       return platformService.getTCProperties().getInt(propName, defaultValue);
     } catch (UnsupportedOperationException e) {
@@ -249,7 +249,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return lookupSuccessfulAfterRejoin;
   }
 
-  private L1ServerMapLocalCacheStore<K, V> createLocalCacheStore() {
+  protected L1ServerMapLocalCacheStore<K, V> createLocalCacheStore() {
     ServerMapLocalStore<K, V> smLocalStore = serverMapLocalStoreFactory
         .getOrCreateServerMapLocalStore(getLocalStoreConfig());
     return new L1ServerMapLocalCacheStoreImpl<K, V>(smLocalStore);
@@ -272,7 +272,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return serverMaps[0];
   }
 
-  private TCObjectServerMap getAnyTCObjectServerMap() {
+  protected TCObjectServerMap getAnyTCObjectServerMap() {
     final InternalToolkitMap<K, V> e = getAnyServerMap();
     if (e == null || e.__tc_managed() == null) { throw new UnsupportedOperationException("Map is not shared ServerMap"); }
     return (TCObjectServerMap) e.__tc_managed();
@@ -290,7 +290,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return getSize();
   }
 
-  private void waitForAllCurrentTransactionsToComplete() {
+  protected void waitForAllCurrentTransactionsToComplete() {
     try {
       platformService.waitForAllCurrentTransactionsToComplete();
     } catch (AbortedOperationException e) {
