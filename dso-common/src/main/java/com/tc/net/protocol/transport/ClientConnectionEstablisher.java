@@ -101,8 +101,8 @@ public class ClientConnectionEstablisher {
       CommStackMismatchException {
     synchronized (this.asyncReconnecting) {
       Assert.eval("Can't call open() while asynch reconnect occurring", !this.asyncReconnecting.get());
-      connectTryAllOnce(cmt);
       this.allowReconnects.set(true);
+      connectTryAllOnce(cmt);
     }
   }
 

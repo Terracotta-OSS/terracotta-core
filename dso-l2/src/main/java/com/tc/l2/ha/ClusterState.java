@@ -64,6 +64,16 @@ public class ClusterState {
     this.nextAvailGlobalTxnID = this.gidSequenceProvider.currentGID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
     this.nextAvailableDGCId = this.dgcSequenceProvider.currentIDValue();
+    checkAndSetGroupID(clusterStatePersistor, thisGroupID);
+  }
+
+  private void checkAndSetGroupID(ClusterStatePersistor clusterStatePersistor, GroupID groupID) {
+    if (clusterStatePersistor.getGroupId().isNull()) {
+      clusterStatePersistor.setGroupId(thisGroupID);
+    } else {
+      Assert.assertEquals("Persisted group id is not the same as the current group id.", groupID,
+          clusterStatePersistor.getGroupId());
+    }
   }
 
   public void setNextAvailableObjectID(long nextAvailOID) {

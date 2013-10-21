@@ -18,7 +18,7 @@
 
   <properties>
     <build.edition>opensource</build.edition>
-    <maven-forge-plugin.version>1.1.7</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.1.8</maven-forge-plugin.version>
   </properties>
 
   <modules>

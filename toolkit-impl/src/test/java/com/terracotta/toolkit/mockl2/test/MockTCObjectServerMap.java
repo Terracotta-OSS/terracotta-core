@@ -380,7 +380,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
 
   @Override
   public long getAllSize(TCServerMap[] maps) {
-    throw new ImplementMe();
+    return 0;
   }
 
   @Override

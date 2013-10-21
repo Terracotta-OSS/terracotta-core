@@ -47,6 +47,7 @@
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.15</surefire.version>
+    <powermock.version>1.5.1</powermock.version>
     <skip.deploy>false</skip.deploy>
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
@@ -363,6 +364,16 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.11</version>
+      </dependency>
+      <dependency>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-module-junit4</artifactId>
+        <version>${powermock.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-api-mockito</artifactId>
+        <version>${powermock.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
