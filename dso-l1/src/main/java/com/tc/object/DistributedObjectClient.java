@@ -685,7 +685,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
     final Stage serverEventDeliveryStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
         new ServerEventDeliveryHandler(serverEventListenerManager), TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), maxSize);
+        .getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), 1, maxSize);
     final Stage serverEventStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_STAGE,
         new ServerEventMessageHandler(serverEventDeliveryStage.getSink()), 1, maxSize);
 
