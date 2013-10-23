@@ -212,12 +212,14 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.EvictionTransactionPersistor;
 import com.tc.objectserver.persistence.OffheapStatsImpl;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageDataStatsImpl;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.OffheapStats;
+import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.ResentTransactionSequencer;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
@@ -1449,6 +1451,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public OffheapStats getOffheapStats() {
     return new OffheapStatsImpl(persistor.getMonitoredResource());
+  }
+
+  public StorageDataStats getStorageStats() {
+    return new StorageDataStatsImpl(persistor.getMonitoredResource());
   }
 
   public ReconnectConfig getL1ReconnectProperties() {
