@@ -848,8 +848,7 @@ public class GroupServerManager {
 
   public void startCrasher() {
     if (crasherStarted.compareAndSet(false, true)) {
-      if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)
-          && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.CUSTOMIZED_CRASH)) {
+      if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
         crasherThread = new Thread(serverCrasher);
         crasherThread.setDaemon(true);
         crasherThread.start();

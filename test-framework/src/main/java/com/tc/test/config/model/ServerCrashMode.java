@@ -8,8 +8,7 @@ public enum ServerCrashMode {
 
   NO_CRASH("no-crash"),
   RANDOM_ACTIVE_CRASH("random-active-crash"),
-  RANDOM_SERVER_CRASH("random-server-crash"),
-  CUSTOMIZED_CRASH("customized-crash");
+  RANDOM_SERVER_CRASH("random-server-crash");
 
   private String mode;
 
