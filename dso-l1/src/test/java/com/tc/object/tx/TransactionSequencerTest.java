@@ -297,12 +297,6 @@ public class TransactionSequencerTest extends TestCase {
         return "TestTransactionBatch{" + "batchID=" + batchID + ", transactions=" + transactions + '}';
     }
 
-    @Override
-    public TransactionBuffer getTransaction(TransactionID txID) {
-      throw new ImplementMe();
-    }
-    
-    
 
   }
 

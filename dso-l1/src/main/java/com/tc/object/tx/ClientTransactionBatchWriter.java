@@ -20,7 +20,6 @@ import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
@@ -149,13 +148,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   @Override
-  public synchronized TransactionBuffer getTransaction(final TransactionID txID) {
-    final TransactionBufferImpl tb = (TransactionBufferImpl) this.transactionData.get(txID);
-    if (tb == null) { throw new AssertionError("Attempt to fetch a transaction that doesn't exist"); }
-    return tb;
-  }
-
-  @Override
   public synchronized boolean contains(final TransactionID txID) {
     return this.transactionData.containsKey(txID);
   }
@@ -276,7 +268,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     final SequenceID sid = new SequenceID(sequenceGenerator.getNextSequence());
     txn.setSequenceID(sid);
     txn.setTransactionID(tidGenerator.nextTransactionID());
-    txn.setLogicalChangeIDs(logicalChangeSequence);
     if (DEBUG) {
       logger.info("NOT folding, created new sequence " + sid);
     }
@@ -361,7 +352,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     if (!foldingEnabled) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(tidGenerator.nextTransactionID());
-      txn.setLogicalChangeIDs(logicalChangeSequence);
       txnBuffer = addSimpleTransaction(txn);
     } else {
       if (committed) { throw new AssertionError("Already committed"); }
@@ -375,7 +365,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       removeEmptyDeltaDna(txn);
 
       txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator, logicalChangeSequence);
-      txnBuffer.addLogicalChangeListeners(txn.getLogicalChangeListeners());
       txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
     }
 
@@ -530,7 +519,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
     private ArrayList                      txnCompleteListers;
-    private Map<LogicalChangeID, LogicalChangeListener> logicalChangeListeners;
 
     TransactionBufferImpl(final SequenceID sequenceID, final TCByteBufferOutputStream output,
                           final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
@@ -770,21 +758,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       return (txnCompleteListers == null ? Collections.EMPTY_LIST : txnCompleteListers);
     }
 
-    @Override
-    public LogicalChangeListener getLogicalChangeListenerFor(LogicalChangeID id) {
-      return logicalChangeListeners.get(id);
-    }
-
-    @Override
-    public void addLogicalChangeListeners(Map<LogicalChangeID, LogicalChangeListener> listeners) {
-      if (!listeners.isEmpty()) {
-        if (this.logicalChangeListeners == null) {
-          this.logicalChangeListeners = new HashMap<LogicalChangeID, LogicalChangeListener>();
-        }
-        this.logicalChangeListeners.putAll(listeners);
-      }
-
-    }
   }
 
   private static class FoldingKey {

@@ -234,4 +234,7 @@ public interface ClientTransactionManager extends ClearableCallback {
   public void receivedLogicalChangeResult(TransactionID transactionID,
                                           Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID);
 
+  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
+      throws AbortedOperationException;
+
 }

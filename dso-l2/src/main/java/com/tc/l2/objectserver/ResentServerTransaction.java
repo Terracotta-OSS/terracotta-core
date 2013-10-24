@@ -144,9 +144,4 @@ public class ResentServerTransaction implements ServerTransaction {
     return false;
   }
 
-  @Override
-  public boolean isBroadcastResult() {
-    return orgTxn.isBroadcastResult();
-  }
-
 }

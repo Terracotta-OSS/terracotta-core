@@ -226,7 +226,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
     return spy(new ApplyTransactionInfo(true,
                                         new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)),
-                                        true, false));
+                                        true));
   }
 
   private <T> Matcher<T> containsObjectWithID(final ObjectID id) {

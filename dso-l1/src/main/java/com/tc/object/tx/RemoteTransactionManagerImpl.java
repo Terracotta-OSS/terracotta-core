@@ -13,8 +13,6 @@ import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.dna.api.LogicalChangeID;
-import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -907,24 +905,4 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.isThrottled = yes;
   }
 
-  @Override
-  public void receivedLogicalChangeResult(TransactionID txID, Map<LogicalChangeID, LogicalChangeResult> results,
-                                          NodeID nodeID) {
-
-    final TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
-    if (!container.isNull()) {
-      final ClientTransactionBatch containingBatch = batchManager.getBatch(container);
-      TransactionBuffer tb = containingBatch.getTransaction(txID);
-      for (Entry<LogicalChangeID, LogicalChangeResult> entry : results.entrySet()) {
-        LogicalChangeListener listener = tb.getLogicalChangeListenerFor(entry.getKey());
-        listener.handleResult(entry.getValue());
-      }
-
-    } else {
-      this.logger.fatal("No batch found for acknowledgement: " + txID + " The batch accounting is "
-                        + this.batchAccounting);
-      throw new AssertionError("No batch found for acknowledgement: " + txID);
-    }
-
-  }
 }

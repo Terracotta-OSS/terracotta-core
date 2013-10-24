@@ -170,8 +170,4 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return false;
   }
 
-  @Override
-  public boolean isBroadcastResult() {
-    return false;
-  }
 }

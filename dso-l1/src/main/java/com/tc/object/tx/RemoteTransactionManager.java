@@ -6,15 +6,12 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
-import com.tc.object.dna.api.LogicalChangeID;
-import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.text.PrettyPrintable;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,8 +49,5 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
    * LockAccounting
    */
   public void preCleanup();
-
-  public void receivedLogicalChangeResult(TransactionID transactionID,
-                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nid);
 
 }

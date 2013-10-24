@@ -66,38 +66,37 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V> {
-  private static final TCLogger                                 LOGGER              = TCLogging
-                                                                                        .getLogger(ServerMap.class);
-  private static final Object[]                                 NO_ARGS             = new Object[0];
-  private static final String                                   LOCK_PREFIX         = "__servermap@lock-";
-  private static final String                                   KEY_LOCK_PREFIX     = LOCK_PREFIX + "key-";
+  private static final TCLogger                             LOGGER              = TCLogging.getLogger(ServerMap.class);
+  private static final Object[]                             NO_ARGS             = new Object[0];
+  private static final String                               LOCK_PREFIX         = "__servermap@lock-";
+  private static final String                               KEY_LOCK_PREFIX     = LOCK_PREFIX + "key-";
 
-  private final ToolkitLock                                     expireConcurrentLock;
-  private final ToolkitLock                                     eventualConcurrentLock;
+  private final ToolkitLock                                 expireConcurrentLock;
+  private final ToolkitLock                                 eventualConcurrentLock;
 
-  private final boolean                                         debugExpiration;
+  private final boolean                                     debugExpiration;
 
   // clustered fields
-  private final ToolkitLockTypeInternal                         lockType;
-  private volatile boolean                                      localCacheEnabled;
-  private volatile boolean                                      compressionEnabled;
-  private volatile boolean                                      copyOnReadEnabled;
-  private volatile int                                          maxTTISeconds;
-  private volatile int                                          maxTTLSeconds;
-  private volatile int                                          maxCountInCluster;
-  private volatile boolean                                      evictionEnabled;
+  private final ToolkitLockTypeInternal                     lockType;
+  private volatile boolean                                  localCacheEnabled;
+  private volatile boolean                                  compressionEnabled;
+  private volatile boolean                                  copyOnReadEnabled;
+  private volatile int                                      maxTTISeconds;
+  private volatile int                                      maxTTLSeconds;
+  private volatile int                                      maxCountInCluster;
+  private volatile boolean                                  evictionEnabled;
 
   // unclustered local fields
-  protected volatile TCObjectServerMap<Object>                  tcObjectServerMap;
-  protected volatile L1ServerMapLocalCacheStore                 l1ServerMapLocalCacheStore;
-  protected volatile LockStrategy                               lockStrategy;
-  private volatile String                                       instanceDsoLockName = null;
-  private volatile TimeSource                                   timeSource;
-  private final String                                          name;
-  private final Consistency                                     consistency;
-  private final ToolkitCacheMetaDataCallback                    metaDataCallback;
-  private final AtomicReference<ToolkitMap<String, String>>     attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
-  private volatile ToolkitAttributeExtractor                    attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
+  protected volatile TCObjectServerMap<Object>              tcObjectServerMap;
+  protected volatile L1ServerMapLocalCacheStore             l1ServerMapLocalCacheStore;
+  protected volatile LockStrategy                           lockStrategy;
+  private volatile String                                   instanceDsoLockName = null;
+  private volatile TimeSource                               timeSource;
+  private final String                                      name;
+  private final Consistency                                 consistency;
+  private final ToolkitCacheMetaDataCallback                metaDataCallback;
+  private final AtomicReference<ToolkitMap<String, String>> attributeSchema     = new AtomicReference<ToolkitMap<String, String>>();
+  private volatile ToolkitAttributeExtractor                attrExtractor       = ToolkitAttributeExtractor.NULL_EXTRACTOR;
 
   public ServerMap(Configuration config, String name) {
     this.name = name;
@@ -464,27 +463,28 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void doLogicalPutLocked(final Object lockID, K key, final V value, int createTimeInSecs,
                                   int customMaxTTISeconds, int customMaxTTLSeconds, MetaData md) {
-    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds,
-        customMaxTTLSeconds, MutateType.LOCKED, lockID, md);
+    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds,
+                 MutateType.LOCKED, lockID, md);
   }
 
   private void doLogicalPutUnlocked(K key, final V value, int createTimeInSecs, int customMaxTTISeconds,
                                     int customMaxTTLSeconds, MetaData md) {
-    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds,
-        customMaxTTLSeconds, MutateType.UNLOCKED, null, md);
+    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds,
+                 MutateType.UNLOCKED, null, md);
   }
 
   private void doLogicalPut(final K key, final V value, int createTimeInSecs, int customMaxTTISeconds,
                             int customMaxTTLSeconds, final MutateType type, final Object lockID, final MetaData metaData) {
-    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds,
-        type, lockID, metaData);
+    doLogicalPut(key, value, DEFAULT_VERSION, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, type, lockID,
+                 metaData);
   }
 
-  private void doLogicalPut(final K key, final V value, final long version, int createTimeInSecs, int customMaxTTISeconds,
-                            int customMaxTTLSeconds, final MutateType type, final Object lockID, final MetaData metaData) {
+  private void doLogicalPut(final K key, final V value, final long version, int createTimeInSecs,
+                            int customMaxTTISeconds, int customMaxTTLSeconds, final MutateType type,
+                            final Object lockID, final MetaData metaData) {
     final K portableKey = (K) assertKeyLiteral(key);
     final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
-        customMaxTTISeconds, customMaxTTLSeconds);
+                                                                           customMaxTTISeconds, customMaxTTLSeconds);
 
     switch (type) {
       case LOCKED:
@@ -648,7 +648,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<K> keySet() {
-    return keySet(Collections.<K>emptySet());
+    return keySet(Collections.<K> emptySet());
   }
 
   @Override
@@ -667,7 +667,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return entrySet(Collections.<K>emptySet());
+    return entrySet(Collections.<K> emptySet());
   }
 
   @Override
@@ -738,7 +738,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void unlockedPutNoReturnVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+  public void unlockedPutNoReturnVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                           int customMaxTTLSeconds) {
     throttleIfNecessary();
     MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
     doLogicalPut(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, MutateType.UNLOCKED,
@@ -756,7 +757,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     internalPutNoReturn(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
-  private void internalPutNoReturn(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+  private void internalPutNoReturn(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
+                                   int customMaxTTLSeconds) {
     assertNotNull(value);
     throttleIfNecessary();
 
@@ -792,8 +794,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       eventualConcurrentLock.lock();
       try {
-        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
-                                           customMaxTTLSeconds);
+        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
       } finally {
         eventualConcurrentLock.unlock();
       }
@@ -801,8 +802,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       final Object lockID = generateLockIdForKey(key);
       beginLock(lockID, getEffectiveLockType());
       try {
-        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
-                                           customMaxTTLSeconds);
+        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
       } finally {
         commitLock(lockID, getEffectiveLockType());
       }
@@ -810,7 +810,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void doLogicalPutIfAbsentVersioned(final K key, final V value, final long version, int createTimeInSecs,
-                                                  int customMaxTTISeconds, int customMaxTTLSeconds) {
+                                             int customMaxTTISeconds, int customMaxTTLSeconds) {
     final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
     final K portableKey = (K) assertKeyLiteral(key);
     final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
@@ -858,6 +858,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           addMetaData(metaData);
         }
         return old;
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException();
       } finally {
         eventualConcurrentLock.unlock();
       }
@@ -1014,26 +1016,35 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     throttleIfNecessary();
     MetaData metaData;
     if (isEventual()) {
-      final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
-      if (old != null) {
-        metaData = createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
-        eventualConcurrentLock.lock();
-        SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
-                                                                            ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-                                                                            ToolkitConfigFields.NO_MAX_TTL_SECONDS);
-        try {
-          this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, newSerializedMapValue);
-          if (metaData != null) {
-            metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
-            metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
-            addMetaData(metaData);
-          }
+      while (true) {
+        // retry until the old value found is correct,
+        // We cant send the old value from the backChannel for CAS as that value will have been removed by inline DGC on
+        // L2 by now..
+        SerializedMapValue oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
+        final V old = deserialize(key, oldSerializedMapValue);
+        if (old != null) {
+          metaData = createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
+          eventualConcurrentLock.lock();
+          SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
+                                                                              ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                                                                              ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+          try {
+            if (metaData != null) {
+              metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
+              metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
+              addMetaData(metaData);
+            }
+            // TODO: fetch old value OID from the server thru the back channel..
+            if (this.tcObjectServerMap
+                .doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue)) { return old; }
 
-        } finally {
-          eventualConcurrentLock.unlock();
+          } catch (AbortedOperationException e) {
+            throw new ToolkitAbortableOperationException();
+          } finally {
+            eventualConcurrentLock.unlock();
+          }
         }
       }
-      return old;
     } else {
 
       metaData = createPutSearchMetaData(key, value);
@@ -1073,15 +1084,17 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue, timeSource.nowInSeconds(),
                                                                               ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
-
-          this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue);
+          // TODO: check If its ok to add metadata here.. Write Test..
           if (metaData != null) {
             metaData.add(SearchMetaData.PREV_VALUE, oldSerializedMapValue.getObjectID());
             metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
             addMetaData(metaData);
           }
+          return this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue,
+                                                                 newSerializedMapValue);
 
-          return true;
+        } catch (AbortedOperationException e) {
+          throw new ToolkitAbortableOperationException();
         } finally {
           eventualConcurrentLock.unlock();
         }
@@ -1117,7 +1130,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     tcObjectServerMap.doClear(this);
     updateSearchMetadataForClear();
   }
-  
+
   private void updateSearchMetadataForClear() {
     MetaData metaData = createClearSearchMetaData();
     if (metaData != null) {
@@ -1135,7 +1148,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       commitLock(getInstanceDsoLockName(), this.lockType);
     }
   }
-  
+
   @Override
   public void clearVersioned() {
     beginLock(getInstanceDsoLockName(), this.lockType);
@@ -1188,11 +1201,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
     }
 
-    V value = getNonExpiredValue(key, serializedMapValue, getType, true);  //TODO: Revisit this method. It may be wrong w.r.t WAN
-    if(value != null) {
-      return new VersionedValueImpl<V>(value, versionedObject.getVersion());
-    }
-    
+    V value = getNonExpiredValue(key, serializedMapValue, getType, true); // TODO: Revisit this method. It may be wrong
+                                                                          // w.r.t WAN
+    if (value != null) { return new VersionedValueImpl<V>(value, versionedObject.getVersion()); }
+
     return null;
   }
 
@@ -1330,7 +1342,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
     };
   }
-
 
   @Override
   public void cleanupOnDestroy() {

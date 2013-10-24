@@ -61,7 +61,4 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
     return grouping;
   }
 
-  public boolean isBroadcastResult() {
-    return txn.isBroadcastResult();
-  }
 }

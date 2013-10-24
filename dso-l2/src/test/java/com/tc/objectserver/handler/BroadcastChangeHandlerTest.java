@@ -250,12 +250,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return false;
     }
 
-    @Override
-    public boolean isBroadcastResult() {
-      return false;
-    }
   }
-
   private static class TestServerConfigurationContext implements ServerConfigurationContext {
     private final int                          noOfClients;
     private final int                          clientDisconnectNo;

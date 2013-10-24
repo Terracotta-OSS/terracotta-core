@@ -197,7 +197,6 @@ public class TransactionSequencer implements ClearableCallback {
           TransactionID tid = transactionIDGenerator.nextTransactionID();
           txn.setSequenceID(sid);
           txn.setTransactionID(tid);
-          txn.setLogicalChangeIDs(logicalChangeSequence);
           buffer = this.currentBatch.addSimpleTransaction(txn);
           this.lockAccounting.add(tid, txn.getAllLockIDs());
         }

@@ -13,7 +13,6 @@ import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
-import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,8 +91,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters,LogicalChangeListener listener) {
-    getOrCreateChangeBuffer(source).logicalInvoke(method, parameters,listener);
+  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeID id) {
+    getOrCreateChangeBuffer(source).logicalInvoke(method, parameters, id);
   }
 
   @Override
@@ -175,22 +174,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   @Override
   public int getSession() {
     return session;
-  }
-
-  @Override
-  public void setLogicalChangeIDs(Sequence logicalChangeSequence) {
-    for (TCChangeBuffer buffer : objectChanges.values()) {
-      buffer.setLogicalChangeIDs(logicalChangeSequence);
-    }
-  }
-
-  @Override
-  public Map<LogicalChangeID, LogicalChangeListener> getLogicalChangeListeners() {
-    Map<LogicalChangeID, LogicalChangeListener> map = new HashMap<LogicalChangeID, LogicalChangeListener>();
-    for (TCChangeBuffer buffer : objectChanges.values()) {
-      buffer.addLogicalChangeListeners(map);
-    }
-    return map;
   }
 
 }

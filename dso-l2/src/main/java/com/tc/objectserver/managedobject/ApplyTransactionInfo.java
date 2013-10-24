@@ -43,11 +43,11 @@ public class ApplyTransactionInfo {
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false, false);
+    this(true, ServerTransactionID.NULL_ID, false);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
-                              final boolean isSearchEnabled, boolean broadcastResult) {
+ final boolean isSearchEnabled) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.parents = new ObjectIDSet();

@@ -56,5 +56,4 @@ public interface ClientTransactionBatch extends TransactionBatch {
   // For testing
   public String dump();
 
-  TransactionBuffer getTransaction(TransactionID txID);
 }

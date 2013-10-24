@@ -258,4 +258,10 @@ public class MockTransactionManager implements ClientTransactionManager {
 
   }
 
+  @Override
+  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
+      throws AbortedOperationException {
+    return false;
+  }
+
 }

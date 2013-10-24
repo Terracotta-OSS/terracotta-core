@@ -225,9 +225,4 @@ public class ServerTransactionImpl implements ServerTransaction {
     return false;
   }
 
-  @Override
-  public boolean isBroadcastResult() {
-    // TODO: delete this method not required anymore..
-    return true;
-  }
 }

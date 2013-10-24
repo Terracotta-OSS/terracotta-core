@@ -283,22 +283,24 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
+  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value)
+      throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.doLogicalPutIfAbsentUnlocked(map, key, value);
   }
 
   @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
+  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue)
+      throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.doLogicalReplaceUnlocked(map, key, current, newValue);
   }
 
-  @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue) {
-    assertLockAndRejoinState();
-    return delegate.doLogicalReplaceUnlocked(map, key, newValue);
-  }
+  // @Override
+  // public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue) {
+  // assertLockAndRejoinState();
+  // return delegate.doLogicalReplaceUnlocked(map, key, newValue);
+  // }
 
   @Override
   public void doLogicalPut(Object lockID, Object key, Object value) {

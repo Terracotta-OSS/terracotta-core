@@ -14,10 +14,8 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
-import com.tc.object.tx.LogicalChangeListener;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -163,11 +161,11 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   }
 
   @Override
-  public void logicalInvoke(int method, Object[] parameters, LogicalChangeListener listener) {
+  public void logicalInvoke(int method, Object[] parameters, LogicalChangeID id) {
     // TODO: It might be useful (if it doesn't take too much CPU) to collapse logical operations. For instance,
     // if a put() is followed by a remove() on the same key we don't need to send anything. Or if multiple put()s are
     // done, only the last one matters
-    logicalEvents.add(new LogicalChangeEvent(method, parameters, listener));
+    logicalEvents.add(new LogicalChangeEvent(method, parameters, id));
   }
 
   @Override
@@ -183,29 +181,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   @Override
   public boolean hasMetaData() {
     return !metaData.isEmpty();
-  }
-
-  @Override
-  public void setLogicalChangeIDs(Sequence logicalChangeSequence) {
-    for (LogicalChangeEvent event : logicalEvents) {
-      // Set Non Null sequence for logical events associated with listeners
-      if (event.getListener() != null) {
-        event.setLogicalChangeID(new LogicalChangeID(logicalChangeSequence.next()));
-      }
-    }
-  }
-
-  @Override
-  public void addLogicalChangeListeners(Map<LogicalChangeID, LogicalChangeListener> map) {
-    for (LogicalChangeEvent event : logicalEvents) {
-      // Set Non Null sequence for logical events associated with listeners
-      if (event.getListener() != null) {
-        LogicalChangeID id = event.getLogicalChangeID();
-        Assert.assertFalse(id.isNull());
-        map.put(id, event.getListener());
-      }
-    }
-
   }
 
 }

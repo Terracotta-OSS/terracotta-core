@@ -57,8 +57,6 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public boolean isActiveTxn();
 
-  public boolean isBroadcastResult();
-
   public boolean isResent();
 
   /**

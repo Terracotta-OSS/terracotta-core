@@ -169,9 +169,4 @@ public class PrunedServerTransaction implements ServerTransaction {
     return this.orgTxn.isEviction();
   }
 
-  @Override
-  public boolean isBroadcastResult() {
-    return orgTxn.isBroadcastResult();
-  }
-
 }

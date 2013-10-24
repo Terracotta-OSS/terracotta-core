@@ -4,10 +4,8 @@
 package com.tc.object.tx;
 
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.dna.api.LogicalChangeID;
 
 import java.util.List;
-import java.util.Map;
 
 public interface TransactionBuffer {
 
@@ -23,7 +21,4 @@ public interface TransactionBuffer {
 
   public List getTransactionCompleteListeners();
 
-  public LogicalChangeListener getLogicalChangeListenerFor(LogicalChangeID id);
-
-  public void addLogicalChangeListeners(Map<LogicalChangeID, LogicalChangeListener> logicalChangeListeners);
 }

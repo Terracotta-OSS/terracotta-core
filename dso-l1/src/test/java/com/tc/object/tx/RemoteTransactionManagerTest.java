@@ -667,11 +667,6 @@ public class RemoteTransactionManagerTest extends TestCase {
       return 64000;
     }
 
-    @Override
-    public TransactionBuffer getTransaction(TransactionID txID) {
-      throw new ImplementMe();
-    }
-
   }
 
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {

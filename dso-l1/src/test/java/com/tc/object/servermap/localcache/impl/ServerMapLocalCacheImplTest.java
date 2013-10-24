@@ -32,7 +32,6 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.impl.ServerMapLocalCacheImpl.ValueOIDKeyTuple;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.LogicalChangeListener;
 import com.tc.object.tx.OnCommitCallable;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionContext;
@@ -42,7 +41,6 @@ import com.tc.stats.Stats;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -950,8 +948,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     @Override
-    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName,
-                              LogicalChangeListener listener) {
+    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName, LogicalChangeID id) {
       throw new ImplementMe();
 
     }
@@ -1005,17 +1002,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     @Override
     public int getSession() {
       return 0;
-    }
-
-    @Override
-    public void setLogicalChangeIDs(Sequence logicalChangeSequence) {
-      throw new ImplementMe();
-
-    }
-
-    @Override
-    public Map<LogicalChangeID, LogicalChangeListener> getLogicalChangeListeners() {
-      throw new ImplementMe();
     }
 
   }

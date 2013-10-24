@@ -13,7 +13,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.SequenceID;
-import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +81,7 @@ public class TestClientTransaction implements ClientTransaction {
 
   @Override
   public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName,
-                            LogicalChangeListener listsner) {
+ LogicalChangeID id) {
     throw new ImplementMe();
   }
 
@@ -223,17 +222,6 @@ public class TestClientTransaction implements ClientTransaction {
   @Override
   public int getSession() {
     return 0;
-  }
-
-  @Override
-  public void setLogicalChangeIDs(Sequence logicalChangeSequence) {
-    throw new ImplementMe();
-
-  }
-
-  @Override
-  public Map<LogicalChangeID, LogicalChangeListener> getLogicalChangeListeners() {
-    throw new ImplementMe();
   }
 
 }

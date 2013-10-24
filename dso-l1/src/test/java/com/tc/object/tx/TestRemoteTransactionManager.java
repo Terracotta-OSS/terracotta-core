@@ -6,8 +6,6 @@ package com.tc.object.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
-import com.tc.object.dna.api.LogicalChangeID;
-import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -139,12 +137,4 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     throw new ImplementMe();
   }
 
-  @Override
-  public void receivedLogicalChangeResult(TransactionID transactionID,
-                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nid) {
-    throw new ImplementMe();
-
-  }
-  
-  
 }
