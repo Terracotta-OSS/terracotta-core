@@ -54,7 +54,7 @@ public class ApplyTransactionInfo {
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
     this.serverEventRecorder = isActiveTxn ? new DefaultServerEventRecorder() : new NullServerEventRecorder();
-    this.resultRecorder = broadcastResult ? new DefaultResultRecorderImpl() : new NullResultRecorderImpl();
+    this.resultRecorder = new DefaultResultRecorderImpl();
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {

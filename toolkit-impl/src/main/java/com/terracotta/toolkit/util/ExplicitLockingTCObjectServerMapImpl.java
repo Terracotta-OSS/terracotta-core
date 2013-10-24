@@ -16,6 +16,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.tx.LogicalChangeListener;
 import com.tc.platform.PlatformService;
 
 import java.lang.ref.WeakReference;
@@ -499,6 +500,12 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     assertLockAndRejoinState();
     delegate.doClearVersioned();
 
+  }
+
+  @Override
+  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener) {
+    assertLockAndRejoinState();
+    delegate.logicalInvoke(method, methodSignature, params, listener);
   }
 
 }

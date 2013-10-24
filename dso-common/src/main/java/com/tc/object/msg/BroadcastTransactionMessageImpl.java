@@ -16,6 +16,8 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
@@ -37,6 +39,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * @author steve
@@ -54,6 +57,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final static byte      NOTIFIED              = 10;
   private final static byte      ROOT_NAME_ID_PAIR     = 11;
   private final static byte      DMI_ID                = 12;
+  private final static byte      LOGICAL_CHANGE_RESULT = 13;
 
   private List                   changes               = new LinkedList();
   private final List             dmis                  = new LinkedList();
@@ -68,6 +72,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    globalTransactionID;
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
+  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults  = new HashMap<LogicalChangeID, LogicalChangeResult>();
 
   public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                          final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -115,6 +120,14 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       DmiDescriptor dd = (DmiDescriptor) i.next();
       putNVPair(DMI_ID, dd);
     }
+
+    for (Iterator i = this.dmis.iterator(); i.hasNext();) {
+      DmiDescriptor dd = (DmiDescriptor) i.next();
+      putNVPair(DMI_ID, dd);
+    }
+    for (Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
+      putNVPair(LOGICAL_CHANGE_RESULT, new LogicalChangeResultPair(entry.getKey(), entry.getValue()));
+    }
   }
 
   @Override
@@ -161,6 +174,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         DmiDescriptor dd = (DmiDescriptor) getObject(new DmiDescriptor());
         this.dmis.add(dd);
         return true;
+      case LOGICAL_CHANGE_RESULT:
+        LogicalChangeResultPair resultPair = (LogicalChangeResultPair) getObject(new LogicalChangeResultPair());
+        this.logicalChangeResults.put(resultPair.getId(), resultPair.getResult());
+        return true;
       default:
         return false;
     }
@@ -170,7 +187,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
                          final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
                          final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
-                         final Collection theNotifies, final Map roots, final DmiDescriptor[] dmiDescs) {
+                         final Collection theNotifies, final Map roots, final DmiDescriptor[] dmiDescs,
+                         Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults) {
     Assert.eval(lids.length > 0);
     Assert.assertNotNull(txnType);
 
@@ -188,6 +206,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     for (DmiDescriptor dmiDesc : dmiDescs) {
       this.dmis.add(dmiDesc);
     }
+    this.logicalChangeResults.putAll(logicalInvokeResults);
   }
 
   @Override
@@ -299,9 +318,47 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
+  private static class LogicalChangeResultPair implements TCSerializable {
+    private LogicalChangeID           id;
+    private LogicalChangeResult result;
+
+    public LogicalChangeID getId() {
+      return id;
+    }
+
+    public LogicalChangeResult getResult() {
+      return result;
+    }
+
+    public LogicalChangeResultPair(LogicalChangeID id, LogicalChangeResult result) {
+      this.id = id;
+      this.result = result;
+    }
+
+    public LogicalChangeResultPair() {
+    }
+
+    @Override
+    public void serializeTo(TCByteBufferOutput serialOutput) {
+      serialOutput.writeLong(id.toLong());
+      result.serializeTo(serialOutput);
+    }
+
+    @Override
+    public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+      this.id = new LogicalChangeID(serialInput.readLong());
+      this.result = (LogicalChangeResult) (new LogicalChangeResult()).deserializeFrom(serialInput);
+      return this;
+    }
+
+  }
+
   @Override
   public List getDmiDescriptors() {
     return this.dmis;
   }
 
+  public Map<LogicalChangeID, LogicalChangeResult> getLogicalChangeResults() {
+    return logicalChangeResults;
+  }
 }

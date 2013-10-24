@@ -12,6 +12,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
@@ -79,7 +80,7 @@ public class DNAImplTest extends TestCase {
     final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriterInternal dnaWriter = createDNAWriter(out, id, type, serializer, encoding, isDelta);
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
-    final LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
+    final LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" }, LogicalChangeID.NULL_ID);
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
     final PhysicalAction action4 = new PhysicalAction("class.field3", new ObjectID(4), true);
     final PhysicalAction action5 = new PhysicalAction("class.field4", new ObjectID(5), true);
@@ -115,7 +116,7 @@ public class DNAImplTest extends TestCase {
       dnaWriter.setArrayLength(arrayLen);
     }
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
-    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
+    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters(), LogicalChangeID.NULL_ID);
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     assertTrue(dnaWriter.isContiguous());
     dnaWriter.addMetaData(md);

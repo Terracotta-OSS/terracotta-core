@@ -7,6 +7,7 @@ package com.tc.object;
 import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.tx.LogicalChangeListener;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
@@ -293,6 +294,12 @@ public class MockTCObject implements TCObject {
   @Override
   public void unresolveReference(final String fieldName) {
     throw new ImplementMe();
+  }
+
+  @Override
+  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener) {
+    throw new ImplementMe();
+
   }
 
 }

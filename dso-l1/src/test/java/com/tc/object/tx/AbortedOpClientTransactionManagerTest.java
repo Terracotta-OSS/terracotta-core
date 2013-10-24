@@ -62,7 +62,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
       clientTxnMgr.begin(new StringLockID("test2"), LockLevel.WRITE, false);
 
       // change1
-      clientTxnFactory.clientTransactions.get(0).logicalInvoke(null, -1, null, null);
+      clientTxnFactory.clientTransactions.get(0).logicalInvoke(null, -1, null, null, null);
       Assert.assertEquals(1, clientTxnFactory.clientTransactions.size());
 
       abortableOperationManager.abort(Thread.currentThread());
@@ -84,9 +84,11 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
     clientTxnFactory.clientTransactions.get(1).addNotify(null);
 
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.times(1))
-        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
+                       null);
     Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.never())
-        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
+                       null);
     
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.never())
         .addNotify((Notify) Matchers

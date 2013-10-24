@@ -4,9 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
-import com.tc.util.concurrent.Runners;
 import org.mockito.Mockito;
 
 import com.tc.abortable.AbortedOperationException;
@@ -14,6 +11,8 @@ import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -25,17 +24,17 @@ import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
-import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.SimpleCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -545,7 +544,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     public final LinkedBlockingQueue addTxQueue   = new LinkedBlockingQueue();
     private final LinkedList transactions = new LinkedList();
-    private int holder = 0;
+    private final int holder = 0;
 
     public TestTransactionBatch(TxnBatchID batchID) {
       this.batchID = batchID;
@@ -573,7 +572,8 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     @Override
     public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                                  TransactionIDGenerator transactionIDGenerator) {
+                                                  TransactionIDGenerator transactionIDGenerator,
+                                                  Sequence logicalChangeSequence) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
       try {
@@ -622,11 +622,6 @@ public class RemoteTransactionManagerTest extends TestCase {
     @Override
     public void send() {
       try {
-          synchronized (this) {
-              while (holder > 0) {
-                  wait();
-              }
-          }
         RemoteTransactionManagerTest.this.batchSendQueue.put(this);
       } catch (InterruptedException e) {
         throw new TCRuntimeException(e);
@@ -672,11 +667,16 @@ public class RemoteTransactionManagerTest extends TestCase {
       return 64000;
     }
 
+    @Override
+    public TransactionBuffer getTransaction(TransactionID txID) {
+      throw new ImplementMe();
+    }
+
   }
 
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {
     private long             idSequence;
-    private boolean          folding;
+    private final boolean          folding;
     public final LinkedBlockingQueue newBatchQueue = new LinkedBlockingQueue();
 
     public TestTransactionBatchFactory(boolean folding) {

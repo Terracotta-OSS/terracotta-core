@@ -13,6 +13,8 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -68,7 +70,8 @@ public class BroadcastTransactionMessageTest extends TestCase {
                                                        State.WAITER));
     }
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-                        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);
+                        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY,
+                        new HashMap<LogicalChangeID, LogicalChangeResult>());
     this.msg.dehydrate();
 
     TCByteBuffer[] data = this.out.toArray();

@@ -4,11 +4,14 @@
  */
 package com.tc.object.tx;
 
+import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +55,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters) {
+  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeListener listsner) {
     // null do nothing
   }
 
@@ -120,4 +123,15 @@ public class NullClientTransaction extends AbstractClientTransaction {
   public int getSession() {
     return 0;
   }
+
+  @Override
+  public void setLogicalChangeIDs(Sequence logicalChangeSequence) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Map<LogicalChangeID, LogicalChangeListener> getLogicalChangeListeners() {
+    throw new ImplementMe();
+  }
+
 }

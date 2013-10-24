@@ -20,6 +20,8 @@ import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
@@ -86,12 +88,14 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final Invalidations invalidateObjectIDs = new Invalidations();
 
       if (!clientID.equals(committerID)) {
-        prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
-            .getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
+        prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(),
+                                                                                    bcc.getApplyInfo(), clientID,
+                                                                                    lookupObjectIDs,
+                                                                                    invalidateObjectIDs);
       }
 
-      Map results = clientID.equals(committerID) ? bcc.getApplyInfo().getApplyResultRecorder().getResults()
-          : Collections.emptyMap();
+      Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = (Map<LogicalChangeID, LogicalChangeResult>) (clientID
+          .equals(committerID) ? bcc.getApplyInfo().getApplyResultRecorder().getResults() : Collections.emptyMap());
 
       if (!invalidateObjectIDs.isEmpty()) {
         invalidateObjMgr.invalidateObjectFor(clientID, invalidateObjectIDs);
@@ -104,7 +108,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
       final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
-          || includeDmi) {
+          || includeDmi || !logicalChangeResults.isEmpty()) {
         this.transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
 
         // check here if the client is already not disconnected
@@ -125,8 +129,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
-                                   txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(), bcc
-                                       .getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi);
+                                   txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(),
+                                   bcc.getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi,
+                                   logicalChangeResults);
 
         responseMessage.send();
 

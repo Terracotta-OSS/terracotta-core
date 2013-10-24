@@ -8,6 +8,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.api.EvictableEntry;
 
@@ -27,7 +28,8 @@ public final class ServerMapEvictionDNA extends RemoveAllDNA {
 
   private static class ServerMapEvictionDNACursor implements DNACursor {
     private static final LogicalAction EVICTION_COMPLETED = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
-        new Object[] {});
+                                                                                     new Object[] {},
+                                                                                     LogicalChangeID.NULL_ID);
 
     private final DNACursor removeCursor;
     private boolean returnedEvictionCompleted = false;

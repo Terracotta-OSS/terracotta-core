@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.api;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.tc.exception.ImplementMe;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
@@ -17,6 +20,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.tx.TransactionID;
@@ -68,9 +72,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author steve
@@ -935,7 +936,7 @@ public class ObjectManagerTest extends TCTestCase {
             case 2:
             case 3:
               final Object item = new UTF8ByteDataHolder("item" + this.count);
-              return new LogicalAction(SerializationUtil.ADD, new Object[] { item });
+              return new LogicalAction(SerializationUtil.ADD, new Object[] { item }, LogicalChangeID.NULL_ID);
             default:
               throw new RuntimeException("bad count: " + this.count);
           }
@@ -1041,7 +1042,7 @@ public class ObjectManagerTest extends TCTestCase {
             case 3:
               final Object key = new UTF8ByteDataHolder("key" + this.count);
               final Object val = new UTF8ByteDataHolder("val" + this.count);
-              return new LogicalAction(SerializationUtil.PUT, new Object[] { key, val });
+              return new LogicalAction(SerializationUtil.PUT, new Object[] { key, val }, LogicalChangeID.NULL_ID);
             default:
               throw new RuntimeException("bad count: " + this.count);
           }
@@ -1120,7 +1121,8 @@ public class ObjectManagerTest extends TCTestCase {
         public LogicalAction getLogicalAction() {
           switch (this.count) {
             case 1:
-              return new LogicalAction(SerializationUtil.SET_TIME, new Object[] { System.currentTimeMillis() });
+              return new LogicalAction(SerializationUtil.SET_TIME, new Object[] { System.currentTimeMillis() },
+                                       LogicalChangeID.NULL_ID);
             default:
               throw new RuntimeException("bad count: " + this.count);
           }

@@ -14,6 +14,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
@@ -252,7 +253,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
                                                   new SerializerDNAEncodingImpl(), isDelta);
 
     final PhysicalAction action1 = new PhysicalAction("manoj.field1", Integer.valueOf(1), false);
-    final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" });
+    final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" }, LogicalChangeID.NULL_ID);
     final PhysicalAction action3 = new PhysicalAction("manoj.field2", new ObjectID(99), true);
 
     dnaWriter.setParentObjectID(new ObjectID(100));

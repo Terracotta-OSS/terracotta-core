@@ -22,6 +22,8 @@ import com.tc.object.TCObjectSelfStore;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
@@ -48,32 +50,32 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
-  private static final TCLogger                logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
+  private static final TCLogger           logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal                    transaction = new VicariousThreadLocal() {
-                                                             @Override
-                                                             protected Object initialValue() {
-                                                               return new ThreadTransactionContext();
-                                                             }
-                                                           };
+  private final ThreadLocal               transaction = new VicariousThreadLocal() {
+                                                        @Override
+                                                        protected Object initialValue() {
+                                                          return new ThreadTransactionContext();
+                                                        }
+                                                      };
 
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal                    txnLogging  = new VicariousThreadLocal();
+  private final ThreadLocal               txnLogging  = new VicariousThreadLocal();
 
-  private final ClientTransactionFactory       txFactory;
-  private final RemoteTransactionManager       remoteTxnManager;
-  private final ClientObjectManager            clientObjectManager;
-  private final ClientLockManager              clientLockManager;
+  private final ClientTransactionFactory  txFactory;
+  private final RemoteTransactionManager  remoteTxnManager;
+  private final ClientObjectManager       clientObjectManager;
+  private final ClientLockManager         clientLockManager;
 
-  private final ClientIDProvider               cidProvider;
+  private final ClientIDProvider          cidProvider;
 
-  private final SampledCounter                 txCounter;
+  private final SampledCounter            txCounter;
 
-  private final TCObjectSelfStore              tcObjectSelfStore;
-  private final AbortableOperationManager      abortableOperationManager;
-  private volatile int                         session     = 0;
+  private final TCObjectSelfStore         tcObjectSelfStore;
+  private final AbortableOperationManager abortableOperationManager;
+  private volatile int                    session     = 0;
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider,
                                       final ClientObjectManager clientObjectManager,
@@ -224,8 +226,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                + "For more information on how to solve this issue, see:\n"
                + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
 
-    throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
-        .getClientID().toLong(), details);
+    throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider.getClientID()
+        .toLong(), details);
   }
 
   @Override
@@ -299,7 +301,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
-
   private OnCommitCallable getOnCommitCallableForAtomicTxn(final LockID lock, final OnCommitCallable delegate) {
     return new OnCommitCallable() {
 
@@ -366,7 +367,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       // Check here that If operation was already aborted.
       AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
       if (this.session != tx.getSession()) { throw new PlatformRejoinException(
-                                                                                       "unable to commit transaction as rejoin occured"); }
+                                                                               "unable to commit transaction as rejoin occured"); }
       hasCommitted = commitInternal(lock, tx);
     } catch (AbortedOperationException t) {
       aborted = true;
@@ -618,6 +619,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   @Override
   public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
+    logicalInvoke(source, method, methodName, parameters, null);
+
+  }
+
+  @Override
+  public void logicalInvoke(final TCObject source, final int method, final String methodName,
+                            final Object[] parameters, LogicalChangeListener listener) {
     if (isTransactionLoggingDisabled()) { return; }
 
     try {
@@ -652,7 +660,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         }
       }
 
-      tx.logicalInvoke(source, method, parameters, methodName);
+      tx.logicalInvoke(source, method, parameters, methodName, listener);
     } finally {
       enableTransactionLogging();
     }
@@ -811,6 +819,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   @Override
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     this.remoteTxnManager.waitForAllCurrentTransactionsToComplete();
+  }
+
+  @Override
+  public void receivedLogicalChangeResult(TransactionID transactionID,
+                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID) {
+    this.remoteTxnManager.receivedLogicalChangeResult(transactionID, results, nodeID);
+    
   }
 
 }

@@ -6,10 +6,12 @@ package com.tc.object.tx;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.SequenceID;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.List;
@@ -123,7 +125,8 @@ public interface ClientTransaction {
    * @param parameters Parameter values
    * @param methodName Method name
    */
-  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName);
+  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName,
+                            LogicalChangeListener listener);
 
   /**
    * Check whether transaction has changes or notifications
@@ -252,5 +255,9 @@ public interface ClientTransaction {
    * returns the session in which this transaction was created
    */
   public int getSession();
+
+  public void setLogicalChangeIDs(Sequence logicalChangeSequence);
+
+  public Map<LogicalChangeID, LogicalChangeListener> getLogicalChangeListeners();
 
 }

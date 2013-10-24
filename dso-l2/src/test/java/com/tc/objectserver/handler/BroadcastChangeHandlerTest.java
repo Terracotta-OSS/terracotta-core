@@ -28,6 +28,8 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -756,12 +758,12 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void initialize(final List chges, final ObjectStringSerializer serializer, final LockID[] lids,
-                           final long cid, final TransactionID txID, final NodeID commitID,
-                           final GlobalTransactionID gtx, final TxnType txnType,
-                           final GlobalTransactionID lowGlobalTransactionIDWatermark, final Collection notifies,
-                           final Map newRoots, final DmiDescriptor[] dmis) {
-      //
+    public void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
+                           NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
+                           GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
+                           DmiDescriptor[] dmis, Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults) {
+      throw new ImplementMe();
+
     }
 
   }

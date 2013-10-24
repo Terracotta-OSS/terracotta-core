@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.object.tx.LogicalChangeListener;
 
 public class TCObjectLogical extends TCObjectImpl {
 
@@ -14,6 +15,12 @@ public class TCObjectLogical extends TCObjectImpl {
   @Override
   public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
     getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
+  }
+
+  @Override
+  public void logicalInvoke(final int method, final String methodName, final Object[] parameters,
+                            LogicalChangeListener listener) {
+    getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters, listener);
   }
 
   @Override

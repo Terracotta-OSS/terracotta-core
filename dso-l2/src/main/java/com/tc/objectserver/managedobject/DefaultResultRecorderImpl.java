@@ -3,30 +3,28 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.object.ObjectID;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.util.Assert;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DefaultResultRecorderImpl implements ApplyResultRecorder {
-  private final Map<ObjectID, List> changeResults = new LinkedHashMap<ObjectID, List>();
+  private final Map<LogicalChangeID, LogicalChangeResult> changeResults = new LinkedHashMap<LogicalChangeID, LogicalChangeResult>();
 
   @Override
-  public void recordResult(ObjectID oid, Object result) {
-    List results = changeResults.get(oid);
-    if (results == null) {
-      results = new ArrayList<Object>();
-      Assert.assertNull(changeResults.put(oid, results));
+  public void recordResult(LogicalChangeID changeID, LogicalChangeResult result) {
+    if (changeID.isNull()) {
+      // L1 not interested in the result
+      return;
     }
-    results.add(result);
+    Assert.assertNull(changeResults.put(changeID, result));
 
   }
 
   @Override
-  public Map<ObjectID, List> getResults() {
+  public Map<LogicalChangeID, LogicalChangeResult> getResults() {
     return changeResults;
   }
 

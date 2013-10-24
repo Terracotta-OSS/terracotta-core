@@ -10,6 +10,8 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
@@ -105,6 +107,17 @@ public interface ClientTransactionManager extends ClearableCallback {
    * @param parameters Parameter values in call
    */
   public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters);
+
+  /**
+   * Record a logical method invocation
+   * 
+   * @param source TCObject for object
+   * @param method Method constant from SerializationUtil
+   * @param methodName Method name
+   * @param parameters Parameter values in call
+   */
+  public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters,
+                            LogicalChangeListener listener);
 
   /**
    * Record notify() or notifyAll() call on object in current transaction
@@ -217,5 +230,8 @@ public interface ClientTransactionManager extends ClearableCallback {
    * @throws AbortedOperationException
    */
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
+  
+  public void receivedLogicalChangeResult(TransactionID transactionID,
+                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID);
 
 }

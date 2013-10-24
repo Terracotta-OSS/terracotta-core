@@ -8,7 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
@@ -38,18 +38,19 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
   }
 
   @Override
-  protected Object applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
+  protected LogicalChangeResult applyLogicalAction(final ObjectID objectID, final ApplyTransactionInfo applyInfo,
+                                                   final int method,
                                       final Object[] params) throws AssertionError {
     switch (method) {
       case SerializationUtil.ADD:
       case SerializationUtil.ADD_LAST:
         addChangeToCollector(objectID, params[0], applyInfo);
         references.add(params[0]);
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.ADD_FIRST:
         addChangeToCollector(objectID, params[0], applyInfo);
         references.add(0, params[0]);
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.INSERT_AT:
       case SerializationUtil.ADD_AT:
         addChangeToCollector(objectID, params[1], applyInfo);
@@ -59,19 +60,19 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         } else {
           references.add(ai, params[1]);
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE:
         references.remove(params[0]);
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE_ALL:
         references.removeAll(Arrays.asList(params));
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE_AT:
         int index = (Integer) params[0];
         if (references.size() > index) {
           references.remove(index);
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE_RANGE: {
         int size = references.size();
         int fromIndex = (Integer) params[0];
@@ -83,11 +84,11 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
           }
         }
       }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.CLEAR:
       case SerializationUtil.DESTROY:
         references.clear();
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.SET_ELEMENT:
       case SerializationUtil.SET:
         addChangeToCollector(objectID, params[1], applyInfo);
@@ -97,18 +98,18 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
         } else {
           references.set(si, params[1]);
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE_FIRST:
         if (references.size() > 0) {
           references.remove(0);
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.REMOVE_LAST:
         int size = references.size();
         if (size > 0) {
           references.remove(size - 1);
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.SET_SIZE:
         int setSize = (Integer) params[0];
         int listSize = references.size();
@@ -122,10 +123,10 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
             references.remove(i - 1);
           }
         }
-        return ManagedObjectState.SUCCESS_RESULT;
+        return LogicalChangeResult.SUCCESS;
       case SerializationUtil.TRIM_TO_SIZE:
         // do nothing for now
-        return ManagedObjectState.FAILURE_RESULT;
+        return LogicalChangeResult.SUCCESS;
       default:
         throw new AssertionError("Invalid method:" + method + " state:" + this);
     }

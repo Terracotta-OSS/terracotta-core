@@ -3,13 +3,13 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.object.ObjectID;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 
-import java.util.List;
 import java.util.Map;
 
 public interface ApplyResultRecorder {
-  public void recordResult(ObjectID oid, Object result);
+  public void recordResult(LogicalChangeID logicalChangeID, LogicalChangeResult result);
 
-  public Map<ObjectID, List> getResults();
+  public Map<LogicalChangeID, LogicalChangeResult> getResults();
 }
