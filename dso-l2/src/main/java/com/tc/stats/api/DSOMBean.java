@@ -11,6 +11,7 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.OffheapStats;
+import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import javax.management.ObjectName;
  * aggregating statistical, configuration, and operational child interfaces.
  */
 
-public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMBean {
+public interface DSOMBean extends DSOStats, OffheapStats, StorageDataStats, DGCMBean, TerracottaMBean {
 
   DSOStats getStats();
 
@@ -108,4 +109,5 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
   int getLicensedClientHighCount();
 
   Map<String, Integer> getUnreadOperatorEventCount();
+
 }

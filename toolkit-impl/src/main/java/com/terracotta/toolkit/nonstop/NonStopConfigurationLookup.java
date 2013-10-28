@@ -5,6 +5,7 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
 
 public class NonStopConfigurationLookup {
   private final NonStopContext    context;
@@ -22,10 +23,61 @@ public class NonStopConfigurationLookup {
   }
 
   public NonStopConfiguration getNonStopConfiguration() {
-    return context.getNonStopConfigurationRegistry().getConfigForInstance(name, objectType);
+    NonStopConfiguration config = context.getNonStopConfigurationRegistry()
+        .getConfigForInstance(name, objectType);
+    if (!context.isEnabledForCurrentThread()) {
+      return new DisabledNonStopConfiguration(config);
+    }
+    return config;
   }
 
   public NonStopConfiguration getNonStopConfigurationForMethod(String methodName) {
-    return context.getNonStopConfigurationRegistry().getConfigForInstanceMethod(methodName, name, objectType);
+    NonStopConfiguration config = context.getNonStopConfigurationRegistry()
+        .getConfigForInstanceMethod(methodName, name, objectType);
+    if (!context.isEnabledForCurrentThread()) {
+      return new DisabledNonStopConfiguration(config);
+    }
+    return config;
   }
+
+
+  private static final class DisabledNonStopConfiguration implements NonStopConfiguration {
+
+    private final NonStopConfiguration delegate;
+
+    public DisabledNonStopConfiguration(NonStopConfiguration delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public NonStopConfigurationFields.NonStopReadTimeoutBehavior getReadOpNonStopTimeoutBehavior() {
+      return delegate.getReadOpNonStopTimeoutBehavior();
+    }
+
+    @Override
+    public NonStopConfigurationFields.NonStopWriteTimeoutBehavior getWriteOpNonStopTimeoutBehavior() {
+      return delegate.getWriteOpNonStopTimeoutBehavior();
+    }
+
+    @Override
+    public long getTimeoutMillis() {
+      return delegate.getTimeoutMillis();
+    }
+
+    @Override
+    public long getSearchTimeoutMillis() {
+      return delegate.getSearchTimeoutMillis();
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return false;
+    }
+
+    @Override
+    public boolean isImmediateTimeoutEnabled() {
+      return delegate.isImmediateTimeoutEnabled();
+    }
+  }
+
 }

@@ -100,7 +100,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
   private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
   private final L2ObjectStateManager                      l2ObjectStateManager;
-  private final ClusterStatePersistor                     clusterStatePersistor;
+
+  // private final ClusterStatePersistor clusterStatePersistor;
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                          final StageManager stageManager, final GroupManager groupCommsManager,
@@ -125,14 +126,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.l2ObjectStateManager = l2ObjectStateManager;
-    this.clusterStatePersistor = clusterStatePersistor;
+    // this.clusterStatePersistor = clusterStatePersistor;
 
     init(stageManager, clusterStatePersistor, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
          serverTransactionFactory, dgcSequenceProvider, objectIDSequence, offheapConfig, electionTimInSecs);
   }
 
-  private void init(final StageManager stageManager, final ClusterStatePersistor clusterStatePersistor,
+  private void init(final StageManager stageManager, final ClusterStatePersistor statePersistor,
                     L2ObjectStateManager objectStateManager, L2IndexStateManager l2IndexStateManager,
                     final ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
@@ -145,7 +146,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(clusterStatePersistor, objectIDSequence,
+    final ClusterState clusterState = new ClusterState(statePersistor, objectIDSequence,
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);
@@ -155,14 +156,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
-                                             createWeightGeneratorFactoryForStateManager(gtxm), clusterStatePersistor);
+                                             createWeightGeneratorFactoryForStateManager(gtxm), statePersistor);
     this.sequenceGenerator = new SequenceGenerator(this);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     clusterStatePersistor);
+                                                                                     statePersistor);
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
@@ -223,7 +224,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                           objectManager, transactionManager,
                                                           objectsSyncRequestSink, indexSyncRequestSink,
                                                           transactionRelaySink, this.sequenceGenerator,
-                                                          this.indexSequenceGenerator, offheapConfig, clusterStatePersistor);
+                                                          this.indexSequenceGenerator, offheapConfig, statePersistor);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);

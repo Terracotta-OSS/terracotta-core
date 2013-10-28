@@ -36,6 +36,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.storage.api.OffheapStats;
+import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
@@ -113,7 +114,8 @@ public class DSOMBeanRegTest {
     mbeanSvr = mock(MBeanServer.class);
     dso = new DSO(smCtxt, mock(ServerConfigurationContext.class), mbeanSvr,
                       new GCStatsEventPublisher(),
-                  mock(TerracottaOperatorEventHistoryProvider.class), mock(OffheapStats.class));
+                  mock(TerracottaOperatorEventHistoryProvider.class), mock(OffheapStats.class),
+                  mock(StorageDataStats.class));
 
   }
 

@@ -28,6 +28,7 @@ import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.collections.ToolkitListInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.feature.NonStopInternalFeature;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
@@ -42,7 +43,6 @@ import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookupAsync;
 import com.terracotta.toolkit.nonstop.NonStopClusterListener;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopConfigurationLookup;
-import com.terracotta.toolkit.nonstop.NonStopContext;
 import com.terracotta.toolkit.nonstop.NonStopContextImpl;
 import com.terracotta.toolkit.nonstop.NonStopLockImpl;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
@@ -59,9 +59,10 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   private final AbortableOperationManager      abortableOperationManager;
   protected final NonStopClusterListener       nonStopClusterListener;
-  private final NonStopFeature                        nonStopFeature;
+  private final NonStopFeature                 nonStopFeature;
+  private final NonStopInternalFeature         nonStopInternalFeature;
   private final AsyncToolkitInitializer        asyncToolkitInitializer;
-  private final NonStopContext                 context;
+  private final NonStopContextImpl             context;
   private final NonStopClusterInfo             nonStopClusterInfo;
   private final PlatformService                platformService;
   private final NonStopInitializationService   nonStopInitiailzationService;
@@ -80,6 +81,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     this.context = new NonStopContextImpl(nonStopManager, nonStopConfigManager, abortableOperationManager,
                                           nonstopTimeoutBehaviorFactory, asyncToolkitInitializer,
                                           nonStopClusterListener);
+    this.nonStopInternalFeature = new NonStopInternalFeatureImpl(context);
 
     this.nonStopInitiailzationService = new NonStopInitializationService(context);
   }
@@ -343,6 +345,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
 
   @Override
   public <T extends ToolkitFeature> T getFeature(ToolkitFeatureTypeInternal<T> type) {
+    if (type == ToolkitFeatureTypeInternal.NONSTOP) { return (T) nonStopInternalFeature; }
     return getInitializedToolkit().getFeature(type);
   }
 

@@ -88,4 +88,13 @@ public abstract class AbstractClientBase implements Runnable {
     System.out.println("[D E B U G : " + DATE_FORMATTER.format(new Date()) + " '" + Thread.currentThread().getName()
                        + "'] " + msg);
   }
+
+  public String getStackTrace(Throwable t) {
+    StringBuilder stackTrace = new StringBuilder("\n" + t.getClass().getName() + " :" + t.getMessage() + "\n");
+    for (StackTraceElement stackTraceElement : t.getStackTrace()) {
+      stackTrace = stackTrace.append(stackTraceElement + "\n");
+    }
+    return stackTrace.toString();
+  }
+
 }

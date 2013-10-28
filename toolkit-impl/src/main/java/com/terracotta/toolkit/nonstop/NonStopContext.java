@@ -19,4 +19,7 @@ public interface NonStopContext {
   AsyncToolkitInitializer getAsyncToolkitInitializer();
 
   NonStopClusterListener getNonStopClusterListener();
+
+  boolean isEnabledForCurrentThread();
+
 }

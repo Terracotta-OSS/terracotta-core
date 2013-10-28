@@ -313,8 +313,10 @@ public class GroupServerManager {
     closeJMXConnectors();
 
     for (int i = 0; i < serverControl.length; i++) {
-      if (serverControl[i].isRunning()) {
-        stopServerInternal(i);
+      synchronized (this) {
+        if (serverControl[i].isRunning()) {
+          stopServer(i);
+        }
       }
     }
   }
@@ -325,12 +327,8 @@ public class GroupServerManager {
     stopAllServers();
   }
 
-  public void stopServer(int index) throws Exception {
-    stopServerInternal(index);
-  }
-
-  private synchronized void stopServerInternal(int index) throws Exception {
-
+  private void stopServer(int index) throws Exception {
+    Assert.assertTrue(Thread.holdsLock(this));
     if (!expectedServerRunning[index]) {
       System.out.println("***Server not expected to be running. not stopping server ["
                          + serverControl[index].getTsaPort() + "]");
@@ -850,8 +848,7 @@ public class GroupServerManager {
 
   public void startCrasher() {
     if (crasherStarted.compareAndSet(false, true)) {
-      if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)
-          && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.CUSTOMIZED_CRASH)) {
+      if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
         crasherThread = new Thread(serverCrasher);
         crasherThread.setDaemon(true);
         crasherThread.start();

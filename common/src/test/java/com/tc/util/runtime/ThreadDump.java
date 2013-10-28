@@ -109,7 +109,8 @@ public class ThreadDump {
     File jrcmd = getProgram("jrcmd");
     if (jrcmd.isFile()) {
       try {
-        Result result = Exec.execute(new String[] { jrcmd.getAbsolutePath(), String.valueOf(pid.getPid()), "print_threads" }, TIMEOUT);
+        Result result = Exec.execute(new String[] { jrcmd.getAbsolutePath(), String.valueOf(pid.getPid()),
+            "print_threads" }, TIMEOUT);
         System.err.println(result.getStdout() + result.getStderr());
       } catch (Exception e) {
         e.printStackTrace();
@@ -124,14 +125,21 @@ public class ThreadDump {
     if (jstack.isFile()) {
       boolean success = false;
       int count = 0;
+      String absolutePath = jstack.getAbsolutePath();
+      String valueOfPid = String.valueOf(pid.getPid());
       do {
         doJps();
         try {
-          Result result = Exec.execute(new String[] { jstack.getAbsolutePath(), "-l", String.valueOf(pid.getPid()) },
-                                       TIMEOUT);
+          String[] cmd = null;
+          if (count > 5) {
+            cmd = new String[] { absolutePath, "-F", "-l", valueOfPid };
+          } else {
+            cmd = new String[] { absolutePath, "-l", valueOfPid };
+          }
+          Result result = Exec.execute(cmd, TIMEOUT);
           String output = result.getStdout() + result.getStderr();
           System.err.println(output);
-          success = !output.contains("Connection refused");
+          success = !(output.contains("Connection refused") || output.contains("Error attaching to process"));
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -183,7 +191,7 @@ public class ThreadDump {
 
     Result result;
     try {
-      result = Exec.execute(new String[] { jpsCmd.getAbsolutePath(), "-lmv"}, TIMEOUT);
+      result = Exec.execute(new String[] { jpsCmd.getAbsolutePath(), "-lmv" }, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

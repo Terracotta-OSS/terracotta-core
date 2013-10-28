@@ -67,12 +67,12 @@ public class ClusterState {
     checkAndSetGroupID(clusterStatePersistor, thisGroupID);
   }
 
-  private void checkAndSetGroupID(ClusterStatePersistor clusterStatePersistor, GroupID groupID) {
-    if (clusterStatePersistor.getGroupId().isNull()) {
-      clusterStatePersistor.setGroupId(thisGroupID);
+  private void checkAndSetGroupID(ClusterStatePersistor statePersistor, GroupID groupID) {
+    if (statePersistor.getGroupId().isNull()) {
+      statePersistor.setGroupId(thisGroupID);
     } else {
       Assert.assertEquals("Persisted group id is not the same as the current group id.", groupID,
-          clusterStatePersistor.getGroupId());
+          statePersistor.getGroupId());
     }
   }
 

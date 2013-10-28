@@ -408,7 +408,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           // first starts up. This node joining could trigger one object list request while the active running the sync() method
           // will trigger the other.
           boolean syncAllowed = !syncStarted.get() && clusterStatePersistor.getInitialState() == null;
-          logger.info("Send response to Active's query : syncAllowed = " + syncAllowed + 
+          logger.info("Send response to Active's query : syncAllowed = " + syncAllowed +
                       " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
                       " resource total=" + getResourceTotal());
           try {
@@ -548,7 +548,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void add2L2StateManager(final Map<NodeID, PassiveSyncState> toAdd) {
       for (Entry<NodeID, PassiveSyncState> e : toAdd.entrySet()) {
         final NodeID nodeID = e.getKey();
-        final PassiveSyncState value = e.getValue();
         startSyncFor(nodeID);
       }
     }
@@ -647,19 +646,18 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   private static class PassiveSyncState {
-    protected final State         currentState;
+    // protected final State currentState;
 
     public PassiveSyncState() {
       this(new State("NO_STATE"));
     }
 
     public PassiveSyncState(State currentState) {
-      this.currentState = currentState;
+      // this.currentState = currentState;
     }
 
-    public State getCurrentState() {
-      return currentState;
-    }
-
+    // public State getCurrentState() {
+    // return currentState;
+    // }
   }
 }
