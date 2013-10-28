@@ -7,7 +7,6 @@ package com.tc.object.tx;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
-import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 
@@ -30,7 +29,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
    * @return true if the transaction was folded
    */
   public FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                   TransactionIDGenerator transactionIDGenerator, Sequence logicalChangeSequence);
+                                   TransactionIDGenerator transactionIDGenerator);
   
   public TransactionBuffer addSimpleTransaction(ClientTransaction txn);
 

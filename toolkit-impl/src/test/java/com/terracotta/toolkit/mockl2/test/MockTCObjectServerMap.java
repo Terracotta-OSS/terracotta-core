@@ -316,11 +316,6 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
     throw new ImplementMe();
   }
 
-  // @Override
-  // public boolean doLogicalReplaceUnlocked(TCServerMap serverMap, Object key, Object newValue) {
-  // throw new ImplementMe();
-  // }
-
   @Override
   public void doLogicalPut(Object lockID, Object key, Object value) {
     map.put(key, value);

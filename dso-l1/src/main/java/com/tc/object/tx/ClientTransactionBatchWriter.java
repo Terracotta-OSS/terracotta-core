@@ -35,7 +35,6 @@ import com.tc.util.Conversion;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -163,7 +162,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private TransactionBuffer getOrCreateBuffer(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
-                                              final TransactionIDGenerator tidGenerator, Sequence logicalChangeSequence) {
+                                              final TransactionIDGenerator tidGenerator) {
     final boolean exceedsLimits = exceedsLimits(txn);
 
     // txns that exceed the lock/object limits, or those with roots, DMI, and/or notify/notifyAll() cannot be folded
@@ -345,8 +344,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   @Override
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
-                                                final TransactionIDGenerator tidGenerator,
-                                                Sequence logicalChangeSequence) {
+                                                final TransactionIDGenerator tidGenerator) {
     holders += 1;
     TransactionBuffer txnBuffer = null;
     if (!foldingEnabled) {
@@ -364,7 +362,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
       removeEmptyDeltaDna(txn);
 
-      txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator, logicalChangeSequence);
+      txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
       txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
     }
 

@@ -20,7 +20,6 @@ import com.tc.util.CallableWaiter;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.sequence.Sequence;
 
 import java.lang.Thread.State;
 import java.util.Collection;
@@ -215,8 +214,7 @@ public class TransactionSequencerTest extends TestCase {
 
     @Override
     public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                                  TransactionIDGenerator transactionIDGenerator,
-                                                  Sequence logicalChangeSequence) {
+                                                  TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
       transactions += 1;

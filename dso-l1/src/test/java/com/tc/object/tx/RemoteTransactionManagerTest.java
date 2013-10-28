@@ -34,7 +34,6 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.Runners;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -572,8 +571,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     @Override
     public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                                  TransactionIDGenerator transactionIDGenerator,
-                                                  Sequence logicalChangeSequence) {
+                                                  TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
       try {

@@ -19,7 +19,6 @@ import com.tc.util.AbortedOperationUtil;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
-import com.tc.util.sequence.SimpleSequence;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -66,7 +65,6 @@ public class TransactionSequencer implements ClearableCallback {
   private final TransactionIDGenerator                      transactionIDGenerator;
   private final AbortableOperationManager                   abortableOperationManager;
   private final RemoteTransactionManagerImpl                remoteTxnMgrImpl;
-  private final SimpleSequence                              logicalChangeSequence    = new SimpleSequence();
 
   public TransactionSequencer(GroupID groupID, TransactionIDGenerator transactionIDGenerator,
                               TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
@@ -185,8 +183,7 @@ public class TransactionSequencer implements ClearableCallback {
 
         if ( this.batchFactory.isFoldingSupported() ) {
           written = this.currentBatch.byteSize();
-          FoldedInfo fold = this.currentBatch.addTransaction(txn, sequence, transactionIDGenerator,
-                                                             logicalChangeSequence);
+          FoldedInfo fold = this.currentBatch.addTransaction(txn, sequence, transactionIDGenerator);
           this.lockAccounting.add(fold.getFoldedTransactionID(), txn.getAllLockIDs());
           numTransactionsDelta = 0;
           written = this.currentBatch.byteSize() - written;
