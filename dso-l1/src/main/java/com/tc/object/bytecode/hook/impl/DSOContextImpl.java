@@ -28,6 +28,7 @@ import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.platform.PlatformService;
 import com.tc.util.Assert;
+import com.terracotta.management.security.SecretProvider;
 
 import java.io.OutputStream;
 import java.lang.reflect.Method;
@@ -85,6 +86,10 @@ public class DSOContextImpl implements DSOContext {
 
   public static TCSecurityManager createSecurityManager(Map<String, Object> env) {
     return AbstractClientFactory.getFactory().createClientSecurityManager(env);
+  }
+
+  public byte[] getSecret() {
+    return SecretProvider.getSecret();
   }
 
   private void startToolkitConfigurator() throws Exception {
