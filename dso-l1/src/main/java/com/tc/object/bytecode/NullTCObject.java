@@ -11,7 +11,6 @@ import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.tx.LogicalChangeListener;
 
 import java.lang.ref.WeakReference;
 
@@ -250,8 +249,4 @@ public class NullTCObject implements TCObject {
     //
   }
 
-  @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener) {
-    //
-  }
 }

@@ -8,7 +8,6 @@ import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.LogicalChangeListener;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -333,8 +332,4 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     return true;
   }
 
-  @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener) {
-    tcClazz.getObjectManager().getTransactionManager().logicalInvoke(this, method, methodSignature, params, listener);
-  }
 }

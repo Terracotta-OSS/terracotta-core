@@ -81,7 +81,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private final TCObjectSelfStore                           tcObjectSelfStore;
   private final AbortableOperationManager                   abortableOperationManager;
   private volatile int                                      session                = 0;
-  private final Map<LogicalChangeID, LogicalChangeListener> logicalChangeListeners = new ConcurrentHashMap<LogicalChangeID, LogicalChangeListener>();
+  private final Map<LogicalChangeID, LogicalChangeResultCallback> logicalChangeCallbacks = new ConcurrentHashMap<LogicalChangeID, LogicalChangeResultCallback>();
   private final Sequence                                    logicalChangeSequence  = new SimpleSequence();
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider,
@@ -628,12 +628,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   @Override
   public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
     logicalInvoke(source, method, methodName, parameters, null);
-
   }
 
-  @Override
-  public void logicalInvoke(final TCObject source, final int method, final String methodName,
-                            final Object[] parameters, LogicalChangeListener listener) {
+
+  private void logicalInvoke(final TCObject source, final int method, final String methodName,
+                             final Object[] parameters, LogicalChangeResultCallback callback) {
     if (isTransactionLoggingDisabled()) { return; }
 
     try {
@@ -668,9 +667,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         }
       }
       LogicalChangeID id = LogicalChangeID.NULL_ID;
-      if (listener != null) {
+      if (callback != null) {
         id = new LogicalChangeID(logicalChangeSequence.next());
-        logicalChangeListeners.put(id, listener);
+        logicalChangeCallbacks.put(id, callback);
       }
       tx.logicalInvoke(source, method, parameters, methodName, id);
     } finally {
@@ -837,7 +836,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   public void receivedLogicalChangeResult(TransactionID transactionID,
                                           Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID) {
     for (Entry<LogicalChangeID, LogicalChangeResult> entry : results.entrySet()) {
-      LogicalChangeListener listener = this.logicalChangeListeners.remove(entry.getKey());
+      LogicalChangeResultCallback listener = this.logicalChangeCallbacks.remove(entry.getKey());
       listener.handleResult(entry.getValue());
     }
   }
@@ -846,7 +845,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   public boolean logicalInvokeWithResult(final TCObject source, final int method, final String methodName,
                                          final Object[] parameters) throws AbortedOperationException {
     StringLockID lock = new StringLockID("__eventual_lock_for_sync_logical_Invoke");
-    LogicalInvokeFutureImpl future = new LogicalInvokeFutureImpl();
+    LogicalChangeResultCallback future = new LogicalChangeResultCallback();
     begin(lock, LockLevel.CONCURRENT, false);
     try {
       logicalInvoke(source, method, methodName, parameters, future);
@@ -856,22 +855,19 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     return future.getResult();
   }
 
-  private static class LogicalInvokeFutureImpl implements LogicalInvokeFuture, LogicalChangeListener {
+  private static class LogicalChangeResultCallback {
     private LogicalChangeResult result;
 
-    @Override
     public synchronized void handleResult(LogicalChangeResult resultParam) {
       this.result = resultParam;
       notifyAll();
     }
 
-    @Override
     public synchronized void handleAborted() {
       // TODO : Add impl
 
     }
 
-    @Override
     public boolean getResult() throws PlatformRejoinException, AbortedOperationException {
       while (result == null) {
         try {

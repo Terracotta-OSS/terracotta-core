@@ -9,7 +9,6 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.LogicalChangeListener;
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -208,9 +207,4 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
   }
 
-  @Override
-  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener) {
-    throw new UnsupportedOperationException();
-
-  }
 }

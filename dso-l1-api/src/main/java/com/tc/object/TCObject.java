@@ -6,7 +6,6 @@ package com.tc.object;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.tx.LogicalChangeListener;
 
 import java.lang.ref.WeakReference;
 
@@ -268,15 +267,6 @@ public interface TCObject extends Cacheable {
    * @param params The parameter values
    */
   public void logicalInvoke(int method, String methodSignature, Object[] params);
-
-  /**
-   * Invoke logical method
-   * 
-   * @param method Method indicator, as defined in {@link com.tc.object.SerializationUtil}
-   * @param methodSignature The signature description
-   * @param params The parameter values
-   */
-  public void logicalInvoke(int method, String methodSignature, Object[] params, LogicalChangeListener listener);
 
   /**
    * Turns off auto locking.

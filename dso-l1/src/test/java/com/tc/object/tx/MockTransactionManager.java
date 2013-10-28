@@ -245,13 +245,6 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters,
-                            LogicalChangeListener listener) {
-    throw new ImplementMe();
-
-  }
-
-  @Override
   public void receivedLogicalChangeResult(TransactionID transactionID,
                                           Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeId) {
     throw new ImplementMe();
@@ -259,8 +252,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
-      throws AbortedOperationException {
+  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters) {
     return false;
   }
 
