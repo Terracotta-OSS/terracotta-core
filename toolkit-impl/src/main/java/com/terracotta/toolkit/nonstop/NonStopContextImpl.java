@@ -21,6 +21,8 @@ public class NonStopContextImpl implements NonStopContext {
 
   private final NonStopClusterListener         nonStopClusterListener;
 
+  private final ThreadLocal<Boolean>           enabledForCurrentThread = new ThreadLocal<Boolean>();
+
   public NonStopContextImpl(NonStopManager nonStopManager, NonStopConfigRegistryImpl nonStopConfigRegistryImpl,
                             AbortableOperationManager abortableOperationManager,
                             NonstopTimeoutBehaviorResolver nonstopTimeoutBehaviorResolver,
@@ -62,6 +64,19 @@ public class NonStopContextImpl implements NonStopContext {
   @Override
   public NonStopClusterListener getNonStopClusterListener() {
     return nonStopClusterListener;
+  }
+
+  @Override
+  public boolean isEnabledForCurrentThread() {
+    return enabledForCurrentThread.get() == null;
+  }
+
+  public void enableForCurrentThread(boolean enable) {
+    if (enable) {
+      enabledForCurrentThread.remove();
+    } else {
+      enabledForCurrentThread.set(Boolean.FALSE);
+    }
   }
 
 }
