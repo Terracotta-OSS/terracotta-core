@@ -518,6 +518,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     internalLogicalRemove(key, DEFAULT_VERSION, MutateType.LOCKED, lockID);
   }
 
+  private boolean doLogicalRemoveUnlocked(Object key, Object value) {
+    try {
+      return this.tcObjectServerMap.doLogicalRemoveUnlocked(this, key, value);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException();
+    }
+  }
+
   private void doLogicalRemoveUnlocked(Object key) {
     internalLogicalRemove(key, DEFAULT_VERSION, MutateType.UNLOCKED, null);
   }
@@ -940,7 +948,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (old != null && old.equals(value)) {
         eventualConcurrentLock.lock();
         try {
-          doLogicalRemoveUnlocked(key);
+          doLogicalRemoveUnlocked(key, value);
         } finally {
           eventualConcurrentLock.unlock();
         }
@@ -1016,34 +1024,40 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     throttleIfNecessary();
     MetaData metaData;
     if (isEventual()) {
+      int retryCount = 0;
       while (true) {
         // retry until the old value found is correct,
         // We cant send the old value from the backChannel for CAS as that value will have been removed by inline DGC on
         // L2 by now..
         SerializedMapValue oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
         final V old = deserialize(key, oldSerializedMapValue);
-        if (old != null) {
-          metaData = createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
-          eventualConcurrentLock.lock();
-          SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
-                                                                              ToolkitConfigFields.NO_MAX_TTI_SECONDS,
-                                                                              ToolkitConfigFields.NO_MAX_TTL_SECONDS);
-          try {
-            if (metaData != null) {
-              metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
-              metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
-              addMetaData(metaData);
-            }
-            // TODO: fetch old value OID from the server thru the back channel..
-            if (this.tcObjectServerMap
-                .doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue)) { return old; }
-
-          } catch (AbortedOperationException e) {
-            throw new ToolkitAbortableOperationException();
-          } finally {
-            eventualConcurrentLock.unlock();
+        if (old == null) { return null; }
+        metaData = createMetaDataAndSetCommand(key, value, SearchCommand.REPLACE);
+        eventualConcurrentLock.lock();
+        SerializedMapValue newSerializedMapValue = createSerializedMapValue(value, timeSource.nowInSeconds(),
+                                                                            ToolkitConfigFields.NO_MAX_TTI_SECONDS,
+                                                                            ToolkitConfigFields.NO_MAX_TTL_SECONDS);
+        try {
+          if (metaData != null) {
+            metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
+            metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
+            addMetaData(metaData);
           }
+          if (this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue)) {
+            return old;
+          } else {
+            // retry
+          }
+
+        } catch (AbortedOperationException e) {
+          throw new ToolkitAbortableOperationException();
+        } finally {
+          eventualConcurrentLock.unlock();
         }
+        if ((retryCount++ % 10) == 0) {
+          LOGGER.info("replace tried for many times " + retryCount);
+        }
+
       }
     } else {
 

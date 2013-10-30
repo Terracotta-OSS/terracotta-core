@@ -54,8 +54,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    * @return true if operation changed the clustered state
+   * @throws AbortedOperationException
    */
-  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value);
+  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value)
+      throws AbortedOperationException;
 
   /**
    * Does a logic putIfAbsent. The cached item is not associated to a lock. The check about the presence of an existing

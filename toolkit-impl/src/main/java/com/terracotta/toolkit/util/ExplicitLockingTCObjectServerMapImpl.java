@@ -276,7 +276,7 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.doLogicalRemoveUnlocked(map, key, value);
   }
