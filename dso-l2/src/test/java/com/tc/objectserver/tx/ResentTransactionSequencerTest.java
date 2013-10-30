@@ -3,15 +3,22 @@
  */
 package com.tc.objectserver.tx;
 
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ResentServerTransaction;
@@ -25,6 +32,7 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.test.TCTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,6 +48,7 @@ public class ResentTransactionSequencerTest extends TCTestCase {
   private TxnsInSystemCompletionListener callBack;
   private ReplicatedObjectManager        replicatedObjectManager;
   private long                           nextGID = 0;
+  private TransactionBatchReader         batchReader;
 
   @Override
   protected void setUp() throws Exception {
@@ -48,6 +57,7 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     callBack = mock(TxnsInSystemCompletionListener.class);
     sequencer = new ResentTransactionSequencer();
     replicatedObjectManager = mock(ReplicatedObjectManager.class);
+    batchReader = mock(TransactionBatchReader.class);
 
     L2HACoordinator l2HACoordinator = mock(L2HACoordinator.class);
     when(l2HACoordinator.getReplicatedObjectManager()).thenReturn(replicatedObjectManager);
@@ -174,6 +184,70 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     verifyBatches(false, c, batch3, batch4);
   }
 
+  public void testDiscontinuousGIDInOrder() throws Exception {
+    TransactionBatchContext batch1 = transactionBatch(0, 1, 2);
+    TransactionBatchContext batch2 = transactionBatch(1, 1);
+
+    // Cut batch1 into 2 sub-batches based on the GID split, batch2 is just 1 batch sitting between batch1 part1 and batch1 part2
+    when(gtxm.getGlobalTransactionID(serverTransactionID(0, 1))).thenReturn(new GlobalTransactionID(0));
+    when(gtxm.getGlobalTransactionID(serverTransactionID(1, 1))).thenReturn(new GlobalTransactionID(1));
+    when(gtxm.getGlobalTransactionID(serverTransactionID(0, 2))).thenReturn(new GlobalTransactionID(2));
+
+    sequencer.goToActiveMode();
+    sequencer.addResentServerTransactionIDs(batch1.getTransactionIDs());
+    sequencer.addResentServerTransactionIDs(batch2.getTransactionIDs());
+    sequencer.transactionManagerStarted(clientIDs(0, 1));
+
+    sequencer.addTransactions(batch1);
+    sequencer.addTransactions(batch2);
+
+    InOrder inOrder = inOrder(transactionManager, replicatedObjectManager);
+    // Make sure transactions are passed through and relayed in 3 chunks (1 per GID range) in the correct order
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch1.getSourceNodeID()), argThat(hasServerTransactions(serverTransactionID(0, 1))));
+    inOrder.verify(replicatedObjectManager).relayTransactions(argThat(hasClientIDAndTxns(0, serverTransactionID(0, 1))));
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch2.getSourceNodeID()), argThat(hasServerTransactions(serverTransactionID(1, 1))));
+    inOrder.verify(replicatedObjectManager).relayTransactions(argThat(hasClientIDAndTxns(1, serverTransactionID(1, 1))));
+    inOrder.verify(transactionManager).incomingTransactions(eq(batch1.getSourceNodeID()), argThat(hasServerTransactions(serverTransactionID(0, 2))));
+    inOrder.verify(replicatedObjectManager).relayTransactions(argThat(hasClientIDAndTxns(0, serverTransactionID(0, 2))));
+  }
+
+  private Matcher<Map<ServerTransactionID, ServerTransaction>> hasServerTransactions(final ServerTransactionID... txnIDs) {
+    return new BaseMatcher<Map<ServerTransactionID, ServerTransaction>>() {
+      @Override
+      public boolean matches(final Object item) {
+        if (item instanceof Map) {
+          Map<?, ?> map = (Map<?, ?>) item;
+          return map.keySet().containsAll(Arrays.asList(txnIDs)) && map.size() == txnIDs.length;
+        }
+        return false;
+      }
+
+      @Override
+      public void describeTo(final Description description) {
+      }
+    };
+  }
+
+  private Matcher<TransactionBatchContext> hasClientIDAndTxns(final long clientID, final ServerTransactionID ... txnIDs) {
+    return new BaseMatcher<TransactionBatchContext>() {
+      @Override
+      public boolean matches(final Object item) {
+        if (item instanceof TransactionBatchContext) {
+          TransactionBatchContext transactionBatchContext = (TransactionBatchContext)item;
+          return transactionBatchContext.getSourceNodeID().equals(new ClientID(clientID)) &&
+                 transactionBatchContext.getNumTxns() == txnIDs.length &&
+                 transactionBatchContext.getTransactionIDs().containsAll(Arrays.asList(txnIDs));
+        } else {
+          return false;
+        }
+      }
+
+      @Override
+      public void describeTo(final Description description) {
+      }
+    };
+  }
+
   private void verifyBatches(boolean isResent, ArgumentCaptor<Map> captor, TransactionBatchContext... batch) {
     List<Map> actual = captor.getAllValues();
     Iterator<Map> itr = actual.iterator();
@@ -195,10 +269,10 @@ public class ResentTransactionSequencerTest extends TCTestCase {
     return set;
   }
 
-  private Set<ServerTransactionID> transactionIDs(long clientId, long ... transactions) {
-    Set<ServerTransactionID> stxIDs = new HashSet<ServerTransactionID>();
+  private List<ServerTransactionID> transactionIDs(long clientId, long ... transactions) {
+    List<ServerTransactionID> stxIDs = Lists.newArrayList();
     for (long transactionId : transactions) {
-      ServerTransactionID stxID = new ServerTransactionID(new ClientID(clientId), new TransactionID(transactionId));
+      ServerTransactionID stxID = serverTransactionID(clientId, transactionId);
       stxIDs.add(stxID);
       when(gtxm.getGlobalTransactionID(stxID)).thenReturn(new GlobalTransactionID(nextGID++));
     }
@@ -208,16 +282,21 @@ public class ResentTransactionSequencerTest extends TCTestCase {
   private TransactionBatchContext transactionBatch(long clientId, long... transactionIds) {
     TransactionBatchContext context = mock(TransactionBatchContext.class);
     List<ServerTransaction> transactions = new ArrayList<ServerTransaction>();
-    Set<ServerTransactionID> ids = transactionIDs(clientId, transactionIds);
+    List<ServerTransactionID> ids = transactionIDs(clientId, transactionIds);
     for (ServerTransactionID stxId : ids) {
       ServerTransaction transaction = mock(ServerTransaction.class);
       when(transaction.getServerTransactionID()).thenReturn(stxId);
       transactions.add(transaction);
     }
+    when(context.getTransactionBatchReader()).thenReturn(batchReader);
+    when(context.getNumTxns()).thenReturn(transactionIds.length);
     when(context.getTransactions()).thenReturn(transactions);
-    when(context.getTransactionIDs()).thenReturn(ids);
+    when(context.getTransactionIDs()).thenReturn(Sets.newHashSet(ids));
     when(context.getSourceNodeID()).thenReturn(new ClientID(clientId));
     return context;
   }
 
+  private ServerTransactionID serverTransactionID(long clientID, long transactionID) {
+    return new ServerTransactionID(new ClientID(clientID), new TransactionID(transactionID));
+  }
 }
