@@ -753,7 +753,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        return REJOIN_IN_PROGRESS;
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -780,7 +780,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        return REJOIN_IN_PROGRESS;
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -861,7 +861,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State rejoin_in_progress() {
-        return REJOIN_IN_PROGRESS;
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override

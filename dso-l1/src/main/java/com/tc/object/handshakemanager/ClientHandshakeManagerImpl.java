@@ -125,17 +125,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public void reconnectionRejected(boolean rejoinEnabled) {
+  public void fireNodeErrorIfNecessary(boolean rejoinEnabled) {
     if (!rejoinEnabled) {
       final String msg = "Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again";
       logger.error(msg);
       CONSOLE_LOGGER.error(msg);
       dsoClusterEventsGun.fireNodeError();
-      return;
-    }
-    logger.info("reconnection rejected or close from server, disconnecting from all groups");
-    for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
-      disconnected(groupId);
     }
   }
 
@@ -247,10 +242,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public void reset() {
+    // clean up all L1 stages and other ClearableCallback which are not ClientHandshakeCallback
     for (ClearableCallback clearable : clearCallbacks) {
       clearable.cleanup();
     }
 
+    logger.info("reconnection rejected or closed from server, disconnecting all groups");
+    for (GroupID groupId : groupIDToStripeIDMap.keySet()) {
+      disconnected(groupId);
+    }
+
+    // clean up ClientHandshakeCallback (all L1 managers) and other ClearableCallback
     for (ClientHandshakeCallback c : callBacks) {
       c.cleanup();
     }
@@ -265,8 +267,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private void notifyCallbackOnHandshake(final NodeID remote, final ClientHandshakeMessage handshakeMessage) {
     for (ClientHandshakeCallback c : this.callBacks) {
       c.initializeHandshake(this.cidp.getClientID(), remote, handshakeMessage);
-      // this.logger.debug(c.getClass().getName() + " oids " + handshakeMessage.getObjectIDs().size() + " validate "
-      // + handshakeMessage.getObjectIDsToValidate().size());
+      this.logger.debug(c.getClass().getName() + " oids " + handshakeMessage.getObjectIDs().size() + " validate "
+                        + handshakeMessage.getObjectIDsToValidate().size());
     }
   }
 
