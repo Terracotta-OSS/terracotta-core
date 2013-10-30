@@ -868,7 +868,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
     }
 
-    public boolean getResult() throws PlatformRejoinException, AbortedOperationException {
+    public synchronized boolean getResult() throws PlatformRejoinException, AbortedOperationException {
       while (result == null) {
         try {
           wait();
