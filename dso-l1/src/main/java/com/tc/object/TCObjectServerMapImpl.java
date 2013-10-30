@@ -265,33 +265,39 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
-      AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-      if (item != null) {
-        Object valueObject = item.getValueObject();
-        if (valueObject != null) {
-          // Item already present
-          return valueObject;
+      int retryCount = 0;
+      while (true) {
+        AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
+        if (item != null) {
+          Object valueObject = item.getValueObject();
+          if (valueObject != null) {
+            // Item already present
+            return valueObject;
+          }
         }
-      }
-      shareObject(key);
-      final ObjectID valueObjectID = shareObject(value);
-      final Object[] parameters = constructParams(key, value);
-      // TODO : send the associated objectID If any along with the putIfAbsent signature.. ??
-      boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT, SerializationUtil.PUT_IF_ABSENT_SIGNATURE,
-                                           parameters);
-      if (rv) {
-        if (!isEventual) {
-          addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+        shareObject(key);
+        final ObjectID valueObjectID = shareObject(value);
+        final Object[] parameters = constructParams(key, value);
+        boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT,
+                                             SerializationUtil.PUT_IF_ABSENT_SIGNATURE, parameters);
+        if (rv) {
+          if (!isEventual) {
+            addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+          } else {
+            addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+          }
+          return null;
         } else {
-          addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+          // PutIfAbsent failed i.e there is some mapping on the L2 so putIfAbsent failed,fetch that value from server
+          Object existingMapping = getValueUnlocked(map, key);
+          // existing mapping can be null in case someone removed this value between putIfAbsent, for this case try
+          // retrying putIfAbsent
+          if (existingMapping != null) { return rv; }
         }
-        return null;
-      } else {
-        // PutIfAbsent failed i.e there is some mapping on the L2 so putIfAbsent failed,fetch that value from server
-        return getValueUnlocked(map, key);
+        if (retryCount++ % 10 == 0) {
+          logger.info("retried putIfAbsent for " + retryCount);
+        }
       }
-
-
     } finally {
       lock.unlock();
     }
@@ -447,9 +453,10 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param map ServerTCMap
    * @param key Key Object
    * @return
+   * @throws AbortedOperationException
    */
   @Override
-  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) throws AbortedOperationException {
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
@@ -460,11 +467,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         return false;
       }
 
-      invokeLogicalRemove(key, value);
-
+      boolean rv = invokeLogicalRemove(key, value);
+      if (rv) {
       updateCacheOnRemoveUnlocked(key);
-
-      return true;
+      }
+      return rv;
     } finally {
       lock.unlock();
     }
@@ -964,16 +971,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return invokeLogicalPutInternal(key, value, false);
   }
 
-  private ObjectID invokeLogicalPutIfAbsent(final Object key, final Object value) {
-    shareObject(key);
-    final ObjectID valueObjectID = shareObject(value);
-    final Object[] parameters = constructParams(key, value);
-
-    logicalInvoke(SerializationUtil.PUT_IF_ABSENT, SerializationUtil.PUT_IF_ABSENT_SIGNATURE, parameters);
-
-    return valueObjectID;
-  }
-
   private ObjectID invokeLogicalPutVersioned(final Object key, final Object value, final long version) {
     shareObject(key);
     final ObjectID valueObjectID = shareObject(value);
@@ -1058,8 +1055,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         version });
   }
 
-  private void invokeLogicalRemove(final Object key, final Object value) {
-    logicalInvoke(SerializationUtil.REMOVE_IF_VALUE_EQUAL, SerializationUtil.REMOVE_IF_VALUE_EQUAL_SIGNATURE,
+  private boolean invokeLogicalRemove(final Object key, final Object value) throws AbortedOperationException {
+    return logicalInvokeWithResult(SerializationUtil.REMOVE_IF_VALUE_EQUAL,
+                                   SerializationUtil.REMOVE_IF_VALUE_EQUAL_SIGNATURE,
                   new Object[] { key, value });
   }
 
