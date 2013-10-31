@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.TCObject;
 import com.tc.object.TestClientObjectManager;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
@@ -85,10 +86,10 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
 
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.times(1))
         .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
-                       null);
+                       (LogicalChangeID) Matchers.any());
     Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.never())
         .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
-                       null);
+                       (LogicalChangeID) Matchers.any());
     
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.never())
         .addNotify((Notify) Matchers
