@@ -72,6 +72,7 @@ public class ClientChannelEventController {
   }
 
   private void requestRejoin(ChannelEvent event) {
+    clientHandshakeManager.disconnected(event.getChannel().getRemoteNodeID());
     clientHandshakeManager.fireNodeErrorIfNecessary(rejoinManager.isRejoinEnabled());
     if (rejoinManager.isRejoinEnabled()) {
       rejoinManager.requestRejoin(channel.channel());
