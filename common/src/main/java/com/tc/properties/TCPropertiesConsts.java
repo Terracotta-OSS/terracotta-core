@@ -809,6 +809,9 @@ public interface TCPropertiesConsts {
   public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeap.allocation.slow";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeap.allocation.critical";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeap.allocation.critical.halt";
+  public static final String L2_ALLOCATION_USE_PARTIALS                                 = "l2.offHeap.allocation.partials";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                                 = "l2.offHeap.allocation.partial.disable.maps";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                                 = "l2.offHeap.allocation.partial.disable.objects";
 
   public static final String L2_OFFHEAP_MIN_PAGE_SIZE                                       = "l2.offHeap.min.page.size";
   public static final String L2_OFFHEAP_MAX_PAGE_SIZE                                       = "l2.offHeap.max.page.size";

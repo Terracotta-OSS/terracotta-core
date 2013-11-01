@@ -12,11 +12,13 @@ import java.util.Map;
  * @author tim
  */
 public interface StorageManagerFactory {
+  enum Type {LEAF, NODE};
+ 
   StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap, TransformerLookup transformerLookup) throws IOException;
 
-  <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(KeyValueStorageConfig<K, V> baseConfig);
+  <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(KeyValueStorageConfig<K, V> baseConfig, Type nt);
 
-  <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(ImmutableKeyValueStorageConfig.Builder<K, V> builder);
+  <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(ImmutableKeyValueStorageConfig.Builder<K, V> builder, Type nt);
 
   <K, V> KeyValueStorageConfig<K, V> wrapMapConfig(KeyValueStorageConfig<K, V> baseConfig);
 

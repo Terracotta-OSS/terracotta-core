@@ -42,6 +42,7 @@ import com.tc.util.Conversion;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -79,6 +80,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                                                                                       true);
   private final ServerMapEvictionEngine           evictor;
   private final ResourceMonitor                   trigger; 
+  private final Collection<MonitoredResource>     resources;
   private final PersistentManagedObjectStore      store;
   private final ObjectManager                     objectManager;
   private final ClientObjectReferenceSet          clientObjectReferenceSet;
@@ -136,7 +138,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     return evictionStats;
   }
 
-  public ProgressiveEvictionManager(final ObjectManager mgr, final MonitoredResource monitored, final PersistentManagedObjectStore store,
+  public ProgressiveEvictionManager(final ObjectManager mgr, final Collection<MonitoredResource> monitorList, final PersistentManagedObjectStore store,
                                     final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
                                     final CounterManager counterManager,
@@ -146,6 +148,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
     this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, persistent);
+    this.resources = monitorList;
+    
+    final MonitoredResource monitored = getEvictionBasedResource(monitorList);
+    
     L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
             .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
     L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
@@ -169,7 +175,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       }
     }
     this.threshold = EvictionThreshold.configure(monitored);
-    log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
+    try {
+        log("Using threshold " + this.threshold + " for total size " + Conversion.memoryBytesAsSize(monitored.getTotal()));
+    } catch ( Conversion.MetricsFormatException m ) {
+        log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
+    }
     log(this.threshold.log(L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD));
 
     this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
@@ -206,6 +216,20 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.evictionStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
     this.expirationStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
   }
+  
+  private static MonitoredResource getEvictionBasedResource(Collection<MonitoredResource> list) {
+    MonitoredResource best = null;
+    for (MonitoredResource rsrc : list) {
+        if ( best == null ) {
+            best = rsrc;
+        } else if ( rsrc.getType() == MonitoredResource.Type.OTHER ) {
+            best = rsrc;
+        } else if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP && best.getType() != MonitoredResource.Type.OTHER) {
+            best = rsrc;
+        }
+    }
+    return best;
+  }  
 
   @Override
   public void initializeContext(final ConfigurationContext context) {
@@ -498,12 +522,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         if ((evictor.isLogging() && System.currentTimeMillis() - tick > (10*1000)) || System.currentTimeMillis() - tick > (60*1000) ) {
           if (max != 0) {
-            log("Percent usage:" + (usage.getUsedMemory() * 100 / max) + " reserved:" + (reserve * 100 / max)
-                + " poll time:" + (current - last) + " msec.");
+            log("Eviction resource - type:" + usage.getDescription() + " usage:" + (usage.getUsedMemory() * 100 / max) + "% reserved:" + (reserve * 100 / max)
+                + "% poll time:" + (current - last) + " msec.");
             try {
-                log("Resource usage: used memory - " + Conversion.memoryBytesAsSize(usage.getUsedMemory()));
-                log("Resource usage: reserve memory - " + Conversion.memoryBytesAsSize(reserve));
-                log("Resource usage: max memory - " + Conversion.memoryBytesAsSize(max));
+                for ( MonitoredResource rsrc : ProgressiveEvictionManager.this.resources ) {
+                    log("Resource usage: type - " + rsrc.getType());
+                    log("Resource usage: used memory - " + Conversion.memoryBytesAsSize(rsrc.getUsed()));
+                    log("Resource usage: reserve memory - " + Conversion.memoryBytesAsSize(rsrc.getReserved()));
+                    log("Resource usage: max memory - " + Conversion.memoryBytesAsSize(rsrc.getTotal()));
+                }
             } catch ( Conversion.MetricsFormatException me ) {
                 logger.warn("bad usage info", me);
             } catch ( NumberFormatException number ) {

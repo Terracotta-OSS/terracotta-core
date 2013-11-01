@@ -285,6 +285,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
 
+import java.util.Collection;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -805,7 +808,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                  globalServerMapGetValueRequestsCounter,
                                                  globalServerMapGetSnapshotRequestsCounter), 8, maxStageSize);
     final Stage respondToServerTCMapStage = stageManager
-        .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
+        .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 32,
                      maxStageSize);
     
     final Stage prefetchStage = stageManager
@@ -827,7 +830,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     dumpHandler.registerForDump(new CallbackDumpAdapter(resourceManager));
     channelManager.addEventListener(resourceManager);
 
-    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
+    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResources(),
                                                            objectStore, clientObjectReferenceSet,
                                                            serverTransactionFactory, threadGroup, resourceManager,
                                                            sampledCounterManager, evictionTransactionPersistor, restartable);
@@ -1450,11 +1453,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public OffheapStats getOffheapStats() {
-    return new OffheapStatsImpl(persistor.getMonitoredResource());
+    Collection<MonitoredResource> list = persistor.getMonitoredResources();
+    for ( MonitoredResource rsrc : list ) {
+        if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP ) {
+            return new OffheapStatsImpl(rsrc);
+        }
+    }
+    return null;
   }
 
   public StorageDataStats getStorageStats() {
-    return new StorageDataStatsImpl(persistor.getMonitoredResource());
+    return new StorageDataStatsImpl(persistor.getMonitoredResources());
   }
 
   public ReconnectConfig getL1ReconnectProperties() {

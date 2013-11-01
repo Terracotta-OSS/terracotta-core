@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.util.Conversion;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import java.util.Arrays;
@@ -65,7 +66,11 @@ public enum EvictionThreshold {
     public String log(int usedTweak, int reservedTweak) {
         long lres = getReserved(reservedTweak);
         long lused = getUsed(lres,usedTweak);
-        return "used:" + lused + ",reserved:" + lres;
+        try {
+            return "used:" + Conversion.memoryBytesAsSize(lused) + ",reserved:" + Conversion.memoryBytesAsSize(lres);
+        } catch ( Conversion.MetricsFormatException m ) {
+            return "used:" + lused + ",reserved:" + lres;
+        }
     }
     
     public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak,int reservedTweak) {
