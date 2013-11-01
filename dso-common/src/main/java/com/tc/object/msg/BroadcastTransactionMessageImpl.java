@@ -322,13 +322,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     private LogicalChangeID           id;
     private LogicalChangeResult result;
 
-    public LogicalChangeID getId() {
-      return id;
-    }
-
-    public LogicalChangeResult getResult() {
-      return result;
-    }
 
     public LogicalChangeResultPair(LogicalChangeID id, LogicalChangeResult result) {
       this.id = id;
@@ -349,6 +342,14 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       this.id = new LogicalChangeID(serialInput.readLong());
       this.result = (LogicalChangeResult) (new LogicalChangeResult()).deserializeFrom(serialInput);
       return this;
+    }
+
+    public LogicalChangeID getId() {
+      return id;
+    }
+
+    public LogicalChangeResult getResult() {
+      return result;
     }
 
   }

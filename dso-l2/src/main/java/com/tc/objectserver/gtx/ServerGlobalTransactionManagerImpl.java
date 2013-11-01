@@ -6,6 +6,8 @@ package com.tc.objectserver.gtx;
 
 import com.tc.async.api.Sink;
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.Transaction;
@@ -18,6 +20,7 @@ import com.tc.util.sequence.Sequence;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -156,4 +159,17 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
       lwmCallbacks.get(gid).add(callback);
     }
   }
+
+  @Override
+  public void recordApplyResults(ServerTransactionID serverTransactionID, Map<LogicalChangeID, LogicalChangeResult> results) {
+    GlobalTransactionDescriptor gdesc = transactionStore.getTransactionDescriptor(serverTransactionID);
+    gdesc.recordLogicalChangeResults(results);
+  }
+
+  @Override
+  public Map<LogicalChangeID, LogicalChangeResult> getApplyResults(ServerTransactionID stxnID) {
+    GlobalTransactionDescriptor gdesc = transactionStore.getTransactionDescriptor(stxnID);
+    return gdesc.getApplyResults();
+  }
+
 }

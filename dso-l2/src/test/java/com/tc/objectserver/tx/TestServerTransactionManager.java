@@ -170,4 +170,9 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void unPauseTransactions() {
     //
   }
+
+  @Override
+  public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
+    //
+  }
 }

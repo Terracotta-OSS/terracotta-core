@@ -110,6 +110,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete(), atc.allCheckedOutObjects());
       txnObjectMgr.applyTransactionComplete(applyInfo);
     } else {
+      transactionManager.loadApplyChangeResults(txn, applyInfo);
       transactionManager.skipApplyAndCommit(txn);
       txnObjectMgr.applyTransactionComplete(applyInfo);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);

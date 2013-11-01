@@ -12,4 +12,6 @@ public interface ApplyResultRecorder {
   public void recordResult(LogicalChangeID logicalChangeID, LogicalChangeResult result);
 
   public Map<LogicalChangeID, LogicalChangeResult> getResults();
+
+  public void recordResults(Map<LogicalChangeID, LogicalChangeResult> applyResults);
 }

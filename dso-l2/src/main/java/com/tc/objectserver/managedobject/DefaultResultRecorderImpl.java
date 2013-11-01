@@ -7,11 +7,11 @@ import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.util.Assert;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultResultRecorderImpl implements ApplyResultRecorder {
-  private final Map<LogicalChangeID, LogicalChangeResult> changeResults = new LinkedHashMap<LogicalChangeID, LogicalChangeResult>();
+  private final Map<LogicalChangeID, LogicalChangeResult> changeResults = new HashMap<LogicalChangeID, LogicalChangeResult>();
 
   @Override
   public void recordResult(LogicalChangeID changeID, LogicalChangeResult result) {
@@ -26,6 +26,12 @@ public class DefaultResultRecorderImpl implements ApplyResultRecorder {
   @Override
   public Map<LogicalChangeID, LogicalChangeResult> getResults() {
     return changeResults;
+  }
+
+  @Override
+  public void recordResults(Map<LogicalChangeID, LogicalChangeResult> results) {
+    changeResults.putAll(results);
+
   }
 
 }

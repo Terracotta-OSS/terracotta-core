@@ -987,5 +987,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public void unPauseTransactions() {
       //
     }
+
+    @Override
+    public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
+      //
+    }
   }
 }

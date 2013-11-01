@@ -89,7 +89,7 @@ public interface ServerTransactionManager {
 
   /**
    * Returns when all transactions which were added to the transaction accounting system
-   * after the listener was attached have finished processing. 
+   * after the listener was attached have finished processing.
    * @param l
    */
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionListener l);
@@ -149,5 +149,6 @@ public interface ServerTransactionManager {
    */
   public void unPauseTransactions();
 
+  public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo);
 
 }
