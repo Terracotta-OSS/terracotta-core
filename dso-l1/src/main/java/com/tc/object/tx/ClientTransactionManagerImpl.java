@@ -52,37 +52,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
-  private static final TCLogger                             logger                 = TCLogging
-                                                                                       .getLogger(ClientTransactionManagerImpl.class);
+  private static final TCLogger                                   logger                 = TCLogging
+                                                                                             .getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal                                 transaction            = new VicariousThreadLocal() {
-                                                                                     @Override
-                                                                                     protected Object initialValue() {
-                                                                                       return new ThreadTransactionContext();
-                                                                                     }
-                                                                                   };
+  private final ThreadLocal                                       transaction            = new VicariousThreadLocal() {
+                                                                                           @Override
+                                                                                           protected Object initialValue() {
+                                                                                             return new ThreadTransactionContext();
+                                                                                           }
+                                                                                         };
 
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal                                 txnLogging             = new VicariousThreadLocal();
+  private final ThreadLocal                                       txnLogging             = new VicariousThreadLocal();
 
-  private final ClientTransactionFactory                    txFactory;
-  private final RemoteTransactionManager                    remoteTxnManager;
-  private final ClientObjectManager                         clientObjectManager;
-  private final ClientLockManager                           clientLockManager;
+  private final ClientTransactionFactory                          txFactory;
+  private final RemoteTransactionManager                          remoteTxnManager;
+  private final ClientObjectManager                               clientObjectManager;
+  private final ClientLockManager                                 clientLockManager;
 
-  private final ClientIDProvider                            cidProvider;
+  private final ClientIDProvider                                  cidProvider;
 
-  private final SampledCounter                              txCounter;
+  private final SampledCounter                                    txCounter;
 
-  private final TCObjectSelfStore                           tcObjectSelfStore;
-  private final AbortableOperationManager                   abortableOperationManager;
-  private volatile int                                      session                = 0;
+  private final TCObjectSelfStore                                 tcObjectSelfStore;
+  private final AbortableOperationManager                         abortableOperationManager;
+  private volatile int                                            session                = 0;
   private final Map<LogicalChangeID, LogicalChangeResultCallback> logicalChangeCallbacks = new ConcurrentHashMap<LogicalChangeID, LogicalChangeResultCallback>();
-  private final Sequence                                    logicalChangeSequence  = new SimpleSequence();
+  private final Sequence                                          logicalChangeSequence  = new SimpleSequence();
+  private final ReadWriteLock                                     rejoinCleanupLock      = new ReentrantReadWriteLock();
+  private static final StringLockID                               CAS_LOCK_ID            = new StringLockID(
+                                                                                                            "__eventual_lock_for_sync_logical_Invoke");
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider,
                                       final ClientObjectManager clientObjectManager,
@@ -104,11 +109,21 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   @Override
   public void cleanup() {
-    session++;
     // remoteTxnManager will be cleanup from clientHandshakeCallbacks
     // clientObjectManager can't because this call is from ClientObjectManagerImpl
     // clientLockManager will be cleanup from clientHandshakeCallbacks
     // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from L1ServerMapLocalCacheManagerImpl
+    rejoinCleanupLock.writeLock().lock();
+    try {
+      session++;
+      for (LogicalChangeResultCallback logicalChangeCallback : logicalChangeCallbacks.values()) {
+        // wake up the waiting threads for LogicalChangeResult
+        logicalChangeCallback.notifyAll();
+      }
+      logicalChangeCallbacks.clear();
+    } finally {
+      rejoinCleanupLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -627,12 +642,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   @Override
   public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
-    logicalInvoke(source, method, methodName, parameters, null);
+    logicalInvoke(source, method, methodName, parameters, LogicalChangeID.NULL_ID);
   }
 
-
   private void logicalInvoke(final TCObject source, final int method, final String methodName,
-                             final Object[] parameters, LogicalChangeResultCallback callback) {
+                             final Object[] parameters, LogicalChangeID id) {
     if (isTransactionLoggingDisabled()) { return; }
 
     try {
@@ -665,11 +679,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
             tx.createObject(tco);
           }
         }
-      }
-      LogicalChangeID id = LogicalChangeID.NULL_ID;
-      if (callback != null) {
-        id = new LogicalChangeID(logicalChangeSequence.next());
-        logicalChangeCallbacks.put(id, callback);
       }
       tx.logicalInvoke(source, method, parameters, methodName, id);
     } finally {
@@ -844,39 +853,67 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   @Override
   public boolean logicalInvokeWithResult(final TCObject source, final int method, final String methodName,
                                          final Object[] parameters) throws AbortedOperationException {
-    StringLockID lock = new StringLockID("__eventual_lock_for_sync_logical_Invoke");
-    LogicalChangeResultCallback future = new LogicalChangeResultCallback();
-    begin(lock, LockLevel.CONCURRENT, false);
+
+    LogicalChangeID id = new LogicalChangeID(logicalChangeSequence.next());
+    LogicalChangeResultCallback future = createLogicalChangeFuture(id);
     try {
-      logicalInvoke(source, method, methodName, parameters, future);
+      begin(CAS_LOCK_ID, LockLevel.CONCURRENT, false);
+      try {
+        logicalInvoke(source, method, methodName, parameters, id);
+      } finally {
+        commit(CAS_LOCK_ID, LockLevel.CONCURRENT, false, null);
+      }
+      return future.getResult();
     } finally {
-      commit(lock, LockLevel.CONCURRENT, false, null);
+      logicalChangeCallbacks.remove(id);
     }
-    return future.getResult();
   }
 
-  private static class LogicalChangeResultCallback {
+  private LogicalChangeResultCallback createLogicalChangeFuture(LogicalChangeID id) {
+    rejoinCleanupLock.readLock().lock();
+    try {
+      LogicalChangeResultCallback future = new LogicalChangeResultCallback(session);
+      logicalChangeCallbacks.put(id, future);
+      return future;
+    } finally {
+      rejoinCleanupLock.readLock().unlock();
+    }
+  }
+
+  private class LogicalChangeResultCallback {
     private LogicalChangeResult result;
+    private final int           sessionForLogicalChange;
+
+    public LogicalChangeResultCallback(int session) {
+      this.sessionForLogicalChange = session;
+    }
 
     public synchronized void handleResult(LogicalChangeResult resultParam) {
       this.result = resultParam;
       notifyAll();
     }
 
-    public synchronized void handleAborted() {
-      // TODO : Add impl
-
-    }
-
     public synchronized boolean getResult() throws PlatformRejoinException, AbortedOperationException {
-      while (result == null) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          // TODO : handle me
+      boolean interrupted = false;
+      try {
+        while (result == null) {
+          if (this.sessionForLogicalChange != ClientTransactionManagerImpl.this.session) {
+            // rejoin has happened
+            throw new PlatformRejoinException();
+          }
+          try {
+            wait(1000);
+          } catch (InterruptedException e) {
+            interrupted = true;
+            if (ClientTransactionManagerImpl.this.abortableOperationManager.isAborted()) { throw new AbortedOperationException(); }
+          }
+        }
+        return result.isSuccess();
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
         }
       }
-      return result.isSuccess();
     }
 
   }
