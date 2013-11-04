@@ -6,8 +6,12 @@ package com.tc.objectserver.tx;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ResentServerTransaction;
 import com.tc.logging.TCLogger;
@@ -80,18 +84,17 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
 
   public void addTransactions(TransactionBatchContext batchContext) {
     boolean addPendingCallbacks = false;
-    TransactionBatchRecord record;
     synchronized (this) {
       State lstate = this.state;
       switch (lstate) {
         case PASS_THRU_PASSIVE:
         case PASS_THRU_ACTIVE:
-          record = new TransactionBatchRecord(batchContext, false);
-          record.process();
+          new TransactionBatchRecord(batchContext, false).process();
           break;
         case INCOMING_RESENT:
-          record = new TransactionBatchRecord(batchContext, true);
-          addToPending(record);
+          for (TransactionBatchRecord record : createResentBatchRecords(batchContext)) {
+            addToPending(record);
+          }
           addPendingCallbacks = processResent();
           break;
         default:
@@ -135,6 +138,50 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
       }
     }
     return moveToPassThruActiveIfPossible();
+  }
+
+  private List<TransactionBatchRecord> createResentBatchRecords(TransactionBatchContext context) {
+    List<TransactionBatchRecord> records = Lists.newArrayList();
+
+    Iterator<ServerTransaction> txns = context.getTransactions().iterator();
+    List<ServerTransaction> currentBatch = Lists.newArrayList();
+    while (txns.hasNext()) {
+      ServerTransaction currentTxn = txns.next();
+      if (!currentBatch.isEmpty()) {
+        ServerTransaction last = currentBatch.get(currentBatch.size() - 1);
+        GlobalTransactionID lastGID = gtxm.getGlobalTransactionID(last.getServerTransactionID());
+        GlobalTransactionID currentGID = gtxm.getGlobalTransactionID(currentTxn.getServerTransactionID());
+        if (!lastGID.next().equals(currentGID)) {
+          // detected a discontinuity in the GID range
+          records.add(batchRecordFor(context, currentBatch, true));
+          currentBatch = Lists.newArrayList();
+        }
+      }
+      currentBatch.add(currentTxn);
+    }
+
+    if (!currentBatch.isEmpty()) {
+      records.add(batchRecordFor(context, currentBatch, true));
+    }
+    return records;
+  }
+
+  private TransactionBatchRecord batchRecordFor(TransactionBatchContext context, List<ServerTransaction> txns, final boolean isResent) {
+    if (context.getNumTxns() == txns.size()) {
+      return new TransactionBatchRecord(context, isResent);
+    } else {
+      Set<ServerTransactionID> serverTransactionIDs = Sets.newHashSet(Lists.transform(txns, new Function<ServerTransaction, ServerTransactionID>() {
+        @Override
+        public ServerTransactionID apply(final ServerTransaction input) {
+          return input.getServerTransactionID();
+        }
+      }));
+      TCByteBuffer[] buffers = context.getTransactionBatchReader().getBackingBuffers(txns.get(0).getServerTransactionID(),
+          txns.get(txns.size() - 1).getServerTransactionID());
+      // new object ID's can be an empty set because it's already been consumed by the AATransactionManager (only used there)
+      return new TransactionBatchRecord(new IncomingTransactionBatchContext(context.getSourceNodeID(), serverTransactionIDs,
+          context.getTransactionBatchReader(), txns, Collections.EMPTY_SET, buffers), isResent);
+    }
   }
 
   private void addToPending(TransactionBatchRecord record) {

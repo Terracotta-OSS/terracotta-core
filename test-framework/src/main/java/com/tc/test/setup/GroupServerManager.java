@@ -860,7 +860,7 @@ public class GroupServerManager {
 
   public void stopCrasher() throws InterruptedException {
     this.serverCrasher.stop();
-    if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
+    if (crasherStarted.get() && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
       crasherThread.join();
     }
   }

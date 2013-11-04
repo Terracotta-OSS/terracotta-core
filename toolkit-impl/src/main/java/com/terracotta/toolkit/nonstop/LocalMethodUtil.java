@@ -27,6 +27,7 @@ class LocalMethodUtil {
     cacheLocalMethodSet.add("localOffHeapSize");
     cacheLocalMethodSet.add("containsKeyLocalOnHeap");
     cacheLocalMethodSet.add("containsKeyLocalOffHeap");
+    cacheLocalMethodSet.add("disposeLocally");
     validateMethodNamesExist(ToolkitCacheImplInterface.class, cacheLocalMethodSet);
     localMethods.put(ToolkitObjectType.CACHE, cacheLocalMethodSet);
     localMethods.put(ToolkitObjectType.STORE, cacheLocalMethodSet);

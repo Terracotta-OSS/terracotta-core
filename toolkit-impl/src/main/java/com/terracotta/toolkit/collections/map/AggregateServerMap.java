@@ -909,6 +909,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
           case EXPIRE:
             listener.onExpiration(event.getKey());
             break;
+          default:
+            throw new IllegalStateException("unexpected ServerEvent in doHandleEvictions " + event.getType());
         }
       } catch (Throwable t) {
         // Catch throwable here since the eviction listener will ultimately call user code.
@@ -923,23 +925,25 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     final Object key = event.getKey();
     final long version = event.getVersion();
     final ServerEventType type = event.getType();
-
-    try {
-      switch (type) {
-        case PUT_LOCAL:
-          final V value = deserializeValue(key, event.getValue());
-          for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-            listener.onLocalPut((K) key, value, version, getServerMapIndexForKey(key));
-          }
-          break;
-        case REMOVE_LOCAL:
-          for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-            listener.onLocalRemove((K) key, version, getServerMapIndexForKey(key));
-          }
-          break;
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Cache version update listener threw an exception", e);
+    switch (type) {
+      case PUT_LOCAL:
+        V value;
+        try {
+          value = deserializeValue(key, event.getValue());
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
+          listener.onLocalPut((K) key, value, version, getServerMapIndexForKey(key));
+        }
+        break;
+      case REMOVE_LOCAL:
+        for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
+          listener.onLocalRemove((K) key, version, getServerMapIndexForKey(key));
+        }
+        break;
+      default:
+        throw new IllegalStateException("unexpected ServerEvent in doHandleVersionUpdates " + type);
     }
   }
 
@@ -1089,6 +1093,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void waitUntilBulkLoadComplete() throws InterruptedException {
+    if (false) { throw new InterruptedException(); }
     throw new UnsupportedOperationException();
   }
 
