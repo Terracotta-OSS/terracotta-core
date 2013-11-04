@@ -27,7 +27,6 @@ import com.tc.test.GroupData;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -513,11 +512,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   public void setOffHeapConfigObject(boolean enabled, String maxDataSize) {
     offHeapEnabled = enabled;
     maxOffHeapDataSize = maxDataSize;
-    Offheap offheap = Offheap.Factory.newInstance();
-    offheap.setEnabled(enabled);
-    offheap.setMaxDataSize(maxDataSize);
-    l2DSOConfig().offHeapConfig().setEnabled(enabled);
-    l2DSOConfig().offHeapConfig().setMaxDataSize(maxDataSize);
+    l2DSOConfig().getOffheap().setSize(maxDataSize);
   }
 
   public void setGCEnabled(boolean val) {

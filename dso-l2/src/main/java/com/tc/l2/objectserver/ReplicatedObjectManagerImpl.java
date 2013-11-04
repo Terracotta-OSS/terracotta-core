@@ -45,7 +45,7 @@ import com.tc.util.State;
 import com.tc.util.TCCollections;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
-import com.terracottatech.config.Offheap;
+import com.terracottatech.config.DataStorage;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,8 +74,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final GCMonitor                    gcMonitor;
   private final L2PassiveSyncStateManager    passiveSyncStateManager;
   private final L2ObjectStateManager         l2ObjectStateManager;
-  private final Offheap                      offheapConfig;
   private final ClusterStatePersistor        clusterStatePersistor;
+  private final DataStorage                  dataStorage;
 
   private final AtomicBoolean                syncStarted = new AtomicBoolean();
 
@@ -86,7 +86,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
                                      final Sink transactionRelaySink, final SequenceGenerator sequenceGenerator,
-                                     final SequenceGenerator indexSequenceGenerator, final Offheap offheapConfig,
+                                     final SequenceGenerator indexSequenceGenerator, final DataStorage dataStorage,
                                      final ClusterStatePersistor clusterStatePersistor) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
@@ -106,7 +106,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.groupManager.registerForMessages(IndexSyncCompleteAckMessage.class, this);
     this.passiveSyncStateManager = l2PassiveSyncStateManager;
     this.l2ObjectStateManager = l2ObjectStateManager;
-    this.offheapConfig = offheapConfig;
+    this.dataStorage = dataStorage;
   }
 
   /**
@@ -409,12 +409,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           // will trigger the other.
           boolean syncAllowed = !syncStarted.get() && clusterStatePersistor.getInitialState() == null;
           logger.info("Send response to Active's query : syncAllowed = " + syncAllowed +
-                      " currentState=" + stateManager.getCurrentState() + " offheapEnabled=" + offheapConfig.getEnabled() +
+                      " currentState=" + stateManager.getCurrentState() +
                       " resource total=" + getResourceTotal());
           try {
             groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
                 .createObjectListSyncResponseMessage(clusterMsg, stateManager.getCurrentState(), syncAllowed,
-                    offheapConfig.getEnabled(), getResourceTotal()));
+                    getResourceTotal()));
           } catch (GroupException e) {
             logger.error("Failed to send object list response to the active.", e);
           }
@@ -432,15 +432,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   private long getResourceTotal() {
-    if (offheapConfig.getEnabled()) {
-      try {
-        return Conversion.memorySizeAsLongBytes(offheapConfig.getMaxDataSize());
-      } catch (Conversion.MetricsFormatException e) {
-        throw new RuntimeException(e);
-      }
-    } else {
-      // If offheap is turned off we use heap
-      return Runtime.getRuntime().maxMemory();
+    try {
+      return Conversion.memorySizeAsLongBytes(dataStorage.getMaxSize());
+    } catch (Conversion.MetricsFormatException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -451,18 +446,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     // We don't want to allow a passive with less than the active's resources to join the cluster. That could lead
     // to the passive crashing randomly at some point in the future, or maybe even during passive sync.
-    if (offheapConfig.getEnabled() && (!response.isOffheapEnabled() || getResourceTotal() > response.getResourceSize())) {
+    if (getResourceTotal() > response.getResourceSize()) {
       groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
           "Node " + response.messageFrom() + " does not have enough offheap space to join the cluster. Required " + getResourceTotal() + " got " + response.getResourceSize());
-      return false;
-    } else if (!offheapConfig.getEnabled() && response.isOffheapEnabled() && getResourceTotal() > response.getResourceSize()) {
-      // Allow an upgrade from heap to offheap in the passive
-      groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
-          "Node " + response.messageFrom() + " does not have enough offheap space to join the cluster. Required " + getResourceTotal() + " got " + response.getResourceSize());
-      return false;
-    } else if (!offheapConfig.getEnabled() && !response.isOffheapEnabled() && getResourceTotal() > response.getResourceSize()) {
-      groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
-          "Node " + response.messageFrom() + " does not have enough heap space to join the cluster. Required " + getResourceTotal() + " got " + response.getResourceSize());
       return false;
     }
     return true;

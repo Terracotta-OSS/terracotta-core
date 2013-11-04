@@ -5,8 +5,9 @@ package com.tc.object.config.schema;
 
 import com.tc.config.schema.Config;
 import com.terracottatech.config.BindPort;
+import com.terracottatech.config.DataStorage;
+import com.terracottatech.config.DataStorageOffheap;
 import com.terracottatech.config.GarbageCollection;
-import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 
@@ -33,11 +34,11 @@ public interface L2DSOConfig extends Config {
 
   String bind();
 
-  Offheap offHeapConfig();
-
   Security securityConfig();
 
-  Offheap getOffheap();
+  DataStorageOffheap getOffheap();
+
+  DataStorage getDataStorage();
 
   Restartable getRestartable();
 }

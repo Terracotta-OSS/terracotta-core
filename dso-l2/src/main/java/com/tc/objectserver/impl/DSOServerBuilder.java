@@ -62,7 +62,8 @@ import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
-import com.terracottatech.config.Offheap;
+import com.terracottatech.config.DataStorage;
+import com.terracottatech.config.Datastore;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,7 +148,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionFactory serverTransactionFactory,
                                       DGCSequenceProvider dgcSequenceProvider,
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
-                                      final Offheap offheapConfig, int electionTimeInSecs);
+                                      final DataStorage datastore, int electionTimeInSecs);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,

@@ -83,7 +83,7 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
-import com.terracottatech.config.Offheap;
+import com.terracottatech.config.DataStorage;
 
 import java.io.File;
 import java.io.IOException;
@@ -254,14 +254,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final ServerTransactionFactory serverTransactionFactory,
                                              final DGCSequenceProvider dgcSequenceProvider,
                                              final SequenceGenerator indexSequenceGenerator,
-                                             final ObjectIDSequence objectIDSequence, final Offheap offheapConfig,
+                                             final ObjectIDSequence objectIDSequence, final DataStorage datastore,
                                              int electionTimeInSecs) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
                                serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence,
-                               offheapConfig, electionTimeInSecs);
+        datastore, electionTimeInSecs);
   }
 
   @Override
