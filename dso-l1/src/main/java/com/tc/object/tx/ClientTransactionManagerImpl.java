@@ -844,8 +844,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   @Override
-  public void receivedLogicalChangeResult(TransactionID transactionID,
-                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID) {
+  public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results) {
     for (Entry<LogicalChangeID, LogicalChangeResult> entry : results.entrySet()) {
       LogicalChangeResultCallback listener = this.logicalChangeCallbacks.remove(entry.getKey());
       listener.handleResult(entry.getValue());

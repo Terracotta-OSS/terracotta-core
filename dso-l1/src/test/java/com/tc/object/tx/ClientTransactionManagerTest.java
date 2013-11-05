@@ -24,6 +24,8 @@ import com.tc.object.tx.ClientTransactionManagerImpl.LogicalChangeResultCallback
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -325,10 +327,12 @@ public class ClientTransactionManagerTest extends TestCase {
         while (rmtTxnMgr.getTxnCount() == 0) {
           ThreadUtil.reallySleep(100);
         }
+        Map<LogicalChangeID, LogicalChangeResult> results = new HashMap<LogicalChangeID, LogicalChangeResult>();
         for (Entry<LogicalChangeID, LogicalChangeResultCallback> entry : clientTxnMgr.getLogicalChangeCallbacks()
             .entrySet()) {
-          entry.getValue().handleResult(LogicalChangeResult.SUCCESS);
+          results.put(entry.getKey(), LogicalChangeResult.SUCCESS);
         }
+        clientTxnMgr.receivedLogicalChangeResult(results);
       }
     };
     thread.start();
@@ -348,10 +352,12 @@ public class ClientTransactionManagerTest extends TestCase {
         while (rmtTxnMgr.getTxnCount() == 0) {
           ThreadUtil.reallySleep(100);
         }
+        Map<LogicalChangeID,LogicalChangeResult> results = new HashMap<LogicalChangeID,LogicalChangeResult>();
         for (Entry<LogicalChangeID, LogicalChangeResultCallback> entry : clientTxnMgr.getLogicalChangeCallbacks()
             .entrySet()) {
-          entry.getValue().handleResult(LogicalChangeResult.FAILURE);
+          results.put(entry.getKey(), LogicalChangeResult.FAILURE);
         }
+        clientTxnMgr.receivedLogicalChangeResult(results);
       }
     };
     thread.start();

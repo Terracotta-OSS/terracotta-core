@@ -245,8 +245,7 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   @Override
-  public void receivedLogicalChangeResult(TransactionID transactionID,
-                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeId) {
+  public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results) {
     throw new ImplementMe();
 
   }
