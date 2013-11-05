@@ -57,6 +57,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
+  public boolean isExplicitlyLocked(Object lockID, LockLevel level) {
+    return delegate.isExplicitlyLocked(lockID, level);
+  }
+
+  @Override
   public void beginAtomicTransaction(LockID lock, LockLevel level) throws AbortedOperationException {
     assertRejoinNotInProgress();
     try {
@@ -83,6 +88,12 @@ public class RejoinAwarePlatformService implements PlatformService {
   public boolean isLockedBeforeRejoin() {
     // already taken a lock && rejoin count has changed
     return isExplicitlyLocked() && (currentRejoinCount.get().longValue() != getRejoinCount());
+  }
+
+  @Override
+  public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
+    // already taken a lock && rejoin count has changed
+    return isExplicitlyLocked(lockID, level) && (currentRejoinCount.get().longValue() != getRejoinCount());
   }
 
   private void resetRejoinCountIfNecessary() {
@@ -220,7 +231,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   public void commitLock(Object lockID, LockLevel level) throws AbortedOperationException {
     // do not assert and throw rejoin exception when rejoin is in progress
     // copy current isLockedBeforeRejoin state because that will change after delegate.commitLock()
-    boolean isLockedBeforeRejoin = isLockedBeforeRejoin();
+    boolean isLockedBeforeRejoin = isLockedBeforeRejoin(lockID, level);
     try {
       delegate.commitLock(lockID, level);
     } catch (PlatformRejoinException e) {

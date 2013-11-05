@@ -362,6 +362,16 @@ public class ObjectStreamClassMappingTest {
     public TaskRunner getTaskRunner() {
       return null;
     }
+
+    @Override
+    public boolean isExplicitlyLocked(Object lockID, LockLevel level) {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
+      return false;
+    }
   }
 
 }

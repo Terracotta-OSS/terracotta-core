@@ -45,10 +45,10 @@ public class PlatformServiceImpl implements PlatformService {
   private volatile RejoinLifecycleEventController rejoinEventsController;
   private final boolean                           rejoinEnabled;
   private static final int                               BASE_COUNT  = 1;
-  private static final ThreadLocal<Map<Object, Integer>> lockIdToCount = new VicariousThreadLocal<Map<Object, Integer>>() {
+  private static final ThreadLocal<Map<LockInfo, Integer>> lockIdToCount = new VicariousThreadLocal<Map<LockInfo, Integer>>() {
                                                                          @Override
-                                                                         protected Map<Object, Integer> initialValue() {
-                                                                           return new HashMap<Object, Integer>();
+                                                                           protected Map<LockInfo, Integer> initialValue() {
+                                                                             return new HashMap<LockInfo, Integer>();
                                                                          }
                                                                        };
 
@@ -57,21 +57,21 @@ public class PlatformServiceImpl implements PlatformService {
     this.rejoinEnabled = rejoinEnabled;
   }
 
-  private void addContext(Object lockId) {
-    Map<Object, Integer> threadLocal = lockIdToCount.get();
-    Integer count = threadLocal.get(lockId);
+  private void addContext(LockInfo lockInfo) {
+    Map<LockInfo, Integer> threadLocal = lockIdToCount.get();
+    Integer count = threadLocal.get(lockInfo);
     Integer lockCount = count != null ? new Integer(count.intValue() + BASE_COUNT) : new Integer(BASE_COUNT);
-    threadLocal.put(lockId, lockCount);
+    threadLocal.put(lockInfo, lockCount);
   }
 
-  private void removeContext(Object lockId) {
-    Map<Object, Integer> threadLocal = lockIdToCount.get();
-    Integer count = threadLocal.get(lockId);
+  private void removeContext(LockInfo lockInfo) {
+    Map<LockInfo, Integer> threadLocal = lockIdToCount.get();
+    Integer count = threadLocal.get(lockInfo);
     if(count != null) {
       if (count.intValue() == BASE_COUNT) {
-        threadLocal.remove(lockId);
+        threadLocal.remove(lockInfo);
       } else {
-        threadLocal.put(lockId, new Integer(count.intValue() - BASE_COUNT));
+        threadLocal.put(lockInfo, new Integer(count.intValue() - BASE_COUNT));
       }
     }
   }
@@ -140,7 +140,7 @@ public class PlatformServiceImpl implements PlatformService {
   public void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     manager.lock(lock, level);
-    addContext(lockID);
+    addContext(new LockInfo(lockID, level));
   }
 
   @Override
@@ -148,7 +148,7 @@ public class PlatformServiceImpl implements PlatformService {
       AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     manager.lockInterruptibly(lock, level);
-    addContext(lockID);
+    addContext(new LockInfo(lockID, level));
   }
 
   @Override
@@ -156,7 +156,7 @@ public class PlatformServiceImpl implements PlatformService {
     LockID lock = manager.generateLockIdentifier(lockID);
     boolean granted = manager.tryLock(lock, level);
     if (granted) {
-      addContext(lockID);
+      addContext(new LockInfo(lockID, level));
     }
     return granted;
   }
@@ -167,7 +167,7 @@ public class PlatformServiceImpl implements PlatformService {
     LockID lock = manager.generateLockIdentifier(lockID);
     boolean granted = manager.tryLock(lock, level, timeUnit.toMillis(timeout));
     if (granted) {
-      addContext(lockID);
+      addContext(new LockInfo(lockID, level));
     }
     return granted;
   }
@@ -178,7 +178,7 @@ public class PlatformServiceImpl implements PlatformService {
     try {
       manager.unlock(lock, level);
     } finally {
-      removeContext(lockID);
+      removeContext(new LockInfo(lockID, level));
     }
   }
 
@@ -353,5 +353,48 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public TaskRunner getTaskRunner() {
     return this.manager.getTastRunner();
+  }
+
+  @Override
+  public boolean isExplicitlyLocked(Object lockID, LockLevel level) {
+    return lockIdToCount.get().containsKey(new LockInfo(lockID, level));
+  }
+
+  @Override
+  public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
+    return false;
+  }
+
+  private static class LockInfo {
+    private final Object    lockId;
+    private final LockLevel lockLevel;
+
+    public LockInfo(Object lockId, LockLevel lockLevel) {
+      this.lockId = lockId;
+      this.lockLevel = lockLevel;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((lockId == null) ? 0 : lockId.hashCode());
+      result = prime * result + ((lockLevel == null) ? 0 : lockLevel.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      LockInfo other = (LockInfo) obj;
+      if (lockId == null) {
+        if (other.lockId != null) return false;
+      } else if (!lockId.equals(other.lockId)) return false;
+      if (lockLevel != other.lockLevel) return false;
+      return true;
+    }
+
   }
 }
