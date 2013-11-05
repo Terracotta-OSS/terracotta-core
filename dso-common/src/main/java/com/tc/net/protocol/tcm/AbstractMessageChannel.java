@@ -14,9 +14,9 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -24,8 +24,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 abstract class AbstractMessageChannel implements MessageChannel, MessageChannelInternal {
 
-  private final Map<String, Object> attachments    = new ConcurrentHashMap<String, Object>();
-  private final Object            attachmentLock = new Object();
+  private final ConcurrentMap<String, Object> attachments    = new ConcurrentHashMap<String, Object>();
   private final Set               listeners      = new CopyOnWriteArraySet();
   private final ChannelStatus     status         = new ChannelStatus();
   private final TCMessageFactory  msgFactory;
@@ -49,11 +48,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   @Override
   public void addAttachment(String key, Object value, boolean replace) {
-    synchronized (attachmentLock) {
-      boolean exists = attachments.containsKey(key);
-      if (replace || !exists) {
-        attachments.put(key, value);
-      }
+    if (replace) {
+      attachments.put(key, value);
+    } else {
+      attachments.putIfAbsent(key, value);
     }
   }
 
