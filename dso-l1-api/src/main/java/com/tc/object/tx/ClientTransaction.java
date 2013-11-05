@@ -124,8 +124,7 @@ public interface ClientTransaction {
    * @param parameters Parameter values
    * @param methodName Method name
    */
-  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName,
- LogicalChangeID id);
+  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName, LogicalChangeID id);
 
   /**
    * Check whether transaction has changes or notifications

@@ -118,7 +118,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       session++;
       for (LogicalChangeResultCallback logicalChangeCallback : logicalChangeCallbacks.values()) {
         // wake up the waiting threads for LogicalChangeResult
-        logicalChangeCallback.notifyAll();
+        synchronized (logicalChangeCallback) {
+          logicalChangeCallback.notifyAll();
+        }
       }
       logicalChangeCallbacks.clear();
     } finally {
@@ -853,7 +855,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   @Override
   public boolean logicalInvokeWithResult(final TCObject source, final int method, final String methodName,
                                          final Object[] parameters) throws AbortedOperationException {
-
+    if (getTransaction().isAtomic()) { throw new UnsupportedOperationException(
+                                                                                      "LogicalInvokeWithResult not supported for atomic transactions"); }
     LogicalChangeID id = new LogicalChangeID(logicalChangeSequence.next());
     LogicalChangeResultCallback future = createLogicalChangeFuture(id);
     try {
@@ -880,7 +883,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
-  private class LogicalChangeResultCallback {
+  class LogicalChangeResultCallback {
     private LogicalChangeResult result;
     private final int           sessionForLogicalChange;
 
@@ -916,6 +919,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       }
     }
 
+
   }
 
+  Map<LogicalChangeID, LogicalChangeResultCallback> getLogicalChangeCallbacks() {
+    return logicalChangeCallbacks;
+  }
 }
