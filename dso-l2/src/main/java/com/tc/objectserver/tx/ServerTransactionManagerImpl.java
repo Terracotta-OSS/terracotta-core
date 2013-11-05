@@ -815,7 +815,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   @Override
   public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
-    System.out.println("Loading Change Results");
     applyInfo.getApplyResultRecorder().recordResults(this.gtxm.getApplyResults(txn.getServerTransactionID()));
   }
 }

@@ -36,7 +36,6 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.server.ServerEvent;
 import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.concurrent.Timer;
 
 import java.util.ArrayList;
@@ -140,7 +139,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
           serverEvictions.scheduleCapacityEviction(oid);
         }
       }
-      ThreadUtil.reallySleep(1000);
       broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo));
     }
 

@@ -220,8 +220,7 @@ public interface ClientTransactionManager extends ClearableCallback {
    */
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
   
-  public void receivedLogicalChangeResult(TransactionID transactionID,
-                                          Map<LogicalChangeID, LogicalChangeResult> results, NodeID nodeID);
+  public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results);
 
   public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
       throws AbortedOperationException;

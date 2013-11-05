@@ -46,8 +46,6 @@ import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -88,7 +86,6 @@ public class TransactionBatchTest extends TestCase {
   public void testGetMinTransaction() throws Exception {
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
-    final Sequence sequence = new SimpleSequence();
     final LinkedList list = new LinkedList();
     for (int i = 0; i < 100; i++) {
       final TestClientTransaction tx = new TestClientTransaction();
@@ -168,7 +165,6 @@ public class TransactionBatchTest extends TestCase {
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
-    final Sequence sequence = new SimpleSequence();
 
     this.writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     this.writer.addTransaction(txn2, sequenceGenerator, tidGenerator);
@@ -259,7 +255,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
@@ -361,7 +356,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     // txn1 and txn2 exceed the object limit (should not fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -395,7 +389,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     // txn1 and txn2 exceed the lock limit (should not fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -426,7 +419,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     // folding disabled (these txns would normally fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -467,7 +459,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     // Txns with DMI, root or notifies do not qualify for folds
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -520,7 +511,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
@@ -560,7 +550,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
@@ -596,7 +585,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    final Sequence sequence = new SimpleSequence();
     // There is a common object between txn1 and txn2 (but differing locks). This should fold
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
