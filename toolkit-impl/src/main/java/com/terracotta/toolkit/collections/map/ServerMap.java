@@ -9,6 +9,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
@@ -935,6 +936,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public boolean remove(final Object key, final Object value) {
+    return remove(key, value, DefaultToolkitValueComparator.INSTANCE);
+  }
+
+  @Override
+  public boolean remove(final Object key, final Object value, ToolkitValueComparator comparator) {
     if (!LiteralValues.isLiteralInstance(key)) {
       // Returning null as we cannot key passed needs to be portable else if the key is not Literal
       return false;
@@ -945,7 +951,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     assertNotNull(value);
     if (isEventual()) {
       V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
-      if (old != null && old.equals(value)) {
+      if (old != null && compare(old, (V) value, comparator)) {
         eventualConcurrentLock.lock();
         try {
           doLogicalRemoveUnlocked(key, value);
@@ -961,7 +967,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
-        if (old != null && old.equals(value)) {
+        if (old != null && compare(old, (V) value, comparator)) {
           doLogicalRemoveLocked(key, lockID);
           return true;
         } else {
@@ -1083,6 +1089,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public boolean replace(final K key, final V oldValue, final V newValue) {
+    return replace(key, oldValue, newValue, DefaultToolkitValueComparator.INSTANCE);
+  }
+
+  @Override
+  public boolean replace(final K key, final V oldValue, final V newValue, ToolkitValueComparator<V> comparator) {
     assertNotNull(oldValue);
     assertNotNull(newValue);
     throttleIfNecessary();
@@ -1091,7 +1102,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
       final V old = deserialize(key, oldSerializedMapValue);
-      if (old != null && old.equals(oldValue)) {
+      if (old != null && compare(oldValue, old, comparator)) {
         metaData = createMetaDataAndSetCommand(key, newValue, SearchCommand.REPLACE);
         eventualConcurrentLock.lock();
         try {
@@ -1125,7 +1136,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       beginLock(lockID, getEffectiveLockType());
       try {
         final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
-        if (old != null && old.equals(oldValue)) {
+        if (old != null && compare(oldValue, old, comparator)) {
 
           doLogicalPut(key, newValue, timeSource.nowInSeconds(), ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                        ToolkitConfigFields.NO_MAX_TTL_SECONDS, MutateType.LOCKED, lockID, metaData);
@@ -1662,4 +1673,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     tcObjectServerMap.addTxnInProgressKeys(addSet, removeSet);
   }
 
+  private boolean compare(V v1, V v2, ToolkitValueComparator<V> comparator) {
+    return comparator == null ? v1.equals(v2) : comparator.equals(v1, v2);
+  }
 }

@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
@@ -128,4 +129,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   Set<Entry<K, V>> entrySet(Set<K> filterSet);
 
   void clearVersioned();
+
+  boolean remove(Object key, Object value, ToolkitValueComparator<V> comparator);
+
+  boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator);
 }

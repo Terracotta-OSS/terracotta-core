@@ -9,6 +9,7 @@ public class LogicalChangeID extends AbstractIdentifier {
   public static LogicalChangeID NULL_ID = new LogicalChangeID();
 
   private LogicalChangeID() {
+    //
   }
 
   public LogicalChangeID(long id) {
