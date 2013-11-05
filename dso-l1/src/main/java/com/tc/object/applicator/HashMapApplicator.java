@@ -18,7 +18,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.LogicalChangeID;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -160,7 +159,7 @@ public class HashMapApplicator extends BaseApplicator {
       if (addKey == null || addValue == null) {
         continue;
       }
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { addKey, addValue }, LogicalChangeID.NULL_ID);
+      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { addKey, addValue });
     }
   }
 

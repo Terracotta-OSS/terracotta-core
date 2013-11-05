@@ -43,4 +43,14 @@ public class LogicalChangeResult implements TCSerializable {
     return "LogicalChangeResult[" + success + "]";
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    LogicalChangeResult other = (LogicalChangeResult) obj;
+    if (success != other.success) return false;
+    return true;
+  }
+
 }

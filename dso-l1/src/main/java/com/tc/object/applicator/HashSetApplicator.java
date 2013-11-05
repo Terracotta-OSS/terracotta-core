@@ -17,7 +17,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.LogicalChangeID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -109,7 +108,7 @@ public class HashSetApplicator extends BaseApplicator {
         continue;
       }
 
-      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { addValue }, LogicalChangeID.NULL_ID);
+      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { addValue });
     }
   }
 

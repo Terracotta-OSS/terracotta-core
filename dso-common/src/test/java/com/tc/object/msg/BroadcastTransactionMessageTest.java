@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -69,9 +70,13 @@ public class BroadcastTransactionMessageTest extends TestCase {
       notified.add(new ClientServerExchangeLockContext(new StringLockID("" + (i + 1)), clientID, new ThreadID(i + 1),
                                                        State.WAITER));
     }
+
+    HashMap<LogicalChangeID, LogicalChangeResult> logicalChangeResults = new HashMap<LogicalChangeID, LogicalChangeResult>();
+    logicalChangeResults.put(new LogicalChangeID(1), LogicalChangeResult.SUCCESS);
+    logicalChangeResults.put(new LogicalChangeID(2), LogicalChangeResult.FAILURE);
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
                         lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY,
-                        new HashMap<LogicalChangeID, LogicalChangeResult>());
+                        logicalChangeResults);
     this.msg.dehydrate();
 
     TCByteBuffer[] data = this.out.toArray();
@@ -87,6 +92,11 @@ public class BroadcastTransactionMessageTest extends TestCase {
     assertEquals(txnType, this.msg.getTransactionType());
     assertEquals(lowGlobalTransactionIDWatermark, this.msg.getLowGlobalTransactionIDWatermark());
     assertEquals(notified, this.msg.addNotifiesTo(new LinkedList()));
+    Map<LogicalChangeID, LogicalChangeResult> msgResults = this.msg.getLogicalChangeResults();
+    assertEquals(2, msgResults.size());
+    assertEquals(LogicalChangeResult.SUCCESS, msgResults.get(new LogicalChangeID(1)));
+    assertEquals(LogicalChangeResult.FAILURE, msgResults.get(new LogicalChangeID(2)));
+
   }
 
 }

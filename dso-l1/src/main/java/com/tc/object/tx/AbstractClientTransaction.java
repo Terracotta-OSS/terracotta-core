@@ -207,8 +207,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
 
   abstract protected void basicArrayChanged(TCObject source, int startPos, Object array, int length);
 
-  abstract protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters,
- LogicalChangeID id);
+  abstract protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeID id);
 
   abstract protected void basicAddMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md);
 
