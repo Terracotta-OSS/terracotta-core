@@ -78,7 +78,6 @@ import com.tc.util.Conversion;
 import com.tc.util.Conversion.MetricsFormatException;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.DataStorage;
-import com.terracottatech.config.Datastore;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -63,7 +63,6 @@ import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 import com.terracottatech.config.DataStorage;
-import com.terracottatech.config.Datastore;
 
 import java.io.File;
 import java.io.IOException;
