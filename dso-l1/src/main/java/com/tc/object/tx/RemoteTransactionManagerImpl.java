@@ -151,8 +151,21 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   private void checkAndSetstate() {
+    throwExceptionIfNecessary(true);
     status = REJOIN_IN_PROGRESS;
     this.lock.notifyAll();
+  }
+
+  private void throwExceptionIfNecessary(boolean throwExp) {
+    if (status != PAUSED && status != REJOIN_IN_PROGRESS) {
+      String message = "cleanup unexpected state: expected " + PAUSED + " OR " + REJOIN_IN_PROGRESS + " but found "
+                       + status;
+      if (throwExp) {
+        throw new IllegalStateException(message);
+      } else {
+        logger.warn(message);
+      }
+    }
   }
 
   @Override

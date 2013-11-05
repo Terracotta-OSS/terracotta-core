@@ -12,6 +12,8 @@ import org.terracotta.groupConfigForL1.ServerInfo;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.object.config.schema.L2DSOConfig;
+import com.terracottatech.config.BindPort;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +40,7 @@ public class GroupInfoServlet extends HttpServlet {
   }
 
   private void createDocumentToSend() {
-    configSetupManager = (L2ConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
+    configSetupManager = getConfigurationManager();
     serverGroupsDocument = ServerGroupsDocument.Factory.newInstance();
     createServerNameToTsaPortAndHostname();
     ServerGroups serverGroups = serverGroupsDocument.addNewServerGroups();
@@ -49,6 +51,10 @@ public class GroupInfoServlet extends HttpServlet {
     }
   }
 
+  protected L2ConfigurationSetupManager getConfigurationManager() {
+    return (L2ConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
+  }
+
   private void createServerNameToTsaPortAndHostname() {
     serverNameToTsaPort = new HashMap<String, Integer>();
     serverNameToHostName = new HashMap<String, String>();
@@ -57,8 +63,14 @@ public class GroupInfoServlet extends HttpServlet {
       int port = 0;
       String host = null;
       try {
-        port = configSetupManager.dsoL2ConfigFor(allServerName).tsaPort().getIntValue();
-        host = configSetupManager.dsoL2ConfigFor(allServerName).host();
+        L2DSOConfig dsoL2Config = configSetupManager.dsoL2ConfigFor(allServerName);
+        BindPort tsaPort = dsoL2Config.tsaPort();
+        port = tsaPort.getIntValue();
+        if (tsaPort.isSetBind() && !tsaPort.getBind().equals("0.0.0.0")) {
+          host = tsaPort.getBind();
+        } else {
+          host = dsoL2Config.host();
+        }
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }
@@ -81,8 +93,12 @@ public class GroupInfoServlet extends HttpServlet {
   @Override
   protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     createDocumentToSend();
-    OutputStream out = response.getOutputStream();
+    OutputStream out = getOutPutStream(response);
     IOUtils.copy(this.serverGroupsDocument.newInputStream(), out);
     response.flushBuffer();
+  }
+
+  protected OutputStream getOutPutStream(HttpServletResponse response) throws IOException {
+    return response.getOutputStream();
   }
 }

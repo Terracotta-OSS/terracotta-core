@@ -11,6 +11,7 @@ import com.terracotta.toolkit.express.loader.Util;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -91,12 +92,33 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(dsoContext);
       isInitialized = true;
       join(tunneledMBeanDomains);
+      setSecretHackOMFG();
     } catch (InvocationTargetException e) {
       throw new RuntimeException(e.getCause());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
+  }
+
+  private void setSecretHackOMFG() {
+    try {
+      // Let's make sure we even care about security stuff at all...
+      // if so, then check if the thing that cares is the BM Connector's TkSecurityManager
+      appClassLoader.loadClass("com.terracotta.management.keychain.KeyChain");
+      final Class<?> omfg = appClassLoader.loadClass("net.sf.ehcache.thrift.server.tc.TkSecurityManager");
+      final Field secret = omfg.getDeclaredField("SECRET");
+      if(secret.getType() == byte[].class) {
+        secret.setAccessible(true);
+        Class dsoContextClass = clusteredStateLoader.loadClass(DSO_CONTEXT_IMPL);
+        Method method = dsoContextClass.getMethod("getSecret");
+        secret.set(null, method.invoke(dsoContext));
+      }
+    } catch (ClassNotFoundException e) {
+      // That's fine, moving on
+    } catch (Throwable t) {
+      //
+    }
   }
 
   @Override

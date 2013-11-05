@@ -4,6 +4,7 @@
  */
 package com.tc.server;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -113,8 +114,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   public static final String                HTTP_SECURITY_ROLE                           = "terracotta";
 
   public static final File                  TC_MANAGEMENT_API_LOCKFILE                   = new File(
-                                                                                             System.getProperty("java.io.tmpdir"),
-                                                                                             ".tc-management-api.lock");
+                                                                                                    System
+                                                                                                        .getProperty("java.io.tmpdir"),
+                                                                                                    ".tc-management-api.lock");
 
   private static final TCLogger             logger                                       = TCLogging
                                                                                              .getLogger(TCServer.class);
@@ -178,10 +180,12 @@ public class TCServerImpl extends SEDA implements TCServer {
             L2DSOConfig dsoConfig = configurationSetupManager.dsoL2ConfigFor(server);
             try {
               // Following will throw NPE if password not found - which is what we want
-              securityManager.getPasswordForTC(securityManager.getIntraL2Username(),
-                  dsoConfig.host(), dsoConfig.tsaGroupPort().getIntValue());
+              securityManager.getPasswordForTC(securityManager.getIntraL2Username(), dsoConfig.host(), dsoConfig
+                  .tsaGroupPort().getIntValue());
             } catch (NullPointerException npex) {
-              throw new IllegalStateException("Invalid cluster security configuration. Unable to find connection credentials to server " + dsoConfig.serverName(), npex);
+              throw new IllegalStateException(
+                                              "Invalid cluster security configuration. Unable to find connection credentials to server "
+                                                  + dsoConfig.serverName(), npex);
             }
           } catch (ConfigurationSetupException e) {
             throw new IllegalStateException("Unexpected error browsing cluster configuration", e);
@@ -261,8 +265,8 @@ public class TCServerImpl extends SEDA implements TCServer {
           host = name;
         }
 
-        out[i] = new L2Info(name, host, config.jmxPort().getIntValue(), config.tsaPort().getIntValue(),
-            config.tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), getSecurityHostname());
+        out[i] = new L2Info(name, host, config.jmxPort().getIntValue(), config.tsaPort().getIntValue(), config
+            .tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), getSecurityHostname());
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
@@ -489,7 +493,9 @@ public class TCServerImpl extends SEDA implements TCServer {
         consoleLogger.info("Available Max Runtime Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
       }
 
-      TCServerImpl.this.terracottaConnector = new TerracottaConnector(TCServerImpl.this.configurationSetupManager.getSecurity() != null);
+      TCServerImpl.this.terracottaConnector = new TerracottaConnector(
+                                                                      TCServerImpl.this.configurationSetupManager
+                                                                          .getSecurity() != null);
       startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
       Stage stage = getStageManager().createStage("dso-http-bridge",
                                                   new HttpConnectionHandler(TCServerImpl.this.terracottaConnector), 1,
@@ -499,7 +505,9 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
 
-      addManagementWebApp();
+      File warTempDir = new File(commonL2Config.dataPath(), "jetty");
+      prepareJettyWarTempDir(warTempDir);
+      addManagementWebApp(warTempDir);
 
       if (isActive()) {
         updateActivateTime();
@@ -517,6 +525,17 @@ public class TCServerImpl extends SEDA implements TCServer {
         logger.info("Server started as " + l2Identifier);
       }
     }
+
+    private void prepareJettyWarTempDir(File warTempDir) throws IOException {
+      if (warTempDir.isDirectory()) {
+        FileUtils.deleteDirectory(warTempDir);
+      }
+      warTempDir.mkdirs();
+      if (!warTempDir.isDirectory() || !warTempDir.canWrite()) { throw new IOException(
+                                                                                       "Can't create jetty temp dir at "
+                                                                                           + warTempDir); }
+    }
+
   }
 
   private long getMaxDataSize() {
@@ -549,9 +568,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
-        tcProps
+                                                                      tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
-        tcProps
+                                                                      tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
                                                                       tcProps
                                                                           .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
@@ -663,7 +682,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private void addManagementWebApp() throws Exception {
+  private void addManagementWebApp(File warTempDir) throws Exception {
     if (!TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
       logger.info("RestManagement is disabled.");
       return;
@@ -693,11 +712,13 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     if (warFile != null) {
-      // DEV-8583: use a lock file in java.io.tmpdir to serialize deployments of the management webapp on a single server
+      // DEV-8583: use a lock file in java.io.tmpdir to serialize deployments of the management webapp on a single
+      // server
       fileLock();
       try {
         logger.info("deploying management REST services from archive " + warFile);
         WebAppContext restContext = new WebAppContext();
+        restContext.setTempDirectory(warTempDir);
 
         // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
         List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
@@ -720,8 +741,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void fileLock() throws InterruptedException, IOException {
     while (true) {
       // check if the lock file is older than 60s, in that case assume another VM crashed and delete it
-      if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L &&
-          System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 60000) {
+      if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L
+          && System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 60000) {
         TC_MANAGEMENT_API_LOCKFILE.delete();
       }
 
@@ -904,17 +925,13 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public String getSecurityServiceLocation() {
-    if (configurationSetupManager.getSecurity() == null) {
-      return null;
-    }
+    if (configurationSetupManager.getSecurity() == null) { return null; }
     return configurationSetupManager.getSecurity().getSecurityServiceLocation();
   }
 
   @Override
   public Integer getSecurityServiceTimeout() {
-    if (configurationSetupManager.getSecurity() == null) {
-      return null;
-    }
+    if (configurationSetupManager.getSecurity() == null) { return null; }
     return configurationSetupManager.getSecurity().getSecurityServiceTimeout();
   }
 
@@ -932,9 +949,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public String getIntraL2Username() {
-    if (!isSecure()) {
-      return null;
-    }
+    if (!isSecure()) { return null; }
     return securityManager.getIntraL2Username();
   }
 
@@ -948,10 +963,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     @Override
     public UserIdentity login(final String username, final Object credentials) {
-      final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
-      if (authenticatedUser == null) {
-        return null;
-      }
+      final Principal authenticatedUser = securityManager.authenticate(username, ((String) credentials).toCharArray());
+      if (authenticatedUser == null) { return null; }
 
       UserIdentity user = _users.get(username);
       if (user == null) {

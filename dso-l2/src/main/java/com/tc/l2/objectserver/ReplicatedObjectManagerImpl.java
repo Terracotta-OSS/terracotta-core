@@ -201,7 +201,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           groupManager.sendTo(fromNode, PassiveSyncBeginMessageFactory.beginError());
         }
       } catch (GroupException e) {
-        throw new RuntimeException(e);
+        logger.error("Error sending response to active.", e);
       }
     } else if (message.isResponse()) {
       if (!add2L2StateManager(fromNode, message.getCurrentState())) {
@@ -417,7 +417,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                     offheapConfig.getEnabled(), getResourceTotal()));
           } catch (GroupException e) {
             logger.error("Failed to send object list response to the active.", e);
-            throw new AssertionError(e);
           }
         }
       });
