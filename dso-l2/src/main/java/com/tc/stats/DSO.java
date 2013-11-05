@@ -30,7 +30,6 @@ import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.objectserver.storage.api.StorageData;
 import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
@@ -830,7 +829,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public Map<String, StorageData> getStorageStats() {
+  public Map<String, Map<String, Long>> getStorageStats() {
     return storageStats.getStorageStats();
   }
 }
