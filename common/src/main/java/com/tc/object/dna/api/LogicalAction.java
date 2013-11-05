@@ -21,6 +21,16 @@ public class LogicalAction {
    * @param method Method identifier, as defined in {@link com.tc.object.SerializationUtil}
    * @param parameters Parameters to the method call, may be empty but not null
    */
+  public LogicalAction(int method, Object[] parameters) {
+    this(method, parameters, LogicalChangeID.NULL_ID);
+  }
+
+  /**
+   * Construct a logical action with the method identifier and parameter values
+   * 
+   * @param method Method identifier, as defined in {@link com.tc.object.SerializationUtil}
+   * @param parameters Parameters to the method call, may be empty but not null
+   */
   public LogicalAction(int method, Object[] parameters, LogicalChangeID id) {
     this.method = method;
     this.parameters = parameters;

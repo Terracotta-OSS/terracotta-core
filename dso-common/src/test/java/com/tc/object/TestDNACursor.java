@@ -8,7 +8,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class TestDNACursor implements DNACursor {
   }
 
   public void addLogicalAction(final int method, final Object params[]) {
-    this.actions.add(new LogicalAction(method, params, new LogicalChangeID(-1)));
+    this.actions.add(new LogicalAction(method, params));
   }
 
   public void addArrayAction(final Object[] objects) {

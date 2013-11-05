@@ -8,7 +8,6 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.api.EvictableEntry;
@@ -116,7 +115,7 @@ public class RemoveAllDNA implements DNAInternal {
       if (actions.hasNext()) {
         final Map.Entry<Object, EvictableEntry> e = actions.next();
         currentAction = new LogicalAction(SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
-            e.getValue().getObjectID() }, LogicalChangeID.NULL_ID);
+            e.getValue().getObjectID() });
         actionsCount--;
         return true;
       } else {

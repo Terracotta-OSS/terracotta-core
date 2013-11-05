@@ -226,7 +226,7 @@ public class TestDNAWriter implements DNAWriter {
 
   @Override
   public void addLogicalAction(int method, Object[] parameters) {
-    this.actions.add(new LogicalAction(method, parameters, LogicalChangeID.NULL_ID));
+    this.actions.add(new LogicalAction(method, parameters));
 
   }
 }
