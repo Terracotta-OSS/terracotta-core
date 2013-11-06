@@ -812,6 +812,7 @@ public interface TCPropertiesConsts {
   public static final String L2_ALLOCATION_USE_PARTIALS                                 = "l2.offHeap.allocation.partials";
   public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                                 = "l2.offHeap.allocation.partial.disable.maps";
   public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                                 = "l2.offHeap.allocation.partial.disable.objects";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_HOTSET                                = "l2.offHeap.allocation.partial.disable.hotset";
 
   public static final String L2_OFFHEAP_DISABLED                                            = "l2.offheap.disable";
 

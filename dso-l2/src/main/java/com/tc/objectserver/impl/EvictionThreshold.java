@@ -73,27 +73,27 @@ public enum EvictionThreshold {
         }
     }
     
-    public boolean shouldThrottle(DetailedMemoryUsage usage,int usedTweak,int reservedTweak) {
+    public boolean shouldThrottle(MonitoredResource usage,int usedTweak,int reservedTweak) {
         long reserve = getReserved(reservedTweak);
         // long used = getUsed(reserve, usedTweak);
-        if ( usage.getReservedMemory() > usage.getMaxMemory() - (reserve) ) {
+        if ( usage.getReserved()> usage.getTotal()- (reserve) ) {
             return true;
         }
         return false;
     }
     
-    public boolean shouldNormalize(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
+    public boolean shouldNormalize(MonitoredResource usage,int usedTweak,int reservedTweak)  {
         long lres = getReserved(reservedTweak);
         long lused = getUsed(lres,usedTweak);
-        if ( usage.getReservedMemory() < usage.getMaxMemory() - lres - ((lused - lres)/2) ) {
+        if ( usage.getReserved()< usage.getTotal()- lres - ((lused - lres)/2) ) {
             return true;
         }
         return false;
     }
     
-    public boolean isInThresholdRegion(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
-        long max = usage.getMaxMemory();
-        long reserve = usage.getReservedMemory();
+    public boolean isInThresholdRegion(MonitoredResource usage,int usedTweak,int reservedTweak)  {
+        long max = usage.getTotal();
+        long reserve = usage.getReserved();
         long lres = getReserved(reservedTweak);
         long lused = getUsed(lres,usedTweak);
         if ( reserve > max - lused && reserve < max - lres ) {
@@ -102,15 +102,15 @@ public enum EvictionThreshold {
         return false;
     }
     
-    public boolean isAboveThreshold(DetailedMemoryUsage usage,int usedTweak,int reservedTweak)  {
-        long max = usage.getMaxMemory();
-        long reserve = usage.getReservedMemory();
+    public boolean isAboveThreshold(MonitoredResource usage,int usedTweak,int reservedTweak)  {
+        long max = usage.getTotal();
+        long reserve = usage.getReserved();
         long lres = getReserved(reservedTweak);
         long lused = getUsed(lres,usedTweak);
-        if ( usage.getReservedMemory() > max - lres ) {
+        if ( usage.getVital() > max - lres ) {
             return true;
         }
-        if ( reserve > max - lused && usage.getUsedMemory() > max - lused ) {
+        if ( reserve > max - lused && usage.getUsed() > max - lused ) {
             return true;
         }
         return false;

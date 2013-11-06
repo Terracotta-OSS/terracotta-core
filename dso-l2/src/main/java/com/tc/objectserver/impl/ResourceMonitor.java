@@ -16,7 +16,7 @@ import com.tc.runtime.MemoryUsage;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ResourceMonitor implements ReconnectionRejectedCallback {
+public class ResourceMonitor implements ResourceEventProducer {
 
   private static final TCLogger logger = TCLogging.getLogger(ResourceMonitor.class);
 
@@ -39,11 +39,13 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     return resource;
   }
 
+  @Override
   public void registerForResourceEvents(ResourceEventListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
   }
 
+  @Override
   public void unregisterForResourceEvents(ResourceEventListener listener) {
     listeners.remove(listener);
     stopMonitorIfNecessary();
@@ -76,9 +78,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   }
 
   private void fireMemoryEvent(final MonitoredResource resourceParam, final long count) {
-    DetailedMemoryUsage usage = new DetailedMemoryUsage(resourceParam, count);
     for (ResourceEventListener listener : listeners) {
-      listener.resourcesUsed(usage);
+      listener.resourcesUsed(resourceParam);
     }
   }
 
