@@ -4,18 +4,10 @@
  */
 package com.tc.objectserver.managedobject;
 
-import static java.util.Arrays.asList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.corestorage.KeyValueStorage;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -29,9 +21,19 @@ import com.tc.server.ServerEventType;
 import com.tc.test.TCTestCase;
 import com.tc.util.Events;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTestCase {
   static {
@@ -240,20 +242,51 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   }
 
   public void testClearVersioned() throws Exception {
-    Collection<Object> values = new ArrayList<Object>();
-    values.add(new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 1));
-    values.add(new CDSMValue(new ObjectID(2), 0, 0, 0, 0, 2));
-    when(keyValueStorage.values()).thenReturn(values);
+    final Set<Object> keys = ImmutableSet.<Object>of(0, 1, 2);
+    final CDSMValue value1 = new CDSMValue(new ObjectID(0), 0, 0, 0, 0, 0);
+    final CDSMValue value2 = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 1);
+    final CDSMValue value3 = new CDSMValue(new ObjectID(2), 0, 0, 0, 0, 2);
+    when(keyValueStorage.keySet()).thenReturn(keys);
+    when(keyValueStorage.get(0)).thenReturn(value1);
+    when(keyValueStorage.get(1)).thenReturn(value2);
+    when(keyValueStorage.get(2)).thenReturn(value3);
 
-    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR_VERSIONED, new Object[] {});
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR_VERSIONED, ArrayUtils.EMPTY_OBJECT_ARRAY);
 
-    for (Object value : values) {
-      verify(applyTransactionInfo).deleteObject(((CDSMValue) value).getObjectID());
-      verify(applyTransactionInfo).invalidate(oid, ((CDSMValue) value).getObjectID());
-    }
-    
-    verify(serverEventRecorder, never()).recordEvent(any(ServerEventType.class), any(), any(ObjectID.class),
-                                                     any(Long.class), anyString());
+    verify(applyTransactionInfo).deleteObject(value1.getObjectID());
+    verify(applyTransactionInfo).deleteObject(value2.getObjectID());
+    verify(applyTransactionInfo).deleteObject(value3.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value1.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
+
+    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE), any(), any(ObjectID.class), anyString());
+    verify(serverEventRecorder, never()).recordEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(ObjectID.class),
+        any(Long.class), anyString());
+  }
+
+  public void testMustDeleteObjectsOnClearAndSendEvents() throws Exception {
+    final Set<Object> keys = ImmutableSet.<Object>of(0, 1, 2);
+    final CDSMValue value1 = new CDSMValue(new ObjectID(0), 0, 0, 0, 0, 0);
+    final CDSMValue value2 = new CDSMValue(new ObjectID(1), 0, 0, 0, 0, 1);
+    final CDSMValue value3 = new CDSMValue(new ObjectID(2), 0, 0, 0, 0, 2);
+    when(keyValueStorage.keySet()).thenReturn(keys);
+    when(keyValueStorage.get(0)).thenReturn(value1);
+    when(keyValueStorage.get(1)).thenReturn(value2);
+    when(keyValueStorage.get(2)).thenReturn(value3);
+
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.CLEAR, ArrayUtils.EMPTY_OBJECT_ARRAY);
+
+    verify(applyTransactionInfo).deleteObject(value1.getObjectID());
+    verify(applyTransactionInfo).deleteObject(value2.getObjectID());
+    verify(applyTransactionInfo).deleteObject(value3.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value1.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
+    verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
+
+    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE), any(), any(ObjectID.class), anyString());
+    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(ObjectID.class),
+        any(Long.class), anyString());
   }
 
   public void testSetLastAccessedTime() throws Exception {

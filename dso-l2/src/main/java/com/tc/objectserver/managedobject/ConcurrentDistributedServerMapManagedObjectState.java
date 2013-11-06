@@ -421,7 +421,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       final ObjectID objectId = (ObjectID)value;
 
       applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
-      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, valueInMap.getVersion(), cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId,
+          valueInMap.getVersion() + 1, cacheName);
     }
   }
 
@@ -445,7 +446,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       final ObjectID objectId = oldValue.getObjectID();
 
       applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, objectId, cacheName);
-      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId, oldValue.getVersion(), cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, objectId,
+          oldValue.getVersion() + 1, cacheName);
     }
     return old;
   }
@@ -475,7 +477,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   protected void applyClear(final ApplyTransactionInfo applyInfo) {
-    removedReferences(applyInfo, references.values());
+    for (Object key : references.keySet()) {
+      final CDSMValue value = getValueForKey(key);
+      removedReference(applyInfo, value);
+
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, value.getObjectID(), cacheName);
+      applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE_LOCAL, key, value.getObjectID(),
+          value.getVersion() + 1, cacheName);
+    }
     references.clear();
   }
 
@@ -483,12 +492,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
    * This method will be called by Orchestrator hence it should not generate REMOVE_LOCAL events
    */
   private void applyClearVersioned(ApplyTransactionInfo applyInfo) {
-    removedReferences(applyInfo, references.values());
     for (Object key : references.keySet()) {
       CDSMValue value = getValueForKey(key);
+      removedReference(applyInfo, value);
       applyInfo.getServerEventRecorder().recordEvent(ServerEventType.REMOVE, key, value.getObjectID(), cacheName);
     }
-
     this.references.clear();
   }
 
