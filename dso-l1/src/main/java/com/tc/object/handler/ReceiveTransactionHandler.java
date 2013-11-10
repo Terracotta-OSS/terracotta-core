@@ -121,8 +121,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
       Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = btm.getLogicalChangeResults();
       if (!logicalChangeResults.isEmpty()) {
-        this.txManager.receivedLogicalChangeResult(btm.getTransactionID(), logicalChangeResults,
-                                                   btm.getDestinationNodeID());
+        this.txManager.receivedLogicalChangeResult(logicalChangeResults);
       }
     }
 
