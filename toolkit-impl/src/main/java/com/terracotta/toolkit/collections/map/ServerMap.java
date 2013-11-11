@@ -950,15 +950,15 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
     assertNotNull(value);
     if (isEventual()) {
-      V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
+      SerializedMapValue oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
+      V old = deserialize(key, oldSerializedMapValue);
       if (old != null && compare(old, (V) value, comparator)) {
         eventualConcurrentLock.lock();
         try {
-          doLogicalRemoveUnlocked(key, value);
+          return doLogicalRemoveUnlocked(key, oldSerializedMapValue);
         } finally {
           eventualConcurrentLock.unlock();
         }
-        return true;
       } else {
         return false;
       }
@@ -1674,6 +1674,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private boolean compare(V v1, V v2, ToolkitValueComparator<V> comparator) {
-    return comparator == null ? v1.equals(v2) : comparator.equals(v1, v2);
+    return comparator.equals(v1, v2);
   }
 }
