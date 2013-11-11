@@ -757,8 +757,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
                            NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                            GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
                            DmiDescriptor[] dmis, Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults) {
-      throw new ImplementMe();
-
+      //
     }
 
   }

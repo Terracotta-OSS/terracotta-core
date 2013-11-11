@@ -92,8 +92,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   @Override
   public void recordApplyResults(ServerTransactionID stxnID, Map<LogicalChangeID, LogicalChangeResult> results) {
-    throw new ImplementMe();
-
+    //
   }
 
   @Override
