@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.events.ToolkitNotifier;
 
 import com.terracotta.toolkit.collections.map.ToolkitCacheImplInterface;
 
@@ -18,9 +17,6 @@ class LocalMethodUtil {
   private static final Map<ToolkitObjectType, Set<String>> localMethods = new HashMap<ToolkitObjectType, Set<String>>();
   static {
     Set<String> cacheLocalMethodSet = new HashSet<String>();
-    Set<String> notifierLocalMethodSet = new HashSet<String>();
-    notifierLocalMethodSet.add("addNotificationListener");
-    notifierLocalMethodSet.add("removeNotificationListener");
     cacheLocalMethodSet.add("unsafeLocalGet");
     cacheLocalMethodSet.add("containsLocalKey");
     cacheLocalMethodSet.add("localSize");
@@ -33,11 +29,8 @@ class LocalMethodUtil {
     cacheLocalMethodSet.add("containsKeyLocalOffHeap");
     cacheLocalMethodSet.add("disposeLocally");
     validateMethodNamesExist(ToolkitCacheImplInterface.class, cacheLocalMethodSet);
-    validateMethodNamesExist(ToolkitNotifier.class, notifierLocalMethodSet);
     localMethods.put(ToolkitObjectType.CACHE, cacheLocalMethodSet);
     localMethods.put(ToolkitObjectType.STORE, cacheLocalMethodSet);
-    localMethods.put(ToolkitObjectType.NOTIFIER, notifierLocalMethodSet);
-
   }
 
   static boolean isLocal(ToolkitObjectType objectType, String methodName) {
