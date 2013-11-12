@@ -9,8 +9,10 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.terracotta.test.categories.CheckShorts;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
@@ -27,9 +29,10 @@ import java.util.concurrent.Callable;
 
 import junit.framework.Assert;
 
+@Category(CheckShorts.class)
 public class AggregateServerMapQuickApiTest {
 
-  private static final int NUM_OF_ELEMENTS = 50;
+  private static final int         NUM_OF_ELEMENTS = 50;
 
   private AggregateServerMap       aggregateServerMap;
 
@@ -70,7 +73,7 @@ public class AggregateServerMapQuickApiTest {
 
   @Test
   public void test_quickClearWorks() {
-    populateMap().quickClear().assertMapCleared();
+    populateMap().assertQuickSize().quickClear().assertMapCleared();
   }
 
   @Test
@@ -78,9 +81,10 @@ public class AggregateServerMapQuickApiTest {
     populateMap().assertQuickSize();
   }
 
-  private void assertQuickSize() {
+  private AggregateServerMapQuickApiTest assertQuickSize() {
     Assert.assertEquals("quickSize failed: quickSize = " + aggregateServerMap.quickSize(), NUM_OF_ELEMENTS,
                         aggregateServerMap.quickSize());
+    return this;
   }
 
   private void assertMapCleared() {
