@@ -118,9 +118,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       session++;
       for (LogicalChangeResultCallback logicalChangeCallback : logicalChangeCallbacks.values()) {
         // wake up the waiting threads for LogicalChangeResult
-        synchronized (logicalChangeCallback) {
-          logicalChangeCallback.notifyAll();
-        }
+        logicalChangeCallback.cleanup();
       }
       logicalChangeCallbacks.clear();
     } finally {
@@ -280,7 +278,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   @Override
   public void commit(final LockID lock, final LockLevel level, boolean atomic, OnCommitCallable onCommitCallable)
       throws UnlockedSharedObjectException, AbortedOperationException {
-    // TODO: remove the logicalInvokeListeners on aborting the txn...
     logCommit0();
     if (isTransactionLoggingDisabled() || this.clientObjectManager.isCreationInProgress()) { return; }
 
@@ -855,7 +852,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   public boolean logicalInvokeWithResult(final TCObject source, final int method, final String methodName,
                                          final Object[] parameters) throws AbortedOperationException {
     if (getTransaction().isAtomic()) { throw new UnsupportedOperationException(
-                                                                                      "LogicalInvokeWithResult not supported for atomic transactions"); }
+                                                                               "LogicalInvokeWithResult not supported for atomic transactions"); }
     LogicalChangeID id = new LogicalChangeID(logicalChangeSequence.next());
     LogicalChangeResultCallback future = createLogicalChangeFuture(id);
     try {
@@ -918,6 +915,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       }
     }
 
+    public synchronized void cleanup() {
+      notifyAll();
+    }
 
   }
 

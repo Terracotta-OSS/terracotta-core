@@ -120,11 +120,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       DmiDescriptor dd = (DmiDescriptor) i.next();
       putNVPair(DMI_ID, dd);
     }
-
-    for (Iterator i = this.dmis.iterator(); i.hasNext();) {
-      DmiDescriptor dd = (DmiDescriptor) i.next();
-      putNVPair(DMI_ID, dd);
-    }
     for (Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
       putNVPair(LOGICAL_CHANGE_RESULT, new LogicalChangeResultPair(entry.getKey(), entry.getValue()));
     }

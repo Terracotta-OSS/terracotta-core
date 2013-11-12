@@ -329,31 +329,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  // @Override
-  // public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue)
-  // throws AbortedOperationException {
-  // Lock lock = getLockForKey(key);
-  // lock.lock();
-  // try {
-  // shareObject(key);
-  // final ObjectID valueObjectID = shareObject(newValue);
-  // final Object[] parameters = constructParams(key, newValue);
-  //
-  // boolean rv = logicalInvokeWithResult(SerializationUtil.REPLACE, SerializationUtil.REPLACE_SIGNATURE, parameters);
-  //
-  // if (rv) {
-  // if (!isEventual) {
-  // addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
-  // } else {
-  // addEventualValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
-  // }
-  // }
-  // return rv;
-  // } finally {
-  // lock.unlock();
-  // }
-  // }
-
   /**
    * Does a logic expire and removes from the local cache if present
    * 
