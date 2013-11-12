@@ -723,6 +723,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread,
                                                        final LockLevel level) {
+    // check if flush in progress then wait for flush
+    if (isFlushInProgress()) { return LockAcquireResult.WAIT_FOR_FLUSH; }
     // What can we glean from local lock state
     final LockHold newHold = new LockHold(thread, level);
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
@@ -745,6 +747,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (level.isWrite() && isLockedBy(thread, READ_LEVELS)) { throw new TCLockUpgradeNotSupportedError(); }
 
     return LockAcquireResult.UNKNOWN;
+  }
+
+  private boolean isFlushInProgress() {
+    for (final LockStateNode s : this) {
+      if ((s instanceof LockHold) && (((LockHold) s).isFlushInProgress())) { return true; }
+    }
+    return false;
   }
 
   /*
@@ -789,8 +798,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     synchronized (this) {
       final boolean noLocksHeld = noLocksHeld(unlock, null);
       final ServerLockLevel flushLevel = greediness.getFlushLevel();
-
-      if (flushOnUnlock(unlock)) {
+      // only one unlock callback is added for flushing the lock
+      if (flushOnUnlock(unlock) && !isFlushInProgress()) {
         // TODO: to be done in a flush thread and not on txn complete thread
         unlock.flushInProgress();
         UnlockCallback flushCallback = new UnlockCallback(remote, flushLevel, unlock);

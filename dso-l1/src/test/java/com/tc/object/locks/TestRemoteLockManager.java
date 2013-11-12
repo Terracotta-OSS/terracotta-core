@@ -13,37 +13,42 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * @author steve
  */
 public class TestRemoteLockManager implements RemoteLockManager {
-  public final LockResponder          LOOPBACK_LOCK_RESPONDER = new LoopbackLockResponder();
-  public final LockResponder          NULL_LOCK_RESPONDER     = new LockResponder() {
-                                                                @Override
-                                                                public void respondToLockRequest(LockID lock,
-                                                                                                 ThreadID thread,
-                                                                                                 ServerLockLevel level) {
-                                                                  return;
-                                                                }
-                                                              };
-  private volatile ClientLockManager  lockManager;
-  private final Map                   locks                   = new HashMap();
-  private int                         lockRequests            = 0;
-  private int                         unlockRequests          = 0;
-  private int                         flushCount              = 0;
-  private boolean                     isGreedy                = false;
-  public LockResponder                lockResponder           = LOOPBACK_LOCK_RESPONDER;
-  private final GroupID               gid                     = new GroupID(0);
+  public final LockResponder                   LOOPBACK_LOCK_RESPONDER = new LoopbackLockResponder();
+  public final LockResponder                   NULL_LOCK_RESPONDER     = new LockResponder() {
+                                                                         @Override
+                                                                         public void respondToLockRequest(LockID lock,
+                                                                                                          ThreadID thread,
+                                                                                                          ServerLockLevel level) {
+                                                                           return;
+                                                                         }
+                                                                       };
+  private volatile ClientLockManager           lockManager;
+  private final Map                            locks                   = new HashMap();
+  private int                                  lockRequests            = 0;
+  private int                                  unlockRequests          = 0;
+  private int                                  flushCount              = 0;
+  private boolean                              isGreedy                = false;
+  public LockResponder                         lockResponder           = LOOPBACK_LOCK_RESPONDER;
+  private final GroupID                        gid                     = new GroupID(0);
 
-  public final NoExceptionLinkedQueue lockRequestCalls        = new NoExceptionLinkedQueue();
-  private final SessionProvider       sessionProvider;
+  public final NoExceptionLinkedQueue          lockRequestCalls        = new NoExceptionLinkedQueue();
+  private final SessionProvider                sessionProvider;
+  private boolean                              autoFlushLock           = true;
+  private final Map<LockID, List<LockFlushCallback>> flushCallbacks          = new HashMap<LockID, List<LockFlushCallback>>();
 
   public TestRemoteLockManager(SessionProvider sessionProvider) {
     this.sessionProvider = sessionProvider;
@@ -101,7 +106,6 @@ public class TestRemoteLockManager implements RemoteLockManager {
         return;
       }
     }
-
     myLocks.addLast(new Lock(threadID, level));
   }
 
@@ -118,11 +122,9 @@ public class TestRemoteLockManager implements RemoteLockManager {
     unlockRequests++;
 
     LinkedList myLocks = (LinkedList) locks.get(lockID);
-
     if (myLocks == null) return;
-
     Lock current = (Lock) myLocks.getFirst();
-    if (current.threadID.equals(threadID)) {
+    if (current.threadID.equals(threadID) || isGreedy) {
       int count = current.downCount();
       if (count == 0) {
         myLocks.removeFirst();
@@ -167,7 +169,17 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   @Override
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
-    return true;
+    if (autoFlushLock) {
+      return true;
+    } else {
+      List<LockFlushCallback> list = flushCallbacks.get(lockID);
+      if (list == null) {
+        list = new ArrayList<LockFlushCallback>();
+        flushCallbacks.put(lockID, list);
+      }
+      list.add(callback);
+      return false;
+    }
   }
 
   public void notify(LockID lockID, TransactionID transactionID, boolean all) {
@@ -255,6 +267,20 @@ public class TestRemoteLockManager implements RemoteLockManager {
   @Override
   public boolean isShutdown() {
     return false;
+  }
+
+  public void setAutoFlushing(boolean autoFlush) {
+    autoFlushLock = autoFlush;
+  }
+
+  public void flushPendingLocks() {
+    for (Entry<LockID, List<LockFlushCallback>> entry : flushCallbacks.entrySet()) {
+      LockID id = entry.getKey();
+      for (LockFlushCallback callback : entry.getValue()) {
+        callback.transactionsForLockFlushed(id);
+      }
+    }
+    flushCallbacks.clear();
   }
 
 }
