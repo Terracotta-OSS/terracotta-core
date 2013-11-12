@@ -8,13 +8,16 @@ import static org.mockito.Mockito.when;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.tx.RemoteTransactionManagerImpl.BatchManager;
 
+@Category(CheckShorts.class)
 public class RemoteTransactionManagerImplTest {
   private RemoteTransactionManager manager;
   @Mock
