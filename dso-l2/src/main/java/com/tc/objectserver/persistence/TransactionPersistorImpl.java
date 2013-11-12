@@ -69,7 +69,7 @@ public class TransactionPersistorImpl implements TransactionPersistor {
     }
   }
 
-  private static class GlobalTransactionDescriptorSerializer extends Serializer<GlobalTransactionDescriptor> {
+  static class GlobalTransactionDescriptorSerializer extends Serializer<GlobalTransactionDescriptor> {
     static final GlobalTransactionDescriptorSerializer INSTANCE = new GlobalTransactionDescriptorSerializer();
 
     @Override
