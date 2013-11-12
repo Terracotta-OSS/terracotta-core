@@ -56,8 +56,7 @@ public class MessageTransportTest extends TCTestCase {
     this.serverResponderSentQueue = new LinkedBlockingQueue<TransportHandshakeMessage>();
     this.clientErrorRef = new AtomicReference(null);
     this.serverErrorRef = new AtomicReference(null);
-    DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    this.connectionId = new ConnectionID("abc", 1L);
 
     this.transportHandshakeMessageFactory = new TransportMessageFactoryImpl();
     serverConnection = new MockTCConnection();

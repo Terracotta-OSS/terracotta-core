@@ -3,6 +3,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -46,8 +47,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   protected ClientMessageChannelImpl(final TCMessageFactory msgFactory, final TCMessageRouter router,
                                      final SessionProvider sessionProvider, final NodeID remoteNodeID,
                                      final SecurityInfo securityInfo, final PwProvider pwProvider,
-                                     final ConnectionAddressProvider addressProvider) {
-    super(router, logger, msgFactory, remoteNodeID);
+                                     final ConnectionAddressProvider addressProvider, final ProductID productId) {
+    super(router, logger, msgFactory, remoteNodeID, productId);
     this.securityInfo = securityInfo;
     this.pwProvider = pwProvider;
     this.addressProvider = addressProvider;
@@ -89,7 +90,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
         Assert.assertNotNull("Password", pw);
       }
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw);
+                                                username, pw, getProductId());
       ((MessageTransport) this.sendLayer).initConnectionID(cid);
       final NetworkStackID id = this.sendLayer.open();
       this.channelID = new ChannelID(id.toLong());

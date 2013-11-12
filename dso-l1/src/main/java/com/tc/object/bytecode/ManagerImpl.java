@@ -15,6 +15,7 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.license.LicenseManager;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
@@ -107,6 +108,7 @@ public class ManagerImpl implements Manager {
 
   private volatile DSOClientConfigHelper              config;
   private volatile PreparedComponentsFromL2Connection connectionComponents;
+  private final ProductID productId;
 
   private final SerializationUtil                     serializer                = new SerializationUtil();
 
@@ -121,7 +123,7 @@ public class ManagerImpl implements Manager {
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
-    this(true, null, null, null, null, config, connectionComponents, true, null, false, securityManager);
+    this(true, null, null, null, null, config, connectionComponents, true, null, false, securityManager, null);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
@@ -130,7 +132,7 @@ public class ManagerImpl implements Manager {
                      final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
     this(startClient, objectManager, txManager, lockManager, searchRequestManager, config, connectionComponents, true,
-         null, false, securityManager);
+         null, false, securityManager, null);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
@@ -138,7 +140,7 @@ public class ManagerImpl implements Manager {
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
                      final boolean shutdownActionRequired, final ClassLoader loader, final boolean isExpressRejoinMode,
-                     final TCSecurityManager securityManager) {
+                     final TCSecurityManager securityManager, final ProductID productId) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
     this.txManager = txManager;
@@ -147,6 +149,7 @@ public class ManagerImpl implements Manager {
     this.config = config;
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
+    this.productId = productId;
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
     this.dsoCluster = new DsoClusterImpl(rejoinManager);
     this.uuid = UUID.getUUID();
@@ -260,7 +263,7 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.dsoCluster,
                                                           ManagerImpl.this.securityManager,
                                                           ManagerImpl.this.abortableOperationManager,
-                                                          ManagerImpl.this.rejoinManager, uuid);
+                                                          ManagerImpl.this.rejoinManager, uuid, productId);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);

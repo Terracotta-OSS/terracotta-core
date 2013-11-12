@@ -15,14 +15,20 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
 
   @Override
   public void channelCreated(MessageChannel channel) {
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(channel
-        .getRemoteNodeID().toString()));
+    // Don't generate operator events for internal products
+    if (!channel.getProductId().isInternal()) {
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(channel
+          .getRemoteNodeID().toString()));
+    }
   }
 
   @Override
   public void channelRemoved(MessageChannel channel) {
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(channel
-        .getRemoteNodeID().toString()));
+    // Don't generate operator events for internal products
+    if (!channel.getProductId().isInternal()) {
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(channel
+          .getRemoteNodeID().toString()));
+    }
   }
 
 }

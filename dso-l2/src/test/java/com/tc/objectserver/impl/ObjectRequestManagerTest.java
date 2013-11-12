@@ -13,6 +13,7 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.invalidation.Invalidations;
+import com.tc.license.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
@@ -1124,6 +1125,11 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void setLocalNodeID(final NodeID source) {
       //
+    }
+
+    @Override
+    public ProductID getProductId() {
+      return null;
     }
   }
 

@@ -5,6 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.license.ProductID;
 import com.tc.net.NodeID;
 
 public class NodeStateEventContext implements MultiThreadedEventContext {
@@ -13,10 +14,12 @@ public class NodeStateEventContext implements MultiThreadedEventContext {
 
   private final int       type;
   private final NodeID    nodeID;
+  private final ProductID productId;
 
-  public NodeStateEventContext(int type, NodeID nodeID) {
+  public NodeStateEventContext(int type, NodeID nodeID, final ProductID productId) {
     this.type = type;
     this.nodeID = nodeID;
+    this.productId = productId;
     if ((type != CREATE) && (type != REMOVE)) { throw new IllegalArgumentException("invalid type: " + type); }
   }
 
@@ -31,5 +34,9 @@ public class NodeStateEventContext implements MultiThreadedEventContext {
   @Override
   public Object getKey() {
     return nodeID;
+  }
+
+  public ProductID getProductId() {
+    return productId;
   }
 }

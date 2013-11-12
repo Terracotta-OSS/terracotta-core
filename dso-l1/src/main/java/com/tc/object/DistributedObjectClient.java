@@ -20,6 +20,7 @@ import com.tc.handler.CallbackDumpHandler;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.TCThreadGroup;
 import com.tc.license.LicenseManager;
+import com.tc.license.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -222,6 +223,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final ThreadIDMap                          threadIDMap;
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
+  private final ProductID productId;
 
   private DSOClientMessageChannel                    channel;
   private ClientLockManager                          lockManager;
@@ -265,7 +267,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final AbortableOperationManager abortableOperationManager,
                                  final RejoinManagerInternal rejoinManager) {
     this(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster, null,
-         abortableOperationManager, rejoinManager, UUID.NULL_ID);
+         abortableOperationManager, rejoinManager, UUID.NULL_ID, null);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
@@ -274,8 +276,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final DsoClusterInternal dsoCluster,
                                  final TCSecurityManager securityManager,
                                  final AbortableOperationManager abortableOperationManager,
-                                 final RejoinManagerInternal rejoinManager, UUID uuid) {
+                                 final RejoinManagerInternal rejoinManager, UUID uuid, final ProductID productId) {
     super(threadGroup);
+    this.productId = productId;
     Assert.assertNotNull(config);
     this.abortableOperationManager = abortableOperationManager;
     this.config = config;
@@ -438,7 +441,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"),
                                      getMessageTypeClassMapping(), getMessageTypeFactoryMapping(encoding),
-                                     ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
+                                     ReconnectionRejectedHandlerL1.SINGLETON, securityManager, productId);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 

@@ -13,6 +13,7 @@ import com.tc.async.api.Stage;
 import com.tc.exception.ImplementMe;
 import com.tc.invalidation.Invalidations;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -646,6 +647,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    @Override
+    public ProductID getProductId() {
+      return null;
+    }
   }
 
   private static class TestBroadcastMessage implements BroadcastTransactionMessage {

@@ -4,6 +4,7 @@
 package com.tc.net.protocol;
 
 import com.tc.exception.ImplementMe;
+import com.tc.license.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -172,4 +173,8 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     throw new ImplementMe();
   }
 
+  @Override
+  public ProductID getProductId() {
+    return null;
+  }
 }

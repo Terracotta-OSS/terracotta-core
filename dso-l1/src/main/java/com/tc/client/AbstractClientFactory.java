@@ -6,6 +6,7 @@ package com.tc.client;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
+import com.tc.license.ProductID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.Manager;
@@ -33,7 +34,7 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        Manager manager, DsoClusterInternal dsoCluster,
                                                        TCSecurityManager securityManager,
                                                        AbortableOperationManager abortableOperationManager,
-                                                       RejoinManagerInternal rejoinManager, UUID uuid);
+                                                       RejoinManagerInternal rejoinManager, UUID uuid, final ProductID productId);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

@@ -11,6 +11,7 @@ public class TerracottaClientConfigParams {
   private Set<String> tunnelledMBeanDomains;
   private boolean     rejoin;
   private boolean     nonStop;
+  private String      productId;
 
   public String getTcConfigSnippetOrUrl() {
     return tcConfigSnippetOrUrl;
@@ -77,4 +78,16 @@ public class TerracottaClientConfigParams {
     return new TerracottaClientConfig(this);
   }
 
+  public String getProductId() {
+    return productId;
+  }
+
+  public void setProductId(final String productId) {
+    this.productId = productId;
+  }
+
+  public TerracottaClientConfigParams productId(String appName) {
+    setProductId(appName);
+    return this;
+  }
 }

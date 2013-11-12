@@ -57,7 +57,8 @@ public abstract class AbstractNetworkStackHarness implements NetworkStackHarness
       } else {
         Assert.assertNotNull(this.transport);
         Assert.assertNotNull(this.channelFactory);
-        this.channel = channelFactory.createNewChannel(new ChannelID(this.transport.getConnectionId().getChannelID()));
+        this.channel = channelFactory.createNewChannel(new ChannelID(this.transport.getConnectionId().getChannelID()),
+            transport.getConnectionId().getProductId());
       }
       createIntermediateLayers();
       connectStack();

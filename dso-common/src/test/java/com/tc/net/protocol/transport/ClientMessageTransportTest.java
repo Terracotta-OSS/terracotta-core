@@ -47,8 +47,7 @@ public class ClientMessageTransportTest extends TCTestCase {
 
   @Override
   public void setUp() {
-    DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    this.connectionId = new ConnectionID("abc", 1L);
     this.connectionManager = new MockConnectionManager();
     this.connection = new MockTCConnection();
     this.connectionManager.setConnection(connection);
@@ -68,7 +67,7 @@ public class ClientMessageTransportTest extends TCTestCase {
   }
 
   public void testRoundRobinReconnect() throws Exception {
-    AtomicReference<Throwable> errorRef = new AtomicReference(null);
+    AtomicReference<Throwable> errorRef = new AtomicReference<Throwable>(null);
     ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(
                                                                                  new LinkedBlockingQueue<TransportHandshakeMessage>(),
                                                                                  new LinkedBlockingQueue<TransportHandshakeMessage>(),
@@ -91,7 +90,7 @@ public class ClientMessageTransportTest extends TCTestCase {
   }
 
   public void testConnectAndHandshake() throws Exception {
-    AtomicReference<Throwable> errorRef = new AtomicReference(null);
+    AtomicReference<Throwable> errorRef = new AtomicReference<Throwable>(null);
     ClientHandshakeMessageResponder tester = new ClientHandshakeMessageResponder(
                                                                                  new LinkedBlockingQueue<TransportHandshakeMessage>(),
                                                                                  new LinkedBlockingQueue<TransportHandshakeMessage>(),

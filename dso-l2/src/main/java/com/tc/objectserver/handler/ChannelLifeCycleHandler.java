@@ -10,6 +10,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.config.HaConfig;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -49,11 +50,11 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
 
     switch (event.getType()) {
       case NodeStateEventContext.CREATE: {
-        nodeConnected(event.getNodeID());
+        nodeConnected(event.getNodeID(), event.getProductId());
         break;
       }
       case NodeStateEventContext.REMOVE: {
-        nodeDisconnected(event.getNodeID());
+        nodeDisconnected(event.getNodeID(), event.getProductId());
         break;
       }
       default: {
@@ -66,8 +67,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(final NodeID nodeID) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID);
+  private void nodeDisconnected(final NodeID nodeID, final ProductID productId) {
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID, productId);
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
@@ -76,12 +77,12 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     }
   }
 
-  private void nodeConnected(final NodeID nodeID) {
-    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
+  private void nodeConnected(final NodeID nodeID, final ProductID productId) {
+    broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID, productId);
     transactionBatchManager.nodeConnected(nodeID);
   }
 
-  private void broadcastClusterMembershipMessage(final int eventType, final NodeID nodeID) {
+  private void broadcastClusterMembershipMessage(final int eventType, final NodeID nodeID, final ProductID productId) {
     // only broadcast cluster membership messages for L1 nodes when the current server is the active coordinator
     if (haConfig.isActiveCoordinatorGroup() && NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       MessageChannel[] channels = channelMgr.getActiveChannels();
@@ -89,7 +90,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
         if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
           ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
               .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-          cmm.initialize(eventType, nodeID, channels);
+          cmm.initialize(eventType, nodeID, productId);
           cmm.send();
         }
       }
@@ -109,7 +110,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   @Override
   public void channelCreated(final MessageChannel channel) {
     channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID()
-        .toLong())));
+        .toLong()), channel.getProductId()));
   }
 
   @Override
@@ -117,7 +118,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
     final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
-                                                                            channel.getRemoteNodeID());
+                                                                            channel.getRemoteNodeID(), channel.getProductId());
     InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink, channel.getRemoteNodeID());
     InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink, channel.getRemoteNodeID());
     hydrateSink.add(context2);

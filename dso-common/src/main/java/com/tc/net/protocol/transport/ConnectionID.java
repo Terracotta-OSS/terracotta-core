@@ -3,7 +3,12 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.io.TCDataInput;
+import com.tc.io.TCDataOutput;
+import com.tc.license.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
+
+import java.io.IOException;
 
 public class ConnectionID {
 
@@ -15,82 +20,27 @@ public class ConnectionID {
   private final String             jvmID;
   private final Exception          initEx;
   private final String             username;
+  private final ProductID          productId;
 
   private volatile char[]          password;
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
+  private static final ProductID   DEFAULT_PRODUCT_ID = ProductID.USER;
   public static final ConnectionID NULL_ID        = new ConnectionID(NULL_JVM_ID, ChannelID.NULL_ID.toLong(),
                                                                      NULL_SERVER_ID);
 
   private static final char        SEP            = '.';
 
-  public static ConnectionID parse(String compositeID) throws InvalidConnectionIDException {
-
-    if (compositeID == null) { throw new InvalidConnectionIDException("NULL ConnectionID"); }
-
-    int idx = compositeID.indexOf(SEP);
-    if (idx <= 0 || idx >= compositeID.length() - 1) {
-      // make formatter sane
-      throw new InvalidConnectionIDException(compositeID, "Invalid format. Separator (.) found at : " + idx);
-    }
-    int idx2 = compositeID.indexOf(SEP, idx + 1);
-    if (idx2 <= idx + 1 || idx2 >= compositeID.length() - 1) {
-      // make formatter sane
-      throw new InvalidConnectionIDException(compositeID, "Invalid format. Separator (.) found at : " + idx2);
-    }
-
-    String channelID = compositeID.substring(0, idx);
-    final long channel;
-    try {
-      channel = Long.parseLong(channelID);
-    } catch (Exception e) {
-      throw new InvalidConnectionIDException(compositeID, "parse exception for channelID " + channelID, e);
-    }
-
-    String server = compositeID.substring(idx + 1, idx2);
-    if (server.length() != 32) { throw new InvalidConnectionIDException(compositeID, "invalid serverID length: "
-                                                                                     + server.length()); }
-
-    int idx3 = compositeID.indexOf(SEP, idx2 + 1);
-    int idx4 = compositeID.indexOf(SEP, idx3 + 1);
-    String jvmID = compositeID.substring(idx2 + 1, idx3);
-    if (jvmID.length() < 1) { throw new InvalidConnectionIDException(compositeID, "invalid jvmId length: "
-                                                                                  + jvmID.length()); }
-
-    if (!validateCharsInServerID(server)) { throw new InvalidConnectionIDException(compositeID,
-                                                                                   "invalid chars in serverID: "
-                                                                                       + server); }
-    String username = null;
-    char[] password = null;
-    if (idx3 != idx4 - 1) {
-      username = compositeID.substring(idx3 + 1, idx4).replace(DOT_PLACEHOLDER, DOT);
-      password = compositeID.substring(idx4 + 1).toCharArray();
-    }
-
-    return new ConnectionID(jvmID, channel, server, username, password);
-  }
-
-  /**
-   * This method does not use String.matches() for performance reason.
-   */
-  private static boolean validateCharsInServerID(String server) {
-    for (int i = 0; i < server.length(); i++) {
-      char c = server.charAt(i);
-      if (!(((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')))) { return false; }
-    }
-    return true;
-  }
-
   public ConnectionID(String jvmID, long channelID, String serverID) {
-    this(jvmID, channelID, serverID, null, (char[]) null);
+    this(jvmID, channelID, serverID, null, null, null);
   }
 
   public ConnectionID(String jvmID, long channelID, String serverID, String username, String password) {
-    this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray());
+    this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray(), null);
   }
 
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password) {
+  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password, final ProductID productId) {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
@@ -102,6 +52,12 @@ public class ConnectionID {
     }
     this.username = username;
     this.password = password;
+
+    if (productId == null) {
+      this.productId = DEFAULT_PRODUCT_ID;
+    } else {
+      this.productId = productId;
+    }
   }
 
   public void authenticated() {
@@ -112,8 +68,8 @@ public class ConnectionID {
     this.password = password;
   }
 
-  public ConnectionID(String jvmID, long channelID, String username, char[] password) {
-    this(jvmID, channelID, NULL_SERVER_ID, username, password);
+  public ConnectionID(String jvmID, long channelID, String username, char[] password, final ProductID productId) {
+    this(jvmID, channelID, NULL_SERVER_ID, username, password, productId);
   }
 
   public ConnectionID(String jvmID, long channelID) {
@@ -182,7 +138,7 @@ public class ConnectionID {
 
   public String getID(final boolean withCredentials) {
     StringBuilder sb = new StringBuilder(withCredentials ? 128 : 64);
-    sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID);
+    sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID).append(SEP).append(productId);
     if (withCredentials) {
       sb.append(SEP);
       if(username != null) {
@@ -196,6 +152,32 @@ public class ConnectionID {
     return sb.toString();
   }
 
+  public void writeTo(TCDataOutput out) {
+    out.writeLong(channelID);
+    out.writeString(serverID);
+    out.writeString(jvmID);
+    out.writeString(productId.name());
+    out.writeBoolean(isSecured());
+    if (isSecured()) {
+      out.writeString(username);
+      out.writeString(String.valueOf(password));
+    }
+  }
+
+  public static ConnectionID readFrom(TCDataInput in) throws IOException {
+    long channelID = in.readLong();
+    String serverID = in.readString();
+    String jvmID = in.readString();
+    ProductID productId = ProductID.valueOf(in.readString());
+    String username = null;
+    char[] password = null;
+    if (in.readBoolean()) {
+      username = in.readString();
+      password = in.readString().toCharArray();
+    }
+    return new ConnectionID(jvmID, channelID, serverID, username, password, productId);
+  }
+
   public String getUsername() {
     return username;
   }
@@ -206,5 +188,9 @@ public class ConnectionID {
 
   public boolean isSecured() {
     return username != null;
+  }
+
+  public ProductID getProductId() {
+    return productId;
   }
 }

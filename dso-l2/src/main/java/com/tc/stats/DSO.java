@@ -264,7 +264,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private ObjectName makeClientObjectName(MessageChannel channel) {
     try {
-      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "channelID=" + channel.getChannelID().toLong());
+      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "channelID=" + channel.getChannelID().toLong() +
+                            ",productId=" + channel.getProductId());
     } catch (MalformedObjectNameException e) {
       // this shouldn't happen
       throw new RuntimeException(e);

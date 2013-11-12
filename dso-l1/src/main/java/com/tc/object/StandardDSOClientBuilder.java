@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
+import com.tc.license.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -114,11 +115,11 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                            Map<TCMessageType, Class> messageTypeClassMapping,
                                                            Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           TCSecurityManager securityManager) {
+                                                           TCSecurityManager securityManager, final ProductID productId) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter,
                                          stackHarnessFactory, null, connectionPolicy, 0, aConfig,
                                          new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager);
+                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager, productId);
   }
 
   @Override

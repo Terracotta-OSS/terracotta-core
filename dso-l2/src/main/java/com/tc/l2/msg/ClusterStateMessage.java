@@ -37,7 +37,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   private String                 clusterID;
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
-  private Set                    connectionIDs;
+  private Set<ConnectionID>      connectionIDs;
   private Map<GroupID, StripeID> stripeIDMap;
 
   // To make serialization happy
@@ -72,7 +72,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
-        connectionID = readConnectionID(in);
+        connectionID = ConnectionID.readFrom(in);
         break;
       case COMPLETE_STATE:
         nextAvailableObjectID = in.readLong();
@@ -81,9 +81,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableDGCId = in.readLong();
         clusterID = in.readString();
         int size = in.readInt();
-        connectionIDs = new HashSet(size);
+        connectionIDs = new HashSet<ConnectionID>(size);
         for (int i = 0; i < size; i++) {
-          connectionIDs.add(readConnectionID(in));
+          connectionIDs.add(ConnectionID.readFrom(in));
         }
         GroupToStripeMapSerializer serializer = new GroupToStripeMapSerializer();
         serializer.deserializeFrom(in);
@@ -111,7 +111,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
-        writeConnectionID(connectionID, out);
+        connectionID.writeTo(out);
         break;
       case COMPLETE_STATE:
         out.writeLong(nextAvailableObjectID);
@@ -120,9 +120,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         out.writeLong(nextAvailableDGCId);
         out.writeString(clusterID);
         out.writeInt(connectionIDs.size());
-        for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
-          ConnectionID conn = (ConnectionID) i.next();
-          writeConnectionID(conn, out);
+        for (ConnectionID id : connectionIDs) {
+          id.writeTo(out);
         }
         new GroupToStripeMapSerializer(stripeIDMap).serializeTo(out);
         break;
@@ -132,19 +131,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       default:
         throw new AssertionError("Unknown type : " + getType());
     }
-  }
-
-  private void writeConnectionID(ConnectionID conn, TCByteBufferOutput out) {
-    if (conn.isJvmIDNull()) out.writeString(ConnectionID.NULL_JVM_ID);
-    else out.writeString(conn.getJvmID());
-    out.writeLong(conn.getChannelID());
-    out.writeString(conn.getServerID());
-    out.writeString(conn.getUsername());
-    out.writeString(conn.getPassword() == null ? null : new String(conn.getPassword()));
-  }
-
-  private ConnectionID readConnectionID(TCByteBufferInput in) throws IOException {
-    return new ConnectionID(in.readString(), in.readLong(), in.readString(), in.readString(), in.readString());
   }
 
   public long getNextAvailableObjectID() {

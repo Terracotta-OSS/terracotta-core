@@ -3,11 +3,12 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.google.common.collect.Maps;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -24,20 +25,20 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   private static final TCLogger                 logger              = TCLogging.getLogger(ChannelManager.class);
   private static final MessageChannelInternal[] EMPTY_CHANNEL_ARARY = new MessageChannelInternal[] {};
 
-  private final Map                             channels;
+  private final Map<ChannelID, MessageChannelInternal> channels;
   private final boolean                         transportDisconnectRemovesChannel;
   private final ServerMessageChannelFactory     channelFactory;
   private final List                            eventListeners      = new CopyOnWriteArrayList();
 
   public ChannelManagerImpl(boolean transportDisconnectRemovesChannel, ServerMessageChannelFactory channelFactory) {
-    this.channels = new HashMap();
+    this.channels = Maps.newHashMap();
     this.transportDisconnectRemovesChannel = transportDisconnectRemovesChannel;
     this.channelFactory = channelFactory;
   }
 
   @Override
-  public MessageChannelInternal createNewChannel(ChannelID id) {
-    MessageChannelInternal channel = channelFactory.createNewChannel(id);
+  public MessageChannelInternal createNewChannel(ChannelID id, final ProductID productId) {
+    MessageChannelInternal channel = channelFactory.createNewChannel(id, productId);
     synchronized (this) {
       channels.put(channel.getChannelID(), channel);
       channel.addListener(this);
@@ -61,12 +62,12 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
 
   @Override
   public synchronized MessageChannelInternal getChannel(ChannelID id) {
-    return (MessageChannelInternal) channels.get(id);
+    return channels.get(id);
   }
 
   @Override
   public synchronized MessageChannelInternal[] getChannels() {
-    return (MessageChannelInternal[]) channels.values().toArray(EMPTY_CHANNEL_ARARY);
+    return channels.values().toArray(EMPTY_CHANNEL_ARARY);
   }
 
   @Override

@@ -101,7 +101,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
     MockClientMessageChannelForTMC() {
       super(new TCMessageFactoryImpl(new NullSessionManager(), new NullMessageMonitor()), null,
-            new NullSessionManager(), null, new SecurityInfo(), null, null);
+            new NullSessionManager(), null, new SecurityInfo(), null, null, null);
       queue = new ArrayBlockingQueue<Object>(10);
       for (int i = 0; i < 10; i++) {
         try {

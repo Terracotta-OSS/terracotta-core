@@ -58,7 +58,7 @@ public class ServerStackProviderTest extends TCTestCase {
                                             transportHandshakeMessageFactory, this.connectionIdFactory,
                                             connectionPolicy, wpaFactory, new ReentrantLock());
     connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    this.connId = nextConnectionID();
   }
 
   @Override
@@ -263,8 +263,8 @@ public class ServerStackProviderTest extends TCTestCase {
   }
 
   public void testRebuildStack() throws Exception {
-    ConnectionID connectionID1 = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
-    ConnectionID connectionID2 = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    ConnectionID connectionID1 = nextConnectionID();
+    ConnectionID connectionID2 = nextConnectionID();
     Set rebuild = new HashSet();
     rebuild.add(connectionID1);
 
@@ -383,7 +383,7 @@ public class ServerStackProviderTest extends TCTestCase {
     assertFalse(harness.wasFinalizeStackCalled);
 
     // cause lookup failure
-    ConnectionID differentConnId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    ConnectionID differentConnId = nextConnectionID();
     harness.wasAttachNewConnectionCalled = false;
     harness.wasFinalizeStackCalled = false;
 
@@ -397,17 +397,15 @@ public class ServerStackProviderTest extends TCTestCase {
     }
   }
 
+  private ConnectionID nextConnectionID() {
+    return connectionIDProvider.populateConnectionID(new ConnectionID(JvmIDUtil.getJvmID(), -1L));
+  }
+
   private class TestConnectionIDFactory extends DefaultConnectionIdFactory {
-
     @Override
-    public synchronized ConnectionID nextConnectionId(String clientJvmID) {
-      connId = super.nextConnectionId(clientJvmID);
+    public ConnectionID populateConnectionID(final ConnectionID connectionID) {
+      connId = super.populateConnectionID(connectionID);
       return connId;
-    }
-
-    @Override
-    public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
-      return (super.makeConnectionId(clientJvmID, channelID));
     }
   }
 

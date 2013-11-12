@@ -5,6 +5,7 @@ package com.tc.net.protocol.tcm;
 
 import org.mockito.Mockito;
 
+import com.tc.license.ProductID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -42,11 +43,11 @@ public class ChannelManagerTest extends TestCase {
 
   final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
                                                      @Override
-                                                    public MessageChannelInternal createNewChannel(ChannelID id) {
+                                                    public MessageChannelInternal createNewChannel(ChannelID id, final ProductID productId) {
                                                        return new ServerMessageChannelImpl(id, msgRouter, msgFactory,
                                                                                            new ServerID("test:9520",
-                                                                                                        new byte[] { 1,
-      3, 5, 7                                                                                          }));
+                                                                                           new byte[] { 1, 3, 5, 7}),
+                                                                                           productId);
                                                      }
                                                    };
 
@@ -56,11 +57,11 @@ public class ChannelManagerTest extends TestCase {
     ChannelManagerImpl channelManager = new ChannelManagerImpl(false, channelFactory);
 
     // make sure things work even w/o an event listener attached
-    channelManager.createNewChannel(new ChannelID(1));
+    channelManager.createNewChannel(new ChannelID(1), null);
 
     channelManager.addEventListener(events);
     assertEquals(0, events.channels.size());
-    MessageChannelInternal c1 = channelManager.createNewChannel(new ChannelID(2));
+    MessageChannelInternal c1 = channelManager.createNewChannel(new ChannelID(2), null);
     channelManager.notifyChannelEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CONNECTED_EVENT, c1));
     c1.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(1, events.channels.size());
@@ -82,17 +83,17 @@ public class ChannelManagerTest extends TestCase {
     int channelCount = 0;
     long sequence = 1;
 
-    MessageChannelInternal channel1 = channelManager.createNewChannel(new ChannelID(sequence++));
+    MessageChannelInternal channel1 = channelManager.createNewChannel(new ChannelID(sequence++), null);
     channel1.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel1.isOpen());
 
-    MessageChannelInternal channel2 = channelManager.createNewChannel(new ChannelID(sequence++));
+    MessageChannelInternal channel2 = channelManager.createNewChannel(new ChannelID(sequence++), null);
     channel2.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel2.isOpen());
 
-    MessageChannelInternal channel3 = channelManager.createNewChannel(new ChannelID(sequence++));
+    MessageChannelInternal channel3 = channelManager.createNewChannel(new ChannelID(sequence++), null);
     channel3.setSendLayer(Mockito.mock(NetworkLayer.class));
     assertEquals(++channelCount, channelManager.getChannels().length);
     assertTrue(channel3.isOpen());

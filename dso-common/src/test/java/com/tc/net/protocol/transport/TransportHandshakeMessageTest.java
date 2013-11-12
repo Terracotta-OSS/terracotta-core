@@ -20,8 +20,7 @@ public class TransportHandshakeMessageTest extends TestCase {
   public void testSendAndReceive() throws Exception {
     boolean isMaxConnectionsExceeded = true;
     int maxConnections = 13;
-    DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
-    ConnectionID connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    ConnectionID connectionId = new ConnectionID("abc", 1L);
     message = factory.createSynAck(connectionId, null, isMaxConnectionsExceeded, maxConnections, 43);
     TCByteBuffer payload[] = message.getPayload();
 

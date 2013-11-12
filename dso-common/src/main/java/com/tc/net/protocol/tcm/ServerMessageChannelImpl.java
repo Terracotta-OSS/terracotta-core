@@ -3,6 +3,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -22,8 +23,8 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
    * this is for the server it needs a session ID
    */
   protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
-                                     final ServerID serverID) {
-    super(router, logger, msgFactory, new ClientID(sessionID.toLong()));
+                                     final ServerID serverID, final ProductID productId) {
+    super(router, logger, msgFactory, new ClientID(sessionID.toLong()), productId);
     this.sessionID = sessionID;
     setLocalNodeID(serverID);
 

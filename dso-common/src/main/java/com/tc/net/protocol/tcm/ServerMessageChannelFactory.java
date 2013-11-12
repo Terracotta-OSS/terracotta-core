@@ -3,8 +3,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.license.ProductID;
+
 public interface ServerMessageChannelFactory {
 
-  MessageChannelInternal createNewChannel(ChannelID id);
+  MessageChannelInternal createNewChannel(ChannelID id, ProductID productId);
 
 }

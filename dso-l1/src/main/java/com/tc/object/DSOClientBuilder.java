@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
+import com.tc.license.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.L1Management;
@@ -79,7 +80,7 @@ public interface DSOClientBuilder {
                                                     Map<TCMessageType, Class> messageTypeClassMapping,
                                                     Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour,
-                                                    TCSecurityManager securityManager);
+                                                    TCSecurityManager securityManager, final ProductID productId);
 
   TunnelingEventHandler createTunnelingEventHandler(ClientMessageChannel ch, DSOMBeanConfig config, UUID uuid);
 
