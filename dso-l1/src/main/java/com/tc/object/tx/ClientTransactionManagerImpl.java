@@ -342,6 +342,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     }
   }
 
+  private void notifyTransactionCompleted(ClientTransaction tx) {
+    List<TransactionCompleteListener> listeners = tx.getTransactionCompleteListeners();
+    TransactionID tid = tx.getTransactionID();
+    for (TransactionCompleteListener listener : listeners) {
+      listener.transactionComplete(tid);
+    }
+  }
+
   private void createTxAndInitContext() {
     final ClientTransaction ctx = this.txFactory.newInstance(this.session);
     ctx.setTransactionContext(peekContext());
@@ -448,6 +456,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       if (currentTransaction.hasChangesOrNotifies()) {
         this.txCounter.increment();
         this.remoteTxnManager.commit(currentTransaction);
+      } else {
+        // notify completion listeners on txn completion.
+        notifyTransactionCompleted(currentTransaction);
       }
       return true;
     } finally {

@@ -27,6 +27,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
@@ -369,5 +370,25 @@ public class ClientTransactionManagerTest extends TestCase {
 
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();
+  }
+
+  public void testNotifyEmptytransaction() throws Exception {
+    final AtomicBoolean txnCompletionNotified = new AtomicBoolean(false);
+    clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
+    // empty transaction and add a listener
+    clientTxnMgr.getCurrentTransaction().addTransactionCompleteListener(new TransactionCompleteListener() {
+      
+      @Override
+      public void transactionComplete(TransactionID txnID) {
+        txnCompletionNotified.set(true);
+      }
+      
+      @Override
+      public void transactionAborted(TransactionID txnID) {
+        //
+      }
+    });
+    clientTxnMgr.commit(new StringLockID("lock"), LockLevel.WRITE, false, null);
+    Assert.assertTrue(txnCompletionNotified.get());
   }
 }
