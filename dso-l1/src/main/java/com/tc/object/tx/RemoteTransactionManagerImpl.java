@@ -86,13 +86,37 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final GroupID                                  groupID;
 
   private volatile boolean                               isShutdown                  = false;
-  private volatile boolean                               isThrottled                  = false;
+  private volatile boolean                               isThrottled                 = false;
   private final AbortableOperationManager                abortableOperationManager;
 
   private final Timer                                    flusherTimer;
   private final RemoteTransactionManagerTask             remoteTxManagerRunnable;
   // this lock protects the state change during rejoin and addition of data to the sequencer.
   private final ReadWriteLock                            rejoinCleanupLock           = new ReentrantReadWriteLock();
+  private volatile boolean                               immediateShutdownRequested  = false;
+
+  // for testing
+  RemoteTransactionManagerImpl(BatchManager batchManager, TransactionBatchAccounting batchAccounting,
+                               LockAccounting lockAccounting, TCLogger logger, long ackOnExitTimeout, State status,
+                               SessionManager sessionManager, TransactionSequencer sequencer,
+                               DSOClientMessageChannel channel, GroupID groupID, boolean isShutdown,
+                               AbortableOperationManager abortableOperationManager, Timer flusherTimer,
+                               RemoteTransactionManagerTask remoteTxManagerRunnable) {
+    this.batchManager = batchManager;
+    this.batchAccounting = batchAccounting;
+    this.lockAccounting = lockAccounting;
+    this.logger = logger;
+    this.ackOnExitTimeout = ackOnExitTimeout;
+    this.status = status;
+    this.sessionManager = sessionManager;
+    this.sequencer = sequencer;
+    this.channel = channel;
+    this.groupID = groupID;
+    this.isShutdown = isShutdown;
+    this.abortableOperationManager = abortableOperationManager;
+    this.flusherTimer = flusherTimer;
+    this.remoteTxManagerRunnable = remoteTxManagerRunnable;
+  }
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -263,6 +287,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   @Override
+  public void requestImmediateShutdown() {
+    this.immediateShutdownRequested = true;
+    synchronized (lock) {
+      lock.notifyAll();
+    }
+  }
+
+  @Override
   public void stop() {
     final long start = System.currentTimeMillis();
     this.logger.debug("stop() is called on " + System.identityHashCode(this));
@@ -282,15 +314,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         final LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLoggerType.COUNT_BASED);
         State currentState = STOP_INITIATED;
 
-        while ((currentState != STOPPED)
+        while ((currentState != STOPPED) && !immediateShutdownRequested
                && ((this.ackOnExitTimeout <= 0) || (t0 + this.ackOnExitTimeout) > System.currentTimeMillis())) {
           if (incompleteBatchesCount != batchManager.size()) {
             lossyLogger.info("stop(): incompleteBatches.size() = " + (incompleteBatchesCount = batchManager.size()));
           }
           synchronized (this.lock) {
             this.lock.wait(pollInteval);
-            currentState = this.status;
           }
+          currentState = this.status;
         }
       } catch (final InterruptedException e) {
         this.logger.warn("stop(): Interrupted " + e);
@@ -538,7 +570,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   boolean isRejoinInProgress() {
     // called from transaction sequencer do not take synchronize status is volatile.
-      return this.status == REJOIN_IN_PROGRESS;
+    return this.status == REJOIN_IN_PROGRESS;
   }
 
   // XXX:: Currently server always sends NULL BatchID
@@ -703,7 +735,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     return this.batchAccounting;
   }
 
-  private class BatchManager {
+  class BatchManager {
     /* make sure there is enough room for batches if max is ignored */
     private final ArrayBlockingQueue<ClientTransactionBatch> sendList           = new ArrayBlockingQueue<ClientTransactionBatch>(
                                                                                                                                  sequencer
@@ -781,10 +813,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       agent = null;
     }
 
-    private synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) {
-      int maxOutstanding = (isThrottled ) ? 1 : MAX_OUTSTANDING_BATCHES;
+    synchronized ClientTransactionBatch sendNextBatch(boolean ignoreMax) {
+      int maxOutstanding = (isThrottled) ? 1 : MAX_OUTSTANDING_BATCHES;
       if (ignoreMax
-          || ( this.outStandingBatches < maxOutstanding && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
+          || (this.outStandingBatches < maxOutstanding && incompleteBatches.size() < MAX_OUTSTANDING_BATCHES * 2)) {
         ClientTransactionBatch batch = sequencer.getNextBatch();
         if (batch != null) {
           if (batch.numberOfTxnsBeforeFolding() == 0) { throw new AssertionError("no transactions"); }
@@ -841,11 +873,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       return incompleteBatches.remove(id);
     }
 
-    private synchronized boolean isEmpty() {
+    synchronized boolean isEmpty() {
       return incompleteBatches.isEmpty();
     }
 
-    private synchronized int size() {
+    synchronized int size() {
       return incompleteBatches.size();
     }
 
@@ -912,9 +944,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   public boolean isShutdown() {
     return this.isShutdown;
   }
-  
+
   @Override
   public void throttleProcessing(boolean yes) {
     this.isThrottled = yes;
   }
+
 }

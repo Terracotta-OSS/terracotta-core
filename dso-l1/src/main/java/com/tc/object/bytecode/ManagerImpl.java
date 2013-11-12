@@ -47,6 +47,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.ClusterEventListener;
 import com.tc.object.tx.OnCommitCallable;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.UnlockedSharedObjectException;
@@ -279,6 +280,8 @@ public class ManagerImpl implements Manager {
 
         ManagerImpl.this.dsoCluster.init(ManagerImpl.this.dso.getClusterMetaDataManager(),
                                          ManagerImpl.this.objectManager, ManagerImpl.this.dso.getClusterEventsStage());
+        ManagerImpl.this.dsoCluster.addClusterListener(new ClusterEventListener(ManagerImpl.this.shutdownManager
+            .getRemoteTransactionManager()));
       }
 
     };
