@@ -295,7 +295,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
           Object existingMapping = getValueUnlocked(map, key);
           // existing mapping can be null in case someone removed this value between putIfAbsent, for this case try
           // retrying putIfAbsent
-          if (existingMapping != null) { return rv; }
+          if (existingMapping != null) { return existingMapping; }
         }
         if (retryCount++ % 10 == 0) {
           logger.info("retried putIfAbsent for " + retryCount);
