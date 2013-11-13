@@ -27,18 +27,18 @@ public interface ManagedObjectState {
    * defined to be public static final. This will ensure that Serialization support is added to
    * ManagedObjectStateFactory.
    */
-  public static final byte PHYSICAL_TYPE                        = 0x01;
-  public static final byte MAP_TYPE                             = 0x03;
-  public static final byte ARRAY_TYPE                           = 0x05;
-  public static final byte LITERAL_TYPE                         = 0x06;
-  public static final byte LIST_TYPE                            = 0x07;
-  public static final byte SET_TYPE                             = 0x08;
-  public static final byte QUEUE_TYPE                           = 0x0b;
-  public static final byte PARTIAL_MAP_TYPE                     = 0x0d;
+  public static final byte    PHYSICAL_TYPE          = 0x01;
+  public static final byte    MAP_TYPE               = 0x03;
+  public static final byte    ARRAY_TYPE             = 0x05;
+  public static final byte    LITERAL_TYPE           = 0x06;
+  public static final byte    LIST_TYPE              = 0x07;
+  public static final byte    SET_TYPE               = 0x08;
+  public static final byte    QUEUE_TYPE             = 0x0b;
+  public static final byte    PARTIAL_MAP_TYPE       = 0x0d;
   // XXX: hack to get support various tims.
-  public static final byte TDC_SERIALIZED_ENTRY                 = 0x12;
-  public static final byte TOOLKIT_TYPE_ROOT_TYPE               = 0x14;
-  public static final byte MAX_TYPE               = 0x15;
+  public static final byte    TDC_SERIALIZED_ENTRY   = 0x12;
+  public static final byte    TOOLKIT_TYPE_ROOT_TYPE = 0x14;
+  public static final byte    MAX_TYPE               = 0x15;
 
   // /////////////////////////////////////////////////////////////////////////////
   // /////////////////////////////////////////////////////////////////////////////

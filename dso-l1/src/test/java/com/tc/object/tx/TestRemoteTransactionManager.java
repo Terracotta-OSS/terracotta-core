@@ -142,6 +142,4 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     throw new ImplementMe();
 
   }
-
-  
 }

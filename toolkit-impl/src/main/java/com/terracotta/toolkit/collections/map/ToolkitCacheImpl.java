@@ -9,6 +9,7 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
@@ -815,5 +816,24 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     }
   }
 
+  @Override
+  public boolean remove(Object key, Object value, ToolkitValueComparator<V> comparator) {
+    readLock();
+    try {
+      return activeDelegate.remove(key, value, comparator);
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
+    readLock();
+    try {
+      return activeDelegate.replace(key, oldValue, newValue, comparator);
+    } finally {
+      readUnlock();
+    }
+  }
 
 }

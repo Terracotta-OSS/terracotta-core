@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
@@ -41,7 +42,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
     dnaWriter.setParentObjectID(pid);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
-    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
+    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters(), LogicalChangeID.NULL_ID);
     dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();

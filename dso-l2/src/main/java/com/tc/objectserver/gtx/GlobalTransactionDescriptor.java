@@ -4,20 +4,27 @@
  */
 package com.tc.objectserver.gtx;
 
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.State;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class GlobalTransactionDescriptor {
 
-  private static final State        INIT            = new State("INIT");
-  private static final State        APPLY_INITIATED = new State("APPLY_INITIATED");
-  private static final State        COMMIT_COMPLETE = new State("COMMIT_COMPLETE");
+  private static final State                              INIT            = new State("INIT");
+  private static final State                              APPLY_INITIATED = new State("APPLY_INITIATED");
+  private static final State                              COMMIT_COMPLETE = new State("COMMIT_COMPLETE");
 
-  private final ServerTransactionID stxn;
-  private final GlobalTransactionID gid;
-  private volatile State            state;
+  private final ServerTransactionID                       stxn;
+  private final GlobalTransactionID                       gid;
+  private volatile State                                  state;
+  private volatile Map<LogicalChangeID, LogicalChangeResult> changeResults   = null;
 
   public GlobalTransactionDescriptor(ServerTransactionID serverTransactionID, GlobalTransactionID gid) {
     this.stxn = serverTransactionID;
@@ -79,5 +86,16 @@ public class GlobalTransactionDescriptor {
 
   public boolean complete() {
     return (state == COMMIT_COMPLETE);
+  }
+
+  public void recordLogicalChangeResults(Map<LogicalChangeID, LogicalChangeResult> results) {
+    if (changeResults == null) {
+      changeResults = new HashMap<LogicalChangeID, LogicalChangeResult>(results.size());
+    }
+    changeResults.putAll(results);
+  }
+
+  public Map<LogicalChangeID, LogicalChangeResult> getApplyResults() {
+    return (Map<LogicalChangeID, LogicalChangeResult>) (changeResults == null ? Collections.emptyMap() : changeResults);
   }
 }

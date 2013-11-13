@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.api;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.tc.exception.ImplementMe;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
@@ -68,9 +71,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author steve

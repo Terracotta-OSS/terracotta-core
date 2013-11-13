@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -97,10 +96,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private final MetaDataManager                         metaDataManager;
   private final TransactionalObjectManager              txnObjectManager;
-  private boolean isPaused = false;
+  private boolean                                       isPaused                     = false;
 
-  public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm,
-                                      final LockManager lockManager,
+  public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm, final LockManager lockManager,
                                       final ClientStateManager stateManager, final ObjectManager objectManager,
                                       final TransactionalObjectManager txnObjectManager,
                                       final TransactionAcknowledgeAction action, final Counter transactionRateCounter,
@@ -386,13 +384,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.transactionRateCounter.increment(txn.getNumApplicationTxn());
 
     fireTransactionAppliedEvent(stxnID, txn.getNewObjectIDs());
-
+    this.gtxm.recordApplyResults(stxnID, applyInfo.getApplyResultRecorder().getResults());
     this.gtxm.commit(stxnID);
   }
-  
+
   @Override
   public void cleanup(Set<ObjectID> delete) {
-      this.objectManager.deleteObjects(delete);
+    this.objectManager.deleteObjects(delete);
   }
 
   @Override
@@ -412,11 +410,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * imposes a problem. The clients could read an object that has changes but it not committed to the disk yet and If
    * the server crashes then transactions are resent and may be re-applied in the clients when it should not have
    * re-applied. To avoid this we now commit inline before releasing the objects.
-   *
    */
   @Override
-  public void commit(final Collection<ManagedObject> objects,
-                     final Map<String, ObjectID> newRoots,
+  public void commit(final Collection<ManagedObject> objects, final Map<String, ObjectID> newRoots,
                      final Collection<ServerTransactionID> appliedServerTransactionIDs) {
     this.objectManager.releaseAll(objects);
     fireRootCreatedEvents(newRoots);
@@ -725,9 +721,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     private final TxnsInSystemCompletionListener callback;
     private final Set<ServerTransactionID>       txnsInSystem;
-    private boolean                              initialized = false;
-    private int                                  count       = 0;
-    private int                                  lastSize    = -1;
+    private boolean                              initialized    = false;
+    private int                                  count          = 0;
+    private int                                  lastSize       = -1;
     private boolean                              callbackCalled = false;
 
     public TxnsInSystemCompletionListenerCallback(final TxnsInSystemCompletionListener callback) {
@@ -815,5 +811,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       return "TxnsInSystemCompletionLister :: Callback :: " + this.callback + " count : " + this.count + " lastSize = "
              + this.lastSize + ". Txns = " + shortDesc(this.txnsInSystem);
     }
+  }
+
+  @Override
+  public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
+    applyInfo.getApplyResultRecorder().recordResults(this.gtxm.getApplyResults(txn.getServerTransactionID()));
   }
 }

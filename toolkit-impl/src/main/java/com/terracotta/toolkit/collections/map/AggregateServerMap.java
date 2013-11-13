@@ -13,6 +13,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
@@ -1153,5 +1154,15 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public int quickSize() {
     return getSize();
+  }
+
+  @Override
+  public boolean remove(Object key, Object value, ToolkitValueComparator<V> comparator) {
+    return getServerMapForKey(key).remove(key, value, comparator);
+  }
+
+  @Override
+  public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
+    return getServerMapForKey(key).replace(key, oldValue, newValue, comparator);
   }
 }

@@ -10,6 +10,8 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
@@ -217,5 +219,10 @@ public interface ClientTransactionManager extends ClearableCallback {
    * @throws AbortedOperationException
    */
   public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
+  
+  public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results);
+
+  public boolean logicalInvokeWithResult(TCObject source, int method, String methodName, Object[] parameters)
+      throws AbortedOperationException;
 
 }

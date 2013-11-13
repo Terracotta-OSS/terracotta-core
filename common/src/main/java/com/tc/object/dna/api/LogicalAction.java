@@ -13,6 +13,7 @@ import java.util.Arrays;
 public class LogicalAction {
   private final int      method;
   private final Object[] parameters;
+  private final LogicalChangeID id;
 
   /**
    * Construct a logical action with the method identifier and parameter values
@@ -21,8 +22,19 @@ public class LogicalAction {
    * @param parameters Parameters to the method call, may be empty but not null
    */
   public LogicalAction(int method, Object[] parameters) {
+    this(method, parameters, LogicalChangeID.NULL_ID);
+  }
+
+  /**
+   * Construct a logical action with the method identifier and parameter values
+   * 
+   * @param method Method identifier, as defined in {@link com.tc.object.SerializationUtil}
+   * @param parameters Parameters to the method call, may be empty but not null
+   */
+  public LogicalAction(int method, Object[] parameters, LogicalChangeID id) {
     this.method = method;
     this.parameters = parameters;
+    this.id = id;
   }
 
   /**
@@ -43,9 +55,13 @@ public class LogicalAction {
     return parameters;
   }
 
+
   @Override
   public String toString() {
     return "LogicalAction [method=" + method + ", parameters=" + Arrays.toString(parameters) + "]";
   }
 
+  public LogicalChangeID getLogicalChangeID() {
+    return id;
+  }
 }

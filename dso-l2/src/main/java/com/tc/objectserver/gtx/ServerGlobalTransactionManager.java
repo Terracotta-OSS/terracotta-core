@@ -5,11 +5,14 @@
 package com.tc.objectserver.gtx;
 
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.util.sequence.Sequence;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator {
@@ -50,4 +53,8 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   public Sequence getGlobalTransactionIDSequence();
 
   public void registerCallbackOnLowWaterMarkReached(Runnable callback);
+
+  public void recordApplyResults(ServerTransactionID stxnID, Map<LogicalChangeID, LogicalChangeResult> results);
+
+  public Map<LogicalChangeID, LogicalChangeResult> getApplyResults(ServerTransactionID stxnID);
 }

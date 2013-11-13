@@ -86,7 +86,6 @@ public class TransactionBatchTest extends TestCase {
   public void testGetMinTransaction() throws Exception {
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
-
     final LinkedList list = new LinkedList();
     for (int i = 0; i < 100; i++) {
       final TestClientTransaction tx = new TestClientTransaction();
@@ -357,7 +356,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     // txn1 and txn2 exceed the object limit (should not fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -391,7 +389,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     // txn1 and txn2 exceed the lock limit (should not fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -422,7 +419,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     // folding disabled (these txns would normally fold)
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -463,7 +459,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     // Txns with DMI, root or notifies do not qualify for folds
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
@@ -516,7 +511,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
@@ -556,7 +550,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
@@ -592,7 +585,6 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-
     // There is a common object between txn1 and txn2 (but differing locks). This should fold
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());

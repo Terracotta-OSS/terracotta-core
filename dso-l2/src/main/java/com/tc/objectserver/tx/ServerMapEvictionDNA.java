@@ -27,7 +27,7 @@ public final class ServerMapEvictionDNA extends RemoveAllDNA {
 
   private static class ServerMapEvictionDNACursor implements DNACursor {
     private static final LogicalAction EVICTION_COMPLETED = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
-        new Object[] {});
+                                                                                     new Object[] {});
 
     private final DNACursor removeCursor;
     private boolean returnedEvictionCompleted = false;

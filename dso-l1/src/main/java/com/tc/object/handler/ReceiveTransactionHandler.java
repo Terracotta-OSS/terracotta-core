@@ -15,6 +15,8 @@ import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.event.DmiEventContext;
 import com.tc.object.event.DmiManager;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
@@ -34,6 +36,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -95,7 +98,6 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
           System.err.println(this.cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID() + " , "
                              + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
         }
-
         try {
           this.txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getNewRoots());
         } catch (TCClassNotFoundException cnfe) {
@@ -115,6 +117,11 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
         if (dmc != null) {
           this.dmiSink.add(new DmiEventContext(dmc));
         }
+      }
+
+      Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = btm.getLogicalChangeResults();
+      if (!logicalChangeResults.isEmpty()) {
+        this.txManager.receivedLogicalChangeResult(logicalChangeResults);
       }
     }
 

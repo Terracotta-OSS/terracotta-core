@@ -7,6 +7,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.search.QueryBuilder;
@@ -386,5 +387,15 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   @Override
   public int quickSize() {
     return immutationBehaviourResolver.quickSize();
+  }
+
+  @Override
+  public boolean remove(Object key, Object value, ToolkitValueComparator<V> comparator) {
+    return mutationBehaviourResolver.remove(key, value, comparator);
+  }
+
+  @Override
+  public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
+    return mutationBehaviourResolver.replace(key, oldValue, newValue, comparator);
   }
 }

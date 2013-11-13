@@ -9,6 +9,7 @@ import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
@@ -90,8 +91,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   @Override
-  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters) {
-    getOrCreateChangeBuffer(source).logicalInvoke(method, parameters);
+  protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters, LogicalChangeID id) {
+    getOrCreateChangeBuffer(source).logicalInvoke(method, parameters, id);
   }
 
   @Override

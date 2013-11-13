@@ -15,6 +15,7 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.locks.LongLockID;
@@ -947,7 +948,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     @Override
-    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
+    public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName, LogicalChangeID id) {
       throw new ImplementMe();
 
     }

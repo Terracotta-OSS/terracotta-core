@@ -331,4 +331,5 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     if (oid == null) { return false; }
     return true;
   }
+
 }

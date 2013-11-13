@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -79,7 +80,8 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   @Override
-  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
+  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName,
+ LogicalChangeID id) {
     throw new ImplementMe();
   }
 

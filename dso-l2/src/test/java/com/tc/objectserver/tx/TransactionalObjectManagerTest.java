@@ -4,6 +4,19 @@
  */
 package com.tc.objectserver.tx;
 
+import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -25,19 +38,6 @@ import com.tc.util.ObjectIDSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class TransactionalObjectManagerTest extends TCTestCase {
 
@@ -224,7 +224,9 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   }
 
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
-    return spy(new ApplyTransactionInfo(true, new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)), true));
+    return spy(new ApplyTransactionInfo(true,
+                                        new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)),
+                                        true));
   }
 
   private <T> Matcher<T> containsObjectWithID(final ObjectID id) {

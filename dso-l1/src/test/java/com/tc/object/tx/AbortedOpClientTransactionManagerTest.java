@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.TCObject;
 import com.tc.object.TestClientObjectManager;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
@@ -62,7 +63,7 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
       clientTxnMgr.begin(new StringLockID("test2"), LockLevel.WRITE, false);
 
       // change1
-      clientTxnFactory.clientTransactions.get(0).logicalInvoke(null, -1, null, null);
+      clientTxnFactory.clientTransactions.get(0).logicalInvoke(null, -1, null, null, null);
       Assert.assertEquals(1, clientTxnFactory.clientTransactions.size());
 
       abortableOperationManager.abort(Thread.currentThread());
@@ -84,9 +85,11 @@ public class AbortedOpClientTransactionManagerTest extends TestCase {
     clientTxnFactory.clientTransactions.get(1).addNotify(null);
 
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.times(1))
-        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
+                       (LogicalChangeID) Matchers.any());
     Mockito.verify(clientTxnFactory.clientTransactions.get(1), Mockito.never())
-        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString());
+        .logicalInvoke((TCObject) Matchers.any(), Matchers.anyInt(), (Object[]) Matchers.any(), Matchers.anyString(),
+                       (LogicalChangeID) Matchers.any());
     
     Mockito.verify(clientTxnFactory.clientTransactions.get(0), Mockito.never())
         .addNotify((Notify) Matchers
