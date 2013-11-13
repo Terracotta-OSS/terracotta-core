@@ -157,9 +157,12 @@ public class ConnectionID {
     out.writeString(serverID);
     out.writeString(jvmID);
     out.writeString(productId.name());
-    out.writeBoolean(isSecured());
-    if (isSecured()) {
+    out.writeBoolean(username != null);
+    if (username != null) {
       out.writeString(username);
+    }
+    out.writeBoolean(password != null);
+    if (password != null) {
       out.writeString(String.valueOf(password));
     }
   }
@@ -173,6 +176,8 @@ public class ConnectionID {
     char[] password = null;
     if (in.readBoolean()) {
       username = in.readString();
+    }
+    if (in.readBoolean()) {
       password = in.readString().toCharArray();
     }
     return new ConnectionID(jvmID, channelID, serverID, username, password, productId);
