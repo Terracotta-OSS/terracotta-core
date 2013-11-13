@@ -294,8 +294,7 @@ public class TransactionSequencerTest extends TestCase {
     public String toString() {
         return "TestTransactionBatch{" + "batchID=" + batchID + ", transactions=" + transactions + '}';
     }
-    
-    
+
 
   }
 

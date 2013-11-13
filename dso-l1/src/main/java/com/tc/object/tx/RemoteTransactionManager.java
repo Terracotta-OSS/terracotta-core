@@ -50,4 +50,6 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
    */
   public void preCleanup();
 
+  public void requestImmediateShutdown();
+
 }

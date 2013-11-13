@@ -54,8 +54,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    * @return true if operation changed the clustered state
+   * @throws AbortedOperationException
    */
-  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value);
+  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value, MetaDataDescriptor mdd)
+      throws AbortedOperationException;
 
   /**
    * Does a logic putIfAbsent. The cached item is not associated to a lock. The check about the presence of an existing
@@ -64,9 +66,13 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
+   * @param mdd
    * @return true if operation changed the clustered state
+   * @throws AbortedOperationException
    */
-  Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
+  Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value,
+                                      MetaDataDescriptor mdd)
+      throws AbortedOperationException;
 
   /**
    * Does a logic replace. The cached item is not associated to a lock.
@@ -74,9 +80,11 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @return true if operation changed the clustered state
+   * @throws AbortedOperationException
    */
   boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current,
-                                   final Object newValue);
+                                   final Object newValue, MetaDataDescriptor mdd)
+      throws AbortedOperationException;
 
   /**
    * Does a logic replace. The cached item is not associated to a lock.
@@ -84,22 +92,22 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @return true if operation changed the clustered state
+   * @throws AbortedOperationException
    */
-  boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key,
-                                   final Object newValue);
+  // boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object newValue)
+  // throws AbortedOperationException;
 
   /**
    * Does a logical put and updates the local cache
-   *
+   * 
    * @param key Key Object
    * @param value Object in the mapping
    */
   void doLogicalPut(final L lockID, final Object key, final Object value);
 
-
   /**
    * Does a logical put with version and updates the local cache
-   *
+   * 
    * @param map ServerTCMap
    * @param lockID, lock under which this entry is added
    * @param key Key Object
@@ -133,10 +141,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   void doLogicalPutUnlocked(final TCServerMap map, final Object key, final Object value);
 
-
   /**
-   * Does a logical put with version and updates the local cache without using a lock. The cached Item is not associated to a lock.
-   *
+   * Does a logical put with version and updates the local cache without using a lock. The cached Item is not associated
+   * to a lock.
+   * 
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
@@ -191,7 +199,6 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @throws AbortedOperationException
    */
   Object getValue(final TCServerMap map, final L lockID, final Object key) throws AbortedOperationException;
-
 
   /**
    * Returns total size of an array of ServerTCMap.
@@ -275,7 +282,7 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   /**
    * Remove the given key from local cache.
-   *
+   * 
    * @param key key to remove.
    */
   void removeValueFromLocalCache(Object key);

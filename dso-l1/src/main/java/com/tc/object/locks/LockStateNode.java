@@ -126,10 +126,13 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       flushInProgress = false;
     }
 
+    public boolean isFlushInProgress() {
+      return flushInProgress;
+    }
+
     @Override
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner())) {
-        if (flushInProgress) { return LockAcquireResult.WAIT_FOR_FLUSH; }
         if (this.getLockLevel().isWrite()) { return LockAcquireResult.SUCCESS; }
         if (newHold.getLockLevel().isRead()) { return LockAcquireResult.SHARED_SUCCESS; }
       } else {
@@ -157,7 +160,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     public String toString() {
-      return super.toString() + " : " + level;
+      return super.toString() + " : " + level + "flushInProgress : " + flushInProgress;
     }
 
     @Override

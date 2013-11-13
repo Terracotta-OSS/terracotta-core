@@ -27,6 +27,11 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean isConnectAllowed(ConnectionID connID) {
+    if (connID.getProductId().isInternal()) {
+      // Don't count internal clients.
+      return true;
+    }
+
     HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
 
     if (jvmClients == null && isMaxConnectionsReached()) {
@@ -43,6 +48,11 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean connectClient(ConnectionID connID) {
+    if (connID.getProductId().isInternal()) {
+      // Always allow connections from internal products
+      return true;
+    }
+
     HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
 
     if (isMaxConnectionsReached() && jvmClients == null) {
@@ -67,6 +77,11 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized void clientDisconnected(ConnectionID connID) {
+    if (connID.getProductId().isInternal()) {
+      // ignore internal clients
+      return;
+    }
+
     // not all times clientSet has connID client disconnect removes the connID. after reconnect timeout, for close event
     // we get here again.
 

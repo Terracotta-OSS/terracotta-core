@@ -685,7 +685,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
     // register REST webapp
     String warFile = System.getProperty("com.tc.management.war");
+    String failureReason = null;
     if (warFile == null) {
+      final String webAppPrefix = "management-tsa-war";
       File tcInstallDir;
       try {
         tcInstallDir = Directories.getInstallationRoot();
@@ -694,16 +696,17 @@ public class TCServerImpl extends SEDA implements TCServer {
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
           public boolean accept(File dir, String name) {
-            return name.startsWith("management-tsa-war") && name.endsWith(".war");
+            return name.startsWith(webAppPrefix) && name.endsWith(".war");
           }
         });
 
         if (files != null && files.length > 0) {
           warFile = managementDir.getPath() + File.separator + files[0];
+        } else {
+          failureReason = "Could not find the management web archive named : " + webAppPrefix;
         }
       } catch (FileNotFoundException e) {
-        // there is no more hope of deploying the web app
-        logger.info("impossible to deploy the webapp due to invalid installation dir location");
+        failureReason = "Could not find the management web archive " + e.getMessage();
       }
     }
 
@@ -731,6 +734,10 @@ public class TCServerImpl extends SEDA implements TCServer {
       } finally {
         fileUnlock();
       }
+    } else {
+        // there is no more hope of deploying the web app
+        logger.info("impossible to deploy the webapp due to invalid installation dir location");
+        logger.info(failureReason);
     }
   }
 

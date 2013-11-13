@@ -30,7 +30,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void testNextID() throws Exception {
     uid("abc123");
     nextChannelId(0);
-    ConnectionID id = connectionIDFactory.nextConnectionId("Mr. Bogus");
+    ConnectionID id = connectionIDFactory.populateConnectionID(idWith("Mr. Bogus", -1L));
     assertEquals("Mr. Bogus", id.getJvmID());
     assertEquals(0, id.getChannelID());
     assertEquals("abc123", id.getServerID());
@@ -39,7 +39,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void testCreateExistingID() throws Exception {
     setContainsId(0, true);
     try {
-      connectionIDFactory.makeConnectionId("aaa", 0);
+      connectionIDFactory.populateConnectionID(idWith("aaa", 0));
       fail();
     } catch (TCRuntimeException e) {
       // expected
@@ -77,5 +77,9 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
 
   private static MessageChannel channelWithId(long id) {
     return when(mock(MessageChannel.class).getChannelID()).thenReturn(new ChannelID(id)).getMock();
+  }
+
+  private static ConnectionID idWith(String jvmId, long channelId) {
+    return new ConnectionID(jvmId, channelId);
   }
 }

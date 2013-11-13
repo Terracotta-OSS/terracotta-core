@@ -370,4 +370,14 @@ public class MockPlatformService implements PlatformService {
   public TaskRunner getTaskRunner() {
     return taskRunnner;
   }
+
+  @Override
+  public boolean isExplicitlyLocked(Object lockID, LockLevel level) {
+    return false;
+  }
+
+  @Override
+  public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
+    return false;
+  }
 }

@@ -5,6 +5,7 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
+import com.tc.license.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -165,5 +166,10 @@ public class TestMessageChannel implements MessageChannel {
       this.type = type;
       this.returnedMessage = returnedMessage;
     }
+  }
+
+  @Override
+  public ProductID getProductId() {
+    return null;
   }
 }

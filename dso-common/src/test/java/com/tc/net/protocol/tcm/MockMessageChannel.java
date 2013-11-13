@@ -7,6 +7,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.license.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -245,8 +246,8 @@ public class MockMessageChannel implements MessageChannelInternal {
     return destination;
   }
 
-  public void setRemoteNodeID(NodeID destination) {
-    this.destination = destination;
+  @Override
+  public ProductID getProductId() {
+    return null;
   }
-
 }

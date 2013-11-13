@@ -12,6 +12,7 @@ import com.tc.object.change.event.LogicalChangeEvent;
 import com.tc.object.change.event.PhysicalChangeEvent;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAWriterInternal;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -33,7 +34,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   private final TCObject                         tcObject;
 
   private final Map                              physicalEvents;
-  private final List                             logicalEvents;
+  private final List<LogicalChangeEvent>         logicalEvents;
   private final Map                              arrayEvents;
   private final List                             literalValueChangedEvents;
   private final List<MetaDataDescriptorInternal> metaData;
@@ -160,11 +161,11 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
   }
 
   @Override
-  public void logicalInvoke(int method, Object[] parameters) {
+  public void logicalInvoke(int method, Object[] parameters, LogicalChangeID id) {
     // TODO: It might be useful (if it doesn't take too much CPU) to collapse logical operations. For instance,
     // if a put() is followed by a remove() on the same key we don't need to send anything. Or if multiple put()s are
     // done, only the last one matters
-    logicalEvents.add(new LogicalChangeEvent(method, parameters));
+    logicalEvents.add(new LogicalChangeEvent(method, parameters, id));
   }
 
   @Override

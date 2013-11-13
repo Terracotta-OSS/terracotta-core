@@ -41,15 +41,13 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final AppClassLoader                  appClassLoader;
   private volatile DSOContextControl            contextControl;
   private final AtomicInteger                   refCount             = new AtomicInteger(0);
-  private final boolean                         rejoinEnabled;
   private boolean                               shutdown             = false;
   private volatile Object                       dsoContext;
   private final Set<String>                     tunneledMBeanDomains = new HashSet<String>();
   private volatile boolean                      isInitialized        = false;
 
   TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, ClassLoader appLoader, boolean rejoinEnabled,
-                               Set<String> tunneledMBeanDomains, Map<String, Object> env) {
-    this.rejoinEnabled = rejoinEnabled;
+                               Set<String> tunneledMBeanDomains, final String productId, Map<String, Object> env) {
     if (tunneledMBeanDomains != null) {
       this.tunneledMBeanDomains.addAll(tunneledMBeanDomains);
     }
@@ -59,7 +57,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
 
       Class bootClass = clusteredStateLoader.loadClass(StandaloneL1Boot.class.getName());
       Constructor<?> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
-                                                     Map.class);
+                                                     String.class, Map.class);
 
       // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
       if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
@@ -69,7 +67,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
         }
       }
       Callable<Object> boot = (Callable<Object>) cstr.newInstance(tcConfig, isUrlConfig, clusteredStateLoader,
-                                                                  rejoinEnabled, env);
+                                                                  rejoinEnabled, productId, env);
 
       Object context = boot.call();
       this.dsoContext = context;

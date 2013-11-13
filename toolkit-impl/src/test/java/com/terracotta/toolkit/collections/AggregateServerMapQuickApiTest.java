@@ -9,8 +9,10 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.terracotta.test.categories.CheckShorts;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
@@ -25,7 +27,12 @@ import com.terracotta.toolkit.object.ToolkitObjectStripe;
 
 import java.util.concurrent.Callable;
 
+import junit.framework.Assert;
+
+@Category(CheckShorts.class)
 public class AggregateServerMapQuickApiTest {
+
+  private static final int         NUM_OF_ELEMENTS = 50;
 
   private AggregateServerMap       aggregateServerMap;
 
@@ -62,6 +69,39 @@ public class AggregateServerMapQuickApiTest {
   public void test_quickClear_never_calls_waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     aggregateServerMap.quickClear();
     verify(platformService, never()).waitForAllCurrentTransactionsToComplete();
+  }
+
+  @Test
+  public void test_quickClearWorks() {
+    populateMap().assertQuickSize().quickClear().assertMapCleared();
+  }
+
+  @Test
+  public void test_quickSize_works() {
+    populateMap().assertQuickSize();
+  }
+
+  private AggregateServerMapQuickApiTest assertQuickSize() {
+    Assert.assertEquals("quickSize failed: quickSize = " + aggregateServerMap.quickSize(), NUM_OF_ELEMENTS,
+                        aggregateServerMap.quickSize());
+    return this;
+  }
+
+  private void assertMapCleared() {
+    Assert.assertEquals("size of map = " + aggregateServerMap.size(), 0, aggregateServerMap.size());
+  }
+
+  private AggregateServerMapQuickApiTest quickClear() {
+    aggregateServerMap.quickClear();
+    return this;
+
+  }
+
+  private AggregateServerMapQuickApiTest populateMap() {
+    for (int i = 0; i < NUM_OF_ELEMENTS; i++) {
+      aggregateServerMap.put("key-" + i, "value-" + i);
+    }
+    return this;
   }
 
 }

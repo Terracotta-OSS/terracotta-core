@@ -87,7 +87,7 @@ public class HashMapApplicator extends BaseApplicator {
         try {
           rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
         } catch (AbortedOperationException e) {
-            throw new TCRuntimeException(e);
+          throw new TCRuntimeException(e);
         }
         if (m instanceof TCMap) {
           ((TCMap) m).__tc_applicator_remove(rkey);
@@ -114,7 +114,7 @@ public class HashMapApplicator extends BaseApplicator {
     try {
       return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
     } catch (AbortedOperationException e) {
-     throw new TCRuntimeException(e);
+      throw new TCRuntimeException(e);
     }
   }
 
@@ -124,7 +124,7 @@ public class HashMapApplicator extends BaseApplicator {
     try {
       return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
     } catch (AbortedOperationException e) {
-       throw new TCRuntimeException(e);
+      throw new TCRuntimeException(e);
     }
   }
 
@@ -140,7 +140,6 @@ public class HashMapApplicator extends BaseApplicator {
   @Override
   public void dehydrate(final ClientObjectManager objectManager, final TCObject tco, final DNAWriter writer,
                         final Object pojo) {
-
     final Map map = (Map) pojo;
     for (final Iterator i = map.entrySet().iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
@@ -160,7 +159,6 @@ public class HashMapApplicator extends BaseApplicator {
       if (addKey == null || addValue == null) {
         continue;
       }
-
       writer.addLogicalAction(SerializationUtil.PUT, new Object[] { addKey, addValue });
     }
   }

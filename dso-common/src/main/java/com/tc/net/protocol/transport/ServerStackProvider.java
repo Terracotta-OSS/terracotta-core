@@ -102,14 +102,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     final MessageTransport rv;
     ConnectionID ourConnectionId;
     if (connectionId.isNewConnection()) {
-      if (connectionId.getChannelID() == ChannelID.NULL_ID.toLong()) {
-        ourConnectionId = connectionIdFactory.nextConnectionId(connectionId.getJvmID());
-      } else {
-        ourConnectionId = connectionIdFactory.makeConnectionId(connectionId.getJvmID(), connectionId.getChannelID());
-      }
+      ourConnectionId = connectionIdFactory.populateConnectionID(connectionId);
 
       rv = messageTransportFactory.createNewTransport(ourConnectionId, connection, createHandshakeErrorHandler(),
-                                                      handshakeMessageFactory, transportListeners);
+          handshakeMessageFactory, transportListeners);
       newStackHarness(ourConnectionId, rv);
     } else {
       harness = (NetworkStackHarness) harnesses.get(connectionId);
@@ -312,7 +308,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           ConnectionID transportConnectionId = transport.getConnectionId();
           // Update the connection ID with the new channel id and server id from server
           connectionId = new ConnectionID(sentConnectionId.getJvmID(), transportConnectionId.getChannelID(),
-              transportConnectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword());
+              transportConnectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword(),
+              sentConnectionId.getProductId());
           // populate the jvmid on the server copy of the connection id if it's null
           if (transportConnectionId.isJvmIDNull()) {
             transport.initConnectionID(new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),

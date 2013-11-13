@@ -40,9 +40,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD);
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALLOWERBOUND);
-    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_CRITICALUPPERBOUND);
     exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD);
+    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE);
+    exemptedProperties.add(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE);
 
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);

@@ -60,4 +60,5 @@ public class ApplyTransactionContext implements MultiThreadedEventContext {
   public Object getKey() {
     return grouping;
   }
+
 }

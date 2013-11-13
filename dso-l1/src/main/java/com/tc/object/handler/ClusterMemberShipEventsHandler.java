@@ -28,10 +28,14 @@ public class ClusterMemberShipEventsHandler extends AbstractEventHandler {
   }
 
   private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
+    if (cmm.getProductId().isInternal()) {
+      // don't fire events for internal products.
+      return;
+    }
     if (cmm.isNodeConnectedEvent()) {
-      dsoClusterEventsGun.fireNodeJoined((ClientID) cmm.getNodeId());
+      dsoClusterEventsGun.fireNodeJoined((ClientID)cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
-      dsoClusterEventsGun.fireNodeLeft((ClientID) cmm.getNodeId());
+      dsoClusterEventsGun.fireNodeLeft((ClientID)cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);
     }

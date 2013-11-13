@@ -6,6 +6,7 @@ package com.tc.object.change;
 
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 
 /**
@@ -21,7 +22,7 @@ public interface TCChangeBuffer {
 
   public void arrayChanged(int startPos, Object array, int length);
 
-  public void logicalInvoke(int method, Object[] parameters);
+  public void logicalInvoke(int method, Object[] parameters, LogicalChangeID id);
 
   public void writeTo(DNAWriter writer);
 

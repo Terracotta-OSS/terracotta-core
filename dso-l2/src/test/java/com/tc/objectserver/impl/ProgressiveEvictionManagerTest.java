@@ -83,7 +83,7 @@ public class ProgressiveEvictionManagerTest {
     when(counter.createCounter(Matchers.<CounterConfig>any())).thenReturn(mock(SampledRateCounter.class));
     mgr = new ProgressiveEvictionManager(objectMgr, Collections.singletonList(mock(MonitoredResource.class)), store, 
             mock(ClientObjectReferenceSet.class), mock(ServerTransactionFactory.class), new TCThreadGroup(mock(ThrowableHandler.class)), 
-            mock(ResourceManager.class), counter, mock(EvictionTransactionPersistor.class), false);
+            mock(ResourceManager.class), counter, mock(EvictionTransactionPersistor.class), false, false);
     
     ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
     Stage stage = mock(Stage.class);

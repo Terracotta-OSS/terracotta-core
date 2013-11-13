@@ -60,8 +60,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
       this.type = in.readByte();
 
       try {
-        this.connectionId = ConnectionID.parse(in.readString());
-      } catch (InvalidConnectionIDException e) {
+        this.connectionId = ConnectionID.readFrom(in);
+      } catch (IOException e) {
         throw new TCProtocolException(e);
       }
 
@@ -169,11 +169,6 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   @Override
   public boolean isTimeCheck() {
     return type == TIME_CHECK;
-  }
-
-  public boolean hasDefaultConnectionId() {
-    Assert.assertNotNull(connectionId);
-    return this.connectionId.isNull();
   }
 
   @Override

@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAWriterInternal;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
@@ -105,9 +106,13 @@ public class DNAWriterImpl implements DNAWriterInternal {
   }
 
   @Override
-  public void addLogicalAction(int method, Object[] parameters) {
+  public void addLogicalAction(int method, Object[] parameters, LogicalChangeID logicalChangeID) {
     actionCount++;
     output.writeByte(BaseDNAEncodingImpl.LOGICAL_ACTION_TYPE);
+    output.writeBoolean(logicalChangeID.isNull());
+    if (!logicalChangeID.isNull()) {
+      output.writeLong(logicalChangeID.toLong());
+    }
     output.writeInt(method); // use a short instead?
     output.writeByte(parameters.length);
 
@@ -351,6 +356,11 @@ public class DNAWriterImpl implements DNAWriterInternal {
     }
 
     @Override
+    public void addLogicalAction(int method, Object[] parameters, LogicalChangeID logicalChangeID) {
+      parent.addLogicalAction(method, parameters, logicalChangeID);
+    }
+
+    @Override
     public void addLogicalAction(int method, Object[] parameters) {
       parent.addLogicalAction(method, parameters);
     }
@@ -418,6 +428,11 @@ public class DNAWriterImpl implements DNAWriterInternal {
     public void finalizeHeader() {
       throw new UnsupportedOperationException();
     }
+  }
+
+  @Override
+  public void addLogicalAction(int method, Object[] parameters) {
+    addLogicalAction(method, parameters, LogicalChangeID.NULL_ID);
   }
 
 }

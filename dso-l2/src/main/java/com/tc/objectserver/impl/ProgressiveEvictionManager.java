@@ -141,7 +141,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                     final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
                                     final CounterManager counterManager,
-                                    final EvictionTransactionPersistor evictionTransactionPersistor, final boolean persistent) {
+                                    final EvictionTransactionPersistor evictionTransactionPersistor, final boolean flash, final boolean persistent) {
     this.objectManager = mgr;
     this.store = store;
     this.clientObjectReferenceSet = clients;
@@ -176,10 +176,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
     }
 
-    if ( monitored.getType() == MonitoredResource.Type.OFFHEAP ) {
+    if ( !flash ) {
       this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
     } else {
-      this.trigger = new MultiResourceMonitor(this.resources, evictionGrp, threshold, sleeptime, persistent);
+      this.trigger = new MultiResourceMonitor(this.resources, evictionGrp, threshold, sleeptime, flash, persistent);
     }
     this.evictionGrp = new ThreadGroup(evictionGrp, "Eviction Worker Group");
 
@@ -607,7 +607,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
     private void throttleIfNeeded(MonitoredResource usage) {
       // if we are this low, stop no matter what
-      if (usage.getVital() >= usage.getTotal() - (16l * 1024 * 1024) && usage.getVital()> usage.getTotal()/ 2 ) {
+      if (usage.getVital() >= usage.getTotal() - (16l * 1024 * 1024) && usage.getVital() > usage.getTotal() / 2 ) {
           if ( !isStopped ) {
             logger.warn("resource usage at max");
           }

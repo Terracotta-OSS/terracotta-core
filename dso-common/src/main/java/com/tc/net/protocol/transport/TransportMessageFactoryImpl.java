@@ -82,7 +82,7 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
 
     bbos.write(TransportMessageImpl.VERSION);
     bbos.write(type);
-    bbos.writeString(connectionId.getID(true));
+    connectionId.writeTo(bbos);
     bbos.writeBoolean(isMaxConnectionsExceeded);
     bbos.writeInt(maxConnections);
     bbos.writeShort(stackLayerFlags);

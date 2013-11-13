@@ -17,6 +17,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
@@ -43,11 +44,11 @@ public class DSOContextImpl implements DSOContext {
   private volatile DSOClientConfigHelper configHelper;
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient,
-                                                   TCSecurityManager securityManager, SecurityInfo securityInfo) {
+                                                   TCSecurityManager securityManager, SecurityInfo securityInfo,
+                                                   ProductID productId) {
     ManagerImpl manager = new ManagerImpl(true, null, null, null, null, null, null, true, loader, expressRejoinClient,
-                                          securityManager);
-    DSOContextImpl context = createContext(manager, configSpec, securityManager, securityInfo);
-    return context;
+                                          securityManager, productId);
+    return createContext(manager, configSpec, securityManager, securityInfo);
   }
 
   public void init() throws ConfigurationSetupException {

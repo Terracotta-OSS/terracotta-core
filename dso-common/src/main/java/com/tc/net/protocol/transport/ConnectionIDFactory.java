@@ -9,9 +9,7 @@ public interface ConnectionIDFactory {
 
   public long getCurrentConnectionID();
 
-  public ConnectionID nextConnectionId(String clientJvmId);
-
-  public ConnectionID makeConnectionId(String clientJvmid, long channelID);
+  public ConnectionID populateConnectionID(ConnectionID connectionID);
 
   public void restoreConnectionId(ConnectionID rv);
 

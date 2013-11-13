@@ -6,6 +6,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.exception.TCRuntimeException;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
@@ -83,6 +84,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final HealthCheckerConfig                                         healthCheckerConfig;
   private final ConnectionPolicy                                            connectionPolicy;
   private final ReconnectionRejectedHandler                                 reconnectionRejectedHandler;
+  protected final ProductID productId;
   protected final ConcurrentHashMap<TCMessageType, Class>                   messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class>();
   protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
 
@@ -138,7 +140,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
          transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping,
-         ReconnectionRejectedHandlerL2.SINGLETON, securityManager);
+         ReconnectionRejectedHandlerL2.SINGLETON, securityManager, null);
     this.serverID = serverID;
   }
 
@@ -152,14 +154,15 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy, workerCommCount,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping,
-         ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
+         ReconnectionRejectedHandlerL1.SINGLETON, securityManager, null);
   }
 
   /**
    * Create a comms manager with the given connection manager. This cstr is mostly for testing, or in the event that you
    * actually want to use an explicit connection manager
-   * 
+   *
    * @param connMgr the connection manager to use
+   * @param productId
    */
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
@@ -168,10 +171,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                   ReconnectionRejectedHandler reconnectionRejectedHandler, TCSecurityManager securityManager) {
+                                   ReconnectionRejectedHandler reconnectionRejectedHandler, TCSecurityManager securityManager,
+                                   ProductID productId) {
     this.commsMgrName = commsMgrName;
     this.monitor = monitor;
     this.messageRouter = messageRouter;
+    this.productId = productId;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
@@ -282,7 +287,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
                                                                new GroupID(addressProvider.getGroupId()),
                                                                addressProvider.getSecurityInfo(), securityManager,
-                                                               addressProvider);
+                                                               addressProvider, productId);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
@@ -353,8 +358,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
       @Override
-      public MessageChannelInternal createNewChannel(ChannelID id) {
-        return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID);
+      public MessageChannelInternal createNewChannel(ChannelID id, final ProductID productId) {
+        return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID, productId);
       }
     };
 

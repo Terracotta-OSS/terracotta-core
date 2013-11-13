@@ -24,6 +24,14 @@ public interface DNAWriter {
   void addLogicalAction(int method, Object[] parameters);
 
   /**
+   * Add logical action to the writer
+   * 
+   * @param Method identifier, defined in {@link com.tc.object.SerializationUtil}
+   * @param parameters Parameter values
+   */
+  void addLogicalAction(int method, Object[] parameters, LogicalChangeID logicalChangeID);
+
+  /**
    * Add physical action to the writer representing field value, automatically determine whether value is a reference by
    * checking whether it is an ObjectID
    * 

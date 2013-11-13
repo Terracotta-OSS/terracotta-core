@@ -25,10 +25,11 @@ public interface ClientTransactionBatch extends TransactionBatch {
   /**
    * Add the given transaction to this batch.
    * 
+   * @param logicalChangeSequence
    * @return true if the transaction was folded
    */
   public FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                TransactionIDGenerator transactionIDGenerator);
+                                   TransactionIDGenerator transactionIDGenerator);
   
   public TransactionBuffer addSimpleTransaction(ClientTransaction txn);
 
@@ -53,4 +54,5 @@ public interface ClientTransactionBatch extends TransactionBatch {
   
   // For testing
   public String dump();
+
 }

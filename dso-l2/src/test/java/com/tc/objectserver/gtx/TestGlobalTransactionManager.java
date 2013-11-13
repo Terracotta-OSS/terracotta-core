@@ -6,11 +6,14 @@ package com.tc.objectserver.gtx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.LogicalChangeID;
+import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.util.sequence.Sequence;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public final class TestGlobalTransactionManager implements ServerGlobalTransactionManager {
@@ -85,5 +88,15 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   @Override
   public void registerCallbackOnLowWaterMarkReached(Runnable callback) {
     //
+  }
+
+  @Override
+  public void recordApplyResults(ServerTransactionID stxnID, Map<LogicalChangeID, LogicalChangeResult> results) {
+    //
+  }
+
+  @Override
+  public Map<LogicalChangeID, LogicalChangeResult> getApplyResults(ServerTransactionID stxnID) {
+    return null;
   }
 }

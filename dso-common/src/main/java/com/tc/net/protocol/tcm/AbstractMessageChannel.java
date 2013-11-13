@@ -4,6 +4,7 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -14,9 +15,9 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -24,11 +25,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 abstract class AbstractMessageChannel implements MessageChannel, MessageChannelInternal {
 
-  private final Map<String, Object> attachments    = new ConcurrentHashMap<String, Object>();
-  private final Object            attachmentLock = new Object();
+  private final ConcurrentMap<String, Object> attachments    = new ConcurrentHashMap<String, Object>();
   private final Set               listeners      = new CopyOnWriteArraySet();
   private final ChannelStatus     status         = new ChannelStatus();
   private final TCMessageFactory  msgFactory;
+  private final ProductID productId;
   private final TCMessageRouter   router;
   private final TCMessageParser   parser;
   private final TCLogger          logger;
@@ -37,10 +38,12 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   protected volatile NetworkLayer sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory, NodeID remoteNodeID) {
+  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
+                         ProductID productId) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
+    this.productId = productId;
     this.parser = new TCMessageParser(this.msgFactory);
     this.remoteNodeID = remoteNodeID;
     // This is set after hand shake for the clients
@@ -49,11 +52,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   @Override
   public void addAttachment(String key, Object value, boolean replace) {
-    synchronized (attachmentLock) {
-      boolean exists = attachments.containsKey(key);
-      if (replace || !exists) {
-        attachments.put(key, value);
-      }
+    if (replace) {
+      attachments.put(key, value);
+    } else {
+      attachments.putIfAbsent(key, value);
     }
   }
 
@@ -276,6 +278,11 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   public String toString() {
     return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID, " + getStatus() + "]") + ":" + getLocalAddress()
             + " <--> " + getRemoteAddress());
+  }
+
+  @Override
+  public ProductID getProductId() {
+    return productId;
   }
 
   private enum ChannelState {

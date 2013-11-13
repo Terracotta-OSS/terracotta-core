@@ -248,4 +248,5 @@ public class NullTCObject implements TCObject {
   public void unresolveReference(final String fieldName) {
     //
   }
+
 }

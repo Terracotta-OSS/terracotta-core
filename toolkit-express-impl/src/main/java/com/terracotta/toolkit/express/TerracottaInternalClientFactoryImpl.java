@@ -28,16 +28,16 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
     if (config.isUrl()) {
       tcConfig = URLConfigUtil.translateSystemProperties(tcConfig);
     }
-    return createClient(tcConfig, config.isUrl(), config.isRejoin(), config.getTunnelledMBeanDomains());
+    return createClient(tcConfig, config.isUrl(), config.isRejoin(), config.getTunnelledMBeanDomains(), config.getProductId());
   }
 
 
   private TerracottaInternalClient createClient(String tcConfig, boolean isUrlConfig, final boolean rejoinClient,
-                                                Set<String> tunneledMBeanDomains) {
+                                                Set<String> tunneledMBeanDomains, final String productId) {
 
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
     TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, getClass()
-        .getClassLoader(), rejoinClient, tunneledMBeanDomains, new ConcurrentHashMap<String, Object>(env));
+        .getClassLoader(), rejoinClient, tunneledMBeanDomains, productId, new ConcurrentHashMap<String, Object>(env));
     return client;
   }
 

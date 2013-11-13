@@ -68,14 +68,16 @@ public interface TCPropertiesConsts {
    * haltThreshold           : the threshold where l2 singles l1 to halt additive operations
    * criticalUpperbound      : the upperbound bytes available above the threshold levels
    * criticalLowerbound      : the lowerbound bytes available above the threshold levels
+   * vital offheap stoppage      : the lowerbound bytes available above the threshold levels
+   * criticalLowerbound      : the lowerbound bytes available above the threshold levels
    * </code>
    ********************************************************************************************************************/
 
   public static final String L2_EVICTION_CRITICALTHRESHOLD                                  = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                            = "l2.eviction.resourcePollInterval";
   public static final String L2_EVICTION_HALTTHRESHOLD                                      = "l2.eviction.haltThreshold";
-  public static final String L2_EVICTION_CRITICALUPPERBOUND                                 = "l2.eviction.criticalUpperbound";
-  public static final String L2_EVICTION_CRITICALLOWERBOUND                                 = "l2.eviction.criticalLowerbound";
+  public static final String L2_EVICTION_OFFHEAP_STOPPAGE                                      = "l2.eviction.offheap.stoppage";
+  public static final String L2_EVICTION_STORAGE_STOPPAGE                                            = "l2.eviction.storage.stoppage";
 
   /*********************************************************************************************************************
    * <code>

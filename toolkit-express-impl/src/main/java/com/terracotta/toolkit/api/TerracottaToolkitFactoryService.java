@@ -24,6 +24,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
   private static final String       TUNNELLED_MBEAN_DOMAINS_KEY      = "tunnelledMBeanDomains";
   private static final String       TC_CONFIG_SNIPPET_KEY            = "tcConfigSnippet";
   private static final String       REJOIN_KEY                       = "rejoin";
+  private static final String       PRODUCT_ID_KEY                   = "productId";
   private static final Properties   EMPTY_PROPERTIES                 = new Properties();
 
   @Override
@@ -58,22 +59,22 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
   private TerracottaClientConfig createTerracottaClientConfig(String type, String subName, Properties properties)
       throws ToolkitInstantiationException {
+    TerracottaClientConfigParams terracottaClientConfigParams = new TerracottaClientConfigParams().rejoin(isRejoinEnabled(properties))
+        .nonStopEnabled(isNonStopEnabled(type));
     String tcConfigSnippet = properties.getProperty(TC_CONFIG_SNIPPET_KEY, "");
-    final String terracottaUrlOrConfig;
-    final boolean isUrl;
     if (tcConfigSnippet == null || tcConfigSnippet.trim().equals("")) {
       // if no tcConfigSnippet, assume url
-      terracottaUrlOrConfig = getTerracottaUrlFromSubName(subName);
-      isUrl = true;
+      terracottaClientConfigParams.tcConfigSnippetOrUrl(getTerracottaUrlFromSubName(subName)).isUrl(true);
     } else {
-      terracottaUrlOrConfig = tcConfigSnippet;
-      isUrl = false;
+      terracottaClientConfigParams.tcConfigSnippetOrUrl(tcConfigSnippet).isUrl(false);
     }
-    Set<String> tunnelledMBeanDomains = getTunnelledMBeanDomains(properties);
+    terracottaClientConfigParams.tunnelledMBeanDomains(getTunnelledMBeanDomains(properties));
 
-    return new TerracottaClientConfigParams().tcConfigSnippetOrUrl(terracottaUrlOrConfig).isUrl(isUrl)
-        .tunnelledMBeanDomains(tunnelledMBeanDomains).rejoin(isRejoinEnabled(properties))
-        .nonStopEnabled(isNonStopEnabled(type)).newTerracottaClientConfig();
+    if (properties.containsKey(PRODUCT_ID_KEY)) {
+      terracottaClientConfigParams.productId(properties.getProperty(PRODUCT_ID_KEY));
+    }
+
+    return terracottaClientConfigParams.newTerracottaClientConfig();
   }
 
   private boolean isNonStopEnabled(String type) {

@@ -15,6 +15,7 @@ import com.terracottatech.config.DataStorageFlash;
 import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
+import com.terracottatech.config.DataStorageFlash;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;

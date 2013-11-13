@@ -4,6 +4,7 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
 
 import java.util.Collections;
@@ -16,12 +17,19 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   private final String uid = UUID.getUUID().toString();
 
   @Override
-  public synchronized ConnectionID nextConnectionId(String clientJvmID) {
+  public ConnectionID populateConnectionID(final ConnectionID connectionID) {
+    if (new ChannelID(connectionID.getChannelID()).isNull()) {
+      return nextConnectionId(connectionID.getJvmID());
+    } else {
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID());
+    }
+  }
+
+  private synchronized ConnectionID nextConnectionId(String clientJvmID) {
     return new ConnectionID(clientJvmID, sequence++, uid);
   }
 
-  @Override
-  public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
+  private ConnectionID makeConnectionId(String clientJvmID, long channelID) {
     return new ConnectionID(clientJvmID, channelID, uid);
   }
 

@@ -8,6 +8,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.PhysicalAction;
 
 import java.util.ArrayList;
@@ -28,8 +29,8 @@ public class TestDNAWriter implements DNAWriter {
   }
 
   @Override
-  public void addLogicalAction(final int method, final Object[] parameters) {
-    this.actions.add(new LogicalAction(method, parameters));
+  public void addLogicalAction(final int method, final Object[] parameters, LogicalChangeID logicalChangeID) {
+    this.actions.add(new LogicalAction(method, parameters, logicalChangeID));
   }
 
   @Override
@@ -221,5 +222,11 @@ public class TestDNAWriter implements DNAWriter {
 
   public TestDNACursor getDNACursor() {
     return new TestDNACursor(this.actions);
+  }
+
+  @Override
+  public void addLogicalAction(int method, Object[] parameters) {
+    this.actions.add(new LogicalAction(method, parameters));
+
   }
 }

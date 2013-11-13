@@ -5,6 +5,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.license.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -35,21 +36,28 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public ConnectionID nextConnectionId(String clientJvmID) {
-    return buildConnectionId(clientJvmID, connectionIDSequence.next());
+  public ConnectionID populateConnectionID(final ConnectionID connectionID) {
+    if (new ChannelID(connectionID.getChannelID()).isNull()) {
+      return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
+    } else {
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
+    }
   }
 
-  private ConnectionID buildConnectionId(String jvmID, long channelID) {
+  private ConnectionID nextConnectionId(String clientJvmID, final ProductID productId) {
+    return buildConnectionId(clientJvmID, connectionIDSequence.next(), productId);
+  }
+
+  private ConnectionID buildConnectionId(String jvmID, long channelID, final ProductID productId) {
     Assert.assertNotNull(uid);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
     clientStateStore.saveClientState(new ChannelID(channelID));
-    ConnectionID rv = new ConnectionID(jvmID, channelID, uid);
+    ConnectionID rv = new ConnectionID(jvmID, channelID, uid, null, null, productId);
     fireCreationEvent(rv);
     return rv;
   }
 
-  @Override
-  public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
+  private ConnectionID makeConnectionId(String clientJvmID, long channelID, final ProductID productId) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
     // provided channelID shall not be using
     if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
@@ -58,7 +66,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
                                                                                                       + " has been used. "
                                                                                                       + " One possible cause: restarted some mirror groups but not all."); }
 
-    return buildConnectionId(clientJvmID, channelID);
+    return buildConnectionId(clientJvmID, channelID, productId);
   }
 
   @Override

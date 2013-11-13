@@ -3,6 +3,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.license.ProductID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -74,5 +75,6 @@ public interface MessageChannel {
   public void setLocalNodeID(NodeID source);
   
   public NodeID getRemoteNodeID();
-  
+
+  public ProductID getProductId();
 }

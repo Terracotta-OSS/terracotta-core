@@ -20,4 +20,5 @@ public interface TransactionBuffer {
   public void addTransactionCompleteListeners(List transactionCompleteListeners);
 
   public List getTransactionCompleteListeners();
+
 }

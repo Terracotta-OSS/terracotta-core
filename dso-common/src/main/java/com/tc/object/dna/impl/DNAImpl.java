@@ -18,6 +18,7 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
@@ -197,6 +198,10 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   }
 
   private void parseLogical(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
+    LogicalChangeID logicalChangeID = LogicalChangeID.NULL_ID;
+    if (!input.readBoolean()) {
+      logicalChangeID = new LogicalChangeID(input.readLong());
+    }
     final int method = this.input.readInt();
     final int paramCount = this.input.read();
     if (paramCount < 0) { throw new AssertionError("Invalid param count:" + paramCount); }
@@ -204,7 +209,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     for (int i = 0; i < params.length; i++) {
       params[i] = encoding.decode(this.input, serializer);
     }
-    this.currentAction = new LogicalAction(method, params);
+    this.currentAction = new LogicalAction(method, params, logicalChangeID);
   }
 
   @Override

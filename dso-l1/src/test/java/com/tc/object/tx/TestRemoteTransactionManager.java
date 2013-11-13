@@ -136,6 +136,10 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void throttleProcessing(boolean processing) {
     throw new ImplementMe();
   }
-  
-  
+
+  @Override
+  public void requestImmediateShutdown() {
+    throw new ImplementMe();
+
+  }
 }

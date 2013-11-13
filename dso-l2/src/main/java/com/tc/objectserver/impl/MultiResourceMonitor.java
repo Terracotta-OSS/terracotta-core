@@ -34,20 +34,26 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   private final Timer                             driver;
   private final int                               L2_EVICTION_CRITICALTHRESHOLD;
   private final int                               L2_EVICTION_HALTTHRESHOLD;
+  private final int                               L2_EVICTION_OFFHEAP_STOPPAGE;
+  private final int                               L2_EVICTION_STORAGE_STOPPAGE;
+  private final boolean                           flash;
   
-  private final Set<MonitoredResource.Type> evictions = EnumSet.noneOf(MonitoredResource.Type.class);
-  private final Set<MonitoredResource.Type> throttles = EnumSet.noneOf(MonitoredResource.Type.class);
+  private boolean evicting = false;
+  private boolean throttling = false;
   private final Set<MonitoredResource.Type> stops = EnumSet.noneOf(MonitoredResource.Type.class);
     
-  public MultiResourceMonitor(Collection<MonitoredResource> rsrc, ThreadGroup grp, EvictionThreshold et, long maxSleepTime, boolean persistent) {
+  public MultiResourceMonitor(Collection<MonitoredResource> rsrc, ThreadGroup grp, EvictionThreshold et, long maxSleepTime, boolean flash, boolean persistent) {
     this.sleepInterval = maxSleepTime;
     this.resources = rsrc;
     this.memoryThreshold = et;
     this.runner = Runners.newScheduledTaskRunner(1, grp);
     this.driver = this.runner.newTimer();
+    this.flash = flash;
     L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
             .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
     L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
+    L2_EVICTION_OFFHEAP_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE,8 * 1024 * 1024);
+    L2_EVICTION_STORAGE_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE,95);
   }
 
   @Override
@@ -74,24 +80,27 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   }
 
   private synchronized void startMonitorIfNecessary() {
-    if (!listeners.isEmpty()) {
-      for ( final MonitoredResource rsrc : this.resources ) {
-        schedule(rsrc,sleepInterval);
+    for ( MonitoredResource rsrc : this.resources ) {
+      switch ( rsrc.getType() ) {
+        case OFFHEAP:
+          if ( flash ) {
+            schedule(createVitalMemoryTask(rsrc, sleepInterval), 0);
+          } else {
+            schedule(createMemoryTask(rsrc, sleepInterval), 0);
+          }
+        break;
+        case HEAP:
+        case OTHER:
+          schedule(createMemoryTask(rsrc, sleepInterval), 0);
+          break;
+        case DISK:
+          schedule(createStorageTask(rsrc, sleepInterval), 0);
       }
     }
   }
   
-  private void schedule(final MonitoredResource rsrc, final long time) {
-    switch ( rsrc.getType() ) {
-      case OFFHEAP:
-      case HEAP:
-      case OTHER:
-        driver.schedule(createMemoryTask(rsrc, time), time, TimeUnit.MILLISECONDS);
-        break;
-      case DISK:
-        driver.schedule(createStorageTask(rsrc, time), time, TimeUnit.MILLISECONDS);
-    }
-    
+  private void schedule(final Runnable runnable, final long time) {
+    driver.schedule(runnable, time, TimeUnit.MILLISECONDS);    
   }
   
   private Runnable createStorageTask(final MonitoredResource rsrc, final long time) {
@@ -99,7 +108,9 @@ public class MultiResourceMonitor implements ResourceEventProducer {
 
       @Override
       public void run() {
-        if ( rsrc.getUsed() > rsrc.getTotal() * 0.9 ) {
+        long reserved = rsrc.getReserved();
+        long total = rsrc.getTotal();
+        if ( reserved > total * (L2_EVICTION_STORAGE_STOPPAGE*0.01) ) {
           if ( stops.add(rsrc.getType()) ) {
             for (ResourceEventListener listener : listeners) {
               listener.requestStop(rsrc);
@@ -112,9 +123,34 @@ public class MultiResourceMonitor implements ResourceEventProducer {
             }
           }
         }
-        schedule(rsrc, adjust(rsrc, time));
+        schedule(this, adjust(reserved,total, time));
       }
-      
+    };
+  }
+  
+  private Runnable createVitalMemoryTask(final MonitoredResource rsrc, final long time) {
+    return new Runnable() {
+
+      @Override
+      public void run() {
+        long vital = rsrc.getVital();
+        long total = rsrc.getTotal();
+
+        if ( total - vital < L2_EVICTION_OFFHEAP_STOPPAGE ) {
+          if ( stops.add(rsrc.getType()) ) {
+            for (ResourceEventListener listener : listeners) {
+              listener.requestStop(rsrc);
+            }
+          }
+        } else {
+          if ( stops.remove(rsrc.getType()) ) {
+            for (ResourceEventListener listener : listeners) {
+              listener.cancelStop(rsrc);
+            }
+          }
+        }
+        schedule(this, adjust(vital ,total , time));        
+      }
     };
   }
   
@@ -123,40 +159,118 @@ public class MultiResourceMonitor implements ResourceEventProducer {
 
       @Override
       public void run() {
+        MonitoredResource working = new CachingMonitoredResource(rsrc);
         for (ResourceEventListener listener : listeners) {
-          listener.resourcesUsed(rsrc);
+          listener.resourcesUsed(working);
         }
-        if ( memoryThreshold.shouldThrottle(rsrc, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+        
+        if ( memoryThreshold.shouldThrottle(working, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+          throttling = true;
           for (ResourceEventListener listener : listeners) {
-            listener.requestThrottle(rsrc);
+            listener.requestThrottle(working);
           }
         } else {
-            for (ResourceEventListener listener : listeners) {
-              listener.cancelThrottle(rsrc);
+            if ( throttling ) {
+              for (ResourceEventListener listener : listeners) {
+                listener.cancelThrottle(working);
+              }
             }
         }
-        if ( memoryThreshold.isAboveThreshold(rsrc, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+        if ( memoryThreshold.isAboveThreshold(working, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+          evicting = true;
           for (ResourceEventListener listener : listeners) {
-            listener.requestEvictions(rsrc);
+            listener.requestEvictions(working);
           }
         } else {
+          if ( evicting ) {
             for (ResourceEventListener listener : listeners) {
-              listener.cancelEvictions(rsrc);
+              listener.cancelEvictions(working);
             }
-        }  
-        schedule(rsrc, adjust(rsrc, time));
+          }
+        }
+        schedule(this, adjust(working.getReserved(),working.getTotal(),time));
       }
-      
     };
   }
 
-  private static long adjust(MonitoredResource mu, long interval) {
-    long remove = Math.round(interval * Math.sin((mu.getReserved() * Math.PI) / (2.0 * mu.getTotal())));
+  private static long adjust(long reserved, long total, long interval) {
+    long remove = Math.round(interval * Math.sin((reserved * Math.PI) / (2.0 * total)));
     return interval - (remove);
   }
     
   @Override
   public synchronized void shutdown() {
     stopMonitorThread();
+  }
+  
+  private static class CachingMonitoredResource implements MonitoredResource {
+    private final MonitoredResource delegate;
+    private long vital;
+    private long used;
+    private long reserved;
+    private long total;
+
+    public CachingMonitoredResource(MonitoredResource delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public Type getType() {
+      return delegate.getType();
+    }
+
+    @Override
+    public long getVital() {
+      if ( vital == 0 ) {
+        vital = delegate.getVital();
+      }
+      return vital;
+    }
+
+    @Override
+    public long getUsed() {
+      if ( used == 0 ) {
+        used = delegate.getUsed();
+      }
+      return used;
+    }
+
+    @Override
+    public long getReserved() {
+      if ( reserved == 0 ) {
+        reserved = delegate.getReserved();
+      }
+      return reserved;
+    }
+
+    @Override
+    public long getTotal() {
+      if ( total == 0 ) {
+        total = delegate.getTotal();
+      }
+      return total;
+    }
+
+    @Override
+    public Runnable addUsedThreshold(Direction direction, long value, Runnable action) {
+      return delegate.addUsedThreshold(direction, value, action);
+    }
+
+    @Override
+    public Runnable removeUsedThreshold(Direction direction, long value) {
+      return delegate.removeUsedThreshold(direction, value);
+    }
+
+    @Override
+    public Runnable addReservedThreshold(Direction direction, long value, Runnable action) {
+      return delegate.addReservedThreshold(direction, value, action);
+    }
+
+    @Override
+    public Runnable removeReservedThreshold(Direction direction, long value) {
+      return delegate.removeReservedThreshold(direction, value);
+    }
+    
+    
   }
 }

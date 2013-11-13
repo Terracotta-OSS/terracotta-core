@@ -26,8 +26,9 @@
     
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <core-storage-api.version>1.1</core-storage-api.version>
-    <heap-core-storage.version>1.0.0</heap-core-storage.version>
+    <heap-core-storage.version>1.1.0</heap-core-storage.version>
     <bigmemory-core-storage.version>1.1.2</bigmemory-core-storage.version>
+    <fast-restartable-store.version>1.1.4-SNAPSHOT</fast-restartable-store.version>
     <jetty.version>8.1.12.v20130726</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.6.6</slf4j.version>
@@ -39,7 +40,7 @@
     <session-management.version>4.2.0-SNAPSHOT</session-management.version>
     <terracotta-license.version>1.0.11</terracotta-license.version>
     <toolkit-api.version>2.4</toolkit-api.version> 
-    <toolkit-api-internal.version>1.8</toolkit-api-internal.version>
+    <toolkit-api-internal.version>1.9</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
     <tcconfig.version>4.2.1</tcconfig.version>
@@ -102,7 +103,12 @@
         <artifactId>bigmemory-core-storage</artifactId>
         <version>${bigmemory-core-storage.version}</version>
       </dependency>
-      <dependency>
+    <dependency>
+      <groupId>com.terracottatech</groupId>
+      <artifactId>fast-restartable-store</artifactId>
+      <version>${fast-restartable-store.version}</version>
+    </dependency> 
+    <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
         <version>${linked-child-process.version}</version>
@@ -375,6 +381,7 @@
         <artifactId>powermock-api-mockito</artifactId>
         <version>${powermock.version}</version>
       </dependency>
+      
     </dependencies>
   </dependencyManagement>
 
@@ -404,7 +411,7 @@
       <artifactId>test-listeners</artifactId>
       <version>1.0.1</version>
       <scope>test</scope>
-    </dependency>    
+    </dependency>         
   </dependencies>
 
   <build>

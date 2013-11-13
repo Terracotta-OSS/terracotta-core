@@ -6,7 +6,6 @@ package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -38,8 +37,6 @@ public class ServerClientHandshakeManager {
   private static final State             STARTED                           = new State("STARTED");
   private static final int               BATCH_SEQUENCE_SIZE               = 10000;
   static final int                       RECONNECT_WARN_INTERVAL           = 15000;
-
-  public static final Sink               NULL_SINK                         = new NullSink();
 
   private State                          state                             = INIT;
 

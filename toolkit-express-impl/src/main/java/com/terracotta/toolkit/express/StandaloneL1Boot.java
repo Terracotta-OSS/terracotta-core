@@ -6,11 +6,11 @@ package com.terracotta.toolkit.express;
 import org.terracotta.license.util.Base64;
 
 import com.google.common.collect.MapMaker;
+import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
-import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.util.ProductInfo;
 
@@ -33,6 +33,7 @@ public class StandaloneL1Boot implements Callable<Object> {
 
   private final String              embeddedTcConfig;
   private final boolean             isURLConfig;
+  private final String              productIdName;
   private final ClassLoader         appLevelTimLoader;
   private final boolean             rejoin;
 
@@ -40,9 +41,10 @@ public class StandaloneL1Boot implements Callable<Object> {
   private final Map<String, Object> env;
 
   public StandaloneL1Boot(String embeddedTcConfig, boolean isURLConfig, ClassLoader appLevelTimLoader, boolean rejoin,
-                          Map<String, Object> env) {
+                          final String productIdName, Map<String, Object> env) {
     this.embeddedTcConfig = embeddedTcConfig;
     this.isURLConfig = isURLConfig;
+    this.productIdName = productIdName;
     String username = null;
     if (isURLConfig) {
       username = URLConfigUtil.getUsername(embeddedTcConfig);
@@ -71,9 +73,9 @@ public class StandaloneL1Boot implements Callable<Object> {
       configSpec = "base64://"
                    + Base64.encodeBytes(embeddedTcConfig.getBytes("UTF-8"), Base64.GZIP | Base64.DONT_BREAK_LINES);
     }
-    DSOContext context = DSOContextImpl.createStandaloneContext(configSpec, appLevelTimLoader,
-                                                                this.rejoin, securityManager, securityInfo);
 
-    return context;
+    ProductID productID = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
+    return DSOContextImpl.createStandaloneContext(configSpec, appLevelTimLoader, rejoin, securityManager, securityInfo,
+        productID);
   }
 }
