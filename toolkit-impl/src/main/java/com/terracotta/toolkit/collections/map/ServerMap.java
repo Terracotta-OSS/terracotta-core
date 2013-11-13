@@ -1058,7 +1058,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         try {
           MetaDataDescriptor mdd = null;
           if (metaData != null) {
-            metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
+            metaData.add(SearchMetaData.PREV_VALUE, oldSerializedMapValue.getObjectID());
             metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
             mdd = getMetaDataDescriptor(metaData);
           }
