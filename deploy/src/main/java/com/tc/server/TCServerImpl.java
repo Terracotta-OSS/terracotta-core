@@ -204,7 +204,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (!LicenseManager.enterpriseEdition()) return;
 
     DataStorage dataStorage = manager.dsoL2Config().getDataStorage();
-    LicenseManager.verifyServerArrayOffheapCapability(dataStorage.getMaxSize());
+    LicenseManager.verifyServerArrayOffheapCapability(dataStorage.getSize());
     if (manager.commonl2Config().authentication()) {
       LicenseManager.verifyAuthenticationCapability();
     }
@@ -540,7 +540,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     long maxOffheap = 0L;
     DataStorage datastore = configurationSetupManager.dsoL2Config().getDataStorage();
     try {
-      maxOffheap = Conversion.memorySizeAsLongBytes(datastore.getMaxSize());
+      maxOffheap = Conversion.memorySizeAsLongBytes(datastore.getSize());
     } catch (MetricsFormatException e) {
       throw new TCRuntimeException("Problem converting max data size: ", e);
     }

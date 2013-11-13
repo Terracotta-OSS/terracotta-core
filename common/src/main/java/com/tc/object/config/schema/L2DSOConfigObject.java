@@ -48,7 +48,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;
   public static final int         MIN_PORTNUMBER                        = 0x0FFF;
   public static final int         MAX_PORTNUMBER                        = 0xFFFF;
-  public static final String      DEFAULT_MAX_DATA_SIZE                 = "512m";
+  public static final String      DEFAULT_DATA_STORAGE_SIZE                 = "512m";
 
   private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
@@ -208,10 +208,10 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (!server.isSetDataStorage()) {
       server.addNewDataStorage();
       if (server.isSetOffheap()) {
-        server.getDataStorage().setMaxSize(server.getOffheap().getMaxDataSize());
+        server.getDataStorage().setSize(server.getOffheap().getMaxDataSize());
       } else {
-        logger.warn("Max data size not specified. Using a default of " + DEFAULT_MAX_DATA_SIZE);
-        server.getDataStorage().setMaxSize(DEFAULT_MAX_DATA_SIZE);
+        logger.warn("Max data size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE);
+        server.getDataStorage().setSize(DEFAULT_DATA_STORAGE_SIZE);
       }
     }
 
@@ -226,7 +226,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     if (!server.getDataStorage().isSetOffheap()) {
       server.getDataStorage().addNewOffheap();
-      server.getDataStorage().getOffheap().setSize(server.getDataStorage().getMaxSize());
+      server.getDataStorage().getOffheap().setSize(server.getDataStorage().getSize());
     }
   }
 

@@ -433,7 +433,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   private long getResourceTotal() {
     try {
-      return Conversion.memorySizeAsLongBytes(dataStorage.getMaxSize());
+      return Conversion.memorySizeAsLongBytes(dataStorage.getSize());
     } catch (Conversion.MetricsFormatException e) {
       throw new RuntimeException(e);
     }
