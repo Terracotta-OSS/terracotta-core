@@ -56,7 +56,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @return true if operation changed the clustered state
    * @throws AbortedOperationException
    */
-  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value)
+  boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value, MetaDataDescriptor mdd)
       throws AbortedOperationException;
 
   /**
@@ -66,10 +66,12 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
+   * @param mdd
    * @return true if operation changed the clustered state
    * @throws AbortedOperationException
    */
-  Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value)
+  Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value,
+                                      MetaDataDescriptor mdd)
       throws AbortedOperationException;
 
   /**
@@ -80,7 +82,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @return true if operation changed the clustered state
    * @throws AbortedOperationException
    */
-  boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current, final Object newValue)
+  boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current,
+                                   final Object newValue, MetaDataDescriptor mdd)
       throws AbortedOperationException;
 
   /**

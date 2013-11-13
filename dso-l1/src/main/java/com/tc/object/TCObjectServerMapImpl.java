@@ -260,7 +260,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value)
+  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
       throws AbortedOperationException {
     Lock lock = getLockForKey(key);
     lock.lock();
@@ -278,6 +278,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         shareObject(key);
         final ObjectID valueObjectID = shareObject(value);
         final Object[] parameters = constructParams(key, value);
+        if (mdd != null) {
+          addMetaData(mdd);
+        }
         boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT,
                                              SerializationUtil.PUT_IF_ABSENT_SIGNATURE, parameters);
         if (rv) {
@@ -304,8 +307,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue)
-      throws AbortedOperationException {
+  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue,
+                                          MetaDataDescriptor mdd) throws AbortedOperationException {
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
@@ -313,7 +316,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       shareObject(current);
       final ObjectID valueObjectID = shareObject(newValue);
       final Object[] parameters = constructParamsForReplace(key, newValue, current);
-
+      if (mdd != null) {
+        addMetaData(mdd);
+      }
       boolean rv = logicalInvokeWithResult(SerializationUtil.REPLACE_IF_VALUE_EQUAL,
                                            SerializationUtil.REPLACE_IF_VALUE_EQUAL_SIGNATURE, parameters);
       if (rv) {
@@ -431,7 +436,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @throws AbortedOperationException
    */
   @Override
-  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) throws AbortedOperationException {
+  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
+      throws AbortedOperationException {
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
@@ -441,10 +447,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         // and coz of DEV-5462
         return false;
       }
-
+      // Only add metadata if we are sending the change..
+      if (mdd != null) {
+        addMetaData(mdd);
+      }
       boolean rv = invokeLogicalRemove(key, value);
       if (rv) {
-      updateCacheOnRemoveUnlocked(key);
+        updateCacheOnRemoveUnlocked(key);
       }
       return rv;
     } finally {
@@ -1032,8 +1041,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private boolean invokeLogicalRemove(final Object key, final Object value) throws AbortedOperationException {
     return logicalInvokeWithResult(SerializationUtil.REMOVE_IF_VALUE_EQUAL,
-                                   SerializationUtil.REMOVE_IF_VALUE_EQUAL_SIGNATURE,
-                  new Object[] { key, value });
+                                   SerializationUtil.REMOVE_IF_VALUE_EQUAL_SIGNATURE, new Object[] { key, value });
   }
 
   private void invokeLogicalExpire(final Object key, final Object value) {

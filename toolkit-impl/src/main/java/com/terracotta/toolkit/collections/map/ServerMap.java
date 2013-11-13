@@ -432,6 +432,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     tcObjectServerMap.addMetaData(mdd);
   }
 
+  private MetaDataDescriptor getMetaDataDescriptor(MetaData metaData) {
+    return Extractor.extractInternalDescriptorFrom(platformService, metaData);
+  }
+
   private Object doLogicalGetValueLocked(Object key, final Object lockID) {
     try {
       return this.tcObjectServerMap.getValue(this, lockID, key);
@@ -521,7 +525,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private boolean doLogicalRemoveUnlocked(Object key, Object value) {
     try {
-      return this.tcObjectServerMap.doLogicalRemoveUnlocked(this, key, value);
+      MetaDataDescriptor mdd = null;
+      MetaData metaData = createRemoveSearchMetaData(key);
+      if (metaData != null) {
+        metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE);
+        metaData.add(SearchMetaData.KEY, key.toString());
+        mdd = getMetaDataDescriptor(metaData);
+      }
+      return this.tcObjectServerMap.doLogicalRemoveUnlocked(this, key, value, mdd);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException();
     }
@@ -858,14 +869,15 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       try {
         SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs, customMaxTTISeconds,
                                                                          customMaxTTLSeconds);
-        V old = deserialize(key,
-                            asSerializedMapValue(this.tcObjectServerMap
-                                .doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue)));
-        if (old == null && metaData != null) {
+        MetaDataDescriptor mdd = null;
+        if (metaData != null) {
           metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);
           metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
-          addMetaData(metaData);
+          mdd = getMetaDataDescriptor(metaData);
         }
+        V old = deserialize(key,
+                            asSerializedMapValue(this.tcObjectServerMap
+                                .doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue, mdd)));
         return old;
       } catch (AbortedOperationException e) {
         throw new ToolkitAbortableOperationException();
@@ -1044,12 +1056,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                                                                             ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                             ToolkitConfigFields.NO_MAX_TTL_SECONDS);
         try {
+          MetaDataDescriptor mdd = null;
           if (metaData != null) {
             metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
             metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
-            addMetaData(metaData);
+            mdd = getMetaDataDescriptor(metaData);
           }
-          if (this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue)) {
+          if (this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue,
+                                                              mdd)) {
             return old;
           } else {
             // retry
@@ -1109,14 +1123,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           SerializedMapValue newSerializedMapValue = createSerializedMapValue(newValue, timeSource.nowInSeconds(),
                                                                               ToolkitConfigFields.NO_MAX_TTI_SECONDS,
                                                                               ToolkitConfigFields.NO_MAX_TTL_SECONDS);
-          // TODO: check If its ok to add metadata here.. Write Test..
+          MetaDataDescriptor mdd = null;
           if (metaData != null) {
             metaData.add(SearchMetaData.PREV_VALUE, oldSerializedMapValue.getObjectID());
             metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
-            addMetaData(metaData);
+            mdd = getMetaDataDescriptor(metaData);
           }
           return this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue,
-                                                                 newSerializedMapValue);
+                                                                 newSerializedMapValue, mdd);
 
         } catch (AbortedOperationException e) {
           throw new ToolkitAbortableOperationException();

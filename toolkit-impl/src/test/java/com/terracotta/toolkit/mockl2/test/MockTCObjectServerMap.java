@@ -302,17 +302,18 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public boolean doLogicalRemoveUnlocked(TCServerMap serverMap, Object key, Object value) {
+  public boolean doLogicalRemoveUnlocked(TCServerMap serverMap, Object key, Object value, MetaDataDescriptor mdd) {
     throw new ImplementMe();
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap serverMap, Object key, Object value) {
+  public Object doLogicalPutIfAbsentUnlocked(TCServerMap serverMap, Object key, Object value, MetaDataDescriptor mdd) {
     throw new ImplementMe();
   }
 
   @Override
-  public boolean doLogicalReplaceUnlocked(TCServerMap serverMap, Object key, Object current, Object newValue) {
+  public boolean doLogicalReplaceUnlocked(TCServerMap serverMap, Object key, Object current, Object newValue,
+                                          MetaDataDescriptor mdd) {
     throw new ImplementMe();
   }
 
