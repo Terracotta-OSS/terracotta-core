@@ -84,17 +84,17 @@ public class MultiResourceMonitor implements ResourceEventProducer {
       switch ( rsrc.getType() ) {
         case OFFHEAP:
           if ( flash ) {
-            schedule(createVitalMemoryTask(rsrc, sleepInterval), 0);
+            schedule(createVitalMemoryTask(rsrc, sleepInterval), 10);
           } else {
-            schedule(createMemoryTask(rsrc, sleepInterval), 0);
+            schedule(createMemoryTask(rsrc, sleepInterval), 20);
           }
         break;
         case HEAP:
         case OTHER:
-          schedule(createMemoryTask(rsrc, sleepInterval), 0);
+          schedule(createMemoryTask(rsrc, sleepInterval), 30);
           break;
         case DISK:
-          schedule(createStorageTask(rsrc, sleepInterval), 0);
+          schedule(createStorageTask(rsrc, sleepInterval), 40);
       }
     }
   }

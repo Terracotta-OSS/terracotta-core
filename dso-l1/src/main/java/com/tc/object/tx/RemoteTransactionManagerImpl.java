@@ -636,8 +636,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private void callBackTxnCompleteListeners(TransactionID txnID,
                                             List<TransactionCompleteListener> transactionCompleteListeners) {
     if (transactionCompleteListeners.isEmpty()) return;
-    for (TransactionCompleteListener l : transactionCompleteListeners) {
-      l.transactionComplete(txnID);
+    try {
+      for (TransactionCompleteListener l : transactionCompleteListeners) {
+        l.transactionComplete(txnID);
+      }
+    } catch (TCNotRunningException e) {
+      if (!isShutdown()) { throw e; }
     }
   }
 
@@ -829,7 +833,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       return null;
     }
 
-    private synchronized ClientTransactionBatch getBatch(TxnBatchID id) {
+    synchronized ClientTransactionBatch getBatch(TxnBatchID id) {
       return incompleteBatches.get(id);
     }
 
@@ -869,7 +873,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       outStandingBatches--;
     }
 
-    private synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
+    synchronized ClientTransactionBatch removeBatch(TxnBatchID id) {
       return incompleteBatches.remove(id);
     }
 

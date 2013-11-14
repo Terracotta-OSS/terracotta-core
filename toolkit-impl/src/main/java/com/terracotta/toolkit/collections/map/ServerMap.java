@@ -1058,7 +1058,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         try {
           MetaDataDescriptor mdd = null;
           if (metaData != null) {
-            metaData.add(SearchMetaData.PREV_VALUE, ObjectID.NULL_ID);
+            metaData.add(SearchMetaData.PREV_VALUE, oldSerializedMapValue.getObjectID());
             metaData.add(SearchMetaData.VALUE, newSerializedMapValue.getObjectID());
             mdd = getMetaDataDescriptor(metaData);
           }
@@ -1653,8 +1653,23 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
     @Override
     public Object generateLockIdForKey(Object key) {
-      long lowBits = key.hashCode() & 0x00000000FFFFFFFFL;
+      long lowBits = computeHashCode(key) & 0x00000000FFFFFFFFL;
       return highBits | lowBits;
+    }
+
+    protected int computeHashCode(Object key) {
+      byte[] bytes = null;
+      int hash = 1704124966;
+      try {
+        bytes = ((String) key).getBytes("UTF-8");
+      } catch (Exception e) {
+        hash = key.hashCode();
+      }
+      for (byte b : bytes) {
+        hash ^= b;
+        hash *= 0x01000193;
+      }
+      return hash;
     }
   }
 
