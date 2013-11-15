@@ -4,8 +4,6 @@
 
 package com.tc.objectserver.impl;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.Runners;
@@ -25,7 +23,6 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  */
 public class MultiResourceMonitor implements ResourceEventProducer {
   
-  private static final TCLogger logger = TCLogging.getLogger(MultiResourceMonitor.class);
   private final List<ResourceEventListener> listeners = new CopyOnWriteArrayList<ResourceEventListener>();
   private final long sleepInterval;
   private final Collection<MonitoredResource> resources;

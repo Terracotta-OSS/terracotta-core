@@ -12,7 +12,7 @@ import java.util.Map;
  * @author tim
  */
 public interface StorageManagerFactory {
-  enum Type {LEAF, NODE};
+  enum Type {LEAF, NODE}
  
   StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap, TransformerLookup transformerLookup) throws IOException;
 

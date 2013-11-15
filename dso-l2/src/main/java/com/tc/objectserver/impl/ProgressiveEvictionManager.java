@@ -73,12 +73,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                                                                           .getProperties()
                                                                                           .getLong(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL,
                                                                                                    -1);
-  private final static boolean                    PERIODIC_EVICTOR_ENABLED            = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED,
-                                                                                                      true);
   private final ServerMapEvictionEngine           evictor;
-  private final ResourceEventProducer                   trigger; 
+  private final ResourceEventProducer             trigger; 
   private final Collection<MonitoredResource>     resources;
   private final PersistentManagedObjectStore      store;
   private final ObjectManager                     objectManager;
