@@ -421,9 +421,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(true, servers.getGarbageCollection().getVerbose());
     Assert.assertEquals(1234, servers.getGarbageCollection().getInterval());
 
-    Assert.assertTrue(server.isSetOffheap());
-    Assert.assertEquals(true, server.getOffheap().getEnabled());
-    Assert.assertEquals("5628m", server.getOffheap().getMaxDataSize());
+    Assert.assertTrue(server.getDataStorage().isSetOffheap());
+    Assert.assertEquals("5628m", server.getDataStorage().getOffheap().getSize());
   }
 
   public void testOffHeap2() throws IOException {

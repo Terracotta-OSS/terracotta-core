@@ -31,7 +31,7 @@ public class HeapStorageManagerFactory implements StorageManagerFactory {
   }
 
   @Override
-  public <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(final KeyValueStorageConfig<K, V> baseConfig) {
+  public <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(final KeyValueStorageConfig<K, V> baseConfig, Type nt) {
     return baseConfig;
   }
 
@@ -41,7 +41,7 @@ public class HeapStorageManagerFactory implements StorageManagerFactory {
   }
 
   @Override
-  public <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(final ImmutableKeyValueStorageConfig.Builder<K, V> builder) {
+  public <K, V> KeyValueStorageConfig<K, V> wrapObjectDBConfig(final ImmutableKeyValueStorageConfig.Builder<K, V> builder, Type nt) {
     return builder.build();
   }
 

@@ -26,7 +26,7 @@ public class DetailedMemoryUsage implements MemoryUsage {
     
     private long checkUsed() {
         if ( cacheUsed < 0 ) {
-            cacheUsed = rsrc.getUsed();
+            cacheUsed = rsrc.getVital();
         }
         return cacheUsed;
     }

@@ -77,7 +77,7 @@ import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.Conversion.MetricsFormatException;
 import com.tc.util.ProductInfo;
-import com.terracottatech.config.Offheap;
+import com.terracottatech.config.DataStorage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -203,10 +203,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
     if (!LicenseManager.enterpriseEdition()) return;
 
-    Offheap offHeapConfig = manager.dsoL2Config().getOffheap();
-    if (offHeapConfig.getEnabled()) {
-      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
-    }
+    DataStorage dataStorage = manager.dsoL2Config().getDataStorage();
+    LicenseManager.verifyServerArrayOffheapCapability(dataStorage.getSize());
     if (manager.commonl2Config().authentication()) {
       LicenseManager.verifyAuthenticationCapability();
     }
@@ -540,13 +538,11 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private long getMaxDataSize() {
     long maxOffheap = 0L;
-    Offheap offHeapConfig = configurationSetupManager.dsoL2Config().offHeapConfig();
-    if (offHeapConfig.getEnabled()) {
-      try {
-        maxOffheap = Conversion.memorySizeAsLongBytes(offHeapConfig.getMaxDataSize());
-      } catch (MetricsFormatException e) {
-        throw new TCRuntimeException("Problem converting max data size: ", e);
-      }
+    DataStorage datastore = configurationSetupManager.dsoL2Config().getDataStorage();
+    try {
+      maxOffheap = Conversion.memorySizeAsLongBytes(datastore.getSize());
+    } catch (MetricsFormatException e) {
+      throw new TCRuntimeException("Problem converting max data size: ", e);
     }
     return maxOffheap;
   }

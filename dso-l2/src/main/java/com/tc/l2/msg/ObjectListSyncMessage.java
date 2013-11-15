@@ -20,7 +20,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
 
   private boolean         syncAllowed;
   private State           currentState;
-  private boolean         offheapEnabled;
   private long            resourceSize;
 
   // To make serialization happy
@@ -32,11 +31,10 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, final boolean offheapEnabled, final long resourceSize) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, final boolean syncAllowed, final long resourceSize) {
     super(type, messageID);
     this.syncAllowed = syncAllowed;
     this.currentState = currentState;
-    this.offheapEnabled = offheapEnabled;
     this.resourceSize = resourceSize;
   }
 
@@ -54,7 +52,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
       case RESPONSE:
         currentState = new State(in.readString());
         syncAllowed = in.readBoolean();
-        offheapEnabled = in.readBoolean();
         resourceSize = in.readLong();
         break;
       default:
@@ -72,7 +69,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
       case RESPONSE:
         out.writeString(this.currentState.getName());
         out.writeBoolean(syncAllowed);
-        out.writeBoolean(offheapEnabled);
         out.writeLong(resourceSize);
         break;
       default:
@@ -88,10 +84,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     return resourceSize;
   }
 
-  public boolean isOffheapEnabled() {
-    return offheapEnabled;
-  }
-
   public boolean isSyncAllowed() {
     return syncAllowed;
   }
@@ -102,7 +94,6 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
            "type=" + getTypeString() +
            ", syncAllowed=" + syncAllowed +
            ", currentState=" + currentState +
-           ", offheapEnabled=" + offheapEnabled +
            ", resourceSize=" + resourceSize +
            '}';
   }

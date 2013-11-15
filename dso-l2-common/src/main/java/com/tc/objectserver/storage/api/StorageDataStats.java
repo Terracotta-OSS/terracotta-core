@@ -7,5 +7,5 @@ import java.io.Serializable;
 import java.util.Map;
 
 public interface StorageDataStats extends Serializable {
-  public Map<String, StorageData> getStorageStats();
+  public Map<String, Map<String, Long>> getStorageStats();
 }

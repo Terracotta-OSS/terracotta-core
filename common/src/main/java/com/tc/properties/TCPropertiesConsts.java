@@ -68,14 +68,16 @@ public interface TCPropertiesConsts {
    * haltThreshold           : the threshold where l2 singles l1 to halt additive operations
    * criticalUpperbound      : the upperbound bytes available above the threshold levels
    * criticalLowerbound      : the lowerbound bytes available above the threshold levels
+   * vital offheap stoppage      : the lowerbound bytes available above the threshold levels
+   * criticalLowerbound      : the lowerbound bytes available above the threshold levels
    * </code>
    ********************************************************************************************************************/
 
   public static final String L2_EVICTION_CRITICALTHRESHOLD                                  = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                            = "l2.eviction.resourcePollInterval";
   public static final String L2_EVICTION_HALTTHRESHOLD                                      = "l2.eviction.haltThreshold";
-  public static final String L2_EVICTION_CRITICALUPPERBOUND                                 = "l2.eviction.criticalUpperbound";
-  public static final String L2_EVICTION_CRITICALLOWERBOUND                                 = "l2.eviction.criticalLowerbound";
+  public static final String L2_EVICTION_OFFHEAP_STOPPAGE                                      = "l2.eviction.offheap.stoppage";
+  public static final String L2_EVICTION_STORAGE_STOPPAGE                                            = "l2.eviction.storage.stoppage";
 
   /*********************************************************************************************************************
    * <code>
@@ -809,6 +811,12 @@ public interface TCPropertiesConsts {
   public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeap.allocation.slow";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeap.allocation.critical";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeap.allocation.critical.halt";
+  public static final String L2_ALLOCATION_USE_PARTIALS                                 = "l2.offHeap.allocation.partials";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                                 = "l2.offHeap.allocation.partial.disable.maps";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                                 = "l2.offHeap.allocation.partial.disable.objects";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_HOTSET                                = "l2.offHeap.allocation.partial.disable.hotset";
+
+  public static final String L2_OFFHEAP_DISABLED                                            = "l2.offheap.disable";
 
   public static final String L2_OFFHEAP_MIN_PAGE_SIZE                                       = "l2.offHeap.min.page.size";
   public static final String L2_OFFHEAP_MAX_PAGE_SIZE                                       = "l2.offHeap.max.page.size";

@@ -64,7 +64,7 @@ public class ObjectListSyncMessageTest extends TestCase {
     validate(olsm, olsm1);
 
     olsm = ObjectListSyncMessageFactory
-        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, true, true, 1L );
+        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, true, 1L );
     olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
   }

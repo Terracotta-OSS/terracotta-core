@@ -10,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
+import com.tc.objectserver.managedobject.SerializedClusterObjectState;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,20 +27,25 @@ import java.util.Set;
  * @author tim
  */
 class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
-  private static final String OBJECT_DB = "object_db";
+  private static final String NODE_OBJECT_DB = "node_object_db";
+  private static final String LEAF_OBJECT_DB = "leaf_object_db";
 
-  private final KeyValueStorage<Long, byte[]> backingMap;
+  private final KeyValueStorage<Long, byte[]> nodeObjects;
+  private final KeyValueStorage<Long, byte[]> leafObjects;
   private final ManagedObjectSerializer serializer;
 
   ObjectMap(ManagedObjectPersistor persistor, StorageManager storageManager) {
-    this.backingMap = storageManager.getKeyValueStorage(OBJECT_DB, Long.class, byte[].class);
+    this.nodeObjects = storageManager.getKeyValueStorage(NODE_OBJECT_DB, Long.class, byte[].class);
+    this.leafObjects = storageManager.getKeyValueStorage(LEAF_OBJECT_DB, Long.class, byte[].class);
     this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
   }
 
   public static void addConfigTo(Map<String, KeyValueStorageConfig<?, ?>> configMap, KeyValueStorageMutationListener<Long, byte[]> listener,
                                  final StorageManagerFactory storageManagerFactory) {
-    configMap.put(OBJECT_DB, storageManagerFactory.wrapObjectDBConfig(ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class)
-        .listener(listener)));
+    configMap.put(NODE_OBJECT_DB, storageManagerFactory.wrapObjectDBConfig(ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class).listener(listener), 
+            StorageManagerFactory.Type.NODE));
+    configMap.put(LEAF_OBJECT_DB, storageManagerFactory.wrapObjectDBConfig(ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class).listener(listener), 
+            StorageManagerFactory.Type.LEAF));
   }
 
   @Override
@@ -54,7 +60,7 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
 
   @Override
   public long size() {
-    return backingMap.size();
+    return nodeObjects.size() + leafObjects.size();
   }
 
   @Override
@@ -75,13 +81,23 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    backingMap.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
+    if ( value.getManagedObjectState() instanceof SerializedClusterObjectState  ) {
+        leafObjects.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
+    } else {
+        nodeObjects.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
+  }
   }
 
   @Override
   public ManagedObject get(final ObjectID key) {
-    byte[] data = backingMap.get(key.toLong());
+    boolean leaf = true;
+    byte[] data = leafObjects.get(key.toLong());
+    
     if (data == null) {
+      data = nodeObjects.get(key.toLong());
+      leaf = false;
+    }
+    if ( data == null ) {
       return null;
     }
     try {
@@ -89,7 +105,11 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
       return (ManagedObject)serializer.deserializeFrom(oi);
     } catch (ObjectNotFoundException e) {
       // Clean up the backing map if the object winds up missing (see MNK-5031)
-      backingMap.remove(key.toLong());
+      if ( leaf ) {
+        leafObjects.remove(key.toLong());
+      } else {
+        nodeObjects.remove(key.toLong());
+      }
       return null;
     } catch (IOException e) {
       throw new AssertionError(e);
@@ -98,7 +118,10 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
 
     @Override
     public boolean remove(final ObjectID key) {
-        return backingMap.remove(key.toLong());
+        if ( !leafObjects.remove(key.toLong()) ) {
+            return nodeObjects.remove(key.toLong());
+    }
+        return true;
     }
 
     @Override
@@ -110,11 +133,15 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
 
     @Override
     public boolean containsKey(final ObjectID key) {
-        return backingMap.containsKey(key.toLong());
+        if ( !leafObjects.containsKey(key.toLong()) ) {
+            return nodeObjects.containsKey(key.toLong());
+    }
+        return true;
     }
 
     @Override
     public void clear() {
-        backingMap.clear();
+        leafObjects.clear();
+        nodeObjects.clear();
     }
 }

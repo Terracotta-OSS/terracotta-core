@@ -285,6 +285,9 @@ import java.util.Timer;
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
 
+import java.util.Collection;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
+
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -460,6 +463,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     final boolean restartable = l2DSOConfig.getRestartable().getEnabled();
+    final boolean flash = l2DSOConfig.getDataStorage().isSetFlash();
 
     // start the JMX server
     try {
@@ -805,7 +809,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                  globalServerMapGetValueRequestsCounter,
                                                  globalServerMapGetSnapshotRequestsCounter), 8, maxStageSize);
     final Stage respondToServerTCMapStage = stageManager
-        .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
+        .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 32,
                      maxStageSize);
     
     final Stage prefetchStage = stageManager
@@ -827,10 +831,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     dumpHandler.registerForDump(new CallbackDumpAdapter(resourceManager));
     channelManager.addEventListener(resourceManager);
 
-    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
+    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResources(),
                                                            objectStore, clientObjectReferenceSet,
                                                            serverTransactionFactory, threadGroup, resourceManager,
-                                                           sampledCounterManager, evictionTransactionPersistor, restartable);
+                                                           sampledCounterManager, evictionTransactionPersistor, flash, restartable);
 
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
@@ -980,7 +984,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                   this.configSetupManager, recycler,
                                                                   this.stripeIDStateManager, serverTransactionFactory,
                                                                   dgcSequenceProvider, indexSequenceGenerator,
-                                                                  objectIDSequence, l2DSOConfig.getOffheap(),
+                                                                  objectIDSequence, l2DSOConfig.getDataStorage(),
                                                                   configSetupManager.getActiveServerGroupForThisL2()
                                                                       .getElectionTimeInSecs());
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
@@ -1450,11 +1454,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public OffheapStats getOffheapStats() {
-    return new OffheapStatsImpl(persistor.getMonitoredResource());
+    Collection<MonitoredResource> list = persistor.getMonitoredResources();
+    for ( MonitoredResource rsrc : list ) {
+        if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP ) {
+            return new OffheapStatsImpl(rsrc);
+        }
+    }
+    return null;
   }
 
   public StorageDataStats getStorageStats() {
-    return new StorageDataStatsImpl(persistor.getMonitoredResource());
+    return new StorageDataStatsImpl(persistor.getMonitoredResources());
   }
 
   public ReconnectConfig getL1ReconnectProperties() {

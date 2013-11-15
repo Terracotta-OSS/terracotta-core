@@ -25,6 +25,7 @@ import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Future;
 import org.junit.After;
@@ -80,9 +81,9 @@ public class ProgressiveEvictionManagerTest {
     
     CounterManager counter = mock(CounterManager.class);
     when(counter.createCounter(Matchers.<CounterConfig>any())).thenReturn(mock(SampledRateCounter.class));
-    mgr = new ProgressiveEvictionManager(objectMgr, mock(MonitoredResource.class), store, 
+    mgr = new ProgressiveEvictionManager(objectMgr, Collections.singletonList(mock(MonitoredResource.class)), store, 
             mock(ClientObjectReferenceSet.class), mock(ServerTransactionFactory.class), new TCThreadGroup(mock(ThrowableHandler.class)), 
-            mock(ResourceManager.class), counter, mock(EvictionTransactionPersistor.class), false);
+            mock(ResourceManager.class), counter, mock(EvictionTransactionPersistor.class), false, false);
     
     ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
     Stage stage = mock(Stage.class);

@@ -4,6 +4,7 @@ import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Conversion;
@@ -101,15 +102,9 @@ public class Persistor implements PrettyPrintable {
     storageManager.close();
   }
   
-  public MonitoredResource getMonitoredResource() {
+  public Collection<MonitoredResource> getMonitoredResources() {
     checkStarted();
-    Collection<MonitoredResource> list = storageManager.getMonitoredResources();
-    for (MonitoredResource rsrc : list) {
-      if (rsrc.getType() == MonitoredResource.Type.OFFHEAP || rsrc.getType() == MonitoredResource.Type.HEAP) {
-        return rsrc;
-      }
-    }
-    return null;
+    return storageManager.getMonitoredResources();
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
@@ -177,10 +172,13 @@ public class Persistor implements PrettyPrintable {
     if (!started) {
       out.indent().print("PersistorImpl not started.").flush();
     } else {
-      out.indent().print("Resource Type: " + getMonitoredResource().getType()).flush();
-      out.indent().print("Resource Total: " + safeByteSizeAsString(getMonitoredResource().getTotal())).flush();
-      out.indent().print("Resource Reserved: " + safeByteSizeAsString(getMonitoredResource().getReserved())).flush();
-      out.indent().print("Resource Used: " + safeByteSizeAsString(getMonitoredResource().getUsed())).flush();
+      Collection<MonitoredResource> list = storageManager.getMonitoredResources();
+      for ( MonitoredResource rsrc : list ) {
+          out.indent().print("Resource Type: " + rsrc.getType()).flush();
+          out.indent().print("Resource Total: " + safeByteSizeAsString(rsrc.getTotal())).flush();
+          out.indent().print("Resource Reserved: " + safeByteSizeAsString(rsrc.getReserved())).flush();
+          out.indent().print("Resource Used: " + safeByteSizeAsString(rsrc.getUsed())).flush();
+      }
     }
     return out;
   }

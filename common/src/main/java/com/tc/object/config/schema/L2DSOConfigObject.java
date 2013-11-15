@@ -21,10 +21,11 @@ import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
+import com.terracottatech.config.DataStorage;
+import com.terracottatech.config.DataStorageOffheap;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Keychain;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
@@ -47,8 +48,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;
   public static final int         MIN_PORTNUMBER                        = 0x0FFF;
   public static final int         MAX_PORTNUMBER                        = 0xFFFF;
+  public static final String      DEFAULT_DATA_STORAGE_SIZE                 = "512m";
 
-  private final Offheap           offHeapConfig;
   private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
   private final BindPort          tsaPort;
@@ -58,6 +59,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final String            bind;
   private final int               clientReconnectWindow;
   private final Restartable       restartable;
+  private final DataStorage       dataStorage;
 
   public L2DSOConfigObject(ConfigContext context, GarbageCollection gc, int clientReconnectWindow,
                            Restartable restartable) {
@@ -79,11 +81,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
-    if (server.isSetOffheap()) {
-      this.offHeapConfig = server.getOffheap();
-    } else {
-      this.offHeapConfig = Offheap.Factory.newInstance();
-    }
+    this.dataStorage = server.getDataStorage();
     if (server.isSetSecurity()) {
       this.securityConfig = server.getSecurity();
     } else {
@@ -95,8 +93,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   @Override
-  public Offheap offHeapConfig() {
-    return this.offHeapConfig;
+  public DataStorage getDataStorage() {
+    return dataStorage;
   }
 
   @Override
@@ -105,8 +103,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   @Override
-  public Offheap getOffheap() {
-    return this.offHeapConfig;
+  public DataStorageOffheap getOffheap() {
+    return dataStorage.getOffheap();
   }
 
   @Override
@@ -199,11 +197,37 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
         initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
         initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
         initializeSecurity(server, defaultValueProvider);
-        initializeOffHeap(server, defaultValueProvider);
+        initializeDatastore(server, defaultValueProvider);
       }
     }
 
     UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
+  }
+
+  private static void initializeDatastore(final Server server, final DefaultValueProvider defaultValueProvider) throws XmlException {
+    if (!server.isSetDataStorage()) {
+      server.addNewDataStorage();
+      if (server.isSetOffheap()) {
+        server.getDataStorage().setSize(server.getOffheap().getMaxDataSize());
+      } else {
+        logger.warn("Max data size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE);
+        server.getDataStorage().setSize(DEFAULT_DATA_STORAGE_SIZE);
+      }
+    }
+
+    if (server.isSetOffheap()) {
+      if (server.getDataStorage().isSetOffheap()) {
+        throw new IllegalStateException("<offheap/> configured in both <datastore/> and <server/> levels");
+      }
+      server.getDataStorage().addNewOffheap();
+      server.getDataStorage().getOffheap().setSize(server.getOffheap().getMaxDataSize());
+      server.unsetOffheap();
+    }
+
+    if (!server.getDataStorage().isSetOffheap()) {
+      server.getDataStorage().addNewOffheap();
+      server.getDataStorage().getOffheap().setSize(server.getDataStorage().getSize());
+    }
   }
 
   private static void initializeServerBind(Server server, DefaultValueProvider defaultValueProvider) {
@@ -402,22 +426,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     Restartable restartable = servers.getRestartable();
     Assert.assertNotNull(restartable);
-  }
-
-  private static void initializeOffHeap(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
-    if (!server.isSetOffheap()) return;
-
-    Offheap offHeap = server.getOffheap();
-    Assert.assertNotNull(offHeap);
-
-    if (!offHeap.isSetEnabled()) {
-      offHeap.setEnabled(getDefaultOffHeapEnabled(server, defaultValueProvider));
-    }
-  }
-
-  private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "offheap/enabled")).getBooleanValue();
   }
 
   private static int getDefaultReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)
