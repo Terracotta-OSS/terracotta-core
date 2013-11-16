@@ -34,6 +34,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
   public static final String             RECEIVE_SERVER_MAP_RESPONSE_STAGE           = "receive_server_map_response_stage";
   public static final String             RECEIVE_SEARCH_QUERY_RESPONSE_STAGE         = "receive_search_query_response_stage";
+  public static final String             RECEIVE_SEARCH_RESULT_RESPONSE_STAGE      = "receive_search_result_response_stage";
   public static final String             CAPACITY_EVICTION_STAGE                     = "capacity_eviction_stage";
   public static final String             LOCAL_CACHE_TXN_COMPLETE_STAGE              = "local_cache_transaction_complete_stage";
   public static final String             TTI_TTL_EVICTION_STAGE                      = "tti_ttl_eviction_stage";

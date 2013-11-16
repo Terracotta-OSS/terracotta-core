@@ -136,10 +136,15 @@ import com.tc.object.msg.RequestRootResponseMessage;
 import com.tc.object.msg.ResourceManagerThrottleMessage;
 import com.tc.object.msg.SearchQueryRequestMessageImpl;
 import com.tc.object.msg.SearchQueryResponseMessageImpl;
+import com.tc.object.msg.SearchResultsCloseMessageImpl;
+import com.tc.object.msg.SearchResultsRequestMessageImpl;
+import com.tc.object.msg.SearchResultsResponseMessageImpl;
 import com.tc.object.msg.ServerEventBatchMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.search.SearchResultManager;
+import com.tc.object.search.SearchResultReplyHandler;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.impl.L1ServerMapCapacityEvictionHandler;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
@@ -514,11 +519,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                            lockRecallHandler, 8, maxSize);
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
 
+    SearchResultManager searchResultMgr =
+        this.dsoClientBuilder.createSearchResultManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
+                                       .getLogger(SearchResultManager.class)), this.channel, sessionManager, abortableOperationManager);
     searchRequestManager = this.dsoClientBuilder
         .createRemoteSearchRequestManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-                                              .getLogger(RemoteObjectManager.class)), this.channel, sessionManager,
-                                          abortableOperationManager);
-
+                                              .getLogger(RemoteSearchRequestManager.class)), this.channel, sessionManager,
+                                          searchResultMgr, abortableOperationManager);
+        
     final L1ServerMapCapacityEvictionHandler l1ServerMapCapacityEvictionHandler = new L1ServerMapCapacityEvictionHandler();
     final Stage capacityEvictionStage = stageManager.createStage(ClientConfigurationContext.CAPACITY_EVICTION_STAGE,
                                                                  l1ServerMapCapacityEvictionHandler, 8, maxSize);
@@ -542,7 +550,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-                                          .getLogger(RemoteObjectManager.class)), remoteObjectManager, this.channel, sessionManager,
+                                          .getLogger(RemoteServerMapManager.class)), remoteObjectManager, this.channel, sessionManager,
                                       globalLocalCacheManager, abortableOperationManager, this.taskRunner);
     final CallbackDumpAdapter remoteServerMgrDumpAdapter = new CallbackDumpAdapter(remoteServerMapManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(remoteServerMgrDumpAdapter);
@@ -660,6 +668,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .createStage(ClientConfigurationContext.RECEIVE_SEARCH_QUERY_RESPONSE_STAGE,
                      new ReceiveSearchQueryResponseHandler(searchRequestManager), 1, maxSize);
 
+    final Stage receiveSearchResultStage = stageManager
+        .createStage(ClientConfigurationContext.RECEIVE_SEARCH_RESULT_RESPONSE_STAGE,
+                     new SearchResultReplyHandler(searchResultMgr), 1, maxSize);
+    
     // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get
     // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
     // more likely an AssertionError
@@ -697,6 +709,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(remoteServerMapManager);
     clientHandshakeCallbacks.add(searchRequestManager);
+    clientHandshakeCallbacks.add(searchResultMgr);
     clientHandshakeCallbacks.add(this.remoteTxnManager);
     clientHandshakeCallbacks.add(this.dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
@@ -731,8 +744,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     initChannelMessageRouter(messageRouter, hydrateStage, lockResponse,
                              receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
                              batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
-                             clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage,
-                             receiveSearchQueryStage, receiveInvalidationStage,
+                             clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage, receiveSearchQueryStage,
+                             receiveSearchResultStage, receiveInvalidationStage,
                              resourceManagerStage, serverEventStage);
 
     openChannel(serverHost, serverPort, maxConnectRetries);
@@ -895,6 +908,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 GetAllSizeServerMapResponseMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, SearchQueryRequestMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, SearchQueryResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_RESULTS_REQUEST_MESSAGE, SearchResultsRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_RESULTS_RESPONSE_MESSAGE, SearchResultsResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_RESULTS_CLOSE_MESSAGE, SearchResultsCloseMessageImpl.class);
+    
     messageTypeClassMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
                                 GetValueServerMapRequestMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
@@ -918,7 +935,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                         Stage jmxRemoteTunnelStage, Stage clusterMembershipEventStage,
                                         Stage clusterMetaDataStage, Stage syncWriteBatchRecvdHandler,
                                         Stage receiveServerMapStage,
-                                        Stage receiveSearchQueryStage, Stage receiveInvalidationStage,
+                                        Stage receiveSearchQueryStage, Stage searchResultLoadStage,
+                                        Stage receiveInvalidationStage,
                                         Stage resourceManagerStage, Stage serverEventStage) {
     final Sink hydrateSink = hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
@@ -962,6 +980,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     messageRouter.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
                                    receiveServerMapStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, receiveSearchQueryStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SEARCH_RESULTS_RESPONSE_MESSAGE, searchResultLoadStage.getSink(),
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, receiveInvalidationStage.getSink(),
                                    hydrateSink);

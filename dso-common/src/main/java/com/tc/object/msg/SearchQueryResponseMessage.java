@@ -3,10 +3,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.SearchRequestID;
-import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.aggregator.Aggregator;
 
 import java.util.List;
@@ -16,58 +13,20 @@ import java.util.List;
  * 
  * @author Nabib El-Rahman
  */
-public interface SearchQueryResponseMessage extends TCMessage {
-
-  /**
-   * Search Identifier. return SearchRequestID requestID
-   */
-  public SearchRequestID getRequestID();
-
-  /**
-   * Originating request groupID.
-   */
-  public GroupID getGroupIDFrom();
-
-  /**
-   * Initialize message.
-   * 
-   * @param searchRequestID
-   * @param groupIDFrom
-   * @param anyCriteriaMatched
-   * @param aggregatorResults
-   * @param aggregatorResults
-   * @param anyCriteriaMatched
-   * @param isGroupBy
-   */
-  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
-                                        List<IndexQueryResult> results, List<Aggregator> aggregators,
-                                        boolean anyCriteriaMatched, boolean isGroupBy);
-
-  /**
-   * Initialize error response
-   * 
-   * @param searchRequestID
-   * @param groupIDFrom
-   * @param errorMessage
-   */
-  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom, String errorMessage);
-
-  /**
-   * @return List<SearchQueryResult> results.
-   */
-  public List<IndexQueryResult> getResults();
+public interface SearchQueryResponseMessage extends TCMessage, SearchResponseMessage {
 
   /**
    * @return List<NVPair> aggregator results.
    */
   public List<Aggregator> getAggregators();
 
-  public String getErrorMessage();
-
-  public boolean isError();
-
   public boolean isAnyCriteriaMatched();
 
   public boolean isQueryGroupBy();
+
+  /**
+   * Not necessarily the same as size of {@link #getResults()} list, if results were paginated.
+   */
+  public long getTotalResultCount();
 
 }

@@ -60,6 +60,8 @@ import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.search.NullSearchResultManager;
+import com.tc.object.search.SearchResultManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -314,8 +316,15 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                                      final DSOClientMessageChannel dsoChannel,
                                                                      final SessionManager sessionManager,
-                                                                     final AbortableOperationManager abortableOperationManager) {
+                                                                     SearchResultManager resultManager, final AbortableOperationManager abortableOperationManager) {
     return new NullRemoteSearchRequestManager();
+  }
+
+  @Override
+  public SearchResultManager createSearchResultManager(TCLogger logger, DSOClientMessageChannel dsoChannel,
+                                                       SessionManager sessionManager,
+                                                       AbortableOperationManager abortableOperationManager) {
+    return new NullSearchResultManager();
   }
 
   @Override

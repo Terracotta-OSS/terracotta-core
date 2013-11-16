@@ -79,6 +79,8 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_DISABLE_FIELD_COMPRESSION);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BUFFERED_DOCS);
     exemptedProperties.add(TCPropertiesConsts.SEARCH_LUCENE_MAX_BOOLEAN_CLAUSES);
+    exemptedProperties.add(TCPropertiesConsts.L1_SEARCH_MAX_OPEN_RESULT_SETS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SEARCH_MAX_PAGED_RESULT_SETS);
 
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_PREFIX);
     exemptedProperties.add(TCPropertiesConsts.L2_FRS_COMPACTOR_POLICY);

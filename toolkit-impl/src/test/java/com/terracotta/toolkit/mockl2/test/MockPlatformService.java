@@ -297,7 +297,7 @@ public class MockPlatformService implements PlatformService {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                          boolean includeValues, Set<String> attributeSet,
                                          List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                         int batchSize, boolean waitForTxn) throws AbortedOperationException {
+                                         int batchSize, int pageSize, boolean waitForTxn) throws AbortedOperationException {
     return null;
   }
 

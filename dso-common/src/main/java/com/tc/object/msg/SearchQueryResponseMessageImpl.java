@@ -33,6 +33,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private static final byte      AGGREGATOR_RESULTS_SIZE = 3;
   private static final byte      ERROR_MESSAGE           = 4;
   private static final byte      ANY_CRITERIA_MATCHED    = 5;
+  private static final byte      TOTAL_RESULT_COUNT      = 6;
 
   private SearchRequestID        requestID;
   private GroupID                groupIDFrom;
@@ -41,6 +42,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private String                 errorMessage;
   private boolean                anyCriteriaMatched;
   private boolean                isQueryGroupBy;
+  private long                   totalResultCount;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -58,13 +60,14 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   @Override
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
                                         List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList,
-                                        boolean criteriaMatched, boolean isGroupBy) {
+                                        boolean criteriaMatched, boolean isGroupBy, long totalResCount) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
     this.aggregators = aggregatorList;
     this.anyCriteriaMatched = criteriaMatched;
     this.isQueryGroupBy = isGroupBy;
+    this.totalResultCount = totalResCount;
   }
 
   /**
@@ -133,11 +136,17 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   }
 
   @Override
+  public long getTotalResultCount() {
+    return totalResultCount;
+  }
+
+  @Override
   protected void dehydrateValues() {
     final TCByteBufferOutputStream outStream = getOutputStream();
 
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
     putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
+    putNVPair(TOTAL_RESULT_COUNT, this.totalResultCount);
 
     if (results != null) {
       putNVPair(RESULTS_SIZE, this.results.size());
@@ -180,7 +189,9 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       case GROUP_ID_FROM:
         this.groupIDFrom = new GroupID(getIntValue());
         return true;
-
+      case TOTAL_RESULT_COUNT:
+        this.totalResultCount = getLongValue();
+        return true;
       case RESULTS_SIZE:
         int size = getIntValue();
         this.results = new ArrayList<IndexQueryResult>(size);

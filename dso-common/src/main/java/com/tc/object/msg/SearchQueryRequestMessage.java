@@ -3,11 +3,9 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.ClientID;
-import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -17,22 +15,7 @@ import java.util.Set;
  * 
  * @author Nabib El-Rahman
  */
-public interface SearchQueryRequestMessage extends TCMessage {
-
-  /**
-   * ClientID
-   */
-  public ClientID getClientID();
-
-  /**
-   * Search Identifier. return SearchRequestID requestID
-   */
-  public SearchRequestID getRequestID();
-
-  /**
-   * GroupID message is from.
-   */
-  public GroupID getGroupIDFrom();
+public interface SearchQueryRequestMessage extends SearchRequestMessage {
 
   /**
    * Initialize message.
@@ -48,19 +31,12 @@ public interface SearchQueryRequestMessage extends TCMessage {
    * @param aggregators
    * @param maxResults
    */
-  public void initializeSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
+  public void initializeSearchRequestMessage(final SearchRequestID searchRequestID,
                                              final String cacheName, final List queryStack, final boolean keys,
                                              final boolean values, final Set<String> attributeSet,
                                              Set<String> groupByAttrs, final List<NVPair> sortAttributesMap,
                                              final List<NVPair> aggregators, int maxResults, int batchSize,
-                                             boolean prefetchFirstBatch);
-
-  /**
-   * Name of cache to query against.
-   * 
-   * @return String string.
-   */
-  public String getCacheName();
+                                             boolean prefetchFirstBatch, int resultPrefetchLimit);
 
   /**
    * Query stack to search
@@ -115,10 +91,17 @@ public interface SearchQueryRequestMessage extends TCMessage {
   /**
    * Return the desired result set batch size
    */
-  public int getBatchSize();
+  public int getValuePrefetchSize();
 
   /**
    * Return true if the server should start prefetch for the first batch
    */
   public boolean isPrefetchFirstBatch();
+
+  /**
+   * How many results to return with query response. If actual returned result count exceeds this value, the rest must
+   * be fetched using result paging. Set to {@link SearchBuilder.Search#BATCH_SIZE_UNLIMITED} to get all results in one
+   * shot in response message regardless of actual hit count.
+   */
+  public int getResultPrefetchLimit();
 }

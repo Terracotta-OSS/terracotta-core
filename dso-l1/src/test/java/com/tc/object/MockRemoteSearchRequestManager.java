@@ -25,6 +25,7 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
   @Override
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
                                   final GroupID groupIDFrom, final List<IndexQueryResult> queryResults,
+                                  final long totalResCt,
                                   final List<Aggregator> aggregators, final NodeID nodeID,
                                   final boolean anyCriteriaMatched) {
     //
@@ -33,7 +34,7 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
   @Override
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
-                                  int maxResults, int batchSize) {
+                                  int maxResults, int batchSize, int resFetchSize) {
     return null;
   }
 

@@ -276,7 +276,7 @@ public class ObjectStreamClassMappingTest {
     public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                            boolean includeValues, Set<String> attributeSet,
                                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                           int batchSize, boolean waitForTxn) {
+                                           int batchSize, int pageSize, boolean waitForTxn) {
       return null;
     }
 

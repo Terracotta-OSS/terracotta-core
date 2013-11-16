@@ -46,6 +46,7 @@ import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.search.SearchResultManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -106,7 +107,11 @@ public interface DSOClientBuilder {
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
                                                               final SessionManager sessionManager,
-                                                              final AbortableOperationManager abortableOperationManager);
+                                                              SearchResultManager resultManager, final AbortableOperationManager abortableOperationManager);
+
+  SearchResultManager createSearchResultManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+                                                final SessionManager sessionManager,
+                                                final AbortableOperationManager abortableOperationManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,

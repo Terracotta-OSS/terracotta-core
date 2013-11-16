@@ -38,6 +38,8 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.msg.SearchQueryRequestMessage;
 import com.tc.object.msg.SearchRequestMessageFactory;
+import com.tc.object.msg.SearchResultsCloseMessage;
+import com.tc.object.msg.SearchResultsRequestMessage;
 import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
@@ -225,6 +227,16 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   @Override
   public SearchQueryRequestMessage newSearchQueryRequestMessage(final NodeID remoteID) {
     return (SearchQueryRequestMessage) this.channel.createMessage(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE);
+  }
+
+  @Override
+  public SearchResultsRequestMessage newSearchResultsRequestMessage(NodeID nodeID) {
+    return (SearchResultsRequestMessage) this.channel.createMessage(TCMessageType.SEARCH_RESULTS_REQUEST_MESSAGE);
+  }
+
+  @Override
+  public SearchResultsCloseMessage newSearchResultsCloseMessage(NodeID nodeID) {
+    return (SearchResultsCloseMessage) this.channel.createMessage(TCMessageType.SEARCH_RESULTS_CLOSE_MESSAGE);
   }
 
   @Override

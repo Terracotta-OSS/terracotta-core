@@ -9,4 +9,7 @@ public interface SearchRequestMessageFactory {
 
   SearchQueryRequestMessage newSearchQueryRequestMessage(final NodeID nodeID);
   
+  SearchResultsRequestMessage newSearchResultsRequestMessage(final NodeID nodeID);
+
+  SearchResultsCloseMessage newSearchResultsCloseMessage(final NodeID nodeID);
 }

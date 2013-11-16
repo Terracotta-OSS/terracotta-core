@@ -310,4 +310,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   public BackupManager createBackupManager(Persistor persistor, IndexManager indexManager, File backupPath, StageManager stageManager, boolean restartable, ServerTransactionManager serverTransactionManager) {
     return NullBackupManager.INSTANCE;
   }
+
+  protected GroupID getLocalGroupId() {
+    return thisGroupID;
+  }
 }

@@ -425,13 +425,14 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+                                         List<NVPair> aggregators, int maxResults, int batchSize, int pageSize,
+                                         boolean waitForTxn)
       throws AbortedOperationException {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
       return delegate.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                   aggregators, maxResults, batchSize, waitForTxn);
+                                   aggregators, maxResults, batchSize, pageSize, waitForTxn);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }

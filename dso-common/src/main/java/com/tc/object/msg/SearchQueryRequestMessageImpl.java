@@ -7,7 +7,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -36,22 +35,21 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private static final ObjectStringSerializer NULL_SERIALIZER        = new NullObjectStringSerializer();
 
   private static final byte                   SEARCH_REQUEST_ID      = 0;
-  private static final byte                   GROUP_ID_FROM          = 1;
-  private static final byte                   CACHE_NAME             = 2;
-  private static final byte                   INCLUDE_KEYS           = 3;
-  private static final byte                   ATTRIBUTES             = 4;
-  private static final byte                   GROUP_BY_ATTRIBUTES    = 5;
-  private static final byte                   SORT_ATTRIBUTES        = 6;
-  private static final byte                   AGGREGATORS            = 7;
-  private static final byte                   STACK_OPERATION_MARKER = 8;
-  private static final byte                   STACK_NVPAIR_MARKER    = 9;
-  private static final byte                   MAX_RESULTS            = 10;
-  private static final byte                   INCLUDE_VALUES         = 11;
-  private static final byte                   BATCH_SIZE             = 12;
-  private static final byte                   PREFETCH_FIRST_BATCH   = 13;
+  private static final byte                   CACHE_NAME             = 1;
+  private static final byte                   INCLUDE_KEYS           = 2;
+  private static final byte                   ATTRIBUTES             = 3;
+  private static final byte                   GROUP_BY_ATTRIBUTES    = 4;
+  private static final byte                   SORT_ATTRIBUTES        = 5;
+  private static final byte                   AGGREGATORS            = 6;
+  private static final byte                   STACK_OPERATION_MARKER = 7;
+  private static final byte                   STACK_NVPAIR_MARKER    = 8;
+  private static final byte                   MAX_RESULTS            = 9;
+  private static final byte                   INCLUDE_VALUES         = 10;
+  private static final byte                   VALUE_PREFETCH_SIZE    = 11;
+  private static final byte                   PREFETCH_VALUES        = 12;
+  private static final byte                   RESULT_PREFETCH_LIMIT  = 13;
 
   private SearchRequestID                     requestID;
-  private GroupID                             groupIDFrom;
   private String                              cacheName;
   private List                                queryStack;
   private boolean                             includeKeys;
@@ -63,6 +61,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private int                                 maxResults;
   private int                                 batchSize;
   private boolean                             prefetchFirstBatch;
+  private int                                 resultPrefetchLimit;
 
   public SearchQueryRequestMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                        MessageChannel channel, TCMessageType type) {
@@ -75,13 +74,12 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   }
 
   @Override
-  public void initializeSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
+  public void initializeSearchRequestMessage(SearchRequestID searchRequestID, String cache,
                                              List stack, boolean keys, boolean values, Set<String> attributeSet,
                                              Set<String> groupByAttrs, List<NVPair> sortAttributesMap,
                                              List<NVPair> attributeAggregators, int max, int batch,
-                                             boolean prefetchFirst) {
+ boolean prefetchFirst, int resultPrefetchSize) {
     this.requestID = searchRequestID;
-    this.groupIDFrom = groupID;
     this.cacheName = cache;
     this.queryStack = stack;
     this.includeKeys = keys;
@@ -93,6 +91,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.maxResults = max;
     this.batchSize = batch;
     this.prefetchFirstBatch = prefetchFirst;
+    this.resultPrefetchLimit = resultPrefetchSize;
   }
 
   @Override
@@ -100,13 +99,13 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     final TCByteBufferOutputStream outStream = getOutputStream();
 
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
-    putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
     putNVPair(CACHE_NAME, this.cacheName);
     putNVPair(INCLUDE_KEYS, this.includeKeys);
     putNVPair(INCLUDE_VALUES, this.includeValues);
     putNVPair(MAX_RESULTS, this.maxResults);
-    putNVPair(BATCH_SIZE, this.batchSize);
-    putNVPair(PREFETCH_FIRST_BATCH, this.prefetchFirstBatch);
+    putNVPair(VALUE_PREFETCH_SIZE, this.batchSize);
+    putNVPair(PREFETCH_VALUES, this.prefetchFirstBatch);
+    putNVPair(RESULT_PREFETCH_LIMIT, this.resultPrefetchLimit);
 
     putNVPair(ATTRIBUTES, this.attributes.size());
     for (final String attribute : this.attributes) {
@@ -154,10 +153,6 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         this.requestID = new SearchRequestID(getLongValue());
         return true;
 
-      case GROUP_ID_FROM:
-        this.groupIDFrom = new GroupID(getIntValue());
-        return true;
-
       case CACHE_NAME:
         this.cacheName = getStringValue();
         return true;
@@ -174,12 +169,16 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         this.maxResults = getIntValue();
         return true;
 
-      case BATCH_SIZE:
+      case VALUE_PREFETCH_SIZE:
         this.batchSize = getIntValue();
         return true;
 
-      case PREFETCH_FIRST_BATCH:
+      case PREFETCH_VALUES:
         this.prefetchFirstBatch = getBooleanValue();
+        return true;
+
+      case RESULT_PREFETCH_LIMIT:
+        this.resultPrefetchLimit = getIntValue();
         return true;
 
       case ATTRIBUTES:
@@ -265,14 +264,6 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    * {@inheritDoc}
    */
   @Override
-  public GroupID getGroupIDFrom() {
-    return groupIDFrom;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
@@ -289,7 +280,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    * {@inheritDoc}
    */
   @Override
-  public int getBatchSize() {
+  public int getValuePrefetchSize() {
     return batchSize;
   }
 
@@ -344,6 +335,14 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   @Override
   public int getMaxResults() {
     return this.maxResults;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getResultPrefetchLimit() {
+    return this.resultPrefetchLimit;
   }
 
 }

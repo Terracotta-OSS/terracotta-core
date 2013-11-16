@@ -76,6 +76,11 @@ class NoOpInvocationHandler implements InvocationHandler {
     }
 
     @Override
+    public QueryBuilder resultPageSize(int size) {
+      return this;
+    }
+
+    @Override
     public QueryBuilder includeAttribute(Attribute<?>... attr) {
       return this;
     }

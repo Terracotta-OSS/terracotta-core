@@ -30,7 +30,9 @@ public class ReceiveSearchQueryResponseHandler extends AbstractEventHandler {
       } else {
         this.remoteSearchRequestManager.addResponseForQuery(responseMsg.getLocalSessionID(),
                                                             responseMsg.getRequestID(), responseMsg.getGroupIDFrom(),
-                                                            responseMsg.getResults(), responseMsg.getAggregators(),
+                                                            responseMsg.getResults(),
+                                                            responseMsg.getTotalResultCount(),
+                                                            responseMsg.getAggregators(),
                                                             responseMsg.getSourceNodeID(),
                                                             responseMsg.isAnyCriteriaMatched());
       }

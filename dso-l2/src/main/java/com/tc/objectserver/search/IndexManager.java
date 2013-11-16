@@ -3,7 +3,9 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
+import com.tc.object.SearchRequestID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 import com.terracottatech.search.IndexException;
 import com.terracottatech.search.NVPair;
@@ -42,10 +44,13 @@ public interface IndexManager {
   void replace(String indexName, String key, ValueID value, ValueID previousValue, List<NVPair> attributes,
                ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  public SearchResult searchIndex(String indexName, List queryStack, boolean includeKeys, boolean includeValues,
+  public SearchResult searchIndex(String indexName, ClientID clientId, SearchRequestID reqId, List queryStack,
+                                  boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                  List<NVPair> aggregators, int maxResults) throws IndexException;
+                                  List<NVPair> aggregators, int maxResults, int fetchSize) throws IndexException;
 
+  public SearchResult getSearchResults(String indexName, ClientID clientId, SearchRequestID reqId, int offset,
+                                       int batchSize) throws IndexException;
 
   public SyncSnapshot snapshot(String id) throws IndexException;
 
@@ -59,4 +64,7 @@ public interface IndexManager {
 
   InputStream getIndexFile(String cacheName, String indexId, String fileName) throws IOException;
 
+  void releaseAllResultsFor(ClientID clientId) throws IndexException;
+
+  void releaseSearchResults(ClientID clientId, SearchRequestID reqId, String indexName) throws IndexException;
 }

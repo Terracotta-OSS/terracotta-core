@@ -24,7 +24,7 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
-                                  int maxResults, int batchSize) throws AbortedOperationException;
+                                  int maxResults, int batchSize, int resultSetLimit) throws AbortedOperationException;
 
   public SearchQueryResults query(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributeMap,
@@ -32,10 +32,12 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
       throws AbortedOperationException;
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
-                                  final List<IndexQueryResult> queryResults, final List<Aggregator> aggregators,
-                                  final NodeID nodeID, boolean anyCriteriaMatched);
+                                  final List<IndexQueryResult> queryResults, final long totalResultCount,
+                                  final List<Aggregator> aggregators, final NodeID nodeID, boolean anyCriteriaMatched);
 
   public void addErrorResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
                                        final String errorMessage, final NodeID nodeID);
+
+  // public SearchQueryResults fetchResults(String cacheName, )
 
 }

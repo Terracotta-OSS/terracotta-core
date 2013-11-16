@@ -91,7 +91,8 @@ public interface PlatformService {
 
   SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn) throws AbortedOperationException;
+                                  int maxResults, int batchSize, int resultPageSize, boolean waitForTxn)
+      throws AbortedOperationException;
 
   SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributes, List<NVPair> aggregators,

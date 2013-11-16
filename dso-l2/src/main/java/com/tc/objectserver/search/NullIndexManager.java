@@ -3,7 +3,9 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
+import com.tc.object.SearchRequestID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 import com.terracottatech.search.IndexException;
 import com.terracottatech.search.IndexFile;
@@ -22,10 +24,27 @@ import java.util.Set;
 public class NullIndexManager implements IndexManager {
 
   @Override
-  public SearchResult searchIndex(String name, List queryStack, boolean includeKeys, boolean includeValues,
-                                  Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                  List<NVPair> aggregators, int maxResults) {
+  public SearchResult searchIndex(String indexName, ClientID clientId, SearchRequestID reqId, List queryStack,
+                                  boolean includeKeys, boolean includeValues, Set<String> attributeSet,
+                                  Set<String> groupByAttributes, List<NVPair> sortAttributes, List<NVPair> aggregators,
+                                  int maxResults, int prefetchSize) {
     return null;
+  }
+
+  @Override
+  public SearchResult getSearchResults(String indexName, ClientID clientId, SearchRequestID reqId, int offset,
+                                       int fetchSize) {
+    return null;
+  }
+
+  @Override
+  public void releaseSearchResults(ClientID clientId, SearchRequestID reqId, String indexName) throws IndexException {
+    //
+  }
+
+  @Override
+  public void releaseAllResultsFor(ClientID clientId) throws IndexException {
+    //
   }
 
   @Override
