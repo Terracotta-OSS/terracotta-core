@@ -43,6 +43,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                                                                           .getProperties()
                                                                                           .getLong(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL,
                                                                                                    -1);
+  private final static boolean                    PERIODIC_EVICTOR_ENABLED            = TCPropertiesImpl
+                                                                                           .getProperties()
+                                                                                           .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED,
+                                                                                                       true);
   private final ServerMapEvictionEngine           evictor;
   private final ResourceEventProducer             trigger; 
   private final Collection<MonitoredResource>     resources;
@@ -143,9 +148,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
     this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, persistent);
-    this.resources = monitorList;
 
-    final MonitoredResource monitored = getEvictionBasedResource(monitorList);
+    final MonitoredResource monitored = getEvictionBasedResource(monitorList, flash);
+    
+    if ( !flash ) {
+      this.resources = Collections.singletonList(monitored);
+    } else {
+      this.resources = monitorList;
+    }
     
     // assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
     this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
@@ -211,14 +221,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.expirationStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
   }
   
-  private static MonitoredResource getEvictionBasedResource(Collection<MonitoredResource> list) {
+  private static MonitoredResource getEvictionBasedResource(Collection<MonitoredResource> list, boolean flash) {
     MonitoredResource best = null;
     for (MonitoredResource rsrc : list) {
         if ( best == null ) {
             best = rsrc;
-        } else if ( rsrc.getType() == MonitoredResource.Type.OTHER ) {
+        } else if ( flash && rsrc.getType() == MonitoredResource.Type.OTHER ) {
             best = rsrc;
-        } else if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP && best.getType() != MonitoredResource.Type.OTHER) {
+        } else if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP) {
             best = rsrc;
         }
     }
@@ -534,7 +544,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
           }
         }
-        
+        if (!isEmergency && PERIODIC_EVICTOR_ENABLED && currentRun.isDone()) {
+          currentRun = schedulePeriodicEvictionRun(null);
+          print("Periodic", currentRun);
+        }
         throttleIfNeeded(usage);
     }
  
@@ -550,6 +563,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     public void cancelEvictions(MonitoredResource usage) {
       if ( evictions.remove(usage.getType()) && evictions.isEmpty() ) {
         stopEmergency(usage);
+      } else if (PERIODIC_EVICTOR_ENABLED && currentRun.isDone()) {
+        currentRun = schedulePeriodicEvictionRun(null);
+        print("Periodic", currentRun);
       }
     }   
 
