@@ -182,11 +182,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
     }
 
-    if ( !flash ) {
-      this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
-    } else {
+//    if ( !flash ) {
+//      this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
+//    } else {
       this.trigger = new MultiResourceMonitor(this.resources, evictionGrp, threshold, sleeptime, flash, persistent);
-    }
+//    }
+      
     this.evictionGrp = new ThreadGroup(evictionGrp, "Eviction Worker Group");
 
     this.agent = new ThreadPoolExecutor(4, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),

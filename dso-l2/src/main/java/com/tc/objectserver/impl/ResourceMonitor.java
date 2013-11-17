@@ -82,7 +82,7 @@ public class ResourceMonitor implements ResourceEventProducer {
       listener.resourcesUsed(resourceParam);
     }
   }
-
+  
   public class MemoryMonitor implements Runnable {
 
     private volatile boolean run = true;

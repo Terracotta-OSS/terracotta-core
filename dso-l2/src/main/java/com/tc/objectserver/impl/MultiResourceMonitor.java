@@ -183,6 +183,7 @@ public class MultiResourceMonitor implements ResourceEventProducer {
             for (ResourceEventListener listener : listeners) {
               listener.cancelEvictions(working);
             }
+            evicting = false;
           }
         }
         schedule(this, adjust(working.getReserved(),working.getTotal(),time));
