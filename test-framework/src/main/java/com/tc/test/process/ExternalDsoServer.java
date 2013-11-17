@@ -37,6 +37,7 @@ import junit.framework.Assert;
  */
 public class ExternalDsoServer {
   private static final String       SERVER_CONFIG_FILENAME = "server-config.xml";
+  private static final String       DEFAULT_MAX_DIRECT_MEMORY = "-XX:MaxDirectMemorySize=1g";
 
   private ExtraProcessServerControl serverProc;
   private final File                serverLog;
@@ -137,11 +138,27 @@ public class ExternalDsoServer {
 
   private void initStart() throws FileNotFoundException {
     logOutputStream = new FileOutputStream(serverLog);
+    addDirectMemoryIfNeeded();
     serverProc = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(),"localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false, jvmArgs);
     serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
     inited = true;
+  }
+  
+  private void addDirectMemoryIfNeeded() {
+    boolean hasOffheap = false;
+
+    for (Object arg : jvmArgs) {
+      String sarg = arg.toString().trim();
+      if (sarg.startsWith("-XX:MaxDirectMemorySize")) {
+        hasOffheap = true;
+      }
+    }
+    
+    if (!hasOffheap) {
+      jvmArgs.add(DEFAULT_MAX_DIRECT_MEMORY);
+    }
   }
 
   public void stop() throws Exception {
