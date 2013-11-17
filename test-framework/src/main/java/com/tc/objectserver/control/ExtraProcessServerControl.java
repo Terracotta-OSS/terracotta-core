@@ -44,6 +44,7 @@ import javax.management.remote.JMXConnector;
 public class ExtraProcessServerControl extends ServerControlBase {
   private static final String  DEFAULT_MIN_HEAP   = "-Xms128m";
   private static final String  DEFAULT_MAX_HEAP   = "-Xmx128m";
+  private static final String  DEFAULT_MAX_DIRECT_MEMORY = "-XX:MaxDirectMemorySize=1g";
   private static final String  NOT_DEF            = "";
   private static final String  ERR_STREAM         = "ERR";
   private static final String  OUT_STREAM         = "OUT";
@@ -204,6 +205,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private void setDefaultHeapIfUnspecified() {
     boolean hasMin = false;
     boolean hasMax = false;
+    boolean hasDirect = false;
 
     for (String arg : jvmArgs) {
       arg = arg.trim();
@@ -211,6 +213,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
         hasMin = true;
       } else if (arg.startsWith("-Xmx")) {
         hasMax = true;
+      } else if (arg.startsWith("-XX:MaxDirectMemorySize")) {
+        hasDirect = true;
       }
     }
 
@@ -221,7 +225,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
     if (!hasMax) {
       jvmArgs.add(DEFAULT_MAX_HEAP);
     }
+    
+    if (!hasDirect) {
+      jvmArgs.add(DEFAULT_MAX_DIRECT_MEMORY);
+    }
   }
+  
 
   protected void addProductKeyIfExists(List args) {
     String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
