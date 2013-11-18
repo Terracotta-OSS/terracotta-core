@@ -4,6 +4,8 @@
 
 package com.tc.objectserver.impl;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.Runners;
@@ -22,7 +24,8 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  * @author mscott
  */
 public class MultiResourceMonitor implements ResourceEventProducer {
-  
+  private static final TCLogger LOGGER = TCLogging.getLogger(ResourceEventProducer.class);
+
   private final List<ResourceEventListener> listeners = new CopyOnWriteArrayList<ResourceEventListener>();
   private final long sleepInterval;
   private final Collection<MonitoredResource> resources;
@@ -97,7 +100,11 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   }
   
   private void schedule(final Runnable runnable, final long time) {
-    driver.schedule(runnable, time, TimeUnit.MILLISECONDS);    
+    try {
+      driver.schedule(runnable, time, TimeUnit.MILLISECONDS);    
+    } catch ( IllegalStateException state ) {
+      LOGGER.warn("resource monitor is shutdown",state);
+    }
   }
   
   private Runnable createStorageTask(final MonitoredResource rsrc, final long time) {
