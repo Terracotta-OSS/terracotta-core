@@ -501,6 +501,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private void waitUntilStarted() throws Exception {
     while (true) {
       if (isRunning()) return;
+      try {
+        throw new IllegalStateException("process exited with: " + process.exitValue());
+      } catch ( IllegalThreadStateException state ) {
+        //  can continue
+      }
       Thread.sleep(1000);
     }
   }
