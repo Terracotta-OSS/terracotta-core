@@ -14,6 +14,7 @@ import org.terracotta.management.resource.exceptions.ExceptionUtils;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.TopologyReloadStatus;
+import com.tc.license.ProductID;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -161,10 +162,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       if (jmxConnector != null) {
         final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-        ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+        Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
 
         for (final ObjectName clientObjectName : clientObjectNames) {
-          final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+          final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
 
           Future<ThreadDumpEntity> future = executorService.submit(new Callable<ThreadDumpEntity>() {
             @Override
@@ -201,10 +202,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
-        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
@@ -358,7 +359,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ClientEntity>> futures = new ArrayList<Future<ClientEntity>>();
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
         Future<ClientEntity> future = executorService.submit(new Callable<ClientEntity>() {
@@ -457,13 +458,12 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(
-          new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
 
       List<Future<StatisticsEntity>> futures = new ArrayList<Future<StatisticsEntity>>();
 
       for (ObjectName clientObjectName : clientObjectNames) {
-        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
@@ -491,8 +491,13 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       statisticsEntity.setSourceId(clientId);
       statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
-      AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId),
-          mbeanAttributeNames);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId + ",productId=*"), null);
+      if (objectNames.size() != 1) {
+        throw new RuntimeException("there should only be 1 client at org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId + ",productId=*");
+      }
+      ObjectName clientObjectName = objectNames.iterator().next();
+
+      AttributeList attributes = mBeanServerConnection.getAttributes(clientObjectName, mbeanAttributeNames);
       for (Object attributeObj : attributes) {
         Attribute attribute = (Attribute)attributeObj;
         statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
@@ -1021,10 +1026,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ConfigEntity>> futures = new ArrayList<Future<ConfigEntity>>();
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
-        final String clientId = "" + mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
         if (clientIds != null && !clientIds.contains(clientId)) {
           continue;
         }
@@ -1884,6 +1889,22 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
     }
     return !dsoClientObjectNames.isEmpty();
+  }
+
+  private static Collection<ObjectName> fetchClientObjectNames(MBeanServerConnection mBeanServerConnection)
+      throws MBeanException, AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException, MalformedObjectNameException {
+    ObjectName[] objectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+    List<ObjectName> result = new ArrayList<ObjectName>();
+    for (ObjectName objectName : objectNames) {
+      String productIdName = objectName.getKeyProperty("productId");
+
+      ProductID productId = ProductID.valueOf(productIdName);
+      if (!productId.isInternal()) {
+        result.add(objectName);
+      }
+    }
+    return result;
   }
 
   private boolean serverIsActive(MBeanServerConnection mBeanServerConnection) throws MalformedObjectNameException,
