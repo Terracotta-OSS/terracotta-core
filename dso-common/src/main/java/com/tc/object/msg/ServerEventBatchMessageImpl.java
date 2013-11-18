@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.session.SessionID;
+import com.tc.server.AdvancedServerEvent;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
@@ -58,6 +59,12 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
       encoder.encode(event.getValue(), outStream);
       if (event instanceof VersionedServerEvent) {
         encoder.encode(((VersionedServerEvent)event).getVersion(), outStream);
+        if (event instanceof AdvancedServerEvent) {
+          AdvancedServerEvent advancedServerEvent = (AdvancedServerEvent) event;
+          encoder.encode(advancedServerEvent.getCreationTimeInSeconds(), outStream);
+          encoder.encode(advancedServerEvent.getTimeToIdle(), outStream);
+          encoder.encode(advancedServerEvent.getTimeToLive(), outStream);
+        }
       }
       count++;
     }
@@ -80,7 +87,17 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
             final byte[] value = (byte[])decoder.decode(inputStream);
             final long version = (inputStream.available() > 0) ? (Long)decoder.decode(inputStream)
                 : VersionedServerEvent.DEFAULT_VERSION;
-            events.add(new BasicServerEvent(type, extractStringIfNecessary(key), value, version, destination));
+            ServerEvent serverEvent = new BasicServerEvent(type, extractStringIfNecessary(key), value,
+                                                                     version, destination);
+
+            if (inputStream.available() > 0) {
+              final int creationTime = (Integer) decoder.decode(inputStream);
+              final int timeToIdle = (Integer) decoder.decode(inputStream);
+              final int timeToLive = (Integer) decoder.decode(inputStream);
+              serverEvent = new AdvancedServerEvent((BasicServerEvent) serverEvent, creationTime, timeToIdle, timeToLive);
+            }
+
+            events.add(serverEvent);
           }
         } catch (ClassNotFoundException e) {
           throw new AssertionError(e);

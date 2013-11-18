@@ -6,6 +6,7 @@ package com.tc.objectserver.event;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.impl.SamplingType;
+import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
@@ -24,6 +25,11 @@ public interface ServerEventRecorder {
 
   void recordEvent(ServerEventType type, Object key, ObjectID objectId,
                    long version, String cacheName);
+
+  /**
+   * This method records an <code>AdvancedServerEvent</code>.
+   */
+  void recordEvent(ServerEventType type, Object key, ObjectID objectId, CDSMValue value, String cacheName);
 
   void recordEventValue(ObjectID objectId, byte[] value);
 

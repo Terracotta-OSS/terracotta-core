@@ -319,7 +319,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     applyPutInternal(applyInfo, params, value, old);
 
     // collect modifications for futher broadcasting
-    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT_LOCAL, key, oid, value.getVersion(), cacheName);
+    applyInfo.getServerEventRecorder().recordEvent(ServerEventType.PUT_LOCAL, key, oid, value, cacheName);
     return old;
   }
 

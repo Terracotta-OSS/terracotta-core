@@ -2,6 +2,7 @@ package com.tc.objectserver.event;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.impl.SamplingType;
+import com.tc.objectserver.managedobject.CDSMValue;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
@@ -32,5 +33,9 @@ public class NullServerEventRecorder implements ServerEventRecorder {
   @Override
   public List<ServerEvent> getEvents() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public void recordEvent(ServerEventType type, Object key, ObjectID objectId, CDSMValue value, String cacheName) {
   }
 }

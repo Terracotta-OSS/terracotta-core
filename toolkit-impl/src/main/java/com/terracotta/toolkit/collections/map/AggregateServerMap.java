@@ -43,6 +43,7 @@ import com.tc.object.TCObjectServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.platform.PlatformService;
+import com.tc.server.AdvancedServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
@@ -928,14 +929,20 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     final ServerEventType type = event.getType();
     switch (type) {
       case PUT_LOCAL:
+        AdvancedServerEvent advancedServerEvent = (AdvancedServerEvent) event;
+        final int creationTimeInSeconds = advancedServerEvent.getCreationTimeInSeconds();
+        final int timeToIdle = advancedServerEvent.getTimeToIdle();
+        final int timeToLive = advancedServerEvent.getTimeToLive();
         V value;
+
         try {
           value = deserializeValue(key, event.getValue());
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
         for (final VersionUpdateListener<K, V> listener : versionUpdateListeners) {
-          listener.onLocalPut((K) key, value, version, getServerMapIndexForKey(key));
+          listener.onLocalPut((K) key, value, version, creationTimeInSeconds, timeToIdle, timeToLive,
+                              getServerMapIndexForKey(key));
         }
         break;
       case REMOVE_LOCAL:

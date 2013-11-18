@@ -5,6 +5,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.impl.SamplingType;
+import com.tc.objectserver.managedobject.CDSMValue;
+import com.tc.server.AdvancedServerEvent;
 import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
@@ -32,6 +34,14 @@ public class DefaultServerEventRecorder implements ServerEventRecorder {
   public void recordEvent(final ServerEventType type, final Object key, final ObjectID objectId,
                           final long version, final String cacheName) {
     events.add(new IntermediateForm(new BasicServerEvent(type, key, version, cacheName), objectId));
+  }
+
+  @Override
+  public void recordEvent(ServerEventType type, Object key, ObjectID objectId, CDSMValue value, String cacheName) {
+    VersionedServerEvent serverEvent = new AdvancedServerEvent(new BasicServerEvent(type, key, value.getVersion(), cacheName),
+                                                               (int) value.getCreationTime(), (int) value.getTimeToIdle(),
+                                                               (int) value.getTimeToLive());
+    events.add(new IntermediateForm(serverEvent, objectId));
   }
 
   @Override
