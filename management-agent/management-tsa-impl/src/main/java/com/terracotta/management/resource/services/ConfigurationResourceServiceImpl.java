@@ -10,7 +10,9 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ConfigEntity;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.ConfigurationService;
 
@@ -48,9 +50,10 @@ public class ConfigurationResourceServiceImpl implements ConfigurationResourceSe
     requestValidator.validateSafe(info);
 
     try {
+      Set<ProductID> productIDs = UriInfoUtils.extractProductIds(info);
       Collection<ConfigEntity> configs = new ArrayList<ConfigEntity>();
       configs.addAll(configurationService.getServerConfigs(null));
-      configs.addAll(configurationService.getClientConfigs(null));
+      configs.addAll(configurationService.getClientConfigs(null, productIDs));
       return configs;
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA configs", see, Response.Status.BAD_REQUEST.getStatusCode());
@@ -66,8 +69,9 @@ public class ConfigurationResourceServiceImpl implements ConfigurationResourceSe
     try {
       String ids = info.getPathSegments().get(2).getMatrixParameters().getFirst("ids");
       Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
+      Set<ProductID> productIDs = UriInfoUtils.extractProductIds(info);
 
-      return configurationService.getClientConfigs(clientIds);
+      return configurationService.getClientConfigs(clientIds, productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA client configs", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

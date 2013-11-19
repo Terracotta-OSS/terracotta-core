@@ -10,8 +10,10 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.DiagnosticsService;
 
@@ -70,7 +72,8 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
     requestValidator.validateSafe(info);
 
     try {
-      return diagnosticsService.getClusterThreadDump();
+      Set<ProductID> productIDs = UriInfoUtils.extractProductIds(info);
+      return diagnosticsService.getClusterThreadDump(productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -126,7 +129,8 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
       String ids = info.getPathSegments().get(3).getMatrixParameters().getFirst("ids");
       Set<String> clientIds = ids == null ? null : new HashSet<String>(Arrays.asList(ids.split(",")));
 
-      return diagnosticsService.getClientsThreadDump(clientIds);
+      Set<ProductID> productIDs = UriInfoUtils.extractProductIds(info);
+      return diagnosticsService.getClientsThreadDump(clientIds, productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to perform TSA diagnostics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

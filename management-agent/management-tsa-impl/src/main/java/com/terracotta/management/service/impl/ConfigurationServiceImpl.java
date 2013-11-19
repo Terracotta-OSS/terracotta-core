@@ -5,6 +5,7 @@ package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.service.ConfigurationService;
 import com.terracotta.management.service.TsaManagementClientService;
@@ -29,7 +30,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   @Override
-  public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientConfigs(clientIds);
+  public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
+    return tsaManagementClientService.getClientConfigs(clientIds, clientProductIds);
   }
 }

@@ -10,11 +10,12 @@ import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.StatisticsEntity;
+import com.terracotta.management.resource.services.utils.UriInfoUtils;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.MonitoringService;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -92,7 +93,9 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
       List<String> attrs = qParams.get(ATTR_QUERY_KEY);
       Set<String> tsaAttrs = attrs == null || attrs.isEmpty() ? null : new HashSet<String>(attrs);
 
-      return monitoringService.getClientStatistics(clientIds, tsaAttrs);
+      Set<ProductID> productIDs = UriInfoUtils.extractProductIds(info);
+
+      return monitoringService.getClientStatistics(clientIds, tsaAttrs, productIDs);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA statistics", see, Response.Status.BAD_REQUEST.getStatusCode());
     }

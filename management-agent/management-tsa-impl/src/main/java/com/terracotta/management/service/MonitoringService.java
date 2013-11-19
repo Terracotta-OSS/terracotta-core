@@ -5,6 +5,7 @@ package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.StatisticsEntity;
 
 import java.util.Collection;
@@ -25,7 +26,7 @@ public interface MonitoringService {
    * @return a collection of {@link StatisticsEntity} objects.
    * @throws ServiceExecutionException
    */
-  Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Get the statistics of the specified server.

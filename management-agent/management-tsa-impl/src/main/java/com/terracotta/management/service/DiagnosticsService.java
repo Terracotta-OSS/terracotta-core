@@ -5,6 +5,7 @@ package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 
@@ -25,7 +26,7 @@ public interface DiagnosticsService {
    * @return a collection {@link ThreadDumpEntity} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ThreadDumpEntity> getClusterThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> getClusterThreadDump(Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Get a collection {@link ThreadDumpEntity} objects each representing a server
@@ -45,7 +46,7 @@ public interface DiagnosticsService {
    * @return a collection {@link ThreadDumpEntity} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ThreadDumpEntity> getClientsThreadDump(Set<String> clientIds) throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> getClientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   /**
    * Run the Distributed Garbage Collector in the server array.

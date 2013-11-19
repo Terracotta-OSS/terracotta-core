@@ -5,6 +5,7 @@ package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ConfigEntity;
 
 import java.util.Collection;
@@ -35,6 +36,6 @@ public interface ConfigurationService {
    * @return a collection {@link com.terracotta.management.resource.ConfigEntity} objects.
    * @throws ServiceExecutionException
    */
-  Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException;
+  Collection<ConfigEntity> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
 }

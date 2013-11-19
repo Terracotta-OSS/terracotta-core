@@ -5,6 +5,7 @@ package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.TsaManagementClientService;
@@ -26,8 +27,8 @@ public class MonitoringServiceImpl implements MonitoringService {
   }
 
   @Override
-  public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientsStatistics(clientIds, attributes);
+  public Collection<StatisticsEntity> getClientStatistics(Set<String> clientIds, Set<String> attributes, Set<ProductID> clientProductIds) throws ServiceExecutionException {
+    return tsaManagementClientService.getClientsStatistics(clientIds, attributes, clientProductIds);
   }
 
   @Override

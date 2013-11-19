@@ -5,6 +5,7 @@ package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ConfigEntity;
@@ -28,17 +29,17 @@ import java.util.Set;
  */
 public interface TsaManagementClientService {
 
-  Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> clusterThreadDump(Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
-  Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException;
 
-  Collection<ClientEntity> getClientEntities() throws ServiceExecutionException;
+  Collection<ClientEntity> getClientEntities(Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException;
 
-  Collection<StatisticsEntity> getClientsStatistics(Set<String> clientIds, Set<String> attributes) throws ServiceExecutionException;
+  Collection<StatisticsEntity> getClientsStatistics(Set<String> clientIds, Set<String> attributes, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   Collection<StatisticsEntity> getServersStatistics(Set<String> serverNames, Set<String> attributes) throws ServiceExecutionException;
 
@@ -54,7 +55,7 @@ public interface TsaManagementClientService {
 
   Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
 
-  Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException;
+  Collection<ConfigEntity> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException;
 
   Collection<BackupEntity> getBackupsStatus() throws ServiceExecutionException;
 

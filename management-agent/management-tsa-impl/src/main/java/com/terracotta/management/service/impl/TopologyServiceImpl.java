@@ -5,12 +5,14 @@ package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
 
+import com.tc.license.ProductID;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Ludovic Orban
@@ -29,8 +31,8 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public Collection<ClientEntity> getClients() throws ServiceExecutionException {
-    return tsaManagementClientService.getClientEntities();
+  public Collection<ClientEntity> getClients(Set<ProductID> clientProductIds) throws ServiceExecutionException {
+    return tsaManagementClientService.getClientEntities(clientProductIds);
   }
 
 }

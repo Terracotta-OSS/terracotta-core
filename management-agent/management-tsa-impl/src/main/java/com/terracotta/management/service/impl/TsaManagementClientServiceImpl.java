@@ -128,7 +128,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<ThreadDumpEntity> clusterThreadDump() throws ServiceExecutionException {
+  public Collection<ThreadDumpEntity> clusterThreadDump(Set<ProductID> clientProductIds) throws ServiceExecutionException {
     List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
     try {
@@ -162,7 +162,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       if (jmxConnector != null) {
         final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-        Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
+        Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection, clientProductIds);
 
         for (final ObjectName clientObjectName : clientObjectNames) {
           final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
@@ -190,7 +190,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
+  public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
@@ -202,7 +202,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ThreadDumpEntity>> futures = new ArrayList<Future<ThreadDumpEntity>>();
 
-      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection, clientProductIds);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
         final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
@@ -347,7 +347,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<ClientEntity> getClientEntities() throws ServiceExecutionException {
+  public Collection<ClientEntity> getClientEntities(Set<ProductID> clientProductIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
@@ -359,7 +359,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ClientEntity>> futures = new ArrayList<Future<ClientEntity>>();
 
-      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection, clientProductIds);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
         Future<ClientEntity> future = executorService.submit(new Callable<ClientEntity>() {
@@ -444,7 +444,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<StatisticsEntity> getClientsStatistics(Set<String> clientIds, Set<String> attributesToShow) throws ServiceExecutionException {
+  public Collection<StatisticsEntity> getClientsStatistics(Set<String> clientIds, Set<String> attributesToShow, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     final String[] mbeanAttributeNames = (attributesToShow == null) ?
         CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES :
         new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
@@ -458,7 +458,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       }
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
-      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection, clientProductIds);
 
       List<Future<StatisticsEntity>> futures = new ArrayList<Future<StatisticsEntity>>();
 
@@ -1014,7 +1014,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
   }
 
   @Override
-  public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException {
+  public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
@@ -1026,7 +1026,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
       List<Future<ConfigEntity>> futures = new ArrayList<Future<ConfigEntity>>();
 
-      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection);
+      Collection<ObjectName> clientObjectNames = fetchClientObjectNames(mBeanServerConnection, clientProductIds);
 
       for (final ObjectName clientObjectName : clientObjectNames) {
         final String clientId = mBeanServerConnection.getAttribute(clientObjectName, "ClientID").toString();
@@ -1891,7 +1891,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     return !dsoClientObjectNames.isEmpty();
   }
 
-  private static Collection<ObjectName> fetchClientObjectNames(MBeanServerConnection mBeanServerConnection)
+  /**
+   * When expectedProductIds is null, only non-internal product ID client object names are returned.
+   */
+  private static Collection<ObjectName> fetchClientObjectNames(MBeanServerConnection mBeanServerConnection, Set<ProductID> expectedProductIds)
       throws MBeanException, AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException, MalformedObjectNameException {
     ObjectName[] objectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
@@ -1899,8 +1902,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     for (ObjectName objectName : objectNames) {
       String productIdName = objectName.getKeyProperty("productId");
 
-      ProductID productId = ProductID.valueOf(productIdName);
-      if (!productId.isInternal()) {
+      if (expectedProductIds == null && !ProductID.valueOf(productIdName).isInternal()) {
+        result.add(objectName);
+      }
+      if (expectedProductIds != null && expectedProductIds.contains(ProductID.valueOf(productIdName))) {
         result.add(objectName);
       }
     }
