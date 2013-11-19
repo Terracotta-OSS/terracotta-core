@@ -36,6 +36,7 @@ public abstract class ServerControlBase implements ServerControl {
       if (!socket.isConnected()) throw new AssertionError();
       return true;
     } catch (IOException e) {
+      System.err.println("Socket connect to " + host + ":" + adminPort + " failed because of " + e.getMessage());
       return false;
     } finally {
         try {
