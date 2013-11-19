@@ -129,7 +129,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         } else {
           boolean isRestartable = testConfig.getRestartable();
           // reduce memory settings for AA tests until RAM is increased on MNK machines.
-          TestBaseUtil.configureOffHeap(testConfig, 512, 300);
+          TestBaseUtil.configureOffHeap(testConfig, 1024, 300);
           testConfig.setRestartable(isRestartable);
         }
       } else {
