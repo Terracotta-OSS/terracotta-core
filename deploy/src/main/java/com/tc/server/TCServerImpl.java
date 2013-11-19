@@ -204,7 +204,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (!LicenseManager.enterpriseEdition()) return;
 
     DataStorage dataStorage = manager.dsoL2Config().getDataStorage();
-    LicenseManager.verifyServerArrayOffheapCapability(dataStorage.getSize());
+    if (!TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OFFHEAP_DISABLED, false)) {
+      LicenseManager.verifyServerArrayOffheapCapability(dataStorage.getSize());
+    }
     if (manager.commonl2Config().authentication()) {
       LicenseManager.verifyAuthenticationCapability();
     }
