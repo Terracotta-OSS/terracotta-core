@@ -11,8 +11,8 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.session.SessionID;
-import com.tc.server.AdvancedServerEvent;
 import com.tc.server.BasicServerEvent;
+import com.tc.server.CustomLifespanVersionedServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
@@ -57,14 +57,17 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
       encoder.encode(event.getCacheName(), outStream);
       encoder.encode(event.getKey(), outStream);
       encoder.encode(event.getValue(), outStream);
-      if (event instanceof VersionedServerEvent) {
-        encoder.encode(((VersionedServerEvent)event).getVersion(), outStream);
-        if (event instanceof AdvancedServerEvent) {
-          AdvancedServerEvent advancedServerEvent = (AdvancedServerEvent) event;
-          encoder.encode(advancedServerEvent.getCreationTimeInSeconds(), outStream);
-          encoder.encode(advancedServerEvent.getTimeToIdle(), outStream);
-          encoder.encode(advancedServerEvent.getTimeToLive(), outStream);
-        }
+      // Note: This is an ugly hack, but it will work for now. Should fix it soon.
+      // Currently every event is a VersionedServerEvent, there is no implementation for ServerEvent
+      encoder.encode(((VersionedServerEvent) event).getVersion(), outStream);
+
+      boolean customLifespanEvent = (event instanceof CustomLifespanVersionedServerEvent);
+      encoder.encode(customLifespanEvent, outStream);
+      if (customLifespanEvent) {
+        CustomLifespanVersionedServerEvent customLifespanVersionedServerEvent = (CustomLifespanVersionedServerEvent) event;
+        encoder.encode(customLifespanVersionedServerEvent.getCreationTimeInSeconds(), outStream);
+        encoder.encode(customLifespanVersionedServerEvent.getTimeToIdle(), outStream);
+        encoder.encode(customLifespanVersionedServerEvent.getTimeToLive(), outStream);
       }
       count++;
     }
@@ -85,16 +88,16 @@ public class ServerEventBatchMessageImpl extends DSOMessageBase implements Serve
             final String destination = (String)decoder.decode(inputStream);
             final Object key = decoder.decode(inputStream);
             final byte[] value = (byte[])decoder.decode(inputStream);
-            final long version = (inputStream.available() > 0) ? (Long)decoder.decode(inputStream)
-                : VersionedServerEvent.DEFAULT_VERSION;
-            ServerEvent serverEvent = new BasicServerEvent(type, extractStringIfNecessary(key), value,
+            final long version = (Long) decoder.decode(inputStream);
+            VersionedServerEvent serverEvent = new BasicServerEvent(type, extractStringIfNecessary(key), value,
                                                                      version, destination);
 
-            if (inputStream.available() > 0) {
+            boolean customLifespanEvent = (Boolean) decoder.decode(inputStream);
+            if (customLifespanEvent) {
               final int creationTime = (Integer) decoder.decode(inputStream);
               final int timeToIdle = (Integer) decoder.decode(inputStream);
               final int timeToLive = (Integer) decoder.decode(inputStream);
-              serverEvent = new AdvancedServerEvent((BasicServerEvent) serverEvent, creationTime, timeToIdle, timeToLive);
+              serverEvent = new CustomLifespanVersionedServerEvent((BasicServerEvent) serverEvent, creationTime, timeToIdle, timeToLive);
             }
 
             events.add(serverEvent);

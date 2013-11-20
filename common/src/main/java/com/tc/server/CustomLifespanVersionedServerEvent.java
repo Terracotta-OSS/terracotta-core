@@ -3,14 +3,14 @@
  */
 package com.tc.server;
 
-public class AdvancedServerEvent implements VersionedServerEvent {
+public class CustomLifespanVersionedServerEvent implements VersionedServerEvent {
 
   private final BasicServerEvent basicServerEvent;
   private final int              creationTimeInSeconds;
   private final int              timeToIdle;
   private final int              timeToLive;
 
-  public AdvancedServerEvent(BasicServerEvent basicServerEvent, int creationTimeInSeconds, int timeToIdle, int timeToLive) {
+  public CustomLifespanVersionedServerEvent(BasicServerEvent basicServerEvent, int creationTimeInSeconds, int timeToIdle, int timeToLive) {
     this.basicServerEvent = basicServerEvent;
     this.creationTimeInSeconds = creationTimeInSeconds;
     this.timeToIdle = timeToIdle;
