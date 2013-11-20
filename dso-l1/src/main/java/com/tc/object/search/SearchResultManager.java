@@ -27,4 +27,6 @@ public interface SearchResultManager extends ClientHandshakeCallback {
   void releaseResults(SearchRequestID request, String cacheName) throws AbortedOperationException;
 
   int getOpenResultSetCount();
+
+  void resultSetReceived(SearchRequestID id, long size);
 }

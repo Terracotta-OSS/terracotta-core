@@ -69,4 +69,8 @@ public class NullSearchResultManager implements SearchResultManager {
     return 0;
   }
 
+  @Override
+  public void resultSetReceived(SearchRequestID id, long size) {
+    //
+  }
 }
