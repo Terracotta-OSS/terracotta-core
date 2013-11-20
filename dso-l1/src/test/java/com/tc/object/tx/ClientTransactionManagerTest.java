@@ -308,13 +308,15 @@ public class ClientTransactionManagerTest extends TestCase {
       }
     };
     thread.start();
+
     clientTxnMgr.begin(new StringLockID("lock"), LockLevel.WRITE, false);
     try {
       clientTxnMgr.logicalInvokeWithResult(new MockTCObject(new ObjectID(1), new Object(), false, true), 1, "test",
                                            new Object[0]);
       Assert.fail();
     } catch (PlatformRejoinException e) {
-      // expected
+      // expected, clear the interrupted status
+      Thread.interrupted();
     }
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();
