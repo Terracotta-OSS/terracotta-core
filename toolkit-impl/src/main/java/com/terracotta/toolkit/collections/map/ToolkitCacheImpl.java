@@ -142,7 +142,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public QueryBuilder createQueryBuilder() {
     readLock();
     try {
-      return activeDelegate.createQueryBuilder();
+      return localDelegate.createQueryBuilder();
     } finally {
       readUnlock();
     }
