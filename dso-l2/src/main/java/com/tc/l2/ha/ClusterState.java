@@ -70,9 +70,10 @@ public class ClusterState {
   private void checkAndSetGroupID(ClusterStatePersistor statePersistor, GroupID groupID) {
     if (statePersistor.getGroupId().isNull()) {
       statePersistor.setGroupId(thisGroupID);
-    } else {
-      Assert.assertEquals("Persisted group id is not the same as the current group id.", groupID,
-          statePersistor.getGroupId());
+    } else if (!groupID.equals(statePersistor.getGroupId())) {
+      logger.error("Found data from the incorrect stripe in the server data path. Verify that the server is starting up " +
+                   "with the correct data files and that the cluster topology has not changed across a restart.");
+      throw new IllegalStateException("Data for " + statePersistor.getGroupId() + " found. Expected data from group " + thisGroupID + ".");
     }
   }
 

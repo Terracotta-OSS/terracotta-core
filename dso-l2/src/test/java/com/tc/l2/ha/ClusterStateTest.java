@@ -43,7 +43,7 @@ public class ClusterStateTest extends TCTestCase {
                                       new GroupID(1), stripeIdStateManager, dgcSequenceProvider);
       clusterState.toString();
       fail();
-    } catch (AssertionError assertionError) {
+    } catch (IllegalStateException exception) {
       // expected
     }
   }
