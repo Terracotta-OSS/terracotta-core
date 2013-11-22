@@ -110,9 +110,9 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
 
   private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ReadRate", "WriteRate" };
 
-  private static final String[]  SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
-      "ReadOperationRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize",
-      "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
+  private static final String[]   SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
+      "ReadOperationRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize", "OffheapUsedSize",
+      "EvictionRate", "ExpirationRate", "StorageStats"              };
 
   private final JmxConnectorPool jmxConnectorPool;
   private final boolean secure;
