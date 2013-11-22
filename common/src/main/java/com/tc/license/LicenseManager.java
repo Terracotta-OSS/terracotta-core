@@ -125,24 +125,24 @@ public class LicenseManager {
     return getLicense().getRequiredProperty(LICENSE_CAPABILITIES);
   }
 
-  public static void verifyServerArrayOffheapCapability(String maxOffHeapConfigured) {
+  public static void verifyServerArrayOffheapCapability(String maxDataStorageConfigured) {
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
 
 
-    String maxHeapSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
-    long maxOffHeapLicensedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
-    long maxOffHeapConfiguredInBytes = MemorySizeParser.parse(maxOffHeapConfigured);
+    String maxDataStorageSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
+    long maxDataStorageLicensedInBytes = MemorySizeParser.parse(maxDataStorageSizeFromLicense);
+    long maxDataStroageConfiguredInBytes = MemorySizeParser.parse(maxDataStorageConfigured);
 
     if (CONSOLE_LOGGER.isDebugEnabled()) {
-      CONSOLE_LOGGER.debug("max offheap licensed: " + maxOffHeapLicensedInBytes);
-      CONSOLE_LOGGER.debug("max offheap configured: " + maxOffHeapConfiguredInBytes);
+      CONSOLE_LOGGER.debug("max dataStorage size licensed: " + maxDataStorageLicensedInBytes);
+      CONSOLE_LOGGER.debug("max dataStorage size configured: " + maxDataStroageConfiguredInBytes);
     }
 
-    boolean offHeapSizeAllowed = maxOffHeapConfiguredInBytes <= maxOffHeapLicensedInBytes;
-    if (!offHeapSizeAllowed) {
-      throw new LicenseException("Your license only allows up to " + maxHeapSizeFromLicense
-                                 + " in offheap size. Your Terracotta server is configured with "
-                                 + maxOffHeapConfigured);
+    boolean dataStorageSizeAllowed = maxDataStroageConfiguredInBytes <= maxDataStorageLicensedInBytes;
+    if (!dataStorageSizeAllowed) {
+      throw new LicenseException("Your license only allows up to " + maxDataStorageSizeFromLicense
+                                 + " in dataStorage size. Your Terracotta server is configured with "
+                                 + maxDataStorageConfigured);
     }
   }
 

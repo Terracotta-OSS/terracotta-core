@@ -13,7 +13,7 @@ import java.util.Map;
  * @author tim
  */
 public class ClusterStatePersistor {
-  private static final String MAX_DATA_SIZE_KEY = "maxdatasize";
+  private static final String MAX_DATA_STORAGE_SIZE_KEY = "maxdatastoragesize";
   private static final String GROUP_ID_KEY = "groupid";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
@@ -29,12 +29,12 @@ public class ClusterStatePersistor {
     this.initialState = getCurrentL2State();
   }
 
-  public void setMaxDataSize(long size) {
-    map.put(MAX_DATA_SIZE_KEY, String.valueOf(size));
+  public void setMaxDataStorageSize(long size) {
+    map.put(MAX_DATA_STORAGE_SIZE_KEY, String.valueOf(size));
   }
 
-  public Long getMaxDataSize() {
-    String l = map.get(MAX_DATA_SIZE_KEY);
+  public Long getMaxDataStorageSize() {
+    String l = map.get(MAX_DATA_STORAGE_SIZE_KEY);
     return l == null ? null : Long.valueOf(l);
   }
 
