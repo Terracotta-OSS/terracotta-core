@@ -152,10 +152,6 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     return ((ConnectionHealthCheckerImpl) serverComms.getConnHealthChecker()).getTotalConnsUnderMonitor();
   }
 
-  private void waitTillGreaterOrEqual() {
-
-  }
-
   private static class MyConnectionManager implements TCConnectionManager {
     private final TCConnectionManagerImpl delegate;
     private final CountDownLatch          connects;
