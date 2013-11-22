@@ -5,27 +5,39 @@ package com.tc.net.protocol.transport;
 
 import com.tc.properties.TCProperties;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class HealthCheckerConfigClientImpl extends HealthCheckerConfigImpl {
-  private String callbackportListenerBindAddress;
-  private int    callbackportListenerBindPort = TransportHandshakeMessage.NO_CALLBACK_PORT;
+  private final String       callbackportListenerBindAddress;
+  private final Set<Integer> callbackportListenerBindPort;
 
   public HealthCheckerConfigClientImpl(TCProperties healthCheckerProperties, String hcName) {
     super(healthCheckerProperties, hcName);
     this.callbackportListenerBindAddress = healthCheckerProperties.getProperty("bindAddress");
-    this.callbackportListenerBindPort = healthCheckerProperties.getInt("bindPort", 0);
+
+    String bindPort = healthCheckerProperties.getProperty("bindPort", true);
+    if (bindPort == null) {
+      bindPort = String.valueOf(CallbackPortRange.SYSTEM_ASSIGNED);
+    }
+
+    this.callbackportListenerBindPort = CallbackPortRange.expandRange(bindPort);
+
+    if (this.callbackportListenerBindPort.isEmpty()) { throw new IllegalArgumentException("No bind port(s) specified"); }
   }
 
-  public HealthCheckerConfigClientImpl(String name) {
+  public HealthCheckerConfigClientImpl(String name, String bindPort) {
     super(name);
-    this.callbackportListenerBindPort = 0;
+    this.callbackportListenerBindPort = CallbackPortRange.expandRange(bindPort);
+    this.callbackportListenerBindAddress = null;
   }
 
   public HealthCheckerConfigClientImpl(long idle, long interval, int probes, String name, boolean extraCheck,
                                        int socketConnectMaxCount, int socketConnectTimeout, String bindAddress,
-                                       int bindPort) {
+                                       String bindPort) {
     super(idle, interval, probes, name, extraCheck, socketConnectMaxCount, socketConnectTimeout);
     this.callbackportListenerBindAddress = bindAddress;
-    this.callbackportListenerBindPort = bindPort;
+    this.callbackportListenerBindPort = CallbackPortRange.expandRange(bindPort);
   }
 
   @Override
@@ -39,8 +51,8 @@ public class HealthCheckerConfigClientImpl extends HealthCheckerConfigImpl {
   }
 
   @Override
-  public int getCallbackPortListenerBindPort() {
-    return this.callbackportListenerBindPort;
+  public Set<Integer> getCallbackPortListenerBindPort() {
+    return Collections.unmodifiableSet(this.callbackportListenerBindPort);
   }
 
 }

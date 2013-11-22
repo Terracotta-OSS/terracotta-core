@@ -424,12 +424,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       return;
     }
 
-    int bindPort = healthCheckrConfig.getCallbackPortListenerBindPort();
-    if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
-      logger.info("HealthCheck CallbackPort Listener disabled");
-      return;
-    }
-
     InetAddress bindAddr;
     String bindAddress = healthCheckrConfig.getCallbackPortListenerBindAddress();
     if (bindAddress == null || bindAddress.equals("")) {
@@ -449,18 +443,34 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                          + addressChecker
                                                                                              .getAllLocalAddresses()); }
 
-    TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
-    NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
-                                                          new DefaultConnectionIdFactory());
-    try {
-      callbackPortListener.start(new HashSet());
-      this.callbackPort = callbackPortListener.getBindPort();
-      this.callbackportListener = callbackPortListener;
-      logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"
-                  + callbackPort);
-    } catch (IOException ioe) {
-      logger.info("Unable to start HealthCheck CallbackPort Listener at" + address + ": " + ioe);
+    startCallbackListener(healthCheckrConfig, bindAddr);
+  }
+
+  private void startCallbackListener(HealthCheckerConfig healthCheckrConfig, InetAddress bindAddr) {
+    for (Integer bindPort : healthCheckrConfig.getCallbackPortListenerBindPort()) {
+      if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
+        logger.info("HealthCheck CallbackPort Listener disabled");
+        return;
+      }
+
+      TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
+      NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
+                                                            new DefaultConnectionIdFactory());
+      try {
+        callbackPortListener.start(new HashSet());
+        this.callbackPort = callbackPortListener.getBindPort();
+        this.callbackportListener = callbackPortListener;
+        logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"
+                    + callbackPort);
+        return;
+      } catch (IOException ioe) {
+        if (healthCheckrConfig.getCallbackPortListenerBindPort().size() == 1) {
+          logger.warn("Unable to start HealthCheck CallbackPort Listener at" + address + ": " + ioe);
+        }
+      }
     }
+
+    logger.warn("Unable to start HealthCheck CallbackPort Listener on any port");
   }
 
   void registerListener(NetworkListener lsnr) {

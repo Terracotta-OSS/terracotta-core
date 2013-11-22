@@ -3,6 +3,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import java.util.Set;
+
 public interface HealthCheckerConfig {
 
   // HC - HealthChecker
@@ -44,7 +46,7 @@ public interface HealthCheckerConfig {
 
   String getCallbackPortListenerBindAddress();
 
-  int getCallbackPortListenerBindPort();
+  Set<Integer> getCallbackPortListenerBindPort();
 
   /**
    * Checking time difference between hosts enabled/disabled.

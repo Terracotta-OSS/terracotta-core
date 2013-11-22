@@ -82,7 +82,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
                                            true, Integer.MAX_VALUE, 2);
     HealthCheckerConfig clientHC = new HealthCheckerConfigClientImpl(1000, 1000, Integer.MAX_VALUE, "client-HC", false,
                                                                      Integer.MAX_VALUE, 2, TCSocketAddress.WILDCARD_IP,
-                                                                     0);
+                                                                     "0");
 
     clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
                                                 new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(),

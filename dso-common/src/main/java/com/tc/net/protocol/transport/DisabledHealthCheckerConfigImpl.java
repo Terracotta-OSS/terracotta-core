@@ -3,6 +3,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import java.util.Set;
+
 /**
  * Default Health Chcker config passed to the Communications Manager
  * 
@@ -56,7 +58,7 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
   }
 
   @Override
-  public int getCallbackPortListenerBindPort() {
+  public Set<Integer> getCallbackPortListenerBindPort() {
     throw new AssertionError("Disabled HealthChecker");
   }
 
