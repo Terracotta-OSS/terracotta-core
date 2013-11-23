@@ -1209,9 +1209,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
   public void internalRemove(Object key) {
     MutateOperation mutateOperation = new MutateOperation(MutateOperation.METHOD.REMOVE, key, null);
-    if (!this.pendingChanges.remove(mutateOperation)) {
-      pendingChanges.add(mutateOperation);
-    }
+    pendingChanges.add(mutateOperation);
   }
 
   public void internalClear() {
