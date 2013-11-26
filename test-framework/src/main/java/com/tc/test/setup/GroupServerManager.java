@@ -1,5 +1,6 @@
 package com.tc.test.setup;
 
+import org.junit.Assert;
 import org.terracotta.test.util.JMXUtils;
 import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.TestFailureListener;
@@ -36,9 +37,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
-import junit.framework.Assert;
-
-public class GroupServerManager {
+class GroupServerManager {
 
   private static final String       DEBUG_SERVER_PROPERTY = "l2.debug";
   private static final boolean      DEBUG                 = Boolean.getBoolean("test.framework.debug");
@@ -114,7 +113,7 @@ public class GroupServerManager {
 
   }
 
-  public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome,
+  GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome,
                             File tcConfigFile, final TestFailureListener testFailureCallback) throws Exception {
     this.groupData = groupData;
     this.testFailureCallback = testFailureCallback;
@@ -207,7 +206,7 @@ public class GroupServerManager {
                                        new ServerExitCallback(serverName, dsoPort, index));
   }
 
-  public void startAllServers() throws Exception {
+  void startAllServers() throws Exception {
     debugPrintln("***** startAllServers():  about to start [" + serverControl.length + "]servers  threadId=["
                  + Thread.currentThread().getName() + "]");
     for (int i = 0; i < serverControl.length; i++) {
@@ -225,7 +224,7 @@ public class GroupServerManager {
                  + "]");
   }
 
-  public synchronized void startServer(int index) throws Exception {
+  synchronized void startServer(int index) throws Exception {
     verifyIndex(index);
     System.out.println("*** Starting server [" + serverControl[index].getTsaPort() + "] ... ");
     serverControl[index].start();
@@ -243,7 +242,7 @@ public class GroupServerManager {
     System.out.println("*** Server started [" + serverControl[index].getTsaPort() + "]");
   }
 
-  public synchronized void startServerNoWait(int index) throws Exception {
+  synchronized void startServerNoWait(int index) throws Exception {
     verifyIndex(index);
     System.out.println("*** Starting server [" + serverControl[index].getTsaPort() + "] expecting a crash. ");
     serverControl[index].startWithoutWait();
@@ -289,7 +288,7 @@ public class GroupServerManager {
     }
   }
 
-  public void startTsaProxyOnActiveServer() {
+  void startTsaProxyOnActiveServer() {
     if (isProxyTsaPort()) {
       int activeServerIndex = getActiveServerIndex();
       while (activeServerIndex < 0) {
@@ -309,7 +308,7 @@ public class GroupServerManager {
     }
   }
 
-  public void stopAllServers() throws Exception {
+  private void stopAllServers() throws Exception {
     closeJMXConnectors();
 
     for (int i = 0; i < serverControl.length; i++) {
@@ -321,7 +320,7 @@ public class GroupServerManager {
     }
   }
 
-  public void stop() throws Exception {
+  void stop() throws Exception {
     stopped = true;
     stopCrasher();
     stopAllServers();
@@ -413,18 +412,18 @@ public class GroupServerManager {
                                                          TCServerInfoMBean.class, true);
   }
 
-  public static JMXConnector getJMXConnector(int jmxPort) throws IOException {
+  private static JMXConnector getJMXConnector(int jmxPort) throws IOException {
     return JMXUtils.getJMXConnector("localhost", jmxPort);
   }
 
-  public DSOMBean getDsoMBean(int index) throws IOException {
+  private DSOMBean getDsoMBean(int index) throws IOException {
     JMXConnector jmxc = getJMXConnector(serverControl[index].getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
     DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     return dsoMBean;
   }
 
-  public DGCMBean getLocalDGCMBean(int index) throws IOException {
+  private DGCMBean getLocalDGCMBean(int index) throws IOException {
     JMXConnector jmxc = getJMXConnector(serverControl[index].getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
     DGCMBean dgcMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.LOCAL_DGC_STATS,
@@ -468,7 +467,7 @@ public class GroupServerManager {
     }
   }
 
-  public List<DSOMBean> connectAllDsoMBeans() {
+  List<DSOMBean> connectAllDsoMBeans() {
     List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
     for (int i = 0; i < serverControl.length; i++) {
       try {
@@ -481,7 +480,7 @@ public class GroupServerManager {
     return mbeans;
   }
 
-  public List<DGCMBean> connectAllLocalDGCMBeans() {
+  List<DGCMBean> connectAllLocalDGCMBeans() {
     List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
     for (int i = 0; i < serverControl.length; i++) {
       try {
@@ -494,14 +493,14 @@ public class GroupServerManager {
     return mbeans;
   }
 
-  public GroupsData getGroupData() {
+  GroupsData getGroupData() {
     return groupData;
   }
 
   /**
    * crash active server and wait for passive server to take over. If Passive is present.
    */
-  public synchronized void crashActiveAndWaitForPassiveToTakeOver() throws Exception {
+  synchronized void crashActiveAndWaitForPassiveToTakeOver() throws Exception {
     if (stopped) return;
     crashActive();
     if (expectedRunningServerCount() > 0) {
@@ -516,7 +515,7 @@ public class GroupServerManager {
 
   }
 
-  public synchronized void crashActive() throws Exception {
+  synchronized void crashActive() throws Exception {
     int activeIndex = getActiveServerIndex();
     if (activeIndex < 0) { throw new AssertionError("Trying to crash active server when no active server is present"); }
     crashServer(activeIndex);
@@ -547,7 +546,7 @@ public class GroupServerManager {
   // pauseServer(index, pauseTimeMillis);
   // }
 
-  public void pauseServer(final int index, final long pauseTimeMillis) throws InterruptedException {
+  void pauseServer(final int index, final long pauseTimeMillis) throws InterruptedException {
     if (isExpectedServerRunning(index)) {
       serverControl[index].pauseServer(pauseTimeMillis);
     }
@@ -572,7 +571,7 @@ public class GroupServerManager {
     return expectedServerRunning[index];
   }
 
-  public void crashAllPassive() throws Exception {
+  void crashAllPassive() throws Exception {
     System.out.println("**** Crashing all passives");
     int activeIndex = getActiveServerIndex();
     for (int i = 0; i < groupData.getServerCount(); i++) {
@@ -584,7 +583,7 @@ public class GroupServerManager {
 
   }
 
-  public synchronized void crashPassive(int passiveToCrash) throws Exception {
+  synchronized void crashPassive(int passiveToCrash) throws Exception {
     verifyIndex(passiveToCrash);
     if (isActive(passiveToCrash)) { throw new AssertionError("**** Trying to crash server ["
                                                              + serverControl[passiveToCrash].getTsaPort()
@@ -592,7 +591,7 @@ public class GroupServerManager {
     crashServer(passiveToCrash, true);
   }
 
-  public synchronized void crashRandomServer() throws Exception {
+  synchronized void crashRandomServer() throws Exception {
     if (stopped) return;
 
     if (random == null) { throw new AssertionError("Random number generator was not set."); }
@@ -605,7 +604,7 @@ public class GroupServerManager {
     }
   }
 
-  public void crashServer(int index) throws Exception {
+  void crashServer(int index) throws Exception {
     crashServer(index, false);
   }
 
@@ -638,7 +637,7 @@ public class GroupServerManager {
     }
   }
 
-  public synchronized void restartLastCrashedServer() throws Exception {
+  synchronized void restartLastCrashedServer() throws Exception {
     if (stopped) return;
     debugPrintln("*****  restarting last crashed server");
 
@@ -654,7 +653,7 @@ public class GroupServerManager {
     }
   }
 
-  public void restartCrashedServer(int serverIndex) throws Exception {
+  void restartCrashedServer(int serverIndex) throws Exception {
 
     debugPrintln("*****  restarting crashed server");
 
@@ -687,23 +686,23 @@ public class GroupServerManager {
     throw new Exception("Server crash did not complete.");
   }
 
-  public boolean isServerRunning(int index) {
+  boolean isServerRunning(int index) {
     return serverControl[index] != null && serverControl[index].isRunning();
   }
 
-  public void waituntilPassiveStandBy() throws Exception {
+  void waituntilPassiveStandBy() throws Exception {
     while (!isPassiveStandBy() && !stopped) {
       Thread.sleep(1000);
     }
   }
 
-  public void waituntilEveryPassiveStandBy() throws Exception {
+  void waituntilEveryPassiveStandBy() throws Exception {
     while (!isEveryPassiveStandBy() && !stopped) {
       Thread.sleep(1000);
     }
   }
 
-  public void waitUntilActive() throws Exception {
+  void waitUntilActive() throws Exception {
     while (!isActivePresent() && !stopped) {
       Thread.sleep(1000);
     }
@@ -717,7 +716,7 @@ public class GroupServerManager {
     return testConfig.getL2Config().isProxyTsaPorts();
   }
 
-  public boolean dumpClusterState() throws Exception {
+  boolean dumpClusterState() throws Exception {
     boolean rv = true;
     for (int i = 0; i < getGroupData().getServerCount(); i++) {
       if (!dumpClusterStateInternal(i)) rv = false;
@@ -761,11 +760,11 @@ public class GroupServerManager {
     return false;
   }
 
-  public synchronized boolean isActivePresent() {
+  synchronized boolean isActivePresent() {
     return getActiveServerIndex() == -1 ? false : true;
   }
 
-  public boolean isEveryPassiveStandBy() {
+  private boolean isEveryPassiveStandBy() {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     int passives = 0;
@@ -793,7 +792,7 @@ public class GroupServerManager {
     return passives == expectedPassives;
   }
 
-  public boolean isPassiveStandBy() {
+  boolean isPassiveStandBy() {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     for (int i = 0; i < groupData.getServerCount(); i++) {
@@ -814,7 +813,7 @@ public class GroupServerManager {
     return false;
   }
 
-  public boolean isPassiveUninitialized(int index) {
+  boolean isPassiveUninitialized(int index) {
     boolean isPassiveUnitialized = false;
     try {
       isPassiveUnitialized = tcServerInfoMBeans[index].isPassiveUninitialized();
@@ -830,7 +829,7 @@ public class GroupServerManager {
     return isPassiveUnitialized;
   }
 
-  public boolean isActive(int index) {
+  private boolean isActive(int index) {
     boolean isActive = false;
     try {
       isActive = tcServerInfoMBeans[index].isActive();
@@ -846,7 +845,7 @@ public class GroupServerManager {
     return isActive;
   }
 
-  public void startCrasher() {
+  void startCrasher() {
     if (crasherStarted.compareAndSet(false, true)) {
       if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
         crasherThread = new Thread(serverCrasher);
@@ -858,14 +857,14 @@ public class GroupServerManager {
     }
   }
 
-  public void stopCrasher() throws InterruptedException {
+  private void stopCrasher() throws InterruptedException {
     this.serverCrasher.stop();
     if (crasherStarted.get() && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)) {
       crasherThread.join();
     }
   }
 
-  public synchronized void closeTsaProxyOnActiveServer() {
+  synchronized void closeTsaProxyOnActiveServer() {
     if (isProxyTsaPort()) {
       int activeServerIndex = getActiveServerIndex();
       System.out.println("*** stopping the DSO proxy with proxy port as "
@@ -875,11 +874,11 @@ public class GroupServerManager {
     }
   }
 
-  public int waitForServerExit(int serverIndex) throws Exception {
+  int waitForServerExit(int serverIndex) throws Exception {
     return serverControl[serverIndex].waitFor();
   }
 
-  public synchronized void stopTsaProxyOnActiveServer() {
+  synchronized void stopTsaProxyOnActiveServer() {
     if (isProxyTsaPort()) {
       int activeServerIndex = getActiveServerIndex();
       stopL1Proxy(activeServerIndex);
