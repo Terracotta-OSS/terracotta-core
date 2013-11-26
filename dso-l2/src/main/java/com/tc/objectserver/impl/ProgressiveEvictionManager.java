@@ -675,7 +675,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       } else {
           resetEpocIfNeeded(nanoTime, used, usage.getTotal());
       }
-      throttle(usage, setThrottle); 
+      
+      if ( setThrottle > .9 ) {
+        stop(new DetailedMemoryUsage(usage, 0));
+      } else {
+        throttle(usage, setThrottle); 
+      }
       throttlePoll = nanoTime;
     }
 
