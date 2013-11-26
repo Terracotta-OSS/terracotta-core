@@ -25,7 +25,7 @@ public class StorageDataStatsImpl implements StorageDataStats {
   public Map<String, Map<String, Long>> getStorageStats() {
     Map<String, Map<String, Long>> stats = new HashMap<String, Map<String, Long>>();
     for (MonitoredResource mr : monitoredResource) {
-      stats.put(mr.getType().toString(), toMap(mr.getTotal(), mr.getReserved(), mr.getUsed()));
+      stats.put(mr.getType().toString(), toMap(mr.getTotal(), mr.getReserved(), mr.getVital()));
     }
     return stats;
   }
