@@ -32,7 +32,7 @@ public final class PauseManager {
   private final ScheduledExecutorService schedulerService = Executors.newScheduledThreadPool(5);
   private final Map<Integer, ScheduledFuture<?>> schedulersForClients;    // needed to keep futures for cancellation
 
-  PauseManager(TestConfig config) {
+  public PauseManager(TestConfig config) {
     this.config = config;
     this.schedulersForClients = new ConcurrentHashMap<Integer, ScheduledFuture<?>>();
   }

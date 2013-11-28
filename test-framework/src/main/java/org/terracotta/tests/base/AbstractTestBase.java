@@ -60,7 +60,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected TestServerManager              testServerManager;
   protected final File                     tempDir;
   protected File                           javaHome;
-  private TestClientManager                clientRunner;
+  protected TestClientManager              clientRunner;
   protected TestJMXServerManager           jmxServerManager;
   private Thread                           duringRunningClusterThread;
   private volatile Thread                  testExecutionThread;
