@@ -43,21 +43,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Eventual Mapping
  * <ul>
- * <li>key -> (value, valueoid)</li>
- * <li>valueoid -> key</li>
+ * <li>key -> (value, valueoid)</li> (local ehcache)
+ * <li>valueoid -> key</li> (local ehcache)
  * </ul>
  * <p/>
  * Strong Mapping (if value is not literal)
  * <ul>
- * <li>key -> (value, lockid)</li>
- * <li>valueoid -> key</li>
- * <li>lockid -> List&lt;valueoid></li>
+ * <li>key -> (value, lockid)</li> (local ehcache)
+ * <li>valueoid -> key</li> (local ehcache)
+ * <li>lockid -> List&lt;valueoid></li> (In memory) lockIDMappings
  * </ul>
  * <p/>
  * Strong Mapping (if value is literal)
  * <ul>
- * <li>key -> (value, lockid)</li>
- * <li>lockid -> List&lt;key></li>
+ * <li>key -> (value, lockid)</li> (local ehcache)
+ * <li>lockid -> List&lt;key></li> (In memory)
  * </ul>
  * <p/>
  * Bulk load
