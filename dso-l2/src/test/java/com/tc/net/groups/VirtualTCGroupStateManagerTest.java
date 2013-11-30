@@ -351,6 +351,8 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   }
 
   private void nodesJoinLater(int nodes, int virtuals) throws Exception {
+// force gc to try and free uncollected ports
+    System.gc();
     System.out.println("*** Testing total=" + nodes + " with " + virtuals + " nodes join at later time.");
 
     final LinkedBlockingQueue<NodeID> joinedNodes = new LinkedBlockingQueue<NodeID>();
