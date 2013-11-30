@@ -184,7 +184,9 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
 
   private void nodesConcurrentJoining(int nodes, int virtuals) throws Exception {
     System.out.println("*** Testing total=" + nodes + " with " + virtuals + " nodes join at same time.");
-
+// force gc to try and free uncollected ports
+    System.gc();
+    
     TCGroupManagerImpl[] groupMgr = new TCGroupManagerImpl[nodes];
     PortChooser pc = new PortChooser();
     int[] ports = new int[nodes];
@@ -283,7 +285,9 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private void nodesMixJoinAndElect(int nodes, int virtuals) throws Exception {
     System.out.println("*** Testing total=" + nodes + " with " + virtuals
                        + " nodes mixed join and election at same time.");
-
+// force gc to try and free uncollected ports
+    System.gc();
+    
     TCGroupManagerImpl[] groupMgr = new TCGroupManagerImpl[nodes];
     PortChooser pc = new PortChooser();
     int[] ports = new int[nodes];
