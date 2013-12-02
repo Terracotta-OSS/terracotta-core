@@ -6,12 +6,9 @@ package com.terracotta.toolkit.client;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.util.Assert;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
 
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -20,12 +17,12 @@ import java.util.concurrent.TimeUnit;
 public class TerracottaToolkitCreator {
 
   private static final long              TIME_TO_WAIT_FOR_ASYNC_INIT                = Long
-                                                                                        .getLong("com.tc.non.stop.init.wait.time.millis",
-                                                                                                 TimeUnit.SECONDS
-                                                                                                     .toMillis(20));
-  private static final String            INIT_WAIT_KEY                              = "toolkit.init.wait.time.millis";
-  private static final String            NON_STOP_INIT_THREAD_NAME                  = "Non Stop initialization of Toolkit";
-  private static final String            INIT_THREAD_NAME                           = "Initialization of Toolkit";
+                                                                                        .parseLong(System
+                                                                                            .getProperty("com.tc.non.stop.init.wait.time.millis",
+                                                                                                         String
+                                                                                                             .valueOf(TimeUnit.SECONDS
+                                                                                                                 .toMillis(20))));
+
   private static final String            TOOLKIT_IMPL_CLASSNAME                     = "com.terracotta.toolkit.TerracottaToolkit";
   private static final String            ENTERPRISE_TOOLKIT_IMPL_CLASSNAME          = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
 
@@ -39,45 +36,29 @@ public class TerracottaToolkitCreator {
   private final TerracottaInternalClient internalClient;
   private final boolean                  enterprise;
   private final TerracottaClientConfig   config;
-  private final Properties               toolkitProperties;
 
-  public TerracottaToolkitCreator(TerracottaClientConfig config, Properties properties, boolean enterprise) {
+  public TerracottaToolkitCreator(TerracottaClientConfig config, boolean enterprise) {
     this.enterprise = enterprise;
     if (config == null) { throw new NullPointerException("terracottaClientConfig cannot be null"); }
     this.config = config;
-    this.internalClient = createInternalClient();
-    this.toolkitProperties = properties;
+    internalClient = createInternalClient();
   }
 
   public ToolkitInternal createToolkit() {
     try {
       final Object defaultToolkitCacheManagerProvider = initializeDefaultCacheManagerProvider();
-      FutureTask<ToolkitInternal> futureTask;
       if (config.isNonStopEnabled()) {
-        futureTask = createInternalToolkitAsynchronously(defaultToolkitCacheManagerProvider, NON_STOP_INIT_THREAD_NAME,
-                                                         TIME_TO_WAIT_FOR_ASYNC_INIT);
+        final FutureTask<ToolkitInternal> futureTask = createInternalToolkitAsynchronously(defaultToolkitCacheManagerProvider);
         return instantiateNonStopToolkit(futureTask);
       } else {
-        final long timeout = getToolkitInitTimeout();
-        futureTask = createInternalToolkitAsynchronously(defaultToolkitCacheManagerProvider, INIT_THREAD_NAME, timeout);
-        if (!futureTask.isDone()) { throw new ConfigurationSetupException("Not able to initialize toolkit in "
-                                                                          + timeout + " milliseconds"); }
-        return futureTask.get();
+        return createInternalToolkit(defaultToolkitCacheManagerProvider, false);
       }
     } catch (Exception e) {
       throw new RuntimeException("Unable to create toolkit.", e);
     }
   }
 
-  private long getToolkitInitTimeout() {
-    long timeoutInMills = Long.valueOf(toolkitProperties.getProperty(INIT_WAIT_KEY, String.valueOf(Long.MAX_VALUE)));
-    Assert.assertTrue("Toolkit initilization timeout should be greater than zero but provided " + timeoutInMills,
-                      timeoutInMills > 0);
-    return timeoutInMills;
-  }
-
-  private FutureTask<ToolkitInternal> createInternalToolkitAsynchronously(final Object defaultToolkitCacheManagerProvider,
-                                                                          String threadName, long timeoutInMills) {
+  private FutureTask<ToolkitInternal> createInternalToolkitAsynchronously(final Object defaultToolkitCacheManagerProvider) {
     final CountDownLatch latch = new CountDownLatch(1);
 
     Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
@@ -89,7 +70,7 @@ public class TerracottaToolkitCreator {
       }
     };
     final FutureTask<ToolkitInternal> futureTask = new FutureTask<ToolkitInternal>(callable);
-    Thread t = new Thread(threadName) {
+    Thread t = new Thread("Non Stop initialization of Toolkit") {
       @Override
       public void run() {
         futureTask.run();
@@ -98,7 +79,7 @@ public class TerracottaToolkitCreator {
     t.start();
 
     try {
-      latch.await(timeoutInMills, TimeUnit.MILLISECONDS);
+      latch.await(TIME_TO_WAIT_FOR_ASYNC_INIT, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

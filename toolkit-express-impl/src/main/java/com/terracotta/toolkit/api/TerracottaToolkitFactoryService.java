@@ -40,7 +40,7 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
       throw new ToolkitInstantiationException("Cannot handle toolkit of type: " + type + ", subName: " + subName);
     }
     try {
-      return createToolkit(createTerracottaClientConfig(type, subName, properties), properties);
+      return createToolkit(createTerracottaClientConfig(type, subName, properties));
     } catch (Throwable t) {
       if (t instanceof ToolkitInstantiationException) {
         throw (ToolkitInstantiationException) t;
@@ -53,8 +53,8 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
   /**
    * Overridden by enterprise to create enterprise toolkit
    */
-  protected Toolkit createToolkit(TerracottaClientConfig config, Properties properties) {
-    return new TerracottaToolkitCreator(config, properties, false).createToolkit();
+  protected Toolkit createToolkit(TerracottaClientConfig config) {
+    return new TerracottaToolkitCreator(config, false).createToolkit();
   }
 
   private TerracottaClientConfig createTerracottaClientConfig(String type, String subName, Properties properties)
