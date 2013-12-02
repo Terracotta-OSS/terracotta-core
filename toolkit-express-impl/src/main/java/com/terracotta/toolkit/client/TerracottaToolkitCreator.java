@@ -7,7 +7,6 @@ import org.terracotta.toolkit.ToolkitInstantiationException;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.util.Assert;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
 
@@ -70,10 +69,11 @@ public class TerracottaToolkitCreator {
     }
   }
 
-  private long getToolkitInitTimeout() {
+  private long getToolkitInitTimeout() throws ToolkitInstantiationException {
     long timeoutInMills = Long.valueOf(toolkitProperties.getProperty(INIT_WAIT_KEY, String.valueOf(Long.MAX_VALUE)));
-    Assert.assertTrue("Toolkit initilization timeout should be greater than zero but provided " + timeoutInMills,
-                      timeoutInMills > 0);
+    if (timeoutInMills <= 0) { throw new ToolkitInstantiationException(
+                                                                       "Toolkit initilization timeout should be greater than zero but provided "
+                                                                           + timeoutInMills); }
     return timeoutInMills;
   }
 
