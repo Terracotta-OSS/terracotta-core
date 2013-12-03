@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -53,6 +54,7 @@ public class LocalBufferedMap<K, V> {
   private volatile AtomicLong            pendingOpsSize             = new AtomicLong();
   private final SizeOfEngine             sizeOfEngine;
   private final ReadWriteLock            bufferSwitchLock           = new ReentrantReadWriteLock();
+  private final ReentrantLock            bulkLoadOnOffLock          = new ReentrantLock();
 
   private final Lock                     concurrentTransactionLock;
   public static int                      NO_VERSION                 = -1;
@@ -79,24 +81,24 @@ public class LocalBufferedMap<K, V> {
                                               LOCAL_MAP_INITIAL_SEGMENTS);
   }
 
-  private void readUnlock() {
+  private void bufferSwitchReadUnlock() {
     bufferSwitchLock.readLock().unlock();
   }
 
-  private void readLock() {
+  private void bufferSwitchReadLock() {
     bufferSwitchLock.readLock().lock();
   }
 
-  private void writeUnlock() {
+  private void bufferSwitchWriteUnlock() {
     bufferSwitchLock.writeLock().unlock();
   }
 
-  private void writeLock() {
+  private void bufferSwitchWriteLock() {
     bufferSwitchLock.writeLock().lock();
   }
 
   public V get(Object key) {
-    readLock();
+    bufferSwitchReadLock();
     try {
       // get from collectingBuffer or flushBuffer
       Value<V> v = collectBuffer.get(key);
@@ -106,13 +108,13 @@ public class LocalBufferedMap<K, V> {
       if (v != null && v.isRemove()) { return null; }
       return v == null ? null : v.getValue();
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
   public V remove(K key, final long version) {
     RemoveValue remove = new RemoveValue(version);
-    readLock();
+    bufferSwitchReadLock();
     try {
       Value<V> old = collectBuffer.put(key, remove);
       if (old == null) {
@@ -122,12 +124,12 @@ public class LocalBufferedMap<K, V> {
         return old.isRemove() ? null : old.getValue();
       }
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
   public boolean containsKey(Object key) {
-    readLock();
+    bufferSwitchReadLock();
     try {
       Value<V> v = collectBuffer.get(key);
       if (v != null) { return !v.isRemove(); }
@@ -138,13 +140,13 @@ public class LocalBufferedMap<K, V> {
         return true;
       }
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
   public int getSize() {
     int size = 0;
-    readLock();
+    bufferSwitchReadLock();
     try {
       Map<K, Value<V>> localCollectingMap = collectBuffer;
       Map<K, Value<V>> localFlushMap = flushBuffer;
@@ -159,13 +161,13 @@ public class LocalBufferedMap<K, V> {
         }
       }
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
     return size;
   }
 
   public void clear() {
-    readLock();
+    bufferSwitchReadLock();
     try {
       collectBuffer.clear();
       flushBuffer.clear();
@@ -173,29 +175,29 @@ public class LocalBufferedMap<K, V> {
       this.clearMap = true;
       pendingOpsSize.set(0);
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
   public Set<K> getKeys() {
-    readLock();
+    bufferSwitchReadLock();
     try {
       Set<K> keySet = new HashSet<K>(collectBuffer.keySet());
       keySet.addAll(flushBuffer.keySet());
       return keySet;
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
   public Set<Map.Entry<K, V>> entrySet() {
     Set<Entry<K, V>> rv = new HashSet<Map.Entry<K, V>>();
-    readLock();
+    bufferSwitchReadLock();
     try {
       addEntriesToSet(rv, collectBuffer);
       addEntriesToSet(rv, flushBuffer);
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
     return rv;
   }
@@ -232,11 +234,11 @@ public class LocalBufferedMap<K, V> {
                int customMaxTTLSeconds) {
     Value<V> wrappedValue = new Value(value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     Value<V> rv = null;
-    readLock();
+    bufferSwitchReadLock();
     try {
       rv = collectBuffer.put(key, wrappedValue);
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
     if (rv == null) {
       throttleIfNecessary(pendingOpsSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated()));
@@ -265,7 +267,7 @@ public class LocalBufferedMap<K, V> {
 
   // unpause the flush thread
   public void startBuffering() {
-    writeLock();
+    bulkLoadOnOffLock.lock();
     try {
       startThreadIfNecessary();
       if (flushToServerThread.isFinished()) {
@@ -274,19 +276,19 @@ public class LocalBufferedMap<K, V> {
       }
       flushToServerThread.unpause();
     } finally {
-      writeUnlock();
+      bulkLoadOnOffLock.unlock();
     }
+
   }
 
   // flushes pending buffers and pauses the flushing thread
   public void flushAndStopBuffering() {
-    writeLock();
+    bulkLoadOnOffLock.lock();
     try {
       // first flush contents of flushBuffer if flush already in progress.
       // flush thread cannot start flush once another (app) thread has called
       // this method as this is under same write-lock
       flushToServerThread.waitUntilFlushCompleteAndPause();
-
       // as no more puts can happen, directly drain the collectingMap to server
       switchBuffers(newMap());
       try {
@@ -298,8 +300,9 @@ public class LocalBufferedMap<K, V> {
       } finally {
         flushBuffer = EMPTY_MAP;
       }
+
     } finally {
-      writeUnlock();
+      bulkLoadOnOffLock.unlock();
     }
 
   }
@@ -328,13 +331,13 @@ public class LocalBufferedMap<K, V> {
 
   // This method is always called under write lock.
   private void switchBuffers(Map<K, Value<V>> newBuffer) {
-    bufferSwitchLock.writeLock().lock();
+    bufferSwitchWriteLock();
     try {
       flushBuffer = collectBuffer;
       collectBuffer = newBuffer;
       pendingOpsSize.set(0);
     } finally {
-      bufferSwitchLock.writeLock().unlock();
+      bufferSwitchWriteUnlock();
     }
   }
 
@@ -502,13 +505,13 @@ public class LocalBufferedMap<K, V> {
   }
 
   public boolean isKeyBeingRemoved(Object obj) {
-    readLock();
+    bufferSwitchReadLock();
     try {
       Value<V> v = collectBuffer.get(obj);
       if (v != null && v.isRemove()) { return true; }
       return false;
     } finally {
-      readUnlock();
+      bufferSwitchReadUnlock();
     }
   }
 
