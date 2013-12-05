@@ -128,6 +128,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   }
 
   public void testStateManagerMixJoinAndElect6() throws Exception {
+    if (isBadHost()) return;
     // 6 nodes mix join and election
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
