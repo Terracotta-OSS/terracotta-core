@@ -61,10 +61,10 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
 
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_USE_PARTIALS);
     exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_MAPS);
     exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS);
-    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_PARTIAL_HOTSET);
+    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_ENABLE_OBJECTS_HOTSET);
+    exemptedProperties.add(TCPropertiesConsts.L2_ALLOCATION_DISABLE_MAPS_HOTSET);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_CHUNK_SIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MIN_CHUNK_SIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_MAX_PAGE_SIZE);

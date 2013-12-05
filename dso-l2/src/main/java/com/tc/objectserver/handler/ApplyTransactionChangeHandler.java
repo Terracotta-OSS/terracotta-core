@@ -108,7 +108,9 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
-      garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete(), atc.allCheckedOutObjects());
+      if ( applyInfo.hasObjectsToDelete() ) {
+        garbageCollectionManager.deleteObjects(applyInfo.getObjectIDsToDelete(), atc.allCheckedOutObjects());
+      }
       txnObjectMgr.applyTransactionComplete(applyInfo);
     } else {
       transactionManager.loadApplyChangeResults(txn, applyInfo);

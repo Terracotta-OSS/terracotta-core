@@ -184,6 +184,10 @@ public class ApplyTransactionInfo {
     }
     this.deleteObjects.addAll(oids);
   }
+  
+  public boolean hasObjectsToDelete() {
+    return !deleteObjects.isEmpty();
+  }
 
   public SortedSet<ObjectID> getObjectIDsToDelete() {
     return deleteObjects;

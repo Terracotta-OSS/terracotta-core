@@ -805,16 +805,21 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * <code>
    * Section :  OffHeap Settings
+   * l2.offHeap.allocation.partial.disable.maps - disable the partial allocation of map storage
+   * l2.offHeap.allocation.partial.disable.objects - disable the partial allocation of objectdb storage
+   * l2.offHeap.allocation.partial.disable.map.hotset - disable caching map values in offheap
+   * l2.offHeap.allocation.partial.enable.object.hotset - enable caching map values in offheap
+   * 
    * </code>
    ********************************************************************************************************************/
 
   public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeap.allocation.slow";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeap.allocation.critical";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeap.allocation.critical.halt";
-  public static final String L2_ALLOCATION_USE_PARTIALS                                 = "l2.offHeap.allocation.partials";
   public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                                 = "l2.offHeap.allocation.partial.disable.maps";
   public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                                 = "l2.offHeap.allocation.partial.disable.objects";
-  public static final String L2_ALLOCATION_DISABLE_PARTIAL_HOTSET                                = "l2.offHeap.allocation.partial.disable.hotset";
+  public static final String L2_ALLOCATION_ENABLE_OBJECTS_HOTSET                                = "l2.offHeap.allocation.partial.enable.object.hotset";
+  public static final String L2_ALLOCATION_DISABLE_MAPS_HOTSET                                = "l2.offHeap.allocation.partial.disable.map.hotset";
 
   public static final String L2_OFFHEAP_DISABLED                                            = "l2.offheap.disable";
 

@@ -278,16 +278,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * 
    * @return null if the object is missing
    */
-  private ManagedObjectReference getOrLookupReference(final ObjectID id) {
+  private ManagedObjectReference getOrLookupReference(final ObjectID id, boolean fordelete) {
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
-      ManagedObject mo = objectStore.getObjectByID(id);
-      if (mo == null) {
-        // Object doesn't exist, bail out early.
-        return null;
+      if ( !fordelete ) {
+        ManagedObject mo = objectStore.getObjectByID(id);
+        if (mo == null) {
+          // Object doesn't exist, bail out early.
+          return null;
+        } else {
+          rv = addNewReference(mo, false);
+        }
       } else {
-        rv = addNewReference(mo, false);
+        rv = addNewReference(new DeleteReference(id),true);
       }
     }
     return rv;
@@ -350,7 +354,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      final ManagedObjectReference reference = getOrLookupReference(id);
+      final ManagedObjectReference reference = getOrLookupReference(id, false);
       if (reference == null) {
         context.missingObject(id);
         continue;
@@ -499,7 +503,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       Iterator<ObjectID> i = toDelete.iterator();
       while (i.hasNext()) {
         ObjectID id = i.next();
-        ManagedObjectReference ref = getOrLookupReference(id);
+        ManagedObjectReference ref = getOrLookupReference(id, true);
         if (ref == null) {
           missingObjects.add(id);
           i.remove();
@@ -524,7 +528,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
     Set<ObjectID> retry = new ObjectIDSet();
     for (ObjectID objectID : objectsToDelete) {
-      ManagedObjectReference ref = getOrLookupReference(objectID);
+      ManagedObjectReference ref = getOrLookupReference(objectID, true);
       if (checkedOutObjects.contains(objectID)) {
         // If the object is already checked out by this operation, just delete it.
         objectStore.removeAllObjectsByID(Collections.singleton(objectID));

@@ -57,7 +57,7 @@ public class ObjectIDSetMaintainer implements KeyValueStorageMutationListener<Lo
   }
 
   @Override
-  public synchronized void removed(Retriever<? extends Long> key, Retriever<? extends byte[]> value) {
+  public synchronized void removed(Retriever<? extends Long> key) {
     ObjectID oid = new ObjectID(key.retrieve());
     evictableObjectIDSet.remove(oid);
     if (!noReferencesObjectIDSet.remove(oid)) {

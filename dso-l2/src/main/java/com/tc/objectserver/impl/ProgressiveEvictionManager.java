@@ -227,7 +227,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     for (MonitoredResource rsrc : list) {
         if ( best == null ) {
             best = rsrc;
-        } else if ( flash && rsrc.getType() == MonitoredResource.Type.OTHER ) {
+        } else if ( flash && rsrc.getType() == MonitoredResource.Type.DATA ) {
             best = rsrc;
         } else if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP) {
             best = rsrc;
@@ -528,10 +528,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           if (max != 0) {
             try {
                 for ( MonitoredResource rsrc : ProgressiveEvictionManager.this.resources ) {
-                    log("Resource usage: type - " + rsrc.getType());
-                    log("Resource usage: used memory - " + Conversion.memoryBytesAsSize(rsrc.getVital()));
-                    log("Resource usage: reserve memory - " + Conversion.memoryBytesAsSize(rsrc.getReserved()));
-                    log("Resource usage: max memory - " + Conversion.memoryBytesAsSize(rsrc.getTotal()));
+                    log("Resource usage: " + rsrc.getType() + 
+                        " - used:" + Conversion.memoryBytesAsSize(rsrc.getVital()) +
+                        " reserved:" + Conversion.memoryBytesAsSize(rsrc.getReserved()) +
+                        " max:" + Conversion.memoryBytesAsSize(rsrc.getTotal()) 
+                    );
                 }
             } catch ( Conversion.MetricsFormatException me ) {
                 logger.warn("bad usage info", me);

@@ -91,6 +91,7 @@ public class MultiResourceMonitor implements ResourceEventProducer {
         break;
         case HEAP:
         case OTHER:
+        case DATA:
           schedule(createMemoryTask(rsrc, sleepInterval), 30);
           break;
         case DISK:
