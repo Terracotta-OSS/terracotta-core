@@ -290,11 +290,11 @@ public class ClientTransactionManagerTest extends TestCase {
                                            new Object[0]);
       Assert.fail();
     } catch (AbortedOperationException e) {
-      // expected
+      // expected, clear the interrupted status
+      Thread.interrupted();
     }
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();
-
   }
 
   public void testLogicalInvokeWithResultthrowsRejoinExceptionOnCleanup() throws Exception {
