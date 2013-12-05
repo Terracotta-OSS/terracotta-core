@@ -231,9 +231,10 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     callCommitOnThread(ctx, barrier);
     barrier.await();
-    ThreadUtil.reallySleep(500);
+    TimeUnit.SECONDS.sleep(1L);
     TestTransactionBatch batch = (TestTransactionBatch) this.batchFactory.newBatchQueue.poll();
     assertNotNull(batch);
+    assertFalse(this.batchSendQueue.isEmpty());
     assertSame(batch, this.batchSendQueue.poll());
     assertTrue(this.batchSendQueue.isEmpty());
 
