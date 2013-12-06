@@ -33,6 +33,10 @@
       <artifactId>terracotta-toolkit-api-internal</artifactId>
       <version>${toolkit-api-internal.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
     <!-- Use ehcache-core to avoid a dependency cycle with 'ehcache' -->
     <dependency>
       <groupId>net.sf.ehcache.internal</groupId>
@@ -46,7 +50,12 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>     
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <reporting>

@@ -814,7 +814,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       eventualConcurrentLock.lock();
       try {
-        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+        unlockedPutIfAbsentNoReturnVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
       } finally {
         eventualConcurrentLock.unlock();
       }
@@ -822,15 +822,15 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       final Object lockID = generateLockIdForKey(key);
       beginLock(lockID, getEffectiveLockType());
       try {
-        doLogicalPutIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+        unlockedPutIfAbsentNoReturnVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
       } finally {
         commitLock(lockID, getEffectiveLockType());
       }
     }
   }
 
-  private void doLogicalPutIfAbsentVersioned(final K key, final V value, final long version, int createTimeInSecs,
-                                             int customMaxTTISeconds, int customMaxTTLSeconds) {
+  public void unlockedPutIfAbsentNoReturnVersioned(final K key, final V value, final long version, int createTimeInSecs,
+                                                   int customMaxTTISeconds, int customMaxTTLSeconds) {
     final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
     final K portableKey = (K) assertKeyLiteral(key);
     final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,

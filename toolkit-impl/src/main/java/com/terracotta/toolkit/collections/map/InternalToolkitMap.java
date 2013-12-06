@@ -98,6 +98,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void unlockedPutNoReturnVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
+  void unlockedPutIfAbsentNoReturnVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
+
   void unlockedRemoveNoReturn(Object key);
 
   void unlockedRemoveNoReturnVersioned(Object key, long version);

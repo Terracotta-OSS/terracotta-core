@@ -9,6 +9,7 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.cache.BufferingToolkitCache;
 import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
@@ -37,7 +38,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
-    OnGCCallable {
+    BufferingToolkitCache<K,V>, OnGCCallable {
 
   // private static final TCLogger LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
   private volatile AggregateServerMap<K, V>        aggregateServerMap;
@@ -836,4 +837,48 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     }
   }
 
+  @Override
+  public void startBuffering() {
+    lock.writeLock().lock();
+    try {
+      if (!bulkloadCache.isBuffering()) {
+        this.activeDelegate = bulkloadCache;
+        this.localDelegate = bulkloadCache;
+        this.bulkloadCache.startBuffering();
+      }
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void stopBuffering() {
+    lock.writeLock().lock();
+    try {
+      if (bulkloadCache.isBuffering()) {
+        this.activeDelegate = aggregateServerMap;
+        this.localDelegate = aggregateServerMap;
+        this.bulkloadCache.stopBuffering();
+      }
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void flushBuffer() {
+    readLock();
+    try {
+      if (bulkloadCache.isBuffering()) {
+        bulkloadCache.flushBuffer();
+      }
+    } finally {
+      readUnlock();
+    }
+  }
+
+  @Override
+  public boolean isBuffering() {
+    return bulkloadCache.isBuffering();
+  }
 }

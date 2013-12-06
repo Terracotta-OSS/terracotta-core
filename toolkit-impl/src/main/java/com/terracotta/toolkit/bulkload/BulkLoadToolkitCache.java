@@ -10,6 +10,7 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.cache.BufferingToolkitCache;
 import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
@@ -31,7 +32,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, V> {
+import static com.google.common.base.Preconditions.checkState;
+
+public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, V>, BufferingToolkitCache<K, V> {
   private static final TCLogger          LOGGER                                 = TCLogging
                                                                                     .getLogger(BulkLoadToolkitCache.class);
   private final AggregateServerMap<K, V> toolkitCache;
@@ -43,6 +46,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   private final boolean                  loggingEnabled;
   private final LocalBufferedMap<K, V>   localBufferedMap;
   private final BulkLoadConstants        bulkLoadConstants;
+  private boolean                        buffering = false;
 
   public BulkLoadToolkitCache(PlatformService platformService, String name,
                               AggregateServerMap<K, V> aggregateServerMap, ToolkitInternal toolkit) {
@@ -54,7 +58,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     this.bulkLoadShutdownHook = new BulkLoadShutdownHook(platformService);
     this.loggingEnabled = bulkLoadConstants.isLoggingEnabled();
 
-    this.localBufferedMap = new LocalBufferedMap(name, aggregateServerMap, toolkit, bulkLoadConstants);
+    this.localBufferedMap = new LocalBufferedMap<K, V>(name, aggregateServerMap, bulkLoadConstants, platformService.getTaskRunner());
   }
 
   public void debug(String msg) {
@@ -65,18 +69,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     if (loggingEnabled) {
       debug("Turning off bulk-load");
     }
-    try {
-      platformService.waitForAllCurrentTransactionsToComplete();
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
-    // clear local cache
-    toolkitCache.clearLocalCache();
-    // flush and stop local buffering
-    localBufferedMap.flushAndStopBuffering();
-    // enable local cache
-    setLocalCacheEnabled(localCacheEnabledBeforeBulkloadEnabled);
-
+    stopBuffering();
     // remove current node from list of bulk-loading nodes
     bulkLoadEnabledNodesSet.removeCurrentNode();
 
@@ -112,14 +105,14 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   @Override
   public void putIfAbsentVersioned(K key, V value, long version) {
-    toolkitCache.putIfAbsentVersioned(key, value, version);
+    localBufferedMap.putIfAbsent(key, value, version, now(), ToolkitConfigFields.NO_MAX_TTI_SECONDS, ToolkitConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
   public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
-    toolkitCache.putIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
-                                           customMaxTTLSeconds);
+    localBufferedMap.putIfAbsent(key, value, version, createTimeInSecs, customMaxTTISeconds,
+        customMaxTTLSeconds);
   }
 
   @Override
@@ -198,8 +191,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   @Override
   public boolean containsKey(Object keyObj) {
-    K key = (K) keyObj;
-    return localBufferedMap.containsKey(key) || toolkitCache.containsKey(key);
+    return localBufferedMap.containsKey(keyObj) || toolkitCache.containsKey(keyObj);
   }
 
   @Override
@@ -218,10 +210,9 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   public V doGet(Object obj, boolean quiet) {
-    K key = (K) obj;
     if (localBufferedMap.isKeyBeingRemoved(obj)) { return null; }
 
-    V value = localBufferedMap.get(key);
+    V value = localBufferedMap.get(obj);
     if (value == null) {
       value = toolkitCache.unlockedGet(obj, quiet);
     }
@@ -500,6 +491,16 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
       debug("Enabling bulk-load");
     }
 
+    // add current node
+    bulkLoadEnabledNodesSet.addCurrentNode();
+    bulkLoadShutdownHook.registerCache(this);
+
+    startBuffering();
+  }
+
+  @Override
+  public void startBuffering() {
+    checkState(!buffering, "Already buffering");
     localCacheEnabledBeforeBulkloadEnabled = toolkitCache.getConfiguration()
         .getBoolean(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME);
 
@@ -508,12 +509,42 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
       setLocalCacheEnabled(false);
     }
 
-    // add current node
-    bulkLoadEnabledNodesSet.addCurrentNode();
-    bulkLoadShutdownHook.registerCache(this);
-
     localBufferedMap.startBuffering();
 
+    buffering = true;
+  }
+
+  @Override
+  public boolean isBuffering() {
+    return buffering;
+  }
+
+  @Override
+  public void stopBuffering() {
+    checkState(buffering, "Not buffering");
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
+    // clear local cache
+    toolkitCache.clearLocalCache();
+    // flush and stop local buffering
+    localBufferedMap.flushAndStopBuffering();
+    // enable local cache
+    setLocalCacheEnabled(localCacheEnabledBeforeBulkloadEnabled);
+    buffering = false;
+  }
+
+  @Override
+  public void flushBuffer() {
+    checkState(buffering, "Not buffering");
+    localBufferedMap.flush();
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override
@@ -531,8 +562,8 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   @Override
   public void quickClear() {
-    toolkitCache.quickClear();
     localBufferedMap.clear();
+    toolkitCache.quickClear();
   }
 
   @Override

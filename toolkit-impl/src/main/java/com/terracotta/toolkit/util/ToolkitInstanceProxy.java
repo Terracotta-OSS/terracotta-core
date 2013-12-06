@@ -10,6 +10,7 @@ import org.terracotta.toolkit.feature.FeatureNotSupportedException;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.nonstop.NonStopConfigurationLookup;
 import com.terracotta.toolkit.nonstop.NonStopContext;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
@@ -20,6 +21,8 @@ import com.terracotta.toolkit.nonstop.ToolkitObjectLookup;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public abstract class ToolkitInstanceProxy {
 
@@ -77,12 +80,14 @@ public abstract class ToolkitInstanceProxy {
 
 
   public static <T extends ToolkitObject> T newNonStopProxy(final NonStopConfigurationLookup nonStopConfigurationLookup,
-                                                            final NonStopContext context, final Class<T> clazz,
-                                                            final ToolkitObjectLookup toolkitObjectLookup) {
+                                                            final NonStopContext context,
+                                                            final ToolkitObjectLookup toolkitObjectLookup,
+                                                            final Class<?> ... clazz) {
+    checkArgument(clazz.length >= 1, "Need at least 1 class to be specified");
     InvocationHandler handler = new NonStopInvocationHandler<T>(context, nonStopConfigurationLookup,
                                                                 toolkitObjectLookup);
 
-    T proxy = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, handler);
+    T proxy = (T) Proxy.newProxyInstance(clazz[0].getClassLoader(), clazz , handler);
     return proxy;
   }
 

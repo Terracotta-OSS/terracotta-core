@@ -38,6 +38,7 @@ import org.terracotta.toolkit.store.ToolkitStore;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.collections.map.ToolkitCacheImpl;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookup;
 import com.terracotta.toolkit.nonstop.AbstractToolkitObjectLookupAsync;
 import com.terracotta.toolkit.nonstop.NonStopClusterListener;
@@ -237,8 +238,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     nonStopInitiailzationService.initialize(toolkitObjectLookup,
                                                 nonStopConfigurationLookup.getNonStopConfiguration());
 
-    return ToolkitInstanceProxy.newNonStopProxy(nonStopConfigurationLookup, context, ToolkitCacheInternal.class,
-                                                toolkitObjectLookup);
+    return ToolkitInstanceProxy.newNonStopProxy(nonStopConfigurationLookup, context, toolkitObjectLookup, ToolkitCacheImpl.class.getInterfaces());
   }
 
 
@@ -263,8 +263,7 @@ public class NonStopToolkitImpl implements ToolkitInternal {
     nonStopInitiailzationService.initialize(toolkitObjectLookup,
                                                 nonStopConfigurationLookup.getNonStopConfiguration());
 
-    return ToolkitInstanceProxy.newNonStopProxy(nonStopConfigurationLookup, context, ToolkitStore.class,
-                                                toolkitObjectLookup);
+    return ToolkitInstanceProxy.newNonStopProxy(nonStopConfigurationLookup, context, toolkitObjectLookup, ToolkitStore.class);
   }
   
 

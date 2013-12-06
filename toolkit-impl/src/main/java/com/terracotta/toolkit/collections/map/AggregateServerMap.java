@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -30,6 +28,8 @@ import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
@@ -49,7 +49,8 @@ import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
-import com.terracotta.toolkit.bulkload.LocalBufferedMap.Value;
+import com.terracotta.toolkit.bulkload.BufferBackend;
+import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.collections.map.ToolkitMapAggregateSet.ClusteredMapAggregateEntrySet;
@@ -94,9 +95,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheImplInterface<K, V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
-    ServerEventDestination {
+    BufferBackend<K, V>, ServerEventDestination {
   private static final TCLogger                                            LOGGER                             = TCLogging
                                                                                                                   .getLogger(AggregateServerMap.class);
 
@@ -548,32 +551,28 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return doGetAll(keys, true);
   }
 
-  private List[] createBatchsForServerMap(Map map) {
-    List a[] = new List[serverMaps.length];
-    for (int i = 0; i < a.length; i++) {
-      a[i] = new ArrayList();
+  private Multimap<Integer, Entry> createBatchsForServerMap(Map map) {
+    Multimap<Integer, Entry> batches = ArrayListMultimap.create();
+    for (Object o : map.entrySet()) {
+      Entry entry = (Entry)o;
+      batches.put(getServerMapIndexForKey(entry.getKey()), entry);
     }
-    for (Object element : map.entrySet()) {
-      Entry entry = (Entry) element;
-      a[getServerMapIndexForKey(entry.getKey())].add(entry);
-    }
-    return a;
+    return batches;
   }
 
   @Override
   public void putAll(Map<? extends K, ? extends V> map) {
     if (map == null || map.isEmpty()) { return; }
     if (getAnyServerMap().isEventual()) {
-      List[] a = createBatchsForServerMap(map);
-      for (int i = 0; i < a.length; i++) {
+      Multimap<Integer, Entry> batchsForServerMap = createBatchsForServerMap(map);
+      for (Entry<Integer, Collection<Entry>> batch : batchsForServerMap.asMap().entrySet()) {
         concurrentLock.lock();
         try {
           // for single serverMap
-          for (Iterator iterator = a[i].iterator(); iterator.hasNext();) {
-            Entry e = (Entry) iterator.next();
-            serverMaps[i].unlockedPutNoReturn((K) e.getKey(), (V) e.getValue(), timeSource.nowInSeconds(),
-                                              ToolkitConfigFields.DEFAULT_MAX_TTI_SECONDS,
-                                              ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS);
+          for (Entry e : batch.getValue()) {
+            serverMaps[batch.getKey()].unlockedPutNoReturn((K) e.getKey(), (V) e.getValue(), timeSource.nowInSeconds(),
+                ToolkitConfigFields.DEFAULT_MAX_TTI_SECONDS,
+                ToolkitConfigFields.DEFAULT_MAX_TTL_SECONDS);
           }
         } finally {
           concurrentLock.unlock();
@@ -1105,36 +1104,51 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     throw new UnsupportedOperationException();
   }
 
-  public void drainBufferToServer(final Map<K, Value<V>> map) {
-    List[] a = createBatchsForServerMap(map);
-    for (int i = 0; i < a.length; i++) {
+  public void drain(final Map<K, BufferedOperation<V>> buffer) {
+    Multimap<Integer, Entry> batches = createBatchsForServerMap(buffer);
+    for (Entry<Integer, Collection<Entry>> batch : batches.asMap().entrySet()) {
+      int serverMapIndex = batch.getKey();
       concurrentLock.lock();
       try {
         // for single serverMap
-        for (Iterator iterator = a[i].iterator(); iterator.hasNext();) {
-          Entry e = (Entry) iterator.next();
-          Value value = (Value) e.getValue();
-          if (!value.isVersioned()) {
-            if (value.isRemove()) {
-              serverMaps[i].unlockedRemoveNoReturn(e.getKey());
-            } else {
-              serverMaps[i].unlockedPutNoReturn((K) e.getKey(), (V) value.getValue(), value.getCreateTimeInSecs(),
-                                                value.getCustomMaxTTISeconds(), value.getCustomMaxTTLSeconds());
+        for (Entry e : batch.getValue()) {
+          BufferedOperation operation = (BufferedOperation) e.getValue();
+          if (!operation.isVersioned()) {
+            switch (operation.getType()) {
+              case PUT:
+                serverMaps[serverMapIndex].unlockedPutNoReturn((K) e.getKey(), (V) operation.getValue(), operation.getCreateTimeInSecs(),
+                    operation.getCustomMaxTTISeconds(), operation.getCustomMaxTTLSeconds());
+                break;
+              case PUT_IF_ABSENT:
+                // putIfAbsent returns by default, so a buffered up putIfAbsent doesn't really work...
+                throw new UnsupportedOperationException("Can't do buffered putIfAbsent");
+              case REMOVE:
+                serverMaps[serverMapIndex].unlockedRemoveNoReturn(e.getKey());
+                break;
             }
           } else {
-            if (value.isRemove()) {
-              serverMaps[i].unlockedRemoveNoReturnVersioned(e.getKey(), value.getVersion());
-            } else {
-              serverMaps[i].unlockedPutNoReturnVersioned((K) e.getKey(), (V) value.getValue(), value.getVersion(),
-                                                         value.getCreateTimeInSecs(), value.getCustomMaxTTISeconds(),
-                                                         value.getCustomMaxTTLSeconds());
+            switch (operation.getType()) {
+              case PUT:
+                serverMaps[serverMapIndex].unlockedPutNoReturnVersioned((K)e.getKey(), (V)operation.getValue(), operation
+                    .getVersion(),
+                    operation.getCreateTimeInSecs(), operation.getCustomMaxTTISeconds(),
+                    operation.getCustomMaxTTLSeconds());
+                break;
+              case PUT_IF_ABSENT:
+                // "versioned" variant of putIfAbsent does not return
+                serverMaps[serverMapIndex].unlockedPutIfAbsentNoReturnVersioned((K)e.getKey(), (V)operation.getValue(),
+                    operation.getVersion(), operation.getCreateTimeInSecs(), operation.getCustomMaxTTISeconds(),
+                    operation.getCustomMaxTTLSeconds());
+                break;
+              case REMOVE:
+                serverMaps[serverMapIndex].unlockedRemoveNoReturnVersioned(e.getKey(), operation.getVersion());
+                break;
             }
           }
         }
       } finally {
         concurrentLock.unlock();
       }
-
     }
   }
 
