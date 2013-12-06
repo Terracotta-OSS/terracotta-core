@@ -92,6 +92,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   }
 
   public void testStateManagerSixServers() throws Exception {
+    if (isBadHost()) return;
     // 6 nodes join concurrently
     // setup throwable ThreadGroup to catch AssertError from threads.
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
