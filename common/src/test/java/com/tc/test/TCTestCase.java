@@ -24,17 +24,12 @@ import com.tc.util.runtime.Vm;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -42,7 +37,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,46 +53,36 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final boolean               USE_TEST_EXECUTION_MODES      = false;
-  private static final String                TEST_CATEGORIES_URL_PROPERTY  = "tc.tests.configuration.categories.url";
-  private static final String                TEST_CATEGORIES_FILE_PROPERTY = "tc.tests.configuration.categories.file";
-  private static final String                TEST_EXECUTION_MODE_PROPERTY  = "tc.tests.configuration.mode";
+  private static final long                DEFAULT_TIMEOUT_THRESHOLD = 60000;
 
-  private static final String                TEST_CATEGORIES_PROPERTIES    = "/TestCategories.properties";
+  private final AtomicReference<Throwable> beforeTimeoutException    = new AtomicReference(null);
 
-  private static final long                  DEFAULT_TIMEOUT_THRESHOLD     = 60000;
+  private DataDirectoryHelper              dataDirectoryHelper;
+  private TempDirectoryHelper              tempDirectoryHelper;
 
-  private final AtomicReference<Throwable>   beforeTimeoutException        = new AtomicReference(null);
-
-  private DataDirectoryHelper                dataDirectoryHelper;
-  private TempDirectoryHelper                tempDirectoryHelper;
-
-  protected Date                             allDisabledUntil;
+  protected Date                           allDisabledUntil;
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer                 timeoutTimer                  = new Timer("Timeout Thread", true);
-  private static TimerTask                   timerTask;
-  protected static final AtomicBoolean     timeoutTaskAdded              = new AtomicBoolean(false);
+  private static final Timer               timeoutTimer              = new Timer("Timeout Thread", true);
+  private static TimerTask                 timerTask;
+  protected static final AtomicBoolean     timeoutTaskAdded          = new AtomicBoolean(false);
 
-  private static boolean                     printedProcess                = false;
+  private static boolean                   printedProcess            = false;
 
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
-  private long                               timeoutThreshold              = DEFAULT_TIMEOUT_THRESHOLD;
+  private long                             timeoutThreshold          = DEFAULT_TIMEOUT_THRESHOLD;
 
   // controls for thread dumping.
-  private boolean                            dumpThreadsOnTimeout          = true;
-  private int                                numThreadDumps                = 3;
-  private long                               dumpInterval                  = 500;
+  private boolean                          dumpThreadsOnTimeout      = true;
+  private int                              numThreadDumps            = 3;
+  private long                             dumpInterval              = 500;
 
   // a way to ensure that system clock moves forward...
-  private long                               previousSystemMillis          = 0;
+  private long                             previousSystemMillis      = 0;
 
-  private ExecutionMode                      executionMode;
-  private TestCategorization                 testCategorization;
-
-  protected volatile boolean                 testWillRun                   = false;
+  protected volatile boolean               testWillRun               = false;
 
   public TCTestCase() {
     super();
@@ -111,81 +95,7 @@ public class TCTestCase extends TestCase {
   }
 
   private void init() {
-    determineExecutionMode();
-    loadTestCategories();
     TCLogging.disableLocking();
-  }
-
-  private void determineExecutionMode() {
-    String mode = System.getProperty(TEST_EXECUTION_MODE_PROPERTY);
-    executionMode = ExecutionMode.fromString(mode);
-    if (executionMode == null) {
-      if (mode != null) {
-        Banner.warnBanner("Invalid value for " + TEST_EXECUTION_MODE_PROPERTY + ": " + mode);
-      }
-      executionMode = ExecutionMode.DEVELOPMENT;
-    }
-    if (executionMode != ExecutionMode.DEVELOPMENT) {
-      Banner.infoBanner("Running tests in " + executionMode + " mode.");
-    }
-  }
-
-  private void loadTestCategories() {
-    // Set to default "empty" instance in case we can't load the properties file.
-    testCategorization = new TestCategorization(new Properties());
-
-    final String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
-    final String categoriesFileProperty = System.getProperty(TEST_CATEGORIES_FILE_PROPERTY);
-    InputStream inputStream = null;
-    String categoriesSource = null;
-
-    if (categoriesUrlProperty != null) {
-      URL categoriesUrl = null;
-      try {
-        categoriesUrl = new URL(categoriesUrlProperty);
-        categoriesSource = categoriesUrl.toString();
-        inputStream = categoriesUrl.openStream();
-      } catch (MalformedURLException e) {
-        Banner.errorBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
-        return;
-      } catch (IOException e) {
-        Banner.warnBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property does not exist: "
-                          + categoriesUrl);
-        return;
-      } catch (Exception e) {
-        Banner.errorBanner(e.getMessage());
-        return;
-      }
-    } else if (categoriesFileProperty != null) {
-      File categoriesFile = new File(categoriesFileProperty);
-      categoriesSource = categoriesFile.toString();
-      try {
-        inputStream = new FileInputStream(categoriesFile);
-      } catch (FileNotFoundException e) {
-        Banner.warnBanner("The file specified by the " + TEST_CATEGORIES_FILE_PROPERTY + " property does not exist: "
-                          + categoriesFile);
-        return;
-      } catch (Exception e) {
-        Banner.errorBanner(e.getMessage());
-        return;
-      }
-    } else {
-      categoriesSource = TEST_CATEGORIES_PROPERTIES;
-      // If no test categories URL is provided as a system property, default to using
-      // a test categories file in the root of the tests JAR.
-      inputStream = this.getClass().getResourceAsStream(TEST_CATEGORIES_PROPERTIES);
-    }
-
-    if (inputStream == null) { return; }
-
-    try {
-      testCategorization = new TestCategorization(inputStream);
-      Banner.infoBanner("Loaded test categories from " + categoriesSource);
-    } catch (IOException e) {
-      Banner.warnBanner("Could not load test categories from " + categoriesSource
-                        + " - all tests will default to UNCATEGORIZED. (" + e.getMessage() + ")");
-      return;
-    }
   }
 
   // called by timer thread (ie. NOT the main thread of test case)
@@ -256,8 +166,6 @@ public class TCTestCase extends TestCase {
         throw new Exception("Timebomb has expired on " + allDisabledUntil);
       }
     }
-
-    if (!shouldTestRunInCurrentExecutionMode()) { return; }
 
     if (shouldBeSkipped()) {
       Banner
@@ -475,51 +383,6 @@ public class TCTestCase extends TestCase {
    */
   protected final void disableTest() {
     disableAllUntil(new Date(Long.MAX_VALUE));
-  }
-
-  protected final ExecutionMode executionMode() {
-    if (executionMode == null) { return ExecutionMode.DEVELOPMENT; }
-    return executionMode;
-  }
-
-  /**
-   * Returns the TestCategory for the current test. This method never returns null. If the test does not have a
-   * category, TestCategory.UNCATEGORIZED is returned.
-   */
-  protected final TestCategory testCategory() {
-    return testCategorization.getTestCategory(this.getClass());
-  }
-
-  protected final boolean shouldTestRunInCurrentExecutionMode() {
-    // INT-2303: Disable quarantined tests system.
-    // By returning true unconditionally, all tests will execute in all execution modes.
-    if (!USE_TEST_EXECUTION_MODES) return true;
-
-    final ExecutionMode currentMode = executionMode();
-    final String skipMessage = this.getClass().getName() + " is in " + testCategory() + ", skipping because this is a "
-                               + currentMode + " run.";
-    System.out.println("Current mode: " + currentMode + ", test category: " + testCategory());
-    switch (currentMode) {
-      case DEVELOPMENT:
-        return true;
-      case QUARANTINE:
-        if (testCategory() == TestCategory.PRODUCTION) {
-          Banner.infoBanner(skipMessage);
-          return false;
-        }
-        return true;
-      case PRODUCTION:
-        if (testCategory() == TestCategory.QUARANTINED) {
-          Banner.infoBanner(skipMessage);
-          return false;
-        } else if (testCategory() == TestCategory.TRIAGED || testCategory() == TestCategory.UNCATEGORIZED) {
-          Banner.infoBanner(skipMessage);
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
   }
 
   protected final void assertSameOrdered(Object one, Object two) {
