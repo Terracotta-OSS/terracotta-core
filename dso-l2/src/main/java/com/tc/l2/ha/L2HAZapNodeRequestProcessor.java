@@ -4,6 +4,7 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
 import com.tc.l2.state.Enrollment;
@@ -129,7 +130,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
           clusterStatePersistor.setDBClean(false);
           throw new ZapDirtyDbServerNodeException(message);
         } else if (zapNodeType == INSUFFICIENT_RESOURCES) {
-          throw new RuntimeException(message);
+          throw new TCShutdownServerException(message);
         } else {
           throw new ZapServerNodeException(message);
         }

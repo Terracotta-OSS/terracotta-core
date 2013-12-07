@@ -23,6 +23,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDumpAdapter;
@@ -424,6 +425,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       @Override
       public void callbackOnExit(final CallbackOnExitState state) {
         state.setRestartNeeded();
+      }
+    });
+    threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, new CallbackOnExitHandler() {
+      @Override
+      public void callbackOnExit(final CallbackOnExitState state) {
+        // do nothing;
       }
     });
 
