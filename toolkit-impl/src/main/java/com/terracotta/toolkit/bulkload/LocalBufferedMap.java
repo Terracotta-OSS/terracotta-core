@@ -284,7 +284,7 @@ public class LocalBufferedMap<K, V> {
     writeLock();
     try {
       checkState(flusher == null, "Already buffering.");
-      flusher = timer.scheduleAtFixedRate(flushRunnable, batchTimeMillis, batchTimeMillis, TimeUnit.MILLISECONDS);
+      flusher = timer.scheduleWithFixedDelay(flushRunnable, batchTimeMillis, batchTimeMillis, TimeUnit.MILLISECONDS);
     } finally {
       writeUnlock();
     }

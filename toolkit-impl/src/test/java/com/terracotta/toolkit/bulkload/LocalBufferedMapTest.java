@@ -50,7 +50,7 @@ public class LocalBufferedMapTest {
   @Test
   public void testStartBufferingSchedulesTask() throws Exception {
     bufferedMap.startBuffering();
-    verify(timer).scheduleAtFixedRate(any(Runnable.class), anyLong(), anyLong(), any(TimeUnit.class));
+    verify(timer).scheduleWithFixedDelay(any(Runnable.class), anyLong(), anyLong(), any(TimeUnit.class));
   }
 
   @Test
