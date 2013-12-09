@@ -36,19 +36,19 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   private final int                               L2_EVICTION_HALTTHRESHOLD;
   private final int                               L2_EVICTION_OFFHEAP_STOPPAGE;
   private final int                               L2_EVICTION_STORAGE_STOPPAGE;
-  private final boolean                           flash;
+  private final boolean                           hybrid;
   
   private boolean evicting = false;
   private boolean throttling = false;
   private final Set<MonitoredResource.Type> stops = EnumSet.noneOf(MonitoredResource.Type.class);
     
-  public MultiResourceMonitor(Collection<MonitoredResource> rsrc, ThreadGroup grp, EvictionThreshold et, long maxSleepTime, boolean flash, boolean persistent) {
+  public MultiResourceMonitor(Collection<MonitoredResource> rsrc, ThreadGroup grp, EvictionThreshold et, long maxSleepTime, boolean hybrid, boolean persistent) {
     this.sleepInterval = maxSleepTime;
     this.resources = rsrc;
     this.memoryThreshold = et;
     this.runner = Runners.newScheduledTaskRunner(1, grp);
     this.driver = this.runner.newTimer();
-    this.flash = flash;
+    this.hybrid = hybrid;
     L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
             .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
     L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
@@ -83,7 +83,7 @@ public class MultiResourceMonitor implements ResourceEventProducer {
     for ( MonitoredResource rsrc : this.resources ) {
       switch ( rsrc.getType() ) {
         case OFFHEAP:
-          if ( flash ) {
+          if (hybrid) {
             schedule(createVitalMemoryTask(rsrc, sleepInterval), 10);
           } else {
             schedule(createMemoryTask(rsrc, sleepInterval), 20);

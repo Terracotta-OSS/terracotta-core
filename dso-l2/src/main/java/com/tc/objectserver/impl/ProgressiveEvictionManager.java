@@ -142,16 +142,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                                     final ClientObjectReferenceSet clients, final ServerTransactionFactory trans,
                                     final TCThreadGroup grp, final ResourceManager resourceManager,
                                     final CounterManager counterManager,
-                                    final EvictionTransactionPersistor evictionTransactionPersistor, final boolean flash, final boolean persistent) {
+                                    final EvictionTransactionPersistor evictionTransactionPersistor, final boolean hybrid, final boolean persistent) {
     this.objectManager = mgr;
     this.store = store;
     this.clientObjectReferenceSet = clients;
     this.resourceManager = resourceManager;
     this.evictor = new ServerMapEvictionEngine(mgr, trans, evictionTransactionPersistor, persistent);
 
-    final MonitoredResource monitored = getEvictionBasedResource(monitorList, flash);
+    final MonitoredResource monitored = getEvictionBasedResource(monitorList, hybrid);
     
-    if ( !flash ) {
+    if ( !hybrid ) {
       this.resources = Collections.singletonList(monitored);
     } else {
       this.resources = monitorList;
@@ -182,10 +182,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         log("Using threshold " + this.threshold + " for total size " + monitored.getTotal());
     }
 
-//    if ( !flash ) {
+//    if ( !hybrid ) {
 //      this.trigger = new ResourceMonitor(monitored, sleeptime, evictionGrp);
 //    } else {
-      this.trigger = new MultiResourceMonitor(this.resources, evictionGrp, threshold, sleeptime, flash, persistent);
+      this.trigger = new MultiResourceMonitor(this.resources, evictionGrp, threshold, sleeptime, hybrid, persistent);
 //    }
       
     this.evictionGrp = new ThreadGroup(evictionGrp, "Eviction Worker Group");
@@ -222,12 +222,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     this.expirationStats = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 100, true, 0));
   }
   
-  private static MonitoredResource getEvictionBasedResource(Collection<MonitoredResource> list, boolean flash) {
+  private static MonitoredResource getEvictionBasedResource(Collection<MonitoredResource> list, boolean hybrid) {
     MonitoredResource best = null;
     for (MonitoredResource rsrc : list) {
         if ( best == null ) {
             best = rsrc;
-        } else if ( flash && rsrc.getType() == MonitoredResource.Type.DATA ) {
+        } else if ( hybrid && rsrc.getType() == MonitoredResource.Type.DATA ) {
             best = rsrc;
         } else if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP) {
             best = rsrc;
