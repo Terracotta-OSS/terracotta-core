@@ -25,6 +25,18 @@
       <version>${toolkit-api-internal.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.terracotta</groupId>
+      <artifactId>security-keychain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.license</groupId>
+      <artifactId>terracotta-license</artifactId>
+    </dependency>
+    <dependency>
       <!-- XXX: This should really be a dependency on the core TC Client API -->
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta</artifactId>
