@@ -30,8 +30,8 @@ public class Conversion {
   public static final long MIN_UINT = 0;
   public static final long MAX_UINT = 4294967295L; // 2^32 - 1
 
-  private static final Pattern MEMORY_SIZE_PATTERN  = Pattern.compile("[0-9]*([.][0-9]+)? *([kmg])?");
-  private static final Pattern SIZE_MODIFIER_PATTERN = Pattern.compile("[kmg]");
+  private static final Pattern MEMORY_SIZE_PATTERN  = Pattern.compile("[0-9]*([.][0-9]+)? *([bkmg])?");
+  private static final Pattern SIZE_MODIFIER_PATTERN = Pattern.compile("[bkmg]");
   private final static DecimalFormat twoDForm = new DecimalFormat();
   static {
     twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");

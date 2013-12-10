@@ -293,6 +293,8 @@ public class ConversionTest extends TestCase {
       Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 1.0 M"), 1048576);
       Assert.assertEquals(Conversion.memorySizeAsLongBytes(".50G"), 536870912);
 
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("100b"), 100);
+
     } catch (MetricsFormatException mfe) {
       Assert.fail("Not suppose to reach here : " + mfe);
     }
