@@ -322,8 +322,8 @@ class GroupServerManager {
 
   void stop() throws Exception {
     stopped = true;
-    stopCrasher();
-    stopAllServers();
+    // stopCrasher();
+    // stopAllServers();
   }
 
   private void stopServer(int index) throws Exception {
