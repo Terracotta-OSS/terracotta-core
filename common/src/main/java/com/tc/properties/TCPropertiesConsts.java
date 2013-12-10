@@ -841,6 +841,7 @@ public interface TCPropertiesConsts {
 
   public static final String L1_SEARCH_MAX_OPEN_RESULT_SETS                                 = "l1.search.max.open.resultSets";
   public static final String L2_SEARCH_MAX_PAGED_RESULT_SETS                                = "l2.search.max.paged.resultSets";
+  public static final String L2_SEARCH_MAX_RESULT_PAGE_SIZE                                 = "l2.search.max.result.pageSize";
 
   public static final String SEARCH_QUERY_WAIT_FOR_TXNS                                     = "search.query.wait.for.txns";
   public static final String SEARCH_USE_COMMIT_THREAD                                       = "search.use.commit.thread";
