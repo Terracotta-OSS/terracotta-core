@@ -9,6 +9,8 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.EhcacheInitializationHelper;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.config.PersistenceConfiguration;
+import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
 import net.sf.ehcache.config.PinningConfiguration;
 import net.sf.ehcache.constructs.classloader.InternalClassLoaderAwareCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
@@ -19,7 +21,6 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreConfi
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 
 public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
-
   private final CacheManager defaultCacheManager;
 
   public EhcacheSMLocalStoreFactory(CacheManager defaultCacheManager) {
@@ -63,7 +64,8 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
   }
 
   private static InternalEhcache createCache(String cacheName, ServerMapLocalStoreConfig config) {
-    CacheConfiguration cacheConfig = new CacheConfiguration(cacheName, 0).overflowToDisk(false)
+    CacheConfiguration cacheConfig = new CacheConfiguration(cacheName, 0).persistence(new PersistenceConfiguration()
+                                                                                          .strategy(Strategy.NONE))
         .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.CLOCK);
 
     // wire up config
