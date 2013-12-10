@@ -410,11 +410,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           boolean syncAllowed = !syncStarted.get() && clusterStatePersistor.getInitialState() == null;
           logger.info("Send response to Active's query : syncAllowed = " + syncAllowed +
                       " currentState=" + stateManager.getCurrentState() +
-                      " resource total=" + getResourceTotal());
+                      " resource total=" + getDataStorageSize());
           try {
             groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
                 .createObjectListSyncResponseMessage(clusterMsg, stateManager.getCurrentState(), syncAllowed,
-                    getResourceTotal()));
+                    getDataStorageSize(), getOffheapSize()));
           } catch (GroupException e) {
             logger.error("Failed to send object list response to the active.", e);
           }
@@ -431,9 +431,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
-  private long getResourceTotal() {
+  private long getDataStorageSize() {
     try {
       return Conversion.memorySizeAsLongBytes(dataStorage.getSize());
+    } catch (Conversion.MetricsFormatException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private long getOffheapSize() {
+    try {
+      return Conversion.memorySizeAsLongBytes(dataStorage.getOffheap().getSize());
     } catch (Conversion.MetricsFormatException e) {
       throw new RuntimeException(e);
     }
@@ -446,9 +454,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     // We don't want to allow a passive with less than the active's resources to join the cluster. That could lead
     // to the passive crashing randomly at some point in the future, or maybe even during passive sync.
-    if (getResourceTotal() > response.getResourceSize()) {
+    if (getDataStorageSize() > response.getDataStorageSize()) {
       groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
-          "Node " + response.messageFrom() + " does not have enough offheap space to join the cluster. Required " + getResourceTotal() + " got " + response.getResourceSize());
+          "Node " + response.messageFrom() + " does not have enough dataStorage space to join the cluster. Required " +
+          getDataStorageSize() + " got " + response.getDataStorageSize());
+      return false;
+    }
+
+    if (getOffheapSize() > response.getOffheapSize()) {
+      groupManager.zapNode(response.messageFrom(), L2HAZapNodeRequestProcessor.INSUFFICIENT_RESOURCES,
+          "Node " + response.messageFrom() + " does not have enough offheap space to join the cluster. Required " +
+          getOffheapSize() + " got " + response.getOffheapSize());
       return false;
     }
     return true;

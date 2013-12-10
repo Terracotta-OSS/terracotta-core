@@ -14,9 +14,9 @@ public class ObjectListSyncMessageFactory {
 
   public static ObjectListSyncMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
                                                                           State currentState, boolean syncAllowed,
-                                                                          final long totalSize) {
+                                                                          final long dataStorageSize, final long offheapSize) {
     return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
-        syncAllowed, totalSize);
+        syncAllowed, dataStorageSize, offheapSize);
   }
 
   public static ObjectListSyncMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {

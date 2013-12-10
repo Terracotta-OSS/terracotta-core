@@ -41,6 +41,8 @@ public class ObjectListSyncMessageTest extends TestCase {
 
     if (olsm.getType() == ObjectListSyncMessage.RESPONSE) {
       assertEquals(olsm.isSyncAllowed(), olsm1.isSyncAllowed());
+      assertEquals(olsm.getOffheapSize(), olsm1.getOffheapSize());
+      assertEquals(olsm.getDataStorageSize(), olsm1.getDataStorageSize());
     } else {
       assertEquals(olsm.toString(), olsm1.toString());
     }
@@ -64,7 +66,7 @@ public class ObjectListSyncMessageTest extends TestCase {
     validate(olsm, olsm1);
 
     olsm = ObjectListSyncMessageFactory
-        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, true, 1L );
+        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINITIALIZED, true, 1L, 1L);
     olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
   }
