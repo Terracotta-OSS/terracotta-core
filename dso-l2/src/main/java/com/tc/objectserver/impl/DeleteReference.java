@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 
 package com.tc.objectserver.impl;
@@ -17,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DeleteReference implements ManagedObjectReference {
   
   private final ObjectID id;
-  private final AtomicBoolean marked = new AtomicBoolean();
+  private final AtomicBoolean marked = new AtomicBoolean(true);
 
   public DeleteReference(ObjectID id) {
     this.id = id;
@@ -40,7 +38,7 @@ public class DeleteReference implements ManagedObjectReference {
 
   @Override
   public boolean markReference() {
-    return marked.compareAndSet(false, true);
+    return false;
   }
 
   @Override
@@ -50,7 +48,7 @@ public class DeleteReference implements ManagedObjectReference {
 
   @Override
   public boolean isReferenced() {
-    return marked.get();
+    return true;
   }
 
   @Override

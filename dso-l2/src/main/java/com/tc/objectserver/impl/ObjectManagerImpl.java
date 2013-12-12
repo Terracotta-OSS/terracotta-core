@@ -278,31 +278,43 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * 
    * @return null if the object is missing
    */
-  private ManagedObjectReference getOrLookupReference(final ObjectID id, boolean fordelete) {
+  private ManagedObjectReference getOrLookupReference(final ObjectID id) {
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
-      if ( !fordelete ) {
-        ManagedObject mo = objectStore.getObjectByID(id);
-        if (mo == null) {
-          // Object doesn't exist, bail out early.
-          return null;
-        } else {
-          rv = addNewReference(mo, false);
-        }
+      ManagedObject mo = objectStore.getObjectByID(id);
+      if (mo == null) {
+        // Object doesn't exist, bail out early.
+        return null;
       } else {
-        rv = addNewReference(new DeleteReference(id),true);
+        rv = addNewReference(mo, false);
       }
     }
     return rv;
   }
-
-  private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease) {
-    return addNewReference(obj.getReference(), isRemoveOnRelease);
+  
+  private ManagedObjectReference markReferenceForDelete(ObjectID oid) {
+    DeleteReference delete = new DeleteReference(oid);
+    final ManagedObjectReference ref = this.references.putIfAbsent(oid, delete);
+    if ( ref == null ) {
+//  deletes are self marked    
+      this.checkedOutCount.incrementAndGet();
+      return delete;
+    } else {
+      if ( ref.isNew() ) {
+        return null;
+      }
+      if ( !markReferenced(ref) ) {
+        return null;
+      }
+      ref.setRemoveOnRelease(true);
+      return ref;
+    }
   }
 
-  private ManagedObjectReference addNewReference(final ManagedObjectReference newReference,
+  private ManagedObjectReference addNewReference(final ManagedObject object,
                                                  final boolean removeOnRelease) {
+    final ManagedObjectReference newReference = object.getReference();
     final ManagedObjectReference ref = this.references.putIfAbsent(newReference.getObjectID(), newReference);
     if (removeOnRelease) {
       newReference.setRemoveOnRelease(removeOnRelease);
@@ -354,7 +366,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      final ManagedObjectReference reference = getOrLookupReference(id, false);
+      final ManagedObjectReference reference = getOrLookupReference(id);
       if (reference == null) {
         context.missingObject(id);
         continue;
@@ -503,20 +515,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       Iterator<ObjectID> i = toDelete.iterator();
       while (i.hasNext()) {
         ObjectID id = i.next();
-        ManagedObjectReference ref = getOrLookupReference(id, true);
-        if (ref == null) {
-          missingObjects.add(id);
-          i.remove();
-          continue;
-        }
-        if (markReferenced(ref)) {
-          if (!ref.isNew()) {
+        ManagedObjectReference ref = markReferenceForDelete(id);
+        if ( ref != null ) {
             i.remove();
             objectStore.removeAllObjectsByID(Collections.singleton(id));
             removeReferenceAndDestroyIfNecessary(id);
-          }
-          unmarkReferenced(ref);
-          makeUnBlocked(id);
+            unmarkReferenced(ref);
+            makeUnBlocked(id);
         }
       }
       processPendingLookups();
@@ -528,25 +533,23 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public Set<ObjectID> tryDeleteObjects(final Set<ObjectID> objectsToDelete, final Set<ObjectID> checkedOutObjects) {
     Set<ObjectID> retry = new ObjectIDSet();
     for (ObjectID objectID : objectsToDelete) {
-      ManagedObjectReference ref = getOrLookupReference(objectID, true);
+      ManagedObjectReference deleteable = markReferenceForDelete(objectID);
       if (checkedOutObjects.contains(objectID)) {
         // If the object is already checked out by this operation, just delete it.
         objectStore.removeAllObjectsByID(Collections.singleton(objectID));
-        ref.setRemoveOnRelease(true);
-        continue;
-      } else if (ref == null || !markReferenced(ref)) {
+        if ( deleteable == null ) {
+          continue;
+        }
+      } else if (deleteable == null) {
         // The object either doesn't exist or we failed to mark it, drop it into the retry set.
         retry.add(objectID);
         continue;
-      } else if (ref.isNew()) {
-        // Don't delete new objects as they haven't been created yet. Fall through since we still need to unmark the object
-        retry.add(objectID);
       } else {
         // The object exists and is deletable, delete it.
         objectStore.removeAllObjectsByID(Collections.singleton(objectID));
         removeReferenceAndDestroyIfNecessary(objectID);
       }
-      unmarkReferenced(ref);
+      unmarkReferenced(deleteable);
       makeUnBlocked(objectID);
     }
     processPendingLookups();
