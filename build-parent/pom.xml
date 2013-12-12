@@ -27,7 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <core-storage-api.version>1.3</core-storage-api.version>
     <heap-core-storage.version>1.1.2</heap-core-storage.version>
-    <bigmemory-core-storage.version>1.1.6</bigmemory-core-storage.version>
+    <bigmemory-core-storage.version>1.1.8</bigmemory-core-storage.version>
     <jetty.version>8.1.12.v20130726</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.6.6</slf4j.version>
@@ -87,12 +87,6 @@
 
   <dependencyManagement>
     <dependencies>
-<!-- TEMPORARY OVERRIDE DEPENDENCY DURING PERF TESTING MKS 11.26.2013 -->
-      <dependency>
-          <groupId>com.terracottatech</groupId>
-          <artifactId>fast-restartable-store</artifactId>
-          <version>1.1.13-SNAPSHOT</version>
-      </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>core-storage-api</artifactId>
