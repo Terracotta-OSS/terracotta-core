@@ -310,7 +310,6 @@ class GroupServerManager {
 
   private void stopAllServers() throws Exception {
     closeJMXConnectors();
-
     for (int i = 0; i < serverControl.length; i++) {
       synchronized (this) {
         if (serverControl[i].isRunning()) {
@@ -321,9 +320,12 @@ class GroupServerManager {
   }
 
   void stop() throws Exception {
+
+    stopCrasher();
+    // XXX as crasher is too coupled with this class right now, we only want to set this flag after it finishes
     stopped = true;
-    // stopCrasher();
-    // stopAllServers();
+
+    stopAllServers();
   }
 
   private void stopServer(int index) throws Exception {

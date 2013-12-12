@@ -98,10 +98,31 @@ public class TestServerManager {
   }
 
   public void stopAllServers() throws Exception {
-    debugPrintln("***** stoppig server crashers");
+    debugPrintln("***** stopping all servers");
     int grpCount = testConfig.getNumOfGroups();
+    Thread[] threads = new Thread[grpCount];
     for (int i = 0; i < grpCount; i++) {
-      groups[i].stop();
+      final GroupServerManager serverManager = groups[i];
+
+      threads[i] = new Thread() {
+        @Override
+        public void run() {
+          try {
+            serverManager.stop();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+
+    }
+
+    for (int i = 0; i < grpCount; i++) {
+      threads[i].start();
+    }
+
+    for (int i = 0; i < grpCount; i++) {
+      threads[i].join();
     }
   }
 
