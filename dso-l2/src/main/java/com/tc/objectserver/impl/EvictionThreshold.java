@@ -73,10 +73,10 @@ public enum EvictionThreshold {
         }
     }
     
-    public boolean shouldThrottle(MonitoredResource usage,int usedTweak,int reservedTweak) {
+    public boolean shouldThrottle(MonitoredResource usage,int reservedTweak) {
         long reserve = getReserved(reservedTweak);
         // long used = getUsed(reserve, usedTweak);
-        if ( usage.getReserved() > usage.getTotal() - (reserve) ) {
+        if ( usage.getReserved() > usage.getTotal() - reserve ) {
             return true;
         }
         return false;
@@ -108,7 +108,7 @@ public enum EvictionThreshold {
         long lres = getReserved(reservedTweak);
         long lused = getUsed(lres,usedTweak);
         if ( usage.getVital() > max - lres ) {
-            return true;
+          return true;
         }
         if ( reserve > max - lused && usage.getUsed() > max - lused ) {
             return true;

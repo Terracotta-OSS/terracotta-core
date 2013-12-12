@@ -32,10 +32,10 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   private final EvictionThreshold  memoryThreshold;
   private final TaskRunner                        runner;
   private final Timer                             driver;
-  private final int                               L2_EVICTION_CRITICALTHRESHOLD;
-  private final int                               L2_EVICTION_HALTTHRESHOLD;
-  private final int                               L2_EVICTION_OFFHEAP_STOPPAGE;
-  private final int                               L2_EVICTION_STORAGE_STOPPAGE;
+  private final int                                 L2_EVICTION_CRITICALTHRESHOLD;
+  private final int                                 L2_EVICTION_HALTTHRESHOLD;
+  private float                               L2_EVICTION_OFFHEAP_STOPPAGE;
+  private float                               L2_EVICTION_STORAGE_STOPPAGE;
   private final boolean                           hybrid;
   
   private boolean evicting = false;
@@ -52,8 +52,17 @@ public class MultiResourceMonitor implements ResourceEventProducer {
     L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
             .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
     L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
-    L2_EVICTION_OFFHEAP_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE,8 * 1024 * 1024);
-    L2_EVICTION_STORAGE_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE,95);
+    L2_EVICTION_OFFHEAP_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE,80) * 0.01f;
+    L2_EVICTION_STORAGE_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE,90) * 0.01f;
+    if ( L2_EVICTION_OFFHEAP_STOPPAGE > 1 || L2_EVICTION_OFFHEAP_STOPPAGE < 0 ) {
+      L2_EVICTION_OFFHEAP_STOPPAGE = 0.8f;
+    }
+    if ( L2_EVICTION_STORAGE_STOPPAGE > 1 || L2_EVICTION_STORAGE_STOPPAGE < 0 ) {
+      L2_EVICTION_STORAGE_STOPPAGE = 0.9f;
+    }
+    if ( hybrid ) {
+      LOGGER.info("offheap stoppage occurs at " + (int)Math.ceil(L2_EVICTION_OFFHEAP_STOPPAGE * 100 ) + "% ");
+    }
   }
 
   @Override
@@ -115,7 +124,7 @@ public class MultiResourceMonitor implements ResourceEventProducer {
       public void run() {
         long reserved = rsrc.getReserved();
         long total = rsrc.getTotal();
-        if ( reserved > total * (L2_EVICTION_STORAGE_STOPPAGE*0.01) ) {
+        if ( reserved > total * (L2_EVICTION_STORAGE_STOPPAGE) ) {
           if ( stops.add(rsrc.getType()) ) {
             for (ResourceEventListener listener : listeners) {
               listener.requestStop(rsrc);
@@ -135,26 +144,43 @@ public class MultiResourceMonitor implements ResourceEventProducer {
   
   private Runnable createVitalMemoryTask(final MonitoredResource rsrc, final long time) {
     return new Runnable() {
+      
+      boolean warned = false;
 
       @Override
       public void run() {
         long vital = rsrc.getVital();
+        long reserved = rsrc.getReserved();
+        long used = rsrc.getUsed();
         long total = rsrc.getTotal();
 
-        if ( total - vital < L2_EVICTION_OFFHEAP_STOPPAGE ) {
+        if (vital > L2_EVICTION_OFFHEAP_STOPPAGE * total) {
           if ( stops.add(rsrc.getType()) ) {
             for (ResourceEventListener listener : listeners) {
               listener.requestStop(rsrc);
             }
           }
+        } else if ( reserved > L2_EVICTION_OFFHEAP_STOPPAGE * total ) {
+          if ( !warned ) {
+            for (ResourceEventListener listener : listeners) {
+              listener.resourcesConstrained(rsrc);
+            }
+            warned = true;
+          }
         } else {
+          if ( warned ) {
+            for (ResourceEventListener listener : listeners) {
+              listener.resourcesConstrained(rsrc);
+            }
+            warned = false;
+          }
           if ( stops.remove(rsrc.getType()) ) {
             for (ResourceEventListener listener : listeners) {
               listener.cancelStop(rsrc);
             }
           }
         }
-        schedule(this, adjust(vital ,total , time));        
+        schedule(this, adjust(vital, total, time));        
       }
     };
   }
@@ -168,13 +194,24 @@ public class MultiResourceMonitor implements ResourceEventProducer {
         for (ResourceEventListener listener : listeners) {
           listener.resourcesUsed(working);
         }
-        
-        if ( memoryThreshold.shouldThrottle(working, L2_EVICTION_CRITICALTHRESHOLD, L2_EVICTION_HALTTHRESHOLD) ) {
+//  just in case
+        if ( working.getReserved() > 0.98 * working.getTotal() ) {
+          if ( stops.add(rsrc.getType()) ) {
+            for (ResourceEventListener listener : listeners) {
+              listener.requestStop(rsrc);
+            }
+          }
+        } else if ( memoryThreshold.shouldThrottle(working, L2_EVICTION_HALTTHRESHOLD) ) {
           throttling = true;
           for (ResourceEventListener listener : listeners) {
             listener.requestThrottle(working);
           }
         } else {
+            if ( stops.remove(rsrc.getType()) ) {
+              for (ResourceEventListener listener : listeners) {
+                listener.cancelThrottle(working);
+              }
+            }
             if ( throttling ) {
               for (ResourceEventListener listener : listeners) {
                 listener.cancelThrottle(working);

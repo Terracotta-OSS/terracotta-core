@@ -552,6 +552,109 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
         throttleIfNeeded(usage);
     }
+    
+
+    @Override
+    public void resourcesConstrained(final MonitoredResource usage) {
+      try {
+        log("RESOURCE CONSTRAINED - Performance may be degraded due to " + usage.getType()
+            + " used:" + Conversion.memoryBytesAsSize(usage.getVital()) + " reserved:" + Conversion.memoryBytesAsSize(usage.getReserved())
+            + " total:" + Conversion.memoryBytesAsSize(usage.getTotal()));
+      } catch ( Conversion.MetricsFormatException format ) {
+        logger.info("unable to print usage", format);
+      }
+      
+      notifyThrottling(new MemoryUsage() {
+
+          @Override
+          public long getFreeMemory() {
+            return usage.getTotal() - usage.getReserved();
+          }
+
+          @Override
+          public String getDescription() {
+            return usage.getType().toString();
+          }
+
+          @Override
+          public long getMaxMemory() {
+            return usage.getTotal();
+          }
+
+          @Override
+          public long getUsedMemory() {
+            return usage.getReserved();
+          }
+
+          @Override
+          public int getUsedPercentage() {
+            return (int)(100 * usage.getReserved() / usage.getTotal());
+          }
+
+          @Override
+          public long getCollectionCount() {
+            return 0;
+          }
+
+          @Override
+          public long getCollectionTime() {
+            return 0;
+          }
+        
+        }
+        );
+    }    
+
+    @Override
+    public void resourcesFreed(final MonitoredResource usage) {
+      try {
+        log("Performance no longer degraded due to " + usage.getType()
+            + " used:" + Conversion.memoryBytesAsSize(usage.getVital()) + " reserved:" + Conversion.memoryBytesAsSize(usage.getReserved())
+            + " total:" + Conversion.memoryBytesAsSize(usage.getTotal()));
+      } catch ( Conversion.MetricsFormatException format ) {
+        logger.info("unable to print usage", format);
+      }
+            
+      notifyAllClear(new MemoryUsage() {
+
+          @Override
+          public long getFreeMemory() {
+            return usage.getTotal() - usage.getReserved();
+          }
+
+          @Override
+          public String getDescription() {
+            return usage.getType().toString();
+          }
+
+          @Override
+          public long getMaxMemory() {
+            return usage.getTotal();
+          }
+
+          @Override
+          public long getUsedMemory() {
+            return usage.getReserved();
+          }
+
+          @Override
+          public int getUsedPercentage() {
+            return (int)(100 * usage.getReserved() / usage.getTotal());
+          }
+
+          @Override
+          public long getCollectionCount() {
+            return 0;
+          }
+
+          @Override
+          public long getCollectionTime() {
+            return 0;
+          }
+      });
+    }
+    
+    
  
     @Override
     public void requestEvictions(MonitoredResource usage) {
@@ -582,6 +685,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     @Override
     public void cancelThrottle(MonitoredResource usage) {
       resourceManager.resetState();
+      throttles.remove(usage.getType());
       if ( this.notified > 0 && this.notified < System.currentTimeMillis() - (60 * 1000) ) {
         notifyAllClear(new DetailedMemoryUsage(usage, turnCount));
       }
@@ -629,9 +733,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       } else if ( (usage.getReserved() >= usage.getTotal()- (128l * 1024 * 1024)
           && usage.getVital()>= usage.getTotal() - (256l * 1024 * 1024) ) ) {
             if ( System.nanoTime() - throttlePoll > TimeUnit.SECONDS.toNanos(2) ) {
-              if ( this.throttle == 0 ) {
-                logger.warn("resource usage at throttle");
-              }
               controlledThrottle(usage);
             }
       }
@@ -653,20 +754,22 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     private void controlledThrottle(MonitoredResource usage) {
       long nanoTime = System.nanoTime();
-      double start = usage.getTotal()* .75D;
-      double span = usage.getTotal()- start;
-      double amt = (usage.getVital()- start) / span;
+      long total = usage.getTotal();
+      double start = total / 2D;
       long used = usage.getVital();
+      double amt = (total - used) / start;
+
       double rate = calculateRate(nanoTime,used);
       float setThrottle = this.throttle;
       if ( setThrottle == 0 ) {
           setThrottle = 0.001f;
       }
-      if ( rate < (DEFAULT_RATE * (1.0f - amt)) ) {
+      if ( rate < (DEFAULT_RATE * (amt)) ) {
           setThrottle *= .90; 
       } else {
           setThrottle *= 1.10;
       }
+
       if ( setThrottle < 0f ) {
           setThrottle = .000001f;
           resetEpoc(nanoTime,used);
@@ -677,7 +780,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
           resetEpocIfNeeded(nanoTime, used, usage.getTotal());
       }
       
-      if ( setThrottle > .9 ) {
+      if ( setThrottle < 0.001 ) {
+        cancelThrottle(usage);
+      } else if ( setThrottle > .999 ) {
         stop(new DetailedMemoryUsage(usage, 0));
       } else {
         throttle(usage, setThrottle); 
@@ -751,7 +856,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         notifyThrottling(new DetailedMemoryUsage(reserved, turnCount));
       }
       throttle = level;
-      log("Throttling clients to " + throttle +" with usage " + reserved);
+      try {
+        log("Throttling clients to " + throttle +" due to " + reserved.getType()
+            + " used:" + Conversion.memoryBytesAsSize(reserved.getVital()) + " reserved:" + Conversion.memoryBytesAsSize(reserved.getReserved())
+            + " total:" + Conversion.memoryBytesAsSize(reserved.getTotal()));
+      } catch ( Conversion.MetricsFormatException format ) {
+        logger.info("unable to print usage", format);
+      }
     }
     
     private boolean shouldNotify() {
@@ -772,7 +883,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
       TerracottaOperatorEvent event = TerracottaOperatorEventFactory.createFullResourceCapacityEvent("pool", reserved
           .getUsedPercentage());
       TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(event);
-      log("Stopping Clients with usage " + reserved);
+      try {
+        log("Stopping Clients due to " + reserved.getDescription()
+          + " used:" + Conversion.memoryBytesAsSize(reserved.getUsedMemory()) 
+          + " total:" + Conversion.memoryBytesAsSize(reserved.getMaxMemory()));
+      } catch ( Conversion.MetricsFormatException format ) {
+        logger.info("unable to report stoppage", format);
+      }
     }
     
     private void notifyThrottling(MemoryUsage usage) {

@@ -10,6 +10,8 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  * @author mscott
  */
 public interface ResourceEventListener {
+    void resourcesConstrained(MonitoredResource usage);
+    void resourcesFreed(MonitoredResource usage);
     void resourcesUsed(MonitoredResource usage);
     void requestEvictions(MonitoredResource usage);
     void cancelEvictions(MonitoredResource usage);
