@@ -12,6 +12,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -55,6 +57,7 @@ public class LocalBufferedMap<K, V> {
   private final AtomicLong               pendingOpsByteSize         = new AtomicLong();
   private final SizeOfEngine             sizeOfEngine;
   private final ReadWriteLock            bufferSwitchLock           = new ReentrantReadWriteLock();
+  private final Condition                bufferFullCondition        = bufferSwitchLock.writeLock().newCondition();
 
   public static int                      NO_VERSION                 = -1;
   public static int                      NO_CREATETIME              = -1;
@@ -234,15 +237,16 @@ public class LocalBufferedMap<K, V> {
                int customMaxTTLSeconds) {
     BufferedOperation<V> wrappedValue = new Operation<V>(Operation.Type.PUT, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     BufferedOperation<V> rv = null;
+    throttleIfNecessary();
     readLock();
     try {
       checkBuffering();
       rv = collectBuffer.put(key, wrappedValue);
+      if (rv == null) {
+        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated());
+      }
     } finally {
       readUnlock();
-    }
-    if (rv == null) {
-      throttleIfNecessary(pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated()));
     }
     return rv == null ? null : rv.getValue();
   }
@@ -251,31 +255,36 @@ public class LocalBufferedMap<K, V> {
                        int customMaxTTLSeconds) {
     BufferedOperation<V> wrappedValue = new Operation<V>(Operation.Type.PUT_IF_ABSENT, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     BufferedOperation<V> rv = null;
+    throttleIfNecessary();
     readLock();
     try {
       checkBuffering();
       rv = collectBuffer.putIfAbsent(key, wrappedValue);
+      if (rv == null) {
+        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated());
+      }
     } finally {
       readUnlock();
-    }
-    if (rv == null) {
-      throttleIfNecessary(pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated()));
     }
     return rv == null ? null : rv.getValue();
   }
 
-  private void throttleIfNecessary(long currentPendingSize) {
-    while (currentPendingSize > throttlePutsByteSize) {
-      sleepMillis(100);
-      currentPendingSize = pendingOpsByteSize.get();
+  private void throttleIfNecessary() {
+    if (pendingOpsByteSize.get() <= throttlePutsByteSize) {
+      // check is a bit racy, but it's "close enough". We just want to avoid the writeLock in most cases.
+      return;
     }
-  }
-
-  private void sleepMillis(long millis) {
+    writeLock();
     try {
-      Thread.sleep(millis);
-    } catch (InterruptedException e) {
-      // TODO: honour nonstop
+      while (pendingOpsByteSize.get() > throttlePutsByteSize) {
+        try {
+          bufferFullCondition.await();
+        } catch (InterruptedException e) {
+          throw new ToolkitAbortableOperationException(e);
+        }
+      }
+    } finally {
+      writeUnlock();
     }
   }
 
@@ -304,20 +313,18 @@ public class LocalBufferedMap<K, V> {
   }
 
   private void doPeriodicFlush() {
-    // mark flush in progress, done under write-lock
-    switchBuffers();
-    try {
-      drainBufferToServer(flushBuffer);
-    } catch (RejoinException e) {
-      LOGGER.warn("error during doPeriodicFlush", e);
-    } catch (TCNotRunningException e) {
-    } finally {
-      flushBuffer = Collections.emptyMap();
-    }
-    if (pendingOpsByteSize.get() >= putsBatchByteSize) {
-      // If there's more work to do, just go again right away.
-      timer.schedule(flushRunnable, 0, TimeUnit.MILLISECONDS);
-    }
+    do {
+      // mark flush in progress, done under write-lock
+      switchBuffers();
+      try {
+        drainBufferToServer(flushBuffer);
+      } catch (RejoinException e) {
+        LOGGER.warn("error during doPeriodicFlush", e);
+      } catch (TCNotRunningException e) {
+      } finally {
+        flushBuffer = Collections.emptyMap();
+      }
+    } while (pendingOpsByteSize.get() >= putsBatchByteSize);
   }
 
   // This method is always called under write lock.
@@ -332,6 +339,7 @@ public class LocalBufferedMap<K, V> {
       flushBuffer = collectBuffer;
       collectBuffer = newMap();
       pendingOpsByteSize.set(0);
+      bufferFullCondition.signalAll();
     } finally {
       writeUnlock();
     }
