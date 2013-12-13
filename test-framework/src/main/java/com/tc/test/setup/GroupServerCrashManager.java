@@ -51,7 +51,7 @@ class GroupServerCrashManager implements Runnable {
 
             case RANDOM_ACTIVE_CRASH:
               debug("about to crash active server");
-              waituntilPassiveStandByIfNecessary();
+              serverManager.waituntilPassiveStandBy();
               serverManager.crashActiveAndWaitForPassiveToTakeOver();
               break;
             case RANDOM_SERVER_CRASH:
@@ -79,10 +79,6 @@ class GroupServerCrashManager implements Runnable {
     }
 
     debug("ServerCrasher is done: errors[" + errors.size() + "] crashCount[" + crashCount + "]");
-  }
-
-  private void waituntilPassiveStandByIfNecessary() throws Exception {
-    serverManager.waituntilPassiveStandByIfNecessary();
   }
 
   private void sleep(long timeMillis) {
