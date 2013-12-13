@@ -51,7 +51,6 @@ class GroupServerCrashManager implements Runnable {
 
             case RANDOM_ACTIVE_CRASH:
               debug("about to crash active server");
-              serverManager.waituntilPassiveStandBy();
               serverManager.crashActiveAndWaitForPassiveToTakeOver();
               break;
             case RANDOM_SERVER_CRASH:
