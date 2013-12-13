@@ -73,7 +73,11 @@ public class TestServerManager {
     }
 
     for (int i = 0; i < grpCount; i++) {
-      threads[i].join();
+      try {
+        threads[i].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
 
   }
