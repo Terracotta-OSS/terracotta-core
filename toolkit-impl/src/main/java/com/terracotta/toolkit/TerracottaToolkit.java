@@ -141,8 +141,8 @@ public class TerracottaToolkit implements ToolkitInternal {
     clusteredListFactory = new ToolkitListFactoryImpl(this, context);
     // create set factory before map factory, as map uses set internally
     clusteredSetFactory = new ToolkitSetFactoryImpl(this, context);
-    clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, context);
     clusteredMapFactory = new ToolkitMapFactoryImpl(this, context);
+    clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, context);
     clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, context);
     clusteredStoreFactory = ToolkitStoreFactoryImpl.newToolkitStoreFactory(this, context);
     clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, context);
