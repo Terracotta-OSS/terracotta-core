@@ -61,10 +61,8 @@ class GroupServerCrashManager implements Runnable {
               throw new AssertionError("Unsupported crash mode: " + getCrashConfig().getCrashMode());
           }
           debug("about to restart last crashed server");
-          if (!done) {
-            serverManager.restartLastCrashedServer(); // no-op after stop() is called
-          }
-          // Re-run precondition, to arrive at a stable state
+          // Re-establish a stable state prior to next iteration
+          serverManager.restartLastCrashedServer();
           serverManager.waituntilEveryPassiveStandBy();
 
           crashCount++;
