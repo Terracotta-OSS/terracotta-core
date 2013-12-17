@@ -57,7 +57,6 @@ public class ToolkitStoreDistributedTypeFactory<K extends Serializable, V extend
     builder.consistency(ToolkitConfigFields.Consistency.valueOf(ToolkitConfigFields.DEFAULT_CONSISTENCY));
     builder.localCacheEnabled(ToolkitConfigFields.DEFAULT_LOCAL_CACHE_ENABLED);
     builder.offheapEnabled(ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED);
-    builder.maxBytesLocalHeap(ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP);
     builder.maxBytesLocalOffheap(ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP);
     builder.maxCountLocalHeap(ToolkitConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP);
     builder.compressionEnabled(ToolkitConfigFields.DEFAULT_COMPRESSION_ENABLED);

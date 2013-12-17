@@ -38,6 +38,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     return InternalCacheConfigurationType.getConfigsFor(ToolkitObjectType.CACHE);
   }
 
+  @Override
   protected void validateNewConfiguration(final Configuration configuration) {
     // options specific for cache
     Preconditions.checkArgument(configuration.hasField(ToolkitConfigFields.EVICTION_ENABLED_FIELD_NAME),
@@ -54,7 +55,6 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     builder.consistency(ToolkitConfigFields.Consistency.valueOf(ToolkitConfigFields.DEFAULT_CONSISTENCY));
     builder.localCacheEnabled(ToolkitConfigFields.DEFAULT_LOCAL_CACHE_ENABLED);
     builder.offheapEnabled(ToolkitConfigFields.DEFAULT_OFFHEAP_ENABLED);
-    builder.maxBytesLocalHeap(ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP);
     builder.maxBytesLocalOffheap(ToolkitConfigFields.DEFAULT_MAX_BYTES_LOCAL_OFFHEAP);
     builder.maxCountLocalHeap(ToolkitConfigFields.DEFAULT_MAX_COUNT_LOCAL_HEAP);
     builder.compressionEnabled(ToolkitConfigFields.DEFAULT_COMPRESSION_ENABLED);
@@ -69,6 +69,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     return builder.build();
   }
 
+  @Override
   protected UnclusteredConfiguration[] distributeConfigAmongStripes(final Configuration config, int numberStripes) {
     final UnclusteredConfiguration[] configurations = super.distributeConfigAmongStripes(config, numberStripes);
 

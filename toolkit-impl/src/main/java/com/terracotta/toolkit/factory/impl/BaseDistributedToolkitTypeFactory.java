@@ -72,13 +72,16 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
     };
 
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
-        searchBuilderFactory, lookup, name, stripeObjects, configuration, schemaCreator, serverMapLocalStoreFactory, platformService);
+                                                                   searchBuilderFactory, lookup, name, stripeObjects,
+                                                                   configuration, schemaCreator,
+                                                                   serverMapLocalStoreFactory, platformService);
     return new ToolkitCacheImpl<K, V>(factory, name, aggregateServerMap, platformService, toolkit);
   }
 
   @Override
-  public ToolkitObjectStripe<InternalToolkitMap<K, V>>[] createStripeObjects(
-      final String name, final Configuration config, final int numStripes) {
+  public ToolkitObjectStripe<InternalToolkitMap<K, V>>[] createStripeObjects(final String name,
+                                                                             final Configuration config,
+                                                                             final int numStripes) {
     // creating stripe objects for first time
     ToolkitObjectStripe<InternalToolkitMap<K, V>>[] rv = new ToolkitObjectStripe[numStripes];
     Configuration[] stripesConfig = distributeConfigAmongStripes(config, numStripes);
@@ -136,12 +139,14 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   }
 
   @Override
-  public Configuration newConfigForCreationInCluster(final Configuration configuration) {
-    final Configuration defaultConfig = getDefaultConfiguration();
-    final UnclusteredConfiguration newConfig = new UnclusteredConfiguration(defaultConfig);
-    for (String key : configuration.getKeys()) {
-      // update values passed in user config
-      newConfig.setObject(key, configuration.getObjectOrNull(key));
+  public Configuration newConfigForCreationInCluster(final Configuration userConfig) {
+    final UnclusteredConfiguration newConfig = new UnclusteredConfiguration(userConfig);
+    final Configuration defaultConfiguration = getDefaultConfiguration();
+    for (String key : defaultConfiguration.getKeys()) {
+      if (!newConfig.hasField(key) && !newConfig.hasConflictingField(key)) {
+        // add the values from default configuration
+        newConfig.setObject(key, defaultConfiguration.getObjectOrNull(key));
+      }
     }
     return newConfig;
   }
@@ -149,24 +154,23 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   @Override
   public Configuration newConfigForCreationInLocalNode(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] existingStripedObjects,
                                                        Configuration userConfig) {
-    final UnclusteredConfiguration newConfig = new UnclusteredConfiguration();
-    for (String key : userConfig.getKeys()) {
-      // copy all config values passed in user config
-      newConfig.setObject(key, userConfig.getObjectOrNull(key));
-    }
-    mergeMissingConfigsFromExistingConfig(existingStripedObjects, newConfig);
-    return newConfig;
-  }
-
-  private void mergeMissingConfigsFromExistingConfig(ToolkitObjectStripe[] stripeObjects,
-                                                     UnclusteredConfiguration newConfig) {
+    final UnclusteredConfiguration newConfig = new UnclusteredConfiguration(userConfig);
+    String field = null;
     for (InternalCacheConfigurationType configType : getAllSupportedConfigs()) {
-      if (!newConfig.hasField(configType.getConfigString())) {
+      field = configType.getConfigString();
+      if (!newConfig.hasField(field) && !newConfig.hasConflictingField(field)
+          && !hasConflictingField(existingStripedObjects[0].getConfiguration(), field)) {
         // missing in newConfig, merge from existing value
-        Serializable existingValue = getExistingValueOrException(configType, stripeObjects);
+        Serializable existingValue = getExistingValueOrException(configType, existingStripedObjects);
         configType.setValue(newConfig, existingValue);
       }
     }
+    return newConfig;
+  }
+
+  private boolean hasConflictingField(Configuration config, String name) {
+    // TODO: change this when hasConflictingField is moved in Configuration or AbstractConfiguration
+    return new UnclusteredConfiguration(config).hasConflictingField(name);
   }
 
   protected UnclusteredConfiguration[] distributeConfigAmongStripes(Configuration config, int numberStripes) {
