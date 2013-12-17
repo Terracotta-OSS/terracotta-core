@@ -323,6 +323,7 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   @Override
   public void clear() {
     localBufferedMap.clear();
+    localBufferedMap.flush();
     toolkitCache.clear();
   }
 
