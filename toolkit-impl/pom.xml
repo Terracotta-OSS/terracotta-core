@@ -36,6 +36,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- Use ehcache-core to avoid a dependency cycle with 'ehcache' -->
     <dependency>

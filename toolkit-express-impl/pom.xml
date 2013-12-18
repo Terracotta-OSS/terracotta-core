@@ -27,14 +27,17 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>security-keychain</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.license</groupId>
       <artifactId>terracotta-license</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <!-- XXX: This should really be a dependency on the core TC Client API -->
