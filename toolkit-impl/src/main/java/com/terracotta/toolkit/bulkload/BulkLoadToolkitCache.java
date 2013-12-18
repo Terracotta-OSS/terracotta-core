@@ -492,16 +492,18 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
       debug("Enabling bulk-load");
     }
 
+    startBuffering();
+
     // add current node
     bulkLoadEnabledNodesSet.addCurrentNode();
     bulkLoadShutdownHook.registerCache(this);
-
-    startBuffering();
   }
 
   @Override
   public void startBuffering() {
-    checkState(!buffering, "Already buffering");
+    if (buffering) {
+      return;
+    }
     localCacheEnabledBeforeBulkloadEnabled = toolkitCache.getConfiguration()
         .getBoolean(ToolkitConfigFields.LOCAL_CACHE_ENABLED_FIELD_NAME);
 
@@ -522,7 +524,9 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
 
   @Override
   public void stopBuffering() {
-    checkState(buffering, "Not buffering");
+    if (!buffering) {
+      return;
+    }
     try {
       platformService.waitForAllCurrentTransactionsToComplete();
     } catch (AbortedOperationException e) {
