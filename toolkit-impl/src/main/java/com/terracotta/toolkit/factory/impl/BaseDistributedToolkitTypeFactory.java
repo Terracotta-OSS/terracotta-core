@@ -119,7 +119,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
     for (InternalCacheConfigurationType configType : getAllSupportedConfigs()) {
       Object existingValue = configType.getValueIfExists(oldConfig);
       // doing this instead of getExistingValueOrException to report better msg
-      if (existingValue == null) {
+      if (existingValue == null && !hasConflictingField(oldConfig, configType.getConfigString())) {
         throw new IllegalArgumentException('\'' + configType.getConfigString()
                                            + "' cannot be null for already existing values in local node");
       } else if (configType.getValueIfExists(newConfig) != null) {
