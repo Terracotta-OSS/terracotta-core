@@ -61,13 +61,13 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected final File                     tempDir;
   protected File                           javaHome;
   protected TestClientManager              clientRunner;
-  protected TestJMXServerManager           jmxServerManager;
-  private Thread                           duringRunningClusterThread;
-  private volatile Thread                  testExecutionThread;
+  protected volatile TestJMXServerManager  jmxServerManager;
+  protected volatile Thread                duringRunningClusterThread;
+  protected volatile Thread                testExecutionThread;
   private static final String              log4jPrefix               = "log4j.logger.";
   private final Map<String, LogLevel>      tcLoggingConfigs          = new HashMap<String, LogLevel>();
-  private final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
-  private PauseManager                     pauseManager;
+  protected final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
+  protected volatile PauseManager                     pauseManager;
 
   public AbstractTestBase(TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -102,7 +102,8 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   /**
-   * Returns the list of testconfigs the test has to run with Overwrite this method to run the same test with multiple
+   * Returns the list of test configs the test has to run with.
+   * Override this method to run the same test with multiple
    * configs
    */
   @Configs
@@ -201,7 +202,7 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   @Override
   @Test
-  final public void runTest() throws Throwable {
+  public void runTest() throws Throwable {
     if (!testWillRun) return;
 
     testExecutionThread = new Thread(new Runnable() {
