@@ -30,14 +30,17 @@ public abstract class AbstractClientBase implements Runnable {
     int index = 0;
     clientIndex = Integer.parseInt(args[index++]);
     final int testControlMbeanPort = Integer.parseInt(args[index++]);
+    testControlMBean = initializeTestHandler(testControlMbeanPort);
+  }
 
+  protected TestHandlerMBean initializeTestHandler(int port) {
     try {
-      JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", testControlMbeanPort);
+      JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", port);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      testControlMBean = MBeanServerInvocationProxy.newMBeanProxy(mbs, TestHandler.TEST_SERVER_CONTROL_MBEAN,
-                                                                  TestHandlerMBean.class, false);
+      return MBeanServerInvocationProxy.newMBeanProxy(mbs, TestHandler.TEST_SERVER_CONTROL_MBEAN,
+          TestHandlerMBean.class, false);
     } catch (Exception e) {
-      System.out.println("****** Exception while connecting to TestMBean Port[" + testControlMbeanPort + "]");
+      System.out.println("****** Exception while connecting to TestMBean Port[" + port + "]");
       throw new RuntimeException(e);
     }
   }
