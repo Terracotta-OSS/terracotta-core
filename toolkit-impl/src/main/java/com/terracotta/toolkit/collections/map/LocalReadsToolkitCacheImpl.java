@@ -424,4 +424,24 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void startBuffering() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isBuffering() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void stopBuffering() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void flushBuffer() {
+    throw new UnsupportedOperationException();
+  }
 }

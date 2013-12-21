@@ -308,7 +308,7 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   public void putIfAbsentVersioned(K key, V value, long version, int createTimeInSecs, int customMaxTTISeconds,
                                         int customMaxTTLSeconds) {
     mutationBehaviourResolver.putIfAbsentVersioned(key, value, version, createTimeInSecs, customMaxTTISeconds,
-                                                        customMaxTTLSeconds);
+        customMaxTTLSeconds);
   }
 
   @Override
@@ -397,5 +397,25 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   @Override
   public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
     return mutationBehaviourResolver.replace(key, oldValue, newValue, comparator);
+  }
+
+  @Override
+  public void startBuffering() {
+    mutationBehaviourResolver.startBuffering();
+  }
+
+  @Override
+  public boolean isBuffering() {
+    return mutationBehaviourResolver.isBuffering();
+  }
+
+  @Override
+  public void stopBuffering() {
+    mutationBehaviourResolver.stopBuffering();
+  }
+
+  @Override
+  public void flushBuffer() {
+    mutationBehaviourResolver.flushBuffer();
   }
 }

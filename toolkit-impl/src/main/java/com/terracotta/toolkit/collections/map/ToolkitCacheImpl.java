@@ -10,6 +10,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.BufferingToolkitCache;
+import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
@@ -42,9 +43,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   // private static final TCLogger LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
   private volatile AggregateServerMap<K, V>        aggregateServerMap;
-  private volatile ToolkitCacheImplInterface<K, V> activeDelegate;
-  private volatile ToolkitCacheImplInterface<K, V> localDelegate;
-  private volatile ToolkitCacheImplInterface<K, V> currentDelegate;
+  private volatile ToolkitCacheInternal<K, V> activeDelegate;
+  private volatile ToolkitCacheInternal<K, V> localDelegate;
+  private volatile ToolkitCacheInternal<K, V> currentDelegate;
   private volatile BulkLoadToolkitCache<K, V>      bulkloadCache;
   private final String                             name;
   private volatile OnGCCallable                    onGCCallable;

@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
+
 import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.AsyncToolkitInitializer;
 
@@ -10,7 +12,7 @@ public interface NonStopContext {
 
   NonStopManager getNonStopManager();
 
-  NonStopConfigRegistryImpl getNonStopConfigurationRegistry();
+  NonStopConfigurationRegistry getNonStopConfigurationRegistry();
 
   AbortableOperationManager getAbortableOperationManager();
 
