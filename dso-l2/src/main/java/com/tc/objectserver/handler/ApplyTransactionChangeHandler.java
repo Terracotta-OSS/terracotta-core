@@ -34,6 +34,7 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerEvent;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
@@ -58,7 +59,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private static final TCLogger            LOGGER              = TCLogging
                                                                    .getLogger(ApplyTransactionChangeHandler.class);
 
-  private static final int                 LWM_UPDATE_INTERVAL = 10000;
+  private static final int                 LWM_UPDATE_INTERVAL = TCPropertiesImpl.getProperties()
+                                                                   .getInt("lwm.update.intervalInMillis", 10000);
 
   private ServerTransactionManager         transactionManager;
   private LockManager                      lockManager;

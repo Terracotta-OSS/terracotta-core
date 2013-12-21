@@ -13,6 +13,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,6 +30,8 @@ public class ClientGlobalTransactionManagerImpl implements
                                                                      .getLogger(ClientGlobalTransactionManagerImpl.class);
 
   private static final int                  ALLOWED_LWM_DELTA    = 100;
+  private static final int                  LWM_IGNORE_MULTIPLIER = TCPropertiesImpl.getProperties()
+                                                                      .getInt("lwm.ignore.multiplier", 100);
   private final Set                               applied              = new HashSet();
   private final SortedMap                         globalTransactionIDs = new TreeMap();
 
@@ -90,7 +93,7 @@ public class ClientGlobalTransactionManagerImpl implements
       return;
     }
     if (this.lowWatermark.toLong() + ALLOWED_LWM_DELTA > lowWatermark.toLong()) {
-      if (this.ignoredCount++ > ALLOWED_LWM_DELTA * 100) {
+      if (this.ignoredCount++ > ALLOWED_LWM_DELTA * LWM_IGNORE_MULTIPLIER) {
         logger.warn("Current Low water Mark = " + this.lowWatermark + " Server sent " + lowWatermark);
         logger.warn("Server didnt send a Low water mark higher than ALLOWED_LWM_DELTA for " + this.ignoredCount
                     + " times. applied.size() = " + this.applied.size() + " Resetting count.");
