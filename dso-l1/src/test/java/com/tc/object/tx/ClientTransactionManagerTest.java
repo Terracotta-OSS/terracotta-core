@@ -20,13 +20,11 @@ import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.tx.ClientTransactionManagerImpl.LogicalChangeResultCallback;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,6 +37,7 @@ public class ClientTransactionManagerTest extends TestCase {
   ClientTransactionManagerImpl          clientTxnMgr;
   AtomicReference<Throwable>            error = new AtomicReference<Throwable>(null);
   private AbortableOperationManagerImpl abortableOperationManager;
+  private LogicalChangeID               logicalChangeID;
 
   @Override
   public void setUp() throws Exception {
@@ -46,10 +45,16 @@ public class ClientTransactionManagerTest extends TestCase {
     rmtTxnMgr = new TestRemoteTransactionManager();
     objMgr = new TestClientObjectManager();
     abortableOperationManager = new AbortableOperationManagerImpl();
+    logicalChangeID = new LogicalChangeID(1);
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     clientTxnFactory, new MockClientLockManager(), rmtTxnMgr,
                                                     SampledCounter.NULL_SAMPLED_COUNTER, null,
-                                                    abortableOperationManager);
+        abortableOperationManager) {
+      @Override
+      LogicalChangeID getNextLogicalChangeId() {
+        return logicalChangeID;
+      }
+    };
   }
 
   @Override
@@ -295,6 +300,10 @@ public class ClientTransactionManagerTest extends TestCase {
     }
     Assert.assertEquals(0, clientTxnMgr.getLogicalChangeCallbacks().size());
     thread.join();
+
+    Map<LogicalChangeID, LogicalChangeResult> results = new HashMap<LogicalChangeID, LogicalChangeResult>();
+    results.put(logicalChangeID, LogicalChangeResult.SUCCESS);
+    clientTxnMgr.receivedLogicalChangeResult(results); // Should not throw exception if operation was aborted
   }
 
   public void testLogicalInvokeWithResultthrowsRejoinExceptionOnCleanup() throws Exception {
@@ -331,10 +340,7 @@ public class ClientTransactionManagerTest extends TestCase {
           ThreadUtil.reallySleep(100);
         }
         Map<LogicalChangeID, LogicalChangeResult> results = new HashMap<LogicalChangeID, LogicalChangeResult>();
-        for (Entry<LogicalChangeID, LogicalChangeResultCallback> entry : clientTxnMgr.getLogicalChangeCallbacks()
-            .entrySet()) {
-          results.put(entry.getKey(), LogicalChangeResult.SUCCESS);
-        }
+        results.put(logicalChangeID, LogicalChangeResult.SUCCESS);
         clientTxnMgr.receivedLogicalChangeResult(results);
       }
     };
@@ -356,10 +362,7 @@ public class ClientTransactionManagerTest extends TestCase {
           ThreadUtil.reallySleep(100);
         }
         Map<LogicalChangeID,LogicalChangeResult> results = new HashMap<LogicalChangeID,LogicalChangeResult>();
-        for (Entry<LogicalChangeID, LogicalChangeResultCallback> entry : clientTxnMgr.getLogicalChangeCallbacks()
-            .entrySet()) {
-          results.put(entry.getKey(), LogicalChangeResult.FAILURE);
-        }
+        results.put(logicalChangeID, LogicalChangeResult.FAILURE);
         clientTxnMgr.receivedLogicalChangeResult(results);
       }
     };
@@ -393,4 +396,5 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr.commit(new StringLockID("lock"), LockLevel.WRITE, false, null);
     Assert.assertTrue(txnCompletionNotified.get());
   }
+
 }

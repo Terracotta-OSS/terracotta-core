@@ -855,7 +855,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   public void receivedLogicalChangeResult(Map<LogicalChangeID, LogicalChangeResult> results) {
     for (Entry<LogicalChangeID, LogicalChangeResult> entry : results.entrySet()) {
       LogicalChangeResultCallback listener = this.logicalChangeCallbacks.remove(entry.getKey());
-      listener.handleResult(entry.getValue());
+      if (listener != null) { // If NonStopException already removed the listener
+        listener.handleResult(entry.getValue());
+      } else {
+        logger.warn("LogicalChangeResul Listener not present for LogicalChangeID - " + entry.getKey());
+      }
     }
   }
 
@@ -864,7 +868,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                          final Object[] parameters) throws AbortedOperationException {
     if (getTransaction().isAtomic()) { throw new UnsupportedOperationException(
                                                                                "LogicalInvokeWithResult not supported for atomic transactions"); }
-    LogicalChangeID id = new LogicalChangeID(logicalChangeSequence.next());
+    LogicalChangeID id = getNextLogicalChangeId();
     LogicalChangeResultCallback future = createLogicalChangeFuture(id);
     try {
       begin(CAS_LOCK_ID, LockLevel.CONCURRENT, false);
@@ -877,6 +881,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     } finally {
       logicalChangeCallbacks.remove(id);
     }
+  }
+
+  LogicalChangeID getNextLogicalChangeId() {
+    return new LogicalChangeID(logicalChangeSequence.next());
   }
 
   private LogicalChangeResultCallback createLogicalChangeFuture(LogicalChangeID id) {
