@@ -858,7 +858,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       if (listener != null) { // If NonStopException already removed the listener
         listener.handleResult(entry.getValue());
       } else {
-        logger.warn("LogicalChangeResul Listener not present for LogicalChangeID - " + entry.getKey());
+        logger.warn("LogicalChangeResultCallback not present for- " + entry.getKey());
       }
     }
   }
