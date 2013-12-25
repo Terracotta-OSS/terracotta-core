@@ -333,6 +333,11 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
+    mutationBehaviourResolver.unregisterVersionUpdateListener(listener);
+  }
+
+  @Override
   public Set<K> keySetForSegment(final int segmentIndex) {
     return mutationBehaviourResolver.keySetForSegment(segmentIndex);
   }

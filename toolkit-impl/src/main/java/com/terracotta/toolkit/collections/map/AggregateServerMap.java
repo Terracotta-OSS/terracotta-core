@@ -95,8 +95,13 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.EXPIRE;
+import static com.tc.server.ServerEventType.PUT_LOCAL;
+import static com.tc.server.ServerEventType.REMOVE_LOCAL;
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
@@ -135,8 +140,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private volatile boolean                                                 lookupSuccessfulAfterRejoin;
   private final AtomicReference<ToolkitMap<String, String>>                attrSchema                         = new AtomicReference<ToolkitMap<String, String>>();
   private final LOCK_STRATEGY                                              lockStrategy;
-  private volatile ToolkitAttributeExtractor                               attributeExtractor                 = null;
-  private final CopyOnWriteArrayList<VersionUpdateListener<K, V>>          versionUpdateListeners;
+  private volatile ToolkitAttributeExtractor                               attributeExtractor;
+  private final CopyOnWriteArraySet<VersionUpdateListener<K, V>>           versionUpdateListeners;
   private final ToolkitLock                                                concurrentLock;
 
   protected int getTerracottaProperty(String propName, int defaultValue) {
@@ -166,7 +171,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     Preconditions.checkNotNull(schemaCreator);
     this.schemaCreator = schemaCreator;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
-    this.versionUpdateListeners = new CopyOnWriteArrayList<VersionUpdateListener<K, V>>();
+    this.versionUpdateListeners = new CopyOnWriteArraySet<VersionUpdateListener<K, V>>();
 
     this.config = new UnclusteredConfiguration(config);
     this.consistency = Consistency.valueOf((String) InternalCacheConfigurationType.CONSISTENCY
@@ -471,18 +476,20 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void registerServerEventListener() {
-    final EnumSet<ServerEventType> types = EnumSet.of(ServerEventType.EVICT, ServerEventType.EXPIRE);
+    final EnumSet<ServerEventType> types = EnumSet.of(EVICT, EXPIRE);
     platformService.registerServerEventListener(this, types);
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Server event listener has been registered for cache: " + getName() + ". Notification types: "
-                   + types);
+      LOGGER.debug("Server event listener has been registered for cache: "
+                   + getName() + ". Notification types: " + types);
     }
   }
 
   private void unregisterServerEventListener() {
-    platformService.unregisterServerEventListener(this);
+    final EnumSet<ServerEventType> types = EnumSet.of(EVICT, EXPIRE);
+    platformService.unregisterServerEventListener(this, types);
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Server event listener has been unregistered for cache: " + getName());
+      LOGGER.debug("Server event listener has been unregistered for cache: "
+                   + getName() + ". Notification types: " + types);
     }
   }
 
@@ -505,7 +512,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public SearchQueryResultSet executeQuery(ToolkitSearchQuery query) {
     return searchBuilderFactory.createSearchExecutor(getName(), getToolkitObjectType(), this,
-                                                     getAnyServerMap().isEventual(), platformService)
+        getAnyServerMap().isEventual(), platformService)
         .executeQuery(query);
   }
 
@@ -598,15 +605,20 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
-    // synchronize not to have duplicate listeners
-    synchronized (versionUpdateListeners) {
-      if (!versionUpdateListeners.contains(listener)) {
-        versionUpdateListeners.add(listener);
-        platformService.registerServerEventListener(this, ServerEventType.PUT_LOCAL, ServerEventType.REMOVE_LOCAL);
+    if (versionUpdateListeners.add(listener)) {
+      platformService.registerServerEventListener(this, PUT_LOCAL, REMOVE_LOCAL);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Version update event listener has been registered for cache: " + getName());
+      }
+    }
+  }
 
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Versioned modification event listener has been registered for cache: " + getName());
-        }
+  @Override
+  public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
+    if (versionUpdateListeners.remove(listener)) {
+      platformService.unregisterServerEventListener(this, PUT_LOCAL, REMOVE_LOCAL);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Version update event listener has been unregistered for cache: " + getName());
       }
     }
   }
@@ -895,9 +907,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void handleServerEvent(final ServerEvent event) {
     final ServerEventType type = event.getType();
-    if (type == ServerEventType.EVICT || type == ServerEventType.EXPIRE) {
+    if (type == EVICT || type == EXPIRE) {
       doHandleEvictions(event);
-    } else if (type == ServerEventType.PUT_LOCAL || type == ServerEventType.REMOVE_LOCAL) {
+    } else if (type == PUT_LOCAL || type == REMOVE_LOCAL) {
       doHandleVersionUpdates((VersionedServerEvent) event);
     }
   }
@@ -1102,7 +1114,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void waitUntilBulkLoadComplete() throws InterruptedException {
-    if (false) { throw new InterruptedException(); }
     throw new UnsupportedOperationException();
   }
 

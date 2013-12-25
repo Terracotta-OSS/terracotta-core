@@ -63,13 +63,16 @@ public class MockPlatformService implements PlatformService {
   @Override
   public void verifyCapability(String capability) {
     throw new ImplementMe();
-
   }
 
   @Override
-  public void unregisterServerEventListener(ServerEventDestination destination) {
+  public void unregisterServerEventListener(ServerEventDestination destination, final Set<ServerEventType> listenTo) {
     throw new ImplementMe();
+  }
 
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
+    throw new ImplementMe();
   }
 
   @Override

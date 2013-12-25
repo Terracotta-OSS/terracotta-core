@@ -7,15 +7,22 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionID;
+import com.tc.server.ServerEventType;
 
 import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * @author Eugene Shelestovich
  */
 public class UnregisterServerEventListenerMessage extends DSOMessageBase {
 
+  private static final byte DESTINATION_NAME_ID = 0;
+  private static final byte EVENT_TYPE_ID = 1;
+
   private String destination;
+  private Set<ServerEventType> eventTypes = EnumSet.noneOf(ServerEventType.class);
 
   public UnregisterServerEventListenerMessage(final SessionID sessionID, final MessageMonitor monitor,
                                               final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -30,10 +37,23 @@ public class UnregisterServerEventListenerMessage extends DSOMessageBase {
   }
 
   protected void dehydrateValues() {
+    putNVPair(DESTINATION_NAME_ID, destination);
+    for (ServerEventType eventType : eventTypes) {
+      putNVPair(EVENT_TYPE_ID, eventType.ordinal());
+    }
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
-    return true;
+    switch (name) {
+      case DESTINATION_NAME_ID:
+        destination = getStringValue();
+        return true;
+      case EVENT_TYPE_ID:
+        eventTypes.add(ServerEventType.values()[getIntValue()]);
+        return true;
+      default:
+        return false;
+    }
   }
 
   public String getDestination() {
@@ -42,5 +62,13 @@ public class UnregisterServerEventListenerMessage extends DSOMessageBase {
 
   public void setDestination(final String destination) {
     this.destination = destination;
+  }
+
+  public void setEventTypes(final Set<ServerEventType> eventTypes) {
+    this.eventTypes = eventTypes;
+  }
+
+  public Set<ServerEventType> getEventTypes() {
+    return eventTypes;
   }
 }

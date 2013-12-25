@@ -386,7 +386,7 @@ public interface Manager extends TerracottaLocking {
 
   void registerServerEventListener(ServerEventDestination destination, Set<ServerEventType> listenTo);
 
-  void unregisterServerEventListener(ServerEventDestination destination);
+  void unregisterServerEventListener(ServerEventDestination destination, final Set<ServerEventType> listenTo);
 
   int getRejoinCount();
 

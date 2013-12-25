@@ -2,6 +2,8 @@ package com.tc.server;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import java.util.Arrays;
+
 /**
  * Base class for all typed events.
  *
@@ -11,9 +13,10 @@ public final class BasicServerEvent implements VersionedServerEvent {
 
   private final String cacheName;
   private final Object key;
+  private final long version;
+
   private ServerEventType type;
   private byte[] value;
-  private long version = DEFAULT_VERSION;
 
   public BasicServerEvent(final ServerEventType type, final Object key, final String cacheName) {
     this(type, key, ArrayUtils.EMPTY_BYTE_ARRAY, DEFAULT_VERSION, cacheName);
@@ -71,11 +74,37 @@ public final class BasicServerEvent implements VersionedServerEvent {
   }
 
   @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final BasicServerEvent that = (BasicServerEvent) o;
+
+    if (version != that.version) return false;
+    if (!cacheName.equals(that.cacheName)) return false;
+    if (!key.equals(that.key)) return false;
+    if (type != that.type) return false;
+    if (!Arrays.equals(value, that.value)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = cacheName.hashCode();
+    result = 31 * result + key.hashCode();
+    result = 31 * result + type.hashCode();
+    result = 31 * result + (value != null ? Arrays.hashCode(value) : 0);
+    result = 31 * result + (int) (version ^ (version >>> 32));
+    return result;
+  }
+
+  @Override
   public String toString() {
     return "ServerEvent" +
            "{type=" + type +
            ", key=" + key +
-           ", value=" + value +
+           ", value size=" + value.length +
            ", version=" + version +
            ", cacheName='" + cacheName + '\'' +
            '}';

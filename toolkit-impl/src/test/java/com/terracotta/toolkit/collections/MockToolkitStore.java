@@ -262,6 +262,11 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
   }
 
   @Override
+  public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
   public Set<K> keySetForSegment(final int segmentIndex) {
     throw new UnsupportedOperationException("Implement me!");
   }

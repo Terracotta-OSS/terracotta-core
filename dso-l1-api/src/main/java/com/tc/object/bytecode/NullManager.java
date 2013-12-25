@@ -476,7 +476,7 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void unregisterServerEventListener(final ServerEventDestination destination) {
+  public void unregisterServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
     //
   }
 

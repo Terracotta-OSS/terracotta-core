@@ -41,9 +41,9 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
   public final void handleServerEvent(final ServerEvent event) {
     lock.readLock().lock();
     try {
-      final Map<ClientID, Set<String>> clientToDestMap = registry.get(event.getType());
-      if (clientToDestMap != null) {
-        for (Map.Entry<ClientID, Set<String>> entry : clientToDestMap.entrySet()) {
+      final Map<ClientID, Set<String>> clients = registry.get(event.getType());
+      if (clients != null) {
+        for (Map.Entry<ClientID, Set<String>> entry : clients.entrySet()) {
           final Set<String> destinations = entry.getValue();
           if (destinations.contains(event.getCacheName())) {
             batcher.add(entry.getKey(), event);
@@ -57,62 +57,70 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
 
   /**
    * Registration is relatively rare operation comparing to event firing.
-   * So we can loop thru the registry instead of maintaining a reversed data structure.
+   * So we can loop through the registry instead of maintaining a reversed data structure.
    */
-  public final void register(final ClientID clientId, final String destination, final Set<ServerEventType> events) {
+  public final void register(final ClientID clientId, final String destination, final Set<ServerEventType> eventTypes) {
     lock.writeLock().lock();
     try {
-      for (ServerEventType event : events) {
-        Map<ClientID, Set<String>> clientToDestMap = registry.get(event);
-        if (clientToDestMap == null) {
-          clientToDestMap = Maps.newHashMap();
-          registry.put(event, clientToDestMap);
-        }
-
-        Set<String> destinations = clientToDestMap.get(clientId);
-        if (destinations == null) {
-          destinations = Sets.newHashSet();
-          clientToDestMap.put(clientId, destinations);
-        }
-        destinations.add(destination);
-
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Client '" + clientId + "' has registered server event listener for cache '"
-                    + destination + "'. Event types: " + events);
-        }
+      for (ServerEventType eventType : eventTypes) {
+        doRegister(clientId, destination, eventType);
       }
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  public final void unregister(final ClientID clientId, final String destination) {
+  private void doRegister(final ClientID clientId, final String destination, final ServerEventType eventType) {
+    Map<ClientID, Set<String>> clients = registry.get(eventType);
+    if (clients == null) {
+      clients = Maps.newHashMap();
+      registry.put(eventType, clients);
+    }
+
+    Set<String> destinations = clients.get(clientId);
+    if (destinations == null) {
+      destinations = Sets.newHashSet();
+      clients.put(clientId, destinations);
+    }
+    destinations.add(destination);
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Client '" + clientId + "' has registered server event listener for cache '"
+                + destination + "' and event type '" + eventType + "'");
+    }
+  }
+
+  public final void unregister(final ClientID clientId, final String destination, final Set<ServerEventType> eventTypes) {
     lock.writeLock().lock();
     try {
-      for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
-        final Set<String> destinations = clientToDestMap.get(clientId);
-        if (destinations != null) {
-          destinations.remove(destination);
-        }
-      }
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Client '" + clientId + "' has unregistered server event listener for cache '"
-                  + destination + "'");
+      for (ServerEventType eventType : eventTypes) {
+        doUnregister(clientId, destination, eventType);
       }
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  private void unregisterClient(final ClientID clientId) {
-    lock.writeLock().lock();
-    try {
-      for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
-        clientToDestMap.remove(clientId);
+  private void doUnregister(final ClientID clientId, final String destination, final ServerEventType eventType) {
+    final Map<ClientID, Set<String>> clients = registry.get(eventType);
+    if (clients != null) {
+      final Set<String> destinations = clients.get(clientId);
+      if (destinations != null) {
+        destinations.remove(destination);
+
+        // potential cascading removal
+        if (destinations.isEmpty()) {
+          clients.remove(clientId);
+          if (clients.isEmpty()) {
+            registry.remove(eventType);
+          }
+        }
       }
-    } finally {
-      lock.writeLock().unlock();
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Client '" + clientId + "' has unregistered server event listener for cache '"
+                + destination + "' and event type '" + eventType + "'");
     }
   }
 
@@ -126,6 +134,17 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
     final ClientID clientId = channelManager.getClientIDFor(channel.getChannelID());
     if (clientId != null) {
       unregisterClient(clientId);
+    }
+  }
+
+  private void unregisterClient(final ClientID clientId) {
+    lock.writeLock().lock();
+    try {
+      for (Map<ClientID, Set<String>> clientToDestMap : registry.values()) {
+        clientToDestMap.remove(clientId);
+      }
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 }

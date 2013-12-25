@@ -326,19 +326,30 @@ public class PlatformServiceImpl implements PlatformService {
 
   @Override
   public void registerServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    Preconditions.checkNotNull(destination);
     Preconditions.checkArgument(listenTo != null && !listenTo.isEmpty());
     manager.registerServerEventListener(destination, listenTo);
   }
 
   @Override
   public void registerServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
-    Preconditions.checkNotNull(listenTo);
+    Preconditions.checkNotNull(destination);
+    Preconditions.checkArgument(listenTo != null && listenTo.length > 0);
     registerServerEventListener(destination, EnumSet.copyOf(Arrays.asList(listenTo)));
   }
 
   @Override
-  public void unregisterServerEventListener(final ServerEventDestination destination) {
-    manager.unregisterServerEventListener(destination);
+  public void unregisterServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    Preconditions.checkNotNull(destination);
+    Preconditions.checkArgument(listenTo != null && !listenTo.isEmpty());
+    manager.unregisterServerEventListener(destination, listenTo);
+  }
+
+  @Override
+  public void unregisterServerEventListener(final ServerEventDestination destination, final ServerEventType... listenTo) {
+    Preconditions.checkNotNull(destination);
+    Preconditions.checkArgument(listenTo != null && listenTo.length > 0);
+    unregisterServerEventListener(destination, EnumSet.copyOf(Arrays.asList(listenTo)));
   }
 
   @Override

@@ -124,7 +124,9 @@ public interface PlatformService {
 
   void registerServerEventListener(ServerEventDestination destination, ServerEventType... listenTo);
 
-  void unregisterServerEventListener(ServerEventDestination destination);
+  void unregisterServerEventListener(ServerEventDestination destination, final Set<ServerEventType> listenTo);
+
+  void unregisterServerEventListener(ServerEventDestination destination, ServerEventType... listenTo);
 
   int getRejoinCount();
 

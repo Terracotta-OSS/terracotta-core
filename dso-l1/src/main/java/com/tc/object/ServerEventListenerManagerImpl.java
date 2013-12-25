@@ -18,6 +18,9 @@ import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * @author Eugene Shelestovich
  */
@@ -38,6 +41,9 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void dispatch(final ServerEvent event, final NodeID remoteNode) {
+    checkNotNull(event);
+    checkNotNull(remoteNode);
+
     final String name = event.getCacheName();
     final ServerEventType type = event.getType();
     if (LOG.isDebugEnabled()) {
@@ -49,9 +55,8 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     try {
       final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
       if (destinations == null) {
-        LOG.warn("Could not find server event destinations for cache: "
-                 + name + ". Incoming event: " + event);
-        return;
+        throw new IllegalStateException("Could not find server event destinations for cache: "
+                                        + name + ". Incoming event: " + event);
       }
 
       boolean handlerFound = false;
@@ -74,6 +79,9 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void registerListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    checkNotNull(destination);
+    checkArgument(listenTo != null && !listenTo.isEmpty());
+
     lock.writeLock().lock();
     try {
       doRegister(destination, listenTo);
@@ -83,18 +91,22 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
   }
 
   @Override
-  public void unregisterListener(final ServerEventDestination destination) {
+  public void unregisterListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    checkNotNull(destination);
+    checkArgument(listenTo != null && !listenTo.isEmpty());
+
     lock.writeLock().lock();
     try {
-      doUnregister(destination);
+      doUnregister(destination, listenTo);
     } finally {
       lock.writeLock().unlock();
     }
   }
 
   private void doRegister(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
-    boolean needsServerRegistration = true;
+    boolean routingUpdated = true;
     final String name = destination.getDestinationName();
+
     Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
     if (destinations == null) {
       destinations = Maps.newHashMap();
@@ -106,11 +118,11 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
         destinations.put(destination, listenTo);
       } else {
         // do not register twice for the same events
-        needsServerRegistration = eventTypes.addAll(listenTo);
+        routingUpdated = eventTypes.addAll(listenTo);
       }
     }
 
-    if (needsServerRegistration) {
+    if (routingUpdated) {
       doRegisterOnServer(name, listenTo);
     }
   }
@@ -122,22 +134,34 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     msg.send();
   }
 
-  private void doUnregister(final ServerEventDestination destination) {
+  private void doUnregister(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
     final String name = destination.getDestinationName();
+
     final Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
     if (destinations != null) {
-      destinations.remove(destination);
-      // unregister on server only if there are no more destinations for a given cache
-      if (destinations.isEmpty()) {
-        registry.remove(name);
-        doUnregisterOnServer(name);
+      final Set<ServerEventType> eventTypes = destinations.get(destination);
+      if (eventTypes != null) {
+        boolean routingUpdated = eventTypes.removeAll(listenTo);
+        // handle potential cascading removals of parent entities
+        if (eventTypes.isEmpty()) {
+          destinations.remove(destination);
+          if (destinations.isEmpty()) {
+            registry.remove(name);
+          }
+        }
+
+        if (routingUpdated) {
+          doUnregisterOnServer(name, listenTo);
+        }
       }
     }
+
   }
 
-  private void doUnregisterOnServer(final String destinationName) {
+  private void doUnregisterOnServer(final String destinationName, final Set<ServerEventType> listenTo) {
     final UnregisterServerEventListenerMessage msg = messageFactory.newUnregisterServerEventListenerMessage(stripeId);
     msg.setDestination(destinationName);
+    msg.setEventTypes(listenTo);
     msg.send();
   }
 

@@ -16,7 +16,7 @@ public interface ServerEventListenerManager extends ClientHandshakeCallback {
 
   void registerListener(ServerEventDestination destination, Set<ServerEventType> listenTo);
 
-  void unregisterListener(ServerEventDestination destination);
+  void unregisterListener(ServerEventDestination destination, final Set<ServerEventType> listenTo);
 
   void dispatch(ServerEvent event, NodeID remoteNode);
 }

@@ -1009,8 +1009,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void unregisterServerEventListener(final ServerEventDestination destination) {
-    serverEventListenerManager.unregisterListener(destination);
+  public void unregisterServerEventListener(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
+    serverEventListenerManager.unregisterListener(destination, listenTo);
   }
 
   @Override

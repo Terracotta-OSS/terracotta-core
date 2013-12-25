@@ -10,7 +10,6 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
-import org.terracotta.toolkit.internal.cache.BufferingToolkitCache;
 import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
@@ -34,7 +33,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, V>, BufferingToolkitCache<K, V> {
+public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, V> {
   private static final TCLogger          LOGGER                                 = TCLogging
                                                                                     .getLogger(BulkLoadToolkitCache.class);
   private final AggregateServerMap<K, V> toolkitCache;
@@ -265,6 +264,11 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     toolkitCache.registerVersionUpdateListener(listener);
+  }
+
+  @Override
+  public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
+    toolkitCache.unregisterVersionUpdateListener(listener);
   }
 
   @Override

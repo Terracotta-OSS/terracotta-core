@@ -9,7 +9,6 @@ import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
-import org.terracotta.toolkit.internal.cache.BufferingToolkitCache;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitValueComparator;
 import org.terracotta.toolkit.internal.cache.VersionUpdateListener;
@@ -39,19 +38,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
     DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheImplInterface<K, V>,
-    BufferingToolkitCache<K,V>, OnGCCallable {
+    OnGCCallable {
 
   // private static final TCLogger LOGGER = TCLogging.getLogger(ToolkitCacheImpl.class);
-  private volatile AggregateServerMap<K, V>        aggregateServerMap;
+  private volatile AggregateServerMap<K, V>   aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
   private volatile ToolkitCacheInternal<K, V> localDelegate;
   private volatile ToolkitCacheInternal<K, V> currentDelegate;
-  private volatile BulkLoadToolkitCache<K, V>      bulkloadCache;
-  private final String                             name;
-  private volatile OnGCCallable                    onGCCallable;
-  private final AtomicBoolean                      delegateSwitched = new AtomicBoolean(false);
+  private final BulkLoadToolkitCache<K, V>    bulkloadCache;
+  private final String                        name;
+  private final OnGCCallable                  onGCCallable;
+  private final AtomicBoolean                 delegateSwitched = new AtomicBoolean(false);
   // lock used to protect the state of activeDelegate and localDelegate.
-  private final ReadWriteLock                      lock = new ReentrantReadWriteLock();
+  private final ReadWriteLock                 lock = new ReentrantReadWriteLock();
+
   public ToolkitCacheImpl(ToolkitObjectFactory factory, String name, AggregateServerMap<K, V> delegate,
                           PlatformService platformService, ToolkitInternal toolkit) {
     super(factory);
@@ -725,6 +725,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
+  public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
+    activeDelegate.unregisterVersionUpdateListener(listener);
+  }
+
+  @Override
   public Set<K> keySetForSegment(final int segmentIndex) {
     return activeDelegate.keySetForSegment(segmentIndex);
   }
@@ -770,13 +775,13 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
       if (enabledBulkLoad && !isNodeBulkLoadEnabled()) {
         this.activeDelegate = bulkloadCache;
         this.localDelegate = bulkloadCache;
-        this.bulkloadCache.setNodeBulkLoadEnabled(enabledBulkLoad);
+        this.bulkloadCache.setNodeBulkLoadEnabled(true);
       }
 
       if (!enabledBulkLoad && isNodeBulkLoadEnabled()) {
         this.activeDelegate = aggregateServerMap;
         this.localDelegate = aggregateServerMap;
-        this.bulkloadCache.setNodeBulkLoadEnabled(enabledBulkLoad);
+        this.bulkloadCache.setNodeBulkLoadEnabled(false);
       }
     } finally {
       lock.writeLock().unlock();
