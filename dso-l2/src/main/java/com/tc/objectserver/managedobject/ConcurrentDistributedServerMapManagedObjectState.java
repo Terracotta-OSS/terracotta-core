@@ -39,6 +39,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   private static final TCLogger LOGGER                         = TCLogging
                                                                    .getLogger(ConcurrentDistributedServerMapManagedObjectState.class);
+  private static final boolean  CAS_LOGGING                    = TCPropertiesImpl.getProperties()
+                                                                   .getBoolean(TCPropertiesConsts.CAS_LOGGING_ENABLED, false);
 
   public static final String    CACHE_NAME_FIELDNAME           = "cacheName";
   public static final String    INVALIDATE_ON_CHANGE_FIELDNAME = "invalidateOnChange";
@@ -147,6 +149,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
         LogicalChangeResult result = applyLogicalAction(objectID, applyInfo, method, params);
+        if (CAS_LOGGING && result == LogicalChangeResult.SUCCESS) {
+          LOGGER.info("SUCCESS returned for KEY: " + params[0] + "   for ServerTransactionID: "
+                      + applyInfo.getServerTransactionID() + "   ---   "
+                       + logicalAction.getLogicalChangeID());
+        }
         applyInfo.getApplyResultRecorder().recordResult(logicalAction.getLogicalChangeID(), result);
         // TODO: requires refactoring, we should call super.apply() instead
         if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
