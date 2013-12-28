@@ -18,8 +18,8 @@ import javax.management.remote.generic.GenericConnector;
 public class ClientProvider implements JMXConnectorProvider {
 
   public static final String JMX_MESSAGE_CHANNEL = "JmxMessageChannel";
-  public static final String CONNECTION_LIST     = "channelIdToMsgConnection";
 
+  @Override
   public JMXConnector newJMXConnector(final JMXServiceURL jmxserviceurl, final Map initialEnvironment)
       throws IOException {
     if (!jmxserviceurl.getProtocol().equals("terracotta")) {
@@ -30,16 +30,19 @@ public class ClientProvider implements JMXConnectorProvider {
     final Map terracottaEnvironment = initialEnvironment != null ? new HashMap(initialEnvironment) : new HashMap();
     final MessageChannel channel = (MessageChannel) terracottaEnvironment.remove(JMX_MESSAGE_CHANNEL);
     final TunnelingMessageConnectionWrapper tmc = new TunnelingMessageConnectionWrapper(channel, false);
-    final Map channelIdToMsgConnection = (Map) terracottaEnvironment.remove(CONNECTION_LIST);
-
-    TunnelingMessageConnection prev = (TunnelingMessageConnection) channelIdToMsgConnection.put(channel.getChannelID(),
-                                                                                                tmc);
-    if (prev != null) {
-      prev.close();
-    }
 
     terracottaEnvironment.put(GenericConnector.MESSAGE_CONNECTION, tmc);
-    return new GenericConnector(terracottaEnvironment);
-  }
+    JMXConnector rv = new GenericConnector(terracottaEnvironment);
 
+    JMXConnectStateMachine state = (JMXConnectStateMachine) channel
+        .getAttachment(ClientTunnelingEventHandler.STATE_ATTACHMENT);
+
+    if (!state.connect(channel.getChannelID(), tmc, rv)) {
+      tmc.close();
+      throw new IOException("JMX connection state transition not accepted for "
+                                                         + channel.getChannelID());
+    }
+
+    return rv;
+  }
 }

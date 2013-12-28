@@ -51,7 +51,7 @@ public class ClientBeanBag {
     setTunneledDomains(tunneledDomains);
   }
 
-  synchronized void unregisterBeans() {
+  public synchronized void unregisterBeans() {
     for (ObjectName name : beanNames) {
       unregisterBean(name, false);
     }
@@ -180,6 +180,7 @@ public class ClientBeanBag {
       this.queryExp = queryExp;
     }
 
+    @Override
     public boolean isNotificationEnabled(final Notification notification) {
       if (notification instanceof MBeanServerNotification) {
         final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
@@ -205,6 +206,7 @@ public class ClientBeanBag {
       this.bag = bag;
     }
 
+    @Override
     final public void handleNotification(final Notification notification, final Object context) {
       if (notification instanceof MBeanServerNotification) {
         String type = notification.getType();

@@ -4,29 +4,22 @@
 package com.tc.management.remote.protocol.terracotta;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.util.UUID;
 
-import java.util.concurrent.ConcurrentMap;
-
 import javax.management.MBeanServer;
-import javax.management.remote.JMXConnector;
 
 public class L1ConnectionMessage implements EventContext {
 
   public static final class Connecting extends L1ConnectionMessage {
-    public Connecting(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains,
-                      ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
-                      ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection) {
-      super(mbs, channel, uuid, tunneledDomains, channelIdToJmxConnector, channelIdToMsgConnection);
+    public Connecting(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains) {
+      super(mbs, channel, uuid, tunneledDomains);
     }
   }
 
   public static final class Disconnecting extends L1ConnectionMessage {
-    public Disconnecting(MessageChannel channel, ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
-                         ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection) {
-      super(channel, channelIdToJmxConnector, channelIdToMsgConnection);
+    public Disconnecting(MessageChannel channel) {
+      super(channel);
     }
   }
 
@@ -34,19 +27,13 @@ public class L1ConnectionMessage implements EventContext {
   private final MessageChannel                                       channel;
   private final UUID                                                 uuid;
   private final String[]                                             tunneledDomains;
-  private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
-  private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
   private final boolean                                              isConnectingMsg;
 
-  private L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains,
-                              ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
-                              ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection) {
+  private L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains) {
     this.mbs = mbs;
     this.channel = channel;
     this.uuid = uuid;
     this.tunneledDomains = tunneledDomains;
-    this.channelIdToJmxConnector = channelIdToJmxConnector;
-    this.channelIdToMsgConnection = channelIdToMsgConnection;
     this.isConnectingMsg = true;
 
     if (isConnectingMsg && mbs == null) {
@@ -56,14 +43,11 @@ public class L1ConnectionMessage implements EventContext {
     }
   }
 
-  private L1ConnectionMessage(MessageChannel channel, ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
-                              ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection) {
+  private L1ConnectionMessage(MessageChannel channel) {
     this.mbs = null;
     this.channel = channel;
     this.uuid = null;
     this.tunneledDomains = null;
-    this.channelIdToJmxConnector = channelIdToJmxConnector;
-    this.channelIdToMsgConnection = channelIdToMsgConnection;
     this.isConnectingMsg = false;
 
     if (isConnectingMsg && mbs == null) {
@@ -87,14 +71,6 @@ public class L1ConnectionMessage implements EventContext {
 
   public String[] getTunneledDomains() {
     return tunneledDomains;
-  }
-
-  public ConcurrentMap<ChannelID, JMXConnector> getChannelIdToJmxConnector() {
-    return channelIdToJmxConnector;
-  }
-
-  public ConcurrentMap<ChannelID, TunnelingMessageConnection> getChannelIdToMsgConnector() {
-    return channelIdToMsgConnection;
   }
 
   public boolean isConnectingMsg() {
