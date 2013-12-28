@@ -93,6 +93,8 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS);
     exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE);
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS);
+
+    exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
   }
 
   private void loadDefaults(String propFile) {
