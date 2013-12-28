@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import com.google.common.collect.Sets;
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.TestConfig;
@@ -28,9 +29,13 @@ import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +50,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public class TestBaseUtil {
+  private static final String  SEP                       = File.pathSeparator;
   private static final String  MAVEN_LOCAL_REPO = getMavenLocalRepo();
   private static final Pattern ARTIFACT_PATTERN = Pattern.compile("^\\s*([^:]+):([^:]+):([^:]+):([^:]+):(.+)$");
 
@@ -366,5 +372,17 @@ public class TestBaseUtil {
 
   public static List<String> getTerracottaCoreDependencies(Class<?> someTCCoreClass) {
     return getDevmodeAwareDependenciesOf("org.terracotta", "terracotta", "terracotta-ee", someTCCoreClass);
+  }
+
+  public static String constructClassPath(String... jars) {
+    return constructClassPath(Arrays.asList(jars));
+  }
+
+  public static String constructClassPath(Collection<String> jars) {
+    StringBuilder builder = new StringBuilder();
+    for (String jar : Sets.newLinkedHashSet(jars)) {
+      builder.append(SEP).append(jar);
+    }
+    return builder.toString();
   }
 }

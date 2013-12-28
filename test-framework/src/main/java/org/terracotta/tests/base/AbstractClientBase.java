@@ -21,8 +21,10 @@ public abstract class AbstractClientBase implements Runnable {
   public final int                      HEAVY_CLIENT_TEST_TIME = 5 * 60 * 1000;
   private static final SimpleDateFormat DATE_FORMATTER         = new SimpleDateFormat("HH:mm:ss.SSS");
 
-  private final TestHandlerMBean        testControlMBean;
   private final int                     clientIndex;
+  private final MBeanServerConnection   mBeanServerConnection;
+
+  private TestHandlerMBean        testControlMBean;
 
   abstract protected void doTest() throws Throwable;
 
@@ -30,19 +32,17 @@ public abstract class AbstractClientBase implements Runnable {
     int index = 0;
     clientIndex = Integer.parseInt(args[index++]);
     final int testControlMbeanPort = Integer.parseInt(args[index++]);
-    testControlMBean = initializeTestHandler(testControlMbeanPort);
-  }
-
-  protected TestHandlerMBean initializeTestHandler(int port) {
     try {
-      JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", port);
-      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      return MBeanServerInvocationProxy.newMBeanProxy(mbs, TestHandler.TEST_SERVER_CONTROL_MBEAN,
-          TestHandlerMBean.class, false);
+      JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", testControlMbeanPort);
+      mBeanServerConnection = jmxConnector.getMBeanServerConnection();
     } catch (Exception e) {
-      System.out.println("****** Exception while connecting to TestMBean Port[" + port + "]");
+      System.out.println("****** Exception while connecting to TestMBean Port[" + testControlMbeanPort + "]");
       throw new RuntimeException(e);
     }
+  }
+
+  protected final MBeanServerConnection getmBeanServerConnection() {
+    return mBeanServerConnection;
   }
 
   public int getClientIndex() {
@@ -62,7 +62,7 @@ public abstract class AbstractClientBase implements Runnable {
       } catch (Exception e) {
         new Exception("Unabled to dump cluster state.", e).printStackTrace();
       }
-      testControlMBean.clientExitedWithException(t);
+      getTestControlMbean().clientExitedWithException(t);
       System.exit(1);
     }
   }
@@ -71,20 +71,28 @@ public abstract class AbstractClientBase implements Runnable {
     System.err.println("[PASS: " + getClass().getName() + "]");
   }
 
-  public TestHandlerMBean getTestControlMbean() {
-    return this.testControlMBean;
+  protected TestHandlerMBean createTestControlMBean() {
+    return MBeanServerInvocationProxy.newMBeanProxy(getmBeanServerConnection(), TestHandler.TEST_SERVER_CONTROL_MBEAN,
+        TestHandlerMBean.class, false);
+  }
+
+  protected synchronized TestHandlerMBean getTestControlMbean() {
+    if (testControlMBean == null) {
+      testControlMBean = createTestControlMBean();
+    }
+    return testControlMBean;
   }
 
   public GroupsData getGroupData(int groupIndex) {
-    return this.testControlMBean.getGroupsData()[groupIndex];
+    return getTestControlMbean().getGroupsData()[groupIndex];
   }
 
   public int getParticipantCount() {
-    return this.testControlMBean.getParticipantCount();
+    return getTestControlMbean().getParticipantCount();
   }
 
   public String getTerracottaUrl() {
-    return this.testControlMBean.getTerracottaUrl();
+    return getTestControlMbean().getTerracottaUrl();
   }
 
   public static synchronized void debug(String msg) {

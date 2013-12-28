@@ -1,53 +1,76 @@
 package com.tc.test.setup;
 
-import java.lang.management.ManagementFactory;
+import com.google.common.collect.Sets;
 
+import java.lang.management.ManagementFactory;
+import java.util.Set;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
-import com.tc.test.jmx.TestHandler;
-import com.tc.test.jmx.TestHandlerMBean;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 public class TestJMXServerManager {
+  private Set<ObjectName> registeredMBeans = Sets.newHashSet();
 
-  private int              jmxServerPort;
-  private TestHandlerMBean testHandlerMBean;
+  private final MBeanServer mBeanServer;
+  private final int jmxServerPort;
 
-  public TestJMXServerManager(int jmxServerPort, TestHandlerMBean testHandlerMBean) {
+  private boolean started = false;
+  private JMXConnectorServer connectorServer;
+
+  public TestJMXServerManager(final MBeanServer mBeanServer, final int jmxServerPort) {
+    this.mBeanServer = mBeanServer;
     this.jmxServerPort = jmxServerPort;
-    this.testHandlerMBean = testHandlerMBean;
   }
 
-  public void startJMXServer() throws Exception {
+  public TestJMXServerManager(int jmxServerPort) {
+    this(ManagementFactory.getPlatformMBeanServer(), jmxServerPort);
+  }
+
+  public synchronized void startJMXServer() throws Exception {
+    if (started) { return; }
     // Get the platform MBeanServer
     System.out.println("********** Starting test JMX server at port[" + jmxServerPort + "]");
-    MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     try {
       // Uniquely identify the MBeans and register them with the platform MBeanServer
-      ObjectName tectControlBeanName = TestHandler.TEST_SERVER_CONTROL_MBEAN;
-      mbs.registerMBean(testHandlerMBean, tectControlBeanName);
       JMXServiceURL url = new JMXServiceURL("service:jmx:jmxmp://" + "localhost" + ":" + this.jmxServerPort);
-      JMXConnectorServer cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
-      cs.start();
+      connectorServer =  JMXConnectorServerFactory.newJMXConnectorServer(url, null, mBeanServer);
+      connectorServer.start();
+      started = true;
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
   }
 
-  public void stopJmxServer() throws Exception {
+  public synchronized void registerMBean(Object mBean, ObjectName objectName) throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
+    checkState(started, "JMX server is not yet started");
+    checkArgument(!registeredMBeans.contains(objectName), "MBean by name {} is already registered.", objectName);
+
+    mBeanServer.registerMBean(mBean, objectName);
+    registeredMBeans.add(objectName);
+  }
+
+  public synchronized void stopJmxServer() throws Exception {
+    if (!started) { return; }
     System.out.println("********** stopping test JMX server at port[" + jmxServerPort + "]");
-    MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     try {
-      // Uniquely identify the MBeans and register them with the platform MBeanServer
-      ObjectName tectControlBeanName = TestHandler.TEST_SERVER_CONTROL_MBEAN;
-      mbs.unregisterMBean(tectControlBeanName);
-      JMXServiceURL url = new JMXServiceURL("service:jmx:jmxmp://" + "localhost" + ":" + this.jmxServerPort);
-      JMXConnectorServer cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
-      cs.stop();
+      connectorServer.stop();
+      started = false;
+
+      for (ObjectName registeredMBean : registeredMBeans) {
+        mBeanServer.unregisterMBean(registeredMBean);
+      }
+      registeredMBeans.clear();
+
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
