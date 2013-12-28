@@ -9,6 +9,7 @@ import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.util.Assert;
 
@@ -33,6 +34,8 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
 
   @Override
   public void handleEvent(final EventContext context) {
+    setupJMXStateMachine(((TCMessage) context).getChannel());
+
     if (context instanceof L1JmxReady) {
       final L1JmxReady readyMessage = (L1JmxReady) context;
       connectToL1JmxServer(readyMessage);
@@ -57,7 +60,6 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
 
   private void connectToL1JmxServer(final L1JmxReady readyMessage) {
     logger.info("L1[" + readyMessage.getChannelID() + "] notified us that their JMX server is now available");
-    setupJMXStateMachine(readyMessage.getChannel());
 
     EventContext msg = new L1ConnectionMessage.Connecting(l2MBeanServer, readyMessage.getChannel(),
                                                           readyMessage.getUUID(), readyMessage.getTunneledDomains());
@@ -68,11 +70,14 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   }
 
   private static void setupJMXStateMachine(MessageChannel channel) {
-    channel.addAttachment(STATE_ATTACHMENT, new JMXConnectStateMachine(), false);
+    if (channel.getAttachment(STATE_ATTACHMENT) == null) {
+      channel.addAttachment(STATE_ATTACHMENT, new JMXConnectStateMachine(), false);
+    }
   }
 
   private void routeTunneledMessage(final JmxRemoteTunnelMessage messageEnvelope) {
-    JMXConnectStateMachine state = (JMXConnectStateMachine) messageEnvelope.getChannel().getAttachment(STATE_ATTACHMENT);
+    JMXConnectStateMachine state = (JMXConnectStateMachine) messageEnvelope.getChannel()
+        .getAttachment(STATE_ATTACHMENT);
 
     if (state != null) {
       state.incomingNetworkMessage(messageEnvelope);
@@ -90,7 +95,6 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   @Override
   public void channelRemoved(final MessageChannel channel) {
     EventContext msg = new L1ConnectionMessage.Disconnecting(channel);
-    setupJMXStateMachine(channel);
 
     synchronized (sinkLock) {
       if (disconnectStageSink == null) { throw new AssertionError("DisconnectStageSink was not set."); }
