@@ -14,7 +14,7 @@ import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 public class ClientConnectEventHandler extends AbstractEventHandler {
-  private static final TCLogger   LOGGER = TCLogging.getLogger(ClientConnectEventHandler.class);
+  private static final TCLogger LOGGER = TCLogging.getLogger(ClientConnectEventHandler.class);
 
   public ClientConnectEventHandler() {
     //
@@ -54,7 +54,9 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     JMXConnectStateMachine state = (JMXConnectStateMachine) channel
         .getAttachment(ClientTunnelingEventHandler.STATE_ATTACHMENT);
 
-    state.disconnect();
+    if (state != null) {
+      state.disconnect();
+    }
   }
 
 }
