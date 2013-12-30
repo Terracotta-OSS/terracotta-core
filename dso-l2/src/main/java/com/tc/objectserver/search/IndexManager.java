@@ -56,7 +56,7 @@ public interface IndexManager {
 
   void backup(File destDir, SyncSnapshot syncSnapshot) throws IndexException;
 
-  void shutdown();
+  void shutdown() throws IndexException;
 
   void optimizeSearchIndex(String indexName);
 
