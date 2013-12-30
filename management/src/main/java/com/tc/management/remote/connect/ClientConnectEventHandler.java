@@ -40,12 +40,17 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private void addJmxConnection(final L1ConnectionMessage msg) {
+    final long start = System.currentTimeMillis();
+
     LOGGER.info("addJmxConnection(" + msg.getChannel().getChannelID() + ")");
 
     JMXConnectStateMachine state = (JMXConnectStateMachine) msg.getChannel()
         .getAttachment(ClientTunnelingEventHandler.STATE_ATTACHMENT);
 
     state.initClientBeanBag(msg);
+
+    LOGGER.info("addJmxConnection(" + msg.getChannel().getChannelID() + ") completed in "
+                + (System.currentTimeMillis() - start) + " millis");
   }
 
   private void removeJmxConnection(final L1ConnectionMessage msg) {
