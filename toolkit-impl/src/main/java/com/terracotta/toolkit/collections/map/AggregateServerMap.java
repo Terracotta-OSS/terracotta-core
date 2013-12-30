@@ -3,6 +3,12 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.EXPIRE;
+import static com.tc.server.ServerEventType.PUT_LOCAL;
+import static com.tc.server.ServerEventType.REMOVE_LOCAL;
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -51,8 +57,6 @@ import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
-import com.terracotta.toolkit.bulkload.BufferBackend;
-import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.collections.map.ToolkitMapAggregateSet.ClusteredMapAggregateEntrySet;
@@ -97,12 +101,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.tc.server.ServerEventType.EVICT;
-import static com.tc.server.ServerEventType.EXPIRE;
-import static com.tc.server.ServerEventType.PUT_LOCAL;
-import static com.tc.server.ServerEventType.REMOVE_LOCAL;
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheInternal<K,V>, ToolkitStore<K,V>, ConfigChangeListener, ValuesResolver<K, V>, SearchableEntity,
@@ -522,6 +520,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void destroy() {
+    // Wait due to search index destroy working globally across all segments only once,
+    // therefore allowing for races between pending txns and index destroy
+    if (attributeExtractor != null) waitForAllCurrentTransactionsToComplete();
     for (InternalToolkitMap serverMap : serverMaps) {
       serverMap.destroy();
     }
