@@ -57,6 +57,8 @@ import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.bulkload.BufferBackend;
+import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.collections.map.ToolkitMapAggregateSet.ClusteredMapAggregateEntrySet;
