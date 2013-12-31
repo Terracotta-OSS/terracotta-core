@@ -11,11 +11,15 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -30,6 +34,8 @@ import javax.management.remote.message.Message;
 
 public class JMXConnectStateMachine {
 
+  private static final long     CONNECT_TIMEOUT = TCPropertiesImpl.getProperties()
+                                                    .getLong(TCPropertiesConsts.L2_REMOTEJMX_CONNECT_TIMEOUT, 30000L);
   private static final TCLogger LOGGER = TCLogging.getLogger(JMXConnectStateMachine.class);
 
   private enum State {
@@ -165,7 +171,7 @@ public class JMXConnectStateMachine {
 
       final JMXConnector conn;
       try {
-        conn = JMXConnectorFactory.connect(serviceURL, environment);
+        conn = jmxConnect(channel, serviceURL, environment);
 
         final MBeanServerConnection l1MBeanServerConnection = conn.getMBeanServerConnection();
 
@@ -187,6 +193,53 @@ public class JMXConnectStateMachine {
                     + "], this DSO client will not show up in monitoring tools!!");
         return;
       }
+    }
+  }
+
+  private static JMXConnector jmxConnect(MessageChannel channel, final JMXServiceURL serviceURL, final Map environment)
+      throws IOException {
+    final AtomicReference<Object> ref = new AtomicReference<Object>();
+
+    Thread connectThread = new Thread("JMX Connect for " + channel.getChannelID()) {
+      @Override
+      public void run() {
+        try {
+          ref.set(JMXConnectorFactory.connect(serviceURL, environment));
+        } catch (Throwable t) {
+          ref.set(t);
+        }
+      }
+    };
+
+    // override the uncaught exception handler just in case
+    connectThread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        //
+      }
+    });
+    connectThread.setDaemon(true);
+    connectThread.start();
+
+    try {
+      connectThread.join(CONNECT_TIMEOUT);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+
+    Object o = ref.get();
+    if (o instanceof Throwable) {
+      if (o instanceof IOException) { throw (IOException) o; }
+      throw new IOException((Throwable) o);
+    } else if (o == null) {
+      connectThread.interrupt();
+      throw new IOException("timeout waiting for jmx connect on " + channel.getChannelID());
+    } else if (o instanceof JMXConnector) {
+      //
+      return (JMXConnector) o;
+    } else {
+      //
+      throw new IOException("Unexpected object type: " + o.getClass().getName());
     }
   }
 

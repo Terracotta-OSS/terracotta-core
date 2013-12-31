@@ -744,6 +744,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L2_REMOTEJMX_MAXTHREADS                                        = "l2.remotejmx.maxthreads";
   public static final String L2_REMOTEJMX_IDLETIME                                          = "l2.remotejmx.idletime";
+  public static final String L2_REMOTEJMX_CONNECT_TIMEOUT                                   = "l2.remotejmx.connect.timeout";
 
   /*********************************************************************************************************************
    * <code>
