@@ -135,6 +135,14 @@ public enum EvictionThreshold {
 
     @Override
     public String toString() {
-        return "EvictionThreshold{" + "name=" + name + ", max=" + maxSize + ", used=" + used + ", reserved=" + reserved + '}';
+      try {
+        return "EvictionThreshold{" + "name=" + name + ", max=" + Conversion.memoryBytesAsSize(maxSize)
+            + ", used=" + Conversion.memoryBytesAsSize(used) 
+            + ", reserved=" + Conversion.memoryBytesAsSize(reserved) + '}';
+      } catch ( Conversion.MetricsFormatException format ) {
+        return "EvictionThreshold{" + "name=" + name + ", max=" + maxSize
+            + ", used=" + used 
+            + ", reserved=" + reserved + '}';
+      } 
     }
 }
