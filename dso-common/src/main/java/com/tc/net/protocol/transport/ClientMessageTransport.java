@@ -25,6 +25,7 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -344,6 +345,9 @@ public class ClientMessageTransport extends MessageTransportBase {
       IOException, CommStackMismatchException, ReconnectionRejectedException {
     HandshakeResult result = handShake();
     handleHandshakeError(result);
+    logger.info("XXX waiting 5 seconds to send ack");
+    ThreadUtil.reallySleep(5000);
+    logger.info("XXX sending ack");
     sendAck();
     connectionId.authenticated();
   }
