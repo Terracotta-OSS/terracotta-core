@@ -598,7 +598,7 @@
                 <configuration>
                   <url>
                     <param>http://download.terracotta.org/appservers</param>
-                    <param>http://kong.terracotta.lan/resources/appservers</param>
+                    <param>http://sfo-c64-jenkins-tools-001.eur.ad.sag/resources/appservers</param>
                   </url>
                   <testPropertiesFile>${tc.tests.configuration.properties.file}</testPropertiesFile>
                 </configuration>
