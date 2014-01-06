@@ -50,7 +50,7 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Executing NonStop behaviour for method - " + method.getName());
       }
-      return handleNonStopBehavior(method, args, nonStopConfiguration);
+      return handleNonStopBehavior(method, args, nonStopConfiguration, null);
     }
     
     boolean started = context.getNonStopManager().tryBegin(getTimeout(nonStopConfiguration));
@@ -65,13 +65,13 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Invocation failed for method - " + method.getName() + ". Exception occurred - " + e.getMessage());
       }
-      return handleNonStopBehavior(method, args, nonStopConfiguration);
+      return handleNonStopBehavior(method, args, nonStopConfiguration, e);
     } catch (RejoinException e) {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Invocation failed for method - " + method.getName() + ". Exception occurred - " + e.getMessage());
       }
       // TODO: Review this.. Is this the right place to handle this...
-      return handleNonStopBehavior(method, args, nonStopConfiguration);
+      return handleNonStopBehavior(method, args, nonStopConfiguration, e);
     } finally {
       if (started) {
         context.getNonStopManager().finish();
@@ -88,14 +88,15 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
     }
   }
 
-  private Object handleNonStopBehavior(Method method, Object[] args, NonStopConfiguration nonStopConfiguration) throws Throwable {
+  private Object handleNonStopBehavior(Method method, Object[] args, NonStopConfiguration nonStopConfiguration,
+                                       Exception expection) throws Throwable {
     try {
       return invokeMethod(method, args, resolveTimeoutBehavior(nonStopConfiguration));
     } catch (NonStopException e) {
       if(context.getNonStopClusterListener().isNodeError()) {
         throw new NonStopException(context.getNonStopClusterListener().getNodeErrorMessage());
       } else {
-        throw e;
+        throw new NonStopException(e.getMessage(), expection);
       }
     }
   }
