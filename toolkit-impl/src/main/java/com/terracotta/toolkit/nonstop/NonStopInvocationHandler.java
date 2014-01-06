@@ -100,19 +100,9 @@ public class NonStopInvocationHandler<T extends ToolkitObject> implements Invoca
       }
     }
   }
-  
 
   private Object invokeLocalMethod(Method method, Object[] args) throws Throwable {
-    Object localDelegate = toolkitObjectLookup.getInitializedObjectOrNull();
-    if (localDelegate == null) {
-      localDelegate = resolveNoOpBehavior();
-    }
-    return invokeMethod(method, args, localDelegate);
-  }
-
-  private Object resolveNoOpBehavior() {
-    return context.getNonstopTimeoutBehaviorResolver().resolveNoOpTimeoutBehavior(nonStopConfigurationLookup
-                                                                                      .getObjectType());
+    return invokeMethod(method, args, toolkitObjectLookup.getInitializedObject());
   }
 
   Object resolveTimeoutBehavior(NonStopConfiguration nonStopConfiguration) {
