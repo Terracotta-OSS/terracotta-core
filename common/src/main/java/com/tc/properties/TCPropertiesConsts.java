@@ -809,7 +809,7 @@ public interface TCPropertiesConsts {
    * l2.offHeap.allocation.partial.disable.maps - disable the partial allocation of map storage
    * l2.offHeap.allocation.partial.disable.objects - disable the partial allocation of objectdb storage
    * l2.offHeap.allocation.partial.disable.map.hotset - disable caching map values in offheap
-   * l2.offHeap.allocation.partial.enable.object.hotset - enable caching map values in offheap
+   * l2.offHeap.allocation.partial.enable.object.hotset - enable caching object values in offheap
    * 
    * </code>
    ********************************************************************************************************************/
