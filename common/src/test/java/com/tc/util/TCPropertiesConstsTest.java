@@ -55,6 +55,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_TABLESIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_DISABLED);
 
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_SERVER_MAP_CAPACITY_EVICTION_STAGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS);
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
