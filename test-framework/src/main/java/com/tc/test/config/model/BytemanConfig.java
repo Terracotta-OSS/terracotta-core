@@ -26,7 +26,7 @@ public class BytemanConfig {
   public void setScript(String script) {
     if (script == null) { throw new IllegalArgumentException("Script should not be null"); }
 
-    this.script = script;
+    this.script = script.startsWith("/") ? script : "/" + script;
   }
 
   /**
