@@ -156,7 +156,9 @@ public class ClientBeanBag {
 
     ObjectName modifiedObjName = null;
     try {
-      modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+      // only change the node attribute of the ObjectName if the MBeans has to be removed from the beanNames set
+      // otherwise this means the beanNames set is being iterated and already contains correct ObjectName's
+      modifiedObjName = remove ? TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress()) : objName;
       if (beanNames.contains(modifiedObjName)) {
         l2MBeanServer.unregisterMBean(modifiedObjName);
         LOGGER.debug("Unregistered Tunneled MBean '" + modifiedObjName + "'");
