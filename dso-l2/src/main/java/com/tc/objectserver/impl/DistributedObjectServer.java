@@ -853,7 +853,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     
     // Lookup stage should never be blocked trying to add to apply stage
-    int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable);
+    int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable || hybrid);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor, persistor
                                  .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher), applyStageThreads, 1, -1);

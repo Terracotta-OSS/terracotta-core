@@ -32,12 +32,13 @@ public class L2Utils {
    * Calculates the optimal number of worker threads for the apply stage.
    * <p/>{@code l2.seda.apply.stage.threads} configuration property overrides this value.
    *
+   * @param usesDisk if uses disk then less computational
    * @return the optimal number of threads for the apply stage
    */
-  public static int getOptimalApplyStageWorkerThreads(boolean restartable) {
+  public static int getOptimalApplyStageWorkerThreads(boolean usesDisk) {
     final int cpus = Runtime.getRuntime().availableProcessors();
     // in restartable mode wait/compute time ratio is low due to disk I/O
-    final int threadsCount = (restartable) ? calculateOptimalThreadsCount(cpus, 30, 70, 0.75)
+    final int threadsCount = (usesDisk) ? calculateOptimalThreadsCount(cpus, 30, 70, 0.75)
         : calculateOptimalThreadsCount(cpus, 0, 100, 0.75);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_APPLY_STAGE_THREADS,
         Math.min(threadsCount, MAX_APPLY_STAGE_THREADS));
