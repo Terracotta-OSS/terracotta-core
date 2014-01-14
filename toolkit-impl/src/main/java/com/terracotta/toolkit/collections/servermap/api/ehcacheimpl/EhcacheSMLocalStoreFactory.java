@@ -64,9 +64,9 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
   }
 
   private static InternalEhcache createCache(String cacheName, ServerMapLocalStoreConfig config) {
-    CacheConfiguration cacheConfig = new CacheConfiguration(cacheName, 0).persistence(new PersistenceConfiguration()
-                                                                                          .strategy(Strategy.NONE))
-        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.CLOCK);
+    CacheConfiguration cacheConfig = new CacheConfiguration(cacheName, 0)
+        .persistence(new PersistenceConfiguration().strategy(Strategy.NONE))
+        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.CLOCK).overflowToDisk(false);
 
     // wire up config
     if (config.getMaxCountLocalHeap() > 0) {
