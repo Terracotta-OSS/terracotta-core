@@ -323,7 +323,7 @@ public class TestBaseUtil {
         doc.getDocumentElement().normalize();
         NodeList nodeList = doc.getElementsByTagName("localRepository");
         if (nodeList.getLength() > 0) {
-          base = nodeList.item(0).getNodeValue();
+          base = nodeList.item(0).getTextContent();
         }
       }
       return base;
