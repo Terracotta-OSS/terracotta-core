@@ -3,24 +3,32 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogging;
 import com.tc.net.core.MockTCConnection;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TestTCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
-import com.tc.net.protocol.StackNotFoundException;
+import com.tc.net.protocol.NetworkStackHarness;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.net.protocol.tcm.MockMessageChannelFactory;
+import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.MockTransportMessageFactory.CallContext;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class ServerStackProviderTest extends TCTestCase {
 
@@ -53,7 +61,7 @@ public class ServerStackProviderTest extends TCTestCase {
     transportHandshakeMessageFactory = new MockTransportMessageFactory();
     connectionPolicy = new TestConnectionPolicy();
     wpaFactory = new TestWireProtocolAdaptorFactory();
-    this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
+    this.provider = new ServerStackProvider(new HashSet(),
                                             this.harnessFactory, null, transportFactory,
                                             transportHandshakeMessageFactory, this.connectionIdFactory,
                                             connectionPolicy, wpaFactory, new ReentrantLock());
@@ -64,6 +72,33 @@ public class ServerStackProviderTest extends TCTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+  }
+
+  public void testAttachAlreadyConnectedTransport() throws Exception {
+    NetworkStackHarness harness = mock(NetworkStackHarness.class);
+    NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
+        any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).thenReturn(harness).getMock();
+    ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
+    MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
+    DefaultConnectionIdFactory connectionIdFactory = new DefaultConnectionIdFactory();
+    ServerStackProvider serverStackProvider = new ServerStackProvider(Collections.emptySet(), harnessFactory, serverMessageChannelFactory, messageTransportFactory,
+        spy(new TransportMessageFactoryImpl()), connectionIdFactory, new NullConnectionPolicy(), mock(WireProtocolAdaptorFactory.class), new ReentrantLock());
+
+    // This is the next connection ID the connectionIDFactory is going to assign out, need to save it first before it
+    // gets changed by the connectionIDFactory assigning it out.
+    ConnectionID nextConnectionID = new ConnectionID("foo", connectionIdFactory.getCurrentConnectionID(), connectionIdFactory.getServerID());
+
+    // Attach once for the normal case.
+    serverStackProvider.attachNewConnection(new ConnectionID("foo", -1), new TestTCConnection());
+
+    // Now make the attach fail due to IllegalReconnectException, we should force a reconnection rejected exception now
+    when(harness.attachNewConnection(any(TCConnection.class))).thenThrow(new IllegalReconnectException());
+    try {
+      serverStackProvider.attachNewConnection(nextConnectionID, new TestTCConnection());
+      fail("Should have gotten a reconnection rejected when attaching a new TCConnection results in an IllegalReconnectException");
+    } catch (RejectReconnectionException e) {
+      // expected
+    }
   }
 
   /**
@@ -185,7 +220,7 @@ public class ServerStackProviderTest extends TCTestCase {
     SynAckMessage synAckMessage;
 
     MockMessageChannelFactory messageChannelFactory = new MockMessageChannelFactory();
-    this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
+    this.provider = new ServerStackProvider(new HashSet(),
                                             new TransportNetworkStackHarnessFactory(), messageChannelFactory,
                                             transportFactory, new TransportMessageFactoryImpl(),
                                             this.connectionIdFactory, connectionPolicy, wpaFactory, new ReentrantLock());
@@ -268,7 +303,7 @@ public class ServerStackProviderTest extends TCTestCase {
     Set rebuild = new HashSet();
     rebuild.add(connectionID1);
 
-    provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), rebuild, this.harnessFactory,
+    provider = new ServerStackProvider(rebuild, this.harnessFactory,
                                        null, transportFactory, null, this.connectionIdFactory, connectionPolicy,
                                        new WireProtocolAdaptorFactoryImpl(), new ReentrantLock());
 
@@ -279,7 +314,7 @@ public class ServerStackProviderTest extends TCTestCase {
     try {
       provider.attachNewConnection(connectionID2, new MockTCConnection());
       fail("Expected StackNotFoundException");
-    } catch (StackNotFoundException e) {
+    } catch (RejectReconnectionException e) {
       // expected.
     }
   }
@@ -324,7 +359,7 @@ public class ServerStackProviderTest extends TCTestCase {
     try {
       provider.attachNewConnection(this.connId, conn);
       fail("Expected StackNotFoundException.");
-    } catch (StackNotFoundException e) {
+    } catch (RejectReconnectionException e) {
       // expected
     }
   }
@@ -343,7 +378,7 @@ public class ServerStackProviderTest extends TCTestCase {
       // try looking it up again. Make sure it throws an exception
       provider.attachNewConnection(this.connId, conn);
       fail("Should have thrown an exception.");
-    } catch (StackNotFoundException e) {
+    } catch (RejectReconnectionException e) {
       // expected
     }
 
@@ -358,9 +393,7 @@ public class ServerStackProviderTest extends TCTestCase {
     MockTCConnection conn = new MockTCConnection();
     try {
       provider.attachNewConnection(new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong()), conn);
-    } catch (StackNotFoundException e) {
-      fail("was virgin, should not throw exception");
-    } catch (IllegalReconnectException e) {
+    } catch (RejectReconnectionException e) {
       fail("was virgin, should not throw exception");
     }
 
@@ -373,9 +406,7 @@ public class ServerStackProviderTest extends TCTestCase {
 
     try {
       provider.attachNewConnection(this.connId, conn);
-    } catch (StackNotFoundException e) {
-      fail("was virgin, should not throw exception");
-    } catch (IllegalReconnectException e) {
+    } catch (RejectReconnectionException e) {
       fail("was virgin, should not throw exception");
     }
 
@@ -390,10 +421,8 @@ public class ServerStackProviderTest extends TCTestCase {
     try {
       provider.attachNewConnection(differentConnId, conn);
       fail("was not virgin and had connId, but should not exist in provider");
-    } catch (StackNotFoundException e) {
+    } catch (RejectReconnectionException e) {
       // expected
-    } catch (IllegalReconnectException e) {
-      fail("unexpected exception: " + e);
     }
   }
 

@@ -84,7 +84,6 @@ public class ClientMessageTransport extends MessageTransportBase {
    * 
    * @throws TCTimeoutException
    * @throws IOException
-   * @throws TCTimeoutException
    * @throws MaxConnectionsExceededException
    */
   @Override
@@ -117,7 +116,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private void handleHandshakeError(HandshakeResult result) throws IOException, MaxConnectionsExceededException,
+  private void handleHandshakeError(HandshakeResult result) throws TransportHandshakeException, MaxConnectionsExceededException,
       CommStackMismatchException, ReconnectionRejectedException {
     if (result.hasErrorContext()) {
       switch (result.getErrorType()) {
@@ -133,7 +132,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
         default:
-          throw new IOException("Disconnected due to transport handshake error");
+          throw new TransportHandshakeException("Disconnected due to transport handshake error");
       }
     }
   }
@@ -249,8 +248,6 @@ public class ClientMessageTransport extends MessageTransportBase {
    * Builds a protocol stack and tries to make a connection. This is a blocking call.
    * 
    * @throws TCTimeoutException
-   * @throws MaxConnectionsExceededException
-   * @throws IOException
    */
   HandshakeResult handShake() throws TCTimeoutException {
     sendSyn();
@@ -291,10 +288,13 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private void sendAck() throws IOException {
+  private void sendAck() throws TransportHandshakeException {
     synchronized (this.status) {
       // DEV-1364 : Connection close might have happened
-      if (!this.status.isSynSent()) { throw new IOException(); }
+      if (!this.status.isSynSent()) {
+        throw new TransportHandshakeException("Transport is not " + MessageTransportState.STATE_SYN_SENT
+                                              + ". Status: " + status);
+      }
       TransportHandshakeMessage ack = this.messageFactory.createAck(this.connectionId, getConnection());
       // send ack message
       this.sendToConnection(ack);
@@ -303,7 +303,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     fireTransportConnectedEvent();
   }
 
-  protected void openConnection(TCConnection connection) throws TCTimeoutException, IOException,
+  protected void openConnection(TCConnection connection) throws TCTimeoutException, TransportHandshakeException,
       MaxConnectionsExceededException, CommStackMismatchException {
     Assert.eval(!isConnected());
     wireNewConnection(connection);
@@ -315,7 +315,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       throw e;
     } catch (ReconnectionRejectedException e) {
       throw new TCRuntimeException("Should not happen here: " + e);
-    } catch (IOException e) {
+    } catch (TransportHandshakeException e) {
       clearConnection();
       this.status.reset();
       throw e;
@@ -341,7 +341,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void handshakeConnection(TCConnection connection) throws TCTimeoutException, MaxConnectionsExceededException,
-      IOException, CommStackMismatchException, ReconnectionRejectedException {
+      TransportHandshakeException, CommStackMismatchException, ReconnectionRejectedException {
     HandshakeResult result = handShake();
     handleHandshakeError(result);
     sendAck();

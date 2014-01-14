@@ -14,7 +14,7 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
 
   private long         sequence;
 
-  private final String uid = UUID.getUUID().toString();
+  private final String serverID = UUID.getUUID().toString();
 
   @Override
   public ConnectionID populateConnectionID(final ConnectionID connectionID) {
@@ -26,11 +26,11 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   private synchronized ConnectionID nextConnectionId(String clientJvmID) {
-    return new ConnectionID(clientJvmID, sequence++, uid);
+    return new ConnectionID(clientJvmID, sequence++, serverID);
   }
 
   private ConnectionID makeConnectionId(String clientJvmID, long channelID) {
-    return new ConnectionID(clientJvmID, channelID, uid);
+    return new ConnectionID(clientJvmID, channelID, serverID);
   }
 
   @Override
@@ -58,4 +58,7 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
     return sequence;
   }
 
+  public String getServerID() {
+    return serverID;
+  }
 }

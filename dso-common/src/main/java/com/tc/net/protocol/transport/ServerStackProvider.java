@@ -3,7 +3,10 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.IllegalReconnectException;
@@ -11,29 +14,26 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.StackNotFoundException;
+import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.TCProtocolAdaptor;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.util.Assert;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Provides network stacks on the server side
  */
 public class ServerStackProvider implements NetworkStackProvider, MessageTransportListener, ProtocolAdaptorFactory {
+  private static final TCLogger logger = TCLogging.getLogger(ServerStackProvider.class);
 
-  private final Map                              harnesses          = new ConcurrentHashMap();
+  private final Map<ConnectionID, NetworkStackHarness> harnesses          = Maps.newConcurrentMap();
   private final NetworkStackHarnessFactory       harnessFactory;
   private final ServerMessageChannelFactory      channelFactory;
   private final TransportHandshakeMessageFactory handshakeMessageFactory;
@@ -43,24 +43,23 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final WireProtocolMessageSink          wireProtoMsgsink;
   private final TCSecurityManager                securityManager;
   private final MessageTransportFactory          messageTransportFactory;
-  private final List                             transportListeners = new ArrayList(1);
-  private final TCLogger                         logger;
+  private final List<MessageTransportListener>   transportListeners = Lists.newArrayList();
   private final ReentrantLock                    licenseLock;
   private final String                           commsMgrName;
 
   // used only in test
-  public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
-    this(logger, initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
+    this(initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
          handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
          CommunicationsManager.COMMSMGR_SERVER, null);
   }
 
-  public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -79,23 +78,22 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.handshakeMessageFactory = handshakeMessageFactory;
     this.connectionIdFactory = connectionIdFactory;
     this.transportListeners.add(this);
-    this.logger = logger;
     Assert.assertNotNull(licenseLock);
     this.licenseLock = licenseLock;
     this.commsMgrName = commsMgrName;
-    for (Iterator i = initialConnectionIDs.iterator(); i.hasNext();) {
-      ConnectionID connectionID = (ConnectionID) i.next();
+    for (final Object initialConnectionID : initialConnectionIDs) {
+      ConnectionID connectionID = (ConnectionID)initialConnectionID;
       logger.info("Preparing comms stack for previously connected client: " + connectionID);
       newStackHarness(connectionID, messageTransportFactory.createNewTransport(connectionID,
-                                                                               createHandshakeErrorHandler(),
-                                                                               handshakeMessageFactory,
-                                                                               transportListeners));
+          createHandshakeErrorHandler(),
+          handshakeMessageFactory,
+          transportListeners));
     }
   }
 
   @Override
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection)
-      throws StackNotFoundException, IllegalReconnectException {
+      throws RejectReconnectionException {
     Assert.assertNotNull(connection);
 
     final NetworkStackHarness harness;
@@ -108,12 +106,17 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handshakeMessageFactory, transportListeners);
       newStackHarness(ourConnectionId, rv);
     } else {
-      harness = (NetworkStackHarness) harnesses.get(connectionId);
+      harness = harnesses.get(connectionId);
 
       if (harness == null) {
-        throw new StackNotFoundException(connectionId, connection.getRemoteAddress());
+        throw new RejectReconnectionException("Stack for " + connectionId +" not found.", connection.getRemoteAddress());
       } else {
-        rv = harness.attachNewConnection(connection);
+        try {
+          rv = harness.attachNewConnection(connection);
+        } catch (IllegalReconnectException e) {
+          logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + connection);
+          throw new RejectReconnectionException("Illegal reconnect attempt from " + connectionId + ".", connection.getRemoteAddress());
+        }
         connectionIdFactory.restoreConnectionId(connectionId);
       }
     }
@@ -140,7 +143,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   }
 
   NetworkStackHarness removeNetworkStack(ConnectionID connectionId) {
-    return (NetworkStackHarness) harnesses.remove(connectionId);
+    return harnesses.remove(connectionId);
   }
 
   /*********************************************************************************************************************
@@ -246,7 +249,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         try {
           handleSyn((SynMessage) message);
           isSynced = true;
-        } catch (StackNotFoundException e) {
+        } catch (RejectReconnectionException e) {
           String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName,
                                                                                  new Object[] { e.getMessage() });
           // send connection rejected SycAck back to L1
@@ -271,7 +274,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       this.handshakeErrorHandler.handleHandshakeError(ctxt);
     }
 
-    private void handleSyn(SynMessage syn) throws StackNotFoundException {
+    private void handleSyn(SynMessage syn) throws RejectReconnectionException {
       ConnectionID connectionId = syn.getConnectionId();
       boolean isMaxConnectionReached = false;
 
@@ -298,12 +301,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
               createHandshakeErrorHandler(),
               handshakeMessageFactory, transportListeners);
         } else {
-          try {
-            this.transport = attachNewConnection(connectionId, syn.getSource());
-          } catch (IllegalReconnectException e) {
-            logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
-            return;
-          }
+          transport = attachNewConnection(connectionId, syn.getSource());
           ConnectionID sentConnectionId = connectionId;
           ConnectionID transportConnectionId = transport.getConnectionId();
           // Update the connection ID with the new channel id and server id from server

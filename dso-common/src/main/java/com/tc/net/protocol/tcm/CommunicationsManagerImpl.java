@@ -406,8 +406,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return rv;
       }
     };
-    ServerStackProvider stackProvider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class),
-                                                                initialConnectionIDs, stackHarnessFactory,
+    ServerStackProvider stackProvider = new ServerStackProvider(initialConnectionIDs, stackHarnessFactory,
                                                                 channelFactory, transportFactory,
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,
