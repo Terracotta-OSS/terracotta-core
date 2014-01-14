@@ -38,11 +38,11 @@ public class ToolkitBarrierImpl implements ToolkitBarrier, RejoinCallback {
     this.name = name;
     this.parties = parties;
     lock = barriers.createLockForKey(name).writeLock();
-    ToolkitBarrierState state = clusteredMap.get(name);
+    ToolkitBarrierState state = barriers.get(name);
     if (state == null) {
       long tmpUid = barrierIdGenerator.getId();
       ToolkitBarrierState tmpState = new ToolkitBarrierState(name, parties, 0, false, tmpUid);
-      state = clusteredMap.putIfAbsent(name, tmpState);
+      state = barriers.putIfAbsent(name, tmpState);
       if (state == null) {
         state = tmpState;
       }
