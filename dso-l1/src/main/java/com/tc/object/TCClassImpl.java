@@ -152,7 +152,7 @@ public class TCClassImpl implements TCClass {
   }
 
   private ChangeApplicator createApplicator() {
-    return this.clazzFactory.createApplicatorFor(this, this.indexed);
+    return this.clazzFactory.createApplicatorFor(this);
   }
 
   @Override

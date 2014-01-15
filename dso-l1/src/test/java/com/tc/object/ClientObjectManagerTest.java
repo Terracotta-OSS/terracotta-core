@@ -600,21 +600,10 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
 
     @Override
-    public Object __tc_getmanagedfield(final String name) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (TestObject) value;
       }
-    }
-
-    @Override
-    public void __tc_setmanagedfield(final String name, final Object value) {
-      throw new ImplementMe();
-
     }
 
     @Override
@@ -646,20 +635,10 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
 
     @Override
-    public Object __tc_getmanagedfield(final String name) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (StupidTestObject) value;
       }
-    }
-
-    @Override
-    public void __tc_setmanagedfield(final String name, final Object value) {
-      throw new ImplementMe();
     }
 
     @Override

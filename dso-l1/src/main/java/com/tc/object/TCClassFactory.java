@@ -12,6 +12,6 @@ public interface TCClassFactory {
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager);
 
-  public ChangeApplicator createApplicatorFor(TCClass clazz, boolean indexed);
+  public ChangeApplicator createApplicatorFor(TCClass clazz);
 
 }
