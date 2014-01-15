@@ -91,7 +91,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       if (message.getSource() == this.connection) {
         receiveTransportMessageImpl(message);
       } else {
-        logger.warn("Received message from an old connection: " + message.getSource() + "; " + message);
+        getLogger().warn("Received message from an old connection: " + message.getSource() + "; " + message);
       }
     }
   }
@@ -102,7 +102,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     Assert.assertNotNull(receiveLayer);
     if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
       // message is printed for debugging
-      logger.info(message.toString());
+      getLogger().info(message.toString());
       throw new AssertionError("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
       if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
@@ -136,7 +136,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     synchronized (isOpen) {
       if (!isOpen.get()) {
         // see DEV-659: we used to throw an assertion error here if already closed
-        logger.warn("Can only close an open connection");
+        getLogger().warn("Can only close an open connection");
         return;
       }
       if (disconnect) {
@@ -172,7 +172,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
     synchronized (status) {
       if (!status.isEstablished()) {
-        logger.warn("Ignoring message sent to non-established transport: " + message);
+        getLogger().warn("Ignoring message sent to non-established transport: " + message);
         return;
       }
 
@@ -187,7 +187,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     if (!status.isClosed()) {
       connection.putMessage(message);
     } else {
-      logger.warn("Couldn't send message status: " + status);
+      getLogger().warn("Couldn't send message status: " + status);
     }
   }
 
@@ -195,7 +195,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
    * Returns true if the underlying connection is open.
    */
   @Override
-  public final boolean isConnected() {
+  public boolean isConnected() {
     synchronized (status) {
       return ((getConnection() != null) && getConnection().isConnected() && this.status.isEstablished());
     }
@@ -277,13 +277,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     if (isSameConnection) {
       boolean forcedDisconnect = false;
       synchronized (status) {
-        logger.warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
+        getLogger().warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
         if (status.isEstablished() || status.isDisconnected()) {
           if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();
         } else {
           status.reset();
-          logger.warn("closing down connection - " + event);
+          getLogger().warn("closing down connection - " + event);
           return;
         }
       }
@@ -344,11 +344,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   protected void wireNewConnection(TCConnection conn) {
-    logger.info("Attaching new connection: " + conn);
+    getLogger().info("Attaching new connection: " + conn);
 
     synchronized (status) {
       if (this.status.isClosed()) {
-        logger.warn("Connection stack is already closed. " + this.status + "; Conn: " + conn);
+        getLogger().warn("Connection stack is already closed. " + this.status + "; Conn: " + conn);
         conn.removeListener(this);
         conn.asynchClose();
       } else {

@@ -22,14 +22,14 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   private static final int           CLOSED                = 5;
   private static final int           RECONNECTION_REJECTED = 6;
 
-  protected final ConnectionIdLogger logger;
+  protected ConnectionIdLogger       logger;
   private final CopyOnWriteArrayList listeners             = new CopyOnWriteArrayList();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
   }
 
-  public ConnectionIdLogger getLogger() {
+  protected ConnectionIdLogger getLogger() {
     return logger;
   }
 
@@ -59,7 +59,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     this.listeners.clear();
   }
 
-  protected final void fireTransportConnectAttemptEvent() {
+  protected void fireTransportConnectAttemptEvent() {
     fireTransportEvent(CONNECT_ATTEMPT);
   }
 

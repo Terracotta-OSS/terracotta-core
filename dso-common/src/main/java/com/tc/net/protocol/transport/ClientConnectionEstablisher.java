@@ -89,6 +89,26 @@ public class ClientConnectionEstablisher {
     this.asyncReconnect = new AsyncReconnect(this);
   }
 
+  // method fore testing only
+  AsyncReconnect getAsyncReconnectThread() {
+    return asyncReconnect;
+  }
+
+  // method used for testing only
+  void setAsyncReconnectingForTests(boolean val) {
+    this.asyncReconnecting.set(val);
+  }
+
+  // method used in testing only
+  void setAllowReconnects(boolean val) {
+    this.allowReconnects.set(val);
+  }
+
+  // method used in testing only
+  boolean getAllowReconnects() {
+    return this.allowReconnects.get();
+  }
+
   /**
    * Blocking open. Causes a connection to be made. Will throw exceptions if the connect fails.
    * 
@@ -106,7 +126,7 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  private void connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException,
+  void connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
     TCConnection rv = null;
@@ -133,7 +153,7 @@ public class ClientConnectionEstablisher {
    * @throws IOException
    * @throws MaxConnectionsExceededException
    */
-  private TCConnection connect(TCSocketAddress sa, ClientMessageTransport cmt) throws TCTimeoutException, IOException {
+  TCConnection connect(TCSocketAddress sa, ClientMessageTransport cmt) throws TCTimeoutException, IOException {
 
     TCConnection connection = this.connManager.createConnection(cmt.getProtocolAdapter());
     cmt.fireTransportConnectAttemptEvent();
@@ -153,22 +173,22 @@ public class ClientConnectionEstablisher {
     return "ClientConnectionEstablisher[" + this.connAddressProvider + ", timeout=" + this.timeout + "]";
   }
 
-  private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
+  void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
     try {
       // Lossy logging for connection errors. Log the errors once in every 10 seconds
-      LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.logger, 10000, LossyTCLoggerType.TIME_BASED,
-                                                                   true);
+      LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.getLogger(), 10000,
+                                                                   LossyTCLoggerType.TIME_BASED, true);
 
       boolean connected = cmt.isConnected();
       if (connected) {
-        cmt.logger.warn("Got reconnect request for ClientMessageTransport that is connected.  skipping");
+        cmt.getLogger().warn("Got reconnect request for ClientMessageTransport that is connected.  skipping");
         return;
       }
 
       this.asyncReconnecting.set(true);
       boolean reconnectionRejected = false;
-      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && !connected
-                      && isReconnectBetweenL2s(); i++) {
+      for (int i = 0; ((this.maxReconnectTries < 0) || (i < this.maxReconnectTries)) && isReconnectBetweenL2s()
+                      && !connected; i++) {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected && isReconnectBetweenL2s()) {
 
@@ -209,8 +229,8 @@ public class ClientConnectionEstablisher {
 
           try {
             if (i % 20 == 0) {
-              cmt.logger.warn("Reconnect attempt " + i + " of " + this.desc + " reconnect tries to " + connInfo
-                              + ", timeout=" + this.timeout);
+              cmt.getLogger().warn("Reconnect attempt " + i + " of " + this.desc + " reconnect tries to " + connInfo
+                                       + ", timeout=" + this.timeout);
             }
             connection = connect(new TCSocketAddress(connInfo), cmt);
             cmt.reconnect(connection);
@@ -235,16 +255,16 @@ public class ClientConnectionEstablisher {
   }
 
   // TRUE for L2, for L1 only if not stopped
-  private boolean isReconnectBetweenL2s() {
+  boolean isReconnectBetweenL2s() {
     return reconnectionRejectedHandler.isRetryOnReconnectionRejected() || !asyncReconnect.isStopped();
   }
 
-  private void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
+  void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
                                  RestoreConnectionCallback callback) throws MaxConnectionsExceededException {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
     boolean connected = cmt.isConnected();
     if (connected) {
-      cmt.logger.warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
+      cmt.getLogger().warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
       return;
     }
 
@@ -272,14 +292,14 @@ public class ClientConnectionEstablisher {
           // DEV-2781
           throw e;
         } catch (TCTimeoutException e) {
-          handleConnectException(e, true, cmt.logger, connection);
+          handleConnectException(e, true, cmt.getLogger(), connection);
         } catch (ReconnectionRejectedException e) {
           reconnectionRejected = true;
-          handleConnectException(e, false, cmt.logger, connection);
+          handleConnectException(e, false, cmt.getLogger(), connection);
         } catch (IOException e) {
-          handleConnectException(e, false, cmt.logger, connection);
+          handleConnectException(e, false, cmt.getLogger(), connection);
         } catch (Exception e) {
-          handleConnectException(e, true, cmt.logger, connection);
+          handleConnectException(e, true, cmt.getLogger(), connection);
         }
         if (connected || System.currentTimeMillis() > deadline) {
           break;
@@ -320,6 +340,10 @@ public class ClientConnectionEstablisher {
   public void asyncRestoreConnection(ClientMessageTransport cmt, TCSocketAddress sa,
                                      RestoreConnectionCallback callback, long timeoutMillis) {
     putConnectionRequest(ConnectionRequest.newRestoreConnectionRequest(cmt, sa, callback, timeoutMillis));
+  }
+
+  void switchAsyncReconnectForTests(AsyncReconnect tmpAsyncReconnect) {
+    this.asyncReconnect = tmpAsyncReconnect;
   }
 
   private void putConnectionRequest(ConnectionRequest request) {
@@ -446,10 +470,10 @@ public class ClientConnectionEstablisher {
         } catch (MaxConnectionsExceededException e) {
           String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
           CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
-          if (cmt != null) cmt.logger.warn("No longer trying to reconnect.");
+          if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
           return;
         } catch (Throwable t) {
-          if (cmt != null) cmt.logger.warn("Reconnect failed !", t);
+          if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
         }
       }
       logger.info("Connection establisher exiting.");
@@ -470,8 +494,8 @@ public class ClientConnectionEstablisher {
     }
 
     public ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt) {
-      this.type = requestType;
       this.cmt = cmt;
+      this.type = requestType;
     }
 
     public ConnectionRequestType getType() {

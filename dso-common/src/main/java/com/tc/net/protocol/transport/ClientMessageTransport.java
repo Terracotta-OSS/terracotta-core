@@ -5,6 +5,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -59,7 +60,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
    * create an unopened MessageTransport.
-   *
+   * 
    * @param securityManager
    * @param addressProvider
    */
@@ -67,8 +68,8 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort,
-                                ReconnectionRejectedHandler reconnectionRejectedHandler, final TCSecurityManager securityManager,
-                                final ConnectionAddressProvider addressProvider) {
+                                ReconnectionRejectedHandler reconnectionRejectedHandler,
+                                final TCSecurityManager securityManager, final ConnectionAddressProvider addressProvider) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
@@ -109,7 +110,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   @Override
   public void reset() {
     synchronized (this.isOpen) {
-      logger.info("Resetting connection " + connectionId);
+      getLogger().info("Resetting connection " + connectionId);
       this.isOpen.set(false);
       this.connectionEstablisher.reset();
       this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
@@ -178,7 +179,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
 
       if (!this.status.isEstablished()) {
-        this.logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource()
+        this.getLogger().warn("Ignoring the message received for an Un-Established Connection; " + message.getSource()
                          + "; " + message);
         message.recycle();
         return;
@@ -230,10 +231,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     errorMessage += getCommunicationStackNames(this);
     errorMessage = "\nTHERE IS A MISMATCH IN THE COMMUNICATION STACKS\n" + synAck.getErrorContext() + errorMessage;
     if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0) {
-      this.logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
+      this.getLogger().error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
       errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
     } else {
-      this.logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+      this.getLogger().error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
       errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT + errorMessage;
     }
     return errorMessage;
@@ -278,7 +279,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         // Re-init the password
         ConnectionInfo connectionInfo = addressProvider.getIterator().next();
         connectionId.setPassword(securityManager.getPasswordForTC(connectionId.getUsername(),
-                connectionInfo.getHostname(), connectionInfo.getPort()));
+                                                                  connectionInfo.getHostname(),
+                                                                  connectionInfo.getPort()));
       }
       TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
                                                                     stackLayerFlags, this.callbackPort);
@@ -326,7 +328,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
     // don't do reconnect if open is still going on
     if (!wasOpened()) {
-      this.logger.warn("Transport was opened already. Skip reconnect " + connection);
+      this.getLogger().warn("Transport was opened already. Skip reconnect " + connection);
       return;
     }
 
@@ -386,7 +388,23 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   }
 
+  @Override
+  protected void fireTransportConnectAttemptEvent() {
+    super.fireTransportConnectAttemptEvent();
+  }
+
+  @Override
+  public boolean isConnected() {
+    return super.isConnected();
+  }
+
   public ClientConnectionEstablisher getConnectionEstablisher() {
     return this.connectionEstablisher;
   }
+
+  // method used for testing
+  public void switchLoggerForTesting(ConnectionIdLogger tmpLogger) {
+    this.logger = tmpLogger;
+  }
+
 }
