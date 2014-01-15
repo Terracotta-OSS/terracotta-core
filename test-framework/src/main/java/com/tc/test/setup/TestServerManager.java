@@ -1,6 +1,9 @@
 package com.tc.test.setup;
 
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.terracotta.license.util.IOUtils;
+import org.terracotta.test.util.TestBaseUtil;
 import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.tests.base.TestFailureListener;
 
@@ -10,13 +13,19 @@ import com.tc.config.test.schema.PortConfigBuilder.PortType;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.TestConfig;
+import com.tc.text.Banner;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import junit.framework.Assert;
 
@@ -27,6 +36,9 @@ public class TestServerManager {
   private final ConfigHelper         configHelper;
   private static final boolean       DEBUG = Boolean.getBoolean("test.framework.debug");
   private final File                 tcConfigFile;
+
+  private org.eclipse.jetty.server.Server server = null;
+  private int proxyJettyPort;
 
   public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome,
                            TestFailureListener failureCallback) throws Exception {
@@ -127,6 +139,12 @@ public class TestServerManager {
 
     for (int i = 0; i < grpCount; i++) {
       threads[i].join();
+    }
+
+    synchronized (this) {
+      if (server != null) {
+        server.stop();
+      }
     }
   }
 
@@ -327,4 +345,36 @@ public class TestServerManager {
     groups[groupIndex].unpauseServer(serverIndex);
   }
 
+  public synchronized String getTerracottaUrl() throws Exception {
+    // If we're not proxying, just return the plain old URL
+    if (!testConfig.getL2Config().isProxyTsaPorts()) {
+      return TestBaseUtil.getTerracottaURL(getGroupsData(), false);
+    }
+
+    // If we're proxying, make sure our jetty server for serving up the proxy tc-config is started then return
+    // the url to the jetty server
+    if (server == null) {
+      proxyJettyPort = portChooser.chooseRandomPort();
+      server = new org.eclipse.jetty.server.Server(proxyJettyPort);
+      server.setHandler(new ProxyConfigHandler());
+      server.start();
+      Banner.infoBanner("Started Jetty server for proxied tc-config on port " + proxyJettyPort);
+    }
+    return "localhost:" + proxyJettyPort;
+  }
+
+  private class ProxyConfigHandler extends AbstractHandler {
+    @Override
+    public void handle(final String target, final Request baseRequest, final HttpServletRequest request,
+                       final HttpServletResponse response) throws IOException, ServletException {
+      response.setContentType("text/xml;charset=utf-8");
+      response.setStatus(HttpServletResponse.SC_OK);
+      baseRequest.setHandled(true);
+      try {
+        response.getWriter().println(getTsaProxyConfig());
+      } catch (Exception e) {
+        throw new ServletException(e);
+      }
+    }
+  }
 }
