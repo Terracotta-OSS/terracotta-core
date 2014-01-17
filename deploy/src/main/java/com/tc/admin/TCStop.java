@@ -21,12 +21,15 @@ import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.security.PwProvider;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -35,6 +38,7 @@ import java.util.Arrays;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
+import javax.net.ssl.SSLContext;
 
 public class TCStop {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
@@ -155,7 +159,8 @@ public class TCStop {
 
       if(manager.isSecure() || securedSpecified) {
         final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
-        securityManagerClass.newInstance();
+        TCSecurityManager securityManager = (TCSecurityManager)securityManagerClass.newInstance();
+        setDefaultSSLContextBecauseWeCannotSpecifyItForJMX(securityManager);
         secured = true;
       }
 
@@ -215,6 +220,14 @@ public class TCStop {
       }
       System.exit(1);
     }
+  }
+
+  private static void setDefaultSSLContextBecauseWeCannotSpecifyItForJMX(TCSecurityManager securityManager) throws Exception {
+    BufferManagerFactory bufferManagerFactory = securityManager.getBufferManagerFactory();
+    SSLContext sslContext = (SSLContext)bufferManagerFactory.getClass()
+        .getMethod("getSslContext")
+        .invoke(bufferManagerFactory);
+    SSLContext.setDefault(sslContext);
   }
 
   private static Throwable getRootCause(Throwable e) {
