@@ -17,7 +17,12 @@ public class CDSMValue implements EvictableEntry {
   private long lastAccessedTime;
   private long version;
 
-  public CDSMValue(final ObjectID objectID, final long creationTime, final long lastAccessedTime, final long timeToIdle, final long timeToLive) {
+  public CDSMValue(final ObjectID objectID) {
+    this(objectID, 0, 0, 0, 0, 0L);
+  }
+
+  public CDSMValue(final ObjectID objectID, final long creationTime, final long lastAccessedTime,
+                   final long timeToIdle, final long timeToLive) {
     this(objectID, creationTime, lastAccessedTime, timeToIdle, timeToLive, 0L);
   }
 

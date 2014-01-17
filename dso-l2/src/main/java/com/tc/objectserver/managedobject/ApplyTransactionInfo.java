@@ -8,9 +8,10 @@ import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.event.DefaultServerEventRecorder;
-import com.tc.objectserver.event.NullServerEventRecorder;
-import com.tc.objectserver.event.ServerEventRecorder;
+import com.tc.objectserver.event.DefaultMutationEventPublisher;
+import com.tc.objectserver.event.MutationEventPublisher;
+import com.tc.objectserver.event.NullMutationEventPublisher;
+import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
@@ -28,6 +29,7 @@ public class ApplyTransactionInfo {
   private final Map<ObjectID, Node>    nodes;
   private final Set<ObjectID>          parents;
   private final ServerTransactionID    stxnID;
+  private final boolean isEviction;
   private final boolean                isActiveTxn;
   private Set<ObjectID>                ignoreBroadcasts   = Collections.emptySet();
   private Set<ObjectID>                initiateEviction   = Collections.emptySet();
@@ -38,22 +40,23 @@ public class ApplyTransactionInfo {
   private final boolean                isSearchEnabled;
   private final Map<ObjectID, Boolean> keyPresentForValue = new HashMap<ObjectID, Boolean>();
   private boolean                      commitNow;
-  private final ServerEventRecorder    serverEventRecorder;
+  private final MutationEventPublisher mutationEventPublisher;
   private final ApplyResultRecorder    resultRecorder;
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false);
+    this(true, ServerTransactionID.NULL_ID, false, false, null);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
- final boolean isSearchEnabled) {
+                              final boolean isSearchEnabled, final boolean isEviction, final ServerEventPublisher serverEventPublisher) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
+    this.isEviction = isEviction;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.serverEventRecorder = isActiveTxn ? new DefaultServerEventRecorder() : new NullServerEventRecorder();
+    this.mutationEventPublisher = isActiveTxn ? new DefaultMutationEventPublisher(serverEventPublisher) : new NullMutationEventPublisher();
     this.resultRecorder = new DefaultResultRecorderImpl();
   }
 
@@ -233,11 +236,15 @@ public class ApplyTransactionInfo {
     keyPresentForValue.remove(value);
   }
 
-  public ServerEventRecorder getServerEventRecorder() {
-    return serverEventRecorder;
+  public MutationEventPublisher getMutationEventPublisher() {
+    return mutationEventPublisher;
   }
 
   public ApplyResultRecorder getApplyResultRecorder() {
     return resultRecorder;
+  }
+
+  public boolean isEviction() {
+    return isEviction;
   }
 }

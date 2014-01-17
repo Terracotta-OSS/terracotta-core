@@ -35,7 +35,6 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.ServerEvent;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
 
@@ -43,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +104,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     ApplyTransactionContext atc = (ApplyTransactionContext) context;
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
-    ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
+    ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled(), txn.isEviction(),
+        serverEventPublisher);
 
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
@@ -135,7 +134,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
     if (txn.isActiveTxn()) {
       // only for active
-      publishModifications(applyInfo);
 
       final Set<ObjectID> initiateEviction = applyInfo.getObjectIDsToInitateEviction();
       if (!initiateEviction.isEmpty()) {
@@ -147,18 +145,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     commit(atc, applyInfo);
-  }
-
-  private void publishModifications(final ApplyTransactionInfo applyInfo) {
-    final List<ServerEvent> events = applyInfo.getServerEventRecorder().getEvents();
-    if (events != null && !events.isEmpty()) {
-      serverEventPublisher.post(events);
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug(events.size() + " server events have been queued for sending");
-        LOGGER.debug(events);
-      }
-    }
   }
 
   private void begin() {

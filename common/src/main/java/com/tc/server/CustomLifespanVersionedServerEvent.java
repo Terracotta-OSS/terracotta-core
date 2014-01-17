@@ -3,6 +3,8 @@
  */
 package com.tc.server;
 
+import com.google.common.base.Objects;
+
 public class CustomLifespanVersionedServerEvent implements VersionedServerEvent {
 
   private final BasicServerEvent basicServerEvent;
@@ -67,8 +69,35 @@ public class CustomLifespanVersionedServerEvent implements VersionedServerEvent 
 
   @Override
   public String toString() {
-    return "AdvancedServerEvent [basicServerEvent=" + basicServerEvent + ", timeToIdle=" + timeToIdle + ", timeToLive="
-           + timeToLive + ", creationTimeInSeconds=" + creationTimeInSeconds + "]";
+    return Objects.toStringHelper(this)
+        .add("basicServerEvent", basicServerEvent)
+        .add("creationTimeInSeconds", creationTimeInSeconds)
+        .add("timeToIdle", timeToIdle)
+        .add("timeToLive", timeToLive)
+        .toString();
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final CustomLifespanVersionedServerEvent that = (CustomLifespanVersionedServerEvent)o;
+
+    if (creationTimeInSeconds != that.creationTimeInSeconds) return false;
+    if (timeToIdle != that.timeToIdle) return false;
+    if (timeToLive != that.timeToLive) return false;
+    if (!basicServerEvent.equals(that.basicServerEvent)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = basicServerEvent.hashCode();
+    result = 31 * result + creationTimeInSeconds;
+    result = 31 * result + timeToIdle;
+    result = 31 * result + timeToLive;
+    return result;
+  }
 }

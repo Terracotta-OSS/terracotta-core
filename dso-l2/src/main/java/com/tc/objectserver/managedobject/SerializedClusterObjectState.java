@@ -57,7 +57,7 @@ public class SerializedClusterObjectState extends AbstractManagedObjectState {
         final Object array = pa.getObject();
         if (array instanceof byte[]) {
           value = (byte[]) array;
-          includeIDs.getServerEventRecorder().recordEventValue(objectID, value);
+          includeIDs.getMutationEventPublisher().setBytesForObjectID(objectID, value);
         } else {
           final String type = safeTypeName(array);
           logger.error("received array of type " + type + " -- ignoring it");

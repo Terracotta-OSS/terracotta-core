@@ -22,6 +22,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.mockito.InOrder;
 
+import com.google.common.eventbus.EventBus;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
@@ -29,6 +30,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
@@ -226,7 +228,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
     return spy(new ApplyTransactionInfo(true,
                                         new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)),
-                                        true));
+                                        true, false, new ServerEventPublisher(new EventBus())));
   }
 
   private <T> Matcher<T> containsObjectWithID(final ObjectID id) {

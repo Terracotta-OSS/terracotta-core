@@ -18,22 +18,12 @@ import java.util.List;
  *
  * @author Eugene Shelestovich
  */
-public interface ServerEventRecorder {
-
-  void recordEvent(ServerEventType type, Object key, ObjectID objectId,
-                   String cacheName);
-
-  void recordEvent(ServerEventType type, Object key, ObjectID objectId,
-                   long version, String cacheName);
+public interface MutationEventPublisher {
 
   /**
    * This method records an <code>AdvancedServerEvent</code>.
    */
-  void recordEvent(ServerEventType type, Object key, ObjectID objectId, CDSMValue value, String cacheName);
+  void publishEvent(ServerEventType type, Object key, CDSMValue value, String cacheName);
 
-  void recordEventValue(ObjectID objectId, byte[] value);
-
-  void reconsiderRemovals(SamplingType samplingType);
-
-  List<ServerEvent> getEvents();
+  void setBytesForObjectID(ObjectID objectId, byte[] value);
 }

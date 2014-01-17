@@ -15,7 +15,9 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.objectserver.event.ServerEventRecorder;
+import com.tc.objectserver.event.MutationEventPublisher;
+import com.tc.objectserver.impl.SamplingType;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.server.ServerEventType;
 import com.tc.test.TCTestCase;
@@ -46,7 +48,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   private ConcurrentDistributedServerMapManagedObjectState state;
   private ManagedObjectChangeListener changeListener;
   private ApplyTransactionInfo applyTransactionInfo;
-  private ServerEventRecorder                              serverEventRecorder;
+  private MutationEventPublisher mutationEventPublisher;
 
   @Override
   public void setUp() throws Exception {
@@ -64,8 +66,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     ManagedObjectStateFactory.createInstance(listenerProvider, persistentObjectFactory);
 
     applyTransactionInfo = searchableApplyInfo();
-    serverEventRecorder = mock(ServerEventRecorder.class);
-    when(applyTransactionInfo.getServerEventRecorder()).thenReturn(serverEventRecorder);
+    mutationEventPublisher = mock(MutationEventPublisher.class);
+    when(applyTransactionInfo.getMutationEventPublisher()).thenReturn(mutationEventPublisher);
   }
 
   public void testCapacityEvictionWhenOverLimit() throws Exception {
@@ -260,9 +262,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
 
-    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE), any(), any(ObjectID.class), anyString());
-    verify(serverEventRecorder, never()).recordEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(ObjectID.class),
-        any(Long.class), anyString());
+    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
+    verify(mutationEventPublisher, never()).publishEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class), anyString());
   }
 
   public void testMustDeleteObjectsOnClearAndSendEvents() throws Exception {
@@ -284,9 +285,9 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
 
-    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE), any(), any(ObjectID.class), anyString());
-    verify(serverEventRecorder, times(3)).recordEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(ObjectID.class),
-        any(Long.class), anyString());
+    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
+    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class),
+        anyString());
   }
 
   public void testSetLastAccessedTime() throws Exception {
@@ -345,6 +346,28 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     state.getOperationEventBus().register(listener);
     state.apply(new ObjectID(3), cursor, new ApplyTransactionInfo());
     assertEquals(200, listener.count);
+  }
+
+  public void testEvictionEvent() throws Exception {
+    ObjectID valueID = new ObjectID(1);
+    String key = "foo";
+    when(applyTransactionInfo.isEviction()).thenReturn(true);
+    when(keyValueStorage.get(key)).thenReturn(new CDSMValue(valueID, 1, 1, 1, 1, 1));
+    state.getRandomSamples(1, mock(ClientObjectReferenceSet.class), SamplingType.FOR_EVICTION);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { key, valueID });
+
+    verify(mutationEventPublisher).publishEvent(ServerEventType.EVICT, key, new CDSMValue(ObjectID.NULL_ID), null);
+  }
+
+  public void testExpirationEvent() throws Exception {
+    ObjectID valueID = new ObjectID(1);
+    String key = "foo";
+    when(applyTransactionInfo.isEviction()).thenReturn(true);
+    when(keyValueStorage.get(key)).thenReturn(new CDSMValue(valueID, 1, 1, 1, 1, 1));
+    state.getRandomSamples(1, mock(ClientObjectReferenceSet.class), SamplingType.FOR_EXPIRATION);
+    state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { key, valueID });
+
+    verify(mutationEventPublisher).publishEvent(ServerEventType.EXPIRE, key, new CDSMValue(ObjectID.NULL_ID), null);
   }
 
   public static final class OperationCountChangeEventListener {
