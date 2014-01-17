@@ -8,8 +8,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -53,9 +51,6 @@ import java.util.concurrent.TimeUnit;
  * @author steve
  */
 public class ApplyTransactionChangeHandler extends AbstractEventHandler {
-
-  private static final TCLogger            LOGGER              = TCLogging
-                                                                   .getLogger(ApplyTransactionChangeHandler.class);
 
   private static final int                 LWM_UPDATE_INTERVAL = TCPropertiesImpl.getProperties()
                                                                    .getInt("lwm.update.intervalInMillis", 10000);
