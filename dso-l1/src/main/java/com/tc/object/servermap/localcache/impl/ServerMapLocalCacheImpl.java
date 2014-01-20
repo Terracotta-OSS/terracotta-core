@@ -933,6 +933,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         // remove meta mappings, but don't remove lockIdMappings
         removeMetaMapping(key, value, false, false);
         pendingTransactionEntries.remove(key, value);
+        remoteRemoveObjectIfPossible(value);
       }
 
     } finally {
