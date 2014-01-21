@@ -369,9 +369,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         String strServerVersion = null;
         try {
           strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
-          if (strServerVersion == null) {
-            logger.debug("Found passive Server = " + serverUrl);
-          }
+          logger.info("Server: " + serverUrl + " returned server version = " + strServerVersion);
         } catch (IOException e) {
           // server that we pinged was not up
           // we should try other servers in stripe
@@ -406,10 +404,10 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       if ((endTime - startTime) > CONFIGURATION_TOTAL_TIMEOUT) { throw new ConfigurationSetupException(
                                                                                                        "Timeout occured while trying to get Server Version, No Active server Found for : "
                                                                                                            + CONFIGURATION_TOTAL_TIMEOUT); }
-      // if (!foundCompactibleActive) { throw new IllegalStateException(
-      // "client Server Version mismatch occured: client version : "
-      // + getClientVersion()
-      // + " is not compatible with a server of Terracotta version: 4.0 or before"); }
+      if (!foundCompactibleActive) { throw new IllegalStateException(
+                                                                     "client Server Version mismatch occured: client version : "
+                                                                         + getClientVersion()
+                                                                         + " is not compatible with a server of Terracotta version: 4.0 or before"); }
     }
   }
 
