@@ -25,6 +25,7 @@ import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.security.PwProvider;
 import com.tc.util.concurrent.ThreadUtil;
+import com.terracotta.management.keychain.KeyChain;
 
 import java.io.Console;
 import java.io.File;
@@ -158,9 +159,9 @@ public class TCStop {
       String[] servers = manager.allCurrentlyKnownServers();
 
       if(manager.isSecure() || securedSpecified) {
+        // Create a security manager that will set the default SSL context
         final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
-        TCSecurityManager securityManager = (TCSecurityManager)securityManagerClass.newInstance();
-        setDefaultSSLContextBecauseWeCannotSpecifyItForJMX(securityManager);
+        securityManagerClass.getConstructor(KeyChain.class, boolean.class).newInstance(null, true);
         secured = true;
       }
 
@@ -220,14 +221,6 @@ public class TCStop {
       }
       System.exit(1);
     }
-  }
-
-  private static void setDefaultSSLContextBecauseWeCannotSpecifyItForJMX(TCSecurityManager securityManager) throws Exception {
-    BufferManagerFactory bufferManagerFactory = securityManager.getBufferManagerFactory();
-    SSLContext sslContext = (SSLContext)bufferManagerFactory.getClass()
-        .getMethod("getSslContext")
-        .invoke(bufferManagerFactory);
-    SSLContext.setDefault(sslContext);
   }
 
   private static Throwable getRootCause(Throwable e) {
