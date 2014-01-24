@@ -4,13 +4,13 @@ package com.tc.test.config.model;
  * Configuration for each mirror group in the test <br>
  * Default : <br>
  * members in each group : 1 <br>
- * election time : 5 secs <br>
- * @author rsingh
+ * election time : 10 secs <br>
  * 
+ * @author rsingh
  */
 public class GroupConfig {
   private int memberCount = 1;
-  private int electionTime = 5;
+  private int electionTime = 10;
 
   /**
    * @return number of servers in each mirror group
