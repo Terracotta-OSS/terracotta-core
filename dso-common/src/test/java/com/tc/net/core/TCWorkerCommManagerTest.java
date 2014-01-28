@@ -259,8 +259,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
-                                                                      new NullConnectionPolicy(),
-        new HealthCheckerConfigImpl(TCPropertiesImpl.getProperties().getPropertiesFor("l1.healthcheck.l2"), "Test Client"));
+                                                                      new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
         .createClientChannel(new NullSessionManager(),
