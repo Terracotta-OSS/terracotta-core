@@ -829,6 +829,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public void unlockedPutIfAbsentNoReturnVersioned(final K key, final V value, final long version, int createTimeInSecs,
                                                    int customMaxTTISeconds, int customMaxTTLSeconds) {
     final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
@@ -1044,9 +1045,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       int retryCount = 0;
       while (true) {
-        // retry until the old value found is correct,
-        // We cant send the old value from the backChannel for CAS as that value will have been removed by inline DGC on
-        // L2 by now..
+        // retry until the old value found is correct, we can't send the old value from the backChannel for CAS as that
+        // value will have been removed by inline DGC on L2 by now
         SerializedMapValue oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
         final V old = deserialize(key, oldSerializedMapValue);
         if (old == null) { return null; }
@@ -1074,13 +1074,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         } finally {
           eventualConcurrentLock.unlock();
         }
-        if ((retryCount++ % 10) == 0) {
-          LOGGER.info("replace tried for many times " + retryCount);
+        if ((++retryCount % 10) == 0) {
+          LOGGER.info("replace tried for " + key + " old " + oldSerializedMapValue.getObjectID() + " new "
+                      + newSerializedMapValue.getObjectID() + " " + retryCount + " times.");
         }
-
       }
     } else {
-
       metaData = createPutSearchMetaData(key, value);
       if (metaData != null) {
         metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);

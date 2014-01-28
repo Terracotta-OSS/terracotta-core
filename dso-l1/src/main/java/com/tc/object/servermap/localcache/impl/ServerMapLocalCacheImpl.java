@@ -601,13 +601,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private void remoteRemoveObjectIfPossible(AbstractLocalCacheStoreValue removed) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
-    }
-
     if (removed != null) {
       ObjectID objectID = removed.getValueObjectId();
       if (isRemoteRemovePossible(objectID)) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
+        }
         removedObjectIDs.remove(objectID);
         removeCallback.removedElement(removed);
       }
@@ -615,13 +614,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private void remoteRemoveObjectIfPossible(TCObjectSelf removed) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
-    }
-
     if (removed != null) {
       ObjectID objectID = removed.getObjectID();
       if (isRemoteRemovePossible(objectID)) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
+        }
         removedObjectIDs.remove(objectID);
         removeCallback.removedElement(removed);
       }
