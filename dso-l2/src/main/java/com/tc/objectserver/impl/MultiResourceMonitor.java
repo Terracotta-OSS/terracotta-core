@@ -50,7 +50,7 @@ public class MultiResourceMonitor implements ResourceEventProducer {
     this.driver = this.runner.newTimer();
     this.hybrid = hybrid;
     L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl.getProperties()
-            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 10 : -1);
+            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD,(persistent) ? 3 : -1);  // add a bit extra for eviction logging
     L2_EVICTION_HALTTHRESHOLD = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_HALTTHRESHOLD,-1);
     L2_EVICTION_OFFHEAP_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_OFFHEAP_STOPPAGE,80) * 0.01f;
     L2_EVICTION_STORAGE_STOPPAGE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_EVICTION_STORAGE_STOPPAGE,90) * 0.01f;

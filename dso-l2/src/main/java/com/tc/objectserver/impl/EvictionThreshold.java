@@ -130,7 +130,7 @@ public enum EvictionThreshold {
         if ( tweak < 0 || tweak > 300 ) {
             return used;
         }
-        return localReserve + Math.round((tweak/100d) * localReserve);
+        return used + Math.round((tweak/100d) * localReserve);
     }
 
     @Override
