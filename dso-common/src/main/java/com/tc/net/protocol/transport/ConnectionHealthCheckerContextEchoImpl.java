@@ -28,6 +28,9 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
                                                                                        transport.getConnection());
       this.transport.send(pingReplyMessage);
       return true;
+    } else if (message.isTimeCheck()) {
+      // Just ignore time checks since we're just doing an echo only implementation
+      return true;
     }
     logger.info(message.toString());
     throw new AssertionError("Echo HealthChecker");
