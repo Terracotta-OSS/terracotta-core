@@ -181,7 +181,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     try {
       throwExceptionIfNecessary();
       if (logger.isDebugEnabled()) {
-        logger.debug("XXX Adding TCObjectSelf to temp cache, ObjectID=" + tcObjectSelf.getObjectID());
+        logger.debug("XXX Adding TCObjectSelf temp cache " + tcObjectSelf.getObjectID());
       }
       this.tcObjectSelfTempCache.put(tcObjectSelf.getObjectID(), tcObjectSelf);
     } finally {
@@ -199,11 +199,10 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         if (tcoself instanceof TCObject) {
           // no need of instanceof check if tcoself is declared as TCObject only... skipping for tests.. refactor later
           ObjectID oid = ((TCObject) tcoself).getObjectID();
-          if (logger.isDebugEnabled()) {
-            logger.debug("XXX Adding TCObjectSelf to Store if necessary, ObjectID=" + oid);
-          }
-
           if (isNew || existOnlyInTempCache(oid)) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("XXX Adding TCObjectSelfStore " + oid);
+            }
             tcObjectSelfStoreOids.add(localStoreValue.isEventualConsistentValue(), oid);
             removeTCObjectSelfTemp((TCObjectSelf) tcoself, false);
             return true;
@@ -258,8 +257,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
         if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) {
           if (logger.isDebugEnabled()) {
-            logger.debug("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
-                         + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+            logger.debug("XXX Removing from TCObjectSelfStore failed " + valueOid
+                         + " , TCObjectSelfStoreOids contains it " + tcObjectSelfStoreOids.contains(valueOid));
           }
           return;
         }
@@ -283,8 +282,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
         if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) {
           if (logger.isDebugEnabled()) {
-            logger.debug("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
-                         + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+            logger.debug("XXX Removing from TCObjectSelfStore failed " + valueOid
+                         + " , TCObjectSelfStoreOids contains it " + tcObjectSelfStoreOids.contains(valueOid));
           }
           return;
         }
