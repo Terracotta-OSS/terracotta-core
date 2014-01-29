@@ -26,6 +26,8 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.InvalidSequenceIDException;
+import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 
 import java.util.ArrayList;
@@ -89,9 +91,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       final NodeID nodeID = reader.getNodeID();
       final Set<ObjectID> newObjectIDs = new HashSet<ObjectID>();
       final Set<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
+      
+      SequenceID current = SequenceID.NULL_ID;
 
       while ((txn = reader.getNextTransaction()) != null) {
-        this.sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
+        if ( current.toLong() > txn.getClientSequenceID().toLong() ) {
+          throw new InvalidSequenceIDException("sequence moves backward");
+        }
+        current = txn.getClientSequenceID();
         txns.add(txn);
         txnIDs.add(txn.getServerTransactionID());
         newObjectIDs.addAll(txn.getNewObjectIDs());
@@ -99,6 +106,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
           syncWriteTxns.add(txn.getTransactionID());
         }
       }
+      
+      this.sequenceValidator.advanceCurrent(nodeID, current);
 
       defineBatch(nodeID, txns.size());
 
@@ -146,12 +155,12 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   @Override
-  public synchronized void defineBatch(final NodeID nid, final int numTxns) {
+  public void defineBatch(final NodeID nid, final int numTxns) {
     final BatchStats batchStats = getOrCreateStats(nid);
     batchStats.defineBatch(numTxns);
   }
 
-  private BatchStats getOrCreateStats(final NodeID nid) {
+  private synchronized BatchStats getOrCreateStats(final NodeID nid) {
     BatchStats bs = this.map.get(nid);
     if (bs == null) {
       bs = new BatchStats(nid);
@@ -159,12 +168,23 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
     return bs;
   }
+  
+  private synchronized BatchStats getStats(final NodeID nid) {
+    return this.map.get(nid);
+  }
 
   @Override
-  public synchronized boolean batchComponentComplete(final NodeID nid, final TransactionID txnID) {
-    final BatchStats bs = this.map.get(nid);
+  public boolean batchComponentComplete(final NodeID nid, final TransactionID txnID) {
+    final BatchStats bs = getStats(nid);
     Assert.assertNotNull(bs);
-    return bs.batchComplete(txnID);
+    BatchStats.BatchState complete = bs.batchComplete(txnID);
+    try {
+      return complete.isComplete();
+    } finally {
+      if ( complete.isShutdown() ) {
+        cleanUp(nid);
+      }
+    }
   }
 
   @Override
@@ -188,55 +208,70 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  private synchronized void shutdownBatchStats(final NodeID nodeID) {
-    final BatchStats bs = this.map.get(nodeID);
+  private void shutdownBatchStats(final NodeID nodeID) {
+    final BatchStats bs = getStats(nodeID);
     if (bs != null) {
-      bs.shutdownNode();
+      if ( bs.shutdownNode() ) {
+//  no more transactions inflight, remove it
+        cleanUp(nodeID);
+      }
     }
   }
 
-  private void cleanUp(final NodeID nodeID) {
+  private synchronized void cleanUp(final NodeID nodeID) {
     this.map.remove(nodeID);
   }
 
-  public class BatchStats {
+  public static class BatchStats {
     private final NodeID nodeID;
 
     private int          batchCount;
     private int          txnCount;
-    private float        avg;
+    private int          ackCount;
 
     private boolean      killed = false;
+    public static enum BatchState {
+      COMPLETE {
+        @Override
+        public boolean isComplete() { return true; }
+      },
+      SHUTDOWN {
+        @Override
+        public boolean isComplete() { return true; }
+        @Override
+        public boolean isShutdown() { return true; }
+      },
+      CONTINUE;
+      public boolean isComplete() { return false; }
+      public boolean isShutdown() {  return false; }
+    }
 
     public BatchStats(final NodeID nid) {
       this.nodeID = nid;
     }
 
-    public void defineBatch(final int numTxns) {
-      final long adjustedTotal = (long) (this.batchCount * this.avg) + numTxns;
+    public synchronized void defineBatch(final int numTxns) {
       this.txnCount += numTxns;
-      this.batchCount++;
-      this.avg = adjustedTotal / this.batchCount;
-      if (false) {
-        log_stats();
+      if ( this.batchCount++ == 0 ) {
+        resetAckCount();
       }
     }
-
-    private void log_stats() {
-      logger.info(this);
+    
+    private void resetAckCount() {
+      this.ackCount = Integer.SIZE - Integer.numberOfLeadingZeros(txnCount) > batchCount ? 
+          txnCount >> (batchCount) : 1;
+      if ( this.ackCount <= 0 ) {
+        throw new AssertionError(this.toString());
+      }
+      logger.debug(this);
     }
 
     @Override
     public String toString() {
-      return "BatchStats : " + this.nodeID + " : batch count = " + this.batchCount + " txnCount = " + this.txnCount
-             + " avg = " + this.avg;
+      return "BatchStats : " + this.nodeID + " : batch count = " + this.batchCount + " txnCount = " + this.txnCount + " ackCount=" + this.ackCount;
     }
 
-    private void log_stats(final float thresh) {
-      logger.info(this + " threshold = " + thresh);
-    }
-
-    public boolean batchComplete(final TransactionID txnID) {
+    public synchronized BatchState batchComplete(final TransactionID txnID) {
       if (this.txnCount <= 0) {
         // this is possible when the passive server moves to active.
         logger.info("Not decrementing txnCount : " + txnID + " : " + toString());
@@ -245,37 +280,27 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       }
       if (this.killed) {
         // return true only when all TXNs are ACKed. Note new batches may still be in network read queue
-        if (this.txnCount == 0) {
-          cleanUp(this.nodeID);
-          return true;
-        } else {
-          return false;
-        }
-      }
-      final float threshold = (this.avg * (this.batchCount - 1));
-
-      if (false) {
-        log_stats(threshold);
+        return (this.txnCount == 0) ? BatchState.SHUTDOWN : BatchState.CONTINUE;
       }
 
-      if (this.txnCount <= threshold) {
+      if ( --this.ackCount == 0 ) {
         if (this.batchCount <= 0) {
           // this is possible when the passive server moves to active.
           logger.info("Not decrementing batchCount : " + txnID + " : " + toString());
         } else {
-          this.batchCount--;
+          if ( this.batchCount-- > 1 ) {
+            resetAckCount();
+          }
         }
-        return true;
+        return BatchState.COMPLETE;
       } else {
-        return false;
+        return BatchState.CONTINUE;
       }
     }
 
-    public void shutdownNode() {
+    public synchronized boolean shutdownNode() {
       this.killed = true;
-      if (this.txnCount == 0) {
-        cleanUp(this.nodeID);
-      }
+      return (this.txnCount == 0);
     }
   }
 
