@@ -16,7 +16,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -190,9 +189,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
         state.setNextAvailableDGCId(nextAvailableDGCId);
-        for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
-          ConnectionID conn = (ConnectionID) i.next();
-          state.addNewConnection(conn);
+        for (ConnectionID id : connectionIDs) {
+          state.addNewConnection(id);
         }
         for (GroupID gid : stripeIDMap.keySet()) {
           state.addToStripeIDMap(gid, stripeIDMap.get(gid));
@@ -211,4 +209,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     }
   }
 
+  public boolean isSplitBrainMessage() {
+    return getType() == OPERATION_FAILED_SPLIT_BRAIN;
+  }
 }

@@ -167,6 +167,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       // XXX:: Is it a good idea to check if the message we are receiving is from the active server that we think is
       // active ? There is a race between publishing active and pushing cluster state and hence we don't do the check.
       // May be someday these two messages will merge into one.
+      if (msg.isSplitBrainMessage()) {
+        return; // About to get zapped no need to actually do anything with the split brain message.
+      }
       msg.initState(state);
       state.syncSequenceState();
       sendChannelLifeCycleEventsIfNecessary(msg);
