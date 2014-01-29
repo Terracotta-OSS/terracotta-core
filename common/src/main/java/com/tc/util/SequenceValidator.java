@@ -35,7 +35,12 @@ public class SequenceValidator {
     Sequencer s = getOrCreate(key);
     s.setCurrent(next);
   }
-
+  
+  public synchronized SequenceID advanceCurrent(Object key, SequenceID next) throws InvalidSequenceIDException {
+    Sequencer s = getOrCreate(key);
+    return s.advance(next);
+  }
+  
   // Used in tests
   public synchronized SequenceID getCurrent(Object key) {
     Sequencer s = (Sequencer) this.sequences.get(key);
@@ -118,6 +123,17 @@ public class SequenceValidator {
         }
       }
       this.current = next;
+    }
+    
+    public SequenceID advance(SequenceID next) {
+      if (this.sequenceIDs != null) {
+        this.sequenceIDs.headSet(next.next()).clear();
+        if (this.sequenceIDs.size() == 0) {
+          this.sequenceIDs = null;
+        }
+      }
+      this.current = next;
+      return this.current;
     }
 
     public SequenceID getCurrent() {
