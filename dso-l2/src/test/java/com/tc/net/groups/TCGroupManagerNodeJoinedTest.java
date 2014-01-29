@@ -13,7 +13,7 @@ import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
+import com.tc.lang.TestThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -47,7 +47,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private TCThreadGroup         threadGroup;
   private TCGroupManagerImpl[]  groupManagers;
   private MyListener[]          listeners;
-  private TestThrowableHandler  throwableHandler;
+  private TestThrowableHandler throwableHandler;
 
   @Override
   public void setUp() {
@@ -443,32 +443,4 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
   }
 
-  private static class TestThrowableHandler extends ThrowableHandler {
-    private volatile Throwable throwable;
-
-    /**
-     * Construct a new ThrowableHandler with a logger
-     *
-     * @param logger Logger
-     */
-    public TestThrowableHandler(final TCLogger logger) {
-      super(logger);
-    }
-
-    @Override
-    public void handleThrowable(final Thread thread, final Throwable t) {
-      this.throwable = t;
-      super.handleThrowable(thread, t);
-    }
-
-    void throwIfNecessary() throws Throwable {
-      if (throwable != null) { throw throwable;
-      }
-    }
-
-    @Override
-    protected synchronized void exit(final int status) {
-      // don't do a system.exit.
-    }
-  }
 }
