@@ -26,6 +26,7 @@ import com.tc.object.tx.RemoteTransactionManagerImpl.BatchManager;
 import com.tc.util.concurrent.Timer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Category(CheckShorts.class)
@@ -58,12 +59,13 @@ public class RemoteTransactionManagerImplTest {
     Mockito.doNothing().when(lockAccounting).shutdown();
     Mockito.doNothing().when(flusherTimer).cancel();
     when(sessionManager.isCurrentSession((NodeID) any(), (SessionID) any())).thenReturn(true);
+//    when(batchManager.isBlocked()).thenReturn(true);
     when(batchManager.sendNextBatch(false)).thenReturn(null);
     when(batchManager.sendNextBatch(true)).thenReturn(null);
     when(batchManager.isEmpty()).thenReturn(false);
     when(batchManager.size()).thenReturn(Integer.MAX_VALUE);
     when(txnBatchID.isNull()).thenReturn(false);
-    when(batchAccounting.acknowledge((TransactionID) any())).thenReturn(txnBatchID);
+    when(batchAccounting.acknowledge((TxnBatchID)any(),(Collection)any())).thenReturn(true);
     when(batchManager.removeBatch((TxnBatchID) any())).thenReturn(null);
 
     when(batchAccounting.getBatchByTransactionID((TransactionID) any())).thenReturn(txnBatchID);

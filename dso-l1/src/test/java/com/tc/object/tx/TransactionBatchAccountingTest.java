@@ -4,11 +4,10 @@
 package com.tc.object.tx;
 
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
@@ -63,7 +62,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
 
     // ACK the first transaction in the multi-transaction batch
-    assertEquals(TxnBatchID.NULL_BATCH_ID, acct.acknowledge(txID1));
+    assertFalse(acct.acknowledge(batch2.batchID,Collections.singletonList(txID1)));
     // there should still be no completed batches
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     
@@ -72,7 +71,7 @@ public class TransactionBatchAccountingTest extends TestCase {
 
     // ACK the last transaction in the multi-transaction batch. This should cause that batch to become complete AND
     // cause all of its constituent transactions to become completed.
-    assertEquals(batch2.batchID, acct.acknowledge(txID2));
+    assertTrue(acct.acknowledge(batch2.batchID,Collections.singletonList(txID2)));
     incompleteBatchIDs.remove(batch2.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
@@ -84,7 +83,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     assertEquals(txID3, acct.getLowWaterMark());
 
     // ACK another transaction
-    assertEquals(batch3.batchID, acct.acknowledge(txID3));
+    assertTrue(acct.acknowledge(batch3.batchID,Collections.singletonList(txID3)));
     incompleteBatchIDs.remove(batch3.batchID);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     assertEquals(incompleteBatchIDs.get(0), acct.getMinIncompleteBatchID());
@@ -93,7 +92,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     assertEquals(txID4, acct.getLowWaterMark());
     
     // ACK the last transaction
-    assertEquals(batch4.batchID, acct.acknowledge(txID4));
+    assertTrue(acct.acknowledge(batch4.batchID,Collections.singletonList(txID4)));
     incompleteBatchIDs.remove(batch4.batchID);
     assertEquals(Collections.EMPTY_LIST, incompleteBatchIDs);
     assertEquals(incompleteBatchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
@@ -111,7 +110,7 @@ public class TransactionBatchAccountingTest extends TestCase {
     List batchIDs = new LinkedList();
     for (int i = 0; i < 1000; i++) {
       TxnBatchID batchID = new TxnBatchID(sequence.next());
-      Set transactionIDs = new HashSet();
+      ArrayList transactionIDs = new ArrayList();
       for (int j = 0; j < 10; j++) {
         transactionIDs.add(new TransactionID(sequence.next()));
       }
@@ -133,7 +132,7 @@ public class TransactionBatchAccountingTest extends TestCase {
   private static final class Batch {
 
     private final TxnBatchID batchID;
-    private final Set        transactionIDs = new HashSet();
+    private final List        transactionIDs = new ArrayList();
 
     public Batch(TxnBatchID batchID) {
       this.batchID = batchID;

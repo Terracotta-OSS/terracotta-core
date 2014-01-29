@@ -160,7 +160,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     public String toString() {
-      return super.toString() + " : " + level + "flushInProgress : " + flushInProgress;
+      return super.toString() + " : " + level + " flushInProgress : " + flushInProgress;
     }
 
     @Override

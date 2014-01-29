@@ -8,6 +8,8 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockID;
 import com.tc.util.AbortedOperationUtil;
@@ -24,14 +26,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class LockAccounting implements ClearableCallback {
+  private static final TCLogger logger    = TCLogging.getLogger(LockAccounting.class);
   private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = TimeUnit.SECONDS
                                                                                             .toMillis(10L);
 
   private final CopyOnWriteArrayList<TxnRemovedListener> listeners                      = new CopyOnWriteArrayList<TxnRemovedListener>();
 
-  private final Map<TransactionIDWrapper, Set<LockID>>   tx2Locks                       = new HashMap();
-  private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap();
-  private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap();
+  private final Map<TransactionIDWrapper, Set<LockID>>   tx2Locks                       = new HashMap<TransactionIDWrapper, Set<LockID>>();
+  private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap<LockID, Set<TransactionIDWrapper>>();
+  private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap<TransactionID, TransactionIDWrapper>();
   private volatile boolean                               shutdown                       = false;
   private final AbortableOperationManager                abortableOperationManager;
   private final RemoteTransactionManagerImpl             remoteTxnMgrImpl;
@@ -51,6 +54,14 @@ public class LockAccounting implements ClearableCallback {
     tx2Locks.clear();
     lock2Txs.clear();
     tid2wrap.clear();
+  }
+
+  public synchronized boolean hasListeners() {
+    return !listeners.isEmpty();
+  }
+  
+  public synchronized boolean contains(TransactionID tid) {
+    return tid2wrap.containsKey(tid);
   }
 
   public synchronized Object dump() {
@@ -114,36 +125,54 @@ public class LockAccounting implements ClearableCallback {
     }
   }
 
+  public synchronized Set<LockID> acknowledge(Collection<TransactionID> tids) {
+    HashSet<LockID> agg = new HashSet<LockID>();
+    for ( TransactionID txID : tids ) {
+      agg.addAll(acknowledgeReally(txID));
+    }
+    return agg;
+  }
+  
+  public synchronized Set<LockID> acknowledge(TransactionID txID) {
+    return acknowledgeReally(txID);
+  }
   // This method returns a set of lockIds that has no more transactions to wait for
-  public synchronized Set acknowledge(TransactionID txID) {
-    Set completedLockIDs = null;
+  private Set<LockID> acknowledgeReally(TransactionID txID) {
+    if ( !Thread.holdsLock(this) ) {
+      throw new AssertionError();
+    }
+    Set<LockID> completedLockIDs = null;
     TransactionIDWrapper txIDWrapper = new TransactionIDWrapper(txID);
-    Set lockIDs = getSetFor(txIDWrapper, tx2Locks);
+    Set<LockID> lockIDs = tx2Locks.get(txIDWrapper);
     if (lockIDs != null) {
       // this may be null if there are phantom acknowledgments caused by server restart.
-      for (Iterator i = lockIDs.iterator(); i.hasNext();) {
-        LockID lid = (LockID) i.next();
-        Set txIDs = getOrCreateSetFor(lid, lock2Txs);
+      for (LockID lid : lockIDs ) {
+        Set<TransactionIDWrapper> txIDs = getOrCreateSetFor(lid, lock2Txs);
         if (!txIDs.remove(txIDWrapper)) {
             throw new AssertionError("No lock=>transaction found for " + lid + ", " + txID);
         }
         if (txIDs.isEmpty()) {
           lock2Txs.remove(lid);
           if (completedLockIDs == null) {
-            completedLockIDs = new HashSet();
+            completedLockIDs = new HashSet<LockID>();
           }
           completedLockIDs.add(lid);
         }
       }
+    } else {
+      System.out.println("locks are null");
     }
     removeTxn(txIDWrapper);
-    return (completedLockIDs == null ? Collections.EMPTY_SET : completedLockIDs);
+    return (completedLockIDs == null ? Collections.<LockID>emptySet() : completedLockIDs);
   }
 
   private void removeTxn(TransactionIDWrapper txnIDWrapper) {
     tx2Locks.remove(txnIDWrapper);
     tid2wrap.remove(txnIDWrapper.getTransactionID());
     notifyTxnRemoved(txnIDWrapper);
+    if ( logger.isDebugEnabled() ) {
+      logger.debug(txnIDWrapper.getTransactionID() + " completed");
+    }
   }
 
   private void notifyTxnRemoved(TransactionIDWrapper txnID) {
@@ -175,6 +204,9 @@ public class LockAccounting implements ClearableCallback {
           if (shutdown) { throw new TCNotRunningException(); }
           if (remoteTxnMgrImpl.isRejoinInProgress()) { throw new PlatformRejoinException(); }
           txnsCompleted = latch.await(WAIT_FOR_TRANSACTIONS_INTERVAL, TimeUnit.MILLISECONDS);
+          if ( logger.isDebugEnabled() ) {
+            logger.debug("waiting for " + listener);
+          }
         } catch (InterruptedException e) {
           AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           interrupted = true;
@@ -192,14 +224,10 @@ public class LockAccounting implements ClearableCallback {
 
   }
 
-  private static Set getSetFor(Object key, Map m) {
-    return (Set) m.get(key);
-  }
-
-  private static Set getOrCreateSetFor(Object key, Map m) {
-    Set rv = getSetFor(key, m);
+  private static <K,V> Set<V> getOrCreateSetFor(K key, Map<K, Set<V>> m) {
+    Set<V> rv = m.get(key);
     if (rv == null) {
-      rv = new HashSet();
+      rv = new HashSet<V>();
       m.put(key, rv);
     }
     return rv;
@@ -251,6 +279,10 @@ public class LockAccounting implements ClearableCallback {
       // released = true;
     }
 
+    @Override
+    public String toString() {
+      return "TxnRemovedListener{" + "txnSet=" + txnSet + ", latch=" + latch + '}';
+    }
   }
 
   private static class TransactionIDWrapper {

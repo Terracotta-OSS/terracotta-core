@@ -3,8 +3,6 @@
  */
 package com.tc.object.locks;
 
-import com.tc.object.locks.LockID;
-
 public interface LockFlushCallback {
 
   /* This method is called when all the transactions made under that Lock are ACKED */

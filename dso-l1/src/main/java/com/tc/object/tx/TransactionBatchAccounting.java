@@ -4,20 +4,25 @@
  */
 package com.tc.object.tx;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class TransactionBatchAccounting {
 
-  private final SortedMap<TransactionID, BatchDescriptor> batchesByTransaction = new TreeMap<TransactionID, BatchDescriptor>();
-  private final LinkedList<BatchDescriptor>               batches              = new LinkedList<BatchDescriptor>();
+  private static final TCLogger LOGGER = TCLogging.getLogger(TransactionBatchAccounting.class);
+  private final NavigableMap<TransactionID, BatchDescriptor> batchesByTransaction = new TreeMap<TransactionID, BatchDescriptor>();
   private boolean                                         stopped              = false;
   private TransactionID                                   highWaterMark        = TransactionID.NULL_ID;
 
@@ -30,33 +35,76 @@ public class TransactionBatchAccounting {
     return "TransactionBatchAccounting[batchesByTransaction=" + batchesByTransaction + "]";
   }
 
-  public synchronized void addBatch(TxnBatchID batchID, Collection transactionIDs) {
-    if (stopped || transactionIDs.size() == 0) return;
+  public synchronized void addBatch(TxnBatchID batchID, List<TransactionID> transactionIDs) {
+    if (transactionIDs.isEmpty()) return;
+    Collections.sort(transactionIDs);
     BatchDescriptor desc = new BatchDescriptor(batchID, transactionIDs);
-    batches.add(desc);
-    for (Iterator<TransactionID> i = transactionIDs.iterator(); i.hasNext();) {
-      TransactionID txID = i.next();
-      Object removed = batchesByTransaction.put(txID, desc);
-      if (removed != null) { throw new AssertionError("TransactionID is already accounted for: " + txID + "=>"
-                                                      + removed); }
-      if (highWaterMark.toLong() < txID.toLong()) {
-        highWaterMark = txID;
-      }
+    batchesByTransaction.put(transactionIDs.get(0), desc);
+    if (highWaterMark.toLong() < transactionIDs.get(transactionIDs.size()-1).toLong()) {
+      highWaterMark = transactionIDs.get(transactionIDs.size()-1);
     }
   }
 
-  public synchronized Collection getTransactionIdsFor(TxnBatchID batchID) {
-    Iterator<BatchDescriptor> iter = batches.iterator();
+  public synchronized Collection<TransactionID> getTransactionIdsFor(TxnBatchID batchID) {
+    Iterator<BatchDescriptor> iter = batchesByTransaction.values().iterator();
     while (iter.hasNext()) {
       BatchDescriptor bd = iter.next();
-      if (bd.getId().equals(batchID)) { return new HashSet(bd.getTransactions()); }
+      if (bd.getId().equals(batchID)) { 
+        return new HashSet<TransactionID>(bd.getTransactions()); 
+      }
     }
-    return Collections.EMPTY_SET;
+    return Collections.<TransactionID>emptySet();
   }
 
   public synchronized TxnBatchID getBatchByTransactionID(TransactionID txID) {
-    BatchDescriptor desc = batchesByTransaction.get(txID);
-    return desc == null ? TxnBatchID.NULL_BATCH_ID : desc.getId();
+    Map.Entry<TransactionID, BatchDescriptor> desc = batchesByTransaction.floorEntry(txID);
+    while ( !desc.getValue().contains(txID) ) {
+      desc = batchesByTransaction.lowerEntry(desc.getKey());
+  }
+    return desc == null ? TxnBatchID.NULL_BATCH_ID : desc.getValue().getId();
+  }
+
+  public synchronized Map<TxnBatchID, Collection<TransactionID>> getBatchesForTransactions(List<TransactionID> list) {
+    Map<TxnBatchID, Collection<TransactionID>> map = new HashMap<TxnBatchID, Collection<TransactionID>>();
+    if ( stopped ) {
+      return map;
+    }
+    Collections.sort(list);
+    BatchDescriptor desc = null;
+    Collection<TransactionID> tids = null;
+    int lookupCount = 0;
+    int batchCount = 0;
+    for ( TransactionID tid : list ) {
+      if ( desc == null || !desc.contains(tid) ) {
+        lookupCount += 1;
+        Map.Entry<TransactionID, BatchDescriptor> pointer = batchesByTransaction.floorEntry(tid);
+        if ( pointer == null  ) {
+          throw new AssertionError("batch not found for transaction " + tid);
+        }
+        while ( !pointer.getValue().contains(tid) ) {
+          pointer = batchesByTransaction.lowerEntry(pointer.getKey());
+          lookupCount++;
+          if ( pointer == null ) {
+            throw new AssertionError("batch not found for transaction " + tid);
+          }
+        }
+        desc = pointer.getValue();
+        tids = map.get(desc.getId());
+        if ( tids == null ) {
+          tids = new HashSet<TransactionID>();
+          map.put(desc.getId(), tids);
+        }
+      } else {
+        if ( desc == null || tids == null ) {
+          throw new AssertionError("batch not found for transaction " + tid);
+        }
+      }
+      tids.add(tid);
+    }
+    if ( LOGGER.isDebugEnabled() ) {
+      LOGGER.debug("lookup count:" + lookupCount + " batch count:" + batchCount + " txn count:"  + list.size());
+    }
+    return map;
   }
 
   /**
@@ -66,32 +114,40 @@ public class TransactionBatchAccounting {
    * @param c The collection to add all incomplete batch ids to
    * @return The input collection
    */
-  public synchronized List addIncompleteBatchIDsTo(List c) {
-    for (BatchDescriptor desc : batches) {
+  public synchronized List<TxnBatchID> addIncompleteBatchIDsTo(List<TxnBatchID> c) {
+    for (BatchDescriptor desc : batchesByTransaction.values()) {
       c.add(desc.batchID);
     }
+    Collections.sort(c);
     return c;
   }
 
   public synchronized TxnBatchID getMinIncompleteBatchID() {
-    return batches.isEmpty() ? TxnBatchID.NULL_BATCH_ID : batches.getFirst().getId();
+    if (stopped || batchesByTransaction.isEmpty() ) {
+      return TxnBatchID.NULL_BATCH_ID;
+  }
+    List<BatchDescriptor> toSort = new ArrayList<BatchDescriptor>(batchesByTransaction.values());
+    Collections.sort(toSort);
+    return toSort.get(0).getId();
   }
 
-  public synchronized TxnBatchID acknowledge(TransactionID txID) {
-    if (stopped) return TxnBatchID.NULL_BATCH_ID;
-    final TxnBatchID completed;
-    final BatchDescriptor desc = batchesByTransaction.remove(txID);
-    if (desc == null) throw new AssertionError("Batch not found for " + txID);
-    if (desc.acknowledge(txID) == 0) {
-      // completedGlobalTransactionIDs.addAll(desc.globalTransactionIDs);
-      batches.remove(desc);
-      completed = desc.getId();
-    } else {
-      completed = TxnBatchID.NULL_BATCH_ID;
+  public synchronized boolean acknowledge(TxnBatchID batch, Collection<TransactionID> tids) {
+    if (stopped) return false;
+    if ( tids.isEmpty() ) {
+      return false;
     }
-    if (batches.size() == 0 && batchesByTransaction.size() > 0) { throw new AssertionError(
-                                                                                           "Batches list and batchesByTransaction map aren't zero at the same time"); }
-    return completed;
+    
+    Map.Entry<TransactionID, BatchDescriptor> pointer = batchesByTransaction.floorEntry(tids.iterator().next());
+    while ( !pointer.getValue().getId().equals(batch) ) {
+      pointer = batchesByTransaction.lowerEntry(pointer.getKey());
+    }
+        
+    if ( pointer.getValue().acknowledge(tids) ) {
+      batchesByTransaction.remove(pointer.getKey());
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public synchronized TransactionID getLowWaterMark() {
@@ -104,20 +160,21 @@ public class TransactionBatchAccounting {
         return highWaterMark.next();
       }
     } else {
-      return batchesByTransaction.firstKey();
+      List<TransactionID> list = new ArrayList(batchesByTransaction.firstEntry().getValue().getTransactions());
+      Collections.sort(list);
+      return list.get(0);
     }
   }
 
   public synchronized void clear() {
-    batches.clear();
     batchesByTransaction.clear();
   }
 
-  private static final class BatchDescriptor {
+  private static final class BatchDescriptor implements Comparable<BatchDescriptor>{
     private final TxnBatchID batchID;
-    private final Set        transactionIDs = new HashSet();
+    private final Set<TransactionID>        transactionIDs = new HashSet<TransactionID>();
 
-    public BatchDescriptor(TxnBatchID batchID, Collection txIDs) {
+    public BatchDescriptor(TxnBatchID batchID, Collection<TransactionID> txIDs) {
       this.batchID = batchID;
       transactionIDs.addAll(txIDs);
     }
@@ -132,20 +189,46 @@ public class TransactionBatchAccounting {
       return transactionIDs.size();
     }
 
-    public Collection getTransactions() {
+    public boolean acknowledge(Collection<TransactionID> tids) {
+      for ( TransactionID txID : tids ) {
+        transactionIDs.remove(txID);
+      }
+      return transactionIDs.isEmpty();
+    }    
+
+    public Collection<TransactionID> getTransactions() {
       return transactionIDs;
     }
 
     public TxnBatchID getId() {
       return batchID;
     }
+    
+    public boolean contains(TransactionID tid) {
+      return transactionIDs.contains(tid);
+  }
+
+    public int size() {
+      return transactionIDs.size();
+    }
+
+    @Override
+    public int compareTo(BatchDescriptor o) {
+      return getId().compareTo(o.getId());
+    }
+    
+    
   }
 
   /**
    * This is used for testing.
+   * @param list
+   * @return 
    */
-  public synchronized List addIncompleteTransactionIDsTo(LinkedList list) {
-    list.addAll(batchesByTransaction.keySet());
+  public synchronized List<TransactionID> addIncompleteTransactionIDsTo(LinkedList<TransactionID> list) {
+    for ( Map.Entry<TransactionID, BatchDescriptor> pointer : batchesByTransaction.entrySet() ) {
+      list.addAll(pointer.getValue().getTransactions());
+    }
     return list;
   }
 

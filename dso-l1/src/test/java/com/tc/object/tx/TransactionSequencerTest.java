@@ -76,8 +76,11 @@ public class TransactionSequencerTest extends TestCase {
     Thread consumer = new Thread(new Consumer(this.txnSequencer), "Consumer");
     consumer.start();
 
-    producer1.join();
     consumer.join();
+    while ( producer1.isAlive() ) {
+      this.txnSequencer.clear();
+      producer1.join(1000);
+  }
   }
   public void testInterruptAddTransactionWithFolding() throws Exception {
       folding = true;
