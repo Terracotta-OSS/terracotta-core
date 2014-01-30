@@ -58,7 +58,7 @@ public class TransactionBatchAccounting {
 
   public synchronized TxnBatchID getBatchByTransactionID(TransactionID txID) {
     Map.Entry<TransactionID, BatchDescriptor> desc = batchesByTransaction.floorEntry(txID);
-    while ( !desc.getValue().contains(txID) ) {
+    while ( desc != null && !desc.getValue().contains(txID) ) {
       desc = batchesByTransaction.lowerEntry(desc.getKey());
   }
     return desc == null ? TxnBatchID.NULL_BATCH_ID : desc.getValue().getId();
