@@ -13,7 +13,6 @@ import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
 import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
 import static org.terracotta.license.LicenseConstants.LICENSE_TYPE_TRIAL;
 import static org.terracotta.license.LicenseConstants.PRODUCTKEY_PATH_PROPERTY;
-import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
 import org.terracotta.license.AbstractLicenseResolverFactory;
 import org.terracotta.license.License;
@@ -129,7 +128,7 @@ public class LicenseManager {
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
 
 
-    String maxDataStorageSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
+    String maxDataStorageSizeFromLicense = getLicense().maxServerArrayDataStorage();
     long maxDataStorageLicensedInBytes = MemorySizeParser.parse(maxDataStorageSizeFromLicense);
     long maxDataStroageConfiguredInBytes = MemorySizeParser.parse(maxDataStorageConfigured);
 
