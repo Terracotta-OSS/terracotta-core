@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LockManagerSystemTest extends BaseDSOTestCase {
 
@@ -303,8 +304,9 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     clientLockManager.lock(l1, LockLevel.WRITE);
     System.out.println("Got first lock again");
 
-    final boolean[] done = new boolean[2];
-
+    final AtomicBoolean[] done = new AtomicBoolean[2];
+    done[0] = new AtomicBoolean();
+    done[1] = new AtomicBoolean();
     // try obtaining a write lock on l1 in a second thread. This should block initially since a write lock is already
     // held on l1
     Thread t = new Thread() {
@@ -318,18 +320,18 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
           logger.warn("Should never come here ", e);
         }
         System.out.println("Got second lock");
-        done[0] = true;
+        done[0].set(true);
       }
     };
 
     t.start();
     sleep(5);
-    assertFalse(done[0]);
+    assertFalse(done[0].get());
     threadManager.setThreadID(tid1);
     clientLockManager.unlock(l1, LockLevel.WRITE);
     clientLockManager.unlock(l1, LockLevel.WRITE); // should unblock thread above
     sleep(5);
-    assertTrue(done[0]); // thread should have been unblocked and finished
+    assertTrue(done[0].get()); // thread should have been unblocked and finished
 
     // Get a bunch of read locks on l3
     threadManager.setThreadID(tid1);
@@ -338,7 +340,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     clientLockManager.lock(l3, LockLevel.READ);
     threadManager.setThreadID(tid3);
     clientLockManager.lock(l3, LockLevel.READ);
-    done[0] = false;
+    done[0].set(false);
     t = new Thread() {
       @Override
       public void run() {
@@ -350,29 +352,29 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
           logger.warn("Should never come here ", e);
         }
         System.out.println("Got write lock");
-        done[0] = true;
+        done[0].set(true);
       }
     };
     t.start();
     sleep(5);
-    assertFalse(done[0]);
+    assertFalse(done[0].get());
 
     threadManager.setThreadID(tid1);
     clientLockManager.unlock(l3, LockLevel.READ);
     sleep(5);
-    assertFalse(done[0]);
+    assertFalse(done[0].get());
 
     threadManager.setThreadID(tid2);
     clientLockManager.unlock(l3, LockLevel.READ);
     sleep(5);
-    assertFalse(done[0]);
+    assertFalse(done[0].get());
 
     threadManager.setThreadID(tid3);
     clientLockManager.unlock(l3, LockLevel.READ);
     sleep(5);
-    assertTrue(done[0]);
+    assertTrue(done[0].get());
 
-    done[0] = false;
+    done[0].set(false);
     t = new Thread() {
       @Override
       public void run() {
@@ -384,12 +386,12 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
           logger.warn("Should never come here ", e);
         }
         System.out.println("Got read lock");
-        done[0] = true;
+        done[0].set(true);
       }
     };
     t.start();
 
-    done[1] = false;
+    done[1].set(false);
     t = new Thread() {
       @Override
       public void run() {
@@ -401,19 +403,19 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
           logger.warn("Should never come here ", e);
         }
         System.out.println("Got read lock");
-        done[1] = true;
+        done[1].set(true);
       }
     };
 
     t.start();
     sleep(5);
-    assertFalse(done[0]);
-    assertFalse(done[1]);
+    assertFalse(done[0].get());
+    assertFalse(done[1].get());
     threadManager.setThreadID(tid4);
     clientLockManager.unlock(l3, LockLevel.WRITE);
     sleep(5);
-    assertTrue(done[0]);
-    assertTrue(done[1]);
+    assertTrue(done[0].get());
+    assertTrue(done[1].get());
     threadManager.setThreadID(tid1);
     clientLockManager.unlock(l3, LockLevel.READ);
     threadManager.setThreadID(tid2);
