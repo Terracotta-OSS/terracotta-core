@@ -26,6 +26,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
 import com.tc.util.version.Version;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
@@ -369,6 +370,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         String strServerVersion = null;
         try {
           strServerVersion = serverUrl.getHeaderField("Version", pwProvider);
+          activeDown = false;
           logger.info("Server: " + serverUrl + " returned server version = " + strServerVersion);
         } catch (IOException e) {
           // server that we pinged was not up
@@ -381,6 +383,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
             if (activeDown) {
               // active was down and we have reached the end of connectionInfo Array
               // so we need to start checking from 0th index again
+              ThreadUtil.reallySleep(500); // sleep for 1 sec before trying again
               serverNumberInStripe = 0;
             } else {
               // active was not down and we have reached end of array
@@ -404,10 +407,16 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       if ((endTime - startTime) > CONFIGURATION_TOTAL_TIMEOUT) { throw new ConfigurationSetupException(
                                                                                                        "Timeout occured while trying to get Server Version, No Active server Found for : "
                                                                                                            + CONFIGURATION_TOTAL_TIMEOUT); }
-      if (!foundCompactibleActive) { throw new IllegalStateException(
-                                                                     "client Server Version mismatch occured: client version : "
-                                                                         + getClientVersion()
-                                                                         + " is not compatible with a server of Terracotta version: 4.0 or before"); }
+      if (!foundCompactibleActive) {
+        if (activeDown) {
+          throw new IllegalStateException(
+                                          "At least one of the stripes is down, couldn't get the server version for compatibility check!");
+        } else {
+          throw new IllegalStateException("client Server Version mismatch occured: client version : "
+                                          + getClientVersion()
+                                          + " is not compatible with a server of Terracotta version: 4.0 or before");
+        }
+      }
     }
   }
 
