@@ -211,11 +211,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     try {
       ObjectID valueObjectID = invokeLogicalPut(key, value);
 
-      if (!isEventual) {
-        addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-      } else {
-        addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-      }
+      updateLocalCacheOnPut(key, value, valueObjectID);
     } finally {
       lock.unlock();
     }
@@ -236,12 +232,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     lock.lock();
     try {
       final ObjectID valueObjectID = invokeLogicalPutVersioned(key, value, version);
-
-      if (!isEventual) {
-        addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-      } else {
-        addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-      }
+      updateLocalCacheOnPut(key, value, valueObjectID);
     } finally {
       lock.unlock();
     }
@@ -252,10 +243,18 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
-      invokeLogicalPutIfAbsentVersioned(key, value, version);
-      // TODO: Revisit and check whether we can simply omit addToCache(). It may have some serious implications
+      final ObjectID valueObjectID = invokeLogicalPutIfAbsentVersioned(key, value, version);
+      updateLocalCacheOnPut(key, value, valueObjectID);
     } finally {
       lock.unlock();
+    }
+  }
+
+  private void updateLocalCacheOnPut(final Object key, final Object value, final ObjectID valueObjectID) {
+    if (!isEventual) {
+      addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+    } else {
+      addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
     }
   }
 
@@ -284,11 +283,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT,
                                              SerializationUtil.PUT_IF_ABSENT_SIGNATURE, parameters);
         if (rv) {
-          if (!isEventual) {
-            addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-          } else {
-            addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-          }
+          updateLocalCacheOnPut(key, value, valueObjectID);
           return null;
         } else {
           // PutIfAbsent failed i.e there is some mapping on the L2 so putIfAbsent failed,fetch that value from server
@@ -322,11 +317,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       boolean rv = logicalInvokeWithResult(SerializationUtil.REPLACE_IF_VALUE_EQUAL,
                                            SerializationUtil.REPLACE_IF_VALUE_EQUAL_SIGNATURE, parameters);
       if (rv) {
-        if (!isEventual) {
-          addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
-        } else {
-          addEventualValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
-        }
+        updateLocalCacheOnPut(key, newValue, valueObjectID);
       }
       return rv;
     } finally {
