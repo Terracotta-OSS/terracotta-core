@@ -292,7 +292,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
           return null;
         } else {
           // PutIfAbsent failed i.e there is some mapping on the L2 so putIfAbsent failed,fetch that value from server
-          Object existingMapping = getValueUnlocked((TCServerMap) map, (Object) key);
+          final Object existingMapping = getValueUnlocked(map, key);
           // existing mapping can be null in case someone removed this value between putIfAbsent, for this case try
           // retrying putIfAbsent
           if (existingMapping != null) { return existingMapping; }
@@ -546,15 +546,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   @Override
   public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
-    return getValueUnlocked(map, key, false);
-  }
-
-  @Override
-  public VersionedObject getVersionedValue(final TCServerMap map, final Object key) throws AbortedOperationException {
-    return (VersionedObject) getValueUnlocked(map, key, true);
-  }
-
-  private Object getValueUnlocked(final TCServerMap map, final Object key, boolean versionRequired) throws AbortedOperationException {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) { return item.getValueObject(); }
 
@@ -565,13 +556,26 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       item = getValueUnlockedFromCache(key);
       if (item != null) { return item.getValueObject(); }
 
-      final Object value = getValueForKeyFromServer(map, key, true, versionRequired);
+      final Object value = getValueForKeyFromServer(map, key, true, false);
       if (value != null) {
-        if (versionRequired) {
-          updateLocalCacheIfNecessary(key, ((VersionedObject)value).getObject());
-        } else {
-          updateLocalCacheIfNecessary(key, value);
-        }
+        updateLocalCacheIfNecessary(key, value);
+      }
+      return value;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public VersionedObject getVersionedValue(final TCServerMap map, final Object key) throws AbortedOperationException {
+    if (!isCacheInitialized()) { return null; }
+
+    final Lock lock = getLockForKey(key);
+    lock.lock();
+    try {
+      final VersionedObject value = (VersionedObject) getValueForKeyFromServer(map, key, true, true);
+      if (value != null) {
+        updateLocalCacheIfNecessary(key, value.getObject());
       }
       return value;
     } finally {
