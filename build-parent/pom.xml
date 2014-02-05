@@ -42,6 +42,7 @@
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
     <tcconfig.version>4.2.2</tcconfig.version>
+    <schema.version>9</schema.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
