@@ -46,7 +46,6 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -221,6 +220,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
     // make sure flush falls through if the acknowledgment is received before the flush is called.
     this.manager.commit(tx2);
+    this.manager.waitForPendings();
     this.manager.receivedAcknowledgement(SessionID.NULL_ID, tx2.getTransactionID(), GroupID.NULL_ID);
     new Thread(flusher).start();
     assertEquals(lockID1, flushCalls.take());

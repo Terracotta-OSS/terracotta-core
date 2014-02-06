@@ -715,6 +715,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
     return callbacks;
   }
+  // for tests
+  void waitForPendings() {
+    batchManager.waitForEmpty();
+  }
 
   /**
    * waits until the Transaction manager is in running state.
