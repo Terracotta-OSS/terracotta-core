@@ -27,10 +27,11 @@ public interface RemoteAgentBridgeService {
   /**
    * Get the connected remote agent node names and details. This goes over the network to fetch details.
    *
+   * @param remoteAgentName the remote agent node name.
    * @return a map using the remote agent node names as keys and a map of attributes as values.
    * @throws ServiceExecutionException
    */
-  Map<String, Map<String, String>> getRemoteAgentNodeDetails() throws ServiceExecutionException;
+  Map<String, String> getRemoteAgentNodeDetails(String remoteAgentName) throws ServiceExecutionException;
 
   /**
    * Invoke an method on the remote agent.

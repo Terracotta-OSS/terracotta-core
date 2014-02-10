@@ -3,14 +3,6 @@
  */
 package com.terracotta.management.service.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
-import org.terracotta.management.l1bridge.RemoteCallDescriptor;
-import org.terracotta.management.resource.VersionedEntity;
-import org.terracotta.management.resource.exceptions.ExceptionUtils;
-
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.TopologyReloadStatus;
@@ -30,71 +22,39 @@ import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Conversion;
 import com.terracotta.management.keychain.URIKeyName;
-import com.terracotta.management.resource.BackupEntity;
-import com.terracotta.management.resource.ClientEntity;
-import com.terracotta.management.resource.ConfigEntity;
-import com.terracotta.management.resource.LogEntity;
-import com.terracotta.management.resource.MBeanEntity;
-import com.terracotta.management.resource.OperatorEventEntity;
-import com.terracotta.management.resource.ServerEntity;
-import com.terracotta.management.resource.ServerGroupEntity;
-import com.terracotta.management.resource.StatisticsEntity;
-import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.*;
 import com.terracotta.management.resource.ThreadDumpEntity.NodeType;
-import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.utils.TSAConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
+import org.terracotta.management.l1bridge.RemoteCallDescriptor;
+import org.terracotta.management.resource.VersionedEntity;
+import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
+import javax.management.*;
+import javax.management.remote.JMXConnector;
+import javax.net.ssl.HttpsURLConnection;
+import javax.security.auth.Subject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
-
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.JMX;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.Notification;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import javax.management.remote.JMXConnector;
-import javax.net.ssl.HttpsURLConnection;
-import javax.security.auth.Subject;
 
 /**
  * @author Ludovic Orban
@@ -817,8 +777,8 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  @Override
-  public Map<String, Map<String, String>> getRemoteAgentNodeDetails() throws ServiceExecutionException {
+//  @Override
+  public Map<String, String> getRemoteAgentNodeDetails(String nodeName) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = getJMXConnectorWithL1MBeans();
@@ -829,33 +789,18 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
 
-      Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
-      for (final ObjectName objectName : objectNames) {
-        try {
-          Map<String, String> attributes = callWithTimeout(new Callable<Map<String, String>>() {
-            @Override
-            public Map<String, String> call() throws Exception {
-              String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
-              String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
-
-              Map<String, String> props = new HashMap<String, String>();
-              props.put("Version", version);
-              props.put("Agency", agency);
-              return props;
-            }
-          }, objectName.toString());
-
-          if (attributes != null) {
-            nodes.put(objectName.getKeyProperty("node"), attributes);
-          }
-        } catch (ExecutionException ee) {
-          LOG.warn("error collecting L1 agent node details of " + objectName, ee);
-        }
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RemoteAgentEndpoint,node=" + nodeName + ",*"), null);
+      if (objectNames.isEmpty()) {
+        return Collections.emptyMap();
       }
-      return nodes;
-    } catch (ServiceExecutionException see) {
-      throw see;
+      ObjectName objectName = objectNames.iterator().next();
+
+      Map<String, String> attributes = new HashMap<String, String>();
+      String version = (String)mBeanServerConnection.getAttribute(objectName, "Version");
+      String agency = (String)mBeanServerConnection.getAttribute(objectName, "Agency");
+      attributes.put("Version", version);
+      attributes.put("Agency", agency);
+      return attributes;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     } finally {
@@ -901,18 +846,10 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
         throw new ServiceExecutionException("Cannot find node : " + nodeName);
       }
 
-      final ObjectName finalObjectName = objectName;
-      return callWithTimeout(new Callable<byte[]>() {
-        @Override
-        public byte[] call() throws Exception {
-          RemoteAgentEndpoint proxy = JMX.newMBeanProxy(mBeanServerConnection, finalObjectName, RemoteAgentEndpoint.class);
-          return proxy.invoke(remoteCallDescriptor);
-        }
-      }, finalObjectName.toString());
+      RemoteAgentEndpoint proxy = JMX.newMBeanProxy(mBeanServerConnection, objectName, RemoteAgentEndpoint.class);
+      return proxy.invoke(remoteCallDescriptor);
     } catch (ServiceExecutionException see) {
       throw see;
-    } catch (ExecutionException ee) {
-      throw new ServiceExecutionException("Error making remote L1 call", filterException(ee));
     } catch (Exception e) {
       throw new ServiceExecutionException("Error making remote L1 call", e);
     } finally {
@@ -920,12 +857,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
   }
 
-  private static Throwable filterException(Throwable throwable) {
-    if (throwable instanceof ExecutionException || throwable instanceof UndeclaredThrowableException) {
-      return filterException(throwable.getCause());
-    }
-    return throwable;
-  }
 
   @Override
   public long getCallTimeout() {
@@ -1485,7 +1416,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
     }
     try {
       DSOMBean dsoMBean = JMX.newMBeanProxy(jmxConnector.getMBeanServerConnection(),
-          new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
+              new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), DSOMBean.class);
 
       return dsoMBean.getUnreadOperatorEventCount();
     } catch (Exception e) {
@@ -1925,19 +1856,6 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       } catch (IOException ioe) {
         LOG.warn("error closing JMX connection", ioe);
       }
-    }
-  }
-
-  private <T> T callWithTimeout(Callable<T> callable, String objectName) throws ExecutionException, ServiceExecutionException {
-    Future<T> future = executorService.submit(callable);
-    try {
-      return future.get(getCallTimeout(), TimeUnit.MILLISECONDS);
-    } catch (InterruptedException ie) {
-      future.cancel(true);
-      throw new ServiceExecutionException("L1 call to " + objectName + " interrupted");
-    } catch (TimeoutException te) {
-      future.cancel(true);
-      throw new ServiceExecutionException("L1 call to " + objectName + " timed out");
     }
   }
 

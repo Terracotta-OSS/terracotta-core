@@ -1,34 +1,28 @@
 package com.terracotta.management.l1bridge;
 
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
-import org.terracotta.management.l1bridge.RemoteCallDescriptor;
-import org.terracotta.management.resource.AgentEntity;
-
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.user.UserRole;
 import com.terracotta.management.user.impl.DfltUserInfo;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.terracotta.management.l1bridge.RemoteAgentEndpoint;
+import org.terracotta.management.l1bridge.RemoteCallDescriptor;
+import org.terracotta.management.resource.AgentEntity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -80,19 +74,24 @@ public class RemoteCallerTest {
   @Test
   public void when_getRemoteAgentNodeDetails_then_call_is_delegated_to_RemoteAgentBridgeService() throws Exception {
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
-    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, null, null, null, null);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, null, Executors.newCachedThreadPool()
+    , null, null);
 
-    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
-    agentNodeDetails.put("localhost.home_59822", new HashMap<String, String>() {{
-      put("Version", "123");
-      put("Agency", "test");
-    }});
+    Map<String, String> agentNodeDetails = new HashMap<String, String>();
+    agentNodeDetails.put("Version", "123");
+    agentNodeDetails.put("Agency", "test");
 
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
+    Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("localhost.home_59822");}};
+            when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
+
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("localhost.home_59822")).thenReturn(agentNodeDetails);
+    when(remoteAgentBridgeService.getCallTimeout()).thenReturn(1000L);
 
     Map<String, Map<String, String>> remoteAgentNodeDetails = remoteCaller.getRemoteAgentNodeDetails();
-
-    assertThat(remoteAgentNodeDetails, equalTo(agentNodeDetails));
+    Map<String, Map<String, String>> operand = new HashMap<String, Map<String, String>>();
+    operand.put("localhost.home_59822", agentNodeDetails);
+    assertThat(remoteAgentNodeDetails, equalTo(operand));
+    assertThat(remoteAgentNodeDetails, hasEntry(equalTo("localhost.home_59822"), equalTo(agentNodeDetails)));
   }
 
   @Test
@@ -124,20 +123,18 @@ public class RemoteCallerTest {
     UserService userService = mock(UserService.class);
     RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
 
-    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
-    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
@@ -148,6 +145,8 @@ public class RemoteCallerTest {
       add("test-nodename-3");
     }};
     when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+    when(remoteAgentBridgeService.getCallTimeout()).thenReturn(1000L);
+
 
     Object response = remoteCaller.fanOutCollectionCall(null, nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
@@ -170,24 +169,27 @@ public class RemoteCallerTest {
     UserService userService = mock(UserService.class);
     RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
 
-    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
-    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+    Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");}};
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
+
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
     when(userService.putUserInfo(userInfo)).thenReturn("test-token");
+    when(remoteAgentBridgeService.getCallTimeout()).thenReturn(1000L);
+
     Set<String> nodeNames = new HashSet<String>() {{
       add("test-nodename-1");
       add("test-nodename-2");
@@ -216,24 +218,26 @@ public class RemoteCallerTest {
     UserService userService = mock(UserService.class);
     RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
 
-    Map<String, Map<String, String>> agentNodeDetails = new HashMap<String, Map<String, String>>();
-    agentNodeDetails.put("test-nodename-1", new HashMap<String, String>() {{
+    Set<String> remoteAgentNodeNames = new HashSet<String>(){{add("test-nodename-1");add("test-nodename-2");add("test-nodename-3");add("test-nodename-4");}};
+    when(remoteAgentBridgeService.getRemoteAgentNodeNames()).thenReturn(remoteAgentNodeNames);
+
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-1")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-2", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-2")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-3", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-3")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
       put("Agency", "test");
     }});
-    agentNodeDetails.put("test-nodename-4", new HashMap<String, String>() {{
+    when(remoteAgentBridgeService.getRemoteAgentNodeDetails("test-nodename-4")).thenReturn(new HashMap<String, String>() {{
       put("Version", "123");
-      put("Agency", "notTest");
+      put("Agency", "test");
     }});
-    when(remoteAgentBridgeService.getRemoteAgentNodeDetails()).thenReturn(agentNodeDetails);
+
     when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
     DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
     when(contextService.getUserInfo()).thenReturn(userInfo);
@@ -245,6 +249,8 @@ public class RemoteCallerTest {
       add("test-nodename-4");
     }};
     when(remoteAgentBridgeService.invokeRemoteMethod(anyString(), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+    when(remoteAgentBridgeService.getCallTimeout()).thenReturn(1000L);
+
 
     Object response = remoteCaller.fanOutCollectionCall("test", nodeNames, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     Collection<AgentEntity> responseCollection = (Collection<AgentEntity>)response;
@@ -255,7 +261,7 @@ public class RemoteCallerTest {
       remoteAgentIds.add(agentId);
     }
 
-    assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3"));
+    assertThat(remoteAgentIds, containsInAnyOrder("test-nodename-1", "test-nodename-2", "test-nodename-3", "test-nodename-4"));
   }
 
 }
