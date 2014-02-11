@@ -20,8 +20,8 @@
   </filter>
 
   <filter>
-    <filter-name>remoteAgentBridgeTimeoutExtractorFilter</filter-name>
-    <filter-class>com.terracotta.management.web.shiro.RemoteAgentBridgeTimeoutExtractorFilter</filter-class>
+    <filter-name>timeoutExtractorFilter</filter-name>
+    <filter-class>com.terracotta.management.web.shiro.TimeoutExtractorFilter</filter-class>
   </filter>
 
   <filter-mapping>
@@ -43,7 +43,7 @@
   </filter-mapping>
 
   <filter-mapping>
-    <filter-name>remoteAgentBridgeTimeoutExtractorFilter</filter-name>
+    <filter-name>timeoutExtractorFilter</filter-name>
     <url-pattern>/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
     <dispatcher>FORWARD</dispatcher>

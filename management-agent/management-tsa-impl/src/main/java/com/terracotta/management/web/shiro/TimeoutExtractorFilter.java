@@ -6,7 +6,7 @@ package com.terracotta.management.web.shiro;
 
 import org.terracotta.management.ServiceLocator;
 
-import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.TimeoutService;
 
 import java.io.IOException;
 
@@ -19,13 +19,13 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * A servlet filter that extracts the timeout from the request and sets it on the RemoteAgentBridgeService.
+ * A servlet filter that extracts the timeout from the request and sets it on the TimeoutService.
 
  * @author Ludovic Orban
  */
-public class RemoteAgentBridgeTimeoutExtractorFilter implements Filter {
+public class TimeoutExtractorFilter implements Filter {
 
-  private final RemoteAgentBridgeService bridgeService = ServiceLocator.locate(RemoteAgentBridgeService.class);
+  private final TimeoutService timeoutService = ServiceLocator.locate(TimeoutService.class);
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -43,7 +43,7 @@ public class RemoteAgentBridgeTimeoutExtractorFilter implements Filter {
     if (readTimeoutHeader != null) {
       try {
         long readTimeout = Long.parseLong(readTimeoutHeader);
-        bridgeService.setCallTimeout(readTimeout);
+        timeoutService.setCallTimeout(readTimeout);
       } catch (NumberFormatException nfe) {
         //
       }
@@ -52,7 +52,7 @@ public class RemoteAgentBridgeTimeoutExtractorFilter implements Filter {
     try {
       chain.doFilter(request, response);
     } finally {
-      bridgeService.clearCallTimeout();
+      timeoutService.clearCallTimeout();
     }
   }
 

@@ -12,6 +12,7 @@ import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.TimeoutService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,8 +31,8 @@ public class RemoteAgentService implements AgentService {
 
   public RemoteAgentService(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
                             ExecutorService executorService, RequestTicketMonitor ticketMonitor,
-                            UserService userService) {
-    this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService);
+                            UserService userService, TimeoutService timeoutService) {
+    this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, ticketMonitor, userService, timeoutService);
   }
 
   @Override
