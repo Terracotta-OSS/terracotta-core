@@ -788,16 +788,16 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       Set<String> nodeNames = new HashSet<String>();
       Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("local server contains {} Ehcache MBeans", objectNames.size());
-        Set<ObjectName> ehcacheObjectNames = mBeanServerConnection.queryNames(new ObjectName("*:*"), null);
-        LOG.debug("server found {} ehcache MBeans", ehcacheObjectNames.size());
-        for (ObjectName ehcacheObjectName : ehcacheObjectNames) {
-          LOG.debug("  {}", ehcacheObjectName);
+        LOG.debug("local server contains {} RemoteAgentEndpoint MBeans", objectNames.size());
+        Set<ObjectName> remoteAgentEndpointObjectNames = mBeanServerConnection.queryNames(new ObjectName("*:*"), null);
+        LOG.debug("server found {} RemoteAgentEndpoint MBeans", remoteAgentEndpointObjectNames.size());
+        for (ObjectName remoteAgentEndpointObjectName : remoteAgentEndpointObjectNames) {
+          LOG.debug("  {}", remoteAgentEndpointObjectName);
         }
       }
       for (ObjectName objectName : objectNames) {
         String node = objectName.getKeyProperty("node");
-        LOG.debug("Ehcache node name: {}", node);
+        LOG.debug("RemoteAgentEndpoint node name: {}", node);
         nodeNames.add(node);
       }
       return nodeNames;
@@ -820,7 +820,7 @@ public class TsaManagementClientServiceImpl implements TsaManagementClientServic
       final MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
 
-      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RemoteAgentEndpoint,node=" + nodeName + ",*"), null);
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("*:type=" + RemoteAgentEndpoint.IDENTIFIER + ",*"), null);
       if (objectNames.isEmpty()) {
         return Collections.emptyMap();
       }
