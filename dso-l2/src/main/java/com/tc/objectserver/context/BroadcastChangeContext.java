@@ -3,7 +3,9 @@
  */
 package com.tc.objectserver.context;
 
+import com.google.common.collect.Multimap;
 import com.tc.async.api.EventContext;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -15,6 +17,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.server.ServerEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -29,14 +32,16 @@ public class BroadcastChangeContext implements EventContext {
   private final GlobalTransactionID lowGlobalTransactionIDWatermark;
   private final NotifiedWaiters     notifiedWaiters;
   private final ApplyTransactionInfo      applyInfo;
+  private final Multimap<ClientID, ServerEvent> events;
 
   public BroadcastChangeContext(ServerTransaction tx,
                                 GlobalTransactionID lowGlobalTransactionIDWatermark, NotifiedWaiters notifiedWaiters,
-                                ApplyTransactionInfo applyInfo) {
+                                ApplyTransactionInfo applyInfo, Multimap<ClientID, ServerEvent> events) {
     this.tx = tx;
     this.lowGlobalTransactionIDWatermark = lowGlobalTransactionIDWatermark;
     this.notifiedWaiters = notifiedWaiters;
     this.applyInfo = applyInfo;
+    this.events = events;
   }
 
   public ApplyTransactionInfo getApplyInfo() {

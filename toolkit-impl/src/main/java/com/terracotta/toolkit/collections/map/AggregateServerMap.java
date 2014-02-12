@@ -249,7 +249,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
     // handles re-join scenario by re-registering server event listener if needed
     if (!listeners.isEmpty()) {
-      registerServerEventListener();
+      registerServerEventListener(EnumSet.of(EVICT, EXPIRE));
+    }
+
+    if (!versionUpdateListeners.isEmpty()) {
+      registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
     }
 
     if (attributeExtractor != null) {
@@ -456,7 +460,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     synchronized (listeners) {
       if (!listeners.contains(listener)) {
         if (listeners.isEmpty()) {
-          registerServerEventListener();
+          registerServerEventListener(EnumSet.of(EVICT, EXPIRE));
         }
         listeners.add(listener);
       }
@@ -468,28 +472,30 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     synchronized (listeners) {
       if (listeners.contains(listener)) {
         if (listeners.size() == 1) {
-          unregisterServerEventListener();
+          unregisterServerEventListener(EnumSet.of(EVICT, EXPIRE));
         }
         listeners.remove(listener);
       }
     }
   }
 
-  private void registerServerEventListener() {
-    final EnumSet<ServerEventType> types = EnumSet.of(EVICT, EXPIRE);
-    platformService.registerServerEventListener(this, types);
+  private void registerServerEventListener(Set<ServerEventType> eventTypes) {
+    for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+      serverMap.registerListener(eventTypes);
+    }
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Server event listener has been registered for cache: "
-                   + getName() + ". Notification types: " + types);
+                   + getName() + ". Notification types: " + eventTypes);
     }
   }
 
-  private void unregisterServerEventListener() {
-    final EnumSet<ServerEventType> types = EnumSet.of(EVICT, EXPIRE);
-    platformService.unregisterServerEventListener(this, types);
+  private void unregisterServerEventListener(Set<ServerEventType> eventTypes) {
+    for (InternalToolkitMap<K, V> serverMap : serverMaps) {
+      serverMap.unregisterListener(eventTypes);
+    }
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Server event listener has been unregistered for cache: "
-                   + getName() + ". Notification types: " + types);
+                   + getName() + ". Notification types: " + eventTypes);
     }
   }
 
@@ -609,20 +615,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     if (versionUpdateListeners.add(listener)) {
-      platformService.registerServerEventListener(this, PUT_LOCAL, REMOVE_LOCAL);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Version update event listener has been registered for cache: " + getName());
-      }
+      registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
     }
   }
 
   @Override
   public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
     if (versionUpdateListeners.remove(listener)) {
-      platformService.unregisterServerEventListener(this, PUT_LOCAL, REMOVE_LOCAL);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Version update event listener has been unregistered for cache: " + getName());
-      }
+      unregisterServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
     }
   }
 
@@ -1120,6 +1120,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void drain(final Map<K, BufferedOperation<V>> buffer) {
     Multimap<Integer, Entry> batches = createBatchsForServerMap(buffer);
     for (Entry<Integer, Collection<Entry>> batch : batches.asMap().entrySet()) {

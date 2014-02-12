@@ -5,6 +5,7 @@
 package com.tc.objectserver.impl;
 
 import org.apache.commons.io.FileUtils;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -168,7 +169,6 @@ import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.event.InClusterServerEventNotifier;
-import com.tc.objectserver.event.ServerEventBatcher;
 import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
@@ -183,7 +183,6 @@ import com.tc.objectserver.handler.InvalidateObjectsHandler;
 import com.tc.objectserver.handler.LowWaterMarkCallbackHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.RegisterServerEventListenerHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RequestObjectIDBatchHandler;
 import com.tc.objectserver.handler.RequestRootHandler;
@@ -280,6 +279,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -288,9 +288,6 @@ import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
-
-import java.util.Collection;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -771,6 +768,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // cache server event related objects
     final EventBus serverEventBus = new EventBus("server-event-bus");
     final ServerEventPublisher serverEventPublisher = new ServerEventPublisher(serverEventBus);
+    final InClusterServerEventNotifier inClusterServerEventNotifier = new InClusterServerEventNotifier(channelManager);
+    serverEventBus.register(inClusterServerEventNotifier);
 
     final Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                      new ProcessTransactionHandler(transactionBatchManager), 1,
@@ -856,7 +855,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable || hybrid);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor, persistor
-                                 .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher), applyStageThreads, 1, -1);
+                                 .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher, 
+                                 inClusterServerEventNotifier), applyStageThreads, 1, -1);
 
     txnStageCoordinator.lookUpSinks();
     
@@ -895,16 +895,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
         new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
-    final ServerEventBatcher batcher = new ServerEventBatcher(channelManager, taskRunner);
-    final InClusterServerEventNotifier inClusterServerEventNotifier = new InClusterServerEventNotifier(channelManager, batcher);
-    serverEventBus.register(inClusterServerEventNotifier);
-
-    final Stage registerServerEventListenerStage = stageManager.createStage(ServerConfigurationContext.REGISTER_SERVER_EVENT_LISTENER_STAGE,
-        new RegisterServerEventListenerHandler(inClusterServerEventNotifier), 1, maxStageSize);
-
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
                       transactionAck, clientHandshake, txnLwmStage, jmxRemoteTunnelStage, clusterMetaDataStage,
-                      serverMapRequestStage, searchQueryRequestStage, registerServerEventListenerStage);
+                      serverMapRequestStage, searchQueryRequestStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
@@ -1101,8 +1094,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    final Stage requestLock, final Stage objectRequestStage, final Stage oidRequest,
                                    final Stage transactionAck, final Stage clientHandshake, final Stage txnLwmStage,
                                    final Stage jmxRemoteTunnelStage, final Stage clusterMetaDataStage,
-                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage,
-                                   final Stage registerServerEventListenerStage) {
+                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -1137,11 +1129,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageRouter.routeMessageType(TCMessageType.SEARCH_RESULTS_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.SEARCH_RESULTS_CLOSE_MESSAGE, searchQueryRequestStage.getSink(),
-                                   hydrateSink);
-
-    messageRouter.routeMessageType(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, registerServerEventListenerStage.getSink(),
-                                   hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, registerServerEventListenerStage.getSink(),
                                    hydrateSink);
   }
 

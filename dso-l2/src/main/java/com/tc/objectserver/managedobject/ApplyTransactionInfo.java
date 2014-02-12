@@ -6,11 +6,11 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.event.DefaultMutationEventPublisher;
 import com.tc.objectserver.event.MutationEventPublisher;
-import com.tc.objectserver.event.NullMutationEventPublisher;
 import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -45,10 +45,11 @@ public class ApplyTransactionInfo {
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false, false, null);
+    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false, null);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
+                              final GlobalTransactionID gtxId,
                               final boolean isSearchEnabled, final boolean isEviction, final ServerEventPublisher serverEventPublisher) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
@@ -56,7 +57,7 @@ public class ApplyTransactionInfo {
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.mutationEventPublisher = isActiveTxn ? new DefaultMutationEventPublisher(serverEventPublisher) : new NullMutationEventPublisher();
+    this.mutationEventPublisher = new DefaultMutationEventPublisher(gtxId, serverEventPublisher);
     this.resultRecorder = new DefaultResultRecorderImpl();
   }
 

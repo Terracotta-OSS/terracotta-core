@@ -3,8 +3,11 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -27,9 +30,11 @@ import com.tc.util.Events;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -75,6 +80,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private boolean               localCacheEnabled;
   private boolean               compressionEnabled;
   private boolean               copyOnReadEnabled;
+  private final SetMultimap<ServerEventType, ClientID> eventRegistry = HashMultimap.create(); //TODO: think about concurrentmap
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory)
       throws IOException {
@@ -116,9 +122,22 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         writer.addLogicalAction(SerializationUtil.PUT, new Object[] { o, value.getObjectID(), value.getCreationTime(),
             value.getLastAccessedTime(), value.getTimeToIdle(), value.getTimeToLive() });
       }
+
+      dehydrateServerEventRegistrations(writer);// TODO: Should we do this for both DNAType???
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
       dehydrateFields(writer);
+    }
+  }
+
+  private void dehydrateServerEventRegistrations(DNAWriter writer) {
+    for(ServerEventType eventType : eventRegistry.keySet()) {
+      List<Object> params = new ArrayList<Object>();
+      params.add(eventType.ordinal());
+      for(ClientID clientID : eventRegistry.get(eventType)) {
+        params.add(clientID.toLong());
+      }
+      writer.addLogicalAction(SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE, params.toArray());
     }
   }
 
@@ -264,6 +283,15 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.CLEAR_VERSIONED:
         applyClearVersioned(applyInfo);
         return LogicalChangeResult.SUCCESS;
+      case SerializationUtil.REGISTER_SERVER_EVENT_LISTENER:
+        applyRegisterServerEventListener(applyInfo, params);
+        return LogicalChangeResult.SUCCESS;
+      case SerializationUtil.UNREGISTER_SERVER_EVENT_LISTENER:
+        applyUnregisterServerEventListener(applyInfo, params);
+        return LogicalChangeResult.SUCCESS;
+      case SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE:
+        applyRelayedRegisterServerEventListener(applyInfo, params);
+        return LogicalChangeResult.SUCCESS;
       default:
         return super.applyLogicalAction(objectID, applyInfo, method, params);
     }
@@ -327,7 +355,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     applyPutInternal(applyInfo, params, value, old);
 
     // collect modifications for futher broadcasting
-    applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.PUT_LOCAL, key, value, cacheName);
+    applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.PUT_LOCAL),
+                                                       ServerEventType.PUT_LOCAL, key, value, cacheName);
     return old;
   }
 
@@ -373,7 +402,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     startCapacityEvictionIfNeccessary(applyInfo);
 
     // collect modifications for futher broadcasting
-    applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.PUT, key, new CDSMValue(oid), cacheName);
+    applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.PUT), ServerEventType.PUT,
+                                                       key, new CDSMValue(oid), cacheName);
   }
 
   private boolean startCapacityEvictionIfNeccessary(final ApplyTransactionInfo applyInfo) {
@@ -440,13 +470,18 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       final ObjectID objectId = (ObjectID) value;
 
       if (applyInfo.isEviction() && samplingType == SamplingType.FOR_EVICTION) {
-        applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.EVICT, key, NULL_CDSM_VALUE, cacheName);
+        applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.EVICT),
+                                                           ServerEventType.EVICT, key, NULL_CDSM_VALUE, cacheName);
       } else if (applyInfo.isEviction() && samplingType == SamplingType.FOR_EXPIRATION) {
-        applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.EXPIRE, key, NULL_CDSM_VALUE, cacheName);
+        applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.EXPIRE),
+                                                           ServerEventType.EXPIRE, key, NULL_CDSM_VALUE, cacheName);
       } else {
-        applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
+        applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE),
+                                                           ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
       }
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE_LOCAL, key,
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE_LOCAL),
+                                                         ServerEventType.REMOVE_LOCAL,
+                                                         key,
           new CDSMValue(ObjectID.NULL_ID, 0, 0, 0, 0, valueInMap.getVersion() + 1), cacheName);
       return LogicalChangeResult.SUCCESS;
     } else {
@@ -461,7 +496,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (valueInMap != null && value.equals(valueInMap.getObjectID())) {
       references.remove(key);
       removedReferences(applyInfo, value);
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.EXPIRE, key, NULL_CDSM_VALUE, cacheName);
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.EXPIRE),
+                                                         ServerEventType.EXPIRE, key, NULL_CDSM_VALUE, cacheName);
       return LogicalChangeResult.SUCCESS;
     } else {
       return LogicalChangeResult.FAILURE;
@@ -476,8 +512,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       final CDSMValue oldValue = (CDSMValue) old;
       final ObjectID objectId = oldValue.getObjectID();
 
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE_LOCAL, key,
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE),
+                                                         ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE_LOCAL),
+                                                         ServerEventType.REMOVE_LOCAL,
+                                                         key,
           new CDSMValue(ObjectID.NULL_ID, 0, 0, 0, 0, oldValue.getVersion() + 1), cacheName);
     }
     return old;
@@ -490,7 +529,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final Object old = super.applyRemove(applyInfo, params);
     if (old instanceof CDSMValue) {
       final ObjectID objectId = ((CDSMValue) old).getObjectID();
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE),
+                                                         ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
     }
     return old;
   }
@@ -512,8 +552,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       final CDSMValue value = getValueForKey(key);
       removedReference(applyInfo, value);
 
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE_LOCAL, key, new CDSMValue(ObjectID.NULL_ID,
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE),
+                                                         ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE_LOCAL),
+                                                         ServerEventType.REMOVE_LOCAL,
+                                                         key,
+                                                         new CDSMValue(ObjectID.NULL_ID,
           0, 0, 0, 0, value.getVersion() + 1), cacheName);
     }
     references.clear();
@@ -526,9 +570,34 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     for (Object key : references.keySet()) {
       CDSMValue value = getValueForKey(key);
       removedReference(applyInfo, value);
-      applyInfo.getMutationEventPublisher().publishEvent(ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
+      applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.REMOVE),
+                                                         ServerEventType.REMOVE, key, NULL_CDSM_VALUE, cacheName);
     }
     this.references.clear();
+  }
+
+  private void applyRegisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
+    ClientID clientID = (ClientID)applyInfo.getServerTransactionID().getSourceID();
+    for(Object eventTypeIndex : params) {
+      ServerEventType serverEventType = ServerEventType.values()[(Integer)eventTypeIndex];
+      eventRegistry.put(serverEventType, clientID);
+    }
+  }
+
+  private void applyUnregisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
+    ClientID clientID = (ClientID) applyInfo.getServerTransactionID().getSourceID();
+    for (Object eventTypeIndex : params) {
+      ServerEventType serverEventType = ServerEventType.values()[(Integer) eventTypeIndex];
+      eventRegistry.remove(serverEventType, clientID);
+    }
+  }
+
+  private void applyRelayedRegisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
+    ServerEventType serverEventType = ServerEventType.values()[(Integer) params[0]];
+    for (int i = 1; i < params.length; i++) {
+      ClientID clientID = new ClientID((Long) params[i]);
+      eventRegistry.put(serverEventType, clientID);
+    }
   }
 
   @Override

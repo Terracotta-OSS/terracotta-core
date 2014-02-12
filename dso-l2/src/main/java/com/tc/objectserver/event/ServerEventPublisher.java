@@ -5,10 +5,6 @@
 package com.tc.objectserver.event;
 
 import com.google.common.eventbus.EventBus;
-import com.tc.server.ServerEvent;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * Dispatcher component responsible for subscription, posting and rounting events.
@@ -23,18 +19,8 @@ public final class ServerEventPublisher {
     this.bus = bus;
   }
 
-  public void post(final ServerEvent event) {
+  public void post(final ServerEventWrapper event) {
     bus.post(event);
-  }
-
-  public void post(final ServerEvent... events) {
-    post(Arrays.asList(events));
-  }
-
-  public void post(final Collection<ServerEvent> events) {
-    for (ServerEvent event : events) {
-      post(event);
-    }
   }
 
   public void register(final ServerEventListener listener) {
