@@ -305,7 +305,7 @@ public class ClientConnectionEstablisher {
           break;
         }
       }
-      if (!connected) {
+      if (!connected && !reconnectionRejected) {
         callback.restoreConnectionFailed(cmt);
       }
     } finally {
