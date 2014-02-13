@@ -99,6 +99,11 @@ public class ClientConnectionEstablisher {
     this.asyncReconnecting.set(val);
   }
 
+  // for testing only
+  void setAsyncReconnectThreadForTests(AsyncReconnect asyncReconnThread) {
+    this.asyncReconnect = asyncReconnThread;
+  }
+
   // method used in testing only
   void setAllowReconnects(boolean val) {
     this.allowReconnects.set(val);
@@ -226,7 +231,6 @@ public class ClientConnectionEstablisher {
               continue;
             }
           }
-
           try {
             if (i % 20 == 0) {
               cmt.getLogger().warn("Reconnect attempt " + i + " of " + this.desc + " reconnect tries to " + connInfo
@@ -260,7 +264,7 @@ public class ClientConnectionEstablisher {
   }
 
   void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
-                                 RestoreConnectionCallback callback) throws MaxConnectionsExceededException {
+                         RestoreConnectionCallback callback) throws MaxConnectionsExceededException {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
     boolean connected = cmt.isConnected();
     if (connected) {
@@ -281,7 +285,6 @@ public class ClientConnectionEstablisher {
             return;
           }
         }
-
         TCConnection connection = null;
         try {
           connection = connect(sa, cmt);
@@ -369,6 +372,11 @@ public class ClientConnectionEstablisher {
     }
   }
 
+  // for testing only
+  int connectionRequestQueueSize() {
+    return this.asyncReconnect.connectionRequestQueueSize();
+  }
+
   static class AsyncReconnect implements Runnable {
     private static final TCLogger             logger             = TCLogging.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
@@ -414,6 +422,11 @@ public class ClientConnectionEstablisher {
     public synchronized void putConnectionRequest(ConnectionRequest request) {
       connectionRequests.add(request);
       this.notifyAll();
+    }
+
+    // for testing only
+    synchronized int connectionRequestQueueSize() {
+      return connectionRequests.size();
     }
 
     public synchronized ConnectionRequest waitUntilRequestAvailableOrStopped() {
