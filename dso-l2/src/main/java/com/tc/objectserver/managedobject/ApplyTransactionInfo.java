@@ -11,7 +11,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.event.DefaultMutationEventPublisher;
 import com.tc.objectserver.event.MutationEventPublisher;
-import com.tc.objectserver.event.ServerEventPublisher;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
@@ -42,6 +42,7 @@ public class ApplyTransactionInfo {
   private boolean                      commitNow;
   private final MutationEventPublisher mutationEventPublisher;
   private final ApplyResultRecorder    resultRecorder;
+  private final ServerEventBuffer      serverEventBuffer;
 
   // For tests
   public ApplyTransactionInfo() {
@@ -49,15 +50,16 @@ public class ApplyTransactionInfo {
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
-                              final GlobalTransactionID gtxId,
-                              final boolean isSearchEnabled, final boolean isEviction, final ServerEventPublisher serverEventPublisher) {
+                              final GlobalTransactionID gtxId, final boolean isSearchEnabled, final boolean isEviction,
+                              final ServerEventBuffer serverEventBuffer) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.isEviction = isEviction;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.mutationEventPublisher = new DefaultMutationEventPublisher(gtxId, serverEventPublisher);
+    this.serverEventBuffer = serverEventBuffer;
+    this.mutationEventPublisher = new DefaultMutationEventPublisher(gtxId, serverEventBuffer);
     this.resultRecorder = new DefaultResultRecorderImpl();
   }
 
@@ -243,6 +245,10 @@ public class ApplyTransactionInfo {
 
   public ApplyResultRecorder getApplyResultRecorder() {
     return resultRecorder;
+  }
+
+  public ServerEventBuffer getServerEventBuffer() {
+    return serverEventBuffer;
   }
 
   public boolean isEviction() {

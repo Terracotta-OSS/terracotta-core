@@ -354,7 +354,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
     applyPutInternal(applyInfo, params, value, old);
 
-    // collect modifications for futher broadcasting
+    // collect modifications for further broadcasting
     applyInfo.getMutationEventPublisher().publishEvent(eventRegistry.get(ServerEventType.PUT_LOCAL),
                                                        ServerEventType.PUT_LOCAL, key, value, cacheName);
     return old;

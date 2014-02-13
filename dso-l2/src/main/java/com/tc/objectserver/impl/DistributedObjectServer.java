@@ -168,8 +168,7 @@ import com.tc.objectserver.dgc.impl.GCControllerImpl;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
-import com.tc.objectserver.event.InClusterServerEventNotifier;
-import com.tc.objectserver.event.ServerEventPublisher;
+import com.tc.objectserver.event.InClusterServerEventBuffer;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
@@ -765,12 +764,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
         maxStageSize);
 
-    // cache server event related objects
-    final EventBus serverEventBus = new EventBus("server-event-bus");
-    final ServerEventPublisher serverEventPublisher = new ServerEventPublisher(serverEventBus);
-    final InClusterServerEventNotifier inClusterServerEventNotifier = new InClusterServerEventNotifier(channelManager);
-    serverEventBus.register(inClusterServerEventNotifier);
-
     final Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                      new ProcessTransactionHandler(transactionBatchManager), 1,
                                                      maxStageSize);
@@ -851,12 +844,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     
+    // cache server event related objects
+    final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer(channelManager);
+
     // Lookup stage should never be blocked trying to add to apply stage
     int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable || hybrid);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
                              new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor, persistor
-                                 .getPersistenceTransactionProvider(), taskRunner, serverEventPublisher, 
-                                 inClusterServerEventNotifier), applyStageThreads, 1, -1);
+                                 .getPersistenceTransactionProvider(), taskRunner, serverEventbuffer), applyStageThreads, 1, -1);
 
     txnStageCoordinator.lookUpSinks();
     

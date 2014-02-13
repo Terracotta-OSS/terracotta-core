@@ -10,35 +10,40 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.server.ServerEvent;
 
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Sends L2 cache events to all interested L1 clients within the same cluster.
  *
  * @author Eugene Shelestovich
  */
-public class InClusterServerEventNotifier implements ServerEventListener, DSOChannelManagerEventListener,
-    ServerEventBuffer {
+public class InClusterServerEventBuffer implements ServerEventBuffer, DSOChannelManagerEventListener {
 
-  private final Map<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap = Maps.newHashMap(); //TODO: Do I need a concurrentmap
+  private final ConcurrentMap<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap = Maps.newConcurrentMap();
   private final DSOChannelManager channelManager;
 
-  public InClusterServerEventNotifier(final DSOChannelManager channelManager) {
+  public InClusterServerEventBuffer(final DSOChannelManager channelManager) {
     this.channelManager = channelManager;
     this.channelManager.addEventListener(this);
   }
 
 
   @Override
-  public final void handleServerEvent(final ServerEventWrapper eventWrapper) {
-    if (eventMap.get(eventWrapper.getGtxId()) == null) {
-      eventMap.put(eventWrapper.getGtxId(), ArrayListMultimap.<ClientID, ServerEvent>create());
+  public final void storeEvent(final GlobalTransactionID gtxId, final ServerEvent serverEvent,
+                               final Set<ClientID> clients) {
+    if (eventMap.get(gtxId) == null) {
+      eventMap.put(gtxId, ArrayListMultimap.<ClientID, ServerEvent> create());
     }
 
-    for (ClientID clientID : eventWrapper.getClients()) {
-      eventMap.get(eventWrapper.getGtxId()).put(clientID, eventWrapper.getEvent());
+    for (ClientID clientID : clients) {
+      eventMap.get(gtxId).put(clientID, serverEvent);
     }
+  }
+
+  @Override
+  public Multimap<ClientID, ServerEvent> getServerEvent(GlobalTransactionID gtxId) {
+    return eventMap.get(gtxId);
   }
 
   @Override
@@ -50,7 +55,14 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
   public void channelRemoved(final MessageChannel channel) {
     final ClientID clientId = channelManager.getClientIDFor(channel.getChannelID());
     if (clientId != null) {
-      // TODO: Should remove the entries for this client from the eventMap and relay to passive
+      removeEventsForClient(clientId);
+      // TODO: Should relay to passive??
+    }
+  }
+
+  private void removeEventsForClient(final ClientID clientId) {
+    for (Multimap<ClientID, ServerEvent> values : eventMap.values()) {
+      values.removeAll(clientId);
     }
   }
 
@@ -61,11 +73,6 @@ public class InClusterServerEventNotifier implements ServerEventListener, DSOCha
     }
 
     // TODO: Relay to Passive the acked serverevents
-  }
-
-  @Override
-  public Multimap<ClientID, ServerEvent> getServerEvent(GlobalTransactionID gtxId) {
-    return eventMap.get(gtxId);
   }
 
 }

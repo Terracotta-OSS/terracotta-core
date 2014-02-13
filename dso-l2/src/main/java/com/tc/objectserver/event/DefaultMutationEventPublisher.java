@@ -28,12 +28,12 @@ public class DefaultMutationEventPublisher implements MutationEventPublisher {
   // design, we can't do that because we don't know how many events there will be.
   private final Map<ObjectID, byte[]>                    oidToValueMap = Maps.newHashMap();
 
-  private final ServerEventPublisher serverEventPublisher;
+  private final ServerEventBuffer                      serverEventBuffer;
   private final GlobalTransactionID                      gtxId;
 
-  public DefaultMutationEventPublisher(final GlobalTransactionID gtxId, final ServerEventPublisher serverEventPublisher) {
+  public DefaultMutationEventPublisher(final GlobalTransactionID gtxId, final ServerEventBuffer serverEventBuffer) {
     this.gtxId = gtxId;
-    this.serverEventPublisher = serverEventPublisher;
+    this.serverEventBuffer = serverEventBuffer;
   }
 
   @Override
@@ -46,18 +46,17 @@ public class DefaultMutationEventPublisher implements MutationEventPublisher {
                                                                (int) value.getCreationTime(), (int) value.getTimeToIdle(),
                                                                (int) value.getTimeToLive());
 
-    ServerEventWrapper wrapper = ServerEventWrapper.createServerEventWrapper(gtxId, serverEvent, clientIds);
     if (!value.getObjectID().isNull()) {
       byte[] valueBytes = oidToValueMap.get(value.getObjectID());
       if (valueBytes == null) {
         // We don't have the bytes yet so just make this pending for now.
-        pendingEvents.put(value.getObjectID(), wrapper);
+        pendingEvents.put(value.getObjectID(), new ServerEventWrapper(serverEvent, clientIds));
         return;
       } else {
         serverEvent.setValue(valueBytes);
       }
     }
-    serverEventPublisher.post(wrapper);
+    serverEventBuffer.storeEvent(gtxId, serverEvent, clientIds);
   }
 
   @Override
@@ -65,8 +64,20 @@ public class DefaultMutationEventPublisher implements MutationEventPublisher {
     checkState(oidToValueMap.put(objectId, value) == null);
     Collection<ServerEventWrapper> serverEventWrappers = pendingEvents.removeAll(objectId);
     for (ServerEventWrapper wrapper : serverEventWrappers) {
-      wrapper.getEvent().setValue(value);
-      serverEventPublisher.post(wrapper);
+      wrapper.serverEvent.setValue(value);
+      serverEventBuffer.storeEvent(gtxId, wrapper.serverEvent, wrapper.clientIds);
     }
   }
+
+  private class ServerEventWrapper {
+    private final VersionedServerEvent serverEvent;
+    private final Set<ClientID>        clientIds;
+
+    public ServerEventWrapper(VersionedServerEvent serverEvent, Set<ClientID> clientIds) {
+      this.serverEvent = serverEvent;
+      this.clientIds = clientIds;
+    }
+
+  }
+
 }

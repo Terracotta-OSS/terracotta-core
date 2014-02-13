@@ -25,7 +25,6 @@ import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.event.ServerEventBuffer;
-import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -68,18 +67,15 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private final ThreadLocal<CommitContext> localCommitContext  = new ThreadLocal<CommitContext>();
   private GarbageCollectionManager         garbageCollectionManager;
-  private final ServerEventPublisher       serverEventPublisher;
   private final ServerEventBuffer          eventBuffer;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
                                        final GlobalTransactionManager gtxm, final ServerMapEvictionManager evictions,
                                        final TransactionProvider persistenceTransactionProvider,
-                                       final TaskRunner taskRunner, final ServerEventPublisher serverEventPublisher,
-                                       final ServerEventBuffer eventBuffer) {
+                                       final TaskRunner taskRunner, final ServerEventBuffer eventBuffer) {
     this.instanceMonitor = instanceMonitor;
     this.serverEvictions = evictions;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
-    this.serverEventPublisher = serverEventPublisher;
     this.eventBuffer = eventBuffer;
     final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
     timer.scheduleAtFixedRate(new Runnable() {
@@ -104,8 +100,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
     ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.getGlobalTransactionID(),
-                                                              txn.isSearchEnabled(), txn.isEviction(),
-        serverEventPublisher);
+                                                              txn.isSearchEnabled(), txn.isEviction(), eventBuffer);
 
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
@@ -141,8 +136,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
           serverEvictions.scheduleCapacityEviction(oid);
         }
       }
-      broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo, eventBuffer
-          .getServerEvent(txn.getGlobalTransactionID())));
+      broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, applyInfo));
     }
 
     commit(atc, applyInfo);

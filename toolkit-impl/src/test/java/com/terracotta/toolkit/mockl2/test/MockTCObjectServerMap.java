@@ -14,6 +14,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.server.ServerEventType;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -526,6 +527,18 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   @Override
   public VersionedObject getVersionedValue(TCServerMap serverMap, Object key) {
     throw new ImplementMe();
+  }
+
+  @Override
+  public void doRegisterListener(Set<ServerEventType> eventTypes) {
+    throw new ImplementMe();
+
+  }
+
+  @Override
+  public void doUnregisterListener(Set<ServerEventType> eventTypes) {
+    throw new ImplementMe();
+
   }
 
 }

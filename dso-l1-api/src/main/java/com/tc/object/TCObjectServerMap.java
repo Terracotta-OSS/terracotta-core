@@ -323,7 +323,7 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   void doClearVersioned();
 
-  void doRegisterListener(Set<ServerEventType> eventType);
+  void doRegisterListener(Set<ServerEventType> eventTypes);
 
   void doUnregisterListener(Set<ServerEventType> eventTypes);
 

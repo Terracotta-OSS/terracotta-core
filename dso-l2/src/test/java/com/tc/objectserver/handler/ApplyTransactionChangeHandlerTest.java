@@ -4,11 +4,19 @@
  */
 package com.tc.objectserver.handler;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.mockito.ArgumentCaptor;
 
-import com.google.common.eventbus.EventBus;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -31,9 +39,9 @@ import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.event.ServerEventPublisher;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
@@ -52,35 +60,27 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class ApplyTransactionChangeHandlerTest extends TestCase {
 
   private ApplyTransactionChangeHandler  handler;
   private LockManager                    lockManager;
   private Sink                           broadcastSink;
   private ArgumentCaptor<NotifiedWaiters> notifiedWaitersArgumentCaptor;
+  private ServerEventBuffer               serverEventBuffer;
 
   @Override
   public void setUp() throws Exception {
     this.lockManager = mock(LockManager.class);
+    this.serverEventBuffer = mock(ServerEventBuffer.class);
     this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
     TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
     Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
-    final ServerEventPublisher serverEventPublisher = new ServerEventPublisher(new EventBus("testBus"));
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
         mock(ServerGlobalTransactionManager.class),mock(ServerMapEvictionManager.class),
         persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner(),
-        serverEventPublisher);
+ serverEventBuffer);
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);

@@ -22,15 +22,15 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.mockito.InOrder;
 
-import com.google.common.eventbus.EventBus;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.event.ServerEventPublisher;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
@@ -47,6 +47,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private TestTransactionalStageCoordinator      coordinator;
   private TransactionalObjectManagerImpl txObjectManager;
   private TestGlobalTransactionManager gtxMgr;
+  private ServerEventBuffer                 serverEventBuffer;
 
   @Override
   public void setUp() {
@@ -56,6 +57,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxMgr, this.coordinator);
     ServerConfigurationContext scc = mock(ServerConfigurationContext.class);
     when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
+    serverEventBuffer = mock(ServerEventBuffer.class);
   }
 
   public void testSimpleLookup() throws Exception {
@@ -228,7 +230,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
     return spy(new ApplyTransactionInfo(true,
                                         new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)),
-                                        true, false, new ServerEventPublisher(new EventBus())));
+                                        GlobalTransactionID.NULL_ID, true, false, serverEventBuffer));
   }
 
   private <T> Matcher<T> containsObjectWithID(final ObjectID id) {

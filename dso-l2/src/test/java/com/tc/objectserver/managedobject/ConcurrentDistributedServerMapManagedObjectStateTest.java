@@ -4,6 +4,17 @@
  */
 package com.tc.objectserver.managedobject;
 
+import static java.util.Arrays.asList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.corestorage.KeyValueStorage;
 
@@ -25,17 +36,6 @@ import com.tc.util.Events;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTestCase {
   static {
@@ -262,8 +262,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
 
-    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
-    verify(mutationEventPublisher, never()).publishEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class), anyString());
+    verify(mutationEventPublisher, times(3)).publishEvent(any(Set.class), eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
+    verify(mutationEventPublisher, never()).publishEvent(any(Set.class), eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class), anyString());
   }
 
   public void testMustDeleteObjectsOnClearAndSendEvents() throws Exception {
@@ -285,8 +285,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(applyTransactionInfo).invalidate(oid, value2.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value3.getObjectID());
 
-    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
-    verify(mutationEventPublisher, times(3)).publishEvent(eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class),
+    verify(mutationEventPublisher, times(3)).publishEvent(any(Set.class), eq(ServerEventType.REMOVE), any(), any(CDSMValue.class), anyString());
+    verify(mutationEventPublisher, times(3)).publishEvent(any(Set.class), eq(ServerEventType.REMOVE_LOCAL), any(), any(CDSMValue.class),
         anyString());
   }
 
@@ -356,7 +356,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     state.getRandomSamples(1, mock(ClientObjectReferenceSet.class), SamplingType.FOR_EVICTION);
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { key, valueID });
 
-    verify(mutationEventPublisher).publishEvent(ServerEventType.EVICT, key, new CDSMValue(ObjectID.NULL_ID), null);
+    verify(mutationEventPublisher).publishEvent(new HashSet(), ServerEventType.EVICT, key,
+                                                new CDSMValue(ObjectID.NULL_ID), null);
   }
 
   public void testExpirationEvent() throws Exception {
@@ -367,7 +368,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     state.getRandomSamples(1, mock(ClientObjectReferenceSet.class), SamplingType.FOR_EXPIRATION);
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { key, valueID });
 
-    verify(mutationEventPublisher).publishEvent(ServerEventType.EXPIRE, key, new CDSMValue(ObjectID.NULL_ID), null);
+    verify(mutationEventPublisher).publishEvent(new HashSet(), ServerEventType.EXPIRE, key,
+                                                new CDSMValue(ObjectID.NULL_ID), null);
   }
 
   public static final class OperationCountChangeEventListener {
