@@ -23,6 +23,7 @@ import com.tc.async.api.Stage;
 import com.tc.net.ClientID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
@@ -153,7 +154,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
   }
 
-  private static ServerTransaction createServerTransaction() {
+  private static ServerTransaction createServerTransaction() throws Exception {
     final ClientID cid = new ClientID(1);
     LockID[] lockIDs = { new StringLockID("1") };
 
@@ -162,9 +163,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
       notifies.add(new NotifyImpl(new StringLockID("" + i), new ThreadID(i), i % 2 == 0));
     }
 
-    return new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+    ServerTransaction txn = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
         lockIDs, cid, Collections.emptyList(), null,
         Collections.emptyMap(), TxnType.NORMAL, notifies, DmiDescriptor.EMPTY_ARRAY,
         new MetaDataReader[0], 1, new long[0]);
+
+    txn.setGlobalTransactionID(GlobalTransactionID.NULL_ID);
+
+    return txn;
   }
 }
