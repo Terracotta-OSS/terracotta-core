@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends PartialMapManagedObjectState implements
     EvictableMap {
@@ -83,7 +81,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private boolean               compressionEnabled;
   private boolean               copyOnReadEnabled;
   private final SetMultimap<ServerEventType, ClientID> eventRegistry                  = HashMultimap.create();
-  private final ReadWriteLock                          eventRegistryLock              = new ReentrantReadWriteLock();
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory)
       throws IOException {
@@ -134,19 +131,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   private void dehydrateServerEventRegistrations(DNAWriter writer) {
-    takeReadLockOnEventRegistry();
-    try {
-      for (ServerEventType eventType : eventRegistry.keySet()) {
-        List<Object> params = new ArrayList<Object>();
-        params.add(eventType.ordinal());
-        for (ClientID clientID : eventRegistry.get(eventType)) {
-          params.add(clientID.toLong());
+    for (ServerEventType eventType : eventRegistry.keySet()) {
+      List<Object> params = new ArrayList<Object>();
+      params.add(eventType.ordinal());
+      for (ClientID clientID : eventRegistry.get(eventType)) {
+        params.add(clientID.toLong());
 
-          writer.addLogicalAction(SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE, params.toArray());
-        }
+        writer.addLogicalAction(SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE, params.toArray());
       }
-    } finally {
-      releaseReadLockOnEventRegistry();
     }
   }
 
@@ -320,29 +312,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return str;
   }
 
-  private void takeWriteLockOnEventRegistry() {
-    eventRegistryLock.writeLock().lock();
-  }
-
-  private void takeReadLockOnEventRegistry() {
-    eventRegistryLock.readLock().lock();
-  }
-
-  private void releaseWriteLockOnEventRegistry() {
-    eventRegistryLock.writeLock().unlock();
-  }
-
-  private void releaseReadLockOnEventRegistry(){
-    eventRegistryLock.readLock().unlock();
-  }
-
   private Set<ClientID> getRegisteredClients(ServerEventType eventType) {
-    takeReadLockOnEventRegistry();
-    try {
       return eventRegistry.get(eventType);
-    } finally {
-      releaseReadLockOnEventRegistry();
-    }
   }
 
   @Override
@@ -614,54 +585,34 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   }
 
   private void applyRegisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
-    takeWriteLockOnEventRegistry();
-    try {
-      ClientID clientID = (ClientID) applyInfo.getServerTransactionID().getSourceID();
-      for (Object eventTypeIndex : params) {
-        ServerEventType serverEventType = ServerEventType.values()[(Integer) eventTypeIndex];
-        eventRegistry.put(serverEventType, clientID);
-        applyInfo.getClientChannelMonitor().monitorClient(clientID, getId());
-      }
-    } finally {
-      releaseWriteLockOnEventRegistry();
+    ClientID clientID = (ClientID) applyInfo.getServerTransactionID().getSourceID();
+    for (Object eventTypeIndex : params) {
+      ServerEventType serverEventType = ServerEventType.values()[(Integer) eventTypeIndex];
+      eventRegistry.put(serverEventType, clientID);
+      applyInfo.getClientChannelMonitor().monitorClient(clientID, getId());
     }
   }
 
   private void applyUnregisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
-    takeWriteLockOnEventRegistry();
-    try {
-      ClientID clientID = (ClientID) applyInfo.getServerTransactionID().getSourceID();
-      for (Object eventTypeIndex : params) {
-        ServerEventType serverEventType = ServerEventType.values()[(Integer) eventTypeIndex];
-        eventRegistry.remove(serverEventType, clientID);
-      }
-    } finally {
-      releaseWriteLockOnEventRegistry();
+    ClientID clientID = (ClientID) applyInfo.getServerTransactionID().getSourceID();
+    for (Object eventTypeIndex : params) {
+      ServerEventType serverEventType = ServerEventType.values()[(Integer) eventTypeIndex];
+      eventRegistry.remove(serverEventType, clientID);
     }
   }
 
   private void applyRelayedRegisterServerEventListener(ApplyTransactionInfo applyInfo, Object[] params) {
-    takeWriteLockOnEventRegistry();
-    try {
-      ServerEventType serverEventType = ServerEventType.values()[(Integer) params[0]];
-      for (int i = 1; i < params.length; i++) {
-        ClientID clientID = new ClientID((Long) params[i]);
-        eventRegistry.put(serverEventType, clientID);
-      }
-    } finally {
-      releaseWriteLockOnEventRegistry();
+    ServerEventType serverEventType = ServerEventType.values()[(Integer) params[0]];
+    for (int i = 1; i < params.length; i++) {
+      ClientID clientID = new ClientID((Long) params[i]);
+      eventRegistry.put(serverEventType, clientID);
     }
   }
 
   private void applyRemoveEventListeningClient(ApplyTransactionInfo applyInfo, Object[] params) {
     ClientID clientID = new ClientID((Long) params[0]);
-    takeWriteLockOnEventRegistry();
-    try {
-      for (ServerEventType eventType : eventRegistry.keySet()) {
-        eventRegistry.remove(eventType, clientID);
-      }
-    } finally {
-      releaseWriteLockOnEventRegistry();
+    for (ServerEventType eventType : eventRegistry.keySet()) {
+      eventRegistry.remove(eventType, clientID);
     }
     applyInfo.getServerEventBuffer().removeEventsForClient(clientID);
   }
