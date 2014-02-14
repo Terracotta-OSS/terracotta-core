@@ -4,10 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.server.ServerEvent;
 
 import java.util.Set;
@@ -18,15 +15,9 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Eugene Shelestovich
  */
-public class InClusterServerEventBuffer implements ServerEventBuffer, DSOChannelManagerEventListener {
+public class InClusterServerEventBuffer implements ServerEventBuffer {
 
   private final ConcurrentMap<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap = Maps.newConcurrentMap();
-  private final DSOChannelManager channelManager;
-
-  public InClusterServerEventBuffer(final DSOChannelManager channelManager) {
-    this.channelManager = channelManager;
-    this.channelManager.addEventListener(this);
-  }
 
 
   @Override
@@ -46,27 +37,16 @@ public class InClusterServerEventBuffer implements ServerEventBuffer, DSOChannel
     return eventMap.get(gtxId);
   }
 
-  @Override
-  public void channelCreated(final MessageChannel channel) {
-    // ignore
-  }
 
   @Override
-  public void channelRemoved(final MessageChannel channel) {
-    final ClientID clientId = channelManager.getClientIDFor(channel.getChannelID());
-    if (clientId != null) {
-      removeEventsForClient(clientId);
-      // TODO: Should relay to passive??
-    }
-  }
-
-  private void removeEventsForClient(final ClientID clientId) {
+  public void removeEventsForClient(final ClientID clientId) {
     for (Multimap<ClientID, ServerEvent> values : eventMap.values()) {
       values.removeAll(clientId);
     }
   }
 
 
+  // TODO: To be linked with broadcast acks
   public void acknowledgement(final Set<GlobalTransactionID> acknowledgedGtxIds) {
     for (GlobalTransactionID gtxId : acknowledgedGtxIds) {
       eventMap.remove(gtxId);

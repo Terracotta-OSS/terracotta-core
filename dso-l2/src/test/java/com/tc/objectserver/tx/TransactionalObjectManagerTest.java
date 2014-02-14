@@ -30,6 +30,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.TestObjectManager;
@@ -48,6 +49,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private TransactionalObjectManagerImpl txObjectManager;
   private TestGlobalTransactionManager gtxMgr;
   private ServerEventBuffer                 serverEventBuffer;
+  private ClientChannelMonitor              clientChannelMonitor;
 
   @Override
   public void setUp() {
@@ -58,6 +60,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     ServerConfigurationContext scc = mock(ServerConfigurationContext.class);
     when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
     serverEventBuffer = mock(ServerEventBuffer.class);
+    clientChannelMonitor = mock(ClientChannelMonitor.class);
   }
 
   public void testSimpleLookup() throws Exception {
@@ -230,7 +233,8 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private ApplyTransactionInfo applyInfoWithTransactionID(long transactionID) {
     return spy(new ApplyTransactionInfo(true,
                                         new ServerTransactionID(new ClientID(0), new TransactionID(transactionID)),
-                                        GlobalTransactionID.NULL_ID, true, false, serverEventBuffer));
+                                        GlobalTransactionID.NULL_ID, true, false, serverEventBuffer,
+                                        clientChannelMonitor));
   }
 
   private <T> Matcher<T> containsObjectWithID(final ObjectID id) {

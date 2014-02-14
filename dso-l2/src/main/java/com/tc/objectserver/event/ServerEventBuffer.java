@@ -17,4 +17,6 @@ public interface ServerEventBuffer {
 
   Multimap<ClientID, ServerEvent> getServerEventsPerClient(GlobalTransactionID gtxId);
 
+  void removeEventsForClient(ClientID clientId);
+
 }

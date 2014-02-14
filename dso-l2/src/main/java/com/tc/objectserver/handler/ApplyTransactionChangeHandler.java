@@ -24,6 +24,7 @@ import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.FlushApplyCommitContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
@@ -68,15 +69,18 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private final ThreadLocal<CommitContext> localCommitContext  = new ThreadLocal<CommitContext>();
   private GarbageCollectionManager         garbageCollectionManager;
   private final ServerEventBuffer          eventBuffer;
+  private final ClientChannelMonitor       clientChannelMonitor;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor,
                                        final GlobalTransactionManager gtxm, final ServerMapEvictionManager evictions,
                                        final TransactionProvider persistenceTransactionProvider,
-                                       final TaskRunner taskRunner, final ServerEventBuffer eventBuffer) {
+                                       final TaskRunner taskRunner, final ServerEventBuffer eventBuffer,
+                                       final ClientChannelMonitor clientChannelMonitor) {
     this.instanceMonitor = instanceMonitor;
     this.serverEvictions = evictions;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.eventBuffer = eventBuffer;
+    this.clientChannelMonitor = clientChannelMonitor;
     final Timer timer = taskRunner.newTimer("Apply Transaction Change Timer");
     timer.scheduleAtFixedRate(new Runnable() {
       @Override
@@ -100,7 +104,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     ServerTransaction txn = atc.getTxn();
     ServerTransactionID stxnID = txn.getServerTransactionID();
     ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.getGlobalTransactionID(),
-                                                              txn.isSearchEnabled(), txn.isEviction(), eventBuffer);
+                                                              txn.isSearchEnabled(), txn.isEviction(), eventBuffer,
+                                                              clientChannelMonitor);
 
     if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);

@@ -168,6 +168,7 @@ import com.tc.objectserver.dgc.impl.GCControllerImpl;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
+import com.tc.objectserver.event.ClientChannelMonitorImpl;
 import com.tc.objectserver.event.InClusterServerEventBuffer;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
@@ -845,13 +846,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     
     // cache server event related objects
-    final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer(channelManager);
+    final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer();
+    final ClientChannelMonitorImpl clientChannelMonitorImpl = new ClientChannelMonitorImpl(channelManager, serverTransactionFactory);
+    toInit.add(clientChannelMonitorImpl);
 
     // Lookup stage should never be blocked trying to add to apply stage
     int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable || hybrid);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor, persistor
-                                 .getPersistenceTransactionProvider(), taskRunner, serverEventbuffer), applyStageThreads, 1, -1);
+                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, this.serverMapEvictor,
+                             persistor.getPersistenceTransactionProvider(), taskRunner, serverEventbuffer, clientChannelMonitorImpl),
+                             applyStageThreads, 1, -1);
 
     txnStageCoordinator.lookUpSinks();
     

@@ -39,6 +39,7 @@ import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
+import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
@@ -67,11 +68,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   private Sink                           broadcastSink;
   private ArgumentCaptor<NotifiedWaiters> notifiedWaitersArgumentCaptor;
   private ServerEventBuffer               serverEventBuffer;
+  private ClientChannelMonitor            clientChannelMonitor;
 
   @Override
   public void setUp() throws Exception {
     this.lockManager = mock(LockManager.class);
     this.serverEventBuffer = mock(ServerEventBuffer.class);
+    this.clientChannelMonitor = mock(ClientChannelMonitor.class);
     this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
     TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
     Transaction persistenceTransaction = mock(Transaction.class);
@@ -80,7 +83,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(),
         mock(ServerGlobalTransactionManager.class),mock(ServerMapEvictionManager.class),
         persistenceTransactionProvider, Runners.newSingleThreadScheduledTaskRunner(),
- serverEventBuffer);
+        serverEventBuffer, clientChannelMonitor);
 
     this.broadcastSink = mock(Sink.class);
     Stage broadcastStage = mock(Stage.class);

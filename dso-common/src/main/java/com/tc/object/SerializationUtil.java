@@ -57,6 +57,7 @@ public class SerializationUtil {
   public final static int            UNREGISTER_SERVER_EVENT_LISTENER           = 42;
   public final static int            REGISTER_SERVER_EVENT_LISTENER_PASSIVE     = 43;
   public final static int            UNREGISTER_SERVER_EVENT_LISTENER_PASSIVE   = 44;
+  public final static int            REMOVE_EVENT_LISTENING_CLIENT        = 45;
 
   public final static String         PUSH_SIGNATURE                           = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String         POP_SIGNATURE                            = "pop()java/lang/Object;";

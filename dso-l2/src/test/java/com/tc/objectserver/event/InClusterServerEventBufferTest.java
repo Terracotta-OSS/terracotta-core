@@ -1,70 +1,88 @@
 package com.tc.objectserver.event;
 
-import static org.mockito.Mockito.mock;
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.PUT;
+import static com.tc.server.ServerEventType.REMOVE;
 
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.tc.net.ClientID;
-import com.tc.object.net.DSOChannelManager;
+import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
 
 /**
  * @author Eugene Shelestovich
  */
 public class InClusterServerEventBufferTest {
 
+  private InClusterServerEventBuffer buffer;
+  
   private final ClientID clientId1 = new ClientID(1L);
   private final ClientID clientId2 = new ClientID(2L);
   private final ClientID clientId3 = new ClientID(3L);
-
-  private InClusterServerEventBuffer buffer;
-  private ServerEventBatcher batcher;
+  
+  private final GlobalTransactionID gtxId1 = new GlobalTransactionID(1);
+  private final GlobalTransactionID gtxId2 = new GlobalTransactionID(2);
+  private final GlobalTransactionID gtxId3 = new GlobalTransactionID(3);
+  
+  private final ServerEvent event1 = new BasicServerEvent(PUT, 1, "cache1");
+  private final ServerEvent event2 = new BasicServerEvent(EVICT, 2, "cache1");
+  private final ServerEvent event3 = new BasicServerEvent(PUT, 3, "cache2");
+  private final ServerEvent event33   = new BasicServerEvent(REMOVE, 5, "cache3");
 
   @Before
   public void setUp() {
-    final DSOChannelManager channelManager = mock(DSOChannelManager.class);
-    batcher = mock(ServerEventBatcher.class);
-    buffer = new InClusterServerEventBuffer(channelManager);
+    buffer = new InClusterServerEventBuffer();
   }
 
-  // @Test
-  // public void testShouldCorrectlyRouteEventsAfterRegistration() throws Exception {
-  // final ServerEvent event1 = new BasicServerEvent(PUT, 1001, "cache1");
-  // final ServerEvent event2 = new BasicServerEvent(EXPIRE, 1002, "cache3");
-  // final ServerEvent event3 = new BasicServerEvent(EVICT, 1003, "cache1");
-  // final ServerEvent event4 = new BasicServerEvent(PUT, 1004, "cache3");
-  //
-  // buffer.handleServerEvent(event1);
-  // buffer.handleServerEvent(event2);
-  // buffer.handleServerEvent(event3);
-  // buffer.handleServerEvent(event4);
-  //
-  // verify(batcher).add(clientId1, event1);
-  // verify(batcher).add(clientId2, event2);
-  // verify(batcher).add(clientId1, event3);
-  // verify(batcher).add(clientId2, event3);
-  // verify(batcher, never()).add(any(ClientID.class), eq(event4));
-  // verifyNoMoreInteractions(batcher);
-  // }
-  //
-  // @Test
-  // public void testShouldCorrectlyRouteEventsAfterUnregisteration() {
-  // final ServerEvent event1 = new BasicServerEvent(EVICT, 1001, "cache1");
-  // final ServerEvent event2 = new BasicServerEvent(EXPIRE, 1002, "cache1");
-  // final ServerEvent event3 = new BasicServerEvent(PUT, 1003, "cache2");
-  //
-  // buffer.unregister(clientId2, "cache1", EnumSet.of(EVICT, PUT));
-  // buffer.unregister(clientId3, "cache2", EnumSet.of(PUT, EXPIRE));
-  //
-  // buffer.handleServerEvent(event1);
-  // buffer.handleServerEvent(event2);
-  // buffer.handleServerEvent(event3);
-  //
-  // verify(batcher).add(clientId1, event1);
-  // verify(batcher, never()).add(clientId2, event1);
-  // verify(batcher).add(clientId2, event2);
-  // verify(batcher).add(clientId1, event3);
-  // verify(batcher, never()).add(clientId3, event3);
-  // verifyNoMoreInteractions(batcher);
-  // }
+  @Test
+  public void testStoreEvent() throws Exception {
+    buffer.storeEvent(gtxId1, event1, Sets.newHashSet(clientId1));
+    buffer.storeEvent(gtxId2, event2, Sets.newHashSet(clientId2, clientId3));
+    buffer.storeEvent(gtxId3, event3, Sets.newHashSet(clientId1, clientId3));
+    buffer.storeEvent(gtxId3, event33, Sets.newHashSet(clientId3));
+    
+    Multimap<ClientID, ServerEvent> eventsForGtxId1 = buffer.getServerEventsPerClient(gtxId1);
+    Assert.assertTrue(eventsForGtxId1.size() == 1);
+    Assert.assertTrue(eventsForGtxId1.get(clientId1).equals(Lists.newArrayList(event1)));
+    
+    Multimap<ClientID, ServerEvent> eventsForGtxId2 = buffer.getServerEventsPerClient(gtxId2);
+    Assert.assertTrue(eventsForGtxId2.size() == 2);
+    Assert.assertTrue(eventsForGtxId2.get(clientId2).equals(Lists.newArrayList(event2)));
+    Assert.assertTrue(eventsForGtxId2.get(clientId3).equals(Lists.newArrayList(event2)));
+    
+    Multimap<ClientID, ServerEvent> eventsForGtxId3 = buffer.getServerEventsPerClient(gtxId3);
+    Assert.assertTrue(eventsForGtxId3.size() == 3);
+    Assert.assertTrue(eventsForGtxId3.get(clientId1).equals(Lists.newArrayList(event3)));
+    Assert.assertTrue(eventsForGtxId3.get(clientId3).equals(Lists.newArrayList(event3, event33)));
+  }
+
+  @Test
+  public void testRemoveEventsForClient() throws Exception {
+    buffer.storeEvent(gtxId1, event1, Sets.newHashSet(clientId1));
+    buffer.storeEvent(gtxId2, event2, Sets.newHashSet(clientId2, clientId3));
+    buffer.storeEvent(gtxId3, event3, Sets.newHashSet(clientId1, clientId3));
+    buffer.storeEvent(gtxId3, event33, Sets.newHashSet(clientId3));
+
+    buffer.removeEventsForClient(clientId1);
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId1 = buffer.getServerEventsPerClient(gtxId1);
+    Assert.assertTrue(eventsForGtxId1.size() == 0);
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId2 = buffer.getServerEventsPerClient(gtxId2);
+    Assert.assertTrue(eventsForGtxId2.size() == 2);
+    Assert.assertTrue(eventsForGtxId2.get(clientId2).equals(Lists.newArrayList(event2)));
+    Assert.assertTrue(eventsForGtxId2.get(clientId3).equals(Lists.newArrayList(event2)));
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId3 = buffer.getServerEventsPerClient(gtxId3);
+    Assert.assertTrue(eventsForGtxId3.size() == 2);
+    Assert.assertTrue(eventsForGtxId3.get(clientId3).equals(Lists.newArrayList(event3, event33)));
+  }
 
 }
