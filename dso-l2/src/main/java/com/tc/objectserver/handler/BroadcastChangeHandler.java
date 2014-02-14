@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.handler;
 
+import com.google.common.collect.Multimap;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
@@ -32,13 +33,14 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.server.ServerEvent;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,11 +73,11 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   @Override
   public void handleEvent(final EventContext context) {
     final BroadcastChangeContext bcc = (BroadcastChangeContext) context;
-
     final NodeID committerID = bcc.getNodeID();
     final TransactionID txnID = bcc.getTransactionID();
-
     final MessageChannel[] channels = this.channelManager.getActiveChannels();
+    final Multimap<ClientID, ServerEvent> serverEventsPerClient = bcc.getApplyInfo()
+        .getServerEventBuffer().getServerEventsPerClient(bcc.getGlobalTransactionID());
 
     for (final MessageChannel client : channels) {
       // TODO:: make message channel return clientID and short channelManager call.
@@ -83,15 +85,15 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
       final Map newRoots = bcc.getNewRoots();
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
-      List prunedChanges = Collections.EMPTY_LIST;
       final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
       final Invalidations invalidateObjectIDs = new Invalidations();
 
+      final List prunedChanges;
       if (!clientID.equals(committerID)) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(),
-                                                                                    bcc.getApplyInfo(), clientID,
-                                                                                    lookupObjectIDs,
-                                                                                    invalidateObjectIDs);
+            bcc.getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
+      }  else {
+        prunedChanges = Collections.emptyList();
       }
 
       Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = (Map<LogicalChangeID, LogicalChangeResult>) (clientID
@@ -126,12 +128,15 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                                LOOKUP_STATE.SERVER_INITIATED));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
+
+        final Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
+
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
                                    txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(),
                                    bcc.getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi,
-                                   logicalChangeResults);
+                                   logicalChangeResults, serverEvents);
 
         responseMessage.send();
 
@@ -148,8 +153,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   }
 
   private void updateStats(final List prunedChanges) {
-    for (final Iterator i = prunedChanges.iterator(); i.hasNext();) {
-      final DNA dna = (DNA) i.next();
+    for (final Object prunedChange : prunedChanges) {
+      final DNA dna = (DNA) prunedChange;
       String className = dna.getTypeName();
       if (className == null) {
         className = "UNKNOWN"; // Could happen on restart scenario

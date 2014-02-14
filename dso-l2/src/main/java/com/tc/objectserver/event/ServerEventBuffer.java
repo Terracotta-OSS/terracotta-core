@@ -13,7 +13,8 @@ import java.util.Set;
 
 public interface ServerEventBuffer {
 
-  public void storeEvent(GlobalTransactionID gtxId, ServerEvent serverEvent, Set<ClientID> clients);
-  public Multimap<ClientID, ServerEvent> getServerEvent(GlobalTransactionID gtxId);
+  void storeEvent(GlobalTransactionID gtxId, ServerEvent serverEvent, Set<ClientID> clients);
+
+  Multimap<ClientID, ServerEvent> getServerEventsPerClient(GlobalTransactionID gtxId);
 
 }

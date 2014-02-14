@@ -28,12 +28,12 @@ import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.server.ServerEvent;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.object.DistributedMethodCall;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -78,12 +78,6 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       waitForClientInitialized();
     }
 
-    if (false) {
-      System.err.println(this.cidProvider.getClientID() + ": ReceiveTransactionHandler: committer="
-                         + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
-                         + ", notified: " + btm.addNotifiesTo(new LinkedList()));
-    }
-
     Assert.eval(btm.getLockIDs().size() > 0);
     GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
@@ -91,13 +85,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     }
     if (this.gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(),
                                    btm.getSourceNodeID())) {
-      Collection changes = btm.getObjectChanges();
+      final Collection changes = btm.getObjectChanges();
       if (changes.size() > 0 || btm.getNewRoots().size() > 0) {
-
-        if (false) {
-          System.err.println(this.cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID() + " , "
-                             + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
-        }
         try {
           this.txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getNewRoots());
         } catch (TCClassNotFoundException cnfe) {
@@ -108,8 +97,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
       }
 
-      for (Iterator i = dmis.iterator(); i.hasNext();) {
-        DmiDescriptor dd = (DmiDescriptor) i.next();
+      for (final Object dmi : dmis) {
+        DmiDescriptor dd = (DmiDescriptor) dmi;
 
         // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
         // importantly before sending ACK below
@@ -123,11 +112,16 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       if (!logicalChangeResults.isEmpty()) {
         this.txManager.receivedLogicalChangeResult(logicalChangeResults);
       }
+
+      // server events
+      final List<ServerEvent> events = btm.getEvents();
+      //TODO: send events to serverEventDeliveryStage
+
     }
 
     Collection notifies = btm.addNotifiesTo(new LinkedList());
-    for (Iterator i = notifies.iterator(); i.hasNext();) {
-      ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) i.next();
+    for (final Object notify : notifies) {
+      ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) notify;
       this.lockManager.notified(lc.getLockID(), lc.getThreadID());
     }
 

@@ -42,7 +42,7 @@ public class InClusterServerEventBuffer implements ServerEventBuffer, DSOChannel
   }
 
   @Override
-  public Multimap<ClientID, ServerEvent> getServerEvent(GlobalTransactionID gtxId) {
+  public Multimap<ClientID, ServerEvent> getServerEventsPerClient(GlobalTransactionID gtxId) {
     return eventMap.get(gtxId);
   }
 
