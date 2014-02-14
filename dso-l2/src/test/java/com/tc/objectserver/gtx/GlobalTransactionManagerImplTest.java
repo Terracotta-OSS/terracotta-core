@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.gtx;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 import org.junit.Assert;
 
 import com.tc.async.api.EventContext;
@@ -15,6 +18,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.LowWaterMarkCallbackContext;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
@@ -30,9 +34,6 @@ import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 public class GlobalTransactionManagerImplTest extends TestCase {
 
   private TestTransactionStore               transactionStore;
@@ -47,8 +48,9 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     PersistenceTransactionProvider transactionProvider = mock(PersistenceTransactionProvider.class);
     Transaction transaction = mock(Transaction.class);
     doReturn(transaction).when(transactionProvider).newTransaction();
+    ServerEventBuffer serverEventBuffer = mock(ServerEventBuffer.class);
     gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, gsp, sequence,
-                                                  new LWMCallbackMockSink(), transactionProvider);
+                                                  new LWMCallbackMockSink(), transactionProvider, serverEventBuffer);
   }
 
   public void testStartAndCommitApply() throws Exception {

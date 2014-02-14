@@ -19,4 +19,6 @@ public interface ServerEventBuffer {
 
   void removeEventsForClient(ClientID clientId);
 
+  void clearEventBufferBelowLowWaterMark(GlobalTransactionID lowWatermark);
+
 }

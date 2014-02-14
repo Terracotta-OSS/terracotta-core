@@ -727,6 +727,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
 
+    final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
+
+    // cache server event related objects
+    final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer();
+    final ClientChannelMonitorImpl clientChannelMonitorImpl = new ClientChannelMonitorImpl(channelManager,
+                                                                                           serverTransactionFactory);
+    toInit.add(clientChannelMonitorImpl);
+
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
     final Stage lwmCallbackStage = stageManager.createStage(ServerConfigurationContext.LOW_WATERMARK_CALLBACK_STAGE,
@@ -734,7 +742,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator, transactionStore,
                                                                                        gidSequenceProvider, globalTransactionIDSequence,
                                                                                        lwmCallbackStage.getSink(),
-                                                                                       persistor.getPersistenceTransactionProvider());
+                                                                                       persistor.getPersistenceTransactionProvider(), serverEventbuffer);
 
     final TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, gtxm, txnStageCoordinator);
@@ -828,8 +836,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                         this.clientStateManager, channelStats);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
-    final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
-
     resourceManager = new ResourceManagerImpl(channelManager, haConfig.getThisGroupID());
     dumpHandler.registerForDump(new CallbackDumpAdapter(resourceManager));
     channelManager.addEventListener(resourceManager);
@@ -845,11 +851,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     
-    // cache server event related objects
-    final InClusterServerEventBuffer serverEventbuffer = new InClusterServerEventBuffer();
-    final ClientChannelMonitorImpl clientChannelMonitorImpl = new ClientChannelMonitorImpl(channelManager, serverTransactionFactory);
-    toInit.add(clientChannelMonitorImpl);
-
     // Lookup stage should never be blocked trying to add to apply stage
     int applyStageThreads = L2Utils.getOptimalApplyStageWorkerThreads(restartable || hybrid);
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
