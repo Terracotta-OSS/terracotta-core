@@ -20,10 +20,13 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
+import com.terracotta.toolkit.collections.map.ServerMap;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.mockl2.test.MockDsoCluster;
+import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
+import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
 
 import java.util.concurrent.Callable;
 
@@ -44,12 +47,14 @@ public class AggregateServerMapQuickApiTest {
   private Callable                 schemaCreator;
   @Mock
   private PlatformService          platformService;
+  @Mock
+  private ServerMap                serverMap;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    stripe = new ToolkitObjectStripe[0];
     config = new UnclusteredConfiguration();
+    stripe = new ToolkitObjectStripe[] { new ToolkitObjectStripeImpl(config, new TCToolkitObject[] { serverMap })};
     config.internalSetConfigMapping(InternalCacheConfigurationType.CONSISTENCY.getConfigString(),
                                     Consistency.STRONG.name());
     when(platformService.getTCProperties()).thenReturn(NullTCProperties.INSTANCE);
@@ -73,7 +78,8 @@ public class AggregateServerMapQuickApiTest {
 
   @Test
   public void test_quickClearWorks() {
-    populateMap().assertQuickSize().quickClear().assertMapCleared();
+    aggregateServerMap.quickClear();
+    verify(serverMap).clear();
   }
 
   @Test

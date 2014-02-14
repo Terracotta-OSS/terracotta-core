@@ -158,9 +158,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         }
         applyInfo.getApplyResultRecorder().recordResult(logicalAction.getLogicalChangeID(), result);
         // TODO: requires refactoring, we should call super.apply() instead
-        if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
-            || method == SerializationUtil.DESTROY || method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
+        if (method == SerializationUtil.CLEAR) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere
+          applyInfo.echoChangesFor(objectID); // Also echo the clear so that we don't need to clear local cache inline for
+                                              // quick clear (DEV-9793)
+          broadcast = true;
+        } else if (method == SerializationUtil.CLEAR_LOCAL_CACHE || method == SerializationUtil.DESTROY || method == SerializationUtil.SET_LAST_ACCESSED_TIME) {
           broadcast = true;
         }
       }

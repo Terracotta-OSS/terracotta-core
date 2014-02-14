@@ -588,7 +588,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                tcSecurityManager);
 
 
-    this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
+    this.clientStateManager = new ClientStateManagerImpl();
     final ClientObjectReferenceSet clientObjectReferenceSet = new ClientObjectReferenceSet(this.clientStateManager);
 
     final boolean gcEnabled = l2DSOConfig.garbageCollection().getEnabled();

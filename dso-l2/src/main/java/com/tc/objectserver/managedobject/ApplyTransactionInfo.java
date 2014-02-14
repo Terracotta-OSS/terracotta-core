@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.collect.Sets;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
@@ -42,6 +43,7 @@ public class ApplyTransactionInfo {
   private boolean                      commitNow;
   private final MutationEventPublisher mutationEventPublisher;
   private final ApplyResultRecorder    resultRecorder;
+  private Set<ObjectID>                echoChangesFor = TCCollections.EMPTY_OBJECT_ID_SET;
 
   // For tests
   public ApplyTransactionInfo() {
@@ -246,5 +248,16 @@ public class ApplyTransactionInfo {
 
   public boolean isEviction() {
     return isEviction;
+  }
+
+  public void echoChangesFor(ObjectID objectID) {
+    if (echoChangesFor == TCCollections.EMPTY_OBJECT_ID_SET) {
+      echoChangesFor = Sets.newHashSet();
+    }
+    echoChangesFor.add(objectID);
+  }
+
+  public Set<ObjectID> getObjectsToEchoChangesFor() {
+    return echoChangesFor;
   }
 }

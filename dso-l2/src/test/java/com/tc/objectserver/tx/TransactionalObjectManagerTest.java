@@ -23,6 +23,7 @@ import org.hamcrest.Matcher;
 import org.mockito.InOrder;
 
 import com.google.common.eventbus.EventBus;
+import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
@@ -141,7 +142,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     gtxMgr.commit(new ServerTransactionID(new ClientID(0), new TransactionID(1)));
     txObjectManager.addTransactions(asList(createTransaction(1, Collections.EMPTY_SET, asList(1L))));
     txObjectManager.lookupObjectsForTransactions();
-    verify(coordinator).addToApplyStage(argThat(allOf(hasTransactionID(1), not(needsApply()))));
+    verify(coordinator).addToApplyStage((EventContext) argThat(allOf(hasTransactionID(1), not(needsApply()))));
 
     ApplyTransactionInfo applyTransactionInfo = applyInfoWithTransactionID(1);
     txObjectManager.applyTransactionComplete(applyTransactionInfo);
@@ -214,7 +215,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     txObjectManager.lookupObjectsForTransactions();
 
     verify(objectManager, never()).createNewObjects((Set) argThat(containsObjectWithID(new ObjectID(1L))));
-    verify(coordinator).addToApplyStage(argThat(allOf(hasTransactionID(0), hasIgnorableObject(new ObjectID(1L)))));
+    verify(coordinator).addToApplyStage((EventContext) argThat(allOf(hasTransactionID(0), hasIgnorableObject(new ObjectID(1L)))));
   }
 
   private static Collection<ObjectID> asCollectionOfObjectIDs(Long ... longs) {

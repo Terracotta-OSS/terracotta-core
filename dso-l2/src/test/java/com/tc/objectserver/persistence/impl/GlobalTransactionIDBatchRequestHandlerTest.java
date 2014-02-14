@@ -50,7 +50,7 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
   public void testRequestBatch() throws Exception {
     BatchSequenceReceiver receiver = mock(BatchSequenceReceiver.class);
     provider.requestBatch(receiver, 5);
-    verify(requestBatchSink).add(argThat(allOf(hasBatchSize(5), hasReceiver(receiver))));
+    verify(requestBatchSink).add((EventContext) argThat(allOf(hasBatchSize(5), hasReceiver(receiver))));
   }
 
   public void testHandleRequest() throws Exception {

@@ -31,8 +31,7 @@ public class ClientObjectReferenceSetTest extends TCTestCase {
 
     final AtomicLong currentObjectID = new AtomicLong(-1);
     final AtomicBoolean stop = new AtomicBoolean(false);
-    final TCLogger logger = TCLogging.getLogger(ClientObjectReferenceSetTest.class);
-    final ClientStateManagerImpl clientStateManager = new ClientStateManagerImpl(logger);
+    final ClientStateManagerImpl clientStateManager = new ClientStateManagerImpl();
     final NodeID node = new ClientID(1);
     final Random r = new Random();
 

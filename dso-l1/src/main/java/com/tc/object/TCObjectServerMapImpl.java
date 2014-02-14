@@ -179,22 +179,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   @Override
   public void doClear(TCServerMap map) {
-    lockAll();
-    try {
-      logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.CLEAR_SIGNATURE, NO_ARGS);
-    } finally {
-      unlockAll();
-    }
+    logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.CLEAR_SIGNATURE, NO_ARGS);
   }
 
   @Override
   public void doClearVersioned() {
-    lockAll();
-    try {
-      logicalInvoke(SerializationUtil.CLEAR_VERSIONED, SerializationUtil.CLEAR_VERSIONED_SIGNATURE, NO_ARGS);
-    } finally {
-      unlockAll();
-    }
+    logicalInvoke(SerializationUtil.CLEAR_VERSIONED, SerializationUtil.CLEAR_VERSIONED_SIGNATURE, NO_ARGS);
   }
 
   /**

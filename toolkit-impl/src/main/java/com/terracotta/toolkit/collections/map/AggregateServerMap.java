@@ -361,7 +361,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void clear() {
     doClear();
     waitForAllCurrentTransactionsToComplete();
-    clearLocalCache();
   }
 
   private void doClear() {
@@ -1185,7 +1184,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void quickClear() {
     doClear();
-    clearLocalCache();
   }
 
   @Override
