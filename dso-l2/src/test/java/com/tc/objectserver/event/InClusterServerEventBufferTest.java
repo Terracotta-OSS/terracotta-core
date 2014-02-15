@@ -39,14 +39,15 @@ public class InClusterServerEventBufferTest {
   @Before
   public void setUp() {
     buffer = new InClusterServerEventBuffer();
-  }
 
-  @Test
-  public void testStoreEvent() throws Exception {
     buffer.storeEvent(gtxId1, event1, Sets.newHashSet(clientId1));
     buffer.storeEvent(gtxId2, event2, Sets.newHashSet(clientId2, clientId3));
     buffer.storeEvent(gtxId3, event3, Sets.newHashSet(clientId1, clientId3));
     buffer.storeEvent(gtxId3, event33, Sets.newHashSet(clientId3));
+  }
+
+  @Test
+  public void testStoreEvent() throws Exception {
     
     Multimap<ClientID, ServerEvent> eventsForGtxId1 = buffer.getServerEventsPerClient(gtxId1);
     Assert.assertTrue(eventsForGtxId1.size() == 1);
@@ -57,6 +58,39 @@ public class InClusterServerEventBufferTest {
     Assert.assertTrue(eventsForGtxId2.get(clientId2).equals(Lists.newArrayList(event2)));
     Assert.assertTrue(eventsForGtxId2.get(clientId3).equals(Lists.newArrayList(event2)));
     
+    Multimap<ClientID, ServerEvent> eventsForGtxId3 = buffer.getServerEventsPerClient(gtxId3);
+    Assert.assertTrue(eventsForGtxId3.size() == 3);
+    Assert.assertTrue(eventsForGtxId3.get(clientId1).equals(Lists.newArrayList(event3)));
+    Assert.assertTrue(eventsForGtxId3.get(clientId3).equals(Lists.newArrayList(event3, event33)));
+  }
+
+  @Test
+  public void testRemoveEventsForTransaction() throws Exception {
+    buffer.removeEventsForTransaction(gtxId3);
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId1 = buffer.getServerEventsPerClient(gtxId1);
+    Assert.assertTrue(eventsForGtxId1.size() == 1);
+    Assert.assertTrue(eventsForGtxId1.get(clientId1).equals(Lists.newArrayList(event1)));
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId2 = buffer.getServerEventsPerClient(gtxId2);
+    Assert.assertTrue(eventsForGtxId2.size() == 2);
+    Assert.assertTrue(eventsForGtxId2.get(clientId2).equals(Lists.newArrayList(event2)));
+    Assert.assertTrue(eventsForGtxId2.get(clientId3).equals(Lists.newArrayList(event2)));
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId3 = buffer.getServerEventsPerClient(gtxId3);
+    Assert.assertTrue(eventsForGtxId3.size() == 0);
+  }
+
+  @Test
+  public void testClearEventBufferBelowLowWaterMark() throws Exception {
+    buffer.clearEventBufferBelowLowWaterMark(gtxId3);
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId1 = buffer.getServerEventsPerClient(gtxId1);
+    Assert.assertTrue(eventsForGtxId1.size() == 0);
+
+    Multimap<ClientID, ServerEvent> eventsForGtxId2 = buffer.getServerEventsPerClient(gtxId2);
+    Assert.assertTrue(eventsForGtxId2.size() == 0);
+
     Multimap<ClientID, ServerEvent> eventsForGtxId3 = buffer.getServerEventsPerClient(gtxId3);
     Assert.assertTrue(eventsForGtxId3.size() == 3);
     Assert.assertTrue(eventsForGtxId3.get(clientId1).equals(Lists.newArrayList(event3)));
