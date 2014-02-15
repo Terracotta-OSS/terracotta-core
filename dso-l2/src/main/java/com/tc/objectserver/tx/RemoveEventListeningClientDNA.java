@@ -11,13 +11,14 @@ import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.DNAImpl;
 
 /**
  * @author manish
  */
 public class RemoveEventListeningClientDNA implements DNAInternal {
-  protected final ObjectID oid;
-  final ClientID           clientID;
+  private final ObjectID oid;
+  private final ClientID clientID;
 
   public RemoveEventListeningClientDNA(final ObjectID oid, final ClientID clientID) {
     this.oid = oid;
@@ -66,7 +67,7 @@ public class RemoveEventListeningClientDNA implements DNAInternal {
 
   @Override
   public MetaDataReader getMetaDataReader() {
-    return null; // TODO: Is some metadata required???
+    return DNAImpl.NULL_META_DATA_READER;
   }
 
   @Override

@@ -24,6 +24,7 @@ import com.tc.objectserver.tx.RemoveEventListeningClientDNA;
 import com.tc.objectserver.tx.ServerEvictionTransactionImpl;
 import com.tc.objectserver.tx.ServerMapEvictionDNA;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.util.SequenceID;
 
 import java.util.Collections;
@@ -105,7 +106,7 @@ public class ServerTransactionFactory {
   private ServerTransaction createRemoveEventListeningClientTransaction(final ServerTransactionID serverTransactionID,
                                                                        final ObjectID oid, final ClientID clientID,
                                                                        final ObjectStringSerializer objectStringSerializer) {
-    return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(),
+    return new ServerTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(),
                                              SequenceID.NULL_ID, NULL_LOCK_ID, serverTransactionID.getSourceID(),
                                              Collections.singletonList(createRemoveEventListeningClientDNA(oid, clientID)),
                                              objectStringSerializer, Collections.emptyMap(), TxnType.NORMAL,
