@@ -100,6 +100,11 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = (Map<LogicalChangeID, LogicalChangeResult>) (clientID
           .equals(committerID) ? bcc.getApplyInfo().getApplyResultRecorder().getResults() : Collections.emptyMap());
 
+      Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
+      if (serverEvents == null) {
+        serverEvents = Collections.emptyList();
+      }
+
       if (!invalidateObjectIDs.isEmpty()) {
         invalidateObjMgr.invalidateObjectFor(clientID, invalidateObjectIDs);
       }
@@ -111,7 +116,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
       final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
-          || includeDmi || !logicalChangeResults.isEmpty()) {
+          || includeDmi || !logicalChangeResults.isEmpty() || !serverEvents.isEmpty()) {
         this.transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
 
         // check here if the client is already not disconnected
@@ -129,11 +134,6 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                                LOOKUP_STATE.SERVER_INITIATED));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
-
-        Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
-        if (serverEvents == null) {
-          serverEvents = Collections.emptyList();
-        }
 
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
