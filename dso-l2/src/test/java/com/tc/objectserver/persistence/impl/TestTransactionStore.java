@@ -15,7 +15,10 @@ import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -100,7 +103,8 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   @Override
-  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark) {
+  public Collection<GlobalTransactionDescriptor> clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark) {
+    List<GlobalTransactionDescriptor> removedGDs = new ArrayList<GlobalTransactionDescriptor>();
     for (final Entry<ServerTransactionID, GlobalTransactionDescriptor> e : volatileMap
         .entrySet()) {
       ServerTransactionID sid = e.getKey();
@@ -109,9 +113,11 @@ public class TestTransactionStore implements TransactionStore {
         if (gdesc.getClientTransactionID().toLong() < lowWaterMark.getClientTransactionID().toLong()) {
           ids.remove(gdesc.getGlobalTransactionID());
           durableMap.remove(sid);
+          removedGDs.add(gdesc);
         }
       }
     }
+    return removedGDs;
   }
 
   @Override

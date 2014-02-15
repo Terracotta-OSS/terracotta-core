@@ -17,8 +17,14 @@ public interface ServerEventBuffer {
 
   Multimap<ClientID, ServerEvent> getServerEventsPerClient(GlobalTransactionID gtxId);
 
-  void removeEventsForClient(ClientID clientId);
-
+  /**
+   * Used by Passive server to clear event buffer, on basis of low watermark from clients
+   */
   void clearEventBufferBelowLowWaterMark(GlobalTransactionID lowWatermark);
+
+  /**
+   * Used by Active server to remove events for a transaction, on basis of low watermark from clients
+   */
+  void removeEventsForTransaction(GlobalTransactionID globalTransactionID);
 
 }

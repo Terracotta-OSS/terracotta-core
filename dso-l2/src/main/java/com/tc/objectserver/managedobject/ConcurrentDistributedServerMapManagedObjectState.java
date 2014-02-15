@@ -614,7 +614,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     for (ServerEventType eventType : eventRegistry.keySet()) {
       eventRegistry.remove(eventType, clientID);
     }
-    applyInfo.getServerEventBuffer().removeEventsForClient(clientID);
   }
 
   @Override

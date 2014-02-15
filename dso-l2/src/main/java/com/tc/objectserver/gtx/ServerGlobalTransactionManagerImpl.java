@@ -19,6 +19,7 @@ import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -72,10 +73,16 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   @Override
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
     Transaction tx = persistenceTransactionProvider.newTransaction();
-    transactionStore.clearCommitedTransactionsBelowLowWaterMark(sid);
+    Collection<GlobalTransactionDescriptor> removedGDs = transactionStore.clearCommitedTransactionsBelowLowWaterMark(sid);
     tx.commit();
     processCallbacks();
-    clearEventBufferBelowLowWaterMark(getGlobalTransactionID(sid));
+    clearEventBuffer(removedGDs);
+  }
+
+  private void clearEventBuffer(Collection<GlobalTransactionDescriptor> removedGDs) {
+    for (GlobalTransactionDescriptor gd : removedGDs) {
+      serverEventBuffer.removeEventsForTransaction(gd.getGlobalTransactionID());
+    }
   }
 
   @Override

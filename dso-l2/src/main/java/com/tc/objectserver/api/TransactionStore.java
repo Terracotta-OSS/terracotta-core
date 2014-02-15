@@ -9,6 +9,7 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
+import java.util.Collection;
 import java.util.Set;
 
 public interface TransactionStore {
@@ -23,8 +24,10 @@ public interface TransactionStore {
 
   /**
    * This method clears the server transaction ids less than the low water mark, for that particular node.
+   * 
+   * @return Collection of {@link GlobalTransactionDescriptor} for removed server transaction
    */
-  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark);
+  public Collection<GlobalTransactionDescriptor> clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID lowWaterMark);
 
   /**
    * This is used by the passive to clear completed Transaction ids.

@@ -2,15 +2,14 @@ package com.tc.objectserver.event;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.server.ServerEvent;
 
-import java.util.Collections;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Sends L2 cache events to all interested L1 clients within the same cluster.
@@ -20,10 +19,7 @@ import java.util.TreeMap;
 public class InClusterServerEventBuffer implements ServerEventBuffer {
 
   private final static Multimap<ClientID, ServerEvent> EMPTY_MAP = ImmutableListMultimap.of();
-  // TODO: Look if ConcurrentHashMap can give better performance
-  // TODO: Eugene: Yes, it can. But the real problem is that internal Multimaps are actually not synchronized at all
-  private final SortedMap<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap  = Collections
-                                                                                              .synchronizedSortedMap(new TreeMap());
+  private final ConcurrentMap<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap  = Maps.newConcurrentMap();
 
 
   @Override
@@ -49,17 +45,17 @@ public class InClusterServerEventBuffer implements ServerEventBuffer {
 
 
   @Override
-  public void removeEventsForClient(final ClientID clientId) {
-    for (Multimap<ClientID, ServerEvent> values : eventMap.values()) {
-      values.removeAll(clientId);
-    }
+  public void removeEventsForTransaction(GlobalTransactionID globalTransactionID) {
+    eventMap.remove(globalTransactionID);
   }
 
 
   @Override
   public void clearEventBufferBelowLowWaterMark(final GlobalTransactionID lowWatermark) {
-    for (GlobalTransactionID gtxID : eventMap.headMap(lowWatermark).keySet()) {
-      eventMap.remove(gtxID);
+    for (GlobalTransactionID gtxID : eventMap.keySet()) {
+      if (gtxID.lessThan(lowWatermark)) {
+        eventMap.remove(gtxID);
+      }
     }
   }
 

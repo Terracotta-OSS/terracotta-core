@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 public class ServerTransactionIDBookKeeper {
 
@@ -75,7 +75,7 @@ public class ServerTransactionIDBookKeeper {
     return removed;
   }
 
-  public synchronized Collection clearCommitedSidsBelowLowWaterMark(ServerTransactionID sid) {
+  public synchronized Collection<GlobalTransactionDescriptor> clearCommitedSidsBelowLowWaterMark(ServerTransactionID sid) {
     List removed = new ArrayList();
     TreeMap tids = getTreeMap(sid.getSourceID());
     Map toRemove = tids.headMap(sid.getClientTransactionID());
@@ -88,7 +88,7 @@ public class ServerTransactionIDBookKeeper {
         removed.add(gd);
       }
     }
-    return removed;
+    return Collections.unmodifiableCollection(removed);
   }
 
 }

@@ -81,8 +81,6 @@ public class ClientChannelMonitorImpl implements ClientChannelMonitor, DSOChanne
       TransactionBatchContext batchContext = new ServerTransactionBatchContext(localNodeID, serverTransaction, serializer);
       transactionBatchManager.processTransactions(batchContext);
     }
-
-    // TODO: Discuss the persisting of txns done in ServerMapEvictionEngine with Tim. Is it required here?
   }
 
 }
