@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -611,8 +612,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   private void applyRemoveEventListeningClient(ApplyTransactionInfo applyInfo, Object[] params) {
     ClientID clientID = new ClientID((Long) params[0]);
-    for (ServerEventType eventType : eventRegistry.keySet()) {
-      eventRegistry.remove(eventType, clientID);
+
+    // Remove all entries for the given client
+    Iterator<Entry<ServerEventType, ClientID>> iterator = eventRegistry.entries().iterator();
+    while (iterator.hasNext()) {
+      Entry<ServerEventType, ClientID> entry = iterator.next();
+      if (entry.getValue().equals(clientID)) {
+        iterator.remove();
+      }
     }
   }
 
