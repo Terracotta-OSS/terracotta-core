@@ -313,7 +313,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     return str;
   }
 
-  private Set<ClientID> getRegisteredClients(ServerEventType eventType) {
+  Set<ClientID> getRegisteredClients(ServerEventType eventType) {
       return eventRegistry.get(eventType);
   }
 
