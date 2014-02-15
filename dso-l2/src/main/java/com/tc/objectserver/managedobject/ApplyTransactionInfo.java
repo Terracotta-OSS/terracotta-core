@@ -11,6 +11,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.DefaultMutationEventPublisher;
+import com.tc.objectserver.event.InClusterServerEventBuffer;
 import com.tc.objectserver.event.MutationEventPublisher;
 import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.util.ObjectIDSet;
@@ -48,7 +49,7 @@ public class ApplyTransactionInfo {
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false, null, null);
+    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false, new InClusterServerEventBuffer(), null);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,

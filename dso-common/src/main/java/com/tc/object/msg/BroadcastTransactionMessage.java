@@ -43,7 +43,7 @@ public interface BroadcastTransactionMessage extends TCMessage {
 
   GlobalTransactionID getLowGlobalTransactionIDWatermark();
 
-  Collection addNotifiesTo(List c);
+  Collection getNotifies();
 
   Map getNewRoots();
 

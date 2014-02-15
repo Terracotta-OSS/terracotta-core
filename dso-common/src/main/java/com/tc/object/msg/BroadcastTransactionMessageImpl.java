@@ -255,9 +255,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public Collection addNotifiesTo(final List c) {
-    c.addAll(this.notifies);
-    return c;
+  public Collection getNotifies() {
+    return Lists.newArrayList(this.notifies);
   }
 
   @Override

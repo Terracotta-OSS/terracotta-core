@@ -21,6 +21,7 @@ public class InClusterServerEventBuffer implements ServerEventBuffer {
 
   private final static Multimap<ClientID, ServerEvent> EMPTY_MAP = ImmutableListMultimap.of();
   // TODO: Look if ConcurrentHashMap can give better performance
+  // TODO: Eugene: Yes, it can. But the real problem is that internal Multimaps are actually not synchronized at all
   private final SortedMap<GlobalTransactionID, Multimap<ClientID, ServerEvent>> eventMap  = Collections
                                                                                               .synchronizedSortedMap(new TreeMap());
 

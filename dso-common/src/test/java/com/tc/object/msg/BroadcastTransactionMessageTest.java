@@ -101,7 +101,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     assertEquals(gtx, this.msg.getGlobalTransactionID());
     assertEquals(txnType, this.msg.getTransactionType());
     assertEquals(lowGlobalTransactionIDWatermark, this.msg.getLowGlobalTransactionIDWatermark());
-    assertEquals(notified, this.msg.addNotifiesTo(new LinkedList()));
+    assertEquals(notified, this.msg.getNotifies());
     Map<LogicalChangeID, LogicalChangeResult> msgResults = this.msg.getLogicalChangeResults();
     assertEquals(2, msgResults.size());
     assertEquals(LogicalChangeResult.SUCCESS, msgResults.get(new LogicalChangeID(1)));

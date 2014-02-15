@@ -7,9 +7,6 @@ package com.tc.objectserver.impl;
 import org.apache.commons.io.FileUtils;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -139,7 +136,6 @@ import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.SearchResultsCloseMessageImpl;
 import com.tc.object.msg.SearchResultsRequestMessageImpl;
 import com.tc.object.msg.SearchResultsResponseMessageImpl;
-import com.tc.object.msg.ServerEventBatchMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -288,6 +284,9 @@ import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1199,7 +1198,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, ServerEventBatchMessageImpl.class);
     return messageTypeClassMapping;
   }
 

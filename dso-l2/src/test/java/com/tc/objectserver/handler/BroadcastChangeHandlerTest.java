@@ -145,7 +145,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public List getChanges() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @Override
@@ -175,12 +175,12 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public Map getNewRoots() {
-      return Collections.EMPTY_MAP;
+      return Collections.emptyMap();
     }
 
     @Override
     public Collection getNotifies() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @Override
@@ -230,7 +230,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public GlobalTransactionID getGlobalTransactionID() {
-      return null;
+      return new GlobalTransactionID(1);
     }
 
     @Override
@@ -705,11 +705,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public Collection addNotifiesTo(final List c) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public long getChangeID() {
       throw new ImplementMe();
     }
@@ -741,6 +736,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public Collection getNotifies() {
       throw new ImplementMe();
     }
 

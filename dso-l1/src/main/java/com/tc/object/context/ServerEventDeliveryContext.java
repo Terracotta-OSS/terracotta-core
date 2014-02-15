@@ -27,6 +27,6 @@ public class ServerEventDeliveryContext implements MultiThreadedEventContext {
 
   @Override
   public Object getKey() {
-    return event.getKey().hashCode();
+    return event.getKey();
   }
 }

@@ -4,10 +4,8 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -86,7 +84,6 @@ import com.tc.object.handler.ReceiveTransactionCompleteHandler;
 import com.tc.object.handler.ReceiveTransactionHandler;
 import com.tc.object.handler.ResourceManagerMessageHandler;
 import com.tc.object.handler.ServerEventDeliveryHandler;
-import com.tc.object.handler.ServerEventMessageHandler;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -139,7 +136,6 @@ import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.SearchResultsCloseMessageImpl;
 import com.tc.object.msg.SearchResultsRequestMessageImpl;
 import com.tc.object.msg.SearchResultsResponseMessageImpl;
-import com.tc.object.msg.ServerEventBatchMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -207,6 +203,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 /**
  * This is the main point of entry into the DSO client.
  */
@@ -250,7 +249,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private TCMemoryManagerImpl                        tcMemManager;
   private ClientChannelEventController               clientChannelEventController;
   private RemoteResourceManager                      remoteResourceManager;
-  private ServerEventListenerManager serverEventListenerManager;
+  private ServerEventListenerManager                 serverEventListenerManager;
 
   private Stage                                      clusterEventsStage;
 
@@ -646,11 +645,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Stage dmiStage = stageManager.createStage(ClientConfigurationContext.DMI_STAGE,
                                                     new DmiHandler(this.dmiManager), 1, maxSize);
 
-    final Stage receiveTransaction = stageManager
-        .createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
-                     new ReceiveTransactionHandler(this.channel.getClientIDProvider(), this.channel
-                         .getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager, dmiStage.getSink(),
-                                                   this.dmiManager, testStartLatch), 1, maxSize);
+
+    serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
+    final Stage serverEventDeliveryStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
+        new ServerEventDeliveryHandler(serverEventListenerManager),
+        TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), 1, maxSize);
+
+    final Stage receiveTransaction = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
+        new ReceiveTransactionHandler(this.channel.getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager,
+            dmiStage.getSink(), this.dmiManager, testStartLatch, serverEventDeliveryStage.getSink()), 1, maxSize);
     final Stage oidRequestResponse = stageManager
         .createStage(ClientConfigurationContext.OBJECT_ID_REQUEST_RESPONSE_STAGE, remoteIDProvider, 1, maxSize);
     final Stage transactionResponse = stageManager
@@ -694,15 +697,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                 1, maxSize);
     final Stage receiveInvalidationStage = stageManager
         .createStage(ClientConfigurationContext.RECEIVE_INVALIDATE_OBJECTS_STAGE,
-                     new ReceiveInvalidationHandler(remoteServerMapManager), 1, TCPropertiesImpl.getProperties()
-                         .getInt(TCPropertiesConsts.L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY));
-
-    serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
-    final Stage serverEventDeliveryStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
-        new ServerEventDeliveryHandler(serverEventListenerManager), TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), 1, maxSize);
-    final Stage serverEventStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_STAGE,
-        new ServerEventMessageHandler(serverEventDeliveryStage.getSink()), 1, maxSize);
+            new ReceiveInvalidationHandler(remoteServerMapManager), 1, TCPropertiesImpl.getProperties()
+            .getInt(TCPropertiesConsts.L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY));
 
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
@@ -739,14 +735,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                          this.clusterMetaDataManager,
                                                                          this.rejoinManager);
     // DO NOT create any stages after this call
-    stageManager.startAll(cc, Collections.EMPTY_LIST);
+    stageManager.startAll(cc, Collections.<PostInit>emptyList());
 
     initChannelMessageRouter(messageRouter, hydrateStage, lockResponse,
                              receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
                              batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
                              clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage, receiveSearchQueryStage,
                              receiveSearchResultStage, receiveInvalidationStage,
-                             resourceManagerStage, serverEventStage);
+                             resourceManagerStage);
 
     openChannel(serverHost, serverPort, maxConnectRetries);
     waitForHandshake();
@@ -924,7 +920,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 ResourceManagerThrottleMessage.class);
     messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
     messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, ServerEventBatchMessageImpl.class);
     return messageTypeClassMapping;
   }
 
@@ -937,7 +932,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                         Stage receiveServerMapStage,
                                         Stage receiveSearchQueryStage, Stage searchResultLoadStage,
                                         Stage receiveInvalidationStage,
-                                        Stage resourceManagerStage, Stage serverEventStage) {
+                                        Stage resourceManagerStage) {
     final Sink hydrateSink = hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
@@ -987,7 +982,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                    resourceManagerStage.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.SERVER_EVENT_BATCH_MESSAGE, serverEventStage.getSink(), hydrateSink);
     DSO_LOGGER.debug("Added message routing types.");
   }
 

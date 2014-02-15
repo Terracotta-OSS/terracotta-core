@@ -76,6 +76,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     final NodeID committerID = bcc.getNodeID();
     final TransactionID txnID = bcc.getTransactionID();
     final MessageChannel[] channels = this.channelManager.getActiveChannels();
+
     final Multimap<ClientID, ServerEvent> serverEventsPerClient = bcc.getApplyInfo()
         .getServerEventBuffer().getServerEventsPerClient(bcc.getGlobalTransactionID());
 
@@ -129,7 +130,10 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
 
-        final Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
+        Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
+        if (serverEvents == null) {
+          serverEvents = Collections.emptyList();
+        }
 
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
