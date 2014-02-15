@@ -16,16 +16,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.junit.Assert;
 import org.terracotta.corestorage.KeyValueStorage;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.MutationEventPublisher;
 import com.tc.objectserver.impl.SamplingType;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
@@ -38,6 +45,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTestCase {
+  private static final ClientID                            CLIENT_ID = new ClientID(1);
+
   static {
     ManagedObjectStateFactory.disableSingleton(true);
   }
@@ -49,6 +58,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
   private ManagedObjectChangeListener changeListener;
   private ApplyTransactionInfo applyTransactionInfo;
   private MutationEventPublisher mutationEventPublisher;
+  private ClientChannelMonitor                             clientChannelMonitor;
 
   @Override
   public void setUp() throws Exception {
@@ -66,8 +76,6 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     ManagedObjectStateFactory.createInstance(listenerProvider, persistentObjectFactory);
 
     applyTransactionInfo = searchableApplyInfo();
-    mutationEventPublisher = mock(MutationEventPublisher.class);
-    when(applyTransactionInfo.getMutationEventPublisher()).thenReturn(mutationEventPublisher);
   }
 
   public void testCapacityEvictionWhenOverLimit() throws Exception {
@@ -406,16 +414,96 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     return cursor;
   }
 
-  private static ApplyTransactionInfo searchableApplyInfo() {
+  private ApplyTransactionInfo searchableApplyInfo() {
+    return searchableApplyInfoForNode(CLIENT_ID);
+  }
+
+  private ApplyTransactionInfo searchableApplyInfoForNode(NodeID nodeID) {
     final ApplyTransactionInfo info = mock(ApplyTransactionInfo.class);
     when(info.isActiveTxn()).thenReturn(true);
     when(info.isSearchEnabled()).thenReturn(true);
+    ServerTransactionID stxID = mock(ServerTransactionID.class);
+    when(stxID.getSourceID()).thenReturn(nodeID);
+    when(info.getServerTransactionID()).thenReturn(stxID);
+
+    mutationEventPublisher = mock(MutationEventPublisher.class);
+    when(info.getMutationEventPublisher()).thenReturn(mutationEventPublisher);
+
+    clientChannelMonitor = mock(ClientChannelMonitor.class);
+    when(info.getClientChannelMonitor()).thenReturn(clientChannelMonitor);
     return info;
   }
 
-  private static void setInvalidateOnChange(ConcurrentDistributedServerMapManagedObjectState state, boolean invalidateOnChange) {
+  private void setInvalidateOnChange(ConcurrentDistributedServerMapManagedObjectState state, boolean invalidateOnChange) {
     state.applyPhysicalAction(new PhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE_FIELDNAME,
         invalidateOnChange, false), ObjectID.NULL_ID, searchableApplyInfo());
   }
 
+  public void testRegisterServerEventListener() throws Exception {
+    ClientID client11 = new ClientID(11);
+    ClientID client22 = new ClientID(22);
+
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client11),
+                            SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal(), ServerEventType.REMOVE_LOCAL.ordinal() });
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client22),
+                             SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal() });
+    
+    Assert.assertEquals(Sets.newHashSet(client11, client22), state.getRegisteredClients(ServerEventType.PUT_LOCAL));
+    Assert.assertEquals(Sets.newHashSet(client11), state.getRegisteredClients(ServerEventType.REMOVE_LOCAL));
+  }
+
+  public void testUnregisterServerEventListener() throws Exception {
+    ClientID client11 = new ClientID(11);
+    ClientID client22 = new ClientID(22);
+
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client11),
+                            SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal(), ServerEventType.REMOVE_LOCAL.ordinal() });
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client22),
+                             SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal() });
+    
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client11),
+                             SerializationUtil.UNREGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal() });
+    
+    Assert.assertEquals(Sets.newHashSet(client22), state.getRegisteredClients(ServerEventType.PUT_LOCAL));
+    Assert.assertEquals(Sets.newHashSet(client11), state.getRegisteredClients(ServerEventType.REMOVE_LOCAL));
+  }
+
+  public void testRelayedRegisterServerEventListener() throws Exception {
+    ClientID client11 = new ClientID(11);
+    ClientID client22 = new ClientID(22);
+
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(new ServerID()),
+                             SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal(), 11L, 22L });
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(new ServerID()),
+                             SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_PASSIVE,
+                             new Object[] { ServerEventType.REMOVE_LOCAL.ordinal(), 11L });
+    
+    Assert.assertEquals(Sets.newHashSet(client11, client22), state.getRegisteredClients(ServerEventType.PUT_LOCAL));
+    Assert.assertEquals(Sets.newHashSet(client11), state.getRegisteredClients(ServerEventType.REMOVE_LOCAL));
+  }
+  
+  public void testRemoveEventListeningClient() throws Exception {
+    ClientID client11 = new ClientID(11);
+    ClientID client22 = new ClientID(22);
+
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client11),
+                            SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal(), ServerEventType.REMOVE_LOCAL.ordinal() });
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client22),
+                             SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                             new Object[] { ServerEventType.PUT_LOCAL.ordinal() });
+    
+    state.applyLogicalAction(oid, searchableApplyInfoForNode(client11),
+                             SerializationUtil.REMOVE_EVENT_LISTENING_CLIENT, new Object[] { 11L });
+
+    Assert.assertEquals(Sets.newHashSet(client22), state.getRegisteredClients(ServerEventType.PUT_LOCAL));
+    Assert.assertEquals(Sets.newHashSet(), state.getRegisteredClients(ServerEventType.REMOVE_LOCAL));
+  }
+  
 }
