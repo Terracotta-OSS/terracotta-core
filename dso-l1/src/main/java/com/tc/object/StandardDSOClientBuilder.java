@@ -344,6 +344,6 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID[] defaultGroups = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new ServerEventListenerManagerImpl(dsoChannel.getServerEventListenerMessageFactory(), defaultGroups[0]);
+    return new ServerEventListenerManagerImpl();
   }
 }

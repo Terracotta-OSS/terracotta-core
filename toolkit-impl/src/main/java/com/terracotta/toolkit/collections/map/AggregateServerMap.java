@@ -480,9 +480,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void registerServerEventListener(Set<ServerEventType> eventTypes) {
+    // For routing incoming events
+    platformService.registerServerEventListener(this, eventTypes);
+
+    // Send registrations to server
     for (InternalToolkitMap<K, V> serverMap : serverMaps) {
       serverMap.registerListener(eventTypes);
     }
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Server event listener has been registered for cache: "
                    + getName() + ". Notification types: " + eventTypes);
@@ -490,9 +495,14 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   private void unregisterServerEventListener(Set<ServerEventType> eventTypes) {
+    // For routing incoming events
+    platformService.unregisterServerEventListener(this, eventTypes);
+
+    // Send registrations to server
     for (InternalToolkitMap<K, V> serverMap : serverMaps) {
       serverMap.unregisterListener(eventTypes);
     }
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Server event listener has been unregistered for cache: "
                    + getName() + ". Notification types: " + eventTypes);

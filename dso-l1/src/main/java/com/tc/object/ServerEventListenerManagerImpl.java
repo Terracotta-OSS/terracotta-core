@@ -1,25 +1,20 @@
 package com.tc.object;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.Maps;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.object.msg.RegisterServerEventListenerMessage;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author Eugene Shelestovich
@@ -30,14 +25,6 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   private final Map<String, Map<ServerEventDestination, Set<ServerEventType>>> registry = Maps.newHashMap();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-  private final ServerEventListenerMessageFactory messageFactory;
-  private final GroupID stripeId;
-
-  public ServerEventListenerManagerImpl(final ServerEventListenerMessageFactory messageFactory, final GroupID stripeId) {
-    this.messageFactory = messageFactory;
-    this.stripeId = stripeId;
-  }
 
   @Override
   public void dispatch(final ServerEvent event, final NodeID remoteNode) {
@@ -104,7 +91,6 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
   }
 
   private void doRegister(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
-    boolean routingUpdated = true;
     final String name = destination.getDestinationName();
 
     Map<ServerEventDestination, Set<ServerEventType>> destinations = registry.get(name);
@@ -117,21 +103,9 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
       if (eventTypes == null) {
         destinations.put(destination, listenTo);
       } else {
-        // do not register twice for the same events
-        routingUpdated = eventTypes.addAll(listenTo);
+        eventTypes.addAll(listenTo);
       }
     }
-
-    if (routingUpdated) {
-      doRegisterOnServer(name, listenTo);
-    }
-  }
-
-  private void doRegisterOnServer(final String destinationName, final Set<ServerEventType> listenTo) {
-    final RegisterServerEventListenerMessage msg = messageFactory.newRegisterServerEventListenerMessage(stripeId);
-    msg.setDestination(destinationName);
-    msg.setEventTypes(listenTo);
-    msg.send();
   }
 
   private void doUnregister(final ServerEventDestination destination, final Set<ServerEventType> listenTo) {
@@ -141,7 +115,7 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
     if (destinations != null) {
       final Set<ServerEventType> eventTypes = destinations.get(destination);
       if (eventTypes != null) {
-        boolean routingUpdated = eventTypes.removeAll(listenTo);
+        eventTypes.removeAll(listenTo);
         // handle potential cascading removals of parent entities
         if (eventTypes.isEmpty()) {
           destinations.remove(destination);
@@ -149,21 +123,10 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
             registry.remove(name);
           }
         }
-
-        if (routingUpdated) {
-          doUnregisterOnServer(name, listenTo);
-        }
       }
     }
-
   }
 
-  private void doUnregisterOnServer(final String destinationName, final Set<ServerEventType> listenTo) {
-    final UnregisterServerEventListenerMessage msg = messageFactory.newUnregisterServerEventListenerMessage(stripeId);
-    msg.setDestination(destinationName);
-    msg.setEventTypes(listenTo);
-    msg.send();
-  }
 
   @Override
   public void cleanup() {
@@ -172,41 +135,23 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void pause(final NodeID remoteNode, final int disconnected) {
-    //TODO: prevent clients from registering new listeners then paused
+    // Do Nothing
   }
 
   @Override
   public void unpause(final NodeID remoteNode, final int disconnected) {
-    // on reconnect - resend all local mappings to server
-    lock.readLock().lock();
-    try {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Client '" + remoteNode + "' is reconnected. Re-sending server event listener registrations");
-      }
-
-      for (Map.Entry<String, Map<ServerEventDestination, Set<ServerEventType>>> entry : registry.entrySet()) {
-        final Set<ServerEventType> eventTypes = EnumSet.noneOf(ServerEventType.class);
-        final Map<ServerEventDestination, Set<ServerEventType>> destinations = entry.getValue();
-        // collect all distinct event types from destinations registered for a given cache
-        for (Set<ServerEventType> types : destinations.values()) {
-          eventTypes.addAll(types);
-        }
-        doRegisterOnServer(entry.getKey(), eventTypes);
-      }
-    } finally {
-      lock.readLock().unlock();
-    }
+    // Do Nothing
   }
 
   @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
-    //
+    // Do Nothing
   }
 
   @Override
   public void shutdown(boolean fromShutdownHook) {
-    //
+    // Do Nothing
   }
 
 }
