@@ -25,10 +25,8 @@ public class InClusterServerEventBuffer implements ServerEventBuffer {
   @Override
   public final void storeEvent(final GlobalTransactionID gtxId, final ServerEvent serverEvent,
                                final Set<ClientID> clients) {
-    if (clients.isEmpty()) { return; }
-
     if (eventMap.get(gtxId) == null) {
-      eventMap.put(gtxId, ArrayListMultimap.<ClientID, ServerEvent> create());
+      eventMap.put(gtxId, ArrayListMultimap.<ClientID, ServerEvent> create(1, 1));
     }
 
     for (ClientID clientID : clients) {
