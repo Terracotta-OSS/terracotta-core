@@ -253,10 +253,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   synchronized void requestOutstanding() {
-    this.logger.info("Sending Pending LookUp Requests");
+    int lookupCount = 0;
+    int rootCount = 0;
     for (final ObjectLookupState ols : this.objectLookupStates.values()) {
       if (!ols.isMissing() && !ols.isPending()) {
         sendRequestNow(ols);
+        ++lookupCount;
       }
     }
     for (final Entry<String, ObjectID> e : this.rootRequests.entrySet()) {
@@ -264,8 +266,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       if (e.getValue().isNull()) {
         final RequestRootMessage rrm = createRootMessage(rootName);
         rrm.send();
+        ++rootCount;
       }
     }
+    this.logger.info("Sending Pending LookUp Requests lookups " + lookupCount + " roots " + rootCount);
   }
 
   @Override
