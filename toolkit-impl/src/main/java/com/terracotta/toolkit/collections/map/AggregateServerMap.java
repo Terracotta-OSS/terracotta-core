@@ -624,15 +624,21 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
-    if (versionUpdateListeners.add(listener)) {
-      registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+    synchronized (versionUpdateListeners) {
+      if (versionUpdateListeners.isEmpty()) {
+        registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+      }
+      versionUpdateListeners.add(listener);
     }
   }
 
   @Override
   public void unregisterVersionUpdateListener(final VersionUpdateListener listener) {
-    if (versionUpdateListeners.remove(listener)) {
-      unregisterServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+    synchronized (versionUpdateListeners) {
+      versionUpdateListeners.remove(listener);
+      if (versionUpdateListeners.isEmpty()) {
+        unregisterServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+      }
     }
   }
 
