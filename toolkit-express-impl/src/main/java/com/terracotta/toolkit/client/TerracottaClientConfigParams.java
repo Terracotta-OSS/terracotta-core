@@ -12,6 +12,7 @@ public class TerracottaClientConfigParams {
   private boolean     rejoin;
   private boolean     nonStop;
   private String      productId;
+  private ClassLoader clasLoader;
 
   public String getTcConfigSnippetOrUrl() {
     return tcConfigSnippetOrUrl;
@@ -90,4 +91,18 @@ public class TerracottaClientConfigParams {
     setProductId(appName);
     return this;
   }
+
+  public ClassLoader getClassLoader() {
+    return clasLoader;
+  }
+
+  public TerracottaClientConfigParams classLoader(ClassLoader loader) {
+    setClassLoader(loader);
+    return this;
+  }
+
+  public void setClassLoader(ClassLoader loader) {
+    this.clasLoader = loader;
+  }
+
 }
