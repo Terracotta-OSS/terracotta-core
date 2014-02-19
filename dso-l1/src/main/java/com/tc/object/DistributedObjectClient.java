@@ -647,9 +647,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
 
     serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
-    final Stage serverEventDeliveryStage = stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
-        new ServerEventDeliveryHandler(serverEventListenerManager),
-        TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4), 1, maxSize);
+
+    final Stage serverEventDeliveryStage = createServerEventDeliveryStage(stageManager);
 
     final Stage receiveTransaction = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
         new ReceiveTransactionHandler(this.channel.getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager,
@@ -748,6 +747,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     waitForHandshake();
 
     setLoggerOnExit();
+  }
+
+  private Stage createServerEventDeliveryStage(final StageManager stageManager) {
+    final int threadsCount = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS, 4);
+    final int queueSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE, 16 * 1024);
+    return stageManager.createStage(ClientConfigurationContext.SERVER_EVENT_DELIVERY_STAGE,
+        new ServerEventDeliveryHandler(serverEventListenerManager), threadsCount, 1, queueSize);
   }
 
   private void openChannel(final String serverHost, final int serverPort, final int maxConnectRetries) {

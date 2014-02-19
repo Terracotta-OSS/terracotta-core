@@ -59,9 +59,12 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
   private volatile boolean clientInitialized;
 
-  public ReceiveTransactionHandler(AcknowledgeTransactionMessageFactory atmFactory,
-                                   ClientGlobalTransactionManager gtxManager, SessionManager sessionManager,
-                                   Sink dmiSink, DmiManager dmiManager, CountDownLatch testStartLatch,
+  public ReceiveTransactionHandler(final AcknowledgeTransactionMessageFactory atmFactory,
+                                   final ClientGlobalTransactionManager gtxManager,
+                                   final SessionManager sessionManager,
+                                   final Sink dmiSink,
+                                   final DmiManager dmiManager,
+                                   final CountDownLatch testStartLatch,
                                    final Sink eventDeliverySink) {
     this.atmFactory = atmFactory;
     this.gtxManager = gtxManager;
@@ -152,6 +155,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     final NodeID remoteNode = btm.getChannel().getRemoteNodeID();
     // unfold the batch and multiplex messages to different queues based on the event key
     for (final ServerEvent event : btm.getEvents()) {
+      // blocks when the internal stage's queue reaches TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE
+      // to delay the transaction acknowledgement and provide back-pressure on clients
       eventDeliverySink.add(new ServerEventDeliveryContext(event, remoteNode));
     }
   }
