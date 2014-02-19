@@ -51,7 +51,7 @@ public interface DistributedToolkitTypeFactory<T extends DistributedToolkitType<
    * Populates values that already exists in the passed configuration. For missing values in the config, uses existing
    * values from existing cluster instance configuration
    */
-  Configuration newConfigForCreationInLocalNode(ToolkitObjectStripe<S>[] existingStripedObjects,
+  Configuration newConfigForCreationInLocalNode(String name, ToolkitObjectStripe<S>[] existingStripedObjects,
                                                 Configuration userConfig);
 
   /**

@@ -68,7 +68,7 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
         try {
           stripeObjects = lookupStripeObjects(name);
           if (stripeObjects != null) {
-            effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(stripeObjects, configuration);
+            effectiveConfig = distributedTypeFactory.newConfigForCreationInLocalNode(name, stripeObjects, configuration);
           } else {
             // make sure config is complete
             effectiveConfig = distributedTypeFactory.newConfigForCreationInCluster(configuration);

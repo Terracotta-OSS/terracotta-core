@@ -13,7 +13,6 @@ import org.terracotta.toolkit.store.ToolkitConfigFields;
 import com.google.common.base.Preconditions;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
-import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.search.SearchFactory;
 
 import java.io.Serializable;
@@ -65,31 +64,5 @@ public class ToolkitStoreDistributedTypeFactory<K extends Serializable, V extend
     builder.configField(ConfigFieldsInternal.LOCAL_STORE_MANAGER_NAME_NAME,
         ConfigFieldsInternal.DEFAULT_LOCAL_STORE_MANAGER_NAME);
     return builder.build();
-  }
-
-  @Override
-  protected Serializable getExistingValueOrException(final InternalCacheConfigurationType configType,
-                                                     final ToolkitObjectStripe[] stripeObjects) {
-    return super.getExistingValueOrException(configType, stripeObjects);
-  }
-
-  @Override
-  protected void validateExistingClusterWideConfigs(final ToolkitObjectStripe[] stripeObjects, final Configuration newConfig) {
-    int concurrency = 0;
-    for (ToolkitObjectStripe stripeObject : stripeObjects) {
-      final Configuration oldConfig = stripeObject.getConfiguration();
-      for (InternalCacheConfigurationType configType : InternalCacheConfigurationType
-          .getClusterWideConfigsFor(ToolkitObjectType.STORE)) {
-        Object existingValue = getAndValidateExistingValue(oldConfig, configType);
-        switch (configType) {
-          case CONCURRENCY:
-            concurrency += ((Integer)existingValue);
-            break;
-          default:
-            configType.validateExistingMatchesValueFromConfig(existingValue, newConfig);
-        }
-      }
-    }
-    InternalCacheConfigurationType.CONCURRENCY.validateExistingMatchesValueFromConfig(concurrency, newConfig);
   }
 }

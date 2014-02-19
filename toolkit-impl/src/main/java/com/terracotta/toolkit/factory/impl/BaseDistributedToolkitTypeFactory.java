@@ -4,14 +4,15 @@
 
 package com.terracotta.toolkit.factory.impl;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
-import com.google.common.base.Preconditions;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 import com.terracotta.toolkit.collections.map.InternalToolkitMap;
@@ -28,14 +29,19 @@ import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 /**
  * @author Eugene Shelestovich
  */
 public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, V extends Serializable> implements
     DistributedToolkitTypeFactory<ToolkitCacheImpl<K, V>, InternalToolkitMap<K, V>> {
+  private static final TCLogger logger = TCLogging.getLogger(BaseDistributedToolkitTypeFactory.class);
 
   private static final UnclusteredConfiguration[] EMPTY_CONFIG_ARRAY = new UnclusteredConfiguration[0];
   private static final ServerMap[] EMPTY_SERVER_MAP_ARRAY = new ServerMap[0];
@@ -152,16 +158,20 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
   }
 
   @Override
-  public Configuration newConfigForCreationInLocalNode(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] existingStripedObjects,
+  public Configuration newConfigForCreationInLocalNode(String name, ToolkitObjectStripe<InternalToolkitMap<K, V>>[] existingStripedObjects,
                                                        Configuration userConfig) {
     final UnclusteredConfiguration newConfig = new UnclusteredConfiguration(userConfig);
-    String field = null;
+    Collection<Configuration> configurations = getConfigurations(existingStripedObjects);
     for (InternalCacheConfigurationType configType : getAllSupportedConfigs()) {
-      field = configType.getConfigString();
-      if (!newConfig.hasField(field) && !newConfig.hasConflictingField(field)
-          && !hasConflictingField(existingStripedObjects[0].getConfiguration(), field)) {
+      String field = configType.getConfigString();
+      Serializable existingValue = configType.getAggregatedConfigValue(configurations);
+      if ((!newConfig.hasField(field) && !newConfig.hasConflictingField(field)
+          && !hasConflictingField(existingStripedObjects[0].getConfiguration(), field))) {
         // missing in newConfig, merge from existing value
-        Serializable existingValue = getExistingValueOrException(configType, existingStripedObjects);
+        configType.setValue(newConfig, existingValue);
+      } else if (configType.acceptOverride() && !existingValue.equals(configType.getValueIfExists(newConfig))) {
+        logger.warn("Overriding configuration value '" + configType.getValueIfExists(newConfig) + "' for field '"
+                    + field + "' from server with value '" + existingValue + "' for cache '" + name + "'.");
         configType.setValue(newConfig, existingValue);
       }
     }
@@ -191,35 +201,21 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
     return configurations;
   }
 
-  protected abstract void validateExistingClusterWideConfigs(final ToolkitObjectStripe[] stripeObjects,
-                                                             final Configuration newConfig);
+  protected static Collection<Configuration> getConfigurations(final ToolkitObjectStripe[] stripeObjects) {
+    return Lists.transform(Arrays.asList(stripeObjects), new Function<ToolkitObjectStripe, Configuration>() {
+      @Override
+      public Configuration apply(final ToolkitObjectStripe input) {
+        return input.getConfiguration();
+      }
+    });
+  }
 
-  protected Serializable getExistingValueOrException(final InternalCacheConfigurationType configType,
-                                                     final ToolkitObjectStripe[] stripeObjects) {
-    // for common configuration params
-    switch (configType) {
-      case CONCURRENCY:
-        int concurrency = 0;
-        for (ToolkitObjectStripe stripeObject : stripeObjects) {
-          Object existingValue = getAndValidateExistingValue(stripeObject.getConfiguration(), configType);
-          concurrency += (Integer)existingValue;
-        }
-        return concurrency;
-      default:
-        // just use the first stripe to get config as it should be same everywhere
-        // TODO: assert that all stripes has same config?
-        final Configuration config = stripeObjects[0].getConfiguration();
-        getAndValidateExistingValue(config, configType);
-        return configType.getValueIfExists(config);
+  protected void validateExistingClusterWideConfigs(final ToolkitObjectStripe[] stripeObjects, final Configuration newConfig) {
+    Collection<Configuration> configurations = getConfigurations(stripeObjects);
+
+    for (InternalCacheConfigurationType configType : getAllSupportedConfigs()) {
+      final Object existingValue = configType.getAggregatedConfigValue(configurations);
+      configType.validateExistingMatchesValueFromConfig(existingValue, newConfig);
     }
   }
-
-  protected static Object getAndValidateExistingValue(final Configuration config,
-                                                      final InternalCacheConfigurationType configType) {
-    final Object existingValue = configType.getValueIfExists(config);
-    Preconditions.checkNotNull(existingValue, '\'' + configType.getConfigString()
-                                              + "' cannot be null in existing config from cluster");
-    return existingValue;
-  }
-
 }
