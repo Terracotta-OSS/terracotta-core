@@ -4,8 +4,6 @@
  */
 package com.tc.object.gtx;
 
-import org.mockito.Mockito;
-
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.tx.TestRemoteTransactionManager;
@@ -19,9 +17,7 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
 
   @Override
   public void setUp() {
-    PreTransactionFlushCallback mockPreTransactionFlushCallback = Mockito.mock(PreTransactionFlushCallback.class);
-    this.mgr = new ClientGlobalTransactionManagerImpl(new TestRemoteTransactionManager(),
-                                                      mockPreTransactionFlushCallback);
+    this.mgr = new ClientGlobalTransactionManagerImpl(new TestRemoteTransactionManager());
   }
 
   public void testBasics() throws Exception {

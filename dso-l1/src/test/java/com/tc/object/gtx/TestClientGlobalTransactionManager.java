@@ -29,7 +29,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
   }
 
   @Override
-  public void flush(LockID lockID, boolean noLocksLeftOnClient) {
+  public void flush(LockID lockID) {
     flushCalls.put(lockID);
   }
 
@@ -44,7 +44,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
   }
 
   @Override
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
     return true;
   }
 

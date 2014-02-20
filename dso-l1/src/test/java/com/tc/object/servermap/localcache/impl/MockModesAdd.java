@@ -25,13 +25,18 @@ public class MockModesAdd {
 
   // final mappings
   // key -> (id, mapOid, valueOid)
-  // lockId -> List<key>
   // oid -> value
   public static void addStrongValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                            LockID lockID, MockSerializedEntry value, ObjectID mapID,
                                            MapOperationType operationType) {
+    addStrongValueToCacheWithAwardID(cache, store, key, lockID, value, mapID, operationType, 1L);
+  }
+
+  public static void addStrongValueToCacheWithAwardID(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
+                                                      LockID lockID, MockSerializedEntry value, ObjectID mapID,
+                                                      MapOperationType operationType, long awardId) {
     ObjectID valueObjectID = value != null ? value.getObjectID() : ObjectID.NULL_ID;
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value, valueObjectID);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value, valueObjectID, awardId);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 

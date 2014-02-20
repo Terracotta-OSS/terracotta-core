@@ -393,4 +393,8 @@ public interface Manager extends TerracottaLocking {
   boolean isRejoinInProgress();
 
   TaskRunner getTastRunner();
+
+  public long getLockAwardIDFor(LockID lock);
+
+  public boolean isLockAwardValid(LockID lock, long awardID);
 }

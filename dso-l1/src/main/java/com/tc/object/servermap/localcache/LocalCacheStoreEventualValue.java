@@ -4,6 +4,7 @@
 package com.tc.object.servermap.localcache;
 
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelf;
 
 public class LocalCacheStoreEventualValue extends AbstractLocalCacheStoreValue {
   public LocalCacheStoreEventualValue() {
@@ -23,4 +24,11 @@ public class LocalCacheStoreEventualValue extends AbstractLocalCacheStoreValue {
   public ObjectID getValueObjectId() {
     return (ObjectID) id;
   }
+
+  @Override
+  public String toString() {
+    return "LocalCacheStoreEventualValue [id=" + id + ", value="
+           + (value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value) + "]";
+  }
+
 }

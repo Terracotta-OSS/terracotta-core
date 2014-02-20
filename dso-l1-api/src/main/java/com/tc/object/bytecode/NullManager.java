@@ -499,4 +499,14 @@ public class NullManager implements Manager {
   public TaskRunner getTastRunner() {
     return Runners.newDefaultCachedScheduledTaskRunner();
   }
+
+  @Override
+  public long getLockAwardIDFor(LockID lock) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isLockAwardValid(LockID lock, long awardID) {
+    throw new ImplementMe();
+  }
 }

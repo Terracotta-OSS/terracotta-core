@@ -50,7 +50,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   private ClientGreediness            greediness    = ClientGreediness.FREE;
 
   private volatile byte               gcCycleCount  = 0;
-  private volatile boolean            pinned;
+  private int                         pinned        = 0;
+
+  private long                        awardId       = NULL_AWARD_ID;
 
   public ClientLockImpl(final LockID lock) {
     this.lock = lock;
@@ -64,6 +66,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       removeAndUnpark(lockState, it);
     }
     greediness = ClientGreediness.FREE;
+    pinned = 0;
+    awardId = NULL_AWARD_ID;
   }
 
   private void removeAndUnpark(LockStateNode lockState, Iterator<LockStateNode> it) {
@@ -255,6 +259,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
           // TODO: This doesn't seem right.. rethink wait behavior...
           remote.flush(this.lock, noLocksHeld);
+          resetPinIfNecessary(noLocksHeld);
 
           synchronized (this) {
             if (flushLevel.equals(this.greediness.getFlushLevel())) {
@@ -271,13 +276,19 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unparkFirstQueuedAcquire();
       waitOnLockWaiter(remote, thread, waiter, listener);
     } finally {
-      // if (waiter != null) {
       if (waiter != null && !waiter.isRejoinInProgress()) {
         moveWaiterToPending(waiter);
         acquireAll(abortableOperationManager, remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
         LOGGER.fatal("Potential lock reacquire failure after wait by " + thread + " in:\n" + this);
       }
+    }
+  }
+
+  protected synchronized void resetPinIfNecessary(boolean noLocksHeld) {
+    if (noLocksHeld) {
+      this.pinned = 0;
+      this.awardId = NULL_AWARD_ID;
     }
   }
 
@@ -436,13 +447,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public void pinLock() {
-    this.pinned = true;
+  public synchronized void pinLock() {
+    pinned++;
   }
 
   @Override
-  public void unpinLock() {
-    this.pinned = false;
+  public synchronized void unpinLock() {
+    pinned--;
   }
 
   /*
@@ -534,16 +545,18 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Called by the stage thread when the server has awarded a lock (either greedy or per thread).
    */
   @Override
-  public void award(final RemoteLockManager remote, final ThreadID thread, final ServerLockLevel level)
+  public void award(final RemoteLockManager remote, final ThreadID thread, final ServerLockLevel level, long lockAwardID)
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
+        this.awardId = lockAwardID;
         this.greediness = this.greediness.awarded(level);
       }
       unparkFirstQueuedAcquire();
     } else {
       PendingLockHold acquire;
       synchronized (this) {
+        this.awardId = lockAwardID;
         acquire = getQueuedAcquire(thread, level);
         if (acquire == null) {
           remote.unlock(this.lock, thread, level);
@@ -666,6 +679,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
 
         remote.flush(lock, noLocksHeld);
+        resetPinIfNecessary(noLocksHeld);
 
         synchronized (this) {
           if (flushLevel.equals(this.greediness.getFlushLevel())) {
@@ -803,6 +817,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         // TODO: to be done in a flush thread and not on txn complete thread
         unlock.flushInProgress();
         UnlockCallback flushCallback = new UnlockCallback(remote, flushLevel, unlock);
+        resetPinIfNecessary(noLocksHeld);
         if (remote.asyncFlush(lock, flushCallback, noLocksHeld)) {
           flushCallback.transactionsForLockFlushed(lock);
         }
@@ -1175,6 +1190,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       final ServerLockLevel flushLevel = this.greediness.getFlushLevel();
       final LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
       boolean noLocksHeld = noLocksHeld(null, null);
+      resetPinIfNecessary(noLocksHeld);
       if (remote.asyncFlush(this.lock, callback, noLocksHeld)) {
         return recallCommit(remote, batch);
       } else {
@@ -1204,6 +1220,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         } else {
           UnlockCallback callback = new UnlockCallback(remote, greediness.getFlushLevel(), unlock);
           boolean noLocksHeld = noLocksHeld(null, null);
+          resetPinIfNecessary(noLocksHeld);
           if (remote.asyncFlush(id, callback, noLocksHeld)) {
             releaseOnFlush();
           }
@@ -1243,6 +1260,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                         + flushLevel + " during flush operation");
             LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
             boolean noLocksHeld = noLocksHeld(null, null);
+            resetPinIfNecessary(noLocksHeld);
             if (remote.asyncFlush(id, callback, noLocksHeld)) {
               greediness = recallCommit(remote, batch);
             }
@@ -1269,7 +1287,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           }
         }
       }
-
       remote.recallCommit(this.lock, contexts, batch);
 
       this.greediness = this.greediness.recallCommitted();
@@ -1294,7 +1311,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    */
   @Override
   public synchronized boolean tryMarkAsGarbage(final RemoteLockManager remote) {
-    if (!this.pinned && isEmpty() && this.gcCycleCount > 0) {
+    if (this.pinned == 0 && isEmpty() && this.gcCycleCount > 0) {
       this.greediness = this.greediness.markAsGarbage();
       if (this.greediness.isGarbage()) {
         return true;
@@ -1404,5 +1421,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } else {
       throw new InterruptedException();
     }
+  }
+
+  @Override
+  public synchronized boolean isAwardValid(long awardIDParam) {
+    return this.awardId != NULL_AWARD_ID && this.awardId == awardIDParam;
+  }
+
+  @Override
+  public long getAwardID() {
+    return this.awardId;
   }
 }

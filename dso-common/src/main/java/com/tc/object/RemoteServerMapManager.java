@@ -7,7 +7,6 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.invalidation.InvalidationsProcessor;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
 import com.tc.text.PrettyPrintable;
@@ -16,7 +15,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface RemoteServerMapManager extends ClientHandshakeCallback, PreTransactionFlushCallback,
+public interface RemoteServerMapManager extends ClientHandshakeCallback,
     InvalidationsProcessor, PrettyPrintable {
 
   public Object getMappingForKey(ObjectID mapID, Object portableKey) throws AbortedOperationException;

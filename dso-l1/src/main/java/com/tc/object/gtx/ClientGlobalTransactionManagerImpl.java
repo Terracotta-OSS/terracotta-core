@@ -38,12 +38,9 @@ public class ClientGlobalTransactionManagerImpl implements
   private GlobalTransactionID               lowWatermark         = GlobalTransactionID.NULL_ID;
   private final RemoteTransactionManager    remoteTransactionManager;
   private int                               ignoredCount         = 0;
-  private final PreTransactionFlushCallback preTransactionFlushCallback;
 
-  public ClientGlobalTransactionManagerImpl(final RemoteTransactionManager remoteTransactionManager,
-                                            final PreTransactionFlushCallback preTransactionFlushCallback) {
+  public ClientGlobalTransactionManagerImpl(final RemoteTransactionManager remoteTransactionManager) {
     this.remoteTransactionManager = remoteTransactionManager;
-    this.preTransactionFlushCallback = preTransactionFlushCallback;
   }
 
   @Override
@@ -113,10 +110,7 @@ public class ClientGlobalTransactionManagerImpl implements
   }
 
   @Override
-  public void flush(final LockID lockID, boolean noLocksLeftOnClient) throws AbortedOperationException {
-    if (noLocksLeftOnClient) {
-      preTransactionFlushCallback.preTransactionFlush(lockID);
-    }
+  public void flush(final LockID lockID) throws AbortedOperationException {
     this.remoteTransactionManager.flush(lockID);
   }
 
@@ -126,10 +120,7 @@ public class ClientGlobalTransactionManagerImpl implements
   }
 
   @Override
-  public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback, boolean noLocksLeftOnClient) {
-    if (noLocksLeftOnClient) {
-      preTransactionFlushCallback.preTransactionFlush(lockID);
-    }
+  public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
     return this.remoteTransactionManager.asyncFlush(lockID, callback);
   }
 }

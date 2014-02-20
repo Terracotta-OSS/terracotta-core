@@ -22,6 +22,8 @@ import com.tc.util.Util;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
 import com.tc.util.runtime.ThreadIDManager;
+import com.tc.util.sequence.Sequence;
+import com.tc.util.sequence.SimpleSequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,6 +61,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   private final Timer                             gcTimer;
   private final Timer                             lockLeaseTimer;
+  private final Sequence                          lockAwardSequence   = new SimpleSequence();
 
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
@@ -450,7 +453,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         while (true) {
           final ClientLock lockState = getOrCreateClientLockState(lock);
           try {
-            lockState.award(this.remoteLockManager, thread, level);
+            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.next());
             break;
           } catch (final GarbageLockException e) {
             // ignorable - thrown when operating on a garbage collected lock
@@ -464,7 +467,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           this.remoteLockManager.unlock(lock, thread, level);
         } else {
           try {
-            lockState.award(this.remoteLockManager, thread, level);
+            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.next());
           } catch (final GarbageLockException e) {
             this.remoteLockManager.unlock(lock, thread, level);
           }
@@ -1011,5 +1014,26 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     return this.locks.size();
   }
 
+  @Override
+  public boolean isLockAwardValid(final LockID lock, final long awardID) {
+    final ClientLock lockState = getClientLockState(lock);
+    if (lockState == null) {
+      return false;
+    } else {
+      return lockState.isAwardValid(awardID);
+    }
+  }
+
+  @Override
+  public long getAwardIDFor(final LockID lock) {
+    final ClientLock lockState = getClientLockState(lock);
+    if (lockState == null) {
+      logger.info("lockstate is null for lock id " + lock);
+      return -1;
+    } else {
+      return lockState.getAwardID();
+    }
+
+  }
 
 }

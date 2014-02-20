@@ -484,7 +484,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue item = this.cache.getLocalValueStrong(key);
     if (item != null) { return item.getValueObject(); }
-
     // Doing double checking to ensure correct value
     Lock lock = getLockForKey(key);
     lock.lock();
@@ -606,7 +605,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public void addStrongValueToCache(LockID lockId, Object key, Object value, ObjectID valueObjectID,
                                     MapOperationType mapOperation) {
-    final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, value, valueObjectID);
+    final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, value, valueObjectID,
+                                                                                      manager.getLockAwardIDFor(lockId));
     addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 

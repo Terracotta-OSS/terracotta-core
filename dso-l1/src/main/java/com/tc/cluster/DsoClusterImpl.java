@@ -233,8 +233,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
         }
       }
       nodeStatus.operationsEnabled();
-      LOGGER.info("NODE_JOINED " + currentClientID + " rejoinHappened " + rejoinHappened + " nodeStatus "
-                  + nodeStatus.getState());
+      LOGGER.info("NODE_JOINED " + currentClientID + " rejoinHappened " + rejoinHappened);
     } finally {
       stateWriteLock.unlock();
 
