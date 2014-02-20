@@ -150,6 +150,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS              = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
   public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
   public static final String L2_OBJECTMANAGER_OIDSET_TYPE                                   = "l2.objectmanager.oidset.type";
+  public static final String L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD                = "l2.objectmanager.client.state.verbose.threshold";
 
   /**
    * ******************************************************************************************************************
