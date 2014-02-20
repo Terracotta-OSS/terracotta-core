@@ -96,6 +96,8 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS);
 
     exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
+
+    exemptedProperties.add(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE);
   }
 
   private void loadDefaults(String propFile) {
