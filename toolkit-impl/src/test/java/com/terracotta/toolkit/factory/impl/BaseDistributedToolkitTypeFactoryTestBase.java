@@ -5,6 +5,8 @@ import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
@@ -14,6 +16,7 @@ import com.terracotta.toolkit.object.ToolkitObjectStripe;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -139,15 +142,25 @@ public abstract class BaseDistributedToolkitTypeFactoryTestBase {
   @Test
   public void testMultiConcurrencyMultiStripe() {
     BaseDistributedToolkitTypeFactory stubFactory = createFactory();
-    ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
+    Configuration config = stubFactory.newConfigForCreationInCluster(new ToolkitCacheConfigBuilder().concurrency(4).build());
 
-    builder.maxTotalCount(100).concurrency(4);
-    Configuration[] configs = stubFactory.distributeConfigAmongStripes(builder.build(), 5);
+    Configuration[] configs = stubFactory.distributeConfigAmongStripes(config, 5);
     Assert.assertEquals(5, configs.length);
     for (int i = 0; i < 4; i++) {
       Assert.assertEquals(1, configs[i].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
     }
     Assert.assertEquals(0, configs[4].getInt(ToolkitConfigFields.CONCURRENCY_FIELD_NAME));
+
+    stubFactory.validateExistingClusterWideConfigs(getToolkitObjectStripes(configs), config);
+  }
+
+  private static ToolkitObjectStripe[] getToolkitObjectStripes(final Configuration[] configs) {
+    return Lists.transform(Arrays.asList(configs), new Function<Configuration, Object>() {
+      @Override
+      public Object apply(final Configuration input) {
+        return when(mock(ToolkitObjectStripe.class).getConfiguration()).thenReturn(input).getMock();
+      }
+    }).toArray(new ToolkitObjectStripe[configs.length]);
   }
 
   @Test

@@ -368,7 +368,7 @@ public enum InternalCacheConfigurationType {
     public Serializable getAggregatedConfigValue(final Collection<Configuration> configurations) {
       int concurrency = 0;
       for (Configuration configuration : configurations) {
-        concurrency += (Integer)getExistingValueOrException(configuration);
+        concurrency += (Integer) getValueIfExistsOrDefault(configuration);
       }
       return concurrency;
     }
