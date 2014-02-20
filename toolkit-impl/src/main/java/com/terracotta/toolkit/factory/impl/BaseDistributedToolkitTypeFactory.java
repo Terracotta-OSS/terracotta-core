@@ -171,7 +171,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
         configType.setValue(newConfig, existingValue);
       } else if (configType.acceptOverride() && !existingValue.equals(configType.getValueIfExists(newConfig))) {
         logger.warn("Overriding configuration value '" + configType.getValueIfExists(newConfig) + "' for field '"
-                    + field + "' from server with value '" + existingValue + "' for cache '" + name + "'.");
+                    + field + "' from TSA with value '" + existingValue + "' for cache '" + name + "'.");
         configType.setValue(newConfig, existingValue);
       }
     }
