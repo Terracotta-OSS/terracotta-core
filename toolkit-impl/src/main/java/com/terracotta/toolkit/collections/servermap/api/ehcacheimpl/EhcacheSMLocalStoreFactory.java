@@ -12,7 +12,6 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
 import net.sf.ehcache.config.PinningConfiguration;
-import net.sf.ehcache.constructs.classloader.InternalClassLoaderAwareCache;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
@@ -40,7 +39,7 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
     final String localCacheName = "local_shadow_cache_for_" + cacheManager.getName() + "_" + config.getLocalStoreName();
     ehcache = (InternalEhcache) cacheManager.getEhcache(localCacheName);
     if (ehcache == null) {
-      ehcache = createCache(localCacheName, config);
+      ehcache = createCache(localCacheName, config, cacheManager);
       new EhcacheInitializationHelper(cacheManager).initializeEhcache(ehcache);
     }
     return ehcache;
@@ -63,10 +62,14 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
     return cacheManager;
   }
 
-  private static InternalEhcache createCache(String cacheName, ServerMapLocalStoreConfig config) {
+  private static InternalEhcache createCache(String cacheName, ServerMapLocalStoreConfig config,
+                                             CacheManager cacheManager) {
     CacheConfiguration cacheConfig = new CacheConfiguration(cacheName, 0)
         .persistence(new PersistenceConfiguration().strategy(Strategy.NONE))
         .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.CLOCK).overflowToDisk(false);
+
+    // classloader for these caches needs to see toolkit internal types
+    cacheConfig.setClassLoader(EhcacheSMLocalStoreFactory.class.getClassLoader());
 
     // wire up config
     if (config.getMaxCountLocalHeap() > 0) {
@@ -91,6 +94,6 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
       cacheConfig.pinning(new PinningConfiguration().store(PinningConfiguration.Store.LOCALMEMORY));
     }
 
-    return new InternalClassLoaderAwareCache(new Cache(cacheConfig), ServerMapLocalStoreFactory.class.getClassLoader());
+    return new Cache(cacheConfig);
   }
 }

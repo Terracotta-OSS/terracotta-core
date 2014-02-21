@@ -30,7 +30,7 @@ public class ToolkitUnitTest {
       public void shutdown() {
         throw new ImplementMe();
       }
-    }, new ToolkitCacheManagerProvider(), false);
+    }, new ToolkitCacheManagerProvider(), false, getClass().getClassLoader());
     return toolkit;
   }
 

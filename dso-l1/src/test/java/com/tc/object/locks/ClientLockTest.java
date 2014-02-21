@@ -634,7 +634,7 @@ public class ClientLockTest extends TestCase {
           lock.notified(new ThreadID(1));
           checkLockQueryMethods(lock, 1, 0);
           try {
-            lock.award(new AssertingRemoteLockManager(lock), new ThreadID(1), ServerLockLevel.WRITE);
+            lock.award(new AssertingRemoteLockManager(lock), new ThreadID(1), ServerLockLevel.WRITE, 1);
           } catch (GarbageLockException e) {
             Assert.failure("Unexpected Exception ", e);
           }
@@ -681,7 +681,7 @@ public class ClientLockTest extends TestCase {
             // ignore
           }
           try {
-            lock.award(new AssertingRemoteLockManager(lock), new ThreadID(1), ServerLockLevel.WRITE);
+            lock.award(new AssertingRemoteLockManager(lock), new ThreadID(1), ServerLockLevel.WRITE, 1);
           } catch (GarbageLockException e) {
             Assert.failure("Unexpected Exception ", e);
           }
@@ -1008,7 +1008,7 @@ public class ClientLockTest extends TestCase {
         @Override
         public void run() {
           try {
-            target.award(AssertingGreedyRemoteLockManager.this, ThreadID.VM_ID, level);
+            target.award(AssertingGreedyRemoteLockManager.this, ThreadID.VM_ID, level, 1);
           } catch (GarbageLockException e) {
             Assert.failure("Unexpected Exception ", e);
           }
@@ -1086,7 +1086,7 @@ public class ClientLockTest extends TestCase {
         @Override
         public void run() {
           try {
-            target.award(AssertingRemoteLockManager.this, thread, level);
+            target.award(AssertingRemoteLockManager.this, thread, level, 1);
           } catch (GarbageLockException e) {
             Assert.failure("Unexpected Exception ", e);
           }
@@ -1120,7 +1120,7 @@ public class ClientLockTest extends TestCase {
         @Override
         public void run() {
           try {
-            target.award(AssertingRemoteLockManager.this, thread, level);
+            target.award(AssertingRemoteLockManager.this, thread, level, 1);
           } catch (GarbageLockException e) {
             Assert.failure("Unexpected Exception ", e);
           }

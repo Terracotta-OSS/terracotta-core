@@ -26,11 +26,8 @@ import com.tc.object.locks.LocksRecallServiceImpl;
 import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
-import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
-import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -115,29 +112,6 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     Assert.assertEquals(1, clientLockManager.getRecallList().size());
     Assert.assertEquals(lockID, clientLockManager.getRecallList().get(0));
-  }
-
-  public void testRememberMapIDToLockID() {
-    L1ServerMapLocalCacheStore store = new L1ServerMapLocalCacheStoreHashMap();
-    ObjectID mapID = new ObjectID(100);
-    ServerMapLocalCache localCache = this.l1LocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito
-        .mock(ClientObjectManager.class), null, true, store, Mockito.mock(PinnedEntryFaultCallback.class));
-    localCache.setLocalCacheEnabled(true);
-
-    MockTCObjectSelfCallback tcObjectSelfCallback = new MockTCObjectSelfCallback();
-    this.l1LocalCacheManagerImpl.initializeTCObjectSelfStore(tcObjectSelfCallback);
-
-    LockID lockID = new LongLockID(100);
-
-    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID,
-                                       MockModesAdd.createMockSerializedEntry(12345), mapID, MapOperationType.GET);
-
-    this.l1LocalCacheManagerImpl.removeEntriesForLockId(lockID);
-
-    System.err.println("Object IDs removed = " + tcObjectSelfCallback.getRemovedSet());
-
-    Assert.assertEquals(0, store.size());
-    Assert.assertEquals(0, localCache.size());
   }
 
   private static class MySink implements Sink {

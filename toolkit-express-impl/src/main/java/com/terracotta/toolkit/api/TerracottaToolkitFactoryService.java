@@ -19,13 +19,14 @@ import java.util.Set;
 
 public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
-  private final static String       TERRACOTTA_TOOLKIT_TYPE          = "terracotta";
-  private final static String       NON_STOP_TERRACOTTA_TOOLKIT_TYPE = "nonstop-terracotta";
-  private static final String       TUNNELLED_MBEAN_DOMAINS_KEY      = "tunnelledMBeanDomains";
-  private static final String       TC_CONFIG_SNIPPET_KEY            = "tcConfigSnippet";
-  private static final String       REJOIN_KEY                       = "rejoin";
-  private static final String       PRODUCT_ID_KEY                   = "productId";
-  private static final Properties   EMPTY_PROPERTIES                 = new Properties();
+  private final static String     TERRACOTTA_TOOLKIT_TYPE          = "terracotta";
+  private final static String     NON_STOP_TERRACOTTA_TOOLKIT_TYPE = "nonstop-terracotta";
+  private static final String     TUNNELLED_MBEAN_DOMAINS_KEY      = "tunnelledMBeanDomains";
+  private static final String     TC_CONFIG_SNIPPET_KEY            = "tcConfigSnippet";
+  private static final String     REJOIN_KEY                       = "rejoin";
+  private static final String     PRODUCT_ID_KEY                   = "productId";
+  private static final String     CLASSLOADER                      = "classloader";
+  private static final Properties EMPTY_PROPERTIES                 = new Properties();
 
   @Override
   public boolean canHandleToolkitType(String type, String subName) {
@@ -59,8 +60,9 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
   private TerracottaClientConfig createTerracottaClientConfig(String type, String subName, Properties properties)
       throws ToolkitInstantiationException {
-    TerracottaClientConfigParams terracottaClientConfigParams = new TerracottaClientConfigParams().rejoin(isRejoinEnabled(properties))
-        .nonStopEnabled(isNonStopEnabled(type));
+    TerracottaClientConfigParams terracottaClientConfigParams = new TerracottaClientConfigParams()
+        .rejoin(isRejoinEnabled(properties)).nonStopEnabled(isNonStopEnabled(type))
+        .classLoader(getClassLoader(properties));
     String tcConfigSnippet = properties.getProperty(TC_CONFIG_SNIPPET_KEY, "");
     if (tcConfigSnippet == null || tcConfigSnippet.trim().equals("")) {
       // if no tcConfigSnippet, assume url
@@ -75,6 +77,11 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
     }
 
     return terracottaClientConfigParams.newTerracottaClientConfig();
+  }
+
+  private ClassLoader getClassLoader(Properties properties) {
+    if (properties == null) { return null; }
+    return (ClassLoader) properties.get(CLASSLOADER);
   }
 
   private boolean isNonStopEnabled(String type) {

@@ -39,7 +39,6 @@ import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
-import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -137,9 +136,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   @Override
-  public ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
-                                                                             final PreTransactionFlushCallback preTransactionFlushCallback) {
-    return new ClientGlobalTransactionManagerImpl(remoteTxnMgr, preTransactionFlushCallback);
+  public ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr) {
+    return new ClientGlobalTransactionManagerImpl(remoteTxnMgr);
   }
 
   @Override

@@ -86,11 +86,11 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
       final Map newRoots = bcc.getNewRoots();
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
+      List<DNA> prunedChanges = Collections.emptyList();
       final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
       final Invalidations invalidateObjectIDs = new Invalidations();
 
-      final List prunedChanges;
-      if (!clientID.equals(committerID)) {
+      if (!clientID.equals(committerID) || !bcc.getApplyInfo().getObjectsToEchoChangesFor().isEmpty()) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(),
             bcc.getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
       }  else {

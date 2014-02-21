@@ -75,6 +75,8 @@ import com.terracotta.toolkit.factory.impl.ToolkitStoreFactoryImpl;
 import com.terracotta.toolkit.feature.NoopLicenseFeature;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
+import com.terracotta.toolkit.object.serialization.ThreadContextAwareClassLoader;
+import com.terracotta.toolkit.object.serialization.UserSuppliedClassLoader;
 import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.rejoin.RejoinAwareSerializerMap;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
@@ -112,12 +114,13 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ToolkitTransactionController                      transactionController;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient, ToolkitCacheManagerProvider toolkitCacheManagerProvider,
-                           boolean isNonStop) {
+                           boolean isNonStop, ClassLoader loader) {
+
     this.tcClient = tcClient;
     this.isNonStop = isNonStop;
     this.platformService = PlatformServiceProvider.getPlatformService();
     clusterInfoInstance = new TerracottaClusterInfo(platformService);
-    SerializationStrategy strategy = createSerializationStrategy();
+    SerializationStrategy strategy = createSerializationStrategy(loader);
     Object old = platformService.registerObjectByNameIfAbsent(TOOLKIT_SERIALIZER_REGISTRATION_NAME, strategy);
     if (old != null) {
       if (old instanceof SerializationStrategy) {
@@ -162,10 +165,16 @@ public class TerracottaToolkit implements ToolkitInternal {
     transactionController = new ToolkitTransactionFeatureImpl(platformService);
   }
 
-  private SerializationStrategy createSerializationStrategy() {
+  private SerializationStrategy createSerializationStrategy(ClassLoader loader) {
+    if (loader == null) {
+      loader = new ThreadContextAwareClassLoader(getClass().getClassLoader());
+    } else {
+      loader = new UserSuppliedClassLoader(loader, getClass().getClassLoader());
+    }
+
     RejoinAwareSerializerMap map = getOrCreateSerializerRootMap();
     platformService.addRejoinLifecycleListener(map);
-    return new SerializationStrategyImpl(this.platformService, map);
+    return new SerializationStrategyImpl(this.platformService, map, loader);
   }
 
   private RejoinAwareSerializerMap getOrCreateSerializerRootMap() {

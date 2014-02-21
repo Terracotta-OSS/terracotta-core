@@ -46,4 +46,9 @@ public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCal
    * Returns a complete dump (in pseudo-portable format) of the state of all locks.
    */
   public Collection<ClientServerExchangeLockContext> getAllLockContexts();
+
+  boolean isLockAwardValid(LockID lock, long awardID);
+
+  public long getAwardIDFor(final LockID lock);
+
 }

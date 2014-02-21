@@ -143,7 +143,7 @@ public class MockPlatformService implements PlatformService {
     if(expectedType.equals(SerializationStrategy.class) && name.equalsIgnoreCase(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME)) {
       SerializerMapImpl serializerMapImpl =  new SerializerMapImpl();
       serializerMapImpl.__tc_managed(NullTCObject.INSTANCE);
-      return (T) new SerializationStrategyImpl(this, serializerMapImpl);
+      return (T) new SerializationStrategyImpl(this, serializerMapImpl, getClass().getClassLoader());
     }
     return null;
   }

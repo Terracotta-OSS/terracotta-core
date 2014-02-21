@@ -886,7 +886,7 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, int resultPageSize, 
+                                         List<NVPair> aggregators, int maxResults, int batchSize, int resultPageSize,
                                          boolean waitForTxn)
       throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
@@ -1026,5 +1026,13 @@ public class ManagerImpl implements Manager {
   @Override
   public TaskRunner getTastRunner() {
     return taskRunner;
+  }
+
+  public long getLockAwardIDFor(LockID lock) {
+    return lockManager.getAwardIDFor(lock);
+  }
+
+  public boolean isLockAwardValid(LockID lock, long awardID) {
+    return lockManager.isLockAwardValid(lock, awardID);
   }
 }

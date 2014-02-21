@@ -37,7 +37,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   @Override
   public void start() {
-    Thread th = new Thread(rejoinWorker, "Rejoin worker thread");
+    Thread th = new Thread(rejoinWorker, "Rejoin Worker");
     th.setDaemon(true);
     th.start();
   }
@@ -129,7 +129,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
       try {
         logger.info("rejoin request for channel: " + channel);
         channel.reopen();
-        reopenInProgress.set(false);
+        setReopenInProgress(false);
         break;
       } catch (Throwable t) {
         logger.warn("Error during channel open " + t);

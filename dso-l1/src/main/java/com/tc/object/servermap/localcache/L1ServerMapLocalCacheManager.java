@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
 import com.tc.util.ObjectIDSet;
@@ -39,16 +38,6 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
    */
   public ObjectIDSet removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set);
 
-  /**
-   * Used when a lock recall happens<br>
-   * All the local cache entries associated with this lock id will be removed
-   */
-  public void removeEntriesForLockId(LockID lockID);
-
-  /**
-   * Remember the mapId associated with the valueLockId
-   */
-  public void rememberMapIdForValueLockId(LockID valueLockId, ServerMapLocalCache localCache);
 
   /**
    * Shut down all local caches

@@ -30,8 +30,7 @@ public class ClientObjectReferenceSetConsistencyTest extends TCTestCase {
         .setProperty(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL, "1000");
 
     final AtomicLong currentObjectID = new AtomicLong(-1);
-    final TCLogger logger = TCLogging.getLogger(ClientObjectReferenceSetTest.class);
-    final ClientStateManagerImpl clientStateManager = new ClientStateManagerImpl(logger);
+    final ClientStateManagerImpl clientStateManager = new ClientStateManagerImpl();
     final NodeID node = new ClientID(1);
     final CyclicBarrier coordinator = new CyclicBarrier(2);
     clientStateManager.startupNode(node);

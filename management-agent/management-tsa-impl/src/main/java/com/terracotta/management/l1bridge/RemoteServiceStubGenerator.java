@@ -4,6 +4,7 @@ import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.TimeoutService;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -22,9 +23,10 @@ public class RemoteServiceStubGenerator {
 
   public RemoteServiceStubGenerator(RequestTicketMonitor requestTicketMonitor, UserService userService,
                                     ContextService contextService, RemoteRequestValidator requestValidator,
-                                    RemoteAgentBridgeService remoteAgentBridgeService, ExecutorService executorService) {
+                                    RemoteAgentBridgeService remoteAgentBridgeService, ExecutorService executorService,
+                                    TimeoutService timeoutService) {
     this.requestValidator = requestValidator;
-    this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService);
+    this.remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
   }
 
   public <T> T newRemoteService(Class<T> clazz, String agency) {

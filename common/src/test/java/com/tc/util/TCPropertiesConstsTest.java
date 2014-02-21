@@ -48,6 +48,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_PREFETCH_ENABLED);
     exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_OIDSET_TYPE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD);
 
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECTDB_CONCURRENCY);
@@ -97,6 +98,8 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE);
 
     exemptedProperties.add(TCPropertiesConsts.CAS_LOGGING_ENABLED);
+
+    exemptedProperties.add(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE);
   }
 
   private void loadDefaults(String propFile) {

@@ -556,7 +556,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dumpHandler.registerForDump(remoteServerMgrDumpAdapter);
 
     final ClientGlobalTransactionManager gtxManager = this.dsoClientBuilder
-        .createClientGlobalTransactionManager(this.remoteTxnManager, remoteServerMapManager);
+        .createClientGlobalTransactionManager(this.remoteTxnManager);
 
     final TCClassFactory classFactory = this.dsoClientBuilder.createTCClassFactory(this.config, this.classProvider,
                                                                                    encoding, this.manager,

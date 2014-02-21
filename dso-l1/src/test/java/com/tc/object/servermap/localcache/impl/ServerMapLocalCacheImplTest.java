@@ -3,7 +3,10 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
@@ -14,10 +17,11 @@ import com.tc.net.GroupID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.bytecode.Manager;
+import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
-import com.tc.object.locks.LocksRecallService;
 import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.locks.Notify;
@@ -29,7 +33,6 @@ import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.object.servermap.localcache.impl.ServerMapLocalCacheImpl.ValueOIDKeyTuple;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.OnCommitCallable;
@@ -44,6 +47,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -59,13 +63,14 @@ import junit.framework.TestCase;
 
 public class ServerMapLocalCacheImplTest extends TestCase {
   private volatile ServerMapLocalCacheImpl cache;
-  private final ObjectID                   mapID       = new ObjectID(50000);
-  private int                              maxInMemory = 1000;
-  private TestLocksRecallHelper            locksRecallHelper;
+  private final ObjectID                   mapID                   = new ObjectID(50000);
+  private int                              maxInMemory             = 1000;
   private L1ServerMapLocalCacheManagerImpl globalLocalCacheManager;
   private MySink                           sink;
   private L1ServerMapLocalCacheStore       localCacheStore;
   private MockTCObjectSelfCallback         mockTCObjectSelfCallback;
+  private final Map                        pinMap                  = new HashMap();
+  private final Map<LockID, Long>          lockIDandAwardIDMapping = new HashMap();
 
   @Override
   protected void setUp() throws Exception {
@@ -74,29 +79,50 @@ public class ServerMapLocalCacheImplTest extends TestCase {
   }
 
   public void setLocalCache(CountDownLatch latch1, CountDownLatch latch2, int maxElementsInMemory) {
-    setLocalCache(latch1, latch2, maxElementsInMemory, new TestLocksRecallHelper());
-  }
-
-  public void setLocalCache(CountDownLatch latch1, CountDownLatch latch2, int maxElementsInMemory,
-                            TestLocksRecallHelper testLocksRecallHelper) {
-    locksRecallHelper = testLocksRecallHelper;
     maxInMemory = maxElementsInMemory;
     sink = new MySink();
-    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink, new TxnCompleteSink(),
+    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(null, sink, new TxnCompleteSink(),
                                                                    Mockito.mock(Sink.class));
     globalLocalCacheManager.setLockManager(new MockClientLockManager());
     mockTCObjectSelfCallback = new MockTCObjectSelfCallback();
     globalLocalCacheManager.initializeTCObjectSelfStore(mockTCObjectSelfCallback);
     sink.setGlobalLocalCacheManager(globalLocalCacheManager);
-    locksRecallHelper.setGlobalLocalCacheManager(globalLocalCacheManager);
     final ClientTransaction clientTransaction = new MyClientTransaction(latch1, latch2);
     ClientObjectManager com = Mockito.mock(ClientObjectManager.class);
     ClientTransactionManager ctm = Mockito.mock(ClientTransactionManager.class);
     Mockito.when(com.getTransactionManager()).thenReturn(ctm);
     Mockito.when(ctm.getCurrentTransaction()).thenReturn(clientTransaction);
+    Manager mng = Mockito.mock(ManagerImpl.class);
+    Mockito.doAnswer(new Answer() {
+
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        int value = (Integer) (pinMap.get(args[0]) != null ? pinMap.get(args[0]) : 0);
+        pinMap.put(invocation.getArguments()[0], ++value);
+        return null;
+      }
+    }).when(mng).pinLock(Matchers.any(LockID.class));
+    Mockito.doAnswer(new Answer() {
+
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        int value = (Integer) (pinMap.get(args[0]) != null ? pinMap.get(args[0]) : 0);
+        pinMap.put(invocation.getArguments()[0], --value);
+        return null;
+      }
+    }).when(mng).unpinLock(Matchers.any(LockID.class));
+    Mockito.when(mng.isLockAwardValid(Matchers.any(LockID.class), Matchers.anyLong())).thenAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) {
+        Object[] args = invocation.getArguments();
+        return args[1].equals(lockIDandAwardIDMapping.get(args[0]));
+      }
+    });
     localCacheStore = new L1ServerMapLocalCacheStoreHashMap(maxElementsInMemory);
     cache = (ServerMapLocalCacheImpl) globalLocalCacheManager
-        .getOrCreateLocalCache(mapID, com, null, true, localCacheStore, Mockito.mock(PinnedEntryFaultCallback.class));
+        .getOrCreateLocalCache(mapID, com, mng, true, localCacheStore, Mockito.mock(PinnedEntryFaultCallback.class));
   }
 
   public void testDev6522() {
@@ -111,6 +137,60 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     latch1.countDown();
   }
 
+  public void testPinIfNecessory() throws Exception {
+    long lockId = 100;
+    long strongOid = 2 * lockId;
+    String key = "key" + lockId;
+    LockID lockOid = new LongLockID(lockId);
+    MockSerializedEntry strongEntry = createMockSerializedEntry("valueStrong", strongOid);
+    lockIDandAwardIDMapping.put(lockOid, 1L);
+    MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
+                                                  mapID, MapOperationType.PUT, 1L);
+    Assert.assertEquals(1, pinMap.get(lockOid));
+
+    // should not pin again for same lock id and award id
+    MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
+                                                  mapID, MapOperationType.PUT, 1L);
+    Assert.assertEquals(1, pinMap.get(lockOid));
+    // should pin for different lock id and key
+    lockId = 100;
+    strongOid = 2 * lockId;
+    key = "key" + lockId;
+    lockOid = new LongLockID(lockId);
+    strongEntry = createMockSerializedEntry("valueStrong", strongOid);
+    lockIDandAwardIDMapping.put(lockOid, 1L);
+    MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
+                                                  mapID, MapOperationType.PUT, 1L);
+    Assert.assertEquals(1, pinMap.get(lockOid));
+
+  }
+
+  public void testPinIfNecessoryForEviction() throws Exception {
+    setLocalCache(null, null, 25);
+    for (int i = 1; i <= 50; i++) {
+      long lockId = 100 + i;
+      long strongOid = 2 * lockId;
+      String key = "key" + lockId;
+      LockID lockOid = new LongLockID(lockId);
+      MockSerializedEntry strongEntry = createMockSerializedEntry("valueStrong" + lockId, strongOid);
+      lockIDandAwardIDMapping.put(lockOid, 1L);
+      MockModesAdd.addStrongValueToCacheWithAwardID(cache, this.globalLocalCacheManager, key, lockOid, strongEntry,
+                                                    mapID, MapOperationType.PUT, 1L);
+      Assert.assertEquals(1, pinMap.get(lockOid));
+    }
+    Thread.sleep(10000);
+    int pinned = 0;
+    int unpinned = 0;
+    for (int j = 1; j <= pinMap.size(); j++) {
+      long lockId = 100 + j;
+      LockID lockOid = new LongLockID(lockId);
+      if ((Integer) pinMap.get(lockOid) == 0) unpinned++;
+      else pinned++;
+    }
+    Assert.assertTrue(unpinned >= 25);
+    Assert.assertTrue(pinned <= 25);
+  }
+
   public void testMixedPut() throws Exception {
     long lockId = 100;
     long strongOid = 2 * lockId;
@@ -123,11 +203,9 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     MockModesAdd.addStrongValueToCache(cache, this.globalLocalCacheManager, key, lockOid, strongEntry, mapID,
                                        MapOperationType.PUT);
     assertNotNull("oid->value does not exist", cache.getMappingUnlocked(strongEntry.getObjectID()));
-    assertNotNull("lockId->key does not exist", cache.getLockdIDMappings().get(lockOid));
     MockModesAdd.addEventualValueToCache(cache, this.globalLocalCacheManager, key, eventualEntry, mapID,
                                          MapOperationType.PUT);
     assertNull("oid->value still exist", cache.getMappingUnlocked(strongEntry.getObjectID()));
-    assertNotNull("lockId->key still exist", cache.getLockdIDMappings().get(lockOid));
     assertNotNull("oid->list<key> does not exist", cache.getMappingUnlocked(eventualEntry.getObjectID()));
 
     lockId = 200;
@@ -144,7 +222,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     MockModesAdd.addStrongValueToCache(cache, this.globalLocalCacheManager, key, lockOid, strongEntry, mapID,
                                        MapOperationType.PUT);
     assertNotNull("oid->value does not exist", cache.getInternalStore().get(strongEntry.getObjectID()));
-    assertNotNull("lockId->key does not exist", cache.getLockdIDMappings().get(lockOid));
     assertNull("oid->list<key> still exist", cache.getInternalStore().get(eventualEntry.getObjectID()));
   }
 
@@ -284,93 +361,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
   }
 
-  public void testRecalledLocks() throws Exception {
-    for (int i = 0; i < 50; i++) {
-      MockModesAdd.addStrongValueToCache(cache, globalLocalCacheManager, "key" + i, new LongLockID(i),
-                                         createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
-    }
-
-    for (int i = 0; i < 50; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
-    }
-
-    Set<LockID> evictLocks = new HashSet<LockID>();
-    for (int i = 0; i < 25; i++) {
-      LockID lockID = new LongLockID(i);
-      evictLocks.add(lockID);
-      globalLocalCacheManager.removeEntriesForLockId(lockID);
-    }
-
-    for (int i = 0; i < 25; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      Assert.assertNull(value);
-      Assert.assertNull(localCacheStore.get(new LongLockID(i)));
-    }
-
-    for (int i = 25; i < 50; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-    }
-
-    for (int i = 25; i < 50; i++) {
-      Set list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
-    }
-  }
-
-  public void testRemovedEntries() throws Exception {
-    Test2LocksRecallHelper test2LocksRecallHelper = new Test2LocksRecallHelper();
-    setLocalCache(null, null, maxInMemory, test2LocksRecallHelper);
-
-    for (int i = 0; i < 50; i++) {
-      MockModesAdd.addStrongValueToCache(cache, globalLocalCacheManager, "key" + i, new LongLockID(i),
-                                         createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
-    }
-
-    for (int i = 0; i < 50; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
-    }
-
-    Set<LockID> evictLocks = new HashSet<LockID>();
-    for (int i = 0; i < 25; i++) {
-      LockID lockID = new LongLockID(i);
-      evictLocks.add(lockID);
-      cache.removeFromLocalCache("key" + i);
-    }
-
-    Assert.assertEquals(evictLocks, test2LocksRecallHelper.lockIdsToEvict);
-
-    for (int i = 0; i < 25; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      Assert.assertNull(value);
-      Assert.assertNull(localCacheStore.get(new LongLockID(i)));
-    }
-
-    for (int i = 25; i < 50; i++) {
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-    }
-
-    for (int i = 25; i < 50; i++) {
-      Set list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
-    }
-  }
-
   public void testPinEntry() throws Exception {
     CountDownLatch latch1 = new CountDownLatch(1);
     CountDownLatch latch2 = new CountDownLatch(1);
@@ -390,35 +380,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     latch1.countDown();
     latch2.await();
   }
-
-  //
-  // public void testUnpinEntry() throws Exception {
-  // // int noOfElements = 50;
-  // //
-  // // CountDownLatch latch1 = new CountDownLatch(1);
-  // // CountDownLatch latch2 = new CountDownLatch(1);
-  // // setLocalCache(latch1, latch2, 10);
-  // //
-  // // for (int i = 0; i < noOfElements; i++) {
-  // // addStrongValueToCache(cache, new LongLockID(i), "key" + i, "value" + i, MapOperationType.PUT);
-  // // }
-  // //
-  // // Assert.assertEquals(noOfElements, cache.size());
-  // //
-  // // ThreadUtil.reallySleep(10 * 1000);
-  // //
-  // // Assert.assertEquals(50, cache.size());
-  // //
-  // // latch1.countDown();
-  // // latch2.await();
-  // //
-  // // ThreadUtil.reallySleep(10 * 1000);
-  // // addStrongValueToCache(cache, new LongLockID(50), "key" + noOfElements, "value" + noOfElements,
-  // // MapOperationType.PUT);
-  // //
-  // // ThreadUtil.reallySleep(10 * 1000);
-  // // Assert.assertTrue(cache.size() < 10);
-  // }
 
   public void testEvictFromLocalCache() throws Exception {
     for (int i = 0; i < 50; i++) {
@@ -577,10 +538,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       int eventualId = count + i;
       AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
       assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
 
       value = cache.getLocalValue("key" + eventualId);
       assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
@@ -658,74 +615,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     } catch (NoSuchElementException e) {
       System.out.println("Caught expected exception: " + e);
     }
-
-    final int half = count / 2;
-    for (int i = 0; i < half; i++) {
-      int eventualId = count + i;
-      LockID lockID = new LongLockID(i);
-      ObjectID objectId = new ObjectID(eventualId);
-      globalLocalCacheManager.removeEntriesForLockId(lockID);
-      globalLocalCacheManager.removeEntriesForObjectId(mapID, Collections.singleton(objectId));
-    }
-
-    for (int i = 0; i < half; i++) {
-      int eventualId = count + i;
-
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      Assert.assertNull(value);
-      Assert.assertNull(localCacheStore.get(new LongLockID(i)));
-
-      value = cache.getLocalValue("key" + eventualId);
-      Assert.assertNull(value);
-      Assert.assertNull(localCacheStore.get(new ObjectID(eventualId)));
-    }
-
-    Assert.assertEquals(count, cache.size());
-    keySet = cache.getKeys();
-    iterator = keySet.iterator();
-    Assert.assertEquals(count, keySet.size());
-    keysFromKeySet = new HashSet();
-    while (iterator.hasNext()) {
-      Object key = iterator.next();
-      keysFromKeySet.add(key);
-    }
-    try {
-      iterator.next();
-      fail("Calling next after iteration should throw NoSuchElementException");
-    } catch (NoSuchElementException e) {
-      System.out.println("Caught expected exception: " + e);
-    }
-    Assert.assertEquals(count, keysFromKeySet.size());
-    for (int i = half; i < count; i++) {
-      int eventualId = count + i;
-      Assert.assertTrue(keysFromKeySet.contains("key" + i));
-      Assert.assertTrue(keysFromKeySet.contains("key" + eventualId));
-
-      Assert.assertTrue(keySet.contains("key" + i));
-      Assert.assertTrue(keySet.contains("key" + eventualId));
-    }
-
-    for (int i = half; i < count; i++) {
-      int eventualId = count + i;
-      AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
-      assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
-
-      value = cache.getLocalValue("key" + eventualId);
-      assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
-      String keyGot = (String) localCacheStore.get(new ObjectID(eventualId));
-      Assert.assertEquals("key" + eventualId, keyGot);
-    }
-  }
-
-  private void assertListContainsOid(Set<ValueOIDKeyTuple> list, ObjectID objectID) {
-    for (ValueOIDKeyTuple tuple : list) {
-      if (tuple.getValueObjectID().equals(objectID)) { return; }
-    }
-    Assert.fail();
   }
 
   public void testGlobalLocalCacheManagerShutdown() {
@@ -743,10 +632,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       int eventualId = count + i;
       AbstractLocalCacheStoreValue value = cache.getLocalValue("key" + i);
       assertStrongValue("value" + i, new LongLockID(i), new ObjectID(i), value);
-      Set<ValueOIDKeyTuple> list = cache.getLockdIDMappings().get(new LongLockID(i));
-      Assert.assertNotNull(list);
-      Assert.assertEquals(1, list.size());
-      assertListContainsOid(list, new ObjectID(i));
 
       value = cache.getLocalValue("key" + eventualId);
       assertEventualValue("value" + eventualId, new ObjectID(eventualId), value);
@@ -1002,51 +887,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     @Override
     public int getSession() {
       return 0;
-    }
-
-  }
-
-  private static class TestLocksRecallHelper implements LocksRecallService {
-    private volatile Set<LockID>                  lockIds;
-    private volatile L1ServerMapLocalCacheManager globalLocalCacheManager;
-
-    public void setGlobalLocalCacheManager(L1ServerMapLocalCacheManager globalLocalCacheManagerParam) {
-      this.globalLocalCacheManager = globalLocalCacheManagerParam;
-    }
-
-    @Override
-    public void recallLocks(Set<LockID> locks) {
-      this.lockIds = locks;
-      for (LockID id : lockIds) {
-        globalLocalCacheManager.removeEntriesForLockId(id);
-      }
-    }
-
-    @Override
-    public void recallLocksInline(Set<LockID> locks) {
-      this.lockIds = locks;
-      for (LockID id : lockIds) {
-        globalLocalCacheManager.removeEntriesForLockId(id);
-      }
-    }
-
-  }
-
-  private static class Test2LocksRecallHelper extends TestLocksRecallHelper {
-    private volatile Set<LockID> lockIdsToEvict = new HashSet<LockID>();
-
-    @Override
-    public void recallLocks(Set<LockID> locks) {
-      for (LockID id : locks) {
-        lockIdsToEvict.add(id);
-      }
-    }
-
-    @Override
-    public void recallLocksInline(Set<LockID> locks) {
-      for (LockID id : locks) {
-        lockIdsToEvict.add(id);
-      }
     }
 
   }

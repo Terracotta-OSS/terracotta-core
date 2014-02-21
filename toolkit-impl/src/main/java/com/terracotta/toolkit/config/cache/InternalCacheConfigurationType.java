@@ -8,12 +8,16 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.config.SupportedConfigurationType;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,6 +109,11 @@ public enum InternalCacheConfigurationType {
     public boolean isSupportedBy(final ToolkitObjectType objectType) {
       return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
+
+    @Override
+    public boolean acceptOverride() {
+      return overrideMode() == ClusteredConfigOverrideMode.ALL;
+    }
   },
   MAX_COUNT_LOCAL_HEAP(INTEGER, MAX_COUNT_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_COUNT_LOCAL_HEAP) {
 
@@ -184,6 +193,11 @@ public enum InternalCacheConfigurationType {
     public boolean isSupportedBy(final ToolkitObjectType objectType) {
       return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
     }
+
+    @Override
+    public boolean acceptOverride() {
+      return overrideMode() == ClusteredConfigOverrideMode.ALL;
+    }
   },
   LOCAL_STORE_MANAGER_NAME(STRING, LOCAL_STORE_MANAGER_NAME_NAME, DEFAULT_LOCAL_STORE_MANAGER_NAME) {
     @Override
@@ -235,6 +249,15 @@ public enum InternalCacheConfigurationType {
     @Override
     public boolean isSupportedBy(final ToolkitObjectType objectType) {
       return objectType == ToolkitObjectType.CACHE;
+    }
+
+    @Override
+    public Serializable getAggregatedConfigValue(final Collection<Configuration> configurations) {
+      int totalCount = 0;
+      for (Configuration configuration : configurations) {
+        totalCount += (Integer) getExistingValueOrException(configuration);
+      }
+      return totalCount  < 0 ? -1 : totalCount;
     }
   },
   EVICTION_ENABLED(BOOLEAN, EVICTION_ENABLED_FIELD_NAME, DEFAULT_EVICTION_ENABLED) {
@@ -339,6 +362,15 @@ public enum InternalCacheConfigurationType {
     @Override
     public boolean isSupportedBy(final ToolkitObjectType objectType) {
       return objectType == ToolkitObjectType.STORE || objectType == ToolkitObjectType.CACHE;
+    }
+
+    @Override
+    public Serializable getAggregatedConfigValue(final Collection<Configuration> configurations) {
+      int concurrency = 0;
+      for (Configuration configuration : configurations) {
+        concurrency += (Integer) getValueIfExistsOrDefault(configuration);
+      }
+      return concurrency;
     }
   },
   CONSISTENCY(STRING, CONSISTENCY_FIELD_NAME, DEFAULT_CONSISTENCY) {
@@ -448,10 +480,14 @@ public enum InternalCacheConfigurationType {
 
   private final SupportedConfigurationType                         typeSupported;
   private final String                                             configString;
-  private final Object                                             defaultValue;
+  private final Serializable                                       defaultValue;
   private final static Map<String, InternalCacheConfigurationType> NAME_TO_TYPE_MAP;
   private final static Set<InternalCacheConfigurationType>         CLUSTER_WIDE_CONFIGS;
   private final static Set<InternalCacheConfigurationType>         LOCAL_CONFIGS;
+
+  private static enum ClusteredConfigOverrideMode {
+    NONE, GLOBAL, ALL
+  }
 
   static {
     InternalCacheConfigurationType[] types = InternalCacheConfigurationType.values();
@@ -470,7 +506,9 @@ public enum InternalCacheConfigurationType {
     CLUSTER_WIDE_CONFIGS = Collections.unmodifiableSet(clusterWideConfigs);
     LOCAL_CONFIGS = Collections.unmodifiableSet(localConfigs);
     NAME_TO_TYPE_MAP = Collections.unmodifiableMap(map);
+
   }
+
 
   // cache these values in a map [objectType -> set of types]
   public static Set<InternalCacheConfigurationType> getConfigsFor(final ToolkitObjectType objectType) {
@@ -500,7 +538,7 @@ public enum InternalCacheConfigurationType {
   }
 
   InternalCacheConfigurationType(SupportedConfigurationType typeSupported, String configStringName,
-                                 Object defaultValue) {
+                                 Serializable defaultValue) {
     this.typeSupported = typeSupported;
     this.configString = configStringName;
     checkValidType(defaultValue);
@@ -536,7 +574,7 @@ public enum InternalCacheConfigurationType {
   /**
    * Returns the value from the config if it is present in the config. Otherwise returns default value of the config
    */
-  public Object getValueIfExistsOrDefault(Configuration config) {
+  public Serializable getValueIfExistsOrDefault(Configuration config) {
     return isPresentInConfig(config) ? typeSupported.getFromConfig(config, configString) : defaultValue;
   }
 
@@ -545,8 +583,8 @@ public enum InternalCacheConfigurationType {
    * 
    * @throws IllegalArgumentException if this config field doesn't exist in the configuration
    */
-  public Object getExistingValueOrException(Configuration config) {
-    Object rv = getValueIfExists(config);
+  public Serializable getExistingValueOrException(Configuration config) {
+    Serializable rv = getValueIfExists(config);
     if (rv == null) {
       throw new IllegalArgumentException("Config field '" + configString + "' does not exist in the configuration - "
                                          + config);
@@ -554,6 +592,17 @@ public enum InternalCacheConfigurationType {
       validateLegalValue(rv);
       return rv;
     }
+  }
+
+  public Serializable getAggregatedConfigValue(Collection<Configuration> configurations) {
+    Iterator<Configuration> iterator = configurations.iterator();
+    Serializable value = getValueIfExistsOrDefault(iterator.next());
+    while (iterator.hasNext()) {
+      if (!value.equals(getValueIfExistsOrDefault(iterator.next()))) {
+        throw new IllegalArgumentException("Config field '" + name() + "' not consistent among all configurations.");
+      }
+    }
+    return value;
   }
 
   /**
@@ -577,7 +626,7 @@ public enum InternalCacheConfigurationType {
    */
   public void validateExistingMatchesValueFromConfig(Object existingValue, Configuration newConfig) {
     Object value = getValueIfExistsOrDefault(newConfig);
-    if (!existingValue.equals(value)) {
+    if (!existingValue.equals(value) && !acceptOverride() && isClusterWideConfig()) {
       throw new IllegalArgumentException('\'' + configString + "' should be same but does not match. Existing value: "
                                          + existingValue + ", value passed in config: " + value);
     }
@@ -605,6 +654,21 @@ public enum InternalCacheConfigurationType {
   public abstract void validateLegalValue(Object value);
 
   protected abstract boolean isSupportedBy(ToolkitObjectType objectType);
+
+  public boolean acceptOverride() {
+    switch (overrideMode()) {
+      case GLOBAL:
+        return isDynamicClusterWideChangeAllowed();
+      case ALL:
+        return isDynamicChangeAllowed();
+    }
+    return false;
+  }
+
+  private static ClusteredConfigOverrideMode overrideMode() {
+    String overrideProp = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE, true);
+    return overrideProp == null ? ClusteredConfigOverrideMode.NONE : ClusteredConfigOverrideMode.valueOf(overrideProp);
+  }
 
   public Object notNull(Object value) {
     return Validator.notNull(name(), value);

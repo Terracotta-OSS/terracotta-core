@@ -6,7 +6,6 @@ package com.tc.object;
 import com.tc.invalidation.Invalidations;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.text.PrettyPrinter;
@@ -93,11 +92,6 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
 
   @Override
   public void processInvalidations(Invalidations invalidations) {
-    //
-  }
-
-  @Override
-  public void preTransactionFlush(LockID lockID) {
     //
   }
 

@@ -150,6 +150,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS              = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
   public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
   public static final String L2_OBJECTMANAGER_OIDSET_TYPE                                   = "l2.objectmanager.oidset.type";
+  public static final String L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD                = "l2.objectmanager.client.state.verbose.threshold";
 
   /**
    * ******************************************************************************************************************
@@ -591,6 +592,12 @@ public interface TCPropertiesConsts {
    *                            : The maximum time in millis after which incoherent cached items will be discarded from the local cache.
    *  storageStrategy.dcv2.eviction.overshoot
    *                            : % overshoot required to trigger capacity eviction
+   *  clustered.config.override.mode
+   *                            : Configures the level of configuration override. Choices are:
+   *                                NONE - Override no local configuration with cluster configurations
+   *                                GLOBAL - Only override settings applicable to both server and client components of a cache
+   *                                ALL - Accepts overrides from the server for all settings
+   *
    * 
    * </code>
    ********************************************************************************************************************/
@@ -610,6 +617,7 @@ public interface TCPropertiesConsts {
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_EVICT_UNEXPIRED_ENTRIES_ENABLED   = "ehcache.storageStrategy.dcv2.evictUnexpiredEntries.enabled";
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED          = "ehcache.storageStrategy.dcv2.periodicEviction.enabled";
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT                = "ehcache.storageStrategy.dcv2.eviction.overshoot";
+  public static final String EHCACHE_CLUSTERED_CONFIG_OVERRIDE_MODE                         = "ehcache.clustered.config.override.mode";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Lock Manager Properties

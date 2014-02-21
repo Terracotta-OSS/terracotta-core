@@ -232,4 +232,14 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  @Override
+  public boolean isLockAwardValid(LockID lock, long awardID) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public long getAwardIDFor(LockID lock) {
+    throw new ImplementMe();
+  }
+
 }

@@ -55,11 +55,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds                   = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
 
   /**
-   * For lock recalls
-   */
-  private volatile TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache                  = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
-
-  /**
    * All local caches
    */
   private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCacheToPinnedEntryFaultCallback = new ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback>();
@@ -92,7 +87,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   public void cleanup() {
     // Clean-up of local cache is done by AggreagateServerMap on Rejoin Completed
 
-    lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
     tcObjectSelfStore.cleanup();
     // all sinks will be cleaned-up as a part of stageManager.cleanAll() from ClientHandshakeManagerImpl.reset()
     // clientLockManager will be cleanup from clientHandshakeCallbacks
@@ -225,31 +219,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
         invalidationsFailed.add(id);
       }
     }
-  }
-
-  /**
-   * This method is called only when recall happens
-   */
-  @Override
-  public void removeEntriesForLockId(LockID lockID) {
-    if (PINNING_ENABLED) {
-      this.clientLockManager.unpinLock(lockID);
-    }
-
-    final Set<ServerMapLocalCache> caches = lockIdsToLocalCache.removeAll(lockID);
-
-    for (ServerMapLocalCache localCache : caches) {
-      localCache.removeEntriesForLockId(lockID);
-    }
-  }
-
-  @Override
-  public void rememberMapIdForValueLockId(LockID valueLockId, ServerMapLocalCache localCache) {
-    if (PINNING_ENABLED) {
-      this.clientLockManager.pinLock(valueLockId);
-    }
-
-    lockIdsToLocalCache.add(valueLockId, localCache);
   }
 
   @Override

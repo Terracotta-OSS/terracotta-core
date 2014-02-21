@@ -14,13 +14,11 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFacto
 import com.terracotta.toolkit.config.ConfigUtil;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
-import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
 import java.util.Set;
-
 
 /**
  * An implementation of {@link DistributedToolkitTypeFactory} for ClusteredMap's
@@ -94,47 +92,4 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     return configurations;
   }
 
-  @Override
-  protected void validateExistingClusterWideConfigs(final ToolkitObjectStripe[] stripeObjects, final Configuration newConfig) {
-    int concurrency = 0;
-    int maxCount = 0;
-    for (ToolkitObjectStripe stripeObject : stripeObjects) {
-      final Configuration oldConfig = stripeObject.getConfiguration();
-      for (InternalCacheConfigurationType configType : InternalCacheConfigurationType
-          .getClusterWideConfigsFor(ToolkitObjectType.CACHE)) {
-        final Object existingValue = getAndValidateExistingValue(oldConfig, configType);
-        switch (configType) {
-          case CONCURRENCY:
-            concurrency += ((Integer)existingValue);
-            break;
-          case MAX_TOTAL_COUNT:
-            maxCount += ((Integer)existingValue);
-            break;
-          default:
-            configType.validateExistingMatchesValueFromConfig(existingValue, newConfig);
-        }
-      }
-    }
-
-    InternalCacheConfigurationType.CONCURRENCY.validateExistingMatchesValueFromConfig(concurrency, newConfig);
-    InternalCacheConfigurationType.MAX_TOTAL_COUNT.validateExistingMatchesValueFromConfig(
-        maxCount < 0 ? -1 : maxCount, newConfig);
-  }
-
-  @Override
-  protected Serializable getExistingValueOrException(final InternalCacheConfigurationType configType,
-                                                     final ToolkitObjectStripe[] stripeObjects) {
-    // cache-specific configuration parameters
-    switch (configType) {
-      case MAX_TOTAL_COUNT:
-        int maxTotalCount = 0;
-        for (ToolkitObjectStripe stripeObject : stripeObjects) {
-          Object existingValue = getAndValidateExistingValue(stripeObject.getConfiguration(), configType);
-          maxTotalCount += (Integer)existingValue;
-        }
-        return maxTotalCount < 0 ? -1 : maxTotalCount;
-      default:
-        return super.getExistingValueOrException(configType, stripeObjects);
-    }
-  }
 }

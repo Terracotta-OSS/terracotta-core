@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.google.common.collect.Sets;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -44,12 +45,14 @@ public class ApplyTransactionInfo {
   private boolean                      commitNow;
   private final MutationEventPublisher mutationEventPublisher;
   private final ApplyResultRecorder    resultRecorder;
+  private Set<ObjectID>                echoChangesFor = TCCollections.EMPTY_OBJECT_ID_SET;
   private final ServerEventBuffer      serverEventBuffer;
   private final ClientChannelMonitor   clientChannelMonitor;
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false, new InClusterServerEventBuffer(), null);
+    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false,
+         new InClusterServerEventBuffer(), null);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
@@ -251,15 +254,26 @@ public class ApplyTransactionInfo {
     return resultRecorder;
   }
 
+  public boolean isEviction() {
+    return isEviction;
+  }
+
+  public void echoChangesFor(ObjectID objectID) {
+    if (echoChangesFor == TCCollections.EMPTY_OBJECT_ID_SET) {
+      echoChangesFor = Sets.newHashSet();
+    }
+    echoChangesFor.add(objectID);
+  }
+
+  public Set<ObjectID> getObjectsToEchoChangesFor() {
+    return echoChangesFor;
+  }
+  
   public ServerEventBuffer getServerEventBuffer() {
     return serverEventBuffer;
   }
 
   public ClientChannelMonitor getClientChannelMonitor() {
     return clientChannelMonitor;
-  }
-
-  public boolean isEviction() {
-    return isEviction;
   }
 }

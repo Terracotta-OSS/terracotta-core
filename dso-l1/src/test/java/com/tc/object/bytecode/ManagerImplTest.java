@@ -15,6 +15,7 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.locks.ClientLock;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -231,6 +232,16 @@ public class ManagerImplTest extends BaseDSOTestCase {
     @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
+    }
+
+    @Override
+    public boolean isLockAwardValid(LockID lock, long awardID) {
+      return false;
+    }
+
+    @Override
+    public long getAwardIDFor(LockID lock) {
+      return ClientLock.NULL_AWARD_ID;
     }
 
   }

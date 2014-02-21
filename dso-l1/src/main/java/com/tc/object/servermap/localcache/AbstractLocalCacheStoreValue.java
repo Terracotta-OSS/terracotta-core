@@ -4,7 +4,6 @@
 package com.tc.object.servermap.localcache;
 
 import com.tc.object.ObjectID;
-import com.tc.object.TCObjectSelf;
 import com.tc.object.locks.LockID;
 
 import java.io.Externalizable;
@@ -104,12 +103,6 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     id = in.readObject();
     value = in.readObject();
-  }
-
-  @Override
-  public String toString() {
-    return "AbstractLocalCacheStoreValue [id=" + id + ", value="
-           + (value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value) + "]";
   }
 
   @Override

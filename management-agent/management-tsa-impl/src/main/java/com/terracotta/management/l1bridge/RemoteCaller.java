@@ -3,26 +3,34 @@
  */
 package com.terracotta.management.l1bridge;
 
-import com.terracotta.management.security.ContextService;
-import com.terracotta.management.security.RequestTicketMonitor;
-import com.terracotta.management.security.UserService;
-import com.terracotta.management.service.RemoteAgentBridgeService;
-import com.terracotta.management.user.UserInfo;
-import com.terracotta.management.web.utils.TSAConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.l1bridge.RemoteCallDescriptor;
 import org.terracotta.management.resource.Representable;
 
+import com.terracotta.management.security.ContextService;
+import com.terracotta.management.security.RequestTicketMonitor;
+import com.terracotta.management.security.UserService;
+import com.terracotta.management.service.RemoteAgentBridgeService;
+import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.user.UserInfo;
+import com.terracotta.management.web.utils.TSAConfig;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,15 +43,19 @@ public class RemoteCaller {
   private final ExecutorService executorService;
   private final RequestTicketMonitor requestTicketMonitor;
   private final UserService userService;
+  private final TimeoutService timeoutService;
   private static final Logger LOG = LoggerFactory.getLogger(RemoteCaller.class);
 
 
-  public RemoteCaller(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService, ExecutorService executorService, RequestTicketMonitor ticketMonitor, UserService userService) {
+  public RemoteCaller(RemoteAgentBridgeService remoteAgentBridgeService, ContextService contextService,
+                      ExecutorService executorService, RequestTicketMonitor ticketMonitor,
+                      UserService userService, TimeoutService timeoutService) {
     this.remoteAgentBridgeService = remoteAgentBridgeService;
     this.contextService = contextService;
     this.executorService = executorService;
     this.requestTicketMonitor = ticketMonitor;
     this.userService = userService;
+    this.timeoutService = timeoutService;
   }
 
   public Set<String> getRemoteAgentNodeNames() throws ServiceExecutionException {
@@ -53,38 +65,45 @@ public class RemoteCaller {
   public Map<String, Map<String, String>> getRemoteAgentNodeDetails() throws ServiceExecutionException {
     Map<String, Map<String, String>> nodes = new HashMap<String, Map<String, String>>();
     Set<String> remoteAgentNodeNames = remoteAgentBridgeService.getRemoteAgentNodeNames();
-    Map<String, Future<Map<String, String>>> futureMap = new HashMap<String, Future<Map<String, String>>>();
+    Collection<Future<Map<String, Map<String, String>>>> futures = new ArrayList<Future<Map<String, Map<String, String>>>>();
 
     for (final String remoteAgentNodeName : remoteAgentNodeNames) {
-      Future<Map<String, String>> future = executorService.submit(new Callable<Map<String, String>>() {
-        @Override
-        public Map<String, String> call() throws Exception {
-          return remoteAgentBridgeService.getRemoteAgentNodeDetails(remoteAgentNodeName);
-        }
-      });
-      futureMap.put(remoteAgentNodeName, future);
-    }
-
-    long timeLeftNanos = TimeUnit.MILLISECONDS.toNanos(remoteAgentBridgeService.getCallTimeout());
-    long before = System.nanoTime();
-
-    int numberOfExceptionsThrown = 0;
-
-    for (Map.Entry<String, Future<Map<String, String>>> futureEntry : futureMap.entrySet()) {
-      Future<Map<String, String>> future = futureEntry.getValue();
       try {
-        Map<String, String> attributes = future.get(Math.max(1L,timeLeftNanos), TimeUnit.NANOSECONDS);
-        nodes.put(futureEntry.getKey(), attributes);
-      } catch (Exception e) {
-        future.cancel(true);
-        numberOfExceptionsThrown++;
-        LOG.debug("A L1 could not respond in time : ", e);
-      } finally {
-        timeLeftNanos = timeLeftNanos - (System.nanoTime() - before);
+        Future<Map<String, Map<String, String>>> future = executorService.submit(new Callable<Map<String, Map<String, String>>>() {
+          @Override
+          public Map<String, Map<String, String>> call() throws Exception {
+            return Collections.singletonMap(remoteAgentNodeName, remoteAgentBridgeService.getRemoteAgentNodeDetails(remoteAgentNodeName));
+          }
+        });
+        futures.add(future);
+      } catch (RejectedExecutionException ree) {
+        LOG.debug("L1 thread pool rejected task, throttling a bit before resuming fan-out call...", ree);
+        try {
+          Thread.sleep(100L);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
-    if (numberOfExceptionsThrown > 0) {
-      LOG.warn("There were " + numberOfExceptionsThrown + " exceptions thrown while invoking the L1s");
+
+    long timeLeft = timeoutService.getCallTimeout();
+    int failedRequests = 0;
+
+    for (Future<Map<String, Map<String, String>>> future : futures) {
+      long before = System.nanoTime();
+      try {
+        Map<String, Map<String, String>> attributes = future.get(Math.max(1L, timeLeft), TimeUnit.MILLISECONDS);
+        nodes.putAll(attributes);
+      } catch (Exception e) {
+        future.cancel(true);
+        failedRequests++;
+        LOG.debug("Future execution error in getRemoteAgentNodeDetails", e);
+      } finally {
+        timeLeft -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - before);
+      }
+    }
+    if (failedRequests > 0) {
+      LOG.warn(failedRequests + "/" + futures.size() + " agent(s) failed to respond to getRemoteAgentNodeDetails");
     }
 
     return nodes;
@@ -97,12 +116,17 @@ public class RemoteCaller {
     final RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
         serviceName, method.getName(), method.getParameterTypes(), args);
 
-    Future<byte[]> future = executorService.submit(new Callable<byte[]>() {
-      @Override
-      public byte[] call() throws Exception {
-        return remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
-      }
-    });
+    Future<byte[]> future;
+    try {
+      future = executorService.submit(new Callable<byte[]>() {
+        @Override
+        public byte[] call() throws Exception {
+          return remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
+        }
+      });
+    } catch (RejectedExecutionException ree) {
+      throw new ServiceExecutionException("Error invoking remote method ", ree);
+    }
 
     byte[] bytes;
     try {
@@ -111,6 +135,7 @@ public class RemoteCaller {
       future.cancel(true);
       throw new ServiceExecutionException("Error invoking remote method ", e);
     }
+
     try {
       Object result = deserialize(bytes);
       if (result instanceof Representable) {
@@ -129,54 +154,58 @@ public class RemoteCaller {
     Collection<Future<Collection<T>>> futures = new ArrayList<Future<Collection<T>>>();
 
     for (final String node : nodes) {
-      Future<Collection<T>> future = executorService
-          .submit(new Callable<Collection<T>>() {
-            @Override
-            public Collection<T> call() throws Exception {
-              String ticket = requestTicketMonitor.issueRequestTicket();
-              String token = userService.putUserInfo(userInfo);
-              if (serviceAgency != null) {
-                Map<String, String> nodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails(node);
+      try {
+        Future<Collection<T>> future = executorService.submit(new Callable<Collection<T>>() {
+          @Override
+          public Collection<T> call() throws Exception {
+            String ticket = requestTicketMonitor.issueRequestTicket();
+            String token = userService.putUserInfo(userInfo);
 
-                if (nodeDetails == null) {
-                  return Collections.emptySet();
-                }
-
-                String nodeAgency = nodeDetails.get("Agency");
-                if (!nodeAgency.equals(serviceAgency)) {
-                  return Collections.emptySet();
-                }
+            if (serviceAgency != null) {
+              Map<String, String> nodeDetails = remoteAgentBridgeService.getRemoteAgentNodeDetails(node);
+              String nodeAgency = nodeDetails.get("Agency");
+              if (!nodeAgency.equals(serviceAgency)) {
+                return Collections.emptySet();
               }
-
-              RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
-                      serviceName, method.getName(), method.getParameterTypes(), args);
-              byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
-              return rewriteAgentId((Collection<T>) deserialize(bytes), node);
             }
-          });
-      futures.add(future);
-    }
-    long timeLeftNanos = TimeUnit.MILLISECONDS.toNanos(remoteAgentBridgeService.getCallTimeout());
 
+            RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
+                serviceName, method.getName(), method.getParameterTypes(), args);
+            byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
+            return rewriteAgentId((Collection<T>)deserialize(bytes), node);
+          }
+        });
+        futures.add(future);
+      } catch (RejectedExecutionException ree) {
+        LOG.debug("L1 thread pool rejected task, throttling a bit before resuming fan-out call...", ree);
+        try {
+          Thread.sleep(100L);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+
+
+    long timeLeft = timeoutService.getCallTimeout();
     Collection<T> globalResult = new ArrayList<T>();
-    int numberOfExceptionsThrown = 0;
+    int failedRequests = 0;
 
     for (Future<Collection<T>> future : futures) {
       long before = System.nanoTime();
       try {
-        // future.get(0) is unpredictable
-        Collection<T> entities = future.get(Math.max(1L,timeLeftNanos), TimeUnit.NANOSECONDS);
+        Collection<T> entities = future.get(Math.max(1L, timeLeft), TimeUnit.MILLISECONDS);
         globalResult.addAll(entities);
-      } catch (Exception ee) {
+      } catch (Exception e) {
         future.cancel(true);
-        numberOfExceptionsThrown++;
-        LOG.debug("A L1 could not respond in time : ", ee);
+        failedRequests++;
+        LOG.debug("Future execution error in {}.{}", serviceName, method.getName(), e);
       } finally {
-        timeLeftNanos = timeLeftNanos - (System.nanoTime() - before);
+        timeLeft -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - before);
       }
     }
-    if (numberOfExceptionsThrown > 0) {
-      LOG.warn("There were " + numberOfExceptionsThrown + " exceptions thrown while invoking the L1s");
+    if (failedRequests > 0) {
+      LOG.warn(failedRequests + "/" + futures.size() + " " + serviceAgency + " agent(s) failed to respond to " + serviceName + "." + method.getName());
     }
     return globalResult;
   }
@@ -186,7 +215,7 @@ public class RemoteCaller {
 
     ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
     try {
-      return (T) ois.readObject();
+      return (T)ois.readObject();
     } finally {
       ois.close();
     }

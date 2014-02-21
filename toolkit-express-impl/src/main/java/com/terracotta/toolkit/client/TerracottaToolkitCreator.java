@@ -39,6 +39,7 @@ public class TerracottaToolkitCreator {
   private final boolean                  enterprise;
   private final TerracottaClientConfig   config;
   private final Properties               toolkitProperties;
+  private final ClassLoader              loader;
 
   public TerracottaToolkitCreator(TerracottaClientConfig config, Properties properties, boolean enterprise) {
     this.enterprise = enterprise;
@@ -46,6 +47,7 @@ public class TerracottaToolkitCreator {
     this.config = config;
     this.internalClient = createInternalClient();
     this.toolkitProperties = properties;
+    this.loader = config.getClassLoader();
   }
 
   public ToolkitInternal createToolkit() {
@@ -121,9 +123,9 @@ public class TerracottaToolkitCreator {
 
     return internalClient.instantiate(className,
                                       new Class[] { TerracottaL1Instance.class,
-                                          internalClient.loadClass(TOOLKIT_DEFAULT_CM_PROVIDER), boolean.class },
-                                      new Object[] { getTerracottaL1Instance(), defaultToolkitCacheManagerProvider,
-                                          isNonStop });
+                                          internalClient.loadClass(TOOLKIT_DEFAULT_CM_PROVIDER), boolean.class,
+                                          ClassLoader.class }, new Object[] { getTerracottaL1Instance(),
+                                          defaultToolkitCacheManagerProvider, isNonStop, loader });
   }
 
   private TerracottaInternalClient createInternalClient() {

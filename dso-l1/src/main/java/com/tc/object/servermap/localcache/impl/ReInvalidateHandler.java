@@ -40,7 +40,7 @@ public class ReInvalidateHandler {
     timer.cancel();
   }
 
-  public void add(ObjectID mapId, ObjectIDSet set) {
+  public synchronized void add(ObjectID mapId, ObjectIDSet set) {
     current.add(mapId, set);
   }
 

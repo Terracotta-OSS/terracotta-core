@@ -13,7 +13,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessage;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessage;
@@ -768,16 +767,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       ObjectIDSet invalidationsFailed = globalLocalCacheManager.removeEntriesForObjectId(mapID, set);
       reInvalidateHandler.add(mapID, invalidationsFailed);
     }
-  }
-
-  /**
-   * Flush all local entries corresponding for the lock that is about to be flushed
-   */
-  @Override
-  public void preTransactionFlush(LockID lockID) {
-    // NOTE: if this impl changes, check RemoteServerMapManagerGroupImpl
-    if (lockID == null) { throw new AssertionError("ID cannot be null"); }
-    this.globalLocalCacheManager.removeEntriesForLockId(lockID);
   }
 
   @Override

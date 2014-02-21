@@ -30,7 +30,6 @@ import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
-import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.idprovider.api.ObjectIDProvider;
@@ -88,8 +87,7 @@ public interface DSOClientBuilder {
   TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
                                                     final TunnelingEventHandler teh);
 
-  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
-                                                                      final PreTransactionFlushCallback preTransactionFlushCallback);
+  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final int faultCount, final SessionManager sessionManager,

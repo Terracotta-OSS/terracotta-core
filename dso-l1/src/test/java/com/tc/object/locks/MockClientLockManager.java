@@ -240,4 +240,14 @@ public class MockClientLockManager implements ClientLockManager {
     return this.recallList;
   }
 
+  @Override
+  public boolean isLockAwardValid(LockID lock, long awardID) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public long getAwardIDFor(LockID lock) {
+    throw new ImplementMe();
+  }
+
 }

@@ -6,13 +6,16 @@ package com.tc.net.protocol.transport;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.terracotta.test.categories.CheckShorts;
 
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressIterator;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -20,38 +23,48 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.delivery.OOOConnectionWatcher;
+import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher.AsyncReconnect;
 import com.tc.util.TCAssertionError;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 
+@Category(CheckShorts.class)
 public class ClientConnectionEstablisherTest {
-  private ClientConnectionEstablisher connEstablisher;
+  private ClientConnectionEstablisher         connEstablisher;
   @Mock
-  private TCConnectionManager         connManager;
+  private TCConnectionManager                 connManager;
   @Mock
-  private ConnectionAddressProvider   connAddressProvider;
+  private OnceAndOnlyOnceProtocolNetworkLayer layer;
   @Mock
-  private ReconnectionRejectedHandler reconnectionRejectedHandler;
+  private ConnectionAddressProvider           connAddressProvider;
   @Mock
-  ClientMessageTransport              cmt;
+  private ReconnectionRejectedHandler         reconnectionRejectedHandler;
   @Mock
-  private AsyncReconnect              mockedAsyncReconnect;
-  private ClientConnectionEstablisher spyConnEstablisher;
+  private ClientMessageTransport              cmt;
   @Mock
-  private ConnectionAddressIterator   cai;
+  private AsyncReconnect                      mockedAsyncReconnect;
+  private ClientConnectionEstablisher         spyConnEstablisher;
   @Mock
-  private ConnectionInfo              connInfo;
+  private ConnectionAddressIterator           cai;
   @Mock
-  private TCConnection                tcConnection;
+  private ConnectionInfo                      connInfo;
   @Mock
-  private TCSocketAddress             sa;
+  private TCConnection                        tcConnection;
+  @Mock
+  private TCSocketAddress                     sa;
 
   @Mock
-  private ConnectionIdLogger          logger;
+  private ConnectionIdLogger                  logger;
   @Mock
-  private RestoreConnectionCallback   callback;
+  private RestoreConnectionCallback           callback;
+  @Mock
+  private ConnectionAddressIterator           connAddresssItr;
+
+  @Mock
+  private TCConnection                        connection;
 
   @Before
   public void setup() {
@@ -193,7 +206,6 @@ public class ClientConnectionEstablisherTest {
 
   @Test
   public void test_restore_tries_to_reconnect_client_message_transport() throws Exception {
-
     Mockito.doReturn(cai).when(connAddressProvider).getIterator();
     Mockito.doReturn(logger).when(cmt).getLogger();
     Mockito.stub(cai.hasNext()).toReturn(true).toReturn(false);
@@ -201,6 +213,34 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) Mockito.any());
     spyConnEstablisher.restoreConnection(cmt, sa, 10 * 1000, callback);
     Mockito.verify(cmt).reconnect((TCConnection) Mockito.any());
+  }
+
+  @Test
+  public void test_when_restoreConnection_gets_reconnectionRejected_then_reconnect_request_not_added()
+      throws Exception {
+    Mockito.doThrow(new ReconnectionRejectedException("Reconnection Rejected")).when(cmt).reconnect(connection);
+    Mockito.doReturn(logger).when(cmt).getLogger();
+    Mockito.doReturn(true).when(cmt).wasOpened();
+    Mockito.doReturn(connection).when(connManager).createConnection((TCProtocolAdaptor) Mockito.any());
+    OOOConnectionWatcher watcher = new OOOConnectionWatcher(cmt, connEstablisher, layer, 0);
+    DummyAsyncReconnect asyncReconnectThread = new DummyAsyncReconnect(connEstablisher);
+    connEstablisher.setAsyncReconnectThreadForTests(asyncReconnectThread);
+
+    connEstablisher.restoreConnection(cmt, sa, 0, watcher);
+    Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
+  }
+
+  public static class DummyAsyncReconnect extends AsyncReconnect {
+
+    public DummyAsyncReconnect(ClientConnectionEstablisher cce) {
+      super(cce);
+    }
+
+    @Override
+    public void startThreadIfNecessary() {
+      // no op
+    }
+
   }
 
 }

@@ -7,6 +7,8 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -18,6 +20,10 @@ import java.util.SortedSet;
 
 abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable,
     TCSerializable {
+  private static final int         VERBOSE_LIMIT = TCPropertiesImpl
+                                                     .getProperties()
+                                                     .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_CLIENT_STATE_VERBOSE_THRESHOLD,
+                                                             200);
   protected transient volatile int modCount;
   protected final AATreeSet        ranges;
   protected int                    size = 0;
@@ -62,7 +68,7 @@ abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSe
 
   @Override
   public String toString() {
-    if (size() <= 200) { return toVerboseString(); }
+    if (size() <= VERBOSE_LIMIT) { return toVerboseString(); }
 
     StringBuffer sb = new StringBuffer(getObjectIDSetType() + " " + getCompressionDetails() + "[");
     for (Iterator i = this.ranges.iterator(); i.hasNext();) {

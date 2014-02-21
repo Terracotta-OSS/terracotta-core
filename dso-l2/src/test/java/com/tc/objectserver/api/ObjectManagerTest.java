@@ -97,7 +97,7 @@ public class ObjectManagerTest extends TCTestCase {
     persistor.start();
     this.logger = TCLogging.getLogger(getClass());
     this.config = new TestObjectManagerConfig();
-    this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
+    this.clientStateManager = new ClientStateManagerImpl();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
