@@ -1707,11 +1707,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void registerListener(Set<ServerEventType> eventTypes) {
+  public void registerListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
     assertNotNull(eventTypes);
     eventualConcurrentLock.lock();
     try {
-      tcObjectServerMap.doRegisterListener(eventTypes);
+      tcObjectServerMap.doRegisterListener(eventTypes, skipRejoinChecks);
     } finally {
       eventualConcurrentLock.unlock();
     }

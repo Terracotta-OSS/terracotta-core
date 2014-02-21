@@ -530,7 +530,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public void doRegisterListener(Set<ServerEventType> eventTypes) {
+  public void doRegisterListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
     throw new ImplementMe();
 
   }

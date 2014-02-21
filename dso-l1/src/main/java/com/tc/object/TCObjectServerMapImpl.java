@@ -1142,7 +1142,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public void doRegisterListener(Set<ServerEventType> eventTypes) {
+  public void doRegisterListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
     Set<Object> params = new HashSet<Object>();
     for (ServerEventType eventType : eventTypes) {
       params.add(eventType.ordinal());

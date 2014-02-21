@@ -137,7 +137,7 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator);
 
-  void registerListener(Set<ServerEventType> eventTypes);
+  void registerListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks);
 
   void unregisterListener(Set<ServerEventType> types);
 }

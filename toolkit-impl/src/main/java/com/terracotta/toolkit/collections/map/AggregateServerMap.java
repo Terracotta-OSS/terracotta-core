@@ -258,11 +258,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void resendEventRegistrations() {
     if (!listeners.isEmpty()) {
-      registerServerEventListener(EnumSet.of(EVICT, EXPIRE));
+      registerServerEventListener(EnumSet.of(EVICT, EXPIRE), true);
     }
 
     if (!versionUpdateListeners.isEmpty()) {
-      registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+      registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL), true);
     }
   }
 
@@ -464,7 +464,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     synchronized (listeners) {
       if (!listeners.contains(listener)) {
         if (listeners.isEmpty()) {
-          registerServerEventListener(EnumSet.of(EVICT, EXPIRE));
+          registerServerEventListener(EnumSet.of(EVICT, EXPIRE), false);
         }
         listeners.add(listener);
       }
@@ -483,13 +483,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
   }
 
-  private void registerServerEventListener(Set<ServerEventType> eventTypes) {
+  private void registerServerEventListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
     // For routing incoming events
     platformService.registerServerEventListener(this, eventTypes);
 
     // Send registrations to server
     for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-      serverMap.registerListener(eventTypes);
+      serverMap.registerListener(eventTypes, skipRejoinChecks);
     }
 
     if (LOGGER.isDebugEnabled()) {
@@ -630,7 +630,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     synchronized (versionUpdateListeners) {
       if (versionUpdateListeners.isEmpty()) {
-        registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
+        registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL), false);
       }
       versionUpdateListeners.add(listener);
     }
