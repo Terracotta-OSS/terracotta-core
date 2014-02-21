@@ -10,4 +10,6 @@ public interface ServerEventDestination {
   String getDestinationName();
 
   void handleServerEvent(ServerEvent event);
+
+  void resendEventRegistrations();
 }

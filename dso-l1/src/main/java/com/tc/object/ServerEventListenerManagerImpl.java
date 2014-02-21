@@ -140,7 +140,16 @@ public class ServerEventListenerManagerImpl implements ServerEventListenerManage
 
   @Override
   public void unpause(final NodeID remoteNode, final int disconnected) {
-    // Do Nothing
+    // on reconnect - resend all server event registrations to server
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Client '" + remoteNode + "' is reconnected. Re-sending server event listener registrations");
+    }
+
+    for (Map<ServerEventDestination, Set<ServerEventType>> destinationMapping : registry.values()) {
+      for (ServerEventDestination serverEventDestination : destinationMapping.keySet()) {
+        serverEventDestination.resendEventRegistrations();
+      }
+    }
   }
 
   @Override

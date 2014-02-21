@@ -248,16 +248,21 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     // handles re-join scenario by re-registering server event listener if needed
+    resendEventRegistrations();
+
+    if (attributeExtractor != null) {
+      registerServerMapAttributeExtractor();
+    }
+  }
+
+  @Override
+  public void resendEventRegistrations() {
     if (!listeners.isEmpty()) {
       registerServerEventListener(EnumSet.of(EVICT, EXPIRE));
     }
 
     if (!versionUpdateListeners.isEmpty()) {
       registerServerEventListener(EnumSet.of(PUT_LOCAL, REMOVE_LOCAL));
-    }
-
-    if (attributeExtractor != null) {
-      registerServerMapAttributeExtractor();
     }
   }
 
