@@ -17,6 +17,7 @@ import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.util.AbortedOperationUtil;
+import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SynchronizedSinglyLinkedList;
 import com.tc.util.Util;
@@ -454,6 +455,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   @Override
   public synchronized void unpinLock() {
     pinned--;
+    if (pinned < 0) {
+      Assert.fail();
+    }
   }
 
   /*
