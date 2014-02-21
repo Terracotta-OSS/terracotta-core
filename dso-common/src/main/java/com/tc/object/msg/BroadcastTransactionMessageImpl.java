@@ -3,8 +3,6 @@
  */
 package com.tc.object.msg;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -41,6 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
+
 /**
  * @author steve
  */
@@ -69,13 +70,13 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID lowWatermark;
   private ObjectStringSerializer serializer;
 
-  private final List changes = Lists.newArrayList();
-  private final List dmis = Lists.newArrayList();
-  private final Collection notifies = Lists.newArrayList();
-  private final Map newRoots = Maps.newHashMap();
-  private final List<LockID> lockIDs = Lists.newArrayList();
-  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = Maps.newHashMap();
-  private final List<ServerEvent> events = Lists.newArrayList();
+  private final List changes = newArrayList();
+  private final List dmis = newArrayList();
+  private final Collection notifies = newArrayList();
+  private final Map newRoots = newHashMap();
+  private final List<LockID> lockIDs = newArrayList();
+  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = newHashMap();
+  private final List<ServerEvent> events = newArrayList();
 
   public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                          final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -190,7 +191,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
                          final Collection theNotifies, final Map roots, final DmiDescriptor[] dmiDescs,
                          final Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
                          final Collection<ServerEvent> events) {
-    Assert.eval(lids.length > 0);
     Assert.assertNotNull(txnType);
 
     this.changes.addAll(chges);
@@ -256,7 +256,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   @Override
   public Collection getNotifies() {
-    return Lists.newArrayList(this.notifies);
+    return newArrayList(this.notifies);
   }
 
   @Override

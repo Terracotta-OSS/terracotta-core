@@ -31,7 +31,6 @@ import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.server.ServerEvent;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.object.DistributedMethodCall;
 
@@ -84,7 +83,6 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       waitForClientInitialized();
     }
 
-    Assert.eval(btm.getLockIDs().size() > 0);
     final GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
       this.gtxManager.setLowWatermark(lowWaterMark, btm.getSourceNodeID());
