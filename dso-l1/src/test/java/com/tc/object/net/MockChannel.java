@@ -28,7 +28,6 @@ import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.msg.SearchRequestMessageFactory;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.session.SessionID;
@@ -143,11 +142,6 @@ public class MockChannel implements DSOClientMessageChannel {
   @Override
   public GroupID[] getGroupIDs() {
     return this.groups;
-  }
-
-  @Override
-  public ServerEventListenerMessageFactory getServerEventListenerMessageFactory() {
-    throw new ImplementMe();
   }
 
   public ServerMapRequestMessage newServerTCMapRequestMessage(final NodeID nodeID) {

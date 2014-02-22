@@ -4,6 +4,9 @@
  */
 package com.tc.object;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -125,7 +128,6 @@ import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessageImpl;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
-import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -137,7 +139,6 @@ import com.tc.object.msg.SearchResultsCloseMessageImpl;
 import com.tc.object.msg.SearchResultsRequestMessageImpl;
 import com.tc.object.msg.SearchResultsResponseMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
-import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.search.SearchResultManager;
 import com.tc.object.search.SearchResultReplyHandler;
@@ -202,9 +203,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * This is the main point of entry into the DSO client.
@@ -924,8 +922,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                 GetAllKeysServerMapRequestMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
-    messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
     return messageTypeClassMapping;
   }
 

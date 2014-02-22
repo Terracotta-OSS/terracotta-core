@@ -34,8 +34,6 @@ public class ServerEventListenerManagerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    final GroupID groupId = new GroupID(1);
-
     manager = new ServerEventListenerManagerImpl();
 
     // destinations

@@ -80,8 +80,6 @@ public final class TCMessageType {
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
   public static final int           TYPE_CLIENT_HANDSHAKE_REFUSED_MESSAGE             = 70;
   public static final int           TYPE_RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE      = 71;
-  public static final int           TYPE_REGISTER_SERVER_EVENT_LISTENER_MESSAGE       = 72;
-  public static final int           TYPE_UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE     = 73;
   public static final int           TYPE_SEARCH_RESULTS_REQUEST_MESSAGE               = 75;
   public static final int           TYPE_SEARCH_RESULTS_RESPONSE_MESSAGE              = 76;
   public static final int           TYPE_SEARCH_RESULTS_CLOSE_MESSAGE                 = 77;
@@ -143,8 +141,6 @@ public final class TCMessageType {
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
   public static final TCMessageType RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE           = new TCMessageType();
-  public static final TCMessageType REGISTER_SERVER_EVENT_LISTENER_MESSAGE            = new TCMessageType();
-  public static final TCMessageType UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE          = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return typeMap.get(i);

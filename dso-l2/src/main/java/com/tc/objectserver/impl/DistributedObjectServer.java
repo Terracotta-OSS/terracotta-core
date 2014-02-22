@@ -7,6 +7,9 @@ package com.tc.objectserver.impl;
 import org.apache.commons.io.FileUtils;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.tc.async.api.PostInit;
@@ -125,7 +128,6 @@ import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessageImpl;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
-import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
@@ -137,7 +139,6 @@ import com.tc.object.msg.SearchResultsCloseMessageImpl;
 import com.tc.object.msg.SearchResultsRequestMessageImpl;
 import com.tc.object.msg.SearchResultsResponseMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
-import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -284,9 +285,6 @@ import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1196,8 +1194,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
     messageTypeClassMapping.put(TCMessageType.RESOURCE_MANAGER_THROTTLE_STATE_MESSAGE,
                                 ResourceManagerThrottleMessage.class);
-    messageTypeClassMapping.put(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE, RegisterServerEventListenerMessage.class);
-    messageTypeClassMapping.put(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE, UnregisterServerEventListenerMessage.class);
     return messageTypeClassMapping;
   }
 

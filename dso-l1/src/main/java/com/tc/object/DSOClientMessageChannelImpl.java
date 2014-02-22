@@ -31,7 +31,6 @@ import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
-import com.tc.object.msg.RegisterServerEventListenerMessage;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
@@ -40,10 +39,8 @@ import com.tc.object.msg.SearchQueryRequestMessage;
 import com.tc.object.msg.SearchRequestMessageFactory;
 import com.tc.object.msg.SearchResultsCloseMessage;
 import com.tc.object.msg.SearchResultsRequestMessage;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
-import com.tc.object.msg.UnregisterServerEventListenerMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.TCTimeoutException;
 
@@ -55,7 +52,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
     CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, ServerMapMessageFactory,
     KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory,
-    SearchRequestMessageFactory, NodesWithKeysMessageFactory, ServerEventListenerMessageFactory {
+    SearchRequestMessageFactory, NodesWithKeysMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
@@ -125,11 +122,6 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   @Override
   public ServerMapMessageFactory getServerMapMessageFactory() {
-    return this;
-  }
-
-  @Override
-  public ServerEventListenerMessageFactory getServerEventListenerMessageFactory() {
     return this;
   }
 
@@ -262,18 +254,6 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   @Override
   public NodesWithKeysMessage newNodesWithKeysMessage(final NodeID nodeID) {
     return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
-  }
-
-  @Override
-  public RegisterServerEventListenerMessage newRegisterServerEventListenerMessage(final NodeID nodeID) {
-    return (RegisterServerEventListenerMessage)this.channel
-        .createMessage(TCMessageType.REGISTER_SERVER_EVENT_LISTENER_MESSAGE);
-  }
-
-  @Override
-  public UnregisterServerEventListenerMessage newUnregisterServerEventListenerMessage(final NodeID nodeID) {
-    return (UnregisterServerEventListenerMessage)this.channel
-        .createMessage(TCMessageType.UNREGISTER_SERVER_EVENT_LISTENER_MESSAGE);
   }
 
 }
