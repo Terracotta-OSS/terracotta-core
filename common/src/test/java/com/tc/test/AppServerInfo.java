@@ -8,36 +8,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AppServerInfo {
-  public static final int WEBLOGIC  = 0;
-  public static final int JBOSS     = 1;
-  public static final int TOMCAT    = 2;
-  public static final int WASCE     = 3;
-  public static final int GLASSFISH = 4;
-  public static final int JETTY     = 5;
-  public static final int RESIN     = 6;
-  public static final int WEBSPHERE = 7;
+  public static final int      WEBLOGIC              = 0;
+  public static final int      JBOSS                 = 1;
+  public static final int      TOMCAT                = 2;
+  public static final int      WASCE                 = 3;
+  public static final int      GLASSFISH             = 4;
+  public static final int      JETTY                 = 5;
+  public static final int      RESIN                 = 6;
+  public static final int      WEBSPHERE             = 7;
 
-  private final int       id;
-  private final String    name;
-  private final String    major;
-  private final String    minor;
+  private final int            id;
+  private final String         name;
+  private final String         major;
+  private final String         minor;
 
-  private static final Pattern nameAndVersionPattern =
-      Pattern.compile("^(\\w+)-(\\w+)\\.([\\w\\-\\.]+)$");
+  private static final Pattern nameAndVersionPattern = Pattern.compile("^(.+)-(\\d+)\\.(.+)$");
 
   /**
-   * Creates a new {@link AppServerInfo} object whose properties are parsed from
-   * the given <code>nameAndVersion> string, which must be of the form
+   * Creates a new {@link AppServerInfo} object whose properties are parsed from the given
+   * <code>nameAndVersion> string, which must be of the form
    * name-major-version.minor-version.
-   *
-   * @throws IllegalArgumentException if the <code>nameAndVersion</code> does
-   *         not parse properly.
+   * 
+   * @throws IllegalArgumentException if the <code>nameAndVersion</code> does not parse properly.
    */
   public static AppServerInfo parse(final String nameAndVersion) {
     Matcher matcher = nameAndVersionPattern.matcher(nameAndVersion);
-    if (!matcher.matches()) {
-      throw new IllegalArgumentException("Cannot parse appserver specification: " + nameAndVersion);
-    }
+    if (!matcher.matches()) { throw new IllegalArgumentException("Cannot parse appserver specification: "
+                                                                 + nameAndVersion); }
     return new AppServerInfo(matcher.group(1), matcher.group(2), matcher.group(3));
   }
 
@@ -46,25 +43,24 @@ public class AppServerInfo {
     this.major = majorVersion;
     this.minor = minorVersion;
 
-    if (name == null)
-      throw new RuntimeException("No appserver name has been set");
+    if (name == null) throw new RuntimeException("No appserver name has been set");
 
-    if (name.equals("weblogic")) {
+    if (name.startsWith("weblogic")) {
       id = WEBLOGIC;
-    } else if (name.equals("jboss")) {
+    } else if (name.startsWith("jboss")) {
       id = JBOSS;
-    } else if (name.equals("tomcat")) {
+    } else if (name.startsWith("tomcat")) {
       id = TOMCAT;
-    } else if (name.equals("wasce")) {
+    } else if (name.startsWith("wasce")) {
       id = WASCE;
-    } else if (name.equals("glassfish")) {
+    } else if (name.startsWith("glassfish")) {
       id = GLASSFISH;
-    } else if (name.equals("jetty")) {
+    } else if (name.startsWith("jetty")) {
       id = JETTY;
-    } else if (name.equals("resin")) {
+    } else if (name.startsWith("resin")) {
       id = RESIN;
-    } else if (name.equals("websphere")) {
-      id = WEBSPHERE;      
+    } else if (name.startsWith("websphere")) {
+      id = WEBSPHERE;
     } else {
       id = -1;
     }

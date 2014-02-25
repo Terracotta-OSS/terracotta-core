@@ -38,7 +38,7 @@
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
     <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
-    <maven-appserver-plugin.version>1.0.4</maven-appserver-plugin.version>
+    <maven-appserver-plugin.version>1.0.5</maven-appserver-plugin.version>
     <gmavenProviderSelection>2.0</gmavenProviderSelection>
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>

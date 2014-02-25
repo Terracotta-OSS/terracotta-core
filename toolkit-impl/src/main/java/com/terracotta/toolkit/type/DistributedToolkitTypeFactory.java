@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.type;
 
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
@@ -21,13 +22,14 @@ public interface DistributedToolkitTypeFactory<T extends DistributedToolkitType<
 
   /**
    * Create the actual <tt>AggregateToolkitType</tt> with the specified objects from stripes
-   * 
+   *
    * @param name
+   * @param configMutationLock
    */
   T createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory,
                           DistributedClusteredObjectLookup<S> lookup, String name,
                           ToolkitObjectStripe<S>[] stripeObjects, Configuration configuration,
-                          PlatformService platformService);
+                          PlatformService platformService, ToolkitLock configMutationLock);
 
   /**
    * Create the stripe objects
