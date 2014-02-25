@@ -20,11 +20,11 @@ public class AppServerInfoTest extends TestCase {
     assertEquals("2.mp2", appServer.getMinor());
     assertEquals(AppServerInfo.WEBLOGIC, appServer.getId());
 
-    appServer = AppServerInfo.parse("glassfish-v1.ur1-p01-b02");
-    assertEquals("glassfish", appServer.getName());
-    assertEquals("v1", appServer.getMajor());
-    assertEquals("ur1-p01-b02", appServer.getMinor());
-    assertEquals(AppServerInfo.GLASSFISH, appServer.getId());
+    appServer = AppServerInfo.parse("jboss-eap-6.1.0");
+    assertEquals("jboss-eap", appServer.getName());
+    assertEquals("6", appServer.getMajor());
+    assertEquals("1.0", appServer.getMinor());
+    assertEquals(AppServerInfo.JBOSS, appServer.getId());
 
     IllegalArgumentException exception = null;
     try {
@@ -37,7 +37,7 @@ public class AppServerInfoTest extends TestCase {
   }
 
   public final void testToString() {
-    String nameAndVersion = "glassfish-v1.ur1-p01-b02";
+    String nameAndVersion = "jboss-eap-6.1.0";
     assertEquals(nameAndVersion, AppServerInfo.parse(nameAndVersion).toString());
   }
 
