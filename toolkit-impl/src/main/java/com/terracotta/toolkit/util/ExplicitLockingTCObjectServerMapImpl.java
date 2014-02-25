@@ -498,4 +498,18 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
     delegate.doClearVersioned();
   }
 
+  @Override
+  public void doRegisterListener(Set eventTypes, boolean skipRejoinChecks) {
+    if (!skipRejoinChecks) {
+      assertLockAndRejoinState();
+    }
+    delegate.doRegisterListener(eventTypes, skipRejoinChecks);
+  }
+
+  @Override
+  public void doUnregisterListener(Set eventTypes) {
+    assertLockAndRejoinState();
+    delegate.doUnregisterListener(eventTypes);
+  }
+
 }

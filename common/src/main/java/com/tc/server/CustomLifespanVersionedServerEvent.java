@@ -7,12 +7,12 @@ import com.google.common.base.Objects;
 
 public class CustomLifespanVersionedServerEvent implements VersionedServerEvent {
 
-  private final BasicServerEvent basicServerEvent;
-  private final int              creationTimeInSeconds;
-  private final int              timeToIdle;
-  private final int              timeToLive;
+  private final VersionedServerEvent basicServerEvent;
+  private final int creationTimeInSeconds;
+  private final int timeToIdle;
+  private final int timeToLive;
 
-  public CustomLifespanVersionedServerEvent(BasicServerEvent basicServerEvent, int creationTimeInSeconds, int timeToIdle, int timeToLive) {
+  public CustomLifespanVersionedServerEvent(VersionedServerEvent basicServerEvent, int creationTimeInSeconds, int timeToIdle, int timeToLive) {
     this.basicServerEvent = basicServerEvent;
     this.creationTimeInSeconds = creationTimeInSeconds;
     this.timeToIdle = timeToIdle;
@@ -82,7 +82,7 @@ public class CustomLifespanVersionedServerEvent implements VersionedServerEvent 
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final CustomLifespanVersionedServerEvent that = (CustomLifespanVersionedServerEvent)o;
+    final CustomLifespanVersionedServerEvent that = (CustomLifespanVersionedServerEvent) o;
 
     if (creationTimeInSeconds != that.creationTimeInSeconds) return false;
     if (timeToIdle != that.timeToIdle) return false;

@@ -116,9 +116,10 @@ public class TransactionStoreImpl implements TransactionStore {
    * This method clears the server transaction ids less than the low water mark, for that particular node.
    */
   @Override
-  public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID stxIDs) {
-    Collection gidDescs = this.sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
-    removeGlobalTransactionDescs(gidDescs);
+  public Collection<GlobalTransactionDescriptor> clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID stxIDs) {
+    Collection<GlobalTransactionDescriptor> removedGDs = this.sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
+    removeGlobalTransactionDescs(removedGDs);
+    return removedGDs;
   }
 
   @Override

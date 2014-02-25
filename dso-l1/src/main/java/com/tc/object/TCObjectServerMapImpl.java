@@ -3,6 +3,8 @@
  */
 package com.tc.object;
 
+import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
+
 import com.google.common.base.Preconditions;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCObjectNotFoundException;
@@ -29,6 +31,7 @@ import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -43,8 +46,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjectServerMap<L> {
 
@@ -1139,4 +1140,29 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void addTxnInProgressKeys(Set addSet, Set removeSet) {
     this.cache.addTxnInProgressKeys(addSet, removeSet);
   }
+
+  @Override
+  public void doRegisterListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
+    Set<Object> params = new HashSet<Object>();
+    for (ServerEventType eventType : eventTypes) {
+      params.add(eventType.ordinal());
+    }
+
+    // TODO: How to get the clientID here???
+    logicalInvoke(SerializationUtil.REGISTER_SERVER_EVENT_LISTENER,
+                  SerializationUtil.REGISTER_SERVER_EVENT_LISTENER_SIGNATURE, params.toArray());
+  }
+
+  @Override
+  public void doUnregisterListener(Set<ServerEventType> eventTypes) {
+    Set<Object> params = new HashSet<Object>();
+    for (ServerEventType eventType : eventTypes) {
+      params.add(eventType.ordinal());
+    }
+
+    // TODO: How to get the clientID here???
+    logicalInvoke(SerializationUtil.UNREGISTER_SERVER_EVENT_LISTENER,
+                  SerializationUtil.UNREGISTER_SERVER_EVENT_LISTENER_SIGNATURE, params.toArray());
+  }
+
 }

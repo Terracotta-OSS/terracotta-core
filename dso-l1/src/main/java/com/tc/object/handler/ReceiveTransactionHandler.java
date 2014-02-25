@@ -11,9 +11,10 @@ import com.tc.async.api.Sink;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.NodeID;
 import com.tc.object.ClientConfigurationContext;
-import com.tc.object.ClientIDProvider;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.context.ServerEventDeliveryContext;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -25,16 +26,15 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
+import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.util.Assert;
+import com.tc.server.ServerEvent;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.object.DistributedMethodCall;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -43,61 +43,55 @@ import java.util.concurrent.CountDownLatch;
  * @author steve
  */
 public class ReceiveTransactionHandler extends AbstractEventHandler {
-  private static final TCLogger                      logger = TCLogging.getLogger(ReceiveTransactionHandler.class);
 
-  private ClientTransactionManager                   txManager;
-  private ClientLockManager                          lockManager;
-  private final SessionManager                       sessionManager;
-  private final ClientGlobalTransactionManager       gtxManager;
+  private static final TCLogger logger = TCLogging.getLogger(ReceiveTransactionHandler.class);
+
+  private ClientTransactionManager txManager;
+  private ClientLockManager lockManager;
+  private final SessionManager sessionManager;
+  private final ClientGlobalTransactionManager gtxManager;
   private final AcknowledgeTransactionMessageFactory atmFactory;
-  private final ClientIDProvider                     cidProvider;
-  private final Sink                                 dmiSink;
-  private final DmiManager                           dmiManager;
-  private final CountDownLatch                       testStartLatch;
+  private final Sink dmiSink;
+  private final DmiManager dmiManager;
+  private final CountDownLatch testStartLatch;
+  private final Sink eventDeliverySink;
 
-  private volatile boolean                           clientInitialized;
+  private volatile boolean clientInitialized;
 
-  public ReceiveTransactionHandler(ClientIDProvider provider, AcknowledgeTransactionMessageFactory atmFactory,
-                                   ClientGlobalTransactionManager gtxManager, SessionManager sessionManager,
-                                   Sink dmiSink, DmiManager dmiManager, CountDownLatch testStartLatch) {
-    this.cidProvider = provider;
+  public ReceiveTransactionHandler(final AcknowledgeTransactionMessageFactory atmFactory,
+                                   final ClientGlobalTransactionManager gtxManager,
+                                   final SessionManager sessionManager,
+                                   final Sink dmiSink,
+                                   final DmiManager dmiManager,
+                                   final CountDownLatch testStartLatch,
+                                   final Sink eventDeliverySink) {
     this.atmFactory = atmFactory;
     this.gtxManager = gtxManager;
     this.sessionManager = sessionManager;
     this.dmiSink = dmiSink;
     this.dmiManager = dmiManager;
     this.testStartLatch = testStartLatch;
+    this.eventDeliverySink = eventDeliverySink;
   }
 
   @Override
   public void handleEvent(EventContext context) {
     final BroadcastTransactionMessageImpl btm = (BroadcastTransactionMessageImpl) context;
-    List dmis = btm.getDmiDescriptors();
+    final List dmis = btm.getDmiDescriptors();
 
     if (dmis.size() > 0) {
       waitForClientInitialized();
     }
 
-    if (false) {
-      System.err.println(this.cidProvider.getClientID() + ": ReceiveTransactionHandler: committer="
-                         + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
-                         + ", notified: " + btm.addNotifiesTo(new LinkedList()));
-    }
-
-    Assert.eval(btm.getLockIDs().size() > 0);
-    GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
+    final GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
       this.gtxManager.setLowWatermark(lowWaterMark, btm.getSourceNodeID());
     }
-    if (this.gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(),
-                                   btm.getSourceNodeID())) {
-      Collection changes = btm.getObjectChanges();
-      if (changes.size() > 0 || btm.getNewRoots().size() > 0) {
 
-        if (false) {
-          System.err.println(this.cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID() + " , "
-                             + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
-        }
+    if (this.gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(),
+        btm.getSourceNodeID())) {
+      final Collection changes = btm.getObjectChanges();
+      if (changes.size() > 0 || btm.getNewRoots().size() > 0) {
         try {
           this.txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getNewRoots());
         } catch (TCClassNotFoundException cnfe) {
@@ -108,29 +102,17 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
       }
 
-      for (Iterator i = dmis.iterator(); i.hasNext();) {
-        DmiDescriptor dd = (DmiDescriptor) i.next();
-
-        // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
-        // importantly before sending ACK below
-        DistributedMethodCall dmc = this.dmiManager.extract(dd);
-        if (dmc != null) {
-          this.dmiSink.add(new DmiEventContext(dmc));
-        }
-      }
-
-      Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = btm.getLogicalChangeResults();
-      if (!logicalChangeResults.isEmpty()) {
-        this.txManager.receivedLogicalChangeResult(logicalChangeResults);
-      }
+      sendDmis(dmis);
+      notifyLogicalChangeResultsReceived(btm);
+      sendServerEvents(btm);
     }
 
-    Collection notifies = btm.addNotifiesTo(new LinkedList());
-    for (Iterator i = notifies.iterator(); i.hasNext();) {
-      ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) i.next();
-      this.lockManager.notified(lc.getLockID(), lc.getThreadID());
-    }
+    notifyLockManager(btm);
+    sendAck(btm);
+    btm.recycle();
+  }
 
+  void sendAck(final BroadcastTransactionMessage btm) {
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
     // and before we actually send it, the server may go down and come back up !
     if (this.sessionManager.isCurrentSession(btm.getSourceNodeID(), btm.getLocalSessionID())) {
@@ -138,7 +120,43 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       ack.initialize(btm.getCommitterID(), btm.getTransactionID());
       ack.send();
     }
-    btm.recycle();
+  }
+
+  void notifyLockManager(final BroadcastTransactionMessage btm) {
+    final Collection notifies = btm.getNotifies();
+    for (final Object notify : notifies) {
+      ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) notify;
+      this.lockManager.notified(lc.getLockID(), lc.getThreadID());
+    }
+  }
+
+  void notifyLogicalChangeResultsReceived(final BroadcastTransactionMessageImpl btm) {
+    final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = btm.getLogicalChangeResults();
+    if (!logicalChangeResults.isEmpty()) {
+      this.txManager.receivedLogicalChangeResult(logicalChangeResults);
+    }
+  }
+
+  void sendDmis(final List dmis) {
+    for (final Object dmi : dmis) {
+      final DmiDescriptor dd = (DmiDescriptor) dmi;
+      // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
+      // importantly before sending ACK below
+      final DistributedMethodCall dmc = this.dmiManager.extract(dd);
+      if (dmc != null) {
+        this.dmiSink.add(new DmiEventContext(dmc));
+      }
+    }
+  }
+
+  void sendServerEvents(final BroadcastTransactionMessage btm) {
+    final NodeID remoteNode = btm.getChannel().getRemoteNodeID();
+    // unfold the batch and multiplex messages to different queues based on the event key
+    for (final ServerEvent event : btm.getEvents()) {
+      // blocks when the internal stage's queue reaches TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE
+      // to delay the transaction acknowledgement and provide back-pressure on clients
+      eventDeliverySink.add(new ServerEventDeliveryContext(event, remoteNode));
+    }
   }
 
   private void waitForClientInitialized() {

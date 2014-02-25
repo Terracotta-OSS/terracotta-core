@@ -7,12 +7,14 @@ package com.tc.objectserver.managedobject;
 import com.google.common.collect.Sets;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.event.ClientChannelMonitor;
 import com.tc.objectserver.event.DefaultMutationEventPublisher;
+import com.tc.objectserver.event.InClusterServerEventBuffer;
 import com.tc.objectserver.event.MutationEventPublisher;
-import com.tc.objectserver.event.NullMutationEventPublisher;
-import com.tc.objectserver.event.ServerEventPublisher;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
@@ -44,21 +46,27 @@ public class ApplyTransactionInfo {
   private final MutationEventPublisher mutationEventPublisher;
   private final ApplyResultRecorder    resultRecorder;
   private Set<ObjectID>                echoChangesFor = TCCollections.EMPTY_OBJECT_ID_SET;
+  private final ServerEventBuffer      serverEventBuffer;
+  private final ClientChannelMonitor   clientChannelMonitor;
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID, false, false, null);
+    this(true, ServerTransactionID.NULL_ID, GlobalTransactionID.NULL_ID, false, false,
+         new InClusterServerEventBuffer(), null);
   }
 
   public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID,
-                              final boolean isSearchEnabled, final boolean isEviction, final ServerEventPublisher serverEventPublisher) {
+                              final GlobalTransactionID gtxId, final boolean isSearchEnabled, final boolean isEviction,
+                              final ServerEventBuffer serverEventBuffer, final ClientChannelMonitor clientChannelMonitor) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.isEviction = isEviction;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
     this.isSearchEnabled = isSearchEnabled;
-    this.mutationEventPublisher = isActiveTxn ? new DefaultMutationEventPublisher(serverEventPublisher) : new NullMutationEventPublisher();
+    this.serverEventBuffer = serverEventBuffer;
+    this.clientChannelMonitor = clientChannelMonitor;
+    this.mutationEventPublisher = new DefaultMutationEventPublisher(gtxId, serverEventBuffer);
     this.resultRecorder = new DefaultResultRecorderImpl();
   }
 
@@ -259,5 +267,13 @@ public class ApplyTransactionInfo {
 
   public Set<ObjectID> getObjectsToEchoChangesFor() {
     return echoChangesFor;
+  }
+  
+  public ServerEventBuffer getServerEventBuffer() {
+    return serverEventBuffer;
+  }
+
+  public ClientChannelMonitor getClientChannelMonitor() {
+    return clientChannelMonitor;
   }
 }

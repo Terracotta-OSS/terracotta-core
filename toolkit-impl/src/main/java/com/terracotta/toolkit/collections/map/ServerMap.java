@@ -39,6 +39,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.server.ServerEventType;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.LockStrategy;
@@ -1703,5 +1704,27 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private boolean compare(V v1, V v2, ToolkitValueComparator<V> comparator) {
     return comparator.equals(v1, v2);
+  }
+
+  @Override
+  public void registerListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks) {
+    assertNotNull(eventTypes);
+    eventualConcurrentLock.lock();
+    try {
+      tcObjectServerMap.doRegisterListener(eventTypes, skipRejoinChecks);
+    } finally {
+      eventualConcurrentLock.unlock();
+    }
+  }
+
+  @Override
+  public void unregisterListener(Set<ServerEventType> eventTypes) {
+    assertNotNull(eventTypes);
+    eventualConcurrentLock.lock();
+    try {
+      tcObjectServerMap.doUnregisterListener(eventTypes);
+    } finally {
+      eventualConcurrentLock.unlock();
+    }
   }
 }

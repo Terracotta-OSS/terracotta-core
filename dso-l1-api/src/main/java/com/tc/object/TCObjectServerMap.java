@@ -8,6 +8,7 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.server.ServerEventType;
 
 import java.util.Map;
 import java.util.Set;
@@ -321,5 +322,9 @@ public interface TCObjectServerMap<L> extends TCObject {
   void addTxnInProgressKeys(Set addSet, Set removeSet);
 
   void doClearVersioned();
+
+  void doRegisterListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks);
+
+  void doUnregisterListener(Set<ServerEventType> eventTypes);
 
 }

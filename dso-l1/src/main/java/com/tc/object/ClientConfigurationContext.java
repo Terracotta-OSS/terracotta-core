@@ -41,7 +41,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             RECEIVE_INVALIDATE_OBJECTS_STAGE            = "receive_invalidate_objects_stage";
   public static final String             PINNED_ENTRY_FAULT_STAGE                    = "pinned_entry_fault_stage";
   public static final String             RESOURCE_MANAGER_STAGE                      = "resource_manager_stage";
-  public static final String             SERVER_EVENT_STAGE                          = "server_event_stage";
   public static final String             SERVER_EVENT_DELIVERY_STAGE                 = "server_event_delivery_stage";
 
   private final ClientLockManager        lockManager;

@@ -76,6 +76,7 @@ import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
+import com.tc.server.ServerEvent;
 import com.tc.stats.Stats;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
@@ -144,7 +145,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public List getChanges() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @Override
@@ -174,12 +175,12 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public Map getNewRoots() {
-      return Collections.EMPTY_MAP;
+      return Collections.emptyMap();
     }
 
     @Override
     public Collection getNotifies() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @Override
@@ -229,7 +230,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public GlobalTransactionID getGlobalTransactionID() {
-      return null;
+      return new GlobalTransactionID(1);
     }
 
     @Override
@@ -252,6 +253,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
   }
+
   private static class TestServerConfigurationContext implements ServerConfigurationContext {
     private final int                          noOfClients;
     private final int                          clientDisconnectNo;
@@ -703,11 +705,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public Collection addNotifiesTo(final List c) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public long getChangeID() {
       throw new ImplementMe();
     }
@@ -723,6 +720,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
+    public List<ServerEvent> getEvents() {
+      throw new ImplementMe();
+    }
+
+    @Override
     public GlobalTransactionID getGlobalTransactionID() {
       throw new ImplementMe();
     }
@@ -734,6 +736,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     @Override
     public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public Collection getNotifies() {
       throw new ImplementMe();
     }
 
@@ -761,7 +768,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
                            NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                            GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
-                           DmiDescriptor[] dmis, Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults) {
+                           DmiDescriptor[] dmis, Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
+                           final Collection<ServerEvent> events) {
       //
     }
 

@@ -1,20 +1,5 @@
 package com.tc.object;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.Sets;
-import com.tc.net.GroupID;
-import com.tc.net.NodeID;
-import com.tc.object.msg.RegisterServerEventListenerMessage;
-import com.tc.object.msg.ServerEventListenerMessageFactory;
-import com.tc.object.msg.UnregisterServerEventListenerMessage;
-import com.tc.server.BasicServerEvent;
-import com.tc.server.ServerEvent;
-import com.tc.server.ServerEventType;
-
-import java.util.EnumSet;
-
 import static com.tc.server.ServerEventType.EVICT;
 import static com.tc.server.ServerEventType.EXPIRE;
 import static com.tc.server.ServerEventType.PUT;
@@ -23,32 +8,33 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.common.collect.Sets;
+import com.tc.net.GroupID;
+import com.tc.net.NodeID;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
+import com.tc.server.ServerEventType;
+
+import java.util.EnumSet;
 
 /**
  * @author Eugene Shelestovich
  */
 public class ServerEventListenerManagerImplTest {
 
-  private RegisterServerEventListenerMessage registrationMsgMock;
-  private UnregisterServerEventListenerMessage unregistrationMsgMock;
   private ServerEventListenerManagerImpl manager;
   private ServerEventDestination[] destinations;
   private final NodeID remoteNode = new GroupID(1);
 
   @Before
   public void setUp() throws Exception {
-    final GroupID groupId = new GroupID(1);
-    registrationMsgMock = mock(RegisterServerEventListenerMessage.class);
-    unregistrationMsgMock = mock(UnregisterServerEventListenerMessage.class);
-
-    final ServerEventListenerMessageFactory factoryMock = mock(ServerEventListenerMessageFactory.class);
-    when(factoryMock.newRegisterServerEventListenerMessage(groupId)).thenReturn(registrationMsgMock);
-    when(factoryMock.newUnregisterServerEventListenerMessage(groupId)).thenReturn(unregistrationMsgMock);
-
-    manager = new ServerEventListenerManagerImpl(factoryMock, groupId);
+    manager = new ServerEventListenerManagerImpl();
 
     // destinations
     destinations = new ServerEventDestination[5];
@@ -83,13 +69,11 @@ public class ServerEventListenerManagerImplTest {
     manager.dispatch(event3, remoteNode);
 
     // verify invocations
-    verify(registrationMsgMock, times(6)).send();
     verify(destinations[1]).handleServerEvent(event1);
     verify(destinations[2]).handleServerEvent(event3);
     verify(destinations[3]).handleServerEvent(event2);
     verify(destinations[4]).handleServerEvent(event2);
     verify(destinations[0], never()).handleServerEvent(any(ServerEvent.class));
-    verify(unregistrationMsgMock, never()).send();
   }
 
   @Test
@@ -117,43 +101,20 @@ public class ServerEventListenerManagerImplTest {
     try {
       manager.dispatch(event3, remoteNode);
       fail();
-    } catch (IllegalStateException justAsPlanned) { // mapping not found
+    } catch (IllegalStateException justAsPlanned) {
+      // mapping not found
     }
     manager.dispatch(event4, remoteNode);
 
     // verify invocations
-    verify(registrationMsgMock, times(6)).send();
     verify(destinations[0]).handleServerEvent(event1);
     verify(destinations[0], never()).handleServerEvent(event2);
     verify(destinations[1]).handleServerEvent(event2);
     verify(destinations[2], never()).handleServerEvent(any(ServerEvent.class));
     verify(destinations[3], never()).handleServerEvent(any(ServerEvent.class));
     verify(destinations[4]).handleServerEvent(event4);
-    verify(unregistrationMsgMock, times(3)).send();
   }
 
-  @Test
-  public void testMustNotRegisterSameListenersTwice() {
-    // same listeners
-    manager.registerListener(destinations[0], EnumSet.of(EXPIRE, PUT));
-    manager.registerListener(destinations[0], EnumSet.of(EXPIRE));
-
-    // register only once
-    verify(registrationMsgMock, times(1)).send();
-  }
-
-  @Test
-  public void testMustNotUnregisterSameListenersTwice() {
-    // register listeners
-    manager.registerListener(destinations[0], EnumSet.of(EXPIRE, PUT));
-
-    // same listeners
-    manager.unregisterListener(destinations[0], EnumSet.of(EXPIRE, PUT));
-    manager.unregisterListener(destinations[0], EnumSet.of(EXPIRE));
-
-    // unregister only once
-    verify(unregistrationMsgMock, times(1)).send();
-  }
 
   @Test(expected = IllegalStateException.class)
   public void testMustFailOnNonExistentMapping() {
@@ -189,7 +150,7 @@ public class ServerEventListenerManagerImplTest {
     }
 
     try {
-      manager.registerListener(destinations[0], Sets.<ServerEventType>newHashSet());
+      manager.registerListener(destinations[0], Sets.<ServerEventType> newHashSet());
       fail();
     } catch (Exception justAsPlanned) {
     }
@@ -201,7 +162,7 @@ public class ServerEventListenerManagerImplTest {
     }
 
     try {
-      manager.unregisterListener(destinations[0], Sets.<ServerEventType>newHashSet());
+      manager.unregisterListener(destinations[0], Sets.<ServerEventType> newHashSet());
       fail();
     } catch (Exception justAsPlanned) {
     }
@@ -219,7 +180,10 @@ public class ServerEventListenerManagerImplTest {
 
     manager.unpause(remoteNode, 0); // don't care about params
 
-    verify(registrationMsgMock, times(9)).send(); // 6 initial registrations + 3 re-registrations on reconnect
+    verify(destinations[0]).resendEventRegistrations();
+    verify(destinations[1]).resendEventRegistrations();
+    verify(destinations[2]).resendEventRegistrations();
+    verify(destinations[3]).resendEventRegistrations();
   }
 
 }

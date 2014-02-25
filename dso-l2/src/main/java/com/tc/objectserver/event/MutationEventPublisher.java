@@ -4,13 +4,12 @@
 
 package com.tc.objectserver.event;
 
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.impl.SamplingType;
 import com.tc.objectserver.managedobject.CDSMValue;
-import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Records all cache modifications and maps keys to actual values
@@ -22,8 +21,10 @@ public interface MutationEventPublisher {
 
   /**
    * This method records an <code>AdvancedServerEvent</code>.
+   * 
+   * @param clientIds
    */
-  void publishEvent(ServerEventType type, Object key, CDSMValue value, String cacheName);
+  void publishEvent(Set<ClientID> clientIds, ServerEventType type, Object key, CDSMValue value, String cacheName);
 
   void setBytesForObjectID(ObjectID objectId, byte[] value);
 }

@@ -28,51 +28,55 @@ import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
+import com.tc.server.ServerEvent;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 
 /**
  * @author steve
  */
 public class BroadcastTransactionMessageImpl extends DSOMessageBase implements BroadcastTransactionMessage {
-  private final static byte      DNA_ID                = 1;
-  private final static byte      LOCK_ID               = 2;
-  private final static byte      CHANGE_ID             = 3;
-  private final static byte      TRANSACTION_ID        = 4;
-  private final static byte      COMMITTER_ID          = 5;
-  private final static byte      TRANSACTION_TYPE_ID   = 6;
-  private final static byte      GLOBAL_TRANSACTION_ID = 7;
-  private final static byte      LOW_WATERMARK         = 8;
-  private final static byte      SERIALIZER_ID         = 9;
-  private final static byte      NOTIFIED              = 10;
-  private final static byte      ROOT_NAME_ID_PAIR     = 11;
-  private final static byte      DMI_ID                = 12;
-  private final static byte      LOGICAL_CHANGE_RESULT = 13;
 
-  private List                   changes               = new LinkedList();
-  private final List             dmis                  = new LinkedList();
-  private final Collection       notifies              = new LinkedList();
-  private final Map              newRoots              = new HashMap();
-  private List<LockID>           lockIDs;
+  private final static byte DNA_ID = 1;
+  private final static byte LOCK_ID = 2;
+  private final static byte CHANGE_ID = 3;
+  private final static byte TRANSACTION_ID = 4;
+  private final static byte COMMITTER_ID = 5;
+  private final static byte TRANSACTION_TYPE_ID = 6;
+  private final static byte GLOBAL_TRANSACTION_ID = 7;
+  private final static byte LOW_WATERMARK = 8;
+  private final static byte SERIALIZER_ID = 9;
+  private final static byte NOTIFIED = 10;
+  private final static byte ROOT_NAME_ID_PAIR = 11;
+  private final static byte DMI_ID = 12;
+  private final static byte LOGICAL_CHANGE_RESULT = 13;
+  private final static byte SERVER_EVENT = 14;
 
-  private long                   changeID;
-  private TransactionID          transactionID;
-  private NodeID                 committerID;
-  private TxnType                transactionType;
-  private GlobalTransactionID    globalTransactionID;
-  private GlobalTransactionID    lowWatermark;
+  private long changeID;
+  private TransactionID transactionID;
+  private NodeID committerID;
+  private TxnType transactionType;
+  private GlobalTransactionID globalTransactionID;
+  private GlobalTransactionID lowWatermark;
   private ObjectStringSerializer serializer;
-  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults  = new HashMap<LogicalChangeID, LogicalChangeResult>();
+
+  private final List changes = newArrayList();
+  private final List dmis = newArrayList();
+  private final Collection notifies = newArrayList();
+  private final Map newRoots = newHashMap();
+  private final List<LockID> lockIDs = newArrayList();
+  private final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = newHashMap();
+  private final List<ServerEvent> events = newArrayList();
 
   public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                          final TCByteBufferOutputStream out, final MessageChannel channel,
@@ -89,39 +93,40 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   @Override
   protected void dehydrateValues() {
     putNVPair(TRANSACTION_TYPE_ID, this.transactionType.getType());
-    for (Object element : this.lockIDs) {
+    for (final Object element : this.lockIDs) {
       LockID lockID = (LockID) element;
       putNVPair(LOCK_ID, lockID);
     }
-
-    for (Iterator i = this.notifies.iterator(); i.hasNext();) {
-      ClientServerExchangeLockContext notified = (ClientServerExchangeLockContext) i.next();
+    for (final Object notify : this.notifies) {
+      ClientServerExchangeLockContext notified = (ClientServerExchangeLockContext) notify;
       putNVPair(NOTIFIED, notified);
     }
 
     putNVPair(SERIALIZER_ID, this.serializer);
-
     putNVPair(CHANGE_ID, this.changeID);
     putNVPair(TRANSACTION_ID, this.transactionID.toLong());
     putNVPair(COMMITTER_ID, this.committerID);
     putNVPair(GLOBAL_TRANSACTION_ID, this.globalTransactionID.toLong());
     putNVPair(LOW_WATERMARK, this.lowWatermark.toLong());
 
-    for (Iterator i = this.changes.iterator(); i.hasNext();) {
-      DNAImpl dna = (DNAImpl) i.next();
+    for (final Object change : this.changes) {
+      DNAImpl dna = (DNAImpl) change;
       putNVPair(DNA_ID, dna);
     }
-    for (Iterator i = this.newRoots.keySet().iterator(); i.hasNext();) {
-      String key = (String) i.next();
+    for (final Object o : this.newRoots.keySet()) {
+      String key = (String) o;
       ObjectID value = (ObjectID) this.newRoots.get(key);
       putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(key, value));
     }
-    for (Iterator i = this.dmis.iterator(); i.hasNext();) {
-      DmiDescriptor dd = (DmiDescriptor) i.next();
+    for (final Object dmi : this.dmis) {
+      DmiDescriptor dd = (DmiDescriptor) dmi;
       putNVPair(DMI_ID, dd);
     }
-    for (Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
+    for (final Entry<LogicalChangeID, LogicalChangeResult> entry : logicalChangeResults.entrySet()) {
       putNVPair(LOGICAL_CHANGE_RESULT, new LogicalChangeResultPair(entry.getKey(), entry.getValue()));
+    }
+    for (final ServerEvent event : events) {
+      putNVPair(SERVER_EVENT, new ServerEventSerializableContext(event));
     }
   }
 
@@ -138,9 +143,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
         return true;
       case LOCK_ID:
-        if (this.lockIDs == null) {
-          this.lockIDs = new LinkedList();
-        }
         this.lockIDs.add(getLockIDValue());
         return true;
       case NOTIFIED:
@@ -173,6 +175,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         LogicalChangeResultPair resultPair = (LogicalChangeResultPair) getObject(new LogicalChangeResultPair());
         this.logicalChangeResults.put(resultPair.getId(), resultPair.getResult());
         return true;
+      case SERVER_EVENT:
+        final ServerEventSerializableContext ctx = (ServerEventSerializableContext) getObject(new ServerEventSerializableContext());
+        events.add(ctx.getEvent());
+        return true;
       default:
         return false;
     }
@@ -183,12 +189,12 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
                          final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
                          final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
                          final Collection theNotifies, final Map roots, final DmiDescriptor[] dmiDescs,
-                         Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults) {
-    Assert.eval(lids.length > 0);
+                         final Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
+                         final Collection<ServerEvent> events) {
     Assert.assertNotNull(txnType);
 
-    this.changes = chges;
-    this.lockIDs = Arrays.asList(lids);
+    this.changes.addAll(chges);
+    Collections.addAll(this.lockIDs, lids);
     this.changeID = cid;
     this.transactionID = txID;
     this.committerID = client;
@@ -198,10 +204,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.serializer = aSerializer;
     this.notifies.addAll(theNotifies);
     this.newRoots.putAll(roots);
-    for (DmiDescriptor dmiDesc : dmiDescs) {
-      this.dmis.add(dmiDesc);
-    }
+    Collections.addAll(this.dmis, dmiDescs);
     this.logicalChangeResults.putAll(logicalInvokeResults);
+    this.events.addAll(events);
   }
 
   @Override
@@ -216,10 +221,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   @Override
   public Collection getObjectChanges() {
-    Collection versionizedChanges = new ArrayList(this.changes.size());
-    for (Iterator iter = this.changes.iterator(); iter.hasNext();) {
-      versionizedChanges.add(new VersionizedDNAWrapper((DNA) iter.next(), this.globalTransactionID.toLong()));
-
+    final Collection versionizedChanges = new ArrayList(this.changes.size());
+    for (final Object change : this.changes) {
+      versionizedChanges.add(new VersionizedDNAWrapper((DNA) change, this.globalTransactionID.toLong()));
     }
     return versionizedChanges;
   }
@@ -251,9 +255,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  public Collection addNotifiesTo(final List c) {
-    c.addAll(this.notifies);
-    return c;
+  public Collection getNotifies() {
+    return newArrayList(this.notifies);
   }
 
   @Override
@@ -278,11 +281,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   private static class RootIDPair implements TCSerializable {
-    private String   rootName;
+    private String rootName;
     private ObjectID rootID;
 
     public RootIDPair() {
-      super();
     }
 
     public RootIDPair(final String rootName, final ObjectID rootID) {
@@ -314,7 +316,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   private static class LogicalChangeResultPair implements TCSerializable {
-    private LogicalChangeID           id;
+    private LogicalChangeID id;
     private LogicalChangeResult result;
 
 
@@ -356,5 +358,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   public Map<LogicalChangeID, LogicalChangeResult> getLogicalChangeResults() {
     return logicalChangeResults;
+  }
+
+  @Override
+  public List<ServerEvent> getEvents() {
+    return events;
   }
 }

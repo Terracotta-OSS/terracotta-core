@@ -26,6 +26,8 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
+import com.tc.server.BasicServerEvent;
+import com.tc.server.ServerEvent;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,12 +38,16 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.PUT;
+import static com.tc.server.ServerEventType.REMOVE;
+
 public class BroadcastTransactionMessageTest extends TestCase {
 
   private BroadcastTransactionMessageImpl msg;
-  private TCByteBufferOutputStream        out;
-  private MessageMonitor                  monitor;
-  private MessageChannel                  channel;
+  private TCByteBufferOutputStream out;
+  private MessageMonitor monitor;
+  private MessageChannel channel;
 
   @Override
   public void setUp() throws Exception {
@@ -49,7 +55,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     this.channel = new TestMessageChannel();
     this.out = new TCByteBufferOutputStream(4, 4096, false);
     this.msg = new BroadcastTransactionMessageImpl(new SessionID(0), this.monitor, this.out, this.channel,
-                                                   TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
+        TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
   }
 
   public void testBasics() throws Exception {
@@ -57,7 +63,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     // / XXX: TODO: Add changes to test.
 
     ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
+    LockID[] lockIDs = { new StringLockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);
     ClientID clientID = new ClientID(1);
@@ -67,16 +73,20 @@ public class BroadcastTransactionMessageTest extends TestCase {
 
     Collection notified = new LinkedList();
     for (int i = 0; i < 100; i++) {
-      notified.add(new ClientServerExchangeLockContext(new StringLockID("" + (i + 1)), clientID, new ThreadID(i + 1),
-                                                       State.WAITER));
+      notified.add(new ClientServerExchangeLockContext(new StringLockID(String.valueOf(i + 1)),
+          clientID, new ThreadID(i + 1), State.WAITER));
     }
 
-    HashMap<LogicalChangeID, LogicalChangeResult> logicalChangeResults = new HashMap<LogicalChangeID, LogicalChangeResult>();
+    final Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = new HashMap<LogicalChangeID, LogicalChangeResult>();
     logicalChangeResults.put(new LogicalChangeID(1), LogicalChangeResult.SUCCESS);
     logicalChangeResults.put(new LogicalChangeID(2), LogicalChangeResult.FAILURE);
+
+    final List<ServerEvent> events = Arrays.<ServerEvent>asList(new BasicServerEvent(EVICT, "key-1", "cache1"),
+        new BasicServerEvent(PUT, "key-2", "cache3"), new BasicServerEvent(REMOVE, "key-3", "cache2"));
+
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-                        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY,
-                        logicalChangeResults);
+        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY,
+        logicalChangeResults, events);
     this.msg.dehydrate();
 
     TCByteBuffer[] data = this.out.toArray();
@@ -91,12 +101,12 @@ public class BroadcastTransactionMessageTest extends TestCase {
     assertEquals(gtx, this.msg.getGlobalTransactionID());
     assertEquals(txnType, this.msg.getTransactionType());
     assertEquals(lowGlobalTransactionIDWatermark, this.msg.getLowGlobalTransactionIDWatermark());
-    assertEquals(notified, this.msg.addNotifiesTo(new LinkedList()));
+    assertEquals(notified, this.msg.getNotifies());
     Map<LogicalChangeID, LogicalChangeResult> msgResults = this.msg.getLogicalChangeResults();
     assertEquals(2, msgResults.size());
     assertEquals(LogicalChangeResult.SUCCESS, msgResults.get(new LogicalChangeID(1)));
     assertEquals(LogicalChangeResult.FAILURE, msgResults.get(new LogicalChangeID(2)));
-
+    assertEquals(events, this.msg.getEvents());
   }
 
 }

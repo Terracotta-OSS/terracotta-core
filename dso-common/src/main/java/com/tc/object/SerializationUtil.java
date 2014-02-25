@@ -53,6 +53,11 @@ public class SerializationUtil {
   public final static int            REMOVE_VERSIONED                         = 38;
   public final static int            PUT_IF_ABSENT_VERSIONED                  = 39;
   public final static int            CLEAR_VERSIONED                          = 40;
+  public final static int            REGISTER_SERVER_EVENT_LISTENER           = 41;
+  public final static int            UNREGISTER_SERVER_EVENT_LISTENER           = 42;
+  public final static int            REGISTER_SERVER_EVENT_LISTENER_PASSIVE     = 43;
+  public final static int            UNREGISTER_SERVER_EVENT_LISTENER_PASSIVE   = 44;
+  public final static int            REMOVE_EVENT_LISTENING_CLIENT        = 45;
 
   public final static String         PUSH_SIGNATURE                           = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String         POP_SIGNATURE                            = "pop()java/lang/Object;";
@@ -142,6 +147,8 @@ public class SerializationUtil {
   public final static String         REMOVE_VERSIONED_SIGNATURE               = "removeVersioned(Ljava/lang/Object;Ljava/lang/Object;)Z";
   public final static String         PUT_IF_ABSENT_VERSIONED_SIGNATURE = "putIfAbsentOrOlderVersion(Ljava/lang/Object;Ljava/lang/Object;J)V";
   public final static String         CLEAR_VERSIONED_SIGNATURE            = "clearVersioned()V";
+  public final static String         REGISTER_SERVER_EVENT_LISTENER_SIGNATURE = "registerListener(Ljava/util/Set)V";
+  public final static String         UNREGISTER_SERVER_EVENT_LISTENER_SIGNATURE = "registerListener(Ljava/util/Set)V";
 
   private final Map<String, Integer> mappings                          = new HashMap<String, Integer>();
 

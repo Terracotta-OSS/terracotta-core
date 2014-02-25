@@ -13,6 +13,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.server.ServerEventType;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.object.TCToolkitObject;
 
@@ -135,4 +136,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   boolean remove(Object key, Object value, ToolkitValueComparator<V> comparator);
 
   boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator);
+
+  void registerListener(Set<ServerEventType> eventTypes, boolean skipRejoinChecks);
+
+  void unregisterListener(Set<ServerEventType> types);
 }
