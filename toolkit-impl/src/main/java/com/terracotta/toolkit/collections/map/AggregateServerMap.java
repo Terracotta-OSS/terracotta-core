@@ -114,7 +114,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   private static final String                                              EHCACHE_GETALL_BATCH_SIZE_PROPERTY = "ehcache.getAll.batchSize";
   private static final int                                                 DEFAULT_GETALL_BATCH_SIZE          = 1000;
-  private final static String                                              CONFIG_CHANGE_LOCK_ID              = "__tc_config_change_lock";
   private final static List<ToolkitObjectType>                             VALID_TYPES                        = Arrays
                                                                                                                   .asList(ToolkitObjectType.STORE,
                                                                                                                       ToolkitObjectType.CACHE);
@@ -132,6 +131,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                                      clusterInfo;
   private final PlatformService                                            platformService;
+  private final ToolkitLock configMutationLock;
   private final Callable<ToolkitMap<String, String>>                       schemaCreator;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
   private final ToolkitObjectType                                          toolkitObjectType;
@@ -157,11 +157,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
                             DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup, String name,
                             ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects, Configuration config,
                             Callable<ToolkitMap<String, String>> schemaCreator,
-                            ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
+                            ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService,
+                            ToolkitLock configMutationLock) {
     this.toolkitObjectType = type;
     this.searchBuilderFactory = searchBuilderFactory;
     this.lookup = lookup;
     this.platformService = platformService;
+    this.configMutationLock = configMutationLock;
     this.clusterInfo = new TerracottaClusterInfo(platformService);
     this.getAllBatchSize = getTerracottaProperty(EHCACHE_GETALL_BATCH_SIZE_PROPERTY, DEFAULT_GETALL_BATCH_SIZE);
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;
@@ -728,7 +730,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void setConfigField(final String fieldChanged, final Serializable changedValue) {
-    ToolkitLockingApi.lock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
+    configMutationLock.lock();
     try {
       // to prevent user from manually setting a wrong configuration option
       validateField(fieldChanged);
@@ -758,7 +760,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         stripe.setConfigField(fieldChanged, newValue);
       }
     } finally {
-      ToolkitLockingApi.unlock(CONFIG_CHANGE_LOCK_ID, ToolkitLockTypeInternal.CONCURRENT, platformService);
+      configMutationLock.unlock();
     }
   }
 

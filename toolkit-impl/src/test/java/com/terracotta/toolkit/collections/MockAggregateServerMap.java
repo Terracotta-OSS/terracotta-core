@@ -13,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 
 import com.tc.abortable.AbortedOperationException;
@@ -44,9 +45,10 @@ public class MockAggregateServerMap extends AggregateServerMap {
   public MockAggregateServerMap(ToolkitObjectType type, SearchFactory searchBuilderFactory,
                                 DistributedClusteredObjectLookup lookup, String name,
                                 ToolkitObjectStripe[] stripeObjects, Configuration config, Callable schemaCreator,
-                                ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
+                                ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService,
+                                ToolkitLock configMutationLock) {
     super(type, searchBuilderFactory, lookup, name, stripeObjects, config, schemaCreator, serverMapLocalStoreFactory,
-          platformService);
+          platformService, configMutationLock);
     MockitoAnnotations.initMocks(this);
     when(anyServerMap.put(any(), any(), anyInt(), anyInt(), anyInt())).thenAnswer(putAction());
     when(anyServerMap.get(any())).thenReturn(getAction());

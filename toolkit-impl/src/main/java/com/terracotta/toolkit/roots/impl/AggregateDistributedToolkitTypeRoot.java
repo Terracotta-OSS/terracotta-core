@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.roots.impl;
 
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
@@ -13,6 +14,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.util.Assert;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
+import com.terracotta.toolkit.concurrent.locks.UnnamedToolkitReadWriteLock;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
@@ -64,7 +66,8 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
         final ToolkitObjectType type = factory.getManufacturedToolkitObjectType();
         ToolkitObjectStripe<S>[] stripeObjects;
         final Configuration effectiveConfig;
-        lock(type, name);
+        ToolkitLock objectCreationLock = objectInstanceLock(type, name).writeLock();
+        objectCreationLock.lock();
         try {
           stripeObjects = lookupStripeObjects(name);
           if (stripeObjects != null) {
@@ -78,11 +81,11 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
             created = true;
           }
         } finally {
-          unlock(type, name);
+          objectCreationLock.unlock();
         }
         // create new distributed object after ToolkitObjectStripe has been created/faulted-in
         distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, this, name, stripeObjects,
-                                                                       effectiveConfig, platformService);
+                                                                       effectiveConfig, platformService, objectCreationLock);
         T oldvalue = distributedTypes.put(name, distributedType);
         Assert.assertNull("oldValue must be null here", oldvalue);
 
@@ -112,11 +115,12 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
   @Override
   public ToolkitObjectStripe<S>[] lookupStripeObjects(final String name, final ToolkitObjectType type,
                                                       Configuration config) {
-    readLock(type, name);
+    ToolkitLock lock = objectInstanceLock(type, name).readLock();
+    lock.lock();
     try {
       return lookupStripeObjects(name);
     } finally {
-      readUnlock(type, name);
+      lock.unlock();
     }
   }
 
@@ -143,31 +147,20 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
 
   @Override
   public void removeToolkitType(ToolkitObjectType toolkitObjectType, String name) {
-    lock(toolkitObjectType, name);
+    ToolkitLock lock = objectInstanceLock(toolkitObjectType, name).writeLock();
+    lock.lock();
     try {
       distributedTypes.remove(name);
       for (ToolkitTypeRoot<ToolkitObjectStripe<S>> root : roots) {
         root.removeClusteredObject(name);
       }
     } finally {
-      unlock(toolkitObjectType, name);
+      lock.unlock();
     }
   }
 
-  private void lock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
-  }
-
-  private void unlock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE, platformService);
-  }
-
-  private void readLock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.READ, platformService);
-  }
-
-  private void readUnlock(ToolkitObjectType toolkitObjectType, String name) {
-    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.READ, platformService);
+  private UnnamedToolkitReadWriteLock objectInstanceLock(ToolkitObjectType type, String name) {
+    return ToolkitLockingApi.createUnnamedReadWriteLock(type, name, platformService, ToolkitLockTypeInternal.SYNCHRONOUS_WRITE);
   }
 
   @Override
@@ -180,14 +173,15 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
    */
   @Override
   public final void destroy(AbstractDestroyableToolkitObject obj, ToolkitObjectType type) {
-    lock(type, obj.getName());
+    ToolkitLock lock = objectInstanceLock(type, obj.getName()).writeLock();
+    lock.lock();
     try {
       if (!obj.isDestroyed()) {
         removeToolkitType(type, obj.getName());
         obj.destroyFromCluster();
       }
     } finally {
-      unlock(type, obj.getName());
+      lock.unlock();
     }
   }
 
@@ -226,11 +220,12 @@ implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedC
 
   @Override
   public void dispose(ToolkitObjectType toolkitObjectType, String name) {
-    lock(toolkitObjectType, name);
+    ToolkitLock lock = objectInstanceLock(toolkitObjectType, name).writeLock();
+    lock.lock();
     try {
       distributedTypes.remove(name);
     } finally {
-      unlock(toolkitObjectType, name);
-  }
+      lock.unlock();
+    }
   }
 }

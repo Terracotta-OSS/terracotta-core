@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.collections;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.terracotta.test.categories.CheckShorts;
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.tc.abortable.AbortedOperationException;
@@ -61,7 +63,7 @@ public class AggregateServerMapQuickApiTest {
     when(platformService.getDsoCluster()).thenReturn(new MockDsoCluster());
 
     aggregateServerMap = new MockAggregateServerMap(ToolkitObjectType.CACHE, null, null, "TestCache", stripe, config,
-                                                    schemaCreator, null, platformService);
+                                                    schemaCreator, null, platformService, mock(ToolkitLock.class));
   }
 
   @Test

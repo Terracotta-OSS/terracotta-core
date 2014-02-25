@@ -5,6 +5,7 @@
 package com.terracotta.toolkit.factory.impl;
 
 import org.terracotta.toolkit.collections.ToolkitMap;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
@@ -67,7 +68,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
                                                       DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup,
                                                       final String name,
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
-                                                      Configuration configuration, PlatformService platformService) {
+                                                      Configuration configuration, PlatformService platformService, ToolkitLock configMutationLock) {
     validateNewConfiguration(configuration);
     validateExistingClusterWideConfigs(stripeObjects, configuration);
     Callable<ToolkitMap<String, String>> schemaCreator = new Callable() {
@@ -80,7 +81,7 @@ public abstract class BaseDistributedToolkitTypeFactory<K extends Serializable, 
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
                                                                    searchBuilderFactory, lookup, name, stripeObjects,
                                                                    configuration, schemaCreator,
-                                                                   serverMapLocalStoreFactory, platformService);
+                                                                   serverMapLocalStoreFactory, platformService, configMutationLock);
     return new ToolkitCacheImpl<K, V>(factory, name, aggregateServerMap, platformService, toolkit);
   }
 
