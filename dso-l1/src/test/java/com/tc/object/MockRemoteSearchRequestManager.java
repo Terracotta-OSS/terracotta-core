@@ -8,6 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.aggregator.Aggregator;
@@ -34,14 +35,14 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
   @Override
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, int resFetchSize) {
+                                  int maxResults, int batchSize, SearchRequestID reqId, int resFetchSize) {
     return null;
   }
 
   @Override
   public SearchQueryResults query(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributeMap,
-                                  List<NVPair> aggregators, int maxResults, int batchSize) {
+                                  List<NVPair> aggregators, int maxResults, int batchSize, SearchRequestID reqId) {
     return null;
   }
 

@@ -75,6 +75,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
       case SerializationUtil.DESTROY:
         applyClear(applyInfo);
         return LogicalChangeResult.SUCCESS;
+      case SerializationUtil.NO_OP:
+        return LogicalChangeResult.SUCCESS;
       default:
         throw new AssertionError("Invalid action:" + method);
     }

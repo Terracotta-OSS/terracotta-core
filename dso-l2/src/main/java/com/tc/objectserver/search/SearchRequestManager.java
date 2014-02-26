@@ -5,7 +5,6 @@ package com.tc.objectserver.search;
 
 import com.tc.async.api.PostInit;
 import com.tc.object.msg.SearchQueryRequestMessage;
-import com.tc.object.msg.SearchResultsCloseMessage;
 import com.tc.object.msg.SearchResultsRequestMessage;
 
 /**
@@ -25,8 +24,4 @@ public interface SearchRequestManager extends PostInit {
    */
   public void resultsRequest(SearchResultsRequestMessage request);
 
-  /**
-   * Request to release search results
-   */
-  public void closeResultsRequest(SearchResultsCloseMessage request);
 }

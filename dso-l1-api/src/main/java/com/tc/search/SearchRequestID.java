@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object;
+package com.tc.search;
 
 import com.tc.util.AbstractIdentifier;
 

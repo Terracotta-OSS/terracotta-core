@@ -24,6 +24,7 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -59,6 +60,7 @@ import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.StartupLock;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
@@ -102,7 +104,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                   List<PostInit> toInit, StageManager stageManager, int maxStageSize,
                                                   DumpHandlerStore dumpHandlerStore);
 
-  SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink);
+  SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink,
+                                                  TaskRunner taskRunner);
 
   GroupManager createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID, Sink httpSink,
@@ -171,4 +174,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   LongGCLogger createLongGCLogger(long gcTimeOut);
 
   StartupLock createStartupLock(TCFile location, boolean retries);
+
+  GroupID getLocalGroupId();
 }

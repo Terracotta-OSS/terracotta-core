@@ -6,6 +6,8 @@ package com.terracotta.toolkit.search;
 import org.terracotta.toolkit.search.SearchQueryResultSet;
 import org.terracotta.toolkit.search.ToolkitSearchQuery;
 
+import com.tc.search.SearchRequestID;
+
 public interface SearchableEntity {
 
   /**
@@ -17,4 +19,9 @@ public interface SearchableEntity {
    * Identifies this entity
    */
   String getName();
+
+  /**
+   * Closes result set on the server
+   */
+  void closeResultSet(SearchRequestID reqId);
 }

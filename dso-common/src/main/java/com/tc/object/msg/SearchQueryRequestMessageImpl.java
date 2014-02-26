@@ -11,11 +11,11 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.SearchRequestID;
 import com.tc.object.dna.impl.NullObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.NVPairSerializer;
 import com.tc.object.session.SessionID;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.StackOperations;
@@ -34,21 +34,6 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private static final NVPairSerializer       NVPAIR_SERIALIZER      = new NVPairSerializer();
   private static final ObjectStringSerializer NULL_SERIALIZER        = new NullObjectStringSerializer();
 
-  private static final byte                   SEARCH_REQUEST_ID      = 0;
-  private static final byte                   CACHE_NAME             = 1;
-  private static final byte                   INCLUDE_KEYS           = 2;
-  private static final byte                   ATTRIBUTES             = 3;
-  private static final byte                   GROUP_BY_ATTRIBUTES    = 4;
-  private static final byte                   SORT_ATTRIBUTES        = 5;
-  private static final byte                   AGGREGATORS            = 6;
-  private static final byte                   STACK_OPERATION_MARKER = 7;
-  private static final byte                   STACK_NVPAIR_MARKER    = 8;
-  private static final byte                   MAX_RESULTS            = 9;
-  private static final byte                   INCLUDE_VALUES         = 10;
-  private static final byte                   VALUE_PREFETCH_SIZE    = 11;
-  private static final byte                   PREFETCH_VALUES        = 12;
-  private static final byte                   RESULT_PREFETCH_LIMIT  = 13;
-
   private SearchRequestID                     requestID;
   private String                              cacheName;
   private List                                queryStack;
@@ -61,7 +46,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private int                                 maxResults;
   private int                                 batchSize;
   private boolean                             prefetchFirstBatch;
-  private int                                 resultPrefetchLimit;
+  private int                                 resultPageSize;
 
   public SearchQueryRequestMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                        MessageChannel channel, TCMessageType type) {
@@ -91,7 +76,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.maxResults = max;
     this.batchSize = batch;
     this.prefetchFirstBatch = prefetchFirst;
-    this.resultPrefetchLimit = resultPrefetchSize;
+    this.resultPageSize = resultPrefetchSize;
   }
 
   @Override
@@ -105,7 +90,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     putNVPair(MAX_RESULTS, this.maxResults);
     putNVPair(VALUE_PREFETCH_SIZE, this.batchSize);
     putNVPair(PREFETCH_VALUES, this.prefetchFirstBatch);
-    putNVPair(RESULT_PREFETCH_LIMIT, this.resultPrefetchLimit);
+    putNVPair(RESULT_PAGE_SIZE, this.resultPageSize);
 
     putNVPair(ATTRIBUTES, this.attributes.size());
     for (final String attribute : this.attributes) {
@@ -177,8 +162,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         this.prefetchFirstBatch = getBooleanValue();
         return true;
 
-      case RESULT_PREFETCH_LIMIT:
-        this.resultPrefetchLimit = getIntValue();
+      case RESULT_PAGE_SIZE:
+        this.resultPageSize = getIntValue();
         return true;
 
       case ATTRIBUTES:
@@ -341,8 +326,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    * {@inheritDoc}
    */
   @Override
-  public int getResultPrefetchLimit() {
-    return this.resultPrefetchLimit;
+  public int getResultPageSize() {
+    return this.resultPageSize;
   }
 
 }

@@ -26,6 +26,7 @@ import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.TaskRunner;
@@ -284,19 +285,19 @@ public class PlatformServiceImpl implements PlatformService {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize, int resultPageSize,
-                                         boolean waitForTxn)
+                                         boolean waitForTxn, SearchRequestID queryId)
       throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                aggregators, maxResults, batchSize, resultPageSize, waitForTxn);
+                                aggregators, maxResults, batchSize, resultPageSize, waitForTxn, queryId);
   }
 
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn, SearchRequestID queryId)
       throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes, aggregators,
-                                maxResults, batchSize, waitForTxn);
+                                maxResults, batchSize, waitForTxn, queryId);
   }
 
   @Override
@@ -375,6 +376,11 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
     return false;
+  }
+
+  @Override
+  public long getClientId() {
+    return manager.getClientID().toLong();
   }
 
   private static class LockInfo {

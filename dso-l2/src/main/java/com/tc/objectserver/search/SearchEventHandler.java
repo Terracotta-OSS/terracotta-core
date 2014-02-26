@@ -107,6 +107,16 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
+    } else if (context instanceof SearchIndexSnapshotContext) {
+      SearchIndexSnapshotContext snapCtxt = (SearchIndexSnapshotContext) context;
+      try {
+        if (snapCtxt.isClose()) indexManager.releaseSearchResults(snapCtxt.getCacheName(), snapCtxt.getSnapshotId(),
+                                                                  snapCtxt.getMetaDataProcessingContext());
+        else indexManager.snapshotForQuery(snapCtxt.getCacheName(), snapCtxt.getSnapshotId(),
+                                           snapCtxt.getMetaDataProcessingContext());
+      } catch (IndexException e) {
+        throw new EventHandlerException(e);
+      }
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

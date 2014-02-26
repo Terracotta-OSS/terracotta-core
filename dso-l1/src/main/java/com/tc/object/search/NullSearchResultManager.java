@@ -5,13 +5,15 @@ package com.tc.object.search;
 
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.SearchRequestID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.IndexQueryResult;
+import com.terracottatech.search.NVPair;
 
 import java.util.List;
+import java.util.Set;
 
 public class NullSearchResultManager implements SearchResultManager {
 
@@ -29,8 +31,11 @@ public class NullSearchResultManager implements SearchResultManager {
   }
 
   @Override
-  public SearchQueryResults<IndexQueryResult> loadResults(final SearchRequestID requestID, final String cacheName,
-                                                          int start, int size, GroupID from) {
+  public SearchQueryResults<IndexQueryResult> loadResults(String cachename, SearchRequestID reqId, List queryStack,
+                                                          boolean includeKeys, boolean includeValues,
+                                                          Set<String> attributeSet, List<NVPair> sortAttributeMap,
+                                                          List<NVPair> aggregators, int maxResults, int start,
+                                                          int pageSize, GroupID from) {
     return null;
   }
 
@@ -60,7 +65,7 @@ public class NullSearchResultManager implements SearchResultManager {
   }
 
   @Override
-  public void releaseResults(SearchRequestID request, String cacheName) {
+  public void releaseResults(SearchRequestID request) {
     //
   }
 

@@ -6,7 +6,7 @@ package com.tc.objectserver.search;
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.object.SearchRequestID;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.NVPair;
 
 import java.util.LinkedList;

@@ -5,7 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.SearchRequestID;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.aggregator.Aggregator;
 

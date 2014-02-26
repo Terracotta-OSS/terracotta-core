@@ -3,9 +3,8 @@
  */
 package com.tc.object.msg;
 
-import com.tc.object.SearchRequestID;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.NVPair;
-import com.terracottatech.search.SearchBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -39,54 +38,9 @@ public interface SearchQueryRequestMessage extends SearchRequestMessage {
                                              boolean prefetchFirstBatch, int resultPrefetchLimit);
 
   /**
-   * Query stack to search
-   * 
-   * @return List linkedlist
-   */
-  public List getQueryStack();
-
-  /**
-   * Return set of attributes ask for.
-   * 
-   * @return Set<String>
-   */
-  public Set<String> getAttributes();
-
-  /**
    * Return set of attributes to group results by
    */
   public Set<String> getGroupByAttributes();
-
-  /**
-   * Return a map of sort attributes
-   */
-  public List<NVPair> getSortAttributes();
-
-  /**
-   * Return a map of attribute aggregators
-   * 
-   * @return List<NVPair>
-   */
-  public List<NVPair> getAggregators();
-
-  /**
-   * Result should include keys
-   * 
-   * @return boolean
-   */
-  public boolean includeKeys();
-
-  /**
-   * Result should include values
-   * 
-   * @return boolean
-   */
-  public boolean includeValues();
-
-  /**
-   * Return maximum results size. return integer
-   */
-  public int getMaxResults();
 
   /**
    * Return the desired result set batch size
@@ -98,10 +52,4 @@ public interface SearchQueryRequestMessage extends SearchRequestMessage {
    */
   public boolean isPrefetchFirstBatch();
 
-  /**
-   * How many results to return with query response. If actual returned result count exceeds this value, the rest must
-   * be fetched using result paging. Set to {@link SearchBuilder.Search#BATCH_SIZE_UNLIMITED} to get all results in one
-   * shot in response message regardless of actual hit count.
-   */
-  public int getResultPrefetchLimit();
 }

@@ -10,6 +10,7 @@ import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerEventDestination;
@@ -25,6 +26,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.TaskRunner;
 import com.terracottatech.search.NVPair;
@@ -254,7 +256,7 @@ public interface Manager extends TerracottaLocking {
    * 
    * @return Client identifier
    */
-  public String getClientID();
+  public ClientID getClientID();
 
   /**
    * Get unique Client identifier
@@ -328,12 +330,13 @@ public interface Manager extends TerracottaLocking {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize, int resultPageSize,
-                                         boolean waitForTxn)
+                                         boolean waitForTxn, SearchRequestID reqId)
       throws AbortedOperationException;
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn,
+                                         SearchRequestID reqId)
       throws AbortedOperationException;
 
   public NVPair createNVPair(String name, Object value);

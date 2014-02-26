@@ -19,6 +19,7 @@ import com.tc.license.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
@@ -65,6 +66,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
@@ -75,6 +77,7 @@ import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchBuilder.Search;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -195,8 +198,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public String getClientID() {
-    return Long.toString(this.dso.getChannel().getClientIDProvider().getClientID().toLong());
+  public ClientID getClientID() {
+    return this.dso.getChannel().getClientIDProvider().getClientID();
   }
 
   @Override
@@ -887,28 +890,29 @@ public class ManagerImpl implements Manager {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize, int resultPageSize,
-                                         boolean waitForTxn)
+                                         boolean waitForTxn, SearchRequestID reqId)
       throws AbortedOperationException {
-    if (shouldWaitForTxn(waitForTxn)) {
+    // Paginated queries are already transactional wrt local changes
+    if (resultPageSize == Search.BATCH_SIZE_UNLIMITED && shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
     return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
                                       aggregators,
-                                      maxResults,
-                                      batchSize,
+                                      maxResults, batchSize, reqId,
                                       resultPageSize);
   }
 
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn,
+                                         SearchRequestID reqId)
       throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
     return searchRequestManager.query(cachename, queryStack, attributeSet, groupByAttribues, sortAttributes,
-                                      aggregators, maxResults, batchSize);
+                                      aggregators, maxResults, batchSize, reqId);
   }
 
   private boolean shouldWaitForTxn(boolean userChoice) {
@@ -1028,10 +1032,12 @@ public class ManagerImpl implements Manager {
     return taskRunner;
   }
 
+  @Override
   public long getLockAwardIDFor(LockID lock) {
     return lockManager.getAwardIDFor(lock);
   }
 
+  @Override
   public boolean isLockAwardValid(LockID lock, long awardID) {
     return lockManager.isLockAwardValid(lock, awardID);
   }

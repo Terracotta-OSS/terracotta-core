@@ -3,7 +3,11 @@
  */
 package com.tc.object.msg;
 
-import com.tc.object.SearchRequestID;
+import com.tc.search.SearchRequestID;
+import com.terracottatech.search.NVPair;
+
+import java.util.List;
+import java.util.Set;
 
 public interface SearchResultsRequestMessage extends SearchRequestMessage {
 
@@ -20,6 +24,9 @@ public interface SearchResultsRequestMessage extends SearchRequestMessage {
   /**
    * Initialize this message
    */
-  public void initialize(final String cacheName, SearchRequestID reqId, int start, int pageSize);
+  public void initialize(final SearchRequestID searchRequestID, final String cacheName, final List queryStack,
+                         final boolean keys, final boolean values, final Set<String> attributeSet,
+                         final List<NVPair> sortAttributesMap, final List<NVPair> aggregators, int maxResults,
+                         int start, int pageSize);
 
 }

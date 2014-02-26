@@ -28,4 +28,5 @@ public interface SearchQueryResults<T extends IndexQueryResult> {
 
   void close();
 
+  SearchRequestID getQueryId();
 }

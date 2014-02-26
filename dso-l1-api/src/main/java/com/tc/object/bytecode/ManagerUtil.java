@@ -108,7 +108,7 @@ public class ManagerUtil {
    * @return Client identifier
    */
   protected static String getClientID() {
-    return getManager().getClientID();
+    return getManager().getClientID().toString();
   }
 
   /**

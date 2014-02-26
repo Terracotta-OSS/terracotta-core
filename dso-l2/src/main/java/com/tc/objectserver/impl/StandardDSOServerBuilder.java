@@ -79,6 +79,7 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
+import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
@@ -94,7 +95,6 @@ import javax.management.MBeanServer;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
   private final HaConfig            haConfig;
-  private final GroupID             thisGroupID;
 
   protected final TCSecurityManager securityManager;
   protected final TCLogger          logger;
@@ -105,7 +105,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     this.securityManager = securityManager;
     this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
-    this.thisGroupID = this.haConfig.getThisGroupID();
   }
 
   @Override
@@ -150,7 +149,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink) {
+  public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager,
+                                                         Sink managedObjectRequestSink, TaskRunner runner) {
     return new NullSearchRequestManager();
   }
 
@@ -259,7 +259,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
-                               configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
+                               configurationSetupManager, recycler, haConfig.getThisGroupID(), stripeStateManager,
                                serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence,
         datastore, electionTimeInSecs);
   }
@@ -311,7 +311,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return NullBackupManager.INSTANCE;
   }
 
-  protected GroupID getLocalGroupId() {
-    return thisGroupID;
+  @Override
+  public GroupID getLocalGroupId() {
+    return haConfig.getThisGroupID();
   }
 }

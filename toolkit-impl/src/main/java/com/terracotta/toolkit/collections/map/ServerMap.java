@@ -39,6 +39,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
@@ -1388,6 +1389,29 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
+  public void addSelfToTxn() {
+    tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP, SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+  }
+
+  @Override
+  public void takeSnapshot(SearchRequestID queryId) {
+    addSnapshotMetaData(queryId, false);
+    tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP,
+                                                             SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+  }
+
+  @Override
+  public void releaseSnapshot(SearchRequestID queryId) {
+    beginLock(getInstanceDsoLockName(), this.lockType);
+    try {
+      tcObjectServerMap.logicalInvoke(SerializationUtil.NO_OP, SerializationUtil.NO_OP_SIGNATURE, new Object[0]);
+      addSnapshotMetaData(queryId, true);
+    } finally {
+      commitLock(getInstanceDsoLockName(), this.lockType);
+    }
+
+  }
+  @Override
   protected void doLogicalDestroy() {
     super.doLogicalDestroy();
     MetaData destroyMetadata = createBaseMetaData();
@@ -1513,6 +1537,16 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private MetaData createClearSearchMetaData() {
     return createRemoveSearchMetaData(null);
+  }
+
+  private void addSnapshotMetaData(SearchRequestID queryId, boolean isClose) {
+    if (!isSearchable()) throw new UnsupportedOperationException("search is not enabled");
+    MetaData snapMetadata = createBaseMetaData();
+    snapMetadata.set(SearchMetaData.COMMAND, isClose ? SearchCommand.RELEASE_RESULTS : SearchCommand.SNAPSHOT);
+    snapMetadata.add(SearchMetaData.CLIENT_ID, platformService.getClientId());
+    snapMetadata.add(SearchMetaData.REQUEST_ID, queryId.toLong());
+    addMetaData(snapMetadata);
+
   }
 
   private static String getSearchAttributeType(String name, Object value) {

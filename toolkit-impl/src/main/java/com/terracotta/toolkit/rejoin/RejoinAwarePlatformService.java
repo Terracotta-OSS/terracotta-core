@@ -24,6 +24,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.TaskRunner;
@@ -431,13 +432,13 @@ public class RejoinAwarePlatformService implements PlatformService {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize, int pageSize,
-                                         boolean waitForTxn)
+                                         boolean waitForTxn, SearchRequestID queryId)
       throws AbortedOperationException {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
       return delegate.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                   aggregators, maxResults, batchSize, pageSize, waitForTxn);
+                                   aggregators, maxResults, batchSize, pageSize, waitForTxn, queryId);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -446,13 +447,13 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn, SearchRequestID queryId)
       throws AbortedOperationException {
     assertRejoinNotInProgress();
     try {
       assertNotLockedBeforeRejoin();
       return delegate.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes, aggregators,
-                                   maxResults, batchSize, waitForTxn);
+                                   maxResults, batchSize, waitForTxn, queryId);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -559,5 +560,10 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public TaskRunner getTaskRunner() {
     return delegate.getTaskRunner();
+  }
+
+  @Override
+  public long getClientId() {
+    return delegate.getClientId();
   }
 }

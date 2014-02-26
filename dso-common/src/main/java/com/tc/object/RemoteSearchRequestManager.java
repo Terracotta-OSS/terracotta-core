@@ -9,6 +9,7 @@ import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.NVPair;
 import com.terracottatech.search.aggregator.Aggregator;
@@ -24,11 +25,13 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, int resultSetLimit) throws AbortedOperationException;
+                                  int maxResults, int firstValueBatchSize, SearchRequestID reqId, int resultSetLimit)
+      throws AbortedOperationException;
 
   public SearchQueryResults query(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributeMap,
-                                  List<NVPair> aggregators, int maxResults, int batchSize)
+                                  List<NVPair> aggregators, int maxResults, int firstValueBatchSize,
+                                  SearchRequestID reqId)
       throws AbortedOperationException;
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
@@ -37,7 +40,5 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public void addErrorResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
                                        final String errorMessage, final NodeID nodeID);
-
-  // public SearchQueryResults fetchResults(String cacheName, )
 
 }

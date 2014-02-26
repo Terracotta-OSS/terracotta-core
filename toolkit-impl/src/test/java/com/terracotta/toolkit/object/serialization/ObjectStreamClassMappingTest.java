@@ -24,6 +24,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.TaskRunner;
 import com.tcclient.cluster.DsoNode;
@@ -276,14 +277,14 @@ public class ObjectStreamClassMappingTest {
     public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                            boolean includeValues, Set<String> attributeSet,
                                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                           int batchSize, int pageSize, boolean waitForTxn) {
+                                           int batchSize, int pageSize, boolean waitForTxn, SearchRequestID queryId) {
       return null;
     }
 
     @Override
     public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                            Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                           List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                           List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn, SearchRequestID queryId) {
       return null;
     }
 
@@ -376,6 +377,11 @@ public class ObjectStreamClassMappingTest {
     @Override
     public boolean isLockedBeforeRejoin(Object lockID, LockLevel level) {
       return false;
+    }
+
+    @Override
+    public long getClientId() {
+      return -1;
     }
   }
 
