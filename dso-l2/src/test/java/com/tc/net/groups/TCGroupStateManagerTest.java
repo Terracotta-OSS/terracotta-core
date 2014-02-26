@@ -279,7 +279,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     ThreadUtil.reallySleep(1000);
     int nodesNeedToMoveToPassive = nodes - 1;
     while (nodesNeedToMoveToPassive > 0) {
-      NodeID toBePassiveNode = joinedNodes.poll(5000, TimeUnit.MILLISECONDS);
+      NodeID toBePassiveNode = joinedNodes.take();
       System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
       managers[0].moveNodeToPassiveStandby(toBePassiveNode);
       --nodesNeedToMoveToPassive;
