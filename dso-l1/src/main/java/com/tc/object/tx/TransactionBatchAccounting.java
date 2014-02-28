@@ -39,7 +39,12 @@ public class TransactionBatchAccounting {
     if (transactionIDs.isEmpty()) return;
     Collections.sort(transactionIDs);
     BatchDescriptor desc = new BatchDescriptor(batchID, transactionIDs);
-    batchesByTransaction.put(transactionIDs.get(0), desc);
+    TransactionID key = transactionIDs.get(0);
+    batchesByTransaction.put(key, desc);
+    Map.Entry<TransactionID,BatchDescriptor> lower = batchesByTransaction.lowerEntry(key);
+    if ( lower != null && lower.getValue().getId().equals(batchID) ) {
+      batchesByTransaction.remove(lower.getKey());
+    }
     if (highWaterMark.toLong() < transactionIDs.get(transactionIDs.size()-1).toLong()) {
       highWaterMark = transactionIDs.get(transactionIDs.size()-1);
     }
@@ -119,6 +124,9 @@ public class TransactionBatchAccounting {
       c.add(desc.batchID);
     }
     Collections.sort(c);
+    if (c.size() != new HashSet(c).size()) {
+      throw new AssertionError("duplicate batch id");
+    }
     return c;
   }
 
