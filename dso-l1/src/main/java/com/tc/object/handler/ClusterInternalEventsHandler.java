@@ -11,7 +11,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.Assert;
 import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoClusterEventsNotifier;
 
@@ -48,7 +47,8 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
     private final ThreadPoolExecutor  eventExecutor       = new ThreadPoolExecutor(1, EXECUTOR_MAX_THREADS, 60L,
                                                                                    TimeUnit.SECONDS,
                                                                                    new SynchronousQueue<Runnable>(),
-                                                                                   daemonThreadFactory);
+                                                                                   daemonThreadFactory,
+                                                                                   new ThreadPoolExecutor.DiscardPolicy());
 
     public ThreadPoolExecutor getExecutorService() {
       return eventExecutor;
@@ -82,7 +82,6 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   @Override
   public void handleEvent(final EventContext context) {
     ThreadPoolExecutor service = clusterEventExecutor.getExecutorService();
-    Assert.assertFalse(service.isTerminating() || service.isShutdown() || service.isTerminated());
     Future eventFuture = service.submit(new Runnable() {
       @Override
       public void run() {
@@ -111,12 +110,5 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   public synchronized void destroy() {
     super.destroy();
     clusterEventExecutor.getExecutorService().shutdownNow();
-    debug("destroy clusterEventExecutor is shutdown");
-  }
-
-  private void debug(String message) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(message);
-    }
   }
 }
