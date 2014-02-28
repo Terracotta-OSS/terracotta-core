@@ -6,8 +6,10 @@ package com.tc.object.tx;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
@@ -106,6 +108,41 @@ public class TransactionBatchAccountingTest extends TestCase {
   /**
    * Tests that the set of incomplete batch ids comes out in the same order it come in.
    */
+  public void testAckAccounting() throws Exception {
+    List<TxnBatchID> batchIDs = new LinkedList<TxnBatchID>();
+    Map<TxnBatchID, TransactionID> firsts = new HashMap<TxnBatchID, TransactionID>();
+    List<TxnBatchID> incomplete = new LinkedList<TxnBatchID>();
+    for (int i = 0; i < 1000; i++) {
+      TxnBatchID batchID = new TxnBatchID(sequence.next());
+      ArrayList<TransactionID> transactionIDs = new ArrayList<TransactionID>();
+      for (int j = 0; j < 10; j++) {
+        transactionIDs.add(new TransactionID(sequence.next()));
+      }
+      firsts.put(batchID,transactionIDs.get(0));
+      acct.addBatch(batchID, transactionIDs);
+      batchIDs.add(batchID);
+
+    }
+    
+    for ( TxnBatchID bid : batchIDs ) {
+      acct.acknowledge(bid, Collections.singletonList(firsts.get(bid)));
+    }
+    
+    assertEquals(batchIDs, acct.addIncompleteBatchIDsTo(incomplete));
+    
+    for ( TxnBatchID bid : incomplete ) {
+      acct.addBatch(bid, new ArrayList<TransactionID>(acct.getTransactionIdsFor(bid)));
+    }
+    
+    incomplete.clear();
+    
+    assertEquals(batchIDs, acct.addIncompleteBatchIDsTo(incomplete));
+  }
+  
+
+  /**
+   * Tests that the set of incomplete batch ids comes out in the same order it come in.
+   */
   public void testBatchOrdering() throws Exception {
     List batchIDs = new LinkedList();
     for (int i = 0; i < 1000; i++) {
@@ -119,7 +156,7 @@ public class TransactionBatchAccountingTest extends TestCase {
 
       assertEquals(batchIDs, acct.addIncompleteBatchIDsTo(new LinkedList()));
     }
-  }
+  }  
 
   private static final class Sequence {
     private final AtomicLong sequence = new AtomicLong(0);
