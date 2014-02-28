@@ -446,7 +446,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       TestTransactionBatch batch2 = getNextNewBatch();
       drainQueueInto(batch2.addTxQueue, heldTx);
       heldBatches.add(batch2);
-      assertTrue(heldBatches.size() < num);
+      assertTrue(heldBatches.size() <= num);
     }
 
 
