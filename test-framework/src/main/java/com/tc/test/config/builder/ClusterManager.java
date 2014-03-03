@@ -337,7 +337,7 @@ public class ClusterManager {
         boolean contains = result.contains("\"agencyOf\": \"Ehcache\"");
         inputStream.close();
         if(!contains) {
-          LOG.info("TSA agent NOT listening on port, we try again ", port);
+          LOG.info("TSA agent NOT listening on port, we try again {}", port);
           ThreadUtil.reallySleep(1000L);
           continue;
         }
