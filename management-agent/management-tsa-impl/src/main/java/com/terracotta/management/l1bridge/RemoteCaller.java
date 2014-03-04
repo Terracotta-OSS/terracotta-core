@@ -137,11 +137,7 @@ public class RemoteCaller {
     }
 
     try {
-      Object result = deserialize(bytes);
-      if (result instanceof Representable) {
-        rewriteAgentId(Collections.singleton((Representable)result), node);
-      }
-      return result;
+      return deserializeAndRewriteAgentId(bytes, node);
     } catch (IOException ioe) {
       throw new ServiceExecutionException("Error deserializing remote response", ioe);
     } catch (ClassNotFoundException cnfe) {
@@ -172,7 +168,7 @@ public class RemoteCaller {
             RemoteCallDescriptor remoteCallDescriptor = new RemoteCallDescriptor(ticket, token, TSAConfig.getSecurityCallbackUrl(),
                 serviceName, method.getName(), method.getParameterTypes(), args);
             byte[] bytes = remoteAgentBridgeService.invokeRemoteMethod(node, remoteCallDescriptor);
-            return rewriteAgentId((Collection<T>)deserialize(bytes), node);
+            return deserializeAndRewriteAgentId(bytes, node);
           }
         });
         futures.add(future);
@@ -210,26 +206,35 @@ public class RemoteCaller {
     return globalResult;
   }
 
-  private static <T> T deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
-    if (bytes == null) { return null; }
+  private static <T> T deserializeAndRewriteAgentId(byte[] bytes, String agentId) throws IOException, ClassNotFoundException {
+    if (bytes == null) {
+      return null;
+    }
 
     ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
     try {
-      return (T)ois.readObject();
+      Object deserialized = ois.readObject();
+      rewriteAgentId(deserialized, agentId);
+      return (T)deserialized;
     } finally {
       ois.close();
     }
   }
 
-  private static <T extends Representable> Collection<T> rewriteAgentId(Collection<T> representables, String agentId) {
-    if (representables != null) {
-      for (Representable r : representables) {
-        r.setAgentId(agentId);
+  private static void rewriteAgentId(Object obj, String agentId) {
+    if (obj == null) {
+      // do nothing
+    } else if (obj instanceof Representable) {
+      ((Representable)obj).setAgentId(agentId);
+    } else if (obj instanceof Collection) {
+      for (Object entity : (Collection<?>)obj) {
+        if (entity instanceof Representable) {
+          ((Representable)entity).setAgentId(agentId);
+        }
       }
     } else {
-      representables = Collections.emptySet();
+      LOG.warn("Entity not of Representable type nor Collection of Representable types - cannot rewrite agent ID");
     }
-    return representables;
   }
 
 }

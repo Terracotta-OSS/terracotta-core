@@ -45,17 +45,18 @@ public class RemoteServiceStubGenerator {
 
     @Override
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-      if (Collection.class.isAssignableFrom(method.getReturnType())) {
-        Set<String> nodes = requestValidator.getValidatedNodes();
-        if (nodes == null) {
-          throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
-        }
+      Set<String> nodes = requestValidator.getValidatedNodes();
+      if (nodes == null) {
+        throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
+      }
+      if (nodes.isEmpty()) {
+        throw new RuntimeException("Invalid remote request to zero L1. Bug?");
+      }
+
+      if (nodes.size() > 1 && Collection.class.isAssignableFrom(method.getReturnType())) {
         return remoteCaller.fanOutCollectionCall(agency, nodes, serviceName, method, args);
       } else {
         String node = requestValidator.getSingleValidatedNode();
-        if (node == null) {
-          throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
-        }
         return remoteCaller.call(node, serviceName, method, args);
       }
     }

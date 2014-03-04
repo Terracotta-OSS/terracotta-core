@@ -106,7 +106,7 @@ public class RemoteCallerTest {
   }
 
   @Test
-  public void when_call_then_remote_collection_has_corresponding_agentId() throws Exception {
+  public void when_call_then_remote_entity_has_corresponding_agentId() throws Exception {
     TimeoutService timeoutService = mock(TimeoutService.class);
     RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
     ContextService contextService = mock(ContextService.class);
@@ -124,6 +124,30 @@ public class RemoteCallerTest {
 
     Object response = remoteCaller.call(nodeName, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
     assertThat(((AgentEntity) response).getAgentId(), equalTo(nodeName));
+  }
+
+  @Test
+  public void when_call_then_remote_collection_has_corresponding_agentId() throws Exception {
+    TimeoutService timeoutService = mock(TimeoutService.class);
+    RemoteAgentBridgeService remoteAgentBridgeService = mock(RemoteAgentBridgeService.class);
+    ContextService contextService = mock(ContextService.class);
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    RequestTicketMonitor requestTicketMonitor = mock(RequestTicketMonitor.class);
+    UserService userService = mock(UserService.class);
+    RemoteCaller remoteCaller = new RemoteCaller(remoteAgentBridgeService, contextService, executorService, requestTicketMonitor, userService, timeoutService);
+
+    when(requestTicketMonitor.issueRequestTicket()).thenReturn("test-ticket");
+    DfltUserInfo userInfo = new DfltUserInfo("testUser", "testPwHash", Collections.singleton(UserRole.TERRACOTTA));
+    when(contextService.getUserInfo()).thenReturn(userInfo);
+    when(userService.putUserInfo(userInfo)).thenReturn("test-token");
+    String nodeName = "test-nodename";
+    when(remoteAgentBridgeService.invokeRemoteMethod(eq(nodeName), Matchers.any(RemoteCallDescriptor.class))).thenReturn(SERIALIZED_AGENT_ENTITY_COLLECTION);
+
+    Object response = remoteCaller.call(nodeName, "myService", RemoteAgentEndpoint.class.getMethod("getVersion"), new Object[0]);
+    Collection<AgentEntity> collection = (Collection<AgentEntity>)response;
+    for (AgentEntity agentEntity : collection) {
+      assertThat(agentEntity.getAgentId(), equalTo(nodeName));
+    }
   }
 
   @Test
