@@ -151,4 +151,7 @@ public interface ServerTransactionManager {
 
   public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo);
 
+  void waitForTransactionRelay(ServerTransactionID serverTransactionID);
+
+  void waitForTransactionCommit(ServerTransactionID serverTransactionID);
 }

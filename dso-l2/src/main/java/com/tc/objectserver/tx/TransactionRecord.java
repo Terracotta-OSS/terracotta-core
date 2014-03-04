@@ -5,6 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.util.Util;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,27 +27,32 @@ public class TransactionRecord {
     }
   }
 
-  public void relayTransactionComplete() {
+  public synchronized void relayTransactionComplete() {
     this.state.relayTransactionComplete();
+    notifyAll();
   }
 
-  public void applyAndCommitSkipped() {
+  public synchronized void applyAndCommitSkipped() {
     this.state.applyAndCommitSkipped();
+    notifyAll();
   }
 
-  public void applyCommitted() {
+  public synchronized void applyCommitted() {
     this.state.applyCommitted();
+    notifyAll();
   }
 
-  public void broadcastCompleted() {
+  public synchronized void broadcastCompleted() {
     this.state.broadcastCompleted();
+    notifyAll();
   }
   
-  public void processMetaDataCompleted() {
+  public synchronized void processMetaDataCompleted() {
     state.processMetaDataCompleted();
+    notifyAll();
   }
 
-  public boolean isComplete() {
+  public synchronized boolean isComplete() {
     return this.state.isComplete() && this.waitees.isEmpty();
   }
 
@@ -55,20 +61,57 @@ public class TransactionRecord {
     return "TransactionRecord@" + System.identityHashCode(this) + " = " + this.state + "  :: waitees = " + this.waitees;
   }
 
-  public boolean addWaitee(final NodeID waitee) {
+  public synchronized boolean addWaitee(final NodeID waitee) {
     return this.waitees.add(waitee);
   }
 
-  public boolean remove(final NodeID waitee) {
-    return this.waitees.remove(waitee);
+  public synchronized boolean remove(final NodeID waitee) {
+    boolean removed = this.waitees.remove(waitee);
+    notifyAll();
+    return removed;
   }
 
-  public boolean isEmpty() {
+  public synchronized boolean isEmpty() {
     return this.waitees.isEmpty();
   }
 
-  public boolean contains(final NodeID waitee) {
+  public synchronized boolean contains(final NodeID waitee) {
     return this.waitees.contains(waitee);
   }
 
+  private synchronized boolean isRelayComplete() {
+    if (state.isRelayComplete()) {
+      for (NodeID waitee : waitees) {
+        if (waitee.getNodeType() == NodeID.SERVER_NODE_TYPE) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public synchronized void waitUntilRelayComplete() {
+    boolean interrupted = false;
+    while(!isRelayComplete()) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    Util.selfInterruptIfNeeded(interrupted);
+  }
+
+  public synchronized void waitUntilCommit() {
+    boolean interrupted = false;
+    while (!state.isApplyCommitted()) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    Util.selfInterruptIfNeeded(interrupted);
+  }
 }

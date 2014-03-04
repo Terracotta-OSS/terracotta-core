@@ -51,6 +51,14 @@ public class TransactionState {
     state |= TXN_RELAYED;
   }
 
+  public boolean isRelayComplete() {
+    return (state & TXN_RELAYED) != 0;
+  }
+
+  public boolean isApplyCommitted() {
+    return (state & APPLY_COMMITTED) != 0;
+  }
+
   @Override
   public String toString() {
     return "TransactionState = [ "

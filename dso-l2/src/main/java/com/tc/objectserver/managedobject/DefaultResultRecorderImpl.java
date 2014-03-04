@@ -20,7 +20,6 @@ public class DefaultResultRecorderImpl implements ApplyResultRecorder {
       return;
     }
     Assert.assertNull(changeResults.put(changeID, result));
-
   }
 
   @Override
@@ -31,7 +30,16 @@ public class DefaultResultRecorderImpl implements ApplyResultRecorder {
   @Override
   public void recordResults(Map<LogicalChangeID, LogicalChangeResult> results) {
     changeResults.putAll(results);
+  }
 
+  @Override
+  public boolean needPersist() {
+    for (LogicalChangeResult logicalChangeResult : changeResults.values()) {
+      if (logicalChangeResult.isSuccess()) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

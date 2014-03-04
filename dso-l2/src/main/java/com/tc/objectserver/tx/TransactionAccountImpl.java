@@ -12,10 +12,11 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * An account of the state of a given transaction. Keeps track of the initiating client, the state of the transaction
@@ -39,10 +40,9 @@ public class TransactionAccountImpl implements TransactionAccount {
   }
 
   @Override
-  public void incomingTransactions(Set txnIDs) {
+  public void incomingTransactions(Set<ServerTransactionID> txnIDs) {
     Assert.assertFalse(this.dead);
-    for (final Iterator i = txnIDs.iterator(); i.hasNext();) {
-      final ServerTransactionID stxnID = (ServerTransactionID) i.next();
+    for (final ServerTransactionID stxnID : txnIDs) {
       createRecord(stxnID.getClientTransactionID(), new TransactionRecord());
     }
   }
@@ -62,6 +62,20 @@ public class TransactionAccountImpl implements TransactionAccount {
       }
     }
     addWaitee(to, txnID);
+  }
+
+  @Override
+  public void waitUntilRelayed(final TransactionID txnID) {
+    TransactionRecord record = getRecord(txnID);
+    checkArgument(record != null, "%s not found.", txnID);
+    record.waitUntilRelayComplete();
+  }
+
+  @Override
+  public void waitUntilCommitted(final TransactionID txnID) {
+    TransactionRecord record = getRecord(txnID);
+    checkArgument(record != null, "%s not found.", txnID);
+    record.waitUntilCommit();
   }
 
   /*

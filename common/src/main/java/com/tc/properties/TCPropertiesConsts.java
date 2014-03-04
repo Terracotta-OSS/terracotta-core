@@ -92,6 +92,11 @@ public interface TCPropertiesConsts {
    * passive.throttle.threshold   : Number of pending transactions after which passive will
    *                                throttle the active
    * passive.throttle.maxSleepSeconds  : Sleep time for active when passive throttles it
+   * broadcast.durability.level   : Controls how much persistence to ensure before sending out the result
+   *                                of a transaction.
+   *                                   - NONE : just send it immediately
+   *                                   - RELAYED : make sure it's relayed to all passives
+   *                                   - DISK : make sure it's on disk (only applicable when restartable is on)
    * </code>
    ********************************************************************************************************************/
   public static final String L2_TRANSACTIONMANAGER_LOGGING_ENABLED                          = "l2.transactionmanager.logging.enabled";
@@ -102,6 +107,7 @@ public interface TCPropertiesConsts {
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED                 = "l2.transactionmanager.passive.throttle.enabled";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD               = "l2.transactionmanager.passive.throttle.threshold";
   public static final String L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS         = "l2.transactionmanager.passive.throttle.maxSleepSeconds";
+  public static final String L2_TRANSACTIONMANAGER_BROADCAST_DURABILITY_LEVEL               = "l2.transactionmanager.broadcast.durability.level";
 
   /*********************************************************************************************************************
    * <code>

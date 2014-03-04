@@ -32,7 +32,9 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.objectserver.tx.BroadcastDurabilityLevel;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerEvent;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
@@ -61,6 +63,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private final SampledCounter          broadcastCounter;
   private final SampledRateCounter      changesPerBroadcast;
   private final InvalidateObjectManager invalidateObjMgr;
+  private final BroadcastDurabilityLevel broadcastDurabilityLevel;
 
   public BroadcastChangeHandler(final SampledCounter broadcastCounter, final ObjectStatsRecorder objectStatsRecorder,
                                 final SampledRateCounter changesPerBroadcast, InvalidateObjectManager invalidateObjMgr) {
@@ -68,6 +71,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     this.objectStatsRecorder = objectStatsRecorder;
     this.changesPerBroadcast = changesPerBroadcast;
     this.invalidateObjMgr = invalidateObjMgr;
+    this.broadcastDurabilityLevel = BroadcastDurabilityLevel.getFromProperties(TCPropertiesImpl.getProperties());
   }
 
   @Override
@@ -80,13 +84,22 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     final Multimap<ClientID, ServerEvent> serverEventsPerClient = bcc.getApplyInfo()
         .getServerEventBuffer().getServerEventsPerClient(bcc.getGlobalTransactionID());
 
+    if (bcc.getApplyInfo().getApplyResultRecorder().needPersist()) {
+      if (broadcastDurabilityLevel.isWaitForCommit()) {
+        transactionManager.waitForTransactionCommit(bcc.getServerTransactionID());
+      }
+      if (broadcastDurabilityLevel.isWaitForRelay()) {
+        transactionManager.waitForTransactionRelay(bcc.getServerTransactionID());
+      }
+    }
+
     for (final MessageChannel client : channels) {
       // TODO:: make message channel return clientID and short channelManager call.
       final ClientID clientID = this.channelManager.getClientIDFor(client.getChannelID());
 
       final Map newRoots = bcc.getNewRoots();
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
-      List<DNA> prunedChanges = Collections.emptyList();
+      List<DNA> prunedChanges;
       final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
       final Invalidations invalidateObjectIDs = new Invalidations();
 
@@ -97,8 +110,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         prunedChanges = Collections.emptyList();
       }
 
-      Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = (Map<LogicalChangeID, LogicalChangeResult>) (clientID
-          .equals(committerID) ? bcc.getApplyInfo().getApplyResultRecorder().getResults() : Collections.emptyMap());
+      Map<LogicalChangeID, LogicalChangeResult> logicalChangeResults = (clientID.equals(committerID) ?
+          bcc.getApplyInfo().getApplyResultRecorder().getResults() :
+          Collections.<LogicalChangeID, LogicalChangeResult>emptyMap());
 
       Collection<ServerEvent> serverEvents = serverEventsPerClient.get(clientID);
       if (serverEvents == null) {

@@ -127,6 +127,18 @@ public interface TransactionAccount {
   public void addObjectsSyncedTo(NodeID to, TransactionID txnID);
 
   /**
+   * Wait until a transaction is relayed to all passives
+   */
+  void waitUntilRelayed(TransactionID txnID);
+
+  /**
+   * Waits until the given transaction is committed to disk
+   *
+   * @param txnID id
+   */
+  void waitUntilCommitted(TransactionID txnID);
+
+  /**
    * Call back interface.
    */
   public interface CallBackOnComplete {

@@ -175,4 +175,14 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
     //
   }
+
+  @Override
+  public void waitForTransactionRelay(final ServerTransactionID serverTransactionID) {
+
+  }
+
+  @Override
+  public void waitForTransactionCommit(final ServerTransactionID serverTransactionID) {
+
+  }
 }

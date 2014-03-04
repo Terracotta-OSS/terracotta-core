@@ -14,4 +14,6 @@ public interface ApplyResultRecorder {
   public Map<LogicalChangeID, LogicalChangeResult> getResults();
 
   public void recordResults(Map<LogicalChangeID, LogicalChangeResult> applyResults);
+
+  boolean needPersist();
 }

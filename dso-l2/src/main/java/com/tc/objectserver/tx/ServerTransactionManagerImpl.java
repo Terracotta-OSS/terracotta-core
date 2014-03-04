@@ -817,4 +817,16 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public void loadApplyChangeResults(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
     applyInfo.getApplyResultRecorder().recordResults(this.gtxm.getApplyResults(txn.getServerTransactionID()));
   }
+
+  @Override
+  public void waitForTransactionRelay(final ServerTransactionID serverTransactionID) {
+    TransactionAccount account = getTransactionAccount(serverTransactionID.getSourceID());
+    account.waitUntilRelayed(serverTransactionID.getClientTransactionID());
+  }
+
+  @Override
+  public void waitForTransactionCommit(final ServerTransactionID serverTransactionID) {
+    TransactionAccount account = getTransactionAccount(serverTransactionID.getSourceID());
+    account.waitUntilCommitted(serverTransactionID.getClientTransactionID());
+  }
 }
