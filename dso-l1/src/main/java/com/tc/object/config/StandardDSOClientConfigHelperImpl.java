@@ -69,6 +69,10 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private static final long                 CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
                                                                             .getProperties()
                                                                             .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
+  private static final long                 GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
+                                                                                     .getProperties()
+                                                                                     .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                                              30000);
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
                                            final L1ConfigurationSetupManager configSetupManager)
@@ -362,7 +366,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         ServerURL serverUrl = null;
         try {
           serverUrl = new ServerURL(connectionIn.getHostname(), connectionIn.getPort(), "/version",
-                                    connectionIn.getSecurityInfo());
+                                    (int) GET_CONFIGURATION_ONE_SOURCE_TIMEOUT, connectionIn.getSecurityInfo());
         } catch (MalformedURLException e) {
           throw new ConfigurationSetupException("Error while trying to verify Client-Server version Compatibility ");
         }
@@ -383,7 +387,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
             if (activeDown) {
               // active was down and we have reached the end of connectionInfo Array
               // so we need to start checking from 0th index again
-              ThreadUtil.reallySleep(500); // sleep for 1 sec before trying again
+              ThreadUtil.reallySleep(500); // sleep for 500 ms before trying again
               serverNumberInStripe = 0;
             } else {
               // active was not down and we have reached end of array
