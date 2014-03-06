@@ -128,7 +128,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     });
     t.start();
     while(true) {
-      TestRequestManagedObjectMessage requestManagedObjectMessage = (TestRequestManagedObjectMessage) rmomf.newMessageQueue.poll(5000);
+      TestRequestManagedObjectMessage requestManagedObjectMessage = (TestRequestManagedObjectMessage) rmomf.newMessageQueue.take();
       requestManagedObjectMessage.sendQueue.take(); // wait till it's sent before checking.
       if (requestManagedObjectMessage.getRequestedObjectIDs().contains(new ObjectID(1))) {
         manager.addAllObjects(SessionID.NULL_ID, 1, Collections.singleton(new TestDNA(new ObjectID(1))), ClientID.NULL_ID);
