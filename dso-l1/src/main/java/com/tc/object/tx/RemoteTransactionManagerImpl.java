@@ -150,6 +150,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.batchManager = new BatchManager();
     this.abortableOperationManager = abortableOperationManager;
     batchManager.start();
+    this.logger.info(logger.getName() + " " + logger.getLevel());
   }
 
   @Override
@@ -549,6 +550,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   void resendOutstanding() {
+    batchManager.waitForEmpty();
     final List<TxnBatchID> toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList<TxnBatchID>());
     if (toSend.isEmpty()) {
       sendBatches(false, " resendOutstanding()");
@@ -832,11 +834,14 @@ class BatchManager extends Semaphore {
     }
 
     public final void start() {
-      stopping = false;
+      ensureStopped();
       spawnWorker();
     }
     
-    private void spawnWorker() {
+    private synchronized void spawnWorker() {
+      if ( agent != null ) {
+        throw new AssertionError();
+      }
       agent = new Thread(new Runnable() {
 
         @Override
@@ -914,8 +919,27 @@ class BatchManager extends Semaphore {
       agent.interrupt();
       agent.join();
       reset();
-      agent = null;
+      deleteWorker();
       stopping = false;
+    }
+    
+    private synchronized void ensureStopped() {
+      while ( agent != null ) {
+        try {
+          logger.debug("AGENT STILL ACTIVE -- waiting for agent");
+          this.wait();
+        } catch ( InterruptedException ie ) {
+          throw new RuntimeException(ie);
+        }
+      }
+    }
+    
+    private synchronized void deleteWorker() {
+      if ( agent == null || agent.isAlive() ) {
+        throw new AssertionError();
+      }
+      agent = null;
+      this.notifyAll();
     }
 
    ClientTransactionBatch sendNextBatch(boolean ignoreMax) {
