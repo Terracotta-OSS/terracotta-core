@@ -3,6 +3,8 @@
  */
 package com.tc.util.concurrent;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Some shortcut stuff for doing common thread stuff
  * 
@@ -16,6 +18,10 @@ public class ThreadUtil {
     reallySleep(millis, 0);
   }
   
+  public static void reallySleep(long sleepTime, TimeUnit unit) {
+    reallySleep(unit.toMillis(sleepTime));
+  }
+
   public static void reallySleep(long millis, int nanos) {
     boolean interrupted = false;
     try {
