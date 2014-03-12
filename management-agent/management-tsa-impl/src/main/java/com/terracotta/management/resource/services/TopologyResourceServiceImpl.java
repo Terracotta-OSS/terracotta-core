@@ -55,7 +55,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
       TopologyEntity result = new TopologyEntity();
       result.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
       result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
+      result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       result.getClientEntities().addAll(topologyService.getClients(productIDs));
       return Collections.singleton(result);
@@ -74,7 +74,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
       TopologyEntity result = new TopologyEntity();
       result.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
       result.setVersion(this.getClass().getPackage().getImplementationVersion());
-      result.setUnreadOperatorEventCount(operatorEventsService.getUnreadCount());
+      result.getUnreadOperatorEventCount().putAll(operatorEventsService.getUnreadCount());
       result.getServerGroupEntities().addAll(topologyService.getTopology());
       return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
