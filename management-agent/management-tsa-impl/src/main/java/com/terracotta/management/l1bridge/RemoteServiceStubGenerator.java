@@ -1,5 +1,7 @@
 package com.terracotta.management.l1bridge;
 
+import org.terracotta.management.resource.ErrorEntity;
+
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
@@ -12,6 +14,9 @@ import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 /**
  * @author Ludovic Orban
@@ -50,7 +55,11 @@ public class RemoteServiceStubGenerator {
         throw new RuntimeException("Request has not been validated which prevents it from being bridged to the L1s. Bug?");
       }
       if (nodes.isEmpty()) {
-        throw new RuntimeException("Invalid remote request to zero L1. Bug?");
+        ErrorEntity errorEntity = new ErrorEntity();
+        errorEntity.setDetails("No L1 to send the request to, try again later.");
+        Response response =  Response.status(404).entity(errorEntity).build();
+        WebApplicationException webApplicationException = new WebApplicationException(response);
+        throw webApplicationException;
       }
 
       if (nodes.size() > 1 && Collection.class.isAssignableFrom(method.getReturnType())) {
