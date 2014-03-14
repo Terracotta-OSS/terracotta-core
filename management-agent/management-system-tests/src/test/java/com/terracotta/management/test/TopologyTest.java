@@ -4,7 +4,6 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import net.sf.ehcache.CacheManager;
 
@@ -210,7 +209,8 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
         JSONArray serverGroupEntities = (JSONArray)o0.get("serverGroupEntities");
         assertThat(serverGroupEntities.size(), is(0));
 
-        assertThat(o0.get("unreadOperatorEventCount"), nullValue());
+        JSONObject unreadOperatorEventCount = (JSONObject) o0.get("unreadOperatorEventCount");
+        assertThat(unreadOperatorEventCount.size(), is(0));
       }
 
       cacheManager.shutdown();
