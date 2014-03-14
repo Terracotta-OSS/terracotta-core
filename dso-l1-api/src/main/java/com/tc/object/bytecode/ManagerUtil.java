@@ -243,16 +243,16 @@ public class ManagerUtil {
   }
 
 
-  protected static void pinLock0(final String lockID) {
+  protected static void pinLock0(final String lockID, long awardID) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.pinLock(lock);
+    mgr.pinLock(lock, awardID);
   }
 
-  protected static void unpinLock0(final String lockID) {
+  protected static void unpinLock0(final String lockID, long awardID) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.unpinLock(lock);
+    mgr.unpinLock(lock, awardID);
   }
 
   /**
@@ -671,16 +671,16 @@ public class ManagerUtil {
   }
 
 
-  protected static void pinLock0(final long lockID) {
+  protected static void pinLock0(final long lockID, long awardID) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.pinLock(lock);
+    mgr.pinLock(lock, awardID);
   }
 
-  protected static void unpinLock0(final long lockID) {
+  protected static void unpinLock0(final long lockID, long awardID) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.unpinLock(lock);
+    mgr.unpinLock(lock, awardID);
   }
 
   /**

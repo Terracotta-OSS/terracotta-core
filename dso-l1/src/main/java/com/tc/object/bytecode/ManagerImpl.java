@@ -857,13 +857,13 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void pinLock(final LockID lock) {
-    this.lockManager.pinLock(lock);
+  public void pinLock(final LockID lock, long awardID) {
+    this.lockManager.pinLock(lock, awardID);
   }
 
   @Override
-  public void unpinLock(final LockID lock) {
-    this.lockManager.unpinLock(lock);
+  public void unpinLock(final LockID lock, long awardID) {
+    this.lockManager.unpinLock(lock, awardID);
   }
 
   private boolean clusteredLockingEnabled(final LockID lock) {

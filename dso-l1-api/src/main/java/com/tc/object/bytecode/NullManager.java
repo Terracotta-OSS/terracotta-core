@@ -325,12 +325,12 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void pinLock(LockID lock) {
+  public void pinLock(LockID lock, long awardID) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void unpinLock(LockID lock) {
+  public void unpinLock(LockID lock, long awardID) {
     throw new UnsupportedOperationException();
   }
 

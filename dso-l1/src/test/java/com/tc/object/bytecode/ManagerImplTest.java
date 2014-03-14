@@ -15,7 +15,6 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.locks.ClientLock;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -213,13 +212,13 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     @Override
-    public void pinLock(final LockID lock) {
+    public void pinLock(final LockID lock, long awardID) {
       throw new ImplementMe();
 
     }
 
     @Override
-    public void unpinLock(final LockID lock) {
+    public void unpinLock(final LockID lock, long awardID) {
       throw new ImplementMe();
 
     }
@@ -241,7 +240,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     @Override
     public long getAwardIDFor(LockID lock) {
-      return ClientLock.NULL_AWARD_ID;
+      return -1;
     }
 
   }

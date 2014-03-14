@@ -182,9 +182,9 @@ public interface TerracottaLocking {
    */
   public int globalWaitingCount(LockID lock) throws AbortedOperationException;
 
-  public void pinLock(LockID lock);
+  public void pinLock(LockID lock, long awardID);
 
-  public void unpinLock(LockID lock);
+  public void unpinLock(LockID lock, long awardID);
 
   public LockID generateLockIdentifier(String str);
 

@@ -413,14 +413,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         && value.isStrongConsistentValue()
         && (oldvalue == null || (oldvalue.isStrongConsistentValue() && (((LocalCacheStoreStrongValue) value)
             .getLockAwardID() != ((LocalCacheStoreStrongValue) oldvalue).getLockAwardID())))) {
-      manager.pinLock(((LocalCacheStoreStrongValue) value).getLockId());
+      manager.pinLock(((LocalCacheStoreStrongValue) value).getLockId(),
+                      (((LocalCacheStoreStrongValue) value).getLockAwardID()));
     }
   }
 
   public void unpinLockIfNecessary(AbstractLocalCacheStoreValue value) {
     if (PINNING_ENABLED && value != null && value.isStrongConsistentValue()
         && manager.isLockAwardValid(value.getLockId(), ((LocalCacheStoreStrongValue) value).getLockAwardID())) {
-      manager.unpinLock(((LocalCacheStoreStrongValue) value).getLockId());
+      manager.unpinLock(((LocalCacheStoreStrongValue) value).getLockId(),
+                        (((LocalCacheStoreStrongValue) value).getLockAwardID()));
     }
   }
 

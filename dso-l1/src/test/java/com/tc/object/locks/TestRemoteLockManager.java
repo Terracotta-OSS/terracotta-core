@@ -155,7 +155,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   @Override
-  public synchronized void flush(LockID lockID, boolean noLocksLeftOnClient) {
+  public synchronized void flush(LockID lockID) {
     flushCount++;
   }
 
@@ -168,7 +168,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   @Override
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
     if (autoFlushLock) {
       return true;
     } else {
@@ -256,7 +256,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   @Override
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
-    flush(lock, true);
+    flush(lock);
   }
 
   @Override

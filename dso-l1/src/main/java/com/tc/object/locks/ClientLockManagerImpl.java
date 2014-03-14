@@ -22,8 +22,6 @@ import com.tc.util.Util;
 import com.tc.util.concurrent.TaskRunner;
 import com.tc.util.concurrent.Timer;
 import com.tc.util.runtime.ThreadIDManager;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -61,7 +60,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   private final Timer                             gcTimer;
   private final Timer                             lockLeaseTimer;
-  private final Sequence                          lockAwardSequence   = new SimpleSequence();
+  private final AtomicLong                        lockAwardSequence   = new AtomicLong();
 
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
@@ -395,18 +394,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public void pinLock(final LockID lock) {
+  public void pinLock(final LockID lock, long awardID) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
-      lockState.pinLock();
+      lockState.pinLock(awardID);
     }
   }
 
   @Override
-  public void unpinLock(final LockID lock) {
+  public void unpinLock(final LockID lock, long awardID) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
-      lockState.unpinLock();
+      lockState.unpinLock(awardID);
     }
   }
 
@@ -453,7 +452,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         while (true) {
           final ClientLock lockState = getOrCreateClientLockState(lock);
           try {
-            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.next());
+            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.incrementAndGet());
             break;
           } catch (final GarbageLockException e) {
             // ignorable - thrown when operating on a garbage collected lock
@@ -467,7 +466,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           this.remoteLockManager.unlock(lock, thread, level);
         } else {
           try {
-            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.next());
+            lockState.award(this.remoteLockManager, thread, level, lockAwardSequence.incrementAndGet());
           } catch (final GarbageLockException e) {
             this.remoteLockManager.unlock(lock, thread, level);
           }
@@ -1028,8 +1027,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public long getAwardIDFor(final LockID lock) {
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
-      logger.info("lockstate is null for lock id " + lock);
-      return -1;
+      throw new IllegalStateException("LockState shouldn't be null");
     } else {
       return lockState.getAwardID();
     }

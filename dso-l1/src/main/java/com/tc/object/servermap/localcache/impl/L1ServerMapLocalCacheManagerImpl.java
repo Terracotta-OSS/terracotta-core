@@ -13,8 +13,6 @@ import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.bytecode.Manager;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
@@ -39,10 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheManager {
 
-  private static final boolean                                                   PINNING_ENABLED                      = TCPropertiesImpl
-                                                                                                                          .getProperties()
-                                                                                                                          .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
-
   private static final boolean                                                   FAULT_INVALIDATED_PINNED_ENTRIES     = TCPropertiesImpl
                                                                                                                           .getProperties()
                                                                                                                           .getBoolean(TCPropertiesConsts.L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES,
@@ -65,17 +59,14 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache> localStores                          = new IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache>();
 
   private final AtomicBoolean                                                    shutdown                             = new AtomicBoolean();
-  private final LocksRecallService                                               locksRecallHelper;
   private final Sink                                                             capacityEvictionSink;
   private final Sink                                                             txnCompleteSink;
   private final RemoveCallback                                                   removeCallback;
   private final TCObjectSelfStore                                                tcObjectSelfStore;
-  private volatile ClientLockManager                                             clientLockManager;
   private final PinnedEntryInvalidationListener                                  pinnedEntryInvalidationListener;
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
                                           Sink txnCompleteSink, Sink pinnedEntryFaultSink) {
-    this.locksRecallHelper = locksRecallHelper;
     this.capacityEvictionSink = capacityEvictionSink;
     removeCallback = new RemoveCallback();
     tcObjectSelfStore = new TCObjectSelfStoreImpl(localCacheToPinnedEntryFaultCallback);
@@ -95,11 +86,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   @Override
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfStore.initializeTCObjectSelfStore(callback);
-  }
-
-  @Override
-  public void setLockManager(ClientLockManager lockManager) {
-    this.clientLockManager = lockManager;
   }
 
   @Override
@@ -160,28 +146,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   // TODO: is this method needed?
   public void removeLocalCache(ObjectID mapID) {
     mapIdTolocalCache.remove(mapID);
-  }
-
-  @Override
-  public void recallLocks(Set<LockID> lockIds) {
-    if (PINNING_ENABLED) {
-      for (LockID lockId : lockIds) {
-        this.clientLockManager.unpinLock(lockId);
-      }
-    }
-
-    locksRecallHelper.recallLocks(lockIds);
-  }
-
-  @Override
-  public void recallLocksInline(Set<LockID> lockIds) {
-    if (PINNING_ENABLED) {
-      for (LockID lockId : lockIds) {
-        this.clientLockManager.unpinLock(lockId);
-      }
-    }
-
-    locksRecallHelper.recallLocksInline(lockIds);
   }
 
   @Override

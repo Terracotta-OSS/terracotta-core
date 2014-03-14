@@ -609,7 +609,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                .getLockRequestMessageFactory(), this.threadIDManager, gtxManager,
                            new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")),
                            abortableOperationManager, this.taskRunner);
-    this.globalLocalCacheManager.setLockManager(this.lockManager);
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
     this.dumpHandler.registerForDump(lockDumpAdapter);

@@ -216,13 +216,13 @@ public class TestLockManager implements ClientLockManager {
   }
 
   @Override
-  public void pinLock(LockID lock) {
+  public void pinLock(LockID lock, long awardID) {
     throw new ImplementMe();
 
   }
 
   @Override
-  public void unpinLock(LockID lock) {
+  public void unpinLock(LockID lock, long awardID) {
     throw new ImplementMe();
 
   }

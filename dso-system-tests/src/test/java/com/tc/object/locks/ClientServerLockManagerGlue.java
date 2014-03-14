@@ -85,12 +85,12 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   }
 
   @Override
-  public void flush(LockID lockID, boolean noLocksLeftOnClient) {
+  public void flush(LockID lockID) {
     return;
   }
 
   @Override
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
     return true;
   }
 

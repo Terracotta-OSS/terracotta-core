@@ -17,6 +17,7 @@ import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.util.AbortedOperationUtil;
+import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SynchronizedSinglyLinkedList;
 import com.tc.util.Util;
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.Stack;
 
 class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> implements ClientLock {
+  private static long                 NULL_AWARD_ID = -1;
   private static final TCLogger       LOGGER        = TCLogging.getLogger(ClientLockImpl.class);
 
   private static final Set<LockLevel> WRITE_LEVELS  = EnumSet.of(LockLevel.WRITE, LockLevel.SYNCHRONOUS_WRITE);
@@ -67,7 +69,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
     greediness = ClientGreediness.FREE;
     pinned = 0;
-    awardId = NULL_AWARD_ID;
+    setAwardID(NULL_AWARD_ID);
   }
 
   private void removeAndUnpark(LockStateNode lockState, Iterator<LockStateNode> it) {
@@ -251,15 +253,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       if (flush) {
         while (true) {
           ServerLockLevel flushLevel;
-          boolean noLocksHeld;
           synchronized (this) {
             flushLevel = this.greediness.getFlushLevel();
-            noLocksHeld = noLocksHeld(null, thread);
           }
 
           // TODO: This doesn't seem right.. rethink wait behavior...
-          remote.flush(this.lock, noLocksHeld);
-          resetPinIfNecessary(noLocksHeld);
+          remote.flush(this.lock);
 
           synchronized (this) {
             if (flushLevel.equals(this.greediness.getFlushLevel())) {
@@ -285,10 +284,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  protected synchronized void resetPinIfNecessary(boolean noLocksHeld) {
-    if (noLocksHeld) {
+  protected synchronized void resetPinIfNecessary() {
+    if (noLocksHeld(null, null)) {
       this.pinned = 0;
-      this.awardId = NULL_AWARD_ID;
+      this.setAwardID(NULL_AWARD_ID);
     }
   }
 
@@ -447,13 +446,17 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public synchronized void pinLock() {
-    pinned++;
+  public synchronized void pinLock(long awardID) {
+    if (isAwardValid(awardID)) pinned++;
   }
 
   @Override
-  public synchronized void unpinLock() {
-    pinned--;
+  public synchronized void unpinLock(long awardID) {
+    if (isAwardValid(awardID)) {
+      if (pinned == 0) Assert.fail();
+      pinned--;
+    }
+
   }
 
   /*
@@ -549,16 +552,17 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
-        this.awardId = lockAwardID;
+        this.setAwardID(lockAwardID);
         this.greediness = this.greediness.awarded(level);
       }
       unparkFirstQueuedAcquire();
     } else {
       PendingLockHold acquire;
       synchronized (this) {
-        this.awardId = lockAwardID;
+        this.setAwardID(lockAwardID);
         acquire = getQueuedAcquire(thread, level);
         if (acquire == null) {
+          resetPinIfNecessary();
           remote.unlock(this.lock, thread, level);
         } else {
           acquire.awarded();
@@ -672,15 +676,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
       while (true) {
         ServerLockLevel flushLevel;
-        boolean noLocksHeld;
         synchronized (this) {
           flushLevel = this.greediness.getFlushLevel();
-          noLocksHeld = noLocksHeld(null, null);
         }
 
-        remote.flush(lock, noLocksHeld);
-        resetPinIfNecessary(noLocksHeld);
-
+        remote.flush(lock);
         synchronized (this) {
           if (flushLevel.equals(this.greediness.getFlushLevel())) {
             if (this.greediness.isRecalled() && canRecallNow()) {
@@ -810,15 +810,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     synchronized (this) {
-      final boolean noLocksHeld = noLocksHeld(unlock, null);
       final ServerLockLevel flushLevel = greediness.getFlushLevel();
       // only one unlock callback is added for flushing the lock
       if (flushOnUnlock(unlock) && !isFlushInProgress()) {
         // TODO: to be done in a flush thread and not on txn complete thread
         unlock.flushInProgress();
         UnlockCallback flushCallback = new UnlockCallback(remote, flushLevel, unlock);
-        resetPinIfNecessary(noLocksHeld);
-        if (remote.asyncFlush(lock, flushCallback, noLocksHeld)) {
+        if (remote.asyncFlush(lock, flushCallback)) {
           flushCallback.transactionsForLockFlushed(lock);
         }
       } else {
@@ -875,7 +873,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       }
     }
-
+    resetPinIfNecessary();
     remote.unlock(this.lock, unlock.getOwner(), ServerLockLevel.fromClientLockLevel(unlock.getLockLevel()));
   }
 
@@ -1120,6 +1118,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   private synchronized void abortAndRemove(final RemoteLockManager remote, PendingLockHold node) {
     node = (PendingLockHold) remove(node);
     if (node != null && node.isAwarded()) {
+      resetPinIfNecessary();
       remote.unlock(this.lock, node.getOwner(), ServerLockLevel.fromClientLockLevel(node.getLockLevel()));
     }
   }
@@ -1189,9 +1188,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (canRecallNow()) {
       final ServerLockLevel flushLevel = this.greediness.getFlushLevel();
       final LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
-      boolean noLocksHeld = noLocksHeld(null, null);
-      resetPinIfNecessary(noLocksHeld);
-      if (remote.asyncFlush(this.lock, callback, noLocksHeld)) {
+      resetPinIfNecessary();
+      if (remote.asyncFlush(this.lock, callback)) {
         return recallCommit(remote, batch);
       } else {
         return this.greediness.recallInProgress();
@@ -1219,9 +1217,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           releaseOnFlush();
         } else {
           UnlockCallback callback = new UnlockCallback(remote, greediness.getFlushLevel(), unlock);
-          boolean noLocksHeld = noLocksHeld(null, null);
-          resetPinIfNecessary(noLocksHeld);
-          if (remote.asyncFlush(id, callback, noLocksHeld)) {
+          if (remote.asyncFlush(id, callback)) {
             releaseOnFlush();
           }
         }
@@ -1259,9 +1255,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
             LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + expectedFlushLevel + " to "
                         + flushLevel + " during flush operation");
             LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
-            boolean noLocksHeld = noLocksHeld(null, null);
-            resetPinIfNecessary(noLocksHeld);
-            if (remote.asyncFlush(id, callback, noLocksHeld)) {
+            if (remote.asyncFlush(id, callback)) {
               greediness = recallCommit(remote, batch);
             }
           }
@@ -1288,7 +1282,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       }
       remote.recallCommit(this.lock, contexts, batch);
-
+      resetPinIfNecessary();
       this.greediness = this.greediness.recallCommitted();
 
       if (this.greediness.isGreedy()) {
@@ -1429,7 +1423,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   @Override
-  public long getAwardID() {
+  public synchronized long getAwardID() {
+    if (this.awardId == NULL_AWARD_ID) throw new IllegalStateException();
     return this.awardId;
+  }
+
+  synchronized final void setAwardID(long awardId) {
+    this.awardId = awardId;
   }
 }

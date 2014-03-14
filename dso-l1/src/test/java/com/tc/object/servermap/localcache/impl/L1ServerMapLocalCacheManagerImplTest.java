@@ -20,10 +20,8 @@ import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.context.LocksToRecallContext;
 import com.tc.object.handler.LockRecallHandler;
-import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.locks.LocksRecallServiceImpl;
-import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
@@ -32,8 +30,6 @@ import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,7 +59,6 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
     this.l1LocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink,
                                                                         new TxnCompleteSink(), Mockito.mock(Sink.class));
-    this.l1LocalCacheManagerImpl.setLockManager(clientLockManager);
   }
 
   public void testTCNotRunning() {
@@ -91,27 +86,6 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     }
 
     Assert.assertTrue(expectedException);
-  }
-
-  public void testInitiateRecall() {
-    LockID lockID = new LongLockID(500);
-    Set<LockID> lockIDs = Collections.singleton(lockID);
-
-    l1LocalCacheManagerImpl.recallLocks(lockIDs);
-    testSink.waitUntilContextsAddedEqualsAndCompletedEquals(1, 1);
-
-    Assert.assertEquals(1, clientLockManager.getRecallList().size());
-    Assert.assertEquals(lockID, clientLockManager.getRecallList().get(0));
-  }
-
-  public void testInlineRecall() {
-    LockID lockID = new LongLockID(500);
-    Set<LockID> lockIDs = Collections.singleton(lockID);
-
-    l1LocalCacheManagerImpl.recallLocksInline(lockIDs);
-
-    Assert.assertEquals(1, clientLockManager.getRecallList().size());
-    Assert.assertEquals(lockID, clientLockManager.getRecallList().get(0));
   }
 
   private static class MySink implements Sink {

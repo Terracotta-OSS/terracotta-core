@@ -13,7 +13,6 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import java.util.Collection;
 
 public interface ClientLock extends ClearableCallback {
-  public static long NULL_AWARD_ID = -1;
 
   /**
    * Blocking acquire
@@ -229,9 +228,9 @@ public interface ClientLock extends ClearableCallback {
    */
   public boolean tryMarkAsGarbage(RemoteLockManager remote);
 
-  public void pinLock();
+  public void pinLock(long awardID);
 
-  public void unpinLock();
+  public void unpinLock(long awardID);
 
   public boolean isAwardValid(long awardIDParam);
 
