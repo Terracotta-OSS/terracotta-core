@@ -3,9 +3,11 @@
  */
 package com.tc.objectserver.handler;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.tc.async.impl.MockStage;
 import com.tc.net.ClientID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -21,6 +23,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.api.TestDNA;
+import com.tc.objectserver.event.ClientChannelMonitor;
+import com.tc.objectserver.event.ServerEventBuffer;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -31,6 +35,7 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.ServerEvent;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
@@ -139,6 +144,20 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     handler.handleEvent(new BroadcastChangeContext(txn, new GlobalTransactionID(1), new NotifiedWaiters(), applyTransactionInfo));
     verify(transactionManager, never()).waitForTransactionCommit(txn.getServerTransactionID());
     verify(transactionManager).waitForTransactionRelay(txn.getServerTransactionID());
+  }
+
+  public void testClearBroadcastedServerEventFromBuffer() throws Exception {
+    GlobalTransactionID gid = new GlobalTransactionID(1);
+    when(txn.getServerTransactionID()).thenReturn(new ServerTransactionID(new ServerID("1234", new byte[20]), new TransactionID(1)));
+    ServerEventBuffer serverEventBuffer = when(mock(ServerEventBuffer.class).getServerEventsPerClient(gid)).thenReturn(
+        HashMultimap.<ClientID, ServerEvent>create()).getMock();
+
+    applyTransactionInfo = new ApplyTransactionInfo(true, txn.getServerTransactionID(), gid, false,
+        true, serverEventBuffer, mock(ClientChannelMonitor.class));
+
+    handler.handleEvent(new BroadcastChangeContext(txn, gid, new NotifiedWaiters(), applyTransactionInfo));
+
+    verify(serverEventBuffer).removeEventsForTransaction(gid);
   }
 
   private static ServerTransaction createTransaction(long sourceID, long txID, long gid) {

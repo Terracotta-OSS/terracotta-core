@@ -168,6 +168,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       }
     }
     this.transactionManager.broadcasted(committerID, txnID);
+    if (bcc.getServerTransactionID().isServerGeneratedTransaction()) {
+      bcc.getApplyInfo().getServerEventBuffer().removeEventsForTransaction(bcc.getGlobalTransactionID());
+    }
   }
 
   private void updateStats(final List prunedChanges) {
