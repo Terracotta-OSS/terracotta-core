@@ -25,7 +25,7 @@ public final class TCMessageType {
   // NOTE: Never recycle these numbers, always add a new constant
   // //////////////////////////////////////////////
   public static final int           TYPE_PING_MESSAGE                                 = 1;
-  public static final int           TYPE_PONG_MESSAGE                                 = 2;
+  // public static final int TYPE_PONG_MESSAGE = 2;
   public static final int           TYPE_REQUEST_ROOT_MESSAGE                         = 8;
   public static final int           TYPE_LOCK_REQUEST_MESSAGE                         = 9;
   public static final int           TYPE_COMMIT_TRANSACTION_MESSAGE                   = 10;
@@ -40,18 +40,18 @@ public final class TCMessageType {
   public static final int           TYPE_CLIENT_HANDSHAKE_MESSAGE                     = 28;
   public static final int           TYPE_BATCH_TRANSACTION_ACK_MESSAGE                = 29;
   public static final int           TYPE_CLIENT_HANDSHAKE_ACK_MESSAGE                 = 30;
-  public static final int           TYPE_CONFIG_PUSH_MESSAGE                          = 31;
-  public static final int           TYPE_OVERRIDE_APPLICATION_CONFIG_MESSAGE          = 32;
+  // public static final int TYPE_CONFIG_PUSH_MESSAGE = 31;
+  // public static final int TYPE_OVERRIDE_APPLICATION_CONFIG_MESSAGE = 32;
   public static final int           TYPE_LOCK_RECALL_MESSAGE                          = 33;
   // public static final int TYPE_JMX_MESSAGE = 34;
   public static final int           TYPE_LOCK_QUERY_RESPONSE_MESSAGE                  = 35;
   public static final int           TYPE_JMXREMOTE_MESSAGE_CONNECTION_MESSAGE         = 36;
-  public static final int           TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE            = 37;
-  public static final int           TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE           = 38;
+  // public static final int TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE = 37;
+  // public static final int TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE = 38;
   public static final int           TYPE_CLUSTER_MEMBERSHIP_EVENT_MESSAGE             = 39;
   public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                     = 40;
   public static final int           TYPE_OBJECTS_NOT_FOUND_RESPONSE_MESSAGE           = 41;
-  public static final int           TYPE_BENCH_MESSAGE                                = 42;
+  // public static final int TYPE_BENCH_MESSAGE = 42;
   // public static final int TYPE_LOCK_STAT_MESSAGE = 43;
   // public static final int TYPE_LOCK_STATISTICS_RESPONSE_MESSAGE = 44;
   public static final int           TYPE_COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE   = 45;
@@ -63,7 +63,7 @@ public final class TCMessageType {
   public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE    = 51;
   public static final int           TYPE_NODE_META_DATA_MESSAGE                       = 52;
   public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE              = 53;
-  public static final int           TYPE_STRIPE_ID_MAP_MESSAGE                        = 54;
+  // public static final int TYPE_STRIPE_ID_MAP_MESSAGE = 54;
   public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE      = 55;
   public static final int           TYPE_GET_VALUE_SERVER_MAP_REQUEST_MESSAGE         = 56;
   public static final int           TYPE_GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE        = 57;
@@ -84,7 +84,6 @@ public final class TCMessageType {
   public static final int           TYPE_SEARCH_RESULTS_RESPONSE_MESSAGE              = 76;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
-  public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType REQUEST_ROOT_MESSAGE                              = new TCMessageType();
   public static final TCMessageType LOCK_REQUEST_MESSAGE                              = new TCMessageType();
   public static final TCMessageType LOCK_RECALL_MESSAGE                               = new TCMessageType();
@@ -102,15 +101,10 @@ public final class TCMessageType {
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_REFUSED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType BATCH_TRANSACTION_ACK_MESSAGE                     = new TCMessageType();
-  public static final TCMessageType CONFIG_PUSH_MESSAGE                               = new TCMessageType();
-  public static final TCMessageType OVERRIDE_APPLICATION_CONFIG_MESSAGE               = new TCMessageType();
   public static final TCMessageType JMXREMOTE_MESSAGE_CONNECTION_MESSAGE              = new TCMessageType();
-  public static final TCMessageType MEMORY_DATA_STORE_REQUEST_MESSAGE                 = new TCMessageType();
-  public static final TCMessageType MEMORY_DATA_STORE_RESPONSE_MESSAGE                = new TCMessageType();
   public static final TCMessageType CLUSTER_MEMBERSHIP_EVENT_MESSAGE                  = new TCMessageType();
   public static final TCMessageType CLIENT_JMX_READY_MESSAGE                          = new TCMessageType();
   public static final TCMessageType OBJECTS_NOT_FOUND_RESPONSE_MESSAGE                = new TCMessageType();
-  public static final TCMessageType BENCH_MESSAGE                                     = new TCMessageType();
   public static final TCMessageType COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE        = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                             = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
@@ -122,7 +116,6 @@ public final class TCMessageType {
   public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE         = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_MESSAGE                            = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_RESPONSE_MESSAGE                   = new TCMessageType();
-  public static final TCMessageType STRIPE_ID_MAP_MESSAGE                             = new TCMessageType();
   public static final TCMessageType SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_VALUE_SERVER_MAP_REQUEST_MESSAGE              = new TCMessageType();
   public static final TCMessageType GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE             = new TCMessageType();
@@ -134,7 +127,6 @@ public final class TCMessageType {
   public static final TCMessageType SEARCH_RESULTS_REQUEST_MESSAGE                    = new TCMessageType();
   public static final TCMessageType SEARCH_QUERY_RESPONSE_MESSAGE                     = new TCMessageType();
   public static final TCMessageType SEARCH_RESULTS_RESPONSE_MESSAGE                   = new TCMessageType();
-
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();

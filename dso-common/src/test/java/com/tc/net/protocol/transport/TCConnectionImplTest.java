@@ -212,7 +212,7 @@ public class TCConnectionImplTest extends TestCase {
     private long              totLen;
 
     MyMessage(MessageMonitor monitor) {
-      super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.BENCH_MESSAGE);
+      super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
     }
 
     public void initialize(long nextSequence, TCByteBuffer[] bufs, long totLe) {
