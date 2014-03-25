@@ -286,7 +286,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     TestTransactionBatch batchN;
     for (int i = 0; i < maxBatchesOutstanding; i++) {
       makeAndCommitTransactions(batchTxs, 1);
-      batchN = (TestTransactionBatch) this.batchSendQueue.take();
+      batchN = getNextSentBatch();
       System.err.println("* Recd " + batchN);
       assertEquals(batchN, getNextNewBatch());
       assertTrue(this.batchSendQueue.isEmpty());
@@ -359,6 +359,11 @@ public class RemoteTransactionManagerTest extends TestCase {
       }
     }
   }
+  
+  private TestTransactionBatch getNextSentBatch() throws InterruptedException {
+    manager.waitForPendings();
+    return this.batchSendQueue.take();
+  }
 
   private List<TestTransactionBatch> restart(RemoteTransactionManagerImpl manager2) {
     manager2.pause(GroupID.ALL_GROUPS, 1);
@@ -411,7 +416,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     
     for (int i = 0; i < maxBatchesOutstanding; i++) {
       makeAndCommitTransactions(batchTxs, 1);
-      batchN = (TestTransactionBatch) this.batchSendQueue.take();
+      batchN = getNextSentBatch();
       System.err.println("* Recd " + batchN);
       assertEquals(batchN, getNextNewBatch());
       assertTrue(this.batchSendQueue.isEmpty());
@@ -455,7 +460,7 @@ public class RemoteTransactionManagerTest extends TestCase {
      TestTransactionBatch batch1 = ((TestTransactionBatch) batches.remove(0));
     // ACK one of the batch (triggers send of next batch)
       this.manager.receivedBatchAcknowledgement(batch1.batchID, GroupID.NULL_ID);
-      assertTrue(heldBatches.remove(this.batchSendQueue.take()));
+      assertTrue(heldBatches.remove(getNextSentBatch()));
     }
 
     TestTransactionBatch batch3 = getNextNewBatch();
