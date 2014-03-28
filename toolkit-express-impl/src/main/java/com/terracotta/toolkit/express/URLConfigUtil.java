@@ -3,14 +3,14 @@
  */
 package com.terracotta.toolkit.express;
 
-import com.tc.util.Assert;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 public class URLConfigUtil {
 
@@ -73,10 +73,12 @@ public class URLConfigUtil {
     for (String s : split) {
       final int index = s.indexOf('@');
       if (index != -1) {
-        if (username != null) {
-          Assert.assertEquals(username, s.substring(0, index).trim());
+        String tmpUsername = s.substring(0, index).trim();
+        if (username != null && !username.equals(tmpUsername)) {
+          throw new AssertionError(format("Invalid configuration: different username found in Terracotta connection URLs " +
+                                          "- %s and %s",username, tmpUsername));
         }
-        username = s.substring(0, index).trim();
+        username = tmpUsername;
         try {
           username = URLDecoder.decode(username, "UTF-8");
         } catch (UnsupportedEncodingException uee) {
