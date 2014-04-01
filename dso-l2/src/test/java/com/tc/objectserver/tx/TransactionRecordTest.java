@@ -30,12 +30,10 @@ public class TransactionRecordTest extends TestCase {
     
     assertFalse(record.isComplete());
     
+    record.addWaitee(clientID);  
+    
     record.processMetaDataCompleted();
-    
-    assertTrue(record.isComplete());
-  
-    record.addWaitee(clientID);
-    
+      
     assertFalse(record.isComplete());
     
     assertFalse(record.isEmpty());

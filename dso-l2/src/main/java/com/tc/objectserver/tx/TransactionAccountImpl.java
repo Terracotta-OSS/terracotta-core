@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * An account of the state of a given transaction. Keeps track of the initiating client, the state of the transaction
@@ -54,14 +56,15 @@ public class TransactionAccountImpl implements TransactionAccount {
 
   @Override
   public void addObjectsSyncedTo(final NodeID to, final TransactionID txnID) {
+    TransactionRecord tr = null;
     synchronized (this.waitees) {
-      TransactionRecord tr = this.waitees.get(txnID);
+      tr = this.waitees.get(txnID);
       if (tr == null) {
         tr = new TransactionRecord(true);
         createRecord(txnID, tr);
       }
     }
-    addWaitee(to, txnID);
+    tr.addWaitee(to);
   }
 
   @Override
@@ -86,19 +89,19 @@ public class TransactionAccountImpl implements TransactionAccount {
     final TransactionRecord transactionRecord = getRecord(txnID);
 
     if (transactionRecord == null) { return false; }
-    synchronized (transactionRecord) {
-      transactionRecord.remove(waitee);
-      return checkCompletedAndRemove(txnID, transactionRecord);
-    }
+    return checkCompletedAndRemove(txnID, transactionRecord.remove(waitee));
   }
 
   @Override
   public void addWaitee(final NodeID waitee, final TransactionID txnID) {
     final TransactionRecord record = getRecord(txnID);
-    synchronized (record) {
-      final boolean added = record.addWaitee(waitee);
-      Assert.eval(added);
-    }
+    Assert.assertNotNull(record);
+    final boolean added = record.addWaitee(waitee);
+    Assert.eval(added);
+  }
+  
+  private synchronized Collection<TransactionID> getTransactions() {
+    return new ArrayList<TransactionID>(this.waitees.keySet());
   }
 
   private TransactionRecord getRecord(final TransactionID txnID) {
@@ -108,76 +111,55 @@ public class TransactionAccountImpl implements TransactionAccount {
   @Override
   public boolean skipApplyAndCommit(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    synchronized (transactionRecord) {
-      transactionRecord.applyAndCommitSkipped();
-      return checkCompletedAndRemove(txnID, transactionRecord);
-    }
+    return checkCompletedAndRemove(txnID, transactionRecord.applyAndCommitSkipped());
   }
 
   @Override
   public boolean applyCommitted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    synchronized (transactionRecord) {
-      transactionRecord.applyCommitted();
-      return checkCompletedAndRemove(txnID, transactionRecord);
-    }
+    return checkCompletedAndRemove(txnID, transactionRecord.applyCommitted());
   }
 
   @Override
   public boolean broadcastCompleted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    synchronized (transactionRecord) {
-      transactionRecord.broadcastCompleted();
-      return checkCompletedAndRemove(txnID, transactionRecord);
-    }
+    return checkCompletedAndRemove(txnID, transactionRecord.broadcastCompleted());
   }
 
   @Override
   public boolean processMetaDataCompleted(TransactionID requestID) {
     TransactionRecord transactionRecord = getRecord(requestID);
-    synchronized (transactionRecord) {
-      transactionRecord.processMetaDataCompleted();
-      return checkCompletedAndRemove(requestID, transactionRecord);
-    }
+    return checkCompletedAndRemove(requestID, transactionRecord.processMetaDataCompleted());
   }
 
   @Override
   public boolean relayTransactionComplete(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    synchronized (transactionRecord) {
-      transactionRecord.relayTransactionComplete();
-      return checkCompletedAndRemove(txnID, transactionRecord);
-    }
+    return checkCompletedAndRemove(txnID, transactionRecord.relayTransactionComplete());
   }
 
   @Override
   public boolean hasWaitees(final TransactionID txnID) {
     final TransactionRecord record = getRecord(txnID);
     if (record == null) { return false; }
-    synchronized (record) {
-      return !record.isEmpty();
-    }
+    return !record.isEmpty();
   }
 
   @Override
   public Set requestersWaitingFor(final NodeID waitee) {
     final Set requesters = new HashSet();
-    synchronized (this.waitees) {
-      for (final Object element : this.waitees.entrySet()) {
-        final Entry e = (Entry) element;
-        final TransactionRecord record = (TransactionRecord) e.getValue();
-        if (record.contains(waitee)) {
-          final TransactionID requester = (TransactionID) e.getKey();
-          requesters.add(requester);
-        }
+    for (final TransactionID tid : getTransactions()) {
+      final TransactionRecord record = (TransactionRecord) this.waitees.get(tid);
+      if (record != null && record.contains(waitee)) {
+        requesters.add(tid);
       }
     }
     return requesters;
   }
 
-  private boolean checkCompletedAndRemove(final TransactionID txnID, final TransactionRecord record) {
+  private boolean checkCompletedAndRemove(final TransactionID txnID, final boolean complete) {
     synchronized (this.waitees) {
-      if (record.isComplete()) {
+      if (complete) {
         this.waitees.remove(txnID);
         invokeCallBackOnCompleteIfNecessary();
         return !this.dead;
