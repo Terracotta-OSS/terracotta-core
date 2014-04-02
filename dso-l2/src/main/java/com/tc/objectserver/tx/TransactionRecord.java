@@ -15,13 +15,14 @@ public class TransactionRecord {
   private final Set<NodeID>      waitees;
 
   public TransactionRecord() {
-    this(false);
+    this(null);
   }
 
-  public TransactionRecord(final boolean objectSyncRecord) {
+  public TransactionRecord(final NodeID node) {
     this.waitees = new HashSet<NodeID>();
-    if (objectSyncRecord) {
+    if (node != null) {
       this.state = TransactionState.COMPLETED_STATE;
+      this.waitees.add(node);
     } else {
       this.state = new TransactionState();
     }
@@ -67,8 +68,8 @@ public class TransactionRecord {
   }
 
   public synchronized boolean addWaitee(final NodeID waitee) {
-/* this the transaction is already complete, no need to wait  */
-    if ( this.state.isComplete() ) {
+/* this the transaction is already complete, can't add waitee and switch state back to not completed  */
+    if ( this.waitees.isEmpty() && this.state.isComplete() ) {
       return false;
     }
     return this.waitees.add(waitee);

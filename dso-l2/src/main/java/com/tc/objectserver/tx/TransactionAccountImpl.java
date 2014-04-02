@@ -57,14 +57,18 @@ public class TransactionAccountImpl implements TransactionAccount {
   @Override
   public void addObjectsSyncedTo(final NodeID to, final TransactionID txnID) {
     TransactionRecord tr = null;
-    synchronized (this.waitees) {
-      tr = this.waitees.get(txnID);
-      if (tr == null) {
-        tr = new TransactionRecord(true);
-        createRecord(txnID, tr);
+    while ( tr == null ) {
+      synchronized (this.waitees) {
+        tr = this.waitees.get(txnID);
+        if (tr == null) {
+          tr = new TransactionRecord(to);
+          createRecord(txnID, tr);
+        } else if ( !tr.addWaitee(to) ) {
+/*  couldn't add the waitee, try again  */
+          tr = null;
+        }
       }
     }
-    tr.addWaitee(to);
   }
 
   @Override
@@ -89,7 +93,11 @@ public class TransactionAccountImpl implements TransactionAccount {
     final TransactionRecord transactionRecord = getRecord(txnID);
 
     if (transactionRecord == null) { return false; }
-    return checkCompletedAndRemove(txnID, transactionRecord.remove(waitee));
+    if ( transactionRecord.remove(waitee) ) {
+      return removeTransaction(txnID);
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -111,31 +119,51 @@ public class TransactionAccountImpl implements TransactionAccount {
   @Override
   public boolean skipApplyAndCommit(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    return checkCompletedAndRemove(txnID, transactionRecord.applyAndCommitSkipped());
+    if ( transactionRecord.applyAndCommitSkipped() ) {
+      return removeTransaction(txnID);
+    } else {
+      return false;
+    }
   }
 
   @Override
   public boolean applyCommitted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    return checkCompletedAndRemove(txnID, transactionRecord.applyCommitted());
+    if ( transactionRecord.applyCommitted() ) {
+      return removeTransaction(txnID);
+    } else {
+        return false;
+    }
   }
 
   @Override
   public boolean broadcastCompleted(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    return checkCompletedAndRemove(txnID, transactionRecord.broadcastCompleted());
+    if ( transactionRecord.broadcastCompleted() ) {
+      return removeTransaction(txnID);
+    } else {
+        return false;
+    }
   }
 
   @Override
   public boolean processMetaDataCompleted(TransactionID requestID) {
     TransactionRecord transactionRecord = getRecord(requestID);
-    return checkCompletedAndRemove(requestID, transactionRecord.processMetaDataCompleted());
+    if ( transactionRecord.processMetaDataCompleted() ) {
+      return removeTransaction(requestID);
+    } else {
+      return false;
+    }
   }
 
   @Override
   public boolean relayTransactionComplete(final TransactionID txnID) {
     final TransactionRecord transactionRecord = getRecord(txnID);
-    return checkCompletedAndRemove(txnID, transactionRecord.relayTransactionComplete());
+    if ( transactionRecord.relayTransactionComplete()) {
+      return removeTransaction(txnID);
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -157,14 +185,11 @@ public class TransactionAccountImpl implements TransactionAccount {
     return requesters;
   }
 
-  private boolean checkCompletedAndRemove(final TransactionID txnID, final boolean complete) {
+  private boolean removeTransaction(final TransactionID txnID) {
     synchronized (this.waitees) {
-      if (complete) {
-        this.waitees.remove(txnID);
-        invokeCallBackOnCompleteIfNecessary();
-        return !this.dead;
-      }
-      return false;
+      this.waitees.remove(txnID);
+      invokeCallBackOnCompleteIfNecessary();
+      return !this.dead;
     }
   }
 
