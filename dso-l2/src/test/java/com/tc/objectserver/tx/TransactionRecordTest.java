@@ -44,5 +44,17 @@ public class TransactionRecordTest extends TestCase {
     
     assertTrue(record.isComplete());
   }
+  
+  public void testObjectSync() {
+    final ClientID clientID = new ClientID(1);
+    final TransactionRecord record = new TransactionRecord(clientID);
+    
+    assertFalse(record.isComplete());
+    assertTrue(!record.isEmpty());
+    
+    assertTrue(record.remove(clientID));
+    
+    assertTrue(record.isComplete());
+  }
 
 }
