@@ -283,7 +283,7 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
+  public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
       throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.doLogicalPutIfAbsentUnlocked(map, key, value, mdd);

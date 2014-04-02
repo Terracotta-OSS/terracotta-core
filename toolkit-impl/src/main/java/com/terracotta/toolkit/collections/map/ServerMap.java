@@ -863,34 +863,50 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private V internalPutIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-
     if (isEventual()) {
       K portableKey = (K) assertKeyLiteral(key);
       MetaData metaData = createPutSearchMetaData(portableKey, value);
 
-      eventualConcurrentLock.lock();
-      try {
-        SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs, customMaxTTISeconds,
-                                                                         customMaxTTLSeconds);
-        MetaDataDescriptor mdd = null;
-        if (metaData != null) {
-          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);
-          metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
-          mdd = getMetaDataDescriptor(metaData);
+      int retryCount = 1;
+      while (true) {
+        V valueObject = unsafeLocalGet(portableKey);
+        if (valueObject != null) {
+          return valueObject;
         }
-        V old = deserialize(key,
-                            asSerializedMapValue(this.tcObjectServerMap
-                                .doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue, mdd)));
-        return old;
-      } catch (AbortedOperationException e) {
-        throw new ToolkitAbortableOperationException();
-      } finally {
-        eventualConcurrentLock.unlock();
+
+        eventualConcurrentLock.lock();
+        try {
+          SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
+                                                                           customMaxTTISeconds, customMaxTTLSeconds);
+          MetaDataDescriptor mdd = null;
+          if (metaData != null) {
+            metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);
+            metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
+            mdd = getMetaDataDescriptor(metaData);
+          }
+
+          if (this.tcObjectServerMap.doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue, mdd)) {
+            return null;
+          } else {
+            Object existingMapping = doLogicalGetValueUnlocked(portableKey);
+            if (existingMapping != null) {
+              return deserialize(key, asSerializedMapValue(existingMapping));
+            }
+          }
+        } catch (AbortedOperationException e) {
+          throw new ToolkitAbortableOperationException();
+        } finally {
+          eventualConcurrentLock.unlock();
+        }
+
+        if (retryCount % 10 == 0) {
+          LOGGER.info("retried putIfAbsent for " + retryCount);
+          retryCount++;
+        }
       }
     } else {
 
       MetaData metaData = createPutSearchMetaData(key, value);
-
       final Object lockID = generateLockIdForKey(key);
       beginLock(lockID, getEffectiveLockType());
       try {

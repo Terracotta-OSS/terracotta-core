@@ -249,44 +249,32 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  private void removeIfTCObjectSelf(Object value) {
+    if (value instanceof TCObjectSelf) {
+      this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, true);
+    }
+  }
+
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
+  public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value, MetaDataDescriptor mdd)
       throws AbortedOperationException {
     Lock lock = getLockForKey(key);
     lock.lock();
     try {
-      int retryCount = 0;
-      while (true) {
-        AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-        if (item != null) {
-          Object valueObject = item.getValueObject();
-          if (valueObject != null) {
-            // Item already present
-            return valueObject;
-          }
-        }
-        shareObject(key);
-        final ObjectID valueObjectID = shareObject(value);
-        final Object[] parameters = constructParams(key, value);
-        if (mdd != null) {
-          addMetaData(mdd);
-        }
-        boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT,
-                                             SerializationUtil.PUT_IF_ABSENT_SIGNATURE, parameters);
-        if (rv) {
-          updateLocalCacheOnPut(key, value, valueObjectID);
-          return null;
-        } else {
-          // PutIfAbsent failed i.e there is some mapping on the L2 so putIfAbsent failed,fetch that value from server
-          final Object existingMapping = getValueUnlocked(map, key);
-          // existing mapping can be null in case someone removed this value between putIfAbsent, for this case try
-          // retrying putIfAbsent
-          if (existingMapping != null) { return existingMapping; }
-        }
-        if (retryCount++ % 10 == 0) {
-          logger.info("retried putIfAbsent for " + retryCount);
-        }
+      shareObject(key);
+      final ObjectID valueObjectID = shareObject(value);
+      final Object[] parameters = constructParams(key, value);
+      if (mdd != null) {
+        addMetaData(mdd);
       }
+      boolean rv = logicalInvokeWithResult(SerializationUtil.PUT_IF_ABSENT, SerializationUtil.PUT_IF_ABSENT_SIGNATURE,
+                                           parameters);
+      if (rv) {
+        updateLocalCacheOnPut(key, value, valueObjectID);
+      } else {
+        removeIfTCObjectSelf(value);
+      }
+      return rv;
     } finally {
       lock.unlock();
     }
@@ -309,6 +297,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                                            SerializationUtil.REPLACE_IF_VALUE_EQUAL_SIGNATURE, parameters);
       if (rv) {
         updateLocalCacheOnPut(key, newValue, valueObjectID);
+      } else {
+        removeIfTCObjectSelf(newValue);
       }
       return rv;
     } finally {

@@ -71,7 +71,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @return true if operation changed the clustered state
    * @throws AbortedOperationException
    */
-  Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value,
+  boolean doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value,
                                       MetaDataDescriptor mdd)
       throws AbortedOperationException;
 

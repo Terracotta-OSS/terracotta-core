@@ -308,7 +308,7 @@ public class MockTCObjectServerMap implements TCObjectServerMap<Object> {
   }
 
   @Override
-  public Object doLogicalPutIfAbsentUnlocked(TCServerMap serverMap, Object key, Object value, MetaDataDescriptor mdd) {
+  public boolean doLogicalPutIfAbsentUnlocked(TCServerMap serverMap, Object key, Object value, MetaDataDescriptor mdd) {
     throw new ImplementMe();
   }
 
