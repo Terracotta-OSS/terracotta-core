@@ -259,4 +259,9 @@ public class TestClientManager {
     LinkedJavaProcess javaProcess = allClients.get(index);
     return javaProcess;
   }
+
+  public File getTempDir() {
+    return tempDir;
+  }
+
 }

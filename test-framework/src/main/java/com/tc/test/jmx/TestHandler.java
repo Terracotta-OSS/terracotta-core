@@ -8,6 +8,7 @@ import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestServerManager;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -44,6 +45,11 @@ public class TestHandler implements TestHandlerMBean {
 
   public int getNumberOfGroups() {
     return testServerManager.getNumberOfGroups();
+  }
+
+  @Override
+  public File getTempDir() {
+    return testClientManager.getTempDir();
   }
 
   @Override

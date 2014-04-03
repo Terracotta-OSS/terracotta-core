@@ -2,6 +2,7 @@ package com.tc.test.jmx;
 
 import com.tc.test.setup.GroupsData;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -243,5 +244,7 @@ public interface TestHandlerMBean {
   void pauseServer(int groupIndex, int serverIndex) throws Exception;
 
   void unpauseServer(int groupIndex, int serverIndex) throws Exception;
+
+  File getTempDir();
 
 }
