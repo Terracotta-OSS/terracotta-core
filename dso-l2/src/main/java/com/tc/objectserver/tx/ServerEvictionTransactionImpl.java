@@ -4,7 +4,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
@@ -21,9 +20,9 @@ public class ServerEvictionTransactionImpl extends ServerTransactionImpl {
 
   public ServerEvictionTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                        NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
-                                       TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
+                                       TxnType transactionType, Collection notifies,
                                        MetaDataReader[] metaDataReaders, int numApplicationTxn, long[] highWaterMarks) {
-    super(batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis,
+    super(batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies,
           metaDataReaders, numApplicationTxn, highWaterMarks);
   }
 

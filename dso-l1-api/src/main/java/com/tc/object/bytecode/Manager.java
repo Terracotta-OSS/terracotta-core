@@ -34,7 +34,6 @@ import com.terracottatech.search.NVPair;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
@@ -173,21 +172,6 @@ public interface Manager extends TerracottaLocking {
    */
   public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params)
       throws AbortedOperationException;
-
-  /**
-   * Perform distributed method call
-   * 
-   * @param receiver The receiver object
-   * @param method The method to call
-   * @param params The parameter values
-   * @param runOnAllNodes True if should run on all nodes, false just for this node
-   */
-  public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes);
-
-  /**
-   * Commit DMI call
-   */
-  public void distributedMethodCallCommit();
 
   /**
    * Lookup root by name
@@ -347,7 +331,7 @@ public interface Manager extends TerracottaLocking {
 
   void stopImmediate();
 
-  void initForTests(CountDownLatch latch);
+  void initForTests();
 
   public GroupID[] getGroupIDs();
 

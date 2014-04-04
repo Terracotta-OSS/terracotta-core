@@ -3,6 +3,13 @@
  */
 package com.tc.objectserver.handler;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.tc.async.impl.MockStage;
@@ -12,7 +19,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -44,13 +50,6 @@ import com.tc.test.TCTestCase;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class BroadcastChangeHandlerTest extends TCTestCase {
 
@@ -165,7 +164,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     when(transaction.getSourceID()).thenReturn(new ClientID(sourceID));
     when(transaction.getServerTransactionID()).thenReturn(new ServerTransactionID(new ClientID(sourceID), new TransactionID(txID)));
     when(transaction.getGlobalTransactionID()).thenReturn(new GlobalTransactionID(gid));
-    when(transaction.getDmiDescriptors()).thenReturn(new DmiDescriptor[0]);
     when(transaction.getTransactionID()).thenReturn(new TransactionID(txID));
     when(transaction.getChanges()).thenReturn(Arrays.asList(new TestDNA(new ObjectID(1), true)));
     return transaction;

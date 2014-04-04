@@ -20,7 +20,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LongLockID;
@@ -676,11 +675,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     @Override
-    public void addDmiDescriptor(DmiDescriptor dd) {
-      throw new ImplementMe();
-    }
-
-    @Override
     public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
       throw new ImplementMe();
     }
@@ -757,11 +751,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
 
     @Override
     public Map getChangeBuffers() {
-      throw new ImplementMe();
-    }
-
-    @Override
-    public List getDmiDescriptors() {
       throw new ImplementMe();
     }
 

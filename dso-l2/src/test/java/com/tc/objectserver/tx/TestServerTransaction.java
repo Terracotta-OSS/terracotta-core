@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -103,11 +102,6 @@ public final class TestServerTransaction implements ServerTransaction {
   @Override
   public TxnBatchID getBatchID() {
     return this.bid;
-  }
-
-  @Override
-  public DmiDescriptor[] getDmiDescriptors() {
-    throw new ImplementMe();
   }
 
   @Override

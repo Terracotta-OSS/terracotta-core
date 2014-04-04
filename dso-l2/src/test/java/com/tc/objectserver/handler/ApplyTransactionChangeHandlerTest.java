@@ -21,7 +21,6 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.net.ClientID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.LockID;
@@ -165,7 +164,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     ServerTransaction txn = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
         lockIDs, cid, Collections.emptyList(), null,
-        Collections.emptyMap(), TxnType.NORMAL, notifies, DmiDescriptor.EMPTY_ARRAY,
+                                                      Collections.emptyMap(), TxnType.NORMAL, notifies,
         new MetaDataReader[0], 1, new long[0]);
 
     txn.setGlobalTransactionID(GlobalTransactionID.NULL_ID);

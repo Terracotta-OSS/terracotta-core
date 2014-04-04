@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -31,7 +30,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
 
   private Map                                 newRoots;
   private List                                notifies;
-  private List                                dmis;
 
   // used to keep things referenced until the transaction is completely ACKED
   private final Map                           referenced    = new IdentityHashMap();
@@ -154,21 +152,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   @Override
-  public void addDmiDescriptor(DmiDescriptor dd) {
-    if (dmis == null) {
-      dmis = new ArrayList();
-    }
-    dmis.add(dd);
-  }
-
-  @Override
   protected void basicAddMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
     getOrCreateChangeBuffer(tco).addMetaDataDescriptor(md);
-  }
-
-  @Override
-  public List getDmiDescriptors() {
-    return dmis == null ? Collections.EMPTY_LIST : dmis;
   }
 
   @Override

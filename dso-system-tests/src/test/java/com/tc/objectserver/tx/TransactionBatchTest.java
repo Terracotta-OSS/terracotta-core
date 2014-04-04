@@ -12,8 +12,6 @@ import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.dmi.DmiClassSpec;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
@@ -445,11 +443,6 @@ public class TransactionBatchTest extends TestCase {
     txnWithRoot.createRoot("root", new ObjectID(234));
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
-    final ClientTransaction txnWithDMI = new ClientTransactionImpl(0);
-    txnWithDMI.setTransactionContext(tc);
-    txnWithDMI.addDmiDescriptor(new DmiDescriptor(new ObjectID(12), new ObjectID(13), new DmiClassSpec[] {}, true));
-
-    tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txnWithNotify = new ClientTransactionImpl(0);
     txnWithNotify.setTransactionContext(tc);
     txnWithNotify.addNotify(new NotifyImpl(lid1, new ThreadID(122), true));
@@ -459,19 +452,16 @@ public class TransactionBatchTest extends TestCase {
     final long startSeq = sequenceGenerator.getCurrentSequence();
 
     FoldedInfo fi;
-    // Txns with DMI, root or notifies do not qualify for folds
+    // Txns with root or notifies do not qualify for folds
     fi = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
     fi = writer.addTransaction(txnWithRoot, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
     assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
-    fi = writer.addTransaction(txnWithDMI, sequenceGenerator, tidGenerator);
-    assertFalse(fi.isFolded());
-    assertEquals(3 + startSeq, sequenceGenerator.getCurrentSequence());
     fi = writer.addTransaction(txnWithNotify, sequenceGenerator, tidGenerator);
     assertFalse(fi.isFolded());
-    assertEquals(4 + startSeq, sequenceGenerator.getCurrentSequence());
+    assertEquals(3 + startSeq, sequenceGenerator.getCurrentSequence());
   }
 
   public void testFoldBug1() {

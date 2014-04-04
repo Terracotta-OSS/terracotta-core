@@ -174,7 +174,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     ManagerImpl tcmanager = new ManagerImpl(true, new TestClientObjectManager(), new MockTransactionManager(),
                                             new MockClientLockManager(), new MockRemoteSearchRequestManager(),
                                             configHelper, l2Connection, null);
-    tcmanager.initForTests(null);
+    tcmanager.initForTests();
     return tcmanager;
   }
 

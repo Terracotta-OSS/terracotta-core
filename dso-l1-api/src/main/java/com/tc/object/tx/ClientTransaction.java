@@ -5,7 +5,6 @@ package com.tc.object.tx;
 
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
@@ -204,23 +203,9 @@ public interface ClientTransaction {
   public Collection getReferencesOfObjectsInTxn();
 
   /**
-   * Add a new DMI descriptor
-   * 
-   * @param dd Descriptor
-   */
-  public void addDmiDescriptor(DmiDescriptor dd);
-
-  /**
    * Add a new MetaData descriptor to the given object
    */
   public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md);
-
-  /**
-   * Get all DmiDescriptors
-   * 
-   * @return List of DmiDescriptors in transaction
-   */
-  public List getDmiDescriptors();
 
   /**
    * Get all Notify calls

@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -40,7 +39,6 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final TxnType                transactionType;
   private final ObjectStringSerializer serializer;
   private final Collection             notifies;
-  private final DmiDescriptor[]        dmis;
   private final MetaDataReader[]       metaDataReaders;
   private final ObjectIDSet            objectIDs;
   private final ObjectIDSet            newObjectIDs;
@@ -52,7 +50,7 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
-                               TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
+                               TxnType transactionType, Collection notifies,
                                MetaDataReader[] metaDataReaders, int numApplicationTxn, long[] highWaterMarks) {
     this.batchID = batchID;
     this.txID = txID;
@@ -65,7 +63,6 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.serverTxID = new ServerTransactionID(source, txID);
     this.transactionType = transactionType;
     this.notifies = notifies;
-    this.dmis = dmis;
     this.metaDataReaders = metaDataReaders;
     this.changes = dnas;
     this.serializer = serializer;
@@ -153,11 +150,6 @@ public class ServerTransactionImpl implements ServerTransaction {
   @Override
   public Collection getNotifies() {
     return this.notifies;
-  }
-
-  @Override
-  public DmiDescriptor[] getDmiDescriptors() {
-    return this.dmis;
   }
 
   @Override

@@ -4,7 +4,6 @@
 package com.tc.l2.objectserver;
 
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -102,11 +101,6 @@ public class ResentServerTransaction implements ServerTransaction {
   @Override
   public Collection getNotifies() {
     return orgTxn.getNotifies();
-  }
-
-  @Override
-  public DmiDescriptor[] getDmiDescriptors() {
-    return orgTxn.getDmiDescriptors();
   }
 
   @Override

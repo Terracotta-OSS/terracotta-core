@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransaction;
@@ -50,8 +49,6 @@ public interface ServerTransaction extends GlobalTransaction {
   public ObjectIDSet getNewObjectIDs();
 
   public Collection getNotifies();
-
-  public DmiDescriptor[] getDmiDescriptors();
 
   public MetaDataReader[] getMetaDataReaders();
 

@@ -19,7 +19,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
@@ -40,7 +39,6 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ObjectIDSet;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -127,10 +125,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         updateStats(prunedChanges);
       }
 
-      final DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
-      final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
-          || includeDmi || !logicalChangeResults.isEmpty() || !serverEvents.isEmpty()) {
+          || !logicalChangeResults.isEmpty() || !serverEvents.isEmpty()) {
         this.transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
 
         // check here if the client is already not disconnected
@@ -147,13 +143,12 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                                    .getName(), -1,
                                                                                LOOKUP_STATE.SERVER_INITIATED));
         }
-        final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
 
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
                                    txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(),
-                                   bcc.getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi,
+                                   bcc.getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots,
                                    logicalChangeResults, serverEvents);
 
         responseMessage.send();
@@ -182,21 +177,6 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       }
       this.objectStatsRecorder.updateBroadcastStats(className);
     }
-  }
-
-  private static DmiDescriptor[] pruneDmiDescriptors(final DmiDescriptor[] dmiDescriptors, final ClientID clientID,
-                                                     final ClientStateManager clientStateManager) {
-    if (dmiDescriptors.length == 0) { return dmiDescriptors; }
-
-    final List list = new ArrayList();
-    for (final DmiDescriptor dd : dmiDescriptors) {
-      if (dd.isFaultReceiver() || clientStateManager.hasReference(clientID, dd.getReceiverId())) {
-        list.add(dd);
-      }
-    }
-    final DmiDescriptor[] rv = new DmiDescriptor[list.size()];
-    list.toArray(rv);
-    return rv;
   }
 
   private long getNextChangeIDFor(final ClientID clientID) {

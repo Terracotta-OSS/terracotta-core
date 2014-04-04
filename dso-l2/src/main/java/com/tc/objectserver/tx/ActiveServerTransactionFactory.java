@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
@@ -24,10 +23,10 @@ public final class ActiveServerTransactionFactory implements ServerTransactionFa
                                                    boolean isEviction,
                                                    LockID[] locks, NodeID source, List dnas,
                                                    ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
-                                                   List notifies, DmiDescriptor[] dmis, MetaDataReader[] readers,
+                                                   List notifies, MetaDataReader[] readers,
                                                    int numApplicationTxn, long[] highWaterMarks) {
     return new ServerTransactionImpl(batchID, txnID, sequenceID, locks, source, dnas, serializer, newRoots, txnType,
-                                     notifies, dmis, readers, numApplicationTxn, highWaterMarks);
+                                     notifies, readers, numApplicationTxn, highWaterMarks);
   }
 
 }

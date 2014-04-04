@@ -12,7 +12,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -144,14 +143,6 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
       notifies.add(n);
     }
 
-    final int dmiCount = this.in.readInt();
-    final DmiDescriptor[] dmis = new DmiDescriptor[dmiCount];
-    for (int i = 0; i < dmiCount; i++) {
-      final DmiDescriptor dd = new DmiDescriptor();
-      dd.deserializeFrom(this.in);
-      dmis[i] = dd;
-    }
-
     final long[] highwaterMarks = readLongArray(this.in);
 
     final List dnas = new ArrayList();
@@ -183,7 +174,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     MetaDataReader [] metaDataReadersArr = metaDataReaders.toArray(new MetaDataReader[metaDataReaders.size()]);
     return this.txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, isEviction, locks, this.source,
                                                    dnas,
-                                                   this.serializer, newRoots, txnType, notifies, dmis,
+                                                   this.serializer, newRoots, txnType, notifies,
                                                    metaDataReadersArr, numApplictionTxn, highwaterMarks);
   }
 

@@ -7,7 +7,6 @@ package com.tc.l2.objectserver;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -61,11 +60,6 @@ public class PrunedServerTransaction implements ServerTransaction {
   @Override
   public NodeID getSourceID() {
     return this.orgTxn.getSourceID();
-  }
-
-  @Override
-  public DmiDescriptor[] getDmiDescriptors() {
-    return this.orgTxn.getDmiDescriptors();
   }
 
   @Override

@@ -292,35 +292,6 @@ public class ManagerUtil {
   }
 
   /**
-   * Commit DMI call
-   */
-  protected static void distributedMethodCallCommit() {
-    getManager().distributedMethodCallCommit();
-  }
-
-  /**
-   * Perform distributed method call on just this node
-   *
-   * @param receiver The receiver object
-   * @param method The method to call
-   * @param params The parameter values
-   */
-  protected static boolean prunedDistributedMethodCall(final Object receiver, final String method, final Object[] params) {
-    return getManager().distributedMethodCall(receiver, method, params, false);
-  }
-
-  /**
-   * Perform distributed method call on all nodes
-   *
-   * @param receiver The receiver object
-   * @param method The method to call
-   * @param params The parameter values
-   */
-  protected static boolean distributedMethodCall(final Object receiver, final String method, final Object[] params) {
-    return getManager().distributedMethodCall(receiver, method, params, true);
-  }
-
-  /**
    * Lookup root by name
    *
    * @param name Name of root

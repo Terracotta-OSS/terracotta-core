@@ -12,7 +12,6 @@ import com.tc.net.ClientID;
 import com.tc.net.groups.MessageID;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -250,7 +249,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       }
       ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, this.clientID, dnas,
                                                        serializer, newRoots, txnType, notifies,
-                                                       DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                                       new MetaDataReader[0], 1, new long[0]);
       map.put(tx.getServerTransactionID(), tx);
       try {
         tx.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(tx.getServerTransactionID()));

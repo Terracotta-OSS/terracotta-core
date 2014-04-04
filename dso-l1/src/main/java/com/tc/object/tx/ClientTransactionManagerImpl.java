@@ -19,7 +19,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LogicalChangeID;
@@ -819,11 +818,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     public int get() {
       return this.callCount;
     }
-  }
-
-  @Override
-  public void addDmiDescriptor(final DmiDescriptor dd) {
-    getTransaction().addDmiDescriptor(dd);
   }
 
   @Override

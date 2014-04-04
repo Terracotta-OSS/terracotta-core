@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -73,7 +72,6 @@ public class ServerTransactionBatchWriter {
     writeLockIDs(out, txn.getLockIDs());
     writeRootsMap(out, txn.getNewRoots());
     writeNotifies(out, txn.getNotifies());
-    writeDMIDescriptors(out, txn.getDmiDescriptors());
     writeHighWaterMarks(out, txn.getHighWaterMarks());
     writeDNAs(out, txn.getChanges());
   }
@@ -155,13 +153,6 @@ public class ServerTransactionBatchWriter {
     out.writeInt(highWaterMarks.length);
     for (final long h : highWaterMarks) {
       out.writeLong(h);
-    }
-  }
-
-  private void writeDMIDescriptors(final TCByteBufferOutputStream out, final DmiDescriptor[] dmiDescriptors) {
-    out.writeInt(dmiDescriptors.length);
-    for (final DmiDescriptor dmiDescriptor : dmiDescriptors) {
-      dmiDescriptor.serializeTo(out);
     }
   }
 

@@ -9,7 +9,6 @@ import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.locks.LockID;
@@ -186,13 +185,6 @@ public interface ClientTransactionManager extends ClearableCallback {
    * @param length Partial array length
    */
   public void arrayChanged(TCObject src, int startPos, Object array, int length);
-
-  /**
-   * Add distributed method call descriptor to current transaction
-   * 
-   * @param d Descriptor
-   */
-  public void addDmiDescriptor(DmiDescriptor d);
 
   /**
    * Add meta data descriptor to current transaction

@@ -1,5 +1,10 @@
 package com.tc.object.handler;
 
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -13,13 +18,6 @@ import com.tc.server.BasicServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 
-import java.util.concurrent.CountDownLatch;
-
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * @author Eugene Shelestovich
  */
@@ -29,8 +27,7 @@ public class ReceiveTransactionHandlerTest {
   public void testMustSendEventsToDeliveryStage() {
     final Sink deliverySink = mock(Sink.class);
 
-    final ReceiveTransactionHandler handler = new ReceiveTransactionHandler(
-        null, null, null, null, null, new CountDownLatch(0), deliverySink);
+    final ReceiveTransactionHandler handler = new ReceiveTransactionHandler(null, null, null, deliverySink);
 
     final ServerEvent event1 = new BasicServerEvent(ServerEventType.PUT, "k1", "cache-1");
     final ServerEvent event2 = new BasicServerEvent(ServerEventType.REMOVE, "k1", "cache-1");

@@ -8,7 +8,6 @@ import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -35,7 +34,6 @@ public class ServerTransactionFactory {
 
   private static final LockID[]        NULL_LOCK_ID          = new LockID[0];
   private static final long[]          EMPTY_HIGH_WATER_MARK = new long[0];
-  private static final DmiDescriptor[] NULL_DMI_DESCRIPTOR   = new DmiDescriptor[0];
 
   private final AtomicLong             tid                   = new AtomicLong();
 
@@ -78,7 +76,6 @@ public class ServerTransactionFactory {
         NULL_LOCK_ID, serverTransactionID.getSourceID(),
         Collections.singletonList(createServerMapEvictionDNAFor(oid, cacheName, candidates)),
         serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
-        NULL_DMI_DESCRIPTOR,
         createEvictionMetaDataFor(oid, cacheName, candidates), 1,
         EMPTY_HIGH_WATER_MARK);
   }
@@ -89,7 +86,7 @@ public class ServerTransactionFactory {
     return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, serverTransactionID.getClientTransactionID(),
         SequenceID.NULL_ID, NULL_LOCK_ID, serverTransactionID.getSourceID(),
         Collections.singletonList(createRemoveAllDNA(oid, cacheName, candidates)), objectStringSerializer,
-        Collections.emptyMap(), TxnType.NORMAL, Collections.emptyList(), NULL_DMI_DESCRIPTOR,
+        Collections.emptyMap(), TxnType.NORMAL, Collections.emptyList(),
         createEvictionMetaDataFor(oid, cacheName, candidates), 1, EMPTY_HIGH_WATER_MARK);
   }
 
@@ -110,7 +107,7 @@ public class ServerTransactionFactory {
                                              SequenceID.NULL_ID, NULL_LOCK_ID, serverTransactionID.getSourceID(),
                                              Collections.singletonList(createRemoveEventListeningClientDNA(oid, clientID)),
                                              objectStringSerializer, Collections.emptyMap(), TxnType.NORMAL,
-                                             Collections.emptyList(), NULL_DMI_DESCRIPTOR,
+                                             Collections.emptyList(),
                                              new MetaDataReader[] {}, 1, EMPTY_HIGH_WATER_MARK);
   }
 

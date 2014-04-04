@@ -37,7 +37,6 @@ import com.terracottatech.search.NVPair;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
@@ -70,7 +69,7 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void initForTests(CountDownLatch latch) {
+  public void initForTests() {
     //
   }
 
@@ -101,16 +100,6 @@ public class NullManager implements Manager {
 
   @Override
   public void logicalInvoke(Object object, String methodName, Object[] params) {
-    //
-  }
-
-  @Override
-  public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
-    return true;
-  }
-
-  @Override
-  public void distributedMethodCallCommit() {
     //
   }
 

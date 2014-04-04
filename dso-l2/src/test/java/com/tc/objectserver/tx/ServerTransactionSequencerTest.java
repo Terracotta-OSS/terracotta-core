@@ -5,7 +5,6 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.locks.LockID;
@@ -182,28 +181,28 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
                                                        this.clientID, createDNAs(1, 1),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       TxnType.NORMAL, new LinkedList(),
                                                        new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn2 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(2),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
                                                        this.clientID, createDNAs(2, 2),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       TxnType.NORMAL, new LinkedList(),
                                                        new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn3 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(3),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
                                                        this.clientID, createDNAs(2, 3),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       TxnType.NORMAL, new LinkedList(),
                                                        new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(4),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock),
                                                        this.clientID, createDNAs(1, 2),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       TxnType.NORMAL, new LinkedList(),
                                                        new MetaDataReader[0], 1, new long[0]);
 
     txns.add(txn1);
@@ -332,7 +331,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                      new SequenceID(this.sqID++), createLocks(lockID, lockID), this.clientID,
                                      new ArrayList<TestDNA>(dnas.values()), new ObjectStringSerializerImpl(),
                                      Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                     DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                     new MetaDataReader[0], 1, new long[0]);
   }
 
   private List getAllTxnsPossible() {
@@ -354,7 +353,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                          new SequenceID(this.sqID++), createLocks(this.start, e), this.clientID,
                                          createDNAs(this.start, e), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                         DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
+                                         new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
     }
     return txns;
@@ -370,7 +369,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                          new SequenceID(this.sqID++), createLocks(this.start, e + j), this.clientID,
                                          createDNAs(this.start, e), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                         DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
+                                         new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
     }
     return txns;
@@ -386,7 +385,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                          new SequenceID(this.sqID++), createLocks(this.start, e), this.clientID,
                                          createDNAs(this.start, e + j), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                         DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
+                                         new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
     }
     return txns;
@@ -402,7 +401,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
                                          new SequenceID(this.sqID++), createLocks(this.start, e + j), this.clientID,
                                          createDNAs(this.start, e + j), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                         DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
+                                         new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
     }
     return txns;

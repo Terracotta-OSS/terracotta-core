@@ -17,7 +17,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.DNAWriterImpl;
@@ -165,10 +164,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
                                               final TransactionIDGenerator tidGenerator) {
       final boolean exceedsLimits = exceedsLimits(txn);
 
-      // txns that exceed the lock/object limits, or those with roots, DMI, and/or notify/notifyAll() cannot be folded
+      // txns that exceed the lock/object limits, or those with roots, and/or notify/notifyAll() cannot be folded
       // and must close any earlier dependent txns
-      final boolean scanForClose = (txn.getNewRoots().size() > 0) || (txn.getDmiDescriptors().size() > 0)
-                                   || (txn.getNotifies().size() > 0) || exceedsLimits;
+      final boolean scanForClose = (txn.getNewRoots().size() > 0) || (txn.getNotifies().size() > 0) || exceedsLimits;
 
       if (DEBUG) {
         log_incomingTxn(txn, exceedsLimits, scanForClose);
@@ -304,9 +302,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   private void log_incomingTxn(final ClientTransaction txn, final boolean exceedsLimits, final boolean scanForClose) {
     logger.info("incoming txn@" + System.identityHashCode(txn) + "[" + txn.getTransactionID() + " locks="
-                + txn.getAllLockIDs() + ", oids=" + txn.getChangeBuffers().keySet() + ", dmi="
-                + txn.getDmiDescriptors() + ", roots=" + txn.getNewRoots() + ", notifies=" + txn.getNotifies()
-                + ", type=" + txn.getLockType() + "] exceedsLimit=" + exceedsLimits + ", scanForClose=" + scanForClose);
+                + txn.getAllLockIDs() + ", oids=" + txn.getChangeBuffers().keySet() + ", roots=" + txn.getNewRoots()
+                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getLockType() + "] exceedsLimit=" + exceedsLimits
+                + ", scanForClose=" + scanForClose);
   }
 
   private void closeDependentKeys(final Collection dependentKeys) {
@@ -345,7 +343,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   @Override
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                                 final TransactionIDGenerator tidGenerator) {
-    holders += 1;  
+    holders += 1;
     TransactionBuffer txnBuffer = null;
     if ( !foldingEnabled ) {
         txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
@@ -373,7 +371,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   @Override
   public synchronized TransactionBuffer addSimpleTransaction(final ClientTransaction txn) {
-    holders += 1;  
+    holders += 1;
     
     if (committed) { throw new AssertionError("Already committed"); }
 
@@ -390,7 +388,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
     
     return txnBuffer;
-  } 
+  }
   
   private synchronized void release() {
       if ( --holders == 0 ) {
@@ -701,13 +699,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
       for (final Iterator i = notifies.iterator(); i.hasNext();) {
         final Notify n = (Notify) i.next();
         n.serializeTo(this.output);
-      }
-
-      final List dmis = txn.getDmiDescriptors();
-      this.output.writeInt(dmis.size());
-      for (final Iterator i = dmis.iterator(); i.hasNext();) {
-        final DmiDescriptor dd = (DmiDescriptor) i.next();
-        dd.serializeTo(this.output);
       }
 
       writeAdditionalHeaderInformation(this.output, txn);

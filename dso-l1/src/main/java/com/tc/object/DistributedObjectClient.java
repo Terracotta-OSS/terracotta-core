@@ -66,15 +66,12 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
-import com.tc.object.event.DmiManager;
-import com.tc.object.event.DmiManagerImpl;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.handler.BatchTransactionAckHandler;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMemberShipEventsHandler;
 import com.tc.object.handler.ClusterMetaDataHandler;
-import com.tc.object.handler.DmiHandler;
 import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.handler.ReceiveInvalidationHandler;
@@ -199,7 +196,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -237,7 +233,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ClusterMetaDataManager                     clusterMetaDataManager;
   private L1Management                               l1Management;
   private TCProperties                               l1Properties;
-  private DmiManager                                 dmiManager;
   private boolean                                    createDedicatedMBeanServer          = false;
   private CounterManager                             counterManager;
   private ThreadIDManager                            threadIDManager;
@@ -383,10 +378,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     return clusterEventsStage;
   }
 
-  public void start() {
-    start(null);
-  }
-
   private void validateClientServerCompatibility() {
     try {
       this.config.validateClientServerCompatibility(securityManager, config.getSecurityInfo());
@@ -396,7 +387,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
   }
 
-  public synchronized void start(CountDownLatch testStartLatch) {
+  public synchronized void start() {
     rejoinManager.start();
     validateSecurityConfig();
     validateGroupConfig();
@@ -637,18 +628,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                          new ReceiveRootIDHandler(), 1, maxSize);
     final Stage receiveObject = stageManager.createStage(ClientConfigurationContext.RECEIVE_OBJECT_STAGE,
                                                          new ReceiveObjectHandler(), 1, maxSize);
-    this.dmiManager = new DmiManagerImpl(this.classProvider, this.objectManager);
-    final Stage dmiStage = stageManager.createStage(ClientConfigurationContext.DMI_STAGE,
-                                                    new DmiHandler(this.dmiManager), 1, maxSize);
-
 
     serverEventListenerManager = dsoClientBuilder.createServerEventListenerManager(channel);
 
     final Stage serverEventDeliveryStage = createServerEventDeliveryStage(stageManager);
 
     final Stage receiveTransaction = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
-        new ReceiveTransactionHandler(this.channel.getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager,
-            dmiStage.getSink(), this.dmiManager, testStartLatch, serverEventDeliveryStage.getSink()), 1, maxSize);
+                     new ReceiveTransactionHandler(this.channel.getAcknowledgeTransactionMessageFactory(), gtxManager,
+                                                   sessionManager, serverEventDeliveryStage.getSink()), 1, maxSize);
     final Stage oidRequestResponse = stageManager
         .createStage(ClientConfigurationContext.OBJECT_ID_REQUEST_RESPONSE_STAGE, remoteIDProvider, 1, maxSize);
     final Stage transactionResponse = stageManager
@@ -1040,10 +1027,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public L1Management getL1Management() {
     return this.l1Management;
-  }
-
-  public DmiManager getDmiManager() {
-    return this.dmiManager;
   }
 
   public TunneledDomainManager getTunneledDomainManager() {

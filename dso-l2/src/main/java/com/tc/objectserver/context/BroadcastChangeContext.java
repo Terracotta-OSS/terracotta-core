@@ -5,7 +5,6 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.net.NodeID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.LockID;
@@ -90,10 +89,6 @@ public class BroadcastChangeContext implements EventContext {
   
   public Map getNewRoots() {
     return tx.getNewRoots();
-  }
-  
-  public DmiDescriptor[] getDmiDescriptors() {
-    return tx.getDmiDescriptors();
   }
 
 }

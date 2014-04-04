@@ -26,7 +26,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
   public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
   public static final String             JMXREMOTE_TUNNEL_STAGE                      = "jmxremote_tunnel_stage";
-  public static final String             DMI_STAGE                                   = "dmi_stage";
   public static final String             OOO_NET_SEND_STAGE                          = "ooo_net_send_stage";
   public static final String             OOO_NET_RECEIVE_STAGE                       = "ooo_net_receive_stage";
   public static final String             CLUSTER_METADATA_STAGE                      = "cluster_metadata_stage";
@@ -34,7 +33,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
   public static final String             RECEIVE_SERVER_MAP_RESPONSE_STAGE           = "receive_server_map_response_stage";
   public static final String             RECEIVE_SEARCH_QUERY_RESPONSE_STAGE         = "receive_search_query_response_stage";
-  public static final String             RECEIVE_SEARCH_RESULT_RESPONSE_STAGE      = "receive_search_result_response_stage";
+  public static final String             RECEIVE_SEARCH_RESULT_RESPONSE_STAGE        = "receive_search_result_response_stage";
   public static final String             CAPACITY_EVICTION_STAGE                     = "capacity_eviction_stage";
   public static final String             LOCAL_CACHE_TXN_COMPLETE_STAGE              = "local_cache_transaction_complete_stage";
   public static final String             TTI_TTL_EVICTION_STAGE                      = "tti_ttl_eviction_stage";

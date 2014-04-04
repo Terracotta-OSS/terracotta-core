@@ -5,7 +5,6 @@ package com.tc.object.msg;
 
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -24,7 +23,7 @@ public interface BroadcastTransactionMessage extends TCMessage {
   void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
                   NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                   GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
-                  DmiDescriptor[] dmis, Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
+                  Map<LogicalChangeID, LogicalChangeResult> logicalInvokeResults,
                   Collection<ServerEvent> events);
 
   List getLockIDs();
@@ -46,8 +45,6 @@ public interface BroadcastTransactionMessage extends TCMessage {
   Collection getNotifies();
 
   Map getNewRoots();
-
-  List getDmiDescriptors();
 
   List<ServerEvent> getEvents();
 }

@@ -34,7 +34,6 @@ import com.tc.object.ServerEventListenerManager;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.event.DmiManager;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.object.locks.ClientLockManager;
@@ -87,7 +86,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
@@ -107,7 +105,6 @@ public class ManagerImpl implements Manager {
   private ClientLockManager                           lockManager;
   private RemoteSearchRequestManager                  searchRequestManager;
   private DistributedObjectClient                     dso;
-  private DmiManager                                  methodCallManager;
 
   private volatile DSOClientConfigHelper              config;
   private volatile PreparedComponentsFromL2Connection connectionComponents;
@@ -178,20 +175,20 @@ public class ManagerImpl implements Manager {
 
   @Override
   public void init() {
-    init(false, null);
+    init(false);
   }
 
   @Override
-  public void initForTests(CountDownLatch latch) {
-    init(true, latch);
+  public void initForTests() {
+    init(true);
   }
 
-  private void init(final boolean forTests, final CountDownLatch testStartLatch) {
+  private void init(final boolean forTests) {
     resolveClasses(); // call this before starting any threads (SEDA, DistributedMethod call stuff, etc)
 
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
-        startClient(forTests, testStartLatch);
+        startClient(forTests);
         this.platformService.init(rejoinManager, this.dso.getClientHandshakeManager());
       }
     }
@@ -245,7 +242,7 @@ public class ManagerImpl implements Manager {
     logicalInvoke(new FakeManageableObject(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
 
-  private void startClient(final boolean forTests, final CountDownLatch testStartLatch) {
+  private void startClient(final boolean forTests) {
     L1ThrowableHandler throwableHandler = new L1ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
                                                                    @Override
@@ -271,12 +268,11 @@ public class ManagerImpl implements Manager {
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
         }
-        ManagerImpl.this.dso.start(testStartLatch);
+        ManagerImpl.this.dso.start();
         ManagerImpl.this.objectManager = ManagerImpl.this.dso.getObjectManager();
         ManagerImpl.this.txManager = ManagerImpl.this.dso.getTransactionManager();
         ManagerImpl.this.lockManager = ManagerImpl.this.dso.getLockManager();
         ManagerImpl.this.searchRequestManager = ManagerImpl.this.dso.getSearchRequestManager();
-        ManagerImpl.this.methodCallManager = ManagerImpl.this.dso.getDmiManager();
         ManagerImpl.this.serverEventListenerManager = ManagerImpl.this.dso.getServerEventListenerManager();
 
         ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
@@ -525,28 +521,6 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean distributedMethodCall(final Object receiver, final String method, final Object[] params,
-                                       final boolean runOnAllNodes) {
-    final TCObject tco = lookupExistingOrNull(receiver);
-
-    try {
-      if (tco != null) {
-        return this.methodCallManager.distributedInvoke(receiver, method, params, runOnAllNodes);
-      } else {
-        return false;
-      }
-    } catch (final Throwable t) {
-      Util.printLogAndRethrowError(t, logger);
-      return false;
-    }
-  }
-
-  @Override
-  public void distributedMethodCallCommit() {
-    this.methodCallManager.distributedInvokeCommit();
-  }
-
-  @Override
   public void checkWriteAccess(final Object context) {
     // XXX: make sure that "context" is the ALWAYS the right object to check here, and then rename it
     if (isManaged(context)) {
@@ -616,10 +590,6 @@ public class ManagerImpl implements Manager {
   @Override
   public TCLogger getLogger(final String loggerName) {
     return TCLogging.getLogger(loggerName);
-  }
-
-  public DmiManager getDmiManager() {
-    return this.methodCallManager;
   }
 
   @Override

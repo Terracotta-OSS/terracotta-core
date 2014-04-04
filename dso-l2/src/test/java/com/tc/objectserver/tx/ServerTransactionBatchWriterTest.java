@@ -10,7 +10,6 @@ import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
@@ -142,7 +141,6 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     assertEquals(expected.getNumApplicationTxn(), actual.getNumApplicationTxn());
     assertEquals(expected.getBatchID(), actual.getBatchID());
     assertEquals(expected.getClientSequenceID(), actual.getClientSequenceID());
-    assertTrue(Arrays.equals(expected.getDmiDescriptors(), actual.getDmiDescriptors()));
     assertTrue(Arrays.equals(expected.getHighWaterMarks(), actual.getHighWaterMarks()));
     assertTrue(Arrays.equals(expected.getLockIDs(), actual.getLockIDs()));
     assertEquals(expected.getNewObjectIDs(), actual.getNewObjectIDs());
@@ -213,7 +211,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
                                                                                                 endIndex),
                                                        this.sourceNodeID, createDNAs(this.startIndex, endIndex),
                                                        new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       TxnType.NORMAL, new LinkedList(),
                                                        new MetaDataReader[0], 1, new long[0]));
       this.startIndex = endIndex + 1;
     }

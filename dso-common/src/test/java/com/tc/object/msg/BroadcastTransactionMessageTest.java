@@ -3,6 +3,10 @@
  */
 package com.tc.object.msg;
 
+import static com.tc.server.ServerEventType.EVICT;
+import static com.tc.server.ServerEventType.PUT;
+import static com.tc.server.ServerEventType.REMOVE;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
@@ -12,7 +16,6 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.LogicalChangeID;
 import com.tc.object.dna.api.LogicalChangeResult;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -37,10 +40,6 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
-
-import static com.tc.server.ServerEventType.EVICT;
-import static com.tc.server.ServerEventType.PUT;
-import static com.tc.server.ServerEventType.REMOVE;
 
 public class BroadcastTransactionMessageTest extends TestCase {
 
@@ -85,7 +84,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
         new BasicServerEvent(PUT, "key-2", "cache3"), new BasicServerEvent(REMOVE, "key-3", "cache2"));
 
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY,
+                        lowGlobalTransactionIDWatermark, notified, new HashMap(),
         logicalChangeResults, events);
     this.msg.dehydrate();
 

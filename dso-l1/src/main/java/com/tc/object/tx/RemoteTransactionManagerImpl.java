@@ -485,7 +485,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   void commitWithoutThrottling(final ClientTransaction txn) {
-    if (!txn.hasChangesOrNotifies() && txn.getDmiDescriptors().isEmpty() && txn.getNewRoots().isEmpty()) {
+    if (!txn.hasChangesOrNotifies() && txn.getNewRoots().isEmpty()) {
       //
       throw new AssertionError("Attempt to commit an empty transaction.");
     }
@@ -636,7 +636,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       callbacks = getLockFlushCallbacks(completedLocks);
       this.lock.notifyAll();
     }
-    fireLockFlushCallbacks(callbacks);  
+    fireLockFlushCallbacks(callbacks);
   }
   
   @Override
@@ -1053,7 +1053,7 @@ class BatchManager extends Semaphore {
 
     @Override
     public String toString() {
-      return "incomplete transactions:" + incompleteBatches.size() + 
+      return "incomplete transactions:" + incompleteBatches.size() +
           " outstanding batches:" + (MAX_OUTSTANDING_BATCHES - availablePermits() - restriction) +
           " send list:" + sendList.size();
     }
