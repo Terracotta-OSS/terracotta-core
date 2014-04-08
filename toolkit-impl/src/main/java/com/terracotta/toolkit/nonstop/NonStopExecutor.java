@@ -10,10 +10,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class NonStopExecutor {
-  public final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(
-                                                                                1,
-                                                                                new NamedThreadFactory(
-                                                                                                       "NonStopExecutor"));
+  public final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1,
+      new NamedThreadFactory("NonStopExecutor", true));
 
   public Future schedule(Runnable task, long timeout) {
     return executor.schedule(task, timeout, TimeUnit.MILLISECONDS);
