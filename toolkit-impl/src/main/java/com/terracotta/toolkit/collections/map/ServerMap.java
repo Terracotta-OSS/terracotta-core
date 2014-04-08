@@ -865,7 +865,6 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private V internalPutIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     if (isEventual()) {
       K portableKey = (K) assertKeyLiteral(key);
-      MetaData metaData = createPutSearchMetaData(portableKey, value);
 
       int retryCount = 1;
       while (true) {
@@ -878,6 +877,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         try {
           SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
                                                                            customMaxTTISeconds, customMaxTTLSeconds);
+          MetaData metaData = createPutSearchMetaData(portableKey, value);
           MetaDataDescriptor mdd = null;
           if (metaData != null) {
             metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);

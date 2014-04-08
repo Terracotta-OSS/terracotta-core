@@ -206,6 +206,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(keyValueStorage, never()).put(key, value);
     verify(applyTransactionInfo).deleteObject(value.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value.getObjectID());
+    verify(applyTransactionInfo).recordValue(new ObjectID(2), false);
 
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.REPLACE_IF_VALUE_EQUAL, new Object[] { key, new ObjectID(1), value
         .getObjectID() });
@@ -213,6 +214,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(keyValueStorage).put(key, value);
     verify(applyTransactionInfo).deleteObject(new ObjectID(1));
     verify(applyTransactionInfo).invalidate(oid, new ObjectID(1));
+    verify(applyTransactionInfo).recordValue(new ObjectID(2), true);
   }
 
   public void testPutIfAbsent() throws Exception {
@@ -223,10 +225,12 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends TCTest
     verify(keyValueStorage, never()).put(key, value);
     verify(applyTransactionInfo).deleteObject(value.getObjectID());
     verify(applyTransactionInfo).invalidate(oid, value.getObjectID());
+    verify(applyTransactionInfo).recordValue(new ObjectID(1), true);
 
     when(keyValueStorage.containsKey(key)).thenReturn(false);
     state.applyLogicalAction(oid, applyTransactionInfo, SerializationUtil.PUT_IF_ABSENT, new Object[] { key, value.getObjectID() });
     verify(keyValueStorage).put(key, value);
+    verify(applyTransactionInfo).recordValue(new ObjectID(1), false);
   }
 
 

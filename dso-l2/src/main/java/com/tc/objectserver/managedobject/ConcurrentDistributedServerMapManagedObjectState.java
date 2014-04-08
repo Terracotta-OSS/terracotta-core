@@ -436,7 +436,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       return LogicalChangeResult.SUCCESS;
     } else {
       removedReferences(applyInfo, value);
-      addValue(applyInfo, value, false);
+      addValue(applyInfo, value, true);
       return LogicalChangeResult.FAILURE;
     }
   }
@@ -468,6 +468,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       return LogicalChangeResult.SUCCESS;
     } else {
       removedReferences(applyInfo, newValue);
+      addValue(applyInfo, newValue, false);
       return LogicalChangeResult.FAILURE;
     }
   }
