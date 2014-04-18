@@ -651,7 +651,10 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             logger.info("Unhandled exception occured on connection layer", e);
             TCConnectionImpl conn = (TCConnectionImpl) key.attachment();
             // TCConnectionManager will take care of closing and cleaning up resources
-            conn.fireErrorEvent(new RuntimeException(e), null);
+            // key may not have an attachment yet.
+            if ( conn != null ) {
+              conn.fireErrorEvent(new RuntimeException(e), null);
+            }
           }
         } // for
       } // while (true)
