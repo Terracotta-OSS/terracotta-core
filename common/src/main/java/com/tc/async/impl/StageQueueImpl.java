@@ -135,7 +135,7 @@ public class StageQueueImpl implements Sink {
       return;
     }
 
-    boolean interrupted = false;
+    boolean interrupted = Thread.interrupted();
     try {
       while (true) {
         try {
