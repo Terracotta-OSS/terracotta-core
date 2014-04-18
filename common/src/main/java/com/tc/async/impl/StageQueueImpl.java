@@ -147,7 +147,7 @@ public class StageQueueImpl implements Sink {
           }
           break;
         } catch (InterruptedException e) {
-          this.logger.error("StageQueue Add: " + e);
+          this.logger.debug("StageQueue Add: " + e);
           interrupted = true;
         }
       }

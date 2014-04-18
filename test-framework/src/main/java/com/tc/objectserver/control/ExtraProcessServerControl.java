@@ -198,7 +198,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
         }
       }
     }
-    pruneJVMArgsList(jvmArgs);
+//    pruneJVMArgsList(jvmArgs);
     setDefaultHeapIfUnspecified();
   }
 
