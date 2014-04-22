@@ -38,6 +38,7 @@ public class ServerStat {
   private final int             port;
   private final String          username;
   private final String          password;
+  private final boolean         secured;
   private JMXConnector          jmxc;
   private MBeanServerConnection mbsc;
 
@@ -45,9 +46,10 @@ public class ServerStat {
   private boolean               connected;
   private String                errorMessage     = "";
 
-  public ServerStat(String username, String password, String host, String hostAlias, int port) {
+  public ServerStat(String username, String password, boolean secured, String host, String hostAlias, int port) {
     this.username = username;
     this.password = password;
+    this.secured = secured;
     this.host = host;
     this.hostName = hostAlias;
     this.port = port;
@@ -67,7 +69,7 @@ public class ServerStat {
   private void connect() {
     closeQuietly(jmxc);
     try {
-      jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
+      jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
       mbsc = jmxc.getMBeanServerConnection();
       infoBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                TCServerInfoMBean.class, false);
@@ -144,7 +146,7 @@ public class ServerStat {
     errorMessage = "jmx connection was closed";
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9520,host2:9520" + NEWLINE
         + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
 
@@ -154,6 +156,7 @@ public class ServerStat {
         "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption(null, "secured", false, "secured", String.class, false);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
     commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.setUsageMessage(usage);
@@ -161,6 +164,13 @@ public class ServerStat {
 
     if (commandLineBuilder.hasOption('h')) {
       commandLineBuilder.usageAndDie();
+    }
+
+    boolean secured = false;
+    if (commandLineBuilder.hasOption("secured")) {
+      final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
+      securityManagerClass.getConstructor(boolean.class).newInstance(true);
+      secured = true;
     }
 
     String username = null;
@@ -179,9 +189,9 @@ public class ServerStat {
 
     try {
       if (configFile != null) {
-        handleConfigFile(username, password, configFile);
+        handleConfigFile(username, password, secured, configFile);
       } else {
-        handleList(username, password, hostList);
+        handleList(username, password, secured, hostList);
       }
     } catch (Exception e) {
       System.err.println(e.getMessage());
@@ -189,7 +199,7 @@ public class ServerStat {
     }
   }
 
-  private static void handleConfigFile(String username, String password, String configFilePath) {
+  private static void handleConfigFile(String username, String password, boolean secured, String configFilePath) {
     TcConfigDocument tcConfigDocument = null;
     try {
 
@@ -208,26 +218,26 @@ public class ServerStat {
       String host = server.getHost();
       String hostName = server.getName();
       int jmxPort = server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
-      ServerStat stat = new ServerStat(username, password, host, hostName, jmxPort);
+      ServerStat stat = new ServerStat(username, password, secured, host, hostName, jmxPort);
       System.out.println(stat.toString());
       stat.dispose();
     }
   }
 
-  private static void handleList(String username, String password, String hostList) {
+  private static void handleList(String username, String password, boolean secured, String hostList) {
     if (hostList == null) {
-      printStat(username, password, "localhost:9520");
+      printStat(username, password, secured, "localhost:9520");
     } else {
       String[] pairs = hostList.split(",");
       for (String info : pairs) {
-        printStat(username, password, info);
+        printStat(username, password, secured, info);
         System.out.println();
       }
     }
   }
 
   // info = host | host:port
-  private static void printStat(String username, String password, String info) {
+  private static void printStat(String username, String password, boolean secured, String info) {
     String host = info;
     int port = DEFAULT_JMX_PORT;
     if (info.indexOf(':') > 0) {
@@ -239,7 +249,7 @@ public class ServerStat {
         throw new RuntimeException("Failed to parse jmxport: " + info);
       }
     }
-    ServerStat stat = new ServerStat(username, password, host, null, port);
+    ServerStat stat = new ServerStat(username, password, secured, host, null, port);
     System.out.println(stat.toString());
     stat.dispose();
   }
