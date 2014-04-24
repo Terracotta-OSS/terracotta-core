@@ -23,6 +23,9 @@ import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.logging.TCLogger;
@@ -670,7 +673,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<K> keySet() {
-    return keySet(Collections.<K> emptySet());
+    return keySet(Collections.<K>emptySet());
   }
 
   @Override
@@ -689,7 +692,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return entrySet(Collections.<K> emptySet());
+    return entrySet(Collections.<K>emptySet());
   }
 
   @Override
@@ -1262,6 +1265,24 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (value != null) { return new VersionedValueImpl<V>(value, versionedObject.getVersion()); }
 
     return null;
+  }
+
+  @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final SetMultimap<ObjectID, K> mapIdToKeysMap) {
+    try {
+      return ImmutableMap.copyOf(Maps.transformEntries((Map)tcObjectServerMap.getAllVersioned((SetMultimap) mapIdToKeysMap),
+          new Maps.EntryTransformer<Object, VersionedObject, VersionedValue<V>>() {
+            @Override
+            public VersionedValue<V> transformEntry(final Object key, final VersionedObject value) {
+              V nonExpiredValue = checkAndGetNonExpiredValue((K)key,
+                  value.getObject(), GetType.UNLOCKED, true);
+              return new VersionedValueImpl<V>(nonExpiredValue, value.getVersion());
+            }
+          }
+      ));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override

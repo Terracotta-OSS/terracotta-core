@@ -5,6 +5,7 @@ package com.terracotta.toolkit.util;
 
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
@@ -22,7 +23,7 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Set;
 
-public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
+public class ExplicitLockingTCObjectServerMapImpl<L> implements TCObjectServerMap<L> {
 
   private final TCObjectServerMap delegate;
   private final PlatformService   service;
@@ -340,7 +341,7 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   }
 
   @Override
-  public Map getAllValuesUnlocked(Map mapIdToKeysMap) throws AbortedOperationException {
+  public Map<Object, Object> getAllValuesUnlocked(final SetMultimap<ObjectID, Object> mapIdToKeysMap) throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.getAllValuesUnlocked(mapIdToKeysMap);
   }
@@ -490,6 +491,12 @@ public class ExplicitLockingTCObjectServerMapImpl implements TCObjectServerMap {
   public VersionedObject getVersionedValue(TCServerMap map, Object key) throws AbortedOperationException {
     assertLockAndRejoinState();
     return delegate.getVersionedValue(map, key);
+  }
+
+  @Override
+  public Map<Object, VersionedObject> getAllVersioned(final SetMultimap<ObjectID, Object> mapIdToKeysMap) throws AbortedOperationException {
+    assertLockAndRejoinState();
+    return delegate.getAllVersioned(mapIdToKeysMap);
   }
 
   @Override

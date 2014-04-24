@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -178,8 +179,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   VersionedObject getVersionedValue(final TCServerMap map, final Object key) throws AbortedOperationException;
 
-  Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+  Map<Object, Object> getAllValuesUnlocked(final SetMultimap<ObjectID, Object> mapIdToKeysMap)
       throws AbortedOperationException;
+
+  Map<Object, VersionedObject> getAllVersioned(final SetMultimap<ObjectID, Object> mapIdToKeysMap) throws AbortedOperationException;
 
   /**
    * Returns a snapshot of keys for the giver TCServerMap

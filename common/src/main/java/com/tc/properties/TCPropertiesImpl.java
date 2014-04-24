@@ -201,6 +201,7 @@ public class TCPropertiesImpl implements TCProperties {
 
   private String getTCJarRootDirectory() {
     URL url = TCPropertiesImpl.class.getProtectionDomain().getCodeSource().getLocation();
+    if (url == null) { return null; }
     String path = url.getPath();
     if (!path.toLowerCase().endsWith(".jar")) { return null; }
     File jarFile = new File(path);

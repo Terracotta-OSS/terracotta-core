@@ -10,6 +10,8 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.store.ConfigFieldsInternal.LOCK_STRATEGY;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
+import com.google.common.collect.SetMultimap;
+import com.tc.object.ObjectID;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
@@ -19,6 +21,7 @@ import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.object.TCToolkitObject;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,6 +61,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
    * This will be a quiet GET for the {@code VersionedValue}.
    */
   VersionedValue<V> getVersionedValue(Object key);
+
+  Map<K, VersionedValue<V>> getAllVersioned(final SetMultimap<ObjectID, K> mapIdToKeysMap);
 
   void setConfigField(String name, Object value);
 

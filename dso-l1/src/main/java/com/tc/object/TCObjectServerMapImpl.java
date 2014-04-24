@@ -6,6 +6,7 @@ package com.tc.object;
 import static com.tc.server.VersionedServerEvent.DEFAULT_VERSION;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
@@ -35,6 +36,7 @@ import com.tc.server.ServerEventType;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -555,22 +557,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+  public Map<Object, Object> getAllValuesUnlocked(final SetMultimap<ObjectID, Object> mapIdToKeysMap)
       throws AbortedOperationException {
     Map<Object, Object> rv = new HashMap<Object, Object>();
-    for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
-      Entry<ObjectID, Set<Object>> entry = iterator.next();
-      Set<Object> keys = entry.getValue();
-      for (Iterator i = keys.iterator(); i.hasNext();) {
-        Object key = i.next();
-        AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-        if (item != null) {
-          i.remove();
-          rv.put(key, item.getValueObject());
-        }
-      }
-      if (keys.isEmpty()) {
-        iterator.remove();
+    for (Iterator<Entry<ObjectID, Object>> i = mapIdToKeysMap.entries().iterator(); i.hasNext();) {
+      Object key = i.next().getValue();
+      AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
+      if (item != null) {
+        rv.put(key, item.getValueObject());
+        i.remove();
       }
     }
 
@@ -578,15 +573,20 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (mapIdToKeysMap.isEmpty()) return rv;
     if (!createdOnServer) {
       // add null for the values as no data is present on server.
-      for (Set<Object> keys : mapIdToKeysMap.values()) {
-        for (Object key : keys) {
-          rv.put(key, null);
-        }
+      for (Entry<ObjectID, Object> entry : mapIdToKeysMap.entries()) {
+        rv.put(entry.getValue(), null);
       }
     } else {
-      getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
+      getAllValuesForKeyFromServer(mapIdToKeysMap, rv, false);
     }
     return rv;
+  }
+
+  @Override
+  public Map<Object, VersionedObject> getAllVersioned(final SetMultimap<ObjectID, Object> mapIdToKeysMap) throws AbortedOperationException {
+    Map<Object, Object> rv = new HashMap<Object, Object>();
+    getAllValuesForKeyFromServer(mapIdToKeysMap, rv, true);
+    return (Map) rv;
   }
 
   private AbstractLocalCacheStoreValue getValueUnlockedFromCache(Object key) {
@@ -719,29 +719,27 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  private Set<Object> getAllPortableKeys(final Set<Object> keys) {
+  private <K> Set<Object> getAllPortableKeys(final Set<K> keys) {
     Set<Object> portableKeys = new HashSet<Object>();
-    for (Object key : keys) {
+    for (K key : keys) {
       portableKeys.add(getPortableKey(key));
     }
     return portableKeys;
   }
 
-  private void getAllValuesForKeyFromServer(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv)
+  private void getAllValuesForKeyFromServer(final SetMultimap<ObjectID, Object> mapIdToKeysMap, Map<Object, Object> rv, boolean versioned)
       throws AbortedOperationException {
     if (!createdOnServer) {
       // add null for the values as no data is present on server.
-      for (Set<Object> keys : mapIdToKeysMap.values()) {
-        for (Object key : keys) {
-          rv.put(key, null);
-        }
+      for (Entry<ObjectID, Object> objectIDObjectEntry : mapIdToKeysMap.entries()) {
+        rv.put(objectIDObjectEntry.getValue(), null);
       }
       return;
     }
     final Map<ObjectID, Set<Object>> mapIdsToLookup = new HashMap<ObjectID, Set<Object>>();
-    for (Entry<ObjectID, Set<Object>> entry : mapIdToKeysMap.entrySet()) {
+    for (Entry<ObjectID, Collection<Object>> entry : mapIdToKeysMap.asMap().entrySet()) {
       // converting Map from <mapID, key> to <mapID, portableKey>
-      mapIdsToLookup.put(entry.getKey(), getAllPortableKeys(entry.getValue()));
+      mapIdsToLookup.put(entry.getKey(), getAllPortableKeys((Set<Object>) entry.getValue()));
     }
 
     long start = System.nanoTime();
@@ -767,7 +765,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
           // update the local cache of corresponding TCServerMap
           map.updateLocalCacheIfNecessary(key, data);
-          rv.put(key, data);
+          if (versioned) {
+            rv.put(key, new VersionedObject(data, value.getVersion()));
+          } else {
+            rv.put(key, data);
+          }
         }
 
         // Remove the map from the remaining lookups when all its keys are accounted for.

@@ -348,6 +348,11 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ToolkitCacheImplIn
   }
 
   @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final Collection<K> keys) {
+    return immutationBehaviourResolver.getAllVersioned(keys);
+  }
+
+  @Override
   public QueryBuilder createQueryBuilder() {
     return immutationBehaviourResolver.createQueryBuilder();
   }

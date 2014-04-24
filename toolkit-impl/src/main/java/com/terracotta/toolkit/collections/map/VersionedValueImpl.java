@@ -25,4 +25,21 @@ public class VersionedValueImpl<V> implements VersionedValue<V> {
     return this.version;
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VersionedValueImpl that = (VersionedValueImpl)o;
+
+    return version == that.version && value.equals(that.value);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = value.hashCode();
+    result = 31 * result + (int)(version ^ (version >>> 32));
+    return result;
+  }
 }

@@ -370,6 +370,11 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final Collection<K> keys) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
   public QueryBuilder createQueryBuilder() {
     return getDelegate().createQueryBuilder();
   }

@@ -325,4 +325,8 @@ public class MockToolkitStore<K, V> extends ConcurrentHashMap<K, V> implements T
     throw new ImplementMe();
   }
 
+  @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final Collection<K> keys) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
 }

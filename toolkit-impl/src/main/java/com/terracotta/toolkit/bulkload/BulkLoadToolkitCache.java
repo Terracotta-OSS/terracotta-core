@@ -262,6 +262,11 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
   }
 
   @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final Collection<K> keys) {
+    return toolkitCache.getAllVersioned(keys);
+  }
+
+  @Override
   public void registerVersionUpdateListener(final VersionUpdateListener listener) {
     toolkitCache.registerVersionUpdateListener(listener);
   }

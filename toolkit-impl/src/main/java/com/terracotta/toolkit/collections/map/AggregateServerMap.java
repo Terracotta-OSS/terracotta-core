@@ -38,7 +38,10 @@ import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
@@ -701,8 +704,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   Map<K, V> getAllInternal(Set<K> keys, boolean quiet) {
-    final Map<ObjectID, Set<K>> mapIdToKeysMap = new HashMap<ObjectID, Set<K>>();
-    divideKeysIntoServerMaps(keys, mapIdToKeysMap);
+    final SetMultimap<ObjectID, K> mapIdToKeysMap = divideKeysIntoServerMaps(keys);
     TCObjectServerMap tcObjectServerMap = getAnyTCObjectServerMap();
     Map<K, V> rv = null;
     try {
@@ -722,21 +724,17 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return rv;
   }
 
-  private void divideKeysIntoServerMaps(Set<K> keys, final Map<ObjectID, Set<K>> mapIdToKeysMap) {
+  private SetMultimap<ObjectID, K> divideKeysIntoServerMaps(Set<K> keys) {
+    SetMultimap<ObjectID, K> mapIdToKeys = HashMultimap.create();
     for (K key : keys) {
       InternalToolkitMap<K, V> serverMap = getServerMapForKey(key);
       assertKeyLiteral(key);
       TCObject tcObject = serverMap.__tc_managed();
       if (tcObject == null) { throw new UnsupportedOperationException(
                                                                       "unlockedGetAll is not supported in a non-shared ServerMap"); }
-      ObjectID mapId = tcObject.getObjectID();
-      Set<K> keysForThisServerMap = mapIdToKeysMap.get(mapId);
-      if (keysForThisServerMap == null) {
-        keysForThisServerMap = new HashSet<K>();
-        mapIdToKeysMap.put(mapId, keysForThisServerMap);
-      }
-      keysForThisServerMap.add(key);
+      mapIdToKeys.put(tcObject.getObjectID(), key);
     }
+    return mapIdToKeys;
   }
 
   private void takeSnapshotForSearchQuery(SearchRequestID reqId) {
@@ -1278,6 +1276,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public VersionedValue<V> getVersionedValue(Object key) {
     return getServerMapForKey(key).getVersionedValue(key);
+  }
+
+  @Override
+  public Map<K, VersionedValue<V>> getAllVersioned(final Collection<K> keys) {
+    return getAnyServerMap().getAllVersioned(divideKeysIntoServerMaps(Sets.newHashSet(keys)));
   }
 
   @Override

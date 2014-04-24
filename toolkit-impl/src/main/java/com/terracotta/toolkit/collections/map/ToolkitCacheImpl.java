@@ -739,6 +739,10 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     return activeDelegate.getVersionedValue(key);
   }
 
+  public Map<K, VersionedValue<V>> getAllVersioned(Collection<K> key) {
+    return activeDelegate.getAllVersioned(key);
+  }
+
   @Override
   public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
     readLock();
