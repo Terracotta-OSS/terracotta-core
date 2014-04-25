@@ -243,8 +243,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
     }
 
+    final List<TxnBatchID> toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList<TxnBatchID>());
     batchManager.start();
-    resendOutstanding();
+    resendOutstanding(toSend);
 
     synchronized (this.lock) {
       if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
@@ -549,9 +550,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
   }
 
-  void resendOutstanding() {
+  void resendOutstanding(List<TxnBatchID> toSend) {
     batchManager.waitForEmpty();
-    final List<TxnBatchID> toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList<TxnBatchID>());
     if (toSend.isEmpty()) {
       sendBatches(false, " resendOutstanding()");
     } else {
@@ -818,7 +818,7 @@ class BatchManager extends Semaphore {
           //
         }
       }
-
+      
       reducePermits(drained);
     }
 
@@ -897,6 +897,9 @@ class BatchManager extends Semaphore {
       if ( hasQueuedThreads() ) {
         throw new AssertionError();
       }
+      if ( !sendList.isEmpty() ) {
+        throw new AssertionError();
+      }
       if ( availablePermits() < MAX_OUTSTANDING_BATCHES ) {
         release(MAX_OUTSTANDING_BATCHES - availablePermits());
       } else if ( availablePermits() > MAX_OUTSTANDING_BATCHES ) {
@@ -907,8 +910,6 @@ class BatchManager extends Semaphore {
         throw new AssertionError();
       }
       restriction = 0;
-      sendList.clear();
-      empty = true;
     }
 
     public void stop() throws InterruptedException {
@@ -963,10 +964,6 @@ class BatchManager extends Semaphore {
 
     private void resendList(List<TxnBatchID> toSend) {
       lastsid = null;
-      if ( !sendList.isEmpty() ) {
-        throw new AssertionError();
-      }
-      reset();
       for (TxnBatchID id : toSend) {
         final ClientTransactionBatch batch = incompleteBatches.get(id);
         if (batch == null) { throw new AssertionError("Unknown batch: " + id); }
