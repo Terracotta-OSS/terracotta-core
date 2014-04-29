@@ -22,7 +22,12 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface TopologyResourceService {
 
-
+  /**
+   * Get a {@code Collection} of {@link TopologyEntity} objects representing the entire cluster
+   * topology provided by the associated monitorable entity's agent given the request path.
+   *
+   * @return a collection of {@link TopologyEntity} objects.
+   */
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   Collection<TopologyEntity> getTopologies(@Context UriInfo info);
@@ -31,7 +36,7 @@ public interface TopologyResourceService {
    * Get a {@code Collection} of {@link TopologyEntity} objects representing the
    * TSA topology provided by the associated monitorable entity's agent given the request path.
    *
-   * @return a a collection of {@link TopologyEntity} objects.
+   * @return a collection of {@link TopologyEntity} objects.
    */
   @GET
   @Path("/servers")
@@ -42,11 +47,21 @@ public interface TopologyResourceService {
    * Get a {@code Collection} of {@link ClientEntity} objects representing the connected clients
    * provided by the associated monitorable entity's agent given the request path.
    *
-   * @return a a collection of {@link ClientEntity} objects.
+   * @return a collection of {@link ClientEntity} objects.
    */
   @GET
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<TopologyEntity> getConnectedClients(@Context UriInfo info);
+
+  /**
+   * Get a {@code Map} of String/Integers (event type / count) representing the unread operator events.
+   *
+   * @return a map of String/Integers.
+   */
+  @GET
+  @Path("/unreadOperatorEventCount")
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<TopologyEntity> getUnreadOperatorEventCount(@Context UriInfo info);
 
 }

@@ -3,7 +3,6 @@
  */
 package com.terracotta.management.resource;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +17,7 @@ public class TopologyEntity extends AbstractTsaEntity {
   private final Set<ServerGroupEntity> serverGroupEntities = new HashSet<ServerGroupEntity>();
   private final Set<ClientEntity> clientEntities = new HashSet<ClientEntity>();
 
-  private final Map<String, Integer>   unreadOperatorEventCount = new HashMap<String, Integer>();
+  private Map<String, Integer>   unreadOperatorEventCount;
 
   public Set<ServerGroupEntity> getServerGroupEntities() {
     return serverGroupEntities;
@@ -26,6 +25,10 @@ public class TopologyEntity extends AbstractTsaEntity {
 
   public Set<ClientEntity> getClientEntities() {
     return clientEntities;
+  }
+
+  public void setUnreadOperatorEventCount(Map<String, Integer> unreadCount) {
+    this.unreadOperatorEventCount = unreadCount;
   }
 
   public Map<String, Integer> getUnreadOperatorEventCount() {

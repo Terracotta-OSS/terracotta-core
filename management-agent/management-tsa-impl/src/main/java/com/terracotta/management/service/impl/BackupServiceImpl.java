@@ -7,28 +7,28 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.BackupEntity;
 import com.terracotta.management.service.BackupService;
-import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Ludovic Orban
  */
 public class BackupServiceImpl implements BackupService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
 
-  public BackupServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public BackupServiceImpl(ServerManagementService serverManagementService) {
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
-  public Collection<BackupEntity> getBackupStatus() throws ServiceExecutionException {
-    return tsaManagementClientService.getBackupsStatus();
+  public Collection<BackupEntity> getBackupStatus(Set<String> serverNames) throws ServiceExecutionException {
+    return serverManagementService.getBackupsStatus(serverNames);
   }
 
   @Override
-  public Collection<BackupEntity> backup() throws ServiceExecutionException {
-    return tsaManagementClientService.backup();
+  public Collection<BackupEntity> backup(Set<String> serverNames, String backupName) throws ServiceExecutionException {
+    return serverManagementService.backup(serverNames, backupName);
   }
 }

@@ -24,7 +24,7 @@ public interface TopologyService {
    * @return a collection of server groups
    * @throws ServiceExecutionException
    */
-  Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException;
+  Collection<ServerGroupEntity> getServerGroups(Set<String> serverNames) throws ServiceExecutionException;
 
   /**
    * Get the connected clients of the current TSA

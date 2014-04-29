@@ -9,7 +9,6 @@ import com.tc.license.ProductID;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.service.TopologyService;
-import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Collection;
 import java.util.Set;
@@ -19,20 +18,22 @@ import java.util.Set;
  */
 public class TopologyServiceImpl implements TopologyService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
+  private final ClientManagementService clientManagementService;
 
-  public TopologyServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public TopologyServiceImpl(ServerManagementService serverManagementService, ClientManagementService clientManagementService) {
+    this.serverManagementService = serverManagementService;
+    this.clientManagementService = clientManagementService;
   }
 
   @Override
-  public Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException {
-    return tsaManagementClientService.getTopology();
+  public Collection<ServerGroupEntity> getServerGroups(Set<String> serverNames) throws ServiceExecutionException {
+    return serverManagementService.getServerGroups(serverNames);
   }
 
   @Override
   public Collection<ClientEntity> getClients(Set<ProductID> clientProductIds) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientEntities(clientProductIds);
+    return clientManagementService.getClients(null, clientProductIds);
   }
 
 }

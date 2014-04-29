@@ -62,9 +62,10 @@ public interface DiagnosticsService {
   /**
    * Reload TSA configuration.
    *
+   * @param serverNames A set of server names, null meaning all of them.
    * @return a collection {@link TopologyReloadStatusEntity} objects.
    * @throws ServiceExecutionException
    */
-  Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException;
+  Collection<TopologyReloadStatusEntity> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException;
 
 }

@@ -9,8 +9,8 @@ import com.tc.license.ProductID;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyReloadStatusEntity;
 import com.terracotta.management.service.DiagnosticsService;
-import com.terracotta.management.service.TsaManagementClientService;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -19,40 +19,47 @@ import java.util.Set;
  */
 public class DiagnosticsServiceImpl implements DiagnosticsService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
+  private final ClientManagementService clientManagementService;
 
-  public DiagnosticsServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public DiagnosticsServiceImpl(ServerManagementService serverManagementService, ClientManagementService clientManagementService) {
+    this.serverManagementService = serverManagementService;
+    this.clientManagementService = clientManagementService;
   }
 
   @Override
   public Collection<ThreadDumpEntity> getClusterThreadDump(Set<ProductID> clientProductIds) throws ServiceExecutionException {
-    return tsaManagementClientService.clusterThreadDump(clientProductIds);
+    Collection<ThreadDumpEntity> result = new ArrayList<ThreadDumpEntity>();
+    result.addAll(serverManagementService.serversThreadDump(null));
+    result.addAll(clientManagementService.clientsThreadDump(null, clientProductIds));
+    return result;
   }
 
   @Override
   public Collection<ThreadDumpEntity> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException {
-    return tsaManagementClientService.serversThreadDump(serverNames);
+    return serverManagementService.serversThreadDump(serverNames);
   }
 
   @Override
   public Collection<ThreadDumpEntity> getClientsThreadDump(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
-    return tsaManagementClientService.clientsThreadDump(clientIds, clientProductIds);
+    return clientManagementService.clientsThreadDump(clientIds, clientProductIds);
   }
 
   @Override
   public boolean runDgc(Set<String> serverNames) throws ServiceExecutionException {
-    return tsaManagementClientService.runDgc(serverNames);
+    serverManagementService.runDgc(serverNames);
+    return true;
   }
 
   @Override
   public boolean dumpClusterState(Set<String> serverNames) throws ServiceExecutionException {
-    return tsaManagementClientService.dumpClusterState(serverNames);
+    serverManagementService.dumpClusterState(serverNames);
+    return true;
   }
 
   @Override
-  public Collection<TopologyReloadStatusEntity> reloadConfiguration() throws ServiceExecutionException {
-    return tsaManagementClientService.reloadConfiguration();
+  public Collection<TopologyReloadStatusEntity> reloadConfiguration(Set<String> serverNames) throws ServiceExecutionException {
+    return serverManagementService.reloadConfiguration(serverNames);
   }
 
 }

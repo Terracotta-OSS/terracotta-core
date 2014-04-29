@@ -6,7 +6,6 @@ package com.terracotta.management.service.impl;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.service.ShutdownService;
-import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Set;
 
@@ -15,15 +14,15 @@ import java.util.Set;
  */
 public class ShutdownServiceImpl implements ShutdownService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
 
-  public ShutdownServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public ShutdownServiceImpl(ServerManagementService serverManagementService) {
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
   public void shutdown(Set<String> serverNames) throws ServiceExecutionException {
-    tsaManagementClientService.shutdownServers(serverNames);
+    serverManagementService.shutdownServers(serverNames);
   }
 
 }

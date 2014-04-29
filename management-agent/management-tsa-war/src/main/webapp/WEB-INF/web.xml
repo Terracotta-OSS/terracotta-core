@@ -20,8 +20,8 @@
   </filter>
 
   <filter>
-    <filter-name>timeoutExtractorFilter</filter-name>
-    <filter-class>com.terracotta.management.web.shiro.TimeoutExtractorFilter</filter-class>
+    <filter-name>headersExtractorFilter</filter-name>
+    <filter-class>com.terracotta.management.web.shiro.HeadersExtractorFilter</filter-class>
   </filter>
 
   <filter-mapping>
@@ -43,7 +43,7 @@
   </filter-mapping>
 
   <filter-mapping>
-    <filter-name>timeoutExtractorFilter</filter-name>
+    <filter-name>headersExtractorFilter</filter-name>
     <url-pattern>/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
     <dispatcher>FORWARD</dispatcher>

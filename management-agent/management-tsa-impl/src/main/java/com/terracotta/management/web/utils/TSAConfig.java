@@ -108,7 +108,7 @@ public class TSAConfig {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       Object securityHostnameAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityHostname");
-      Object tsaListenPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "TSAListenPort");
+      Object tsaListenPortAttribute = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "TSAGroupPort");
 
       return "https://" + securityHostnameAttribute + ":" + tsaListenPortAttribute + "/tc-management-api/assertIdentity";
     } catch (Exception e) {

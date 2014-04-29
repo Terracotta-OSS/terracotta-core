@@ -60,6 +60,7 @@ public interface OperatorEventsService {
   /**
    * Returns the number of unread operator events.
    * @throws ServiceExecutionException
+   * @param serverNames A set of server names, null meaning all of them.
    */
-  Map<String, Integer> getUnreadCount() throws ServiceExecutionException;
+  Map<String, Integer> getUnreadCount(Set<String> serverNames) throws ServiceExecutionException;
 }

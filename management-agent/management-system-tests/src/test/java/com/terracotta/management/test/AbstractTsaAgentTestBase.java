@@ -167,7 +167,9 @@ public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
       try {
         if (response.getStatusLine().getStatusCode() != 200) {
           HttpEntity entity2 = response.getEntity();
-          EntityUtils.consume(entity2);
+          String s = EntityUtils.toString(entity2);
+          System.out.println("Error");
+          System.out.println(s);
           throw new IOException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
         }
 

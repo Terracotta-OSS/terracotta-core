@@ -7,24 +7,23 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.OperatorEventEntity;
 import com.terracotta.management.service.OperatorEventsService;
-import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.util.TimeStringParser;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author Ludovic Orban
  */
 public class OperatorEventsServiceImpl implements OperatorEventsService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
 
-  public OperatorEventsServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public OperatorEventsServiceImpl(ServerManagementService serverManagementService) {
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
@@ -35,10 +34,10 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
     }
 
     if (sinceWhen == null) {
-      return tsaManagementClientService.getOperatorEvents(serverNames, null, acceptableTypes, read);
+      return serverManagementService.getOperatorEvents(serverNames, null, acceptableTypes, read);
     } else {
       try {
-        return tsaManagementClientService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), acceptableTypes, read);
+        return serverManagementService.getOperatorEvents(serverNames, TimeStringParser.parseTime(sinceWhen), acceptableTypes, read);
       } catch (NumberFormatException nfe) {
         throw new ServiceExecutionException("Illegal time string: [" + sinceWhen + "]", nfe);
       }
@@ -47,11 +46,11 @@ public class OperatorEventsServiceImpl implements OperatorEventsService {
 
   @Override
   public boolean markOperatorEvent(OperatorEventEntity operatorEventEntity, boolean read) throws ServiceExecutionException {
-    return tsaManagementClientService.markOperatorEvent(operatorEventEntity, read);
+    return serverManagementService.markOperatorEvent(operatorEventEntity, read);
   }
 
   @Override
-  public Map<String, Integer> getUnreadCount() throws ServiceExecutionException {
-    return tsaManagementClientService.getUnreadOperatorEventCount();
+  public Map<String, Integer> getUnreadCount(Set<String> serverNames) throws ServiceExecutionException {
+    return serverManagementService.getUnreadOperatorEventCount(serverNames);
   }
 }

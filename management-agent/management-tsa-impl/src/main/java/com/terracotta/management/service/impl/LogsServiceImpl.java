@@ -7,7 +7,6 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.LogEntity;
 import com.terracotta.management.service.LogsService;
-import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.util.TimeStringParser;
 
 import java.util.Collection;
@@ -18,20 +17,20 @@ import java.util.Set;
  */
 public class LogsServiceImpl implements LogsService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
 
-  public LogsServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public LogsServiceImpl(ServerManagementService serverManagementService) {
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
   public Collection<LogEntity> getLogs(Set<String> serverNames) throws ServiceExecutionException {
-    return tsaManagementClientService.getLogs(serverNames, null);
+    return serverManagementService.getLogs(serverNames, null);
   }
 
   @Override
   public Collection<LogEntity> getLogs(Set<String> serverNames, long sinceWhen) throws ServiceExecutionException {
-    return tsaManagementClientService.getLogs(serverNames, sinceWhen);
+    return serverManagementService.getLogs(serverNames, sinceWhen);
   }
 
   @Override

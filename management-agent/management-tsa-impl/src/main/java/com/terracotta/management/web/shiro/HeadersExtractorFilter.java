@@ -6,7 +6,10 @@ package com.terracotta.management.web.shiro;
 
 import org.terracotta.management.ServiceLocator;
 
+import com.terracotta.management.security.IACredentials;
+import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.web.utils.TSAConfig;
 
 import java.io.IOException;
 
@@ -19,13 +22,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * A servlet filter that extracts the timeout from the request and sets it on the TimeoutService.
+ * A servlet filter that extracts various headers from the request and populates Services with their values.
 
  * @author Ludovic Orban
  */
-public class TimeoutExtractorFilter implements Filter {
+public class HeadersExtractorFilter implements Filter {
 
   private final TimeoutService timeoutService = ServiceLocator.locate(TimeoutService.class);
+  private final SecurityContextService securityContextService = ServiceLocator.locate(SecurityContextService.class);
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -49,9 +53,20 @@ public class TimeoutExtractorFilter implements Filter {
       }
     }
 
+    if (TSAConfig.isSslEnabled()) {
+      String reqTicket = httpServletRequest.getHeader(IACredentials.REQ_TICKET);
+      String signature = httpServletRequest.getHeader(IACredentials.SIGNATURE);
+      String alias = httpServletRequest.getHeader(IACredentials.ALIAS);
+      String token = httpServletRequest.getHeader(IACredentials.TC_ID_TOKEN);
+      securityContextService.setSecurityContext(new SecurityContextService.SecurityContext(reqTicket, signature, alias, token));
+    }
+
     try {
       chain.doFilter(request, response);
     } finally {
+      if (TSAConfig.isSslEnabled()) {
+        securityContextService.clearSecurityContext();
+      }
       timeoutService.clearCallTimeout();
     }
   }

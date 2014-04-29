@@ -8,6 +8,8 @@ import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -50,7 +52,7 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
       } catch (IOException e) {
         // expected
       }
-      testResources(0, 1, new boolean[] {true, false});
+      testResources(0, 1, 1);
 
       // restart crashed server -> make sure everything is back in working order
       getTestControlMbean().restartLastCrashedServer(0);
@@ -65,38 +67,44 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
     }
 
     private void testResources(int group, int member) throws IOException {
-      testResources(group, member, new boolean[] {false, false});
+      testResources(group, member, 0);
     }
 
-    private void testResources(int group, int member, boolean[] downServers) throws IOException {
+    private void testResources(int group, int member, int expectedDownCount) throws IOException {
       int tsaGroupPort = getGroupData(group).getTsaGroupPort(member);
 
       JSONArray contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers;names=" + getGroupData(group).getServerNames()[member]);
       assertThat(contentArray.size(), is(1));
       JSONObject content = (JSONObject)contentArray.get(0);
-      checkServerConfigurationWithName(group, member, content, false);
+      checkServerConfigurationWithName(group, content);
 
       contentArray = getTsaJSONArrayContent(ConfigHelper.HOST, tsaGroupPort, "/tc-management-api/agents/configurations/servers");
       assertThat(contentArray.size(), is(MEMBER_COUNT * GROUP_COUNT));
       content = (JSONObject)contentArray.get(0);
-      checkServerConfigurationWithName(0, 0, content, downServers[0]);
+      int downCount = 0;
+      if (checkServerConfigurationWithName(0, content)) { downCount++; }
       content = (JSONObject)contentArray.get(1);
-      checkServerConfigurationWithName(0, 1, content, downServers[1]);
+      if (checkServerConfigurationWithName(0, content)) { downCount++; }
+
+      assertThat(downCount, is(expectedDownCount));
     }
 
-    private void checkServerConfigurationWithName(int groupIndex, int serverIndex, JSONObject content, boolean down) {
+    /**
+     * @return true if that server was reported as down by the agent
+     */
+    private boolean checkServerConfigurationWithName(int groupIndex, JSONObject content) {
       String sourceId = (String)content.get("sourceId");
-      assertThat(sourceId.contains(getGroupData(groupIndex).getServerNames()[serverIndex]), is(true));
+      List<String> names = Arrays.asList(getGroupData(groupIndex).getServerNames());
+      assertThat(names.contains(sourceId), is(true));
 
       JSONObject attributes = (JSONObject)content.get("attributes");
       assertThat(attributes, is(notNullValue()));
 
       assertThat((String)content.get("version"), is(guessVersion()));
 
-      if (down) {
-        System.out.println("down? attributes: " + attributes);
-        String environment = (String)attributes.get("Error");
-        assertThat(environment, is(notNullValue()));
+      String error = (String)attributes.get("Error");
+      if (error != null) {
+        return true;
       } else {
         String environment = (String)attributes.get("environment");
         assertThat(environment, containsString("user.home"));
@@ -110,6 +118,7 @@ public class ConfigurationTest extends AbstractTsaAgentTestBase {
 
         String tcProperties = (String)attributes.get("tcProperties");
         assertThat(tcProperties, containsString("tc.config.total.timeout"));
+        return false;
       }
     }
 

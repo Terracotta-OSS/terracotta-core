@@ -7,7 +7,6 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.MBeanEntity;
 import com.terracotta.management.service.JmxService;
-import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Collection;
 import java.util.Set;
@@ -17,14 +16,14 @@ import java.util.Set;
  */
 public class JmxServiceImpl implements JmxService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
 
-  public JmxServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public JmxServiceImpl(ServerManagementService serverManagementService) {
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
   public Collection<MBeanEntity> queryMBeans(Set<String> serverNames, String query) throws ServiceExecutionException {
-    return tsaManagementClientService.queryMBeans(serverNames, query);
+    return serverManagementService.queryMBeans(serverNames, query);
   }
 }

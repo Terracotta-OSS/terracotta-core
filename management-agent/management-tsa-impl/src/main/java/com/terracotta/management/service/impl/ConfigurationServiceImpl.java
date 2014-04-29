@@ -8,7 +8,6 @@ import org.terracotta.management.ServiceExecutionException;
 import com.tc.license.ProductID;
 import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.service.ConfigurationService;
-import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.Collection;
 import java.util.Set;
@@ -18,19 +17,21 @@ import java.util.Set;
  */
 public class ConfigurationServiceImpl implements ConfigurationService {
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ClientManagementService clientManagementService;
+  private final ServerManagementService serverManagementService;
 
-  public ConfigurationServiceImpl(TsaManagementClientService tsaManagementClientService) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public ConfigurationServiceImpl(ServerManagementService serverManagementService, ClientManagementService clientManagementService) {
+    this.clientManagementService = clientManagementService;
+    this.serverManagementService = serverManagementService;
   }
 
   @Override
   public Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException {
-    return tsaManagementClientService.getServerConfigs(serverNames);
+    return serverManagementService.getServerConfigs(serverNames);
   }
 
   @Override
   public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds, Set<ProductID> clientProductIds) throws ServiceExecutionException {
-    return tsaManagementClientService.getClientConfigs(clientIds, clientProductIds);
+    return clientManagementService.getClientConfigs(clientIds, clientProductIds);
   }
 }

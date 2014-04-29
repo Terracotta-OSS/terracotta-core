@@ -9,7 +9,6 @@ import org.terracotta.management.resource.AgentMetadataEntity;
 import org.terracotta.management.resource.services.AgentService;
 
 import com.terracotta.management.service.RemoteAgentBridgeService;
-import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.web.utils.TSAConfig;
 
 import java.util.ArrayList;
@@ -24,12 +23,12 @@ public class TsaAgentServiceImpl implements AgentService {
 
   private static final String AGENCY = "TSA";
 
-  private final TsaManagementClientService tsaManagementClientService;
+  private final ServerManagementService serverManagementService;
   private final RemoteAgentBridgeService remoteAgentBridgeService;
   private final AgentService l1Agent;
 
-  public TsaAgentServiceImpl(TsaManagementClientService tsaManagementClientService, RemoteAgentBridgeService remoteAgentBridgeService, AgentService l1Agent) {
-    this.tsaManagementClientService = tsaManagementClientService;
+  public TsaAgentServiceImpl(ServerManagementService serverManagementService, RemoteAgentBridgeService remoteAgentBridgeService, AgentService l1Agent) {
+    this.serverManagementService = serverManagementService;
     this.remoteAgentBridgeService = remoteAgentBridgeService;
     this.l1Agent = l1Agent;
   }
@@ -121,7 +120,7 @@ public class TsaAgentServiceImpl implements AgentService {
 
     ame.setSecured(TSAConfig.isSslEnabled());
     ame.setSslEnabled(TSAConfig.isSslEnabled());
-    ame.setLicensed(tsaManagementClientService.isEnterpriseEdition());
+    ame.setLicensed(serverManagementService.isEnterpriseEdition());
     ame.setNeedClientAuth(false);
     ame.setEnabled(true);
 
@@ -140,7 +139,7 @@ public class TsaAgentServiceImpl implements AgentService {
   private String createL2Urls() throws ServiceExecutionException {
     StringBuilder sb = new StringBuilder();
 
-    Collection<String> l2Urls = tsaManagementClientService.getL2Urls();
+    Collection<String> l2Urls = serverManagementService.getL2Urls();
     for (String l2Url : l2Urls) {
       sb.append(l2Url).append(",");
     }

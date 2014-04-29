@@ -29,11 +29,13 @@ import com.terracotta.management.security.RequestIdentityAsserter;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.SSLContextFactory;
 import com.terracotta.management.security.SecretUtils;
+import com.terracotta.management.security.SecurityContextService;
 import com.terracotta.management.security.SecurityServiceDirectory;
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.security.impl.ConstantSecurityServiceDirectory;
 import com.terracotta.management.security.impl.DfltContextService;
 import com.terracotta.management.security.impl.DfltRequestTicketMonitor;
+import com.terracotta.management.security.impl.DfltSecurityContextService;
 import com.terracotta.management.security.impl.DfltUserService;
 import com.terracotta.management.security.impl.NullContextService;
 import com.terracotta.management.security.impl.NullIdentityAsserter;
@@ -52,20 +54,23 @@ import com.terracotta.management.service.RemoteAgentBridgeService;
 import com.terracotta.management.service.ShutdownService;
 import com.terracotta.management.service.TimeoutService;
 import com.terracotta.management.service.TopologyService;
-import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.BackupServiceImpl;
+import com.terracotta.management.service.impl.ClientManagementService;
 import com.terracotta.management.service.impl.ConfigurationServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.JmxServiceImpl;
 import com.terracotta.management.service.impl.LogsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.service.impl.OperatorEventsServiceImpl;
+import com.terracotta.management.service.impl.RemoteAgentBridgeServiceImpl;
+import com.terracotta.management.service.impl.ServerManagementService;
 import com.terracotta.management.service.impl.ShutdownServiceImpl;
 import com.terracotta.management.service.impl.TimeoutServiceImpl;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
-import com.terracotta.management.service.impl.TsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
+import com.terracotta.management.service.impl.util.LocalManagementSource;
+import com.terracotta.management.service.impl.util.RemoteManagementSource;
 import com.terracotta.management.web.utils.TSAConfig;
 
 import java.net.URI;
@@ -92,6 +97,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
   private volatile JmxConnectorPool jmxConnectorPool;
   private volatile ThreadPoolExecutor l1BridgeExecutorService;
   private volatile ThreadPoolExecutor tsaExecutorService;
+  private volatile RemoteManagementSource remoteManagementSource;
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
@@ -101,7 +107,6 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       /// TSA services ///
 
-      TsaManagementClientServiceImpl tsaManagementClientService;
       if (sslEnabled) {
         final TSASSLSocketFactory socketFactory = new TSASSLSocketFactory();
         jmxConnectorPool = new JmxConnectorPool("service:jmx:rmi://{0}:{1}/jndi/rmi://{0}:{1}/jmxrmi") {
@@ -137,21 +142,26 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       tsaExecutorService.allowCoreThreadTimeOut(true);
 
       TimeoutService timeoutService = new TimeoutServiceImpl(TSAConfig.getDefaultL1BridgeTimeout());
+      SecurityContextService securityContextService = new DfltSecurityContextService();
 
-      tsaManagementClientService = new TsaManagementClientServiceImpl(jmxConnectorPool, sslEnabled, tsaExecutorService, timeoutService);
+      LocalManagementSource localManagementSource = new LocalManagementSource();
+      remoteManagementSource = new RemoteManagementSource(localManagementSource, timeoutService, securityContextService);
+      ServerManagementService serverManagementService = new ServerManagementService(tsaExecutorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+      ClientManagementService clientManagementService = new ClientManagementService(serverManagementService, tsaExecutorService, timeoutService, localManagementSource, remoteManagementSource, securityContextService);
+      RemoteAgentBridgeService remoteAgentBridgeService = new RemoteAgentBridgeServiceImpl(jmxConnectorPool);
 
       serviceLocator.loadService(TimeoutService.class, timeoutService);
+      serviceLocator.loadService(SecurityContextService.class, securityContextService);
       serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
-      serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
-      serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(ConfigurationService.class, new ConfigurationServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(BackupService.class, new BackupServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(LogsService.class, new LogsServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(OperatorEventsService.class, new OperatorEventsServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(ShutdownService.class, new ShutdownServiceImpl(tsaManagementClientService));
-      serviceLocator.loadService(JmxService.class, new JmxServiceImpl(tsaManagementClientService));
+      serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(serverManagementService, clientManagementService));
+      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(serverManagementService, clientManagementService));
+      serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(serverManagementService, clientManagementService));
+      serviceLocator.loadService(ConfigurationService.class, new ConfigurationServiceImpl(serverManagementService, clientManagementService));
+      serviceLocator.loadService(BackupService.class, new BackupServiceImpl(serverManagementService));
+      serviceLocator.loadService(LogsService.class, new LogsServiceImpl(serverManagementService));
+      serviceLocator.loadService(OperatorEventsService.class, new OperatorEventsServiceImpl(serverManagementService));
+      serviceLocator.loadService(ShutdownService.class, new ShutdownServiceImpl(serverManagementService));
+      serviceLocator.loadService(JmxService.class, new JmxServiceImpl(serverManagementService));
 
       /// L1 bridge and Security Services ///
 
@@ -184,9 +194,9 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         identityAsserter = new NullIdentityAsserter();
       }
 
-      RemoteRequestValidator requestValidator = new RemoteRequestValidator(tsaManagementClientService);
+      RemoteRequestValidator requestValidator = new RemoteRequestValidator(remoteAgentBridgeService);
       RemoteServiceStubGenerator remoteServiceStubGenerator = new RemoteServiceStubGenerator(requestTicketMonitor, userService,
-          contextService, requestValidator, tsaManagementClientService, l1BridgeExecutorService, timeoutService);
+          contextService, requestValidator, remoteAgentBridgeService, l1BridgeExecutorService, timeoutService);
 
       serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
       serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
@@ -195,12 +205,12 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
       serviceLocator.loadService(RequestValidator.class, requestValidator);
       serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
-      serviceLocator.loadService(RemoteAgentBridgeService.class, tsaManagementClientService);
+      serviceLocator.loadService(RemoteAgentBridgeService.class, remoteAgentBridgeService);
 
       /// Compound Agent Service ///
 
-      RemoteAgentService remoteAgentService = new RemoteAgentService(tsaManagementClientService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
-      serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, tsaManagementClientService, remoteAgentService));
+      RemoteAgentService remoteAgentService = new RemoteAgentService(remoteAgentBridgeService, contextService, l1BridgeExecutorService, requestTicketMonitor, userService, timeoutService);
+      serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(serverManagementService, remoteAgentBridgeService, remoteAgentService));
 
       /// Ehcache Services ///
 
@@ -216,7 +226,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       ServiceLocator.load(serviceLocator);
 
-      List<String> strings = tsaManagementClientService.performSecurityChecks();
+      List<String> strings = localManagementSource.performSecurityChecks();
       for (String string : strings) {
         LOG.warn(string);
       }
@@ -234,6 +244,9 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {
+    if (remoteManagementSource != null) {
+      remoteManagementSource.shutdown();
+    }
     if (jmxConnectorPool != null) {
       jmxConnectorPool.shutdown();
     }

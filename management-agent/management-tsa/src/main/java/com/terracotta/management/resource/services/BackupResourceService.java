@@ -21,6 +21,8 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface BackupResourceService {
 
+  public final static String ATTR_BACKUP_NAME_KEY = "name";
+
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   Collection<BackupEntity> getBackupStatus(@Context UriInfo info);
