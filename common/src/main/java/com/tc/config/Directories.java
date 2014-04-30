@@ -4,7 +4,6 @@
 package com.tc.config;
 
 import org.apache.commons.lang.StringUtils;
-import org.omg.CORBA.Environment;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,9 +16,7 @@ import java.io.FileNotFoundException;
 public class Directories {
 
   /**
-   * This is <code>public</code> <strong>ONLY</strong> so that some entities can <strong>SET</strong> it. You should
-   * <strong>NOT</strong> set it yourself; that breaks the point of encapsulation. Use the method
-   * {@link Environment#inTest()} instead. The property name is "tc.install-root".
+   * The property name is "tc.install-root".
    */
   public static final String TC_INSTALL_ROOT_PROPERTY_NAME               = "tc.install-root";
 
@@ -63,6 +60,10 @@ public class Directories {
       }
       return rootPath;
     }
+  }
+
+  public static File getServerLibFolder() throws FileNotFoundException {
+    return new File(getInstallationRoot(), "server/lib");
   }
 
   public static boolean tcInstallRootDefined() {
