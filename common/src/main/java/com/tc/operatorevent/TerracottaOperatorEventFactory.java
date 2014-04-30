@@ -110,6 +110,24 @@ public class TerracottaOperatorEventFactory {
                                                remoteNodeID.toString(), serverVersion }), "handshake rejected");
   }
 
+  public static TerracottaOperatorEvent createActiveL2DisconnectedEvent(String serverName) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getActiveServerDisconnectMessage(), new Object[] { serverName }), "");
+  }
+
+  public static TerracottaOperatorEvent createPassiveL2DisconnectedEvent(String serverName) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getPassiveServerDisconnectMessage(), new Object[] { serverName }), "");
+  }
+
+  public static TerracottaOperatorEvent createStripeDisconnectedEvent(String stripeName) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getStripeDisconnectMessage(), new Object[] { stripeName }), "");
+  }
+
   /**
    * zap events
    */

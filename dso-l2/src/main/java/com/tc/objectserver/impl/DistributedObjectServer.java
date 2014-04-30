@@ -984,7 +984,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                   dgcSequenceProvider, indexSequenceGenerator,
                                                                   objectIDSequence, l2DSOConfig.getDataStorage(),
                                                                   configSetupManager.getActiveServerGroupForThisL2()
-                                                                      .getElectionTimeInSecs());
+                                                                      .getElectionTimeInSecs(), haConfig
+                                                                      .getNodesStore());
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

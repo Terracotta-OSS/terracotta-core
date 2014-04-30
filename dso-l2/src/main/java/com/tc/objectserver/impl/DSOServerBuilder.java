@@ -8,6 +8,7 @@ import org.terracotta.corestorage.StorageManager;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
@@ -150,7 +151,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionFactory serverTransactionFactory,
                                       DGCSequenceProvider dgcSequenceProvider,
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
-                                      final DataStorage datastore, int electionTimeInSecs);
+                                      final DataStorage datastore, int electionTimeInSecs, NodesStore nodesStore);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,

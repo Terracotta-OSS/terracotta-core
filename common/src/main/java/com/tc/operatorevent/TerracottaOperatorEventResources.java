@@ -90,6 +90,18 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("handshake.reject");
   }
 
+  static String getActiveServerDisconnectMessage() {
+    return instance.resources.getString("active.server.disconnect");
+  }
+
+  static String getPassiveServerDisconnectMessage() {
+    return instance.resources.getString("passive.server.disconnect");
+  }
+
+  static String getStripeDisconnectMessage() {
+    return instance.resources.getString("stripe.disconnect");
+  }
+
   /**
    * Zap Messagse
    */

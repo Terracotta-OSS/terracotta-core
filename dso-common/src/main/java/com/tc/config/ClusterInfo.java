@@ -9,7 +9,7 @@ public interface ClusterInfo {
 
   boolean hasServerInCluster(String name);
 
-  GroupID getGroupIDFromServerName(String name);
+  GroupID getGroupIDFromNodeName(String name);
 
   boolean hasServerInGroup(String serverName);
 }

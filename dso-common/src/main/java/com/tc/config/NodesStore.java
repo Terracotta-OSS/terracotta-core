@@ -11,5 +11,7 @@ public interface NodesStore extends ClusterInfo {
 
   Node[] getAllNodes();
   
-  String getNodeNameFromServerName(String serverName);
+  String getServerNameFromNodeName(String nodeName);
+
+  String getGroupNameFromNodeName(String nodeName);
 }

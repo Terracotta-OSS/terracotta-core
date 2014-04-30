@@ -3,6 +3,7 @@
  */
 package com.tc.config;
 
+import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
@@ -20,9 +21,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   private final Set<Node>                                   nodes;
   private final CopyOnWriteArraySet<TopologyChangeListener> listeners               = new CopyOnWriteArraySet<TopologyChangeListener>();
-  private L2ConfigurationSetupManager                    configSetupManager;
-  private volatile HashMap<String, GroupID>                 serverNameToGidMap      = new HashMap<String, GroupID>();
-  private volatile HashSet<String>                          serverNamesForThisGroup = new HashSet<String>();
+  private L2ConfigurationSetupManager                       configSetupManager;
+  private volatile HashMap<String, GroupID>                 nodeNameToGidMap      = new HashMap<String, GroupID>();
+  private volatile HashSet<String>                          nodeNamesForThisGroup = new HashSet<String>();
   private volatile HashMap<String, String>                  nodeNamesToServerNames  = new HashMap<String, String>();
 
   /**
@@ -33,10 +34,10 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   }
 
   public NodesStoreImpl(Set<Node> nodes, Set<String> nodeNamesForThisGroup,
-                        HashMap<String, GroupID> serverNameToGidMap, L2ConfigurationSetupManager configSetupManager) {
+                        HashMap<String, GroupID> serverNodeNameToGidMap, L2ConfigurationSetupManager configSetupManager) {
     this(nodes);
-    serverNamesForThisGroup.addAll(nodeNamesForThisGroup);
-    this.serverNameToGidMap = serverNameToGidMap;
+    this.nodeNamesForThisGroup.addAll(nodeNamesForThisGroup);
+    this.nodeNameToGidMap = serverNodeNameToGidMap;
     this.configSetupManager = configSetupManager;
     initNodeNamesToServerNames();
   }
@@ -66,14 +67,14 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   private void initNodeNamesToServerNames() {
     HashMap<String, String> tempNodeNamesToServerNames = new HashMap<String, String>();
     String[] serverNames = configSetupManager.allCurrentlyKnownServers();
-    for (int i = 0; i < serverNames.length; i++) {
+    for (String serverName : serverNames) {
       try {
-        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
+        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverName);
         String host = l2Config.tsaGroupPort().getBind();
         if (TCSocketAddress.WILDCARD_IP.equals(host)) {
           host = l2Config.host();
         }
-        tempNodeNamesToServerNames.put(host + ":" + l2Config.tsaPort().getIntValue(), serverNames[i]);
+        tempNodeNamesToServerNames.put(host + ":" + l2Config.tsaPort().getIntValue(), serverName);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }
@@ -82,9 +83,9 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   }
 
   @Override
-  public String getNodeNameFromServerName(String serverName) {
+  public String getServerNameFromNodeName(String nodeName) {
 
-    return nodeNamesToServerNames.get(serverName);
+    return nodeNamesToServerNames.get(nodeName);
   }
 
   /**
@@ -93,11 +94,11 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
 
   @Override
   public boolean hasServerInGroup(String serverName) {
-    return serverNamesForThisGroup.contains(serverName);
+    return nodeNamesForThisGroup.contains(serverName);
   }
 
   void updateServerNames(ReloadConfigChangeContext context) {
-    HashSet<String> tmp = (HashSet<String>) serverNamesForThisGroup.clone();
+    HashSet<String> tmp = (HashSet<String>) nodeNamesForThisGroup.clone();
 
     for (Node n : context.getNodesAdded()) {
       tmp.add(n.getServerNodeName());
@@ -107,7 +108,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
       tmp.remove(n.getServerNodeName());
     }
 
-    this.serverNamesForThisGroup = tmp;
+    this.nodeNamesForThisGroup = tmp;
   }
 
   /**
@@ -116,16 +117,25 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
 
   @Override
   public boolean hasServerInCluster(String name) {
-    return serverNameToGidMap.containsKey(name);
+    return nodeNameToGidMap.containsKey(name);
   }
 
   @Override
-  public GroupID getGroupIDFromServerName(String name) {
-    return serverNameToGidMap.get(name);
+  public GroupID getGroupIDFromNodeName(String name) {
+    return nodeNameToGidMap.get(name);
+  }
+
+  @Override
+  public String getGroupNameFromNodeName(String nodeName) {
+    if (configSetupManager == null) { return null; }
+    ActiveServerGroupConfig asgc = configSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroupForL2(nodeNamesToServerNames.get(nodeName));
+    if (asgc == null) { return null; }
+    return asgc.getGroupName();
   }
 
   void updateServerNames(ReloadConfigChangeContext context, GroupID gid) {
-    HashMap<String, GroupID> tempMap = (HashMap<String, GroupID>) serverNameToGidMap.clone();
+    HashMap<String, GroupID> tempMap = (HashMap<String, GroupID>) nodeNameToGidMap.clone();
     for (Node n : context.getNodesAdded()) {
       tempMap.put(n.getServerNodeName(), gid);
     }
@@ -133,6 +143,6 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     for (Node n : context.getNodesRemoved()) {
       tempMap.remove(n.getServerNodeName());
     }
-    this.serverNameToGidMap = tempMap;
+    this.nodeNameToGidMap = tempMap;
   }
 }

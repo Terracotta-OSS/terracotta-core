@@ -7,6 +7,7 @@ package com.tc.l2.ha;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
+import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
@@ -44,6 +45,7 @@ import com.tc.l2.objectserver.ReplicatedObjectManagerImpl;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManagerImpl;
 import com.tc.l2.objectserver.ServerTransactionFactory;
+import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
 import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
@@ -54,9 +56,11 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.PassiveServerListener;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.objectserver.api.ObjectManager;
@@ -81,25 +85,26 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener {
 
-  private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
+  private static final TCLogger                             logger           = TCLogging
+                                                                                 .getLogger(L2HACoordinator.class);
 
+  private final TCLogger                                    consoleLogger;
+  private final DistributedObjectServer                     server;
+  private final GroupManager                                groupManager;
+  private final GroupID                                     thisGroupID;
 
-  private final TCLogger                                  consoleLogger;
-  private final DistributedObjectServer                   server;
-  private final GroupManager                              groupManager;
-  private final GroupID                                   thisGroupID;
+  private StateManager                                      stateManager;
+  private ReplicatedObjectManagerImpl                       rObjectManager;
+  private ReplicatedTransactionManager                      rTxnManager;
+  private ReplicatedClusterStateManager                     rClusterStateMgr;
+  private SequenceGenerator                                 sequenceGenerator;
 
-  private StateManager                                    stateManager;
-  private ReplicatedObjectManagerImpl                     rObjectManager;
-  private ReplicatedTransactionManager                    rTxnManager;
-  private ReplicatedClusterStateManager                   rClusterStateMgr;
-  private SequenceGenerator                               sequenceGenerator;
-
-  private final SequenceGenerator                         indexSequenceGenerator;
-  private final L2ConfigurationSetupManager               configSetupManager;
-  private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
-  private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
-  private final L2ObjectStateManager                      l2ObjectStateManager;
+  private final SequenceGenerator                           indexSequenceGenerator;
+  private final L2ConfigurationSetupManager                 configSetupManager;
+  private final CopyOnWriteArrayList<StateChangeListener>   listeners        = new CopyOnWriteArrayList<StateChangeListener>();
+  private final CopyOnWriteArrayList<PassiveServerListener> passiveListeners = new CopyOnWriteArrayList<PassiveServerListener>();
+  private final L2PassiveSyncStateManager                   l2PassiveSyncStateManager;
+  private final L2ObjectStateManager                        l2ObjectStateManager;
 
   // private final ClusterStatePersistor clusterStatePersistor;
 
@@ -116,8 +121,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
                          DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
-                         final ObjectIDSequence objectIDSequence, final DataStorage dataStorage,
-                         int electionTimInSecs) {
+                         final ObjectIDSequence objectIDSequence, final DataStorage dataStorage, int electionTimInSecs,
+                         final NodesStore nodesStore) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -130,7 +135,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     init(stageManager, clusterStatePersistor, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
-         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, dataStorage, electionTimInSecs);
+         serverTransactionFactory, dgcSequenceProvider, objectIDSequence, dataStorage, electionTimInSecs, nodesStore);
   }
 
   private void init(final StageManager stageManager, final ClusterStatePersistor statePersistor,
@@ -140,7 +145,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider,
-                    final ObjectIDSequence objectIDSequence, final DataStorage dataStorage, int electionTimeInSecs) {
+                    final ObjectIDSequence objectIDSequence, final DataStorage dataStorage, int electionTimeInSecs,
+                    final NodesStore nodesStore) {
 
     registerForStateChangeEvents(indexHACoordinator);
 
@@ -168,9 +174,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
-                                                              new L2ObjectSyncSendHandler(objectStateManager,
-                                                                                          serverTransactionFactory), 1,
-                                                              MAX_STAGE_SIZE).getSink();
+                             new L2ObjectSyncSendHandler(objectStateManager, serverTransactionFactory), 1,
+                             MAX_STAGE_SIZE).getSink();
 
     final L2ObjectSyncAckManager objectSyncAckManager = new L2ObjectSyncAckManagerImpl(transactionManager, groupManager);
     final Sink objectsSyncRequestSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
@@ -179,13 +184,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                                  MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(serverTransactionFactory,
-                                                                                  objectSyncAckManager,
-                                                                                  this.server.getTaskRunner()), 1,
+                                                                                  objectSyncAckManager, this.server
+                                                                                      .getTaskRunner()), 1,
                                                           MAX_STAGE_SIZE).getSink();
 
     Sink transactionRelaySink = stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
-                             new TransactionRelayHandler(objectStateManager, this.sequenceGenerator, gtxm), 1,
-                             MAX_STAGE_SIZE).getSink();
+                                                         new TransactionRelayHandler(objectStateManager,
+                                                                                     this.sequenceGenerator, gtxm), 1,
+                                                         MAX_STAGE_SIZE).getSink();
     final Sink ackProcessingSink = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
                      new ServerTransactionAckHandler(), 1, MAX_STAGE_SIZE).getSink();
@@ -218,13 +224,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.rTxnManager = new ReplicatedTransactionManagerImpl(this.groupManager, orderedObjectsSyncSink,
                                                             transactionManager, gtxm, recycler, objectSyncAckManager);
 
-
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
                                                           this.l2PassiveSyncStateManager, this.l2ObjectStateManager,
-                                                          objectManager, transactionManager,
-                                                          objectsSyncRequestSink, indexSyncRequestSink,
-                                                          transactionRelaySink, this.sequenceGenerator,
-                                                          this.indexSequenceGenerator, dataStorage, statePersistor);
+                                                          objectManager, transactionManager, objectsSyncRequestSink,
+                                                          indexSyncRequestSink, transactionRelaySink,
+                                                          this.sequenceGenerator, this.indexSequenceGenerator,
+                                                          dataStorage, statePersistor);
 
     objectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);
@@ -251,6 +256,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
 
     this.groupManager.registerForGroupEvents(dispatcher);
+
+    passiveListeners.add(new OperatorEventsPassiveServerConnectionListener(nodesStore));
   }
 
   private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager(final ServerGlobalTransactionManager gtxm) {
@@ -352,6 +359,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
         this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                   errMesg + L2HAZapNodeRequestProcessor.getErrorString(ge));
       }
+    } else {
+      firePassiveEvent(nodeID, true);
     }
   }
 
@@ -371,6 +380,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     if (this.stateManager.isActiveCoordinator()) {
       this.rObjectManager.clear(nodeID);
       this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
+      firePassiveEvent(nodeID, false);
     } else {
       this.stateManager.startElectionIfNecessary(nodeID);
     }
@@ -413,6 +423,16 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   @Override
   public StateSyncManager getStateSyncManager() {
     return this.l2PassiveSyncStateManager;
+  }
+
+  private void firePassiveEvent(NodeID nodeID, boolean joined) {
+    for (PassiveServerListener listener : this.passiveListeners) {
+      if (joined) {
+        listener.passiveServerJoined((ServerID) nodeID);
+      } else {
+        listener.passiveServerLeft((ServerID) nodeID);
+      }
+    }
   }
 
 }

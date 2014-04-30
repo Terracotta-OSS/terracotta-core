@@ -119,7 +119,7 @@ public class HaConfigForGroupNameTests implements HaConfig {
     }
 
     @Override
-    public GroupID getGroupIDFromServerName(String name) {
+    public GroupID getGroupIDFromNodeName(String name) {
       throw new ImplementMe();
     }
 

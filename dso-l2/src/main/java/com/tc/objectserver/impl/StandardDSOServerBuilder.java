@@ -10,6 +10,7 @@ import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
+import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
@@ -255,13 +256,13 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final DGCSequenceProvider dgcSequenceProvider,
                                              final SequenceGenerator indexSequenceGenerator,
                                              final ObjectIDSequence objectIDSequence, final DataStorage datastore,
-                                             int electionTimeInSecs) {
+                                             int electionTimeInSecs, final NodesStore nodesStore) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, haConfig.getThisGroupID(), stripeStateManager,
                                serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence,
-        datastore, electionTimeInSecs);
+                               datastore, electionTimeInSecs, nodesStore);
   }
 
   @Override
