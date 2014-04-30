@@ -693,7 +693,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       File tcInstallDir;
       try {
         tcInstallDir = Directories.getInstallationRoot();
-        File managementDir = new File(tcInstallDir, "server/lib");
+        File managementDir = new File(tcInstallDir, "lib");
 
         String[] files = managementDir.list(new FilenameFilter() {
           @Override
