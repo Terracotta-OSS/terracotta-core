@@ -6,6 +6,7 @@ package com.terracotta.toolkit.object.serialization;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
@@ -33,7 +34,6 @@ import com.terracottatech.search.NVPair;
 import java.io.IOException;
 import java.io.ObjectStreamClass;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,6 +41,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+
+import static org.junit.Assert.assertEquals;
 
 public class ObjectStreamClassMappingTest {
 
@@ -56,12 +58,9 @@ public class ObjectStreamClassMappingTest {
 
   @Test
   public void testSerializer() throws IOException, ClassNotFoundException {
-    Set<Class> classSet = new HashSet<Class>();
-    populateSet(classSet);
-
     HashMap<Integer, ObjectStreamClass> mappings = new HashMap<Integer, ObjectStreamClass>();
 
-    for (Class cl : classSet) {
+    for (Class cl : classSet()) {
       ObjectStreamClass osc = ObjectStreamClass.lookup(cl);
       mappings.put(serializer.getMappingFor(osc), osc);
     }
@@ -71,7 +70,16 @@ public class ObjectStreamClassMappingTest {
     }
   }
 
-  private void populateSet(Set<Class> classSet) {
+  @Test
+  public void testMultipleLookupsReturnSameID() throws Exception {
+    for (Class aClass : classSet()) {
+      ObjectStreamClass osc = ObjectStreamClass.lookup(aClass);
+      assertEquals(serializer.getMappingFor(osc), serializer.getMappingFor(osc));
+    }
+  }
+
+  private static Set<Class> classSet() {
+    Set<Class> classSet = Sets.newHashSet();
     classSet.add(Integer.class);
     classSet.add(Long.class);
     classSet.add(Character.class);
@@ -83,6 +91,7 @@ public class ObjectStreamClassMappingTest {
     classSet.add(String.class);
     classSet.add(Long.class);
     classSet.add(Enum.class);
+    return classSet;
   }
 
   private static class LocalSerializerMap<K, V> implements SerializerMap<K, V> {

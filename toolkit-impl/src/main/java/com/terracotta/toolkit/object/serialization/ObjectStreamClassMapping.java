@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.collect.Maps;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -30,6 +31,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,6 +65,7 @@ public class ObjectStreamClassMapping {
                                                                                       }
                                                                                     });
   private final AbortableOperationManager         abortableOperationManager;
+  private final ConcurrentMap<ObjectStreamClass, SerializableDataKey> oscKeyCache = Maps.newConcurrentMap();
 
   static {
     Field superDesc = null;
@@ -113,7 +116,7 @@ public class ObjectStreamClassMapping {
   /**
    * this method has to be called from lock
    * 
-   * @param key2
+   * @param key
    */
   private Integer addMapping(ObjectStreamClass desc, SerializableDataKey key) {
     Integer value = getAndIncrement();
@@ -140,7 +143,7 @@ public class ObjectStreamClassMapping {
   // 2. Modify our serializerMap to have complex object as keys rather than only String as keys.
   public int getMappingFor(ObjectStreamClass descParam) throws IOException {
     final ObjectStreamClass desc = prune(descParam);
-    final SerializableDataKey key = new SerializableDataKey(desc);
+    final SerializableDataKey key = getSerializableDataKey(desc);
 
     Integer value = (Integer) serializerMap.localGet(key.getStringForm());
     if (value != null) { return value.intValue(); }
@@ -174,6 +177,15 @@ public class ObjectStreamClassMapping {
       if (e.getCause() instanceof RejoinException) { throw (RejoinException) e.getCause(); }
       throw new ToolkitRuntimeException(e);
     }
+  }
+
+  private SerializableDataKey getSerializableDataKey(final ObjectStreamClass desc) throws IOException {
+    SerializableDataKey key = oscKeyCache.get(desc);
+    if (key == null) {
+      key = new SerializableDataKey(desc);
+      oscKeyCache.putIfAbsent(desc, key);
+    }
+    return key;
   }
 
   ObjectStreamClass localGetObjectStreamClassFor(int mapping) {
