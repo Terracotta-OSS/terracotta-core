@@ -263,7 +263,7 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     }
 
     private boolean isPointingToLast() {
-      if (this.current.last() >= this.current.start + this.idx) { return false; }
+      if (!current.isEmpty() && this.current.last() >= this.current.start + this.idx) { return false; }
       return true;
     }
 
@@ -469,7 +469,9 @@ class BitSetObjectIDSet extends ObjectIDSetBase {
     }
 
     public long last() {
-      if (this.nextLongs == 0) { throw new NoSuchElementException(); }
+      if (this.nextLongs == 0) {
+        throw new NoSuchElementException();
+      }
       return this.start + BitSet.RANGE_SIZE - 1 - Long.numberOfLeadingZeros(this.nextLongs);
     }
   }

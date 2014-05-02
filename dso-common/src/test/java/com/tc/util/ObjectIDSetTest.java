@@ -60,6 +60,27 @@ public class ObjectIDSetTest extends TCTestCase {
 //    Thread.sleep(180000);
 //  }
 
+  public void testOjectIDSetConcurrentIteratorRemove() {
+    objectIDSetConcurrentIteratorRemove(new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET));
+    objectIDSetConcurrentIteratorRemove(new ObjectIDSet(ObjectIDSetType.EXPANDING_BITSET_BASED_SET));
+  }
+
+  private void objectIDSetConcurrentIteratorRemove(ObjectIDSet set) {
+    set.add(new ObjectID(0));
+
+    Iterator<ObjectID> iterator = set.iterator();
+
+    for (Iterator<?> it = set.iterator(); it.hasNext(); it.next(), it.remove());
+
+    try {
+      while (iterator.hasNext()) {
+        iterator.next();
+      }
+    } catch (ConcurrentModificationException e) {
+      //acceptable
+    }
+  }
+
   public void testContain() {
     final ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
     final ObjectIDSet expandingBitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.EXPANDING_BITSET_BASED_SET);
