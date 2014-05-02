@@ -7,6 +7,7 @@ import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.rejoin.RejoinException;
 
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.logging.TCLogger;
@@ -65,7 +66,7 @@ public class ObjectStreamClassMapping {
                                                                                       }
                                                                                     });
   private final AbortableOperationManager         abortableOperationManager;
-  private final ConcurrentMap<ObjectStreamClass, SerializableDataKey> oscKeyCache = Maps.newConcurrentMap();
+  private final ConcurrentMap<ObjectStreamClass, SerializableDataKey> oscKeyCache = new MapMaker().weakKeys().makeMap();
 
   static {
     Field superDesc = null;

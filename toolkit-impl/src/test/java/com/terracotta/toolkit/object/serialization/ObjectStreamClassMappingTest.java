@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.ObjectStreamClass;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +52,6 @@ public class ObjectStreamClassMappingTest {
   public void init() {
     localSerializerMap = new LocalSerializerMap();
     serializer = new ObjectStreamClassMapping(new ThreadCheckerPlatformService(), localSerializerMap);
-
   }
 
   @Test
@@ -92,26 +90,6 @@ public class ObjectStreamClassMappingTest {
     classSet.add(Long.class);
     classSet.add(Enum.class);
     return classSet;
-  }
-
-  private static class LocalSerializerMap<K, V> implements SerializerMap<K, V> {
-    private final Map<K, V> localHashMap = new HashMap<K, V>();
-
-    @Override
-    public V put(K key, V value) {
-      return localHashMap.put(key, value);
-    }
-
-    @Override
-    public V get(K key) {
-      return localHashMap.get(key);
-    }
-
-    @Override
-    public V localGet(K key) {
-      return get(key);
-    }
-
   }
 
   // Asserts that the write lock is taken from the Serializer thread
