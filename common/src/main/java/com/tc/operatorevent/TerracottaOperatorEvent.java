@@ -16,10 +16,6 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
     MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, APPLICATION, SYSTEM_SETUP, RESOURCE
   }
 
-  public static enum EventType {
-    INFO, WARN, DEBUG, ERROR, CRITICAL
-  }
-
   void addNodeName(String nodeId);
 
   EventLevel getEventLevel();
