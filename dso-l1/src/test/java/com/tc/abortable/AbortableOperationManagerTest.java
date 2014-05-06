@@ -133,5 +133,50 @@ public class AbortableOperationManagerTest extends TestCase {
     }
 
   }
-
+  
+/*  BS-959 - AbortableOperationManagerImpl class by itself is racey and can leak interrupts.  
+  They way the class is used with NonStopManagerImpl keeps the leak from happening but really 
+  thread safe use should be guaranteed within the class.  Comment out test for now until cleanup.
+  
+  public void testRace() {    
+    final AtomicBoolean testFailed = new AtomicBoolean();
+    final Thread first = new Thread() {
+      public void run() {
+        for (int x=0;x<Integer.MAX_VALUE;x++) {
+          abortableOperationManager.begin();
+          abortableOperationManager.finish();
+          if (Thread.interrupted() ) {
+            testFailed.set(true);
+            break;
+          }
+        }
+      }
+    };
+    Thread second = new Thread() {
+      public void run() {
+        for (int x=0;x<Integer.MAX_VALUE;x++) {
+          try {
+            abortableOperationManager.abort(first);
+          } catch ( IllegalStateException ise ) {
+            if ( !first.isAlive() ) {
+              return;
+            }
+          }
+        }
+      }
+    };
+    
+    first.start();
+    second.start();
+    try {
+      first.join();
+      second.join();
+    } catch ( InterruptedException ie ) {
+      throw new RuntimeException(ie);
+    }
+    if ( testFailed.get() ) {
+      throw new AssertionError("thread was in interrupt state");
+    }
+  }
+    */
 }
