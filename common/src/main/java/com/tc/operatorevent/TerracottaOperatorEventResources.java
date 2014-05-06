@@ -94,8 +94,8 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("active.server.disconnect");
   }
 
-  static String getPassiveServerDisconnectMessage() {
-    return instance.resources.getString("passive.server.disconnect");
+  static String getMirrorServerDisconnectMessage() {
+    return instance.resources.getString("mirror.server.disconnect");
   }
 
   static String getStripeDisconnectMessage() {

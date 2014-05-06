@@ -4,8 +4,8 @@
 package com.tc.operatorevent;
 
 import com.tc.net.NodeID;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -119,13 +119,7 @@ public class TerracottaOperatorEventFactory {
   public static TerracottaOperatorEvent createPassiveL2DisconnectedEvent(String serverName) {
     return new TerracottaOperatorEventImpl(EventLevel.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
                                            MessageFormat.format(TerracottaOperatorEventResources
-                                               .getPassiveServerDisconnectMessage(), new Object[] { serverName }), "");
-  }
-
-  public static TerracottaOperatorEvent createStripeDisconnectedEvent(String stripeName) {
-    return new TerracottaOperatorEventImpl(EventLevel.WARN, EventSubsystem.CLUSTER_TOPOLOGY,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getStripeDisconnectMessage(), new Object[] { stripeName }), "");
+                                               .getMirrorServerDisconnectMessage(), new Object[] { serverName }), "");
   }
 
   /**
