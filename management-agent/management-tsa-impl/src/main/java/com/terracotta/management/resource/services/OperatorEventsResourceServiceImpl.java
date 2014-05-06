@@ -70,8 +70,8 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
     boolean rc = true;
     for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
       try {
-        if (operatorEventEntity.getEventType() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
+        if (operatorEventEntity.getEventLevel() == null) {
+          throw new ServiceExecutionException("eventLevel must not be null");
         }
         if (operatorEventEntity.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
@@ -104,7 +104,7 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
     boolean rc = true;
     for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
       try {
-        if (operatorEventEntity.getEventType() == null) {
+        if (operatorEventEntity.getEventLevel() == null) {
           throw new ServiceExecutionException("eventType must not be null");
         }
         if (operatorEventEntity.getEventSubsystem() == null) {

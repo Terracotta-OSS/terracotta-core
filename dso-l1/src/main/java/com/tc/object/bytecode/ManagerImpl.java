@@ -54,7 +54,7 @@ import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.PlatformService;
@@ -905,7 +905,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
+  public void fireOperatorEvent(EventLevel eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
     TerracottaOperatorEvent opEvent = new TerracottaOperatorEventImpl(eventLevel, eventSubsystem, eventMessage, "");
     TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(opEvent);
   }

@@ -16,7 +16,7 @@ public class OperatorEventEntity extends AbstractTsaEntity {
   private String message;
   private String collapseString;
   private String eventSubsystem;
-  private String eventType;
+  private String eventLevel;
   private boolean read;
 
   public String getSourceId() {
@@ -59,12 +59,12 @@ public class OperatorEventEntity extends AbstractTsaEntity {
     this.eventSubsystem = eventSubsystem;
   }
 
-  public String getEventType() {
-    return eventType;
+  public String getEventLevel() {
+    return eventLevel;
   }
 
-  public void setEventType(String eventType) {
-    this.eventType = eventType;
+  public void setEventLevel(String eventLevel) {
+    this.eventLevel = eventLevel;
   }
 
   public boolean isRead() {

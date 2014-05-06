@@ -22,7 +22,7 @@ import com.tc.object.locks.TerracottaLocking;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
@@ -327,7 +327,7 @@ public interface Manager extends TerracottaLocking {
 
   void verifyCapability(String capability);
 
-  void fireOperatorEvent(EventType eventLevel, EventSubsystem subsystem, String eventMessage);
+  void fireOperatorEvent(EventLevel eventLevel, EventSubsystem subsystem, String eventMessage);
 
   void stopImmediate();
 

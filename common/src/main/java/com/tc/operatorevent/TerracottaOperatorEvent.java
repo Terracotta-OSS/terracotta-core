@@ -8,7 +8,7 @@ import java.util.Date;
 
 public interface TerracottaOperatorEvent extends Serializable, Cloneable {
 
-  public static enum EventType {
+  public static enum EventLevel {
     INFO, WARN, DEBUG, ERROR, CRITICAL
   }
 
@@ -16,9 +16,13 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
     MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, APPLICATION, SYSTEM_SETUP, RESOURCE
   }
 
+  public static enum EventType {
+    INFO, WARN, DEBUG, ERROR, CRITICAL
+  }
+
   void addNodeName(String nodeId);
 
-  EventType getEventType();
+  EventLevel getEventLevel();
 
   String getNodeName();
 
@@ -32,7 +36,7 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
    * These methods are there because devconsole does not take enum as the return type while updating the panel Should be
    * dealt with in future
    */
-  String getEventTypeAsString();
+  String getEventLevelAsString();
 
   String getEventSubsystemAsString();
 

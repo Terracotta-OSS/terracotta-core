@@ -6,27 +6,27 @@ package com.terracotta.toolkit.events;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.platform.PlatformService;
 
 public class OperatorEventUtil {
 
-  private static EventType translateOperatorEventLevel(OperatorEventLevel level) {
+  private static EventLevel translateOperatorEventLevel(OperatorEventLevel level) {
     switch (level) {
       case INFO: {
-        return EventType.INFO;
+        return EventLevel.INFO;
       }
       case WARN: {
-        return EventType.WARN;
+        return EventLevel.WARN;
       }
       case DEBUG: {
-        return EventType.DEBUG;
+        return EventLevel.DEBUG;
       }
       case ERROR: {
-        return EventType.ERROR;
+        return EventLevel.ERROR;
       }
       case CRITICAL: {
-        return EventType.CRITICAL;
+        return EventLevel.CRITICAL;
       }
     }
     // don't do this as the "default" in the switch block so the compiler can catch errors

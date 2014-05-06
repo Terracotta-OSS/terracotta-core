@@ -14,28 +14,28 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Comparable<TerracottaOperatorEventImpl> {
   private final long                    time;
   private final String                  eventMessage;
-  private final EventType               eventType;
+  private final EventLevel               eventLevel;
   private final EventSubsystem          subSystem;
   private volatile Map<String, Integer> nodes;
   private boolean                       isRead = false;
   private final String                  collapseString;
 
-  public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
+  public TerracottaOperatorEventImpl(EventLevel eventLevel, EventSubsystem subSystem, String message,
                                      String collapseString) {
-    this(eventType, subSystem, System.currentTimeMillis(), message, collapseString, new HashMap<String, Integer>());
+    this(eventLevel, subSystem, System.currentTimeMillis(), message, collapseString, new HashMap<String, Integer>());
   }
 
-  public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
+  public TerracottaOperatorEventImpl(EventLevel eventLevel, EventSubsystem subSystem, String message,
                                      long time, String collapseString) {
-    this(eventType, subSystem, time, message, collapseString, new HashMap<String, Integer>());
+    this(eventLevel, subSystem, time, message, collapseString, new HashMap<String, Integer>());
   }
 
-  private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String message,
+  private TerracottaOperatorEventImpl(EventLevel eventLevel, EventSubsystem subsystem, long time, String message,
                                       String collapseString, Map<String, Integer> nodes) {
     // Using a CHM here can trigger CDV-1377 if event sent/serialized from a custom mode L1
     if (nodes instanceof ConcurrentHashMap) { throw new AssertionError("CHM not allowed here"); }
 
-    this.eventType = eventType;
+    this.eventLevel = eventLevel;
     this.subSystem = subsystem;
     this.time = time;
     this.eventMessage = message;
@@ -55,13 +55,13 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   }
 
   @Override
-  public EventType getEventType() {
-    return this.eventType;
+  public EventLevel getEventLevel() {
+    return this.eventLevel;
   }
 
   @Override
-  public String getEventTypeAsString() {
-    return this.eventType.name();
+  public String getEventLevelAsString() {
+    return this.eventLevel.name();
   }
 
   @Override
@@ -117,7 +117,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   public boolean equals(Object o) {
     if (!(o instanceof TerracottaOperatorEventImpl)) return false;
     TerracottaOperatorEventImpl event = (TerracottaOperatorEventImpl) o;
-    if (this.eventType != event.eventType) return false;
+    if (this.eventLevel != event.eventLevel) return false;
     if (this.subSystem != event.subSystem) return false;
     if (this.time != event.time) return false;
     if (!this.collapseString.equals(event.collapseString)) return false;
@@ -129,7 +129,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     final int prime = 31;
     int result = 1;
     result = prime * result + ((collapseString == null) ? 0 : collapseString.hashCode());
-    result = prime * result + ((eventType == null) ? 0 : eventType.hashCode());
+    result = prime * result + ((eventLevel == null) ? 0 : eventLevel.hashCode());
     result = prime * result + ((subSystem == null) ? 0 : subSystem.hashCode());
     result = prime * result + (int) (time ^ (time >>> 32));
     return result;
@@ -147,7 +147,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
 
   @Override
   public String toString() {
-    return getEventType() + " " + getEventTime() + " " + getNodeName() + " " + getEventSubsystemAsString() + " "
+    return getEventLevel() + " " + getEventTime() + " " + getNodeName() + " " + getEventSubsystemAsString() + " "
            + getEventMessage();
   }
 
@@ -162,7 +162,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     synchronized (this) {
       nodesCopy = new HashMap<String, Integer>(this.nodes);
     }
-    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
+    return new TerracottaOperatorEventImpl(this.eventLevel, this.subSystem, this.time, this.eventMessage,
                                            this.collapseString, nodesCopy);
 
   }

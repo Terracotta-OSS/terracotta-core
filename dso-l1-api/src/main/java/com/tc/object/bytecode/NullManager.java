@@ -23,7 +23,7 @@ import com.tc.object.locks.UnclusteredLockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
@@ -380,7 +380,7 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
+  public void fireOperatorEvent(EventLevel eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
     //
   }
 

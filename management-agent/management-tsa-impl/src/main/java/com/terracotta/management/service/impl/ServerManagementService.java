@@ -3,6 +3,8 @@
  */
 package com.terracotta.management.service.impl;
 
+import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
+
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.Representable;
 
@@ -48,9 +50,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.management.Notification;
 import javax.management.ObjectName;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriBuilderException;
-
-import static com.terracotta.management.service.impl.util.RemoteManagementSource.toCsv;
 
 /**
  * @author Ludovic Orban
@@ -346,7 +345,7 @@ public class ServerManagementService {
             }
             if (acceptableTypes != null) {
               // filter out event types
-              if (!acceptableTypes.contains(operatorEvent.getEventTypeAsString())) {
+              if (!acceptableTypes.contains(operatorEvent.getEventLevelAsString())) {
                 continue;
               }
             }
@@ -358,7 +357,7 @@ public class ServerManagementService {
             operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
             operatorEventEntity.setCollapseString(operatorEvent.getCollapseString());
             operatorEventEntity.setEventSubsystem(operatorEvent.getEventSubsystemAsString());
-            operatorEventEntity.setEventType(operatorEvent.getEventTypeAsString());
+            operatorEventEntity.setEventLevel(operatorEvent.getEventLevelAsString());
             operatorEventEntity.setRead(operatorEvent.isRead());
 
             localResult.add(operatorEventEntity);
@@ -707,7 +706,7 @@ public class ServerManagementService {
     String sourceId = operatorEventEntity.getSourceId();
     if (sourceId.equals(localManagementSource.getLocalServerName())) {
       TerracottaOperatorEvent terracottaOperatorEvent = new TerracottaOperatorEventImpl(
-          TerracottaOperatorEvent.EventType.valueOf(operatorEventEntity.getEventType()),
+          TerracottaOperatorEvent.EventLevel.valueOf(operatorEventEntity.getEventLevel()),
           TerracottaOperatorEvent.EventSubsystem.valueOf(operatorEventEntity.getEventSubsystem()),
           operatorEventEntity.getMessage(), operatorEventEntity.getTimestamp(), operatorEventEntity.getCollapseString());
 

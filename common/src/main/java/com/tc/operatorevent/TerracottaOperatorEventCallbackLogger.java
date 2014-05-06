@@ -5,7 +5,7 @@ package com.tc.operatorevent;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 
 public class TerracottaOperatorEventCallbackLogger implements TerracottaOperatorEventCallback {
 
@@ -13,7 +13,7 @@ public class TerracottaOperatorEventCallbackLogger implements TerracottaOperator
 
   @Override
   public void logOperatorEvent(TerracottaOperatorEvent event) {
-    EventType eventType = event.getEventType();
+    EventLevel eventType = event.getEventLevel();
     switch (eventType) {
       case INFO:
         this.logger.info("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "

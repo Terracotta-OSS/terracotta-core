@@ -19,7 +19,7 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
@@ -379,7 +379,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void fireOperatorEvent(EventType coreOperatorEventLevel, EventSubsystem coreEventSubsytem, String eventMessage) {
+  public void fireOperatorEvent(EventLevel coreOperatorEventLevel, EventSubsystem coreEventSubsytem, String eventMessage) {
     assertRejoinNotInProgress();
     try {
       delegate.fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventMessage);

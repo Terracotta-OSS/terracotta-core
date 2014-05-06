@@ -8,7 +8,7 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.logging.LongGCLogger;
@@ -37,7 +37,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
       @Override
       public void logOperatorEvent(TerracottaOperatorEvent event) {
-        if (event.getEventType() == EventType.WARN) {
+        if (event.getEventLevel() == EventLevel.WARN) {
           logger.warn(event);
           if (event.toString().contains("Frequent long GC")) {
             latch.countDown();

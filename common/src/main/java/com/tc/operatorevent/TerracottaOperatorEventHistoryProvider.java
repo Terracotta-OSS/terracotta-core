@@ -16,7 +16,7 @@ public interface TerracottaOperatorEventHistoryProvider {
   /**
    * Returns the unread event counts broken out by event type name.
    * 
-   * @see TerracottaOperatorEvent.EventType
+   * @see TerracottaOperatorEvent.EventLevel
    */
   Map<String, Integer> getUnreadCounts();
 

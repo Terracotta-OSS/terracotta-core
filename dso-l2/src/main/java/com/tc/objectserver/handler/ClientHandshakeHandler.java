@@ -73,7 +73,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler {
   }
 
   protected void logEvent(TerracottaOperatorEvent event) {
-    switch (event.getEventType()) {
+    switch (event.getEventLevel()) {
       case INFO:
         LOGGER.info(event.getEventMessage());
         break;

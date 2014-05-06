@@ -3,7 +3,7 @@
  */
 package com.tc.operatorevent;
 
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.CircularLossyQueue;
@@ -24,7 +24,7 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
         .getInt(TCPropertiesConsts.L2_OPERATOR_EVENTS_STORE, 1500));
 
     unreadCounts = new HashMap<String, Integer>();
-    for (EventType severity : EventType.values()) {
+    for (EventLevel severity : EventLevel.values()) {
       unreadCounts.put(severity.name(), Integer.valueOf(0));
     }
   }
@@ -63,7 +63,7 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
   }
 
   private void incrementUnread(TerracottaOperatorEvent operatorEvent, int count) {
-    String eventTypeName = operatorEvent.getEventType().name();
+    String eventTypeName = operatorEvent.getEventLevel().name();
     Integer value = unreadCounts.get(eventTypeName);
     unreadCounts.put(eventTypeName, Integer.valueOf(value.intValue() + count));
   }
