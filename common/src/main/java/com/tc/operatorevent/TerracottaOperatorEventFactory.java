@@ -22,13 +22,6 @@ public class TerracottaOperatorEventFactory {
                                                                 arguments), "");
   }
 
-  public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage, int critcalThreshold) {
-    return new TerracottaOperatorEventImpl(EventLevel.WARN, EventSubsystem.MEMORY_MANAGER,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getHighMemoryUsageMessage(), new Object[] { memoryUsage,
-                                               critcalThreshold }), "");
-  }
-
   /**
    * DGC events
    */
@@ -173,16 +166,6 @@ public class TerracottaOperatorEventFactory {
                                            "config reload");
   }
 
-  /**
-   * Cluster state events
-   */
-  public static TerracottaOperatorEvent createActiveServerWithOldDataBaseEvent(String serverName) {
-    return new TerracottaOperatorEventImpl(EventLevel.INFO, EventSubsystem.SYSTEM_SETUP,
-                                           MessageFormat.format(TerracottaOperatorEventResources
-                                               .getActiveStartedWithOldDBMessage(), new Object[] { serverName }),
-                                           "old db");
-  }
-  
   /**
    * Resource Management
    */

@@ -21,40 +21,42 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
      * Memeory manager messages
      */
     Assert.assertTrue(TerracottaOperatorEventResources.getLongGCMessage().equals(this.resources.getObject("long.gc")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getLongGCAndOffheapRecommendationMessage()
-        .equals(this.resources.getObject("long.gc.no.offheap")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getHighMemoryUsageMessage()
-        .equals(this.resources.getObject("high.memory.usage")));
 
     /**
      * DGC messages
      */
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCStartedMessage().equals(
-                                                                                     this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCStartedMessage().equals(this.resources
                                                                                          .getObject("dgc.started")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCFinishedMessage().equals(
-                                                                                      this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCFinishedMessage().equals(this.resources
                                                                                           .getObject("dgc.finished")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCCanceledMessage().equals(
-                                                                                      this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCCanceledMessage().equals(this.resources
                                                                                           .getObject("dgc.canceled")));
+    /**
+     * Inline DGC
+     */
+    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupStartedMessage()
+        .equals(this.resources.getObject("inlineDgc.cleanup.started")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupFinishedMessage()
+        .equals(this.resources.getObject("inlineDgc.cleanup.finished")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getInlineDGCReferenceCleanupCanceledMessage()
+        .equals(this.resources.getObject("inlineDgc.cleanup.canceled")));
 
     /**
      * HA Messages
      */
     Assert.assertTrue(TerracottaOperatorEventResources.getNodeAvailabiltyMessage()
         .equals(this.resources.getObject("node.availability")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getOOODisconnectMessage()
-        .equals(this.resources.getObject("ooo.disconnect")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getOOOConnectMessage().equals(
-                                                                                     this.resources
-                                                                                         .getObject("ooo.connect")));
     Assert.assertTrue(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage()
         .equals(this.resources.getObject("node.state")));
 
     Assert.assertTrue(TerracottaOperatorEventResources.getHandshakeRejectedMessage()
         .equals(this.resources.getObject("handshake.reject")));
 
+    Assert.assertTrue(TerracottaOperatorEventResources.getActiveServerDisconnectMessage()
+        .equals(this.resources.getObject("active.server.disconnect")));
+
+    Assert.assertTrue(TerracottaOperatorEventResources.getMirrorServerDisconnectMessage()
+        .equals(this.resources.getObject("mirror.server.disconnect")));
     /**
      * Zap Messagse
      */
@@ -66,25 +68,33 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
         .assertTrue(TerracottaOperatorEventResources.getDirtyDBMessage().equals(this.resources.getObject("dirty.db")));
 
     /**
-     * Off heap message
+     * Dirty DB
      */
-    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapMemoryUsageMessage()
-        .equals(this.resources.getObject("offheap.memory.usage")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapMemoryEvictionMessage()
-        .equals(this.resources.getObject("offheap.memory.eviction")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapObjectCachedMessage()
-        .equals(this.resources.getObject("offheap.memory.objectCached")));
+    Assert
+        .assertTrue(TerracottaOperatorEventResources.getDirtyDBMessage().equals(this.resources.getObject("dirty.db")));
+
+    /**
+     * Servermap
+     */
+    Assert.assertTrue(TerracottaOperatorEventResources.getServerMapEvictionMessage()
+        .equals(this.resources.getObject("servermap.eviction")));
 
     /**
      * config related message
      */
+    Assert.assertTrue(TerracottaOperatorEventResources.getTimeDifferentMessage()
+        .equals(this.resources.getObject("time.different")));
     Assert.assertTrue(TerracottaOperatorEventResources.getConfigReloadedMessage()
         .equals(this.resources.getObject("config.reloaded")));
 
     /**
-     * cluster state events messages
+     * resource management
      */
-    Assert.assertEquals(TerracottaOperatorEventResources.getActiveStartedWithOldDBMessage(), this.resources.getObject("db.state"));
-
+    Assert.assertTrue(TerracottaOperatorEventResources.getNearResourceCapacityLimit()
+        .equals(this.resources.getObject("resource.nearcapacity")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getFullResourceCapacityLimit()
+        .equals(this.resources.getObject("resource.fullcapacity")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getRestoredNormalResourceCapacity()
+        .equals(this.resources.getObject("resource.capacityrestored")));
   }
 }

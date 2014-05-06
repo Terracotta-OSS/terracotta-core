@@ -20,26 +20,6 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("long.gc");
   }
 
-  static String getLongGCAndOffheapRecommendationMessage() {
-    return instance.resources.getString("long.gc.no.offheap");
-  }
-
-  static String getHighMemoryUsageMessage() {
-    return instance.resources.getString("high.memory.usage");
-  }
-
-  static String getOffHeapMemoryUsageMessage() {
-    return instance.resources.getString("offheap.memory.usage");
-  }
-
-  static String getOffHeapMemoryEvictionMessage() {
-    return instance.resources.getString("offheap.memory.eviction");
-  }
-
-  static String getOffHeapObjectCachedMessage() {
-    return instance.resources.getString("offheap.memory.objectCached");
-  }
-
   /**
    * DGC messages
    */
@@ -74,13 +54,6 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("node.availability");
   }
 
-  static String getOOODisconnectMessage() {
-    return instance.resources.getString("ooo.disconnect");
-  }
-
-  static String getOOOConnectMessage() {
-    return instance.resources.getString("ooo.connect");
-  }
 
   static String getClusterNodeStateChangedMessage() {
     return instance.resources.getString("node.state");
@@ -96,10 +69,6 @@ class TerracottaOperatorEventResources {
 
   static String getMirrorServerDisconnectMessage() {
     return instance.resources.getString("mirror.server.disconnect");
-  }
-
-  static String getStripeDisconnectMessage() {
-    return instance.resources.getString("stripe.disconnect");
   }
 
   /**
@@ -135,12 +104,6 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("config.reloaded");
   }
 
-  /**
-   * Cluster state events
-   */
-  static String getActiveStartedWithOldDBMessage() {
-    return instance.resources.getString("db.state");
-  }
   
   /**
    * resource management
