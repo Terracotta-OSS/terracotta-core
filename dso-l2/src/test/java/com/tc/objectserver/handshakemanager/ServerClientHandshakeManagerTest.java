@@ -64,7 +64,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private ServerClientHandshakeManager hm;
   private TestClientStateManager       clientStateManager;
   private TestLockManager              lockManager;
-  private TestSink                     lockResponseSink;
   private TestSink                     objectIDRequestSink;
   private Set                          existingUnconnectedClients;
   private TestTimer                    timer;
@@ -83,7 +82,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     this.existingUnconnectedClients = new HashSet();
     this.clientStateManager = new TestClientStateManager();
     this.lockManager = new TestLockManager();
-    this.lockResponseSink = new TestSink();
     this.objectIDRequestSink = new TestSink();
     this.timer = new TestTimer();
     this.channelManager = new TestChannelManager();
@@ -97,8 +95,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     this.hm = new ServerClientHandshakeManager(logger, this.channelManager, new TestServerTransactionManager(),
                                                this.transactionBatchManager, this.sequenceValidator,
                                                this.clientStateManager, this.invalidateObjMgr, this.lockManager,
-                                               Mockito.mock(ServerMapEvictionManager.class), this.lockResponseSink,
-                                               this.objectIDRequestSink, this.timer, reconnectTimeout, false, logger);
+                                               Mockito.mock(ServerMapEvictionManager.class),
+        this.objectIDRequestSink, this.timer, reconnectTimeout, false, logger);
     this.hm.setStarting(convertToConnectionIds(this.existingUnconnectedClients));
     this.hm.startReconnectWindow();
   }

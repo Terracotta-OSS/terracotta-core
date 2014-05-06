@@ -64,7 +64,7 @@ public class ServerClientHandshakeManager {
                                       final SequenceValidator sequenceValidator,
                                       final ClientStateManager clientStateManager,
                                       final InvalidateObjectManager invalidateObjMgr, final LockManager lockManager,
-                                      final ServerMapEvictionManager serverMapEvictor, final Sink lockResponseSink,
+                                      final ServerMapEvictionManager serverMapEvictor,
                                       final Sink oidRequestSink, final Timer timer, final long reconnectTimeout,
                                       final boolean persistent, final TCLogger consoleLogger) {
     this.logger = logger;
