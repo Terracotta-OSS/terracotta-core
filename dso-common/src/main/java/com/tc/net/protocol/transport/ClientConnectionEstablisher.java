@@ -221,11 +221,11 @@ public class ClientConnectionEstablisher {
             try {
               connectingToHost = InetAddress.getByName(connInfo.getHostname()).getHostAddress();
             } catch (UnknownHostException e) {
-              // these errors are caught even before
-              throw new RuntimeException(e);
+              handleConnectException(e, true, connectionErrorLossyLogger, connection);
+              // keep trying reconnects, for maxReconnectTries
+              continue;
             }
             int connectingToHostPort = connInfo.getPort();
-
             if ((addresses.hasNext()) && (previousConnectHost.equals(connectingToHost))
                 && (previousConnectHostPort == connectingToHostPort)) {
               continue;
