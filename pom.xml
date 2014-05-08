@@ -56,7 +56,7 @@
     <profile>
       <id>kit</id>
       <modules>
-        <module>terracotta-kit</module>
+        <module>../bigmemory-max-kit</module>
       </modules>
     </profile>
 
