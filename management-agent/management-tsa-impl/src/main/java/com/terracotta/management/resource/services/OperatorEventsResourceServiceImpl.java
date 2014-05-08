@@ -53,9 +53,10 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
       MultivaluedMap<String, String> qParams = info.getQueryParameters();
       String sinceWhen = qParams.getFirst(ATTR_QUERY_KEY__SINCE_WHEN);
       String eventTypes = qParams.getFirst(ATTR_QUERY_KEY__EVENT_TYPES);
+      String eventLevels = qParams.getFirst(ATTR_QUERY_KEY__EVENT_LEVELS);
       boolean filterOutRead = qParams.getFirst(ATTR_FILTER_KEY) == null || Boolean.parseBoolean(qParams.getFirst(ATTR_FILTER_KEY));
 
-      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, filterOutRead);
+      return operatorEventsService.getOperatorEvents(serverNames, sinceWhen, eventTypes, eventLevels, filterOutRead);
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to get TSA operator events", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -75,6 +76,9 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
         }
         if (operatorEventEntity.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
         }
         if (operatorEventEntity.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");
@@ -105,10 +109,13 @@ public class OperatorEventsResourceServiceImpl implements OperatorEventsResource
     for (OperatorEventEntity operatorEventEntity : operatorEventEntities) {
       try {
         if (operatorEventEntity.getEventLevel() == null) {
-          throw new ServiceExecutionException("eventType must not be null");
+          throw new ServiceExecutionException("eventLevel must not be null");
         }
         if (operatorEventEntity.getEventSubsystem() == null) {
           throw new ServiceExecutionException("eventSubsystem must not be null");
+        }
+        if (operatorEventEntity.getEventType() == null) {
+          throw new ServiceExecutionException("eventType must not be null");
         }
         if (operatorEventEntity.getCollapseString() == null) {
           throw new ServiceExecutionException("collapseString must not be null");

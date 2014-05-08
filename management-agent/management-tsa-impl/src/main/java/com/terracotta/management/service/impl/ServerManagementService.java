@@ -331,7 +331,7 @@ public class ServerManagementService {
     });
   }
 
-  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableLevels, final boolean read) throws ServiceExecutionException {
+  public Collection<OperatorEventEntity> getOperatorEvents(Set<String> serverNames, final Long sinceWhen, final Set<String> acceptableTypes, final Set<String> acceptableLevels, final boolean read) throws ServiceExecutionException {
     return forEachServer("getOperatorEvents", serverNames, new ForEachServer<OperatorEventEntity>() {
       @Override
       public Collection<OperatorEventEntity> queryLocalServer(L2Info member) {
@@ -342,6 +342,12 @@ public class ServerManagementService {
             if (operatorEvent.isRead() && read) {
               // filter out read events
               continue;
+            }
+            if (acceptableTypes != null) {
+              // filter out event types
+              if (!acceptableTypes.contains(operatorEvent.getEventTypeAsString())) {
+                continue;
+              }
             }
             if (acceptableLevels != null) {
               // filter out event levels
@@ -357,6 +363,7 @@ public class ServerManagementService {
             operatorEventEntity.setTimestamp(operatorEvent.getEventTime().getTime());
             operatorEventEntity.setCollapseString(operatorEvent.getCollapseString());
             operatorEventEntity.setEventSubsystem(operatorEvent.getEventSubsystemAsString());
+            operatorEventEntity.setEventType(operatorEvent.getEventTypeAsString());
             operatorEventEntity.setEventLevel(operatorEvent.getEventLevelAsString());
             operatorEventEntity.setRead(operatorEvent.isRead());
 
@@ -380,6 +387,7 @@ public class ServerManagementService {
             .path("operatorEvents")
             .matrixParam("names", member.name());
         if (sinceWhen != null) { uriBuilder.queryParam("sinceWhen", sinceWhen); }
+        if (acceptableTypes != null) { uriBuilder.queryParam("eventTypes", toCsv(acceptableTypes)); }
         if (acceptableLevels != null) { uriBuilder.queryParam("eventLevels", toCsv(acceptableLevels)); }
         uriBuilder.queryParam("filterOutRead", read);
 
