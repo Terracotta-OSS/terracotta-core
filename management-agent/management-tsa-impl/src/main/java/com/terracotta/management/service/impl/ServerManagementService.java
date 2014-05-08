@@ -708,6 +708,7 @@ public class ServerManagementService {
       TerracottaOperatorEvent terracottaOperatorEvent = new TerracottaOperatorEventImpl(
           TerracottaOperatorEvent.EventLevel.valueOf(operatorEventEntity.getEventLevel()),
           TerracottaOperatorEvent.EventSubsystem.valueOf(operatorEventEntity.getEventSubsystem()),
+          TerracottaOperatorEvent.EventType.valueOf(operatorEventEntity.getEventType()),
           operatorEventEntity.getMessage(), operatorEventEntity.getTimestamp(), operatorEventEntity.getCollapseString());
 
       return localManagementSource.markOperatorEvent(terracottaOperatorEvent, read);

@@ -20,8 +20,9 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
@@ -252,8 +253,9 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void fireOperatorEvent(EventLevel coreOperatorEventLevel, EventSubsystem coreEventSubsytem, String eventMessage) {
-    manager.fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventMessage);
+  public void fireOperatorEvent(EventLevel coreOperatorEventLevel, EventSubsystem coreEventSubsytem,
+                                EventType eventType, String eventMessage) {
+    manager.fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventType, eventMessage);
   }
 
   @Override

@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,8 +21,9 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
@@ -40,8 +43,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
-
-import static org.junit.Assert.assertEquals;
 
 public class ObjectStreamClassMappingTest {
 
@@ -236,6 +237,7 @@ public class ObjectStreamClassMappingTest {
 
     @Override
     public void fireOperatorEvent(EventLevel coreOperatorEventLevel, EventSubsystem coreEventSubsytem,
+                                  EventType eventType,
                                   String eventMessage) {
       //
     }
