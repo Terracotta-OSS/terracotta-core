@@ -30,6 +30,7 @@ import com.tc.util.TCAssertionError;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 @Category(CheckShorts.class)
 public class ClientConnectionEstablisherTest {
@@ -228,6 +229,27 @@ public class ClientConnectionEstablisherTest {
 
     connEstablisher.restoreConnection(cmt, sa, 0, watcher);
     Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
+  }
+
+  @Test
+  public void test_client_keeps_trying_for_reconnect_after_unknownHostException() throws Exception {
+    Mockito.doReturn(cai).when(connAddressProvider).getIterator();
+    Mockito.doReturn(logger).when(cmt).getLogger();
+    Mockito.stub(cai.hasNext()).toReturn(true).toReturn(false);
+
+    Mockito.doReturn(connInfo).when(cai).next();
+    Mockito.doThrow(new UnknownHostException("Host can not be resolved!")).when(spyConnEstablisher)
+        .getHostByName(connInfo);
+    Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) Mockito.any());
+    try {
+      spyConnEstablisher.reconnect(cmt);
+    } catch (RuntimeException re) {
+      String msg = "failed due to:" + re.getMessage();
+      if (re.getCause() instanceof UnknownHostException) {
+        msg = "Got UnknownHostException,it should be ignored and we should keep trying reconnect";
+      }
+      Assert.fail(msg);
+    }
   }
 
   public static class DummyAsyncReconnect extends AsyncReconnect {

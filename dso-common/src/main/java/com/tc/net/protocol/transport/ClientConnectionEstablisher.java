@@ -219,7 +219,7 @@ public class ClientConnectionEstablisher {
             }
             String connectingToHost = "";
             try {
-              connectingToHost = InetAddress.getByName(connInfo.getHostname()).getHostAddress();
+              connectingToHost = getHostByName(connInfo);
             } catch (UnknownHostException e) {
               handleConnectException(e, true, connectionErrorLossyLogger, connection);
               // keep trying reconnects, for maxReconnectTries
@@ -256,6 +256,10 @@ public class ClientConnectionEstablisher {
     } finally {
       asyncReconnecting.set(false);
     }
+  }
+
+  String getHostByName(final ConnectionInfo connInfo) throws UnknownHostException {
+    return InetAddress.getByName(connInfo.getHostname()).getHostAddress();
   }
 
   // TRUE for L2, for L1 only if not stopped
