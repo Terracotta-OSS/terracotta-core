@@ -63,9 +63,9 @@ public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventH
   }
 
   private void incrementUnread(TerracottaOperatorEvent operatorEvent, int count) {
-    String eventTypeName = operatorEvent.getEventLevel().name();
-    Integer value = unreadCounts.get(eventTypeName);
-    unreadCounts.put(eventTypeName, Integer.valueOf(value.intValue() + count));
+    String eventLevelName = operatorEvent.getEventLevel().name();
+    Integer value = unreadCounts.get(eventLevelName);
+    unreadCounts.put(eventLevelName, Integer.valueOf(value.intValue() + count));
   }
 
   @Override

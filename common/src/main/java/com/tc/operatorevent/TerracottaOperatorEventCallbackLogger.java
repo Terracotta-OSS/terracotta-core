@@ -16,24 +16,24 @@ public class TerracottaOperatorEventCallbackLogger implements TerracottaOperator
     EventLevel eventType = event.getEventLevel();
     switch (eventType) {
       case INFO:
-        this.logger.info("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "
-                         + event.getEventMessage());
+        this.logger.info("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " EventType: "
+                         + event.getEventType() + " Message: " + event.getEventMessage());
         break;
       case WARN:
-        this.logger.warn("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "
-                         + event.getEventMessage());
+        this.logger.warn("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " EventType: "
+                         + event.getEventType() + " Message: " + event.getEventMessage());
         break;
       case DEBUG:
-        this.logger.debug("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "
-                          + event.getEventMessage());
+        this.logger.debug("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " EventType: "
+                          + event.getEventType() + " Message: " + event.getEventMessage());
         break;
       case ERROR:
-        this.logger.error("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "
-                          + event.getEventMessage());
+        this.logger.error("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " EventType: "
+                          + event.getEventType() + " Message: " + event.getEventMessage());
         break;
       case CRITICAL:
-        this.logger.fatal("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " Message: "
-                          + event.getEventMessage());
+        this.logger.fatal("NODE : " + event.getNodeName() + " Subsystem: " + event.getEventSubsystem() + " EventType: "
+                          + event.getEventType() + " Message: " + event.getEventMessage());
         break;
       default:
         throw new RuntimeException("invalid event type: " + eventType);
