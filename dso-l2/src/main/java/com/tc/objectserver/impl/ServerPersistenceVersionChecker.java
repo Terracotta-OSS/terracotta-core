@@ -5,6 +5,7 @@ import com.tc.logging.TCLogging;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 
 /**
  * @author tim
@@ -24,13 +25,7 @@ public class ServerPersistenceVersionChecker {
   }
 
   private boolean checkVersion(Version persisted, Version current) {
-    // TODO: increase the range of allowed versions when they exist
-    if (persisted != null && (
-        current.major() != persisted.major() ||
-        current.minor() < persisted.minor() ||
-        current.micro() < persisted.micro())) {
-      return false;
-    }
+    if (persisted != null) { return new VersionCompatibility().isCompatibleServerPersistence(persisted, current); }
     return true;
   }
 
@@ -38,7 +33,11 @@ public class ServerPersistenceVersionChecker {
     Version currentVersion = new Version(productInfo.version());
     Version persistedVersion = clusterStatePersistor.getVersion();
     if (checkVersion(clusterStatePersistor.getVersion(), currentVersion)) {
-      clusterStatePersistor.setVersion(currentVersion);
+      
+      // only move persisted version forward
+      if (persistedVersion == null || currentVersion.compareTo(persistedVersion) > 0) {
+        clusterStatePersistor.setVersion(currentVersion);
+      }
     } else {
       LOGGER.error("Incompatible data format detected. Found data for version " + persistedVersion +" expecting data for version " + currentVersion + ".");
       LOGGER.error("Verify that the correct data is in the server data path, and try again.");

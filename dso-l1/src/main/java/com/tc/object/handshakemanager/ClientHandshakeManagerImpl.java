@@ -22,6 +22,8 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
+import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.Collection;
@@ -207,7 +209,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       return;
     }
 
-    checkClientServerVersionMatch(serverVersion);
+    checkClientServerVersionCompatibility(serverVersion);
     this.serverIsPersistent = persistentServer;
     lock.lock();
     try {
@@ -223,11 +225,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     }
   }
 
-  protected void checkClientServerVersionMatch(final String serverVersion) {
-    final boolean checkVersionMatches = TCPropertiesImpl.getProperties()
-        .getBoolean(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK);
-    if (checkVersionMatches && !this.clientVersion.equals(serverVersion)) {
-      final String msg = "Client/Server Version Mismatch Error: Client Version: " + this.clientVersion
+  protected void checkClientServerVersionCompatibility(final String serverVersion) {
+    final boolean check = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
+
+    if (check && !new VersionCompatibility().isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion))) {
+      final String msg = "Client/Server versions are not compatibile: Client Version: " + clientVersion
                          + ", Server Version: " + serverVersion + ".  Terminating client now.";
       CONSOLE_LOGGER.error(msg);
       throw new IllegalStateException(msg);

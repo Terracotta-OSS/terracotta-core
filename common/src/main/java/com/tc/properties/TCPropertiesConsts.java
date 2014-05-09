@@ -58,7 +58,7 @@ public interface TCPropertiesConsts {
       "l2.offHeapCache.skip.jvmarg.check", "l1.cachemanager.enabled", "l1.cachemanager.logging.enabled",
       "l1.cachemanager.leastCount", "l1.cachemanager.percentageToEvict", "l1.cachemanager.sleepInterval",
       "l1.cachemanager.criticalThreshold", "l1.cachemanager.threshold", "l1.cachemanager.monitorOldGenOnly",
-      "l1.cachemanager.criticalObjectThreshold"                                            };
+      "l1.cachemanager.criticalObjectThreshold", "l1.connect.versionMatchCheck.enabled", "l1.jvm.check.compatibility" };
 
   /*********************************************************************************************************************
    * <code>
@@ -76,8 +76,8 @@ public interface TCPropertiesConsts {
   public static final String L2_EVICTION_CRITICALTHRESHOLD                                  = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                            = "l2.eviction.resourcePollInterval";
   public static final String L2_EVICTION_HALTTHRESHOLD                                      = "l2.eviction.haltThreshold";
-  public static final String L2_EVICTION_OFFHEAP_STOPPAGE                                      = "l2.eviction.offheap.stoppage";
-  public static final String L2_EVICTION_STORAGE_STOPPAGE                                            = "l2.eviction.storage.stoppage";
+  public static final String L2_EVICTION_OFFHEAP_STOPPAGE                                   = "l2.eviction.offheap.stoppage";
+  public static final String L2_EVICTION_STORAGE_STOPPAGE                                   = "l2.eviction.storage.stoppage";
 
   /*********************************************************************************************************************
    * <code>
@@ -306,16 +306,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 JVM Compatibility Properties
-   * Description : This section contains the defaults for the JVM compatibility for the L1
-   * jvm.check.compatibility : Makes sure that the boot jar with which L1 is running matches
-   *                           the current VM version running the L1 application
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L1_JVM_CHECK_COMPATIBILITY                                     = "l1.jvm.check.compatibility";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section : L1 L2 Config match Property
    * Description : This property will check if the client has to match server config i.e. check cluster topology
    * </code>
@@ -396,15 +386,12 @@ public interface TCPropertiesConsts {
    * Section: L1 Connect Properties
    * Description: This section contains properties controlling L1 connect feature
    * max.connect.retries               - Maximum L2 connection attempts
-   * connect.versionMatchCheck.enabled - If true, connection is established only when
-   *                                     L1 and L2 are of the same DSO version
    * socket.connect.timeout            - Socket timeout (ms) when connecting to server
    * reconnect.waitInterval            - Sleep time (ms) between trying connections to the server
    *                                     (values less than 10ms will be set to 10ms)
    * </code>
    ********************************************************************************************************************/
   public static final String L1_MAX_CONNECT_RETRIES                                         = "l1.max.connect.retries";
-  public static final String L1_CONNECT_VERSION_MATCH_CHECK                                 = "l1.connect.versionMatchCheck.enabled";
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                      = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                              = "l1.socket.reconnect.waitInterval";
   public static final String L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS                           = "l1.clusterevents.outofbandnotifier.jointime.millis";
@@ -603,7 +590,7 @@ public interface TCPropertiesConsts {
    *                                NONE - Override no local configuration with cluster configurations
    *                                GLOBAL - Only override settings applicable to both server and client components of a cache
    *                                ALL - Accepts overrides from the server for all settings
-   *
+   * 
    * 
    * </code>
    ********************************************************************************************************************/
@@ -831,10 +818,10 @@ public interface TCPropertiesConsts {
   public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeap.allocation.slow";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeap.allocation.critical";
   public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeap.allocation.critical.halt";
-  public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                                 = "l2.offHeap.allocation.partial.disable.maps";
-  public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                                 = "l2.offHeap.allocation.partial.disable.objects";
-  public static final String L2_ALLOCATION_ENABLE_OBJECTS_HOTSET                                = "l2.offHeap.allocation.partial.enable.object.hotset";
-  public static final String L2_ALLOCATION_DISABLE_MAPS_HOTSET                                = "l2.offHeap.allocation.partial.disable.map.hotset";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_MAPS                             = "l2.offHeap.allocation.partial.disable.maps";
+  public static final String L2_ALLOCATION_DISABLE_PARTIAL_OBJECTS                          = "l2.offHeap.allocation.partial.disable.objects";
+  public static final String L2_ALLOCATION_ENABLE_OBJECTS_HOTSET                            = "l2.offHeap.allocation.partial.enable.object.hotset";
+  public static final String L2_ALLOCATION_DISABLE_MAPS_HOTSET                              = "l2.offHeap.allocation.partial.disable.map.hotset";
 
   public static final String L2_OFFHEAP_DISABLED                                            = "l2.offheap.disable";
 
@@ -916,5 +903,13 @@ public interface TCPropertiesConsts {
    * For enabling CAS logging
    */
   public static final String CAS_LOGGING_ENABLED                                            = "cas.logging.enabled";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Version Settings
+   * version.compatibility.check - check version compatibility for client<->server and server<-> connections
+   * </code>
+   ********************************************************************************************************************/
+  public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
 
 }

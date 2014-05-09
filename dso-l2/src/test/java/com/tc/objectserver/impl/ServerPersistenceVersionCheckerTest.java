@@ -1,5 +1,11 @@
 package com.tc.objectserver.impl;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -9,21 +15,15 @@ import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * @author tim
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ ProductInfo.class })
 public class ServerPersistenceVersionCheckerTest extends TCTestCase {
-  private ClusterStatePersistor clusterStatePersistor;
+  private ClusterStatePersistor           clusterStatePersistor;
   private ServerPersistenceVersionChecker serverPersistenceVersionChecker;
-  private ProductInfo productInfo;
+  private ProductInfo                     productInfo;
 
   @Override
   public void setUp() throws Exception {
@@ -47,25 +47,25 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   public void testDotVersionDrop() throws Exception {
     currentVersion("1.0.0");
     persistedVersion("1.0.1");
-    verifyNoVersionUpdate();
+    verifyNoUpdate();
   }
 
   public void testMinorVersionBump() throws Exception {
     currentVersion("1.1.0");
     persistedVersion("1.0.0");
-    verifyUpdatedTo("1.1.0");
+    verifyExceptionAndNoUpdate();
   }
 
   public void testMinorVersionDrop() throws Exception {
     currentVersion("1.0.0");
     persistedVersion("1.1.0");
-    verifyNoVersionUpdate();
+    verifyExceptionAndNoUpdate();
   }
 
   public void testMajorVersionBump() throws Exception {
     persistedVersion("1.0.0");
     currentVersion("2.0.0");
-    verifyNoVersionUpdate();
+    verifyExceptionAndNoUpdate();
   }
 
   public void testInitializeVersion() throws Exception {
@@ -83,7 +83,7 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   public void testDoNotOverwriteNewerVersion() throws Exception {
     currentVersion("1.0.0");
     persistedVersion("1.0.1");
-    verifyNoVersionUpdate();
+    verifyNoUpdate();
   }
 
   private void currentVersion(String v) {
@@ -99,7 +99,12 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
     verify(clusterStatePersistor).setVersion(new Version(v));
   }
 
-  private void verifyNoVersionUpdate() {
+  private void verifyNoUpdate() {
+    serverPersistenceVersionChecker.checkAndSetVersion();
+    verify(clusterStatePersistor, never()).setVersion(any(Version.class));
+  }
+
+  private void verifyExceptionAndNoUpdate() {
     try {
       serverPersistenceVersionChecker.checkAndSetVersion();
       fail();

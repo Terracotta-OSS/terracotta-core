@@ -29,6 +29,7 @@ import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.ServerURL;
 import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.io.IOException;
@@ -348,7 +349,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
     for (int stripeNumber = 0; stripeNumber < connectionInfoItems.length; stripeNumber++) {
       ConnectionInfo[] connectionInfo = connectionInfoItems[stripeNumber].getConnectionInfos();
-      boolean foundCompactibleActive = false;
+      boolean foundCompatibleActive = false;
       boolean activeDown = false;
       int serverNumberInStripe = 0;
       long startTime = System.currentTimeMillis();
@@ -392,7 +393,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
             } else {
               // active was not down and we have reached end of array
               // we didn't find any compatible active
-              foundCompactibleActive = false;
+              foundCompatibleActive = false;
               break;
             }
           } else {
@@ -404,14 +405,14 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
           continue;
         } else {
           Version serverVersion = new Version(strServerVersion);
-          foundCompactibleActive = matchServerClientVersion(serverVersion, serverUrl);
+          foundCompatibleActive = checkServerClientVersion(serverVersion, serverUrl);
           break;
         }
       }
       if ((endTime - startTime) > CONFIGURATION_TOTAL_TIMEOUT) { throw new ConfigurationSetupException(
                                                                                                        "Timeout occured while trying to get Server Version, No Active server Found for : "
                                                                                                            + CONFIGURATION_TOTAL_TIMEOUT); }
-      if (!foundCompactibleActive) {
+      if (!foundCompatibleActive) {
         if (activeDown) {
           throw new IllegalStateException(
                                           "At least one of the stripes is down, couldn't get the server version for compatibility check!");
@@ -424,11 +425,11 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
-  private boolean matchServerClientVersion(Version serverVersion, ServerURL serverUrl) {
+  private boolean checkServerClientVersion(Version serverVersion, ServerURL serverUrl) {
     Version clientVersion = getClientVersion();
-    if (!clientVersion.equals(serverVersion)) {
-      throw new IllegalStateException("Client-Server Version mismatch occured: client version : " + clientVersion
-                                      + " is not compatible with serverVersion : " + serverVersion);
+    if (!new VersionCompatibility().isCompatibleClientServer(clientVersion, serverVersion)) {
+      throw new IllegalStateException("Client-Server versions are incompatible: client version=" + clientVersion
+                                      + ", serverVersion=" + serverVersion);
     } else {
       logger.debug("Found Compatible active Server = " + serverUrl);
       return true;

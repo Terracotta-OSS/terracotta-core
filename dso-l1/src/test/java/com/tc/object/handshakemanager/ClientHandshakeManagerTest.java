@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandshakeManagerTest extends TCTestCase {
-  private static final String               clientVersion = "x.y.z";
+  private static final String               clientVersion = "1.2.3";
+
   private TestClientHandshakeManagerImpl    mgr;
   private TestClientHandshakeMessageFactory chmf;
   private TestClientHandshakeCallback       callback;
@@ -261,7 +262,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
   }
 
   private boolean checkVersionMatchEnabled() {
-    return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK);
+    return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
   }
 
   private static class TestClientHandshakeMessageFactory implements ClientHandshakeMessageFactory {

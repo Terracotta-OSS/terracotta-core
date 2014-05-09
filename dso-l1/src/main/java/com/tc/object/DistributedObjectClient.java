@@ -393,8 +393,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     validateGroupConfig();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
-    final boolean matchClientServerVersion = tcProperties.getBoolean(TCPropertiesConsts.L1_CONNECT_VERSION_MATCH_CHECK);
-    if (matchClientServerVersion) {
+    final boolean checkClientServerVersions = tcProperties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
+    if (checkClientServerVersions) {
       validateClientServerCompatibility();
     }
     this.l1Properties = tcProperties.getPropertiesFor("l1");
