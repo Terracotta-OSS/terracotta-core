@@ -21,6 +21,7 @@ import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
+import com.tc.util.concurrent.TaskRunner;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 import com.terracotta.toolkit.collections.map.ServerMap;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
@@ -51,6 +52,8 @@ public class AggregateServerMapQuickApiTest {
   private PlatformService          platformService;
   @Mock
   private ServerMap                serverMap;
+  @Mock
+  private TaskRunner               taskRunner;
 
   @Before
   public void setUp() {
@@ -61,6 +64,7 @@ public class AggregateServerMapQuickApiTest {
                                     Consistency.STRONG.name());
     when(platformService.getTCProperties()).thenReturn(NullTCProperties.INSTANCE);
     when(platformService.getDsoCluster()).thenReturn(new MockDsoCluster());
+    when(platformService.getTaskRunner()).thenReturn(taskRunner);
 
     aggregateServerMap = new MockAggregateServerMap(ToolkitObjectType.CACHE, null, null, "TestCache", stripe, config,
                                                     schemaCreator, null, platformService, mock(ToolkitLock.class));

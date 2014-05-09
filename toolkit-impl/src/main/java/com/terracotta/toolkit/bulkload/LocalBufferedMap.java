@@ -120,13 +120,14 @@ public class LocalBufferedMap<K, V> {
   }
 
   public V remove(K key, final long version) {
-    BufferedOperation<V> remove = new Operation<V>(version);
+    BufferedOperation<V> remove = backend.createBufferedOperation(BufferedOperation.Type.REMOVE, key, null, version,
+        NO_CREATETIME, NO_TTI, NO_TTL);
     readLock();
     try {
       checkBuffering();
       BufferedOperation<V> old = collectBuffer.put(key, remove);
       if (old == null) {
-        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, remove, null).getCalculated());
+        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, null, null).getCalculated());
         return null;
       } else {
         return old.getValue();
@@ -210,7 +211,7 @@ public class LocalBufferedMap<K, V> {
       final K key = entry.getKey();
       BufferedOperation<V> wrappedValue = entry.getValue();
       final V value = wrappedValue.getValue();
-      if (wrappedValue.getType() != Operation.Type.REMOVE) {
+      if (wrappedValue.getType() != BufferedOperation.Type.REMOVE) {
         rv.add(new Map.Entry<K, V>() {
 
           @Override
@@ -235,7 +236,8 @@ public class LocalBufferedMap<K, V> {
 
   public V put(K key, V value, final long version, int createTimeInSecs, int customMaxTTISeconds,
                int customMaxTTLSeconds) {
-    BufferedOperation<V> wrappedValue = new Operation<V>(Operation.Type.PUT, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    BufferedOperation<V> wrappedValue = backend.createBufferedOperation(BufferedOperation.Type.PUT, key, value,
+        version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     BufferedOperation<V> rv = null;
     throttleIfNecessary();
     readLock();
@@ -243,7 +245,7 @@ public class LocalBufferedMap<K, V> {
       checkBuffering();
       rv = collectBuffer.put(key, wrappedValue);
       if (rv == null) {
-        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated());
+        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, value, null).getCalculated());
       }
     } finally {
       readUnlock();
@@ -253,7 +255,8 @@ public class LocalBufferedMap<K, V> {
 
   public V putIfAbsent(K key, V value, final long version, int createTimeInSecs, int customMaxTTISeconds,
                        int customMaxTTLSeconds) {
-    BufferedOperation<V> wrappedValue = new Operation<V>(Operation.Type.PUT_IF_ABSENT, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+    BufferedOperation<V> wrappedValue = backend.createBufferedOperation(BufferedOperation.Type.PUT_IF_ABSENT, key,
+        value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     BufferedOperation<V> rv = null;
     throttleIfNecessary();
     readLock();
@@ -261,7 +264,7 @@ public class LocalBufferedMap<K, V> {
       checkBuffering();
       rv = collectBuffer.putIfAbsent(key, wrappedValue);
       if (rv == null) {
-        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, wrappedValue, null).getCalculated());
+        pendingOpsByteSize.addAndGet(sizeOfEngine.sizeOf(key, value, null).getCalculated());
       }
     } finally {
       readUnlock();
@@ -354,7 +357,7 @@ public class LocalBufferedMap<K, V> {
     readLock();
     try {
       BufferedOperation<V> v = collectBuffer.get(obj);
-      return v != null && v.getType() == Operation.Type.REMOVE;
+      return v != null && v.getType() == BufferedOperation.Type.REMOVE;
     } finally {
       readUnlock();
     }
@@ -371,62 +374,4 @@ public class LocalBufferedMap<K, V> {
   private void checkBuffering() {
     checkState(flusher != null, "Not buffering");
   }
-
-  private static class Operation<T> implements BufferedOperation<T> {
-    private final Type type;
-    private final T    value;
-    private final int  createTimeInSecs;
-    private final int  customMaxTTISeconds;
-    private final int  customMaxTTLSeconds;
-    private final long version;
-
-    Operation(long version) {
-      this(Type.REMOVE, null, version, NO_CREATETIME, NO_TTI, NO_TTL);
-    }
-
-    Operation(Type type, T value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-      this.type = type;
-      this.value = value;
-      this.createTimeInSecs = createTimeInSecs;
-      this.customMaxTTISeconds = customMaxTTISeconds;
-      this.customMaxTTLSeconds = customMaxTTLSeconds;
-      this.version = version;
-    }
-
-    @Override
-    public Type getType() {
-      return type;
-    }
-
-    @Override
-    public T getValue() {
-      return value;
-    }
-
-    @Override
-    public boolean isVersioned() {
-      return this.version != NO_VERSION;
-    }
-
-    @Override
-    public int getCreateTimeInSecs() {
-      return createTimeInSecs;
-    }
-
-    @Override
-    public int getCustomMaxTTISeconds() {
-      return customMaxTTISeconds;
-    }
-
-    @Override
-    public int getCustomMaxTTLSeconds() {
-      return customMaxTTLSeconds;
-    }
-
-    @Override
-    public long getVersion() {
-      return version;
-    }
-  }
-
 }

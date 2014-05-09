@@ -16,10 +16,12 @@ import com.google.common.collect.Sets;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.VersionedObject;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.toolkit.TerracottaToolkit;
+import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.factory.impl.ToolkitCacheDistributedTypeFactory;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
@@ -28,14 +30,20 @@ import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.search.SearchFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -58,11 +66,67 @@ public class ServerMapTest {
     platformService = mock(PlatformService.class);
     when(platformService.getTCProperties()).thenReturn(TCPropertiesImpl.getProperties());
     serializationStrategy = mock(SerializationStrategy.class);
+    when(serializationStrategy.serialize(any(), anyBoolean())).thenReturn(new byte[1]);
     when(platformService.lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME, SerializationStrategy.class))
         .thenReturn(serializationStrategy);
 
     mockStatic(PlatformServiceProvider.class);
     when(PlatformServiceProvider.getPlatformService()).thenReturn(platformService);
+  }
+
+  @Test
+  public void testCreateRemoveBufferedOperation() throws Exception {
+    ServerMap serverMap = new ServerMap(configuration, "foo");
+    serverMap.__tc_managed(tcObjectServerMap);
+
+    BufferedOperation bo = serverMap.createBufferedOperation(BufferedOperation.Type.REMOVE, "foo", null, 1, 2, 3, 4);
+    assertThat(bo.getType(), is(BufferedOperation.Type.REMOVE));
+    assertThat(bo.getValue(), nullValue());
+    assertThat(bo.getVersion(), is(1L));
+  }
+
+  @Test
+  public void testCreatePutIfAbsentBufferedOperation() throws Exception {
+    ServerMap serverMap = new ServerMap(configuration, "foo");
+    serverMap.__tc_managed(tcObjectServerMap);
+
+    BufferedOperation<String> bo = serverMap.createBufferedOperation(BufferedOperation.Type.PUT_IF_ABSENT, "foo", "bar", 1, 2, 3, 4);
+    assertThat(bo.getType(), is(BufferedOperation.Type.PUT_IF_ABSENT));
+    assertThat(bo.getValue(), is("bar"));
+    assertThat(bo.getVersion(), is(1L));
+    assertThat(bo.getCreateTimeInSecs(), is(2));
+    assertThat(bo.getCustomMaxTTISeconds(), is(3));
+    assertThat(bo.getCustomMaxTTLSeconds(), is(4));
+  }
+
+  @Test
+  public void testCreatePutBufferedOperation() throws Exception {
+    ServerMap serverMap = new ServerMap(configuration, "foo");
+    serverMap.__tc_managed(tcObjectServerMap);
+
+    BufferedOperation<String> bo = serverMap.createBufferedOperation(BufferedOperation.Type.PUT, "foo", "bar", 4, 3, 2, 1);
+    assertThat(bo.getType(), is(BufferedOperation.Type.PUT));
+    assertThat(bo.getValue(), is("bar"));
+    assertThat(bo.getVersion(), is(4L));
+    assertThat(bo.getCreateTimeInSecs(), is(3));
+    assertThat(bo.getCustomMaxTTISeconds(), is(2));
+    assertThat(bo.getCustomMaxTTLSeconds(), is(1));
+  }
+
+  @Test
+  public void testDrain() throws Exception {
+    ServerMap serverMap = new ServerMap(configuration, "foo");
+    serverMap.__tc_managed(tcObjectServerMap);
+
+    Map<String, BufferedOperation<String>> operations = new HashMap<String, BufferedOperation<String>>();
+    operations.put("foo", serverMap.createBufferedOperation(BufferedOperation.Type.PUT, "foo", "bar", 4, 3, 2, 1));
+    operations.put("bar", serverMap.createBufferedOperation(BufferedOperation.Type.PUT_IF_ABSENT, "bar", "bar", 4, 3, 2, 1));
+    operations.put("baz", serverMap.createBufferedOperation(BufferedOperation.Type.REMOVE, "baz", null, 4, 0, 0, 0));
+
+    serverMap.drain(operations);
+    verify(tcObjectServerMap).doLogicalPutUnlockedVersioned(any(TCServerMap.class), eq("foo"), any(), eq(4L));
+    verify(tcObjectServerMap).doLogicalPutIfAbsentVersioned(eq("bar"), any(), eq(4L));
+    verify(tcObjectServerMap).doLogicalRemoveUnlockedVersioned(any(TCServerMap.class), eq("baz"), eq(4L));
   }
 
   @Test

@@ -20,5 +20,5 @@ public interface SerializedClusterObjectFactory {
   /**
    * Creates serialized map value, that can be stored in the cluster, in the stripe denoted by gid
    */
-  SerializedMapValue createSerializedMapValue(SerializedMapValueParameters params, GroupID gid);
+  <T> SerializedMapValue<T> createSerializedMapValue(SerializedMapValueParameters<T> params, GroupID gid);
 }

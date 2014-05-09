@@ -37,6 +37,7 @@ import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -63,6 +64,9 @@ import com.tc.server.CustomLifespanVersionedServerEvent;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import com.tc.server.VersionedServerEvent;
+import com.tc.util.Util;
+import com.tc.util.concurrent.TaskRunner;
+import com.tc.util.concurrent.Timer;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.bulkload.BufferBackend;
@@ -112,6 +116,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
@@ -155,6 +162,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private volatile ToolkitAttributeExtractor                               attributeExtractor;
   private final CopyOnWriteArraySet<VersionUpdateListener<K, V>>           versionUpdateListeners;
   private final ToolkitLock                                                concurrentLock;
+  private final TaskRunner                                                 taskRunner;
+  private final Timer timer;
 
   protected int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -188,7 +197,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.versionUpdateListeners = new CopyOnWriteArraySet<VersionUpdateListener<K, V>>();
 
     this.config = new UnclusteredConfiguration(config);
-    this.consistency = Consistency.valueOf((String) InternalCacheConfigurationType.CONSISTENCY
+    this.consistency = Consistency.valueOf((String)InternalCacheConfigurationType.CONSISTENCY
         .getExistingValueOrException(config));
     localCacheStore = createLocalCacheStore();
     pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
@@ -197,6 +206,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.lockStrategy = getLockStrategyFromConfig(config);
     setupStripeObjects(stripeObjects);
     concurrentLock = ToolkitLockingApi.createConcurrentTransactionLock("CONCURRENT_LOCK_FOR_BULKLOAD", platformService);
+    taskRunner = platformService.getTaskRunner();
+    timer = taskRunner.newTimer();
   }
 
   private void setupStripeObjects(ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects) {
@@ -622,6 +633,21 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     for (Object o : map.entrySet()) {
       Entry entry = (Entry)o;
       batches.put(getServerMapIndexForKey(entry.getKey()), entry);
+    }
+    return batches;
+  }
+
+  private Map<InternalToolkitMap, Map> createBatchesPerServerMap(Map map) {
+    Map<InternalToolkitMap, Map> batches = new HashMap<InternalToolkitMap, Map>();
+    for (Object o : map.entrySet()) {
+      Entry e = (Entry) o;
+      InternalToolkitMap serverMap = getServerMapForKey(e.getKey());
+      Map batch = batches.get(serverMap);
+      if (batch == null) {
+        batch = new HashMap();
+        batches.put(serverMap, batch);
+      }
+      batch.put(e.getKey(), e.getValue());
     }
     return batches;
   }
@@ -1217,51 +1243,33 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void drain(final Map<K, BufferedOperation<V>> buffer) {
-    Multimap<Integer, Entry> batches = createBatchsForServerMap(buffer);
-    for (Entry<Integer, Collection<Entry>> batch : batches.asMap().entrySet()) {
-      int serverMapIndex = batch.getKey();
-      concurrentLock.lock();
+    Map<InternalToolkitMap, Map> batches = createBatchesPerServerMap(buffer);
+    Collection<Future<?>> futures = new ArrayList<Future<?>>(batches.size());
+    for (final Entry<InternalToolkitMap, Map> entry : batches.entrySet()) {
+      futures.add(timer.schedule(new Runnable() {
+        @Override
+        public void run() {
+          entry.getKey().drain(entry.getValue());
+        }
+      }, 0, TimeUnit.MILLISECONDS));
+    }
+    boolean interrupted = false;
+    for (Future<?> future : futures) {
       try {
-        // for single serverMap
-        for (Entry e : batch.getValue()) {
-          BufferedOperation operation = (BufferedOperation) e.getValue();
-          if (!operation.isVersioned()) {
-            switch (operation.getType()) {
-              case PUT:
-                serverMaps[serverMapIndex].unlockedPutNoReturn((K) e.getKey(), (V) operation.getValue(), operation.getCreateTimeInSecs(),
-                    operation.getCustomMaxTTISeconds(), operation.getCustomMaxTTLSeconds());
-                break;
-              case PUT_IF_ABSENT:
-                // putIfAbsent returns by default, so a buffered up putIfAbsent doesn't really work...
-                throw new UnsupportedOperationException("Can't do buffered putIfAbsent");
-              case REMOVE:
-                serverMaps[serverMapIndex].unlockedRemoveNoReturn(e.getKey());
-                break;
-            }
-          } else {
-            switch (operation.getType()) {
-              case PUT:
-                serverMaps[serverMapIndex].unlockedPutNoReturnVersioned((K)e.getKey(), (V)operation.getValue(), operation
-                    .getVersion(),
-                    operation.getCreateTimeInSecs(), operation.getCustomMaxTTISeconds(),
-                    operation.getCustomMaxTTLSeconds());
-                break;
-              case PUT_IF_ABSENT:
-                // "versioned" variant of putIfAbsent does not return
-                serverMaps[serverMapIndex].unlockedPutIfAbsentNoReturnVersioned((K)e.getKey(), (V)operation.getValue(),
-                    operation.getVersion(), operation.getCreateTimeInSecs(), operation.getCustomMaxTTISeconds(),
-                    operation.getCustomMaxTTLSeconds());
-                break;
-              case REMOVE:
-                serverMaps[serverMapIndex].unlockedRemoveNoReturnVersioned(e.getKey(), operation.getVersion());
-                break;
-            }
+        while (true) {
+          try {
+            future.get();
+            break;
+          } catch (InterruptedException e) {
+            interrupted = true;
           }
         }
-      } finally {
-        concurrentLock.unlock();
+      } catch (ExecutionException e) {
+        LOGGER.error("Error draining batch", e);
+        Throwables.propagate(e);
       }
     }
+    Util.selfInterruptIfNeeded(interrupted);
   }
 
   @Override
@@ -1301,5 +1309,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public boolean replace(K key, V oldValue, V newValue, ToolkitValueComparator<V> comparator) {
     return getServerMapForKey(key).replace(key, oldValue, newValue, comparator);
+  }
+
+  @Override
+  public BufferedOperation<V> createBufferedOperation(final BufferedOperation.Type type, final K key, final V value,
+                                                      final long version, final int createTimeInSecs,
+                                                      final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    return getServerMapForKey(key).createBufferedOperation(type, key, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 }

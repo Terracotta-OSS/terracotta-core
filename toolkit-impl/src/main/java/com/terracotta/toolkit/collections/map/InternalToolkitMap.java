@@ -17,6 +17,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
+import com.terracotta.toolkit.bulkload.BufferBackend;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.object.TCToolkitObject;
 
@@ -26,7 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerMap, TCToolkitObject,
-    ValuesResolver<K, V> {
+    ValuesResolver<K, V>, BufferBackend<K, V> {
 
   String getName();
 

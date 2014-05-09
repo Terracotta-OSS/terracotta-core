@@ -69,22 +69,22 @@ public class SerializedMapValueParameters<T> {
     this.lastAccessedTime = lastAccessedTime;
   }
 
-  public SerializedMapValueParameters deserialized(T deserializedParam) {
+  public SerializedMapValueParameters<T> deserialized(T deserializedParam) {
     this.setDeserialized(deserializedParam);
     return this;
   }
 
-  public SerializedMapValueParameters serialized(byte[] serializedParam) {
+  public SerializedMapValueParameters<T> serialized(byte[] serializedParam) {
     this.setSerialized(serializedParam);
     return this;
   }
 
-  public SerializedMapValueParameters createTime(int createTimeParam) {
+  public SerializedMapValueParameters<T> createTime(int createTimeParam) {
     this.setCreateTime(createTimeParam);
     return this;
   }
 
-  public SerializedMapValueParameters lastAccessedTime(int lastAccessedTimeParam) {
+  public SerializedMapValueParameters<T> lastAccessedTime(int lastAccessedTimeParam) {
     this.setLastAccessedTime(lastAccessedTimeParam);
     return this;
   }

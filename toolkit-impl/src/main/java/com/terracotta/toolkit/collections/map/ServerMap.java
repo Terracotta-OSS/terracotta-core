@@ -46,6 +46,8 @@ import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEventType;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.bulkload.BufferedOperation;
+import com.terracotta.toolkit.bulkload.LocalBufferedMap;
 import com.terracotta.toolkit.concurrent.locks.LockStrategy;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
@@ -492,10 +494,14 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void doLogicalPut(final K key, final V value, final long version, int createTimeInSecs,
                             int customMaxTTISeconds, int customMaxTTLSeconds, final MutateType type,
                             final Object lockID, final MetaData metaData) {
-    final K portableKey = (K) assertKeyLiteral(key);
-    final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
+    final K portableKey = assertKeyLiteral(key);
+    final SerializedMapValue<V> serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
                                                                            customMaxTTISeconds, customMaxTTLSeconds);
 
+    doLogicalPut(version, type, lockID, metaData, portableKey, serializedMapValue);
+  }
+
+  private void doLogicalPut(final long version, final MutateType type, final Object lockID, final MetaData metaData, final K portableKey, final SerializedMapValue<V> serializedMapValue) {
     switch (type) {
       case LOCKED:
         assertNotNull(lockID);
@@ -589,18 +595,24 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
-  private SerializedMapValue createSerializedMapValue(final V value, int createTimeInSecs, int customMaxTTISeconds,
+  private SerializedMapValue<V> createSerializedMapValue(final V value, int createTimeInSecs, int customMaxTTISeconds,
                                                       int customMaxTTLSeconds) {
-    SerializedMapValueParameters<V> params = new SerializedMapValueParameters<V>();
-    params.createTime(createTimeInSecs).deserialized(value).lastAccessedTime(createTimeInSecs);
-    params.setCustomTTI(customMaxTTISeconds).setCustomTTL(customMaxTTLSeconds);
-
-    params.serialized(serStrategy.serialize(value, compressionEnabled));
+    SerializedMapValueParameters<V> params = createSerializedMapValueParameters(value, createTimeInSecs,
+        customMaxTTISeconds, customMaxTTLSeconds);
 
     return serializedClusterObjectFactory.createSerializedMapValue(params, gid);
   }
 
-  private Object assertKeyLiteral(Object key) {
+  private <T> SerializedMapValueParameters<T> createSerializedMapValueParameters(final T value, final int createTimeInSecs, final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    SerializedMapValueParameters<T> params = new SerializedMapValueParameters<T>();
+    params.createTime(createTimeInSecs).deserialized(value).lastAccessedTime(createTimeInSecs);
+    params.setCustomTTI(customMaxTTISeconds).setCustomTTL(customMaxTTLSeconds);
+
+    params.serialized(serStrategy.serialize(value, compressionEnabled));
+    return params;
+  }
+
+  private <T> T assertKeyLiteral(T key) {
     if (!LiteralValues.isLiteralInstance(key)) {
       //
       throw new UnsupportedOperationException("Only literal keys are supported - key: " + key);
@@ -837,13 +849,16 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public void unlockedPutIfAbsentNoReturnVersioned(final K key, final V value, final long version, int createTimeInSecs,
                                                    int customMaxTTISeconds, int customMaxTTLSeconds) {
-    final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT);
-    final K portableKey = (K) assertKeyLiteral(key);
-    final SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
+    final MetaData metaData = createMetaDataAndSetCommand(key, value, SearchCommand.PUT_IF_ABSENT);
+    final K portableKey = assertKeyLiteral(key);
+    final SerializedMapValue<V> serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
                                                                            customMaxTTISeconds, customMaxTTLSeconds);
 
-    this.tcObjectServerMap.doLogicalPutIfAbsentVersioned(portableKey, serializedMapValue, version);
+    unlockedPutIfAbsentNoReturnVersioned(portableKey, serializedMapValue, metaData, version);
+  }
 
+  private void unlockedPutIfAbsentNoReturnVersioned(final K key, final SerializedMapValue<V> serializedMapValue, final MetaData metaData, final long version) {
+    this.tcObjectServerMap.doLogicalPutIfAbsentVersioned(key, serializedMapValue, version);
     if (metaData != null) {
       metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
       addMetaData(metaData);
@@ -1716,8 +1731,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private class LongLockStrategy implements LockStrategy {
-    private final long highBits;
 
+    private final long highBits;
     public LongLockStrategy(String instanceQualifier) {
       this.highBits = ((long) instanceQualifier.hashCode()) << 32;
     }
@@ -1741,6 +1756,61 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         hash *= 0x01000193;
       }
       return hash;
+    }
+
+  }
+
+  private class Operation<T> implements BufferedOperation<T> {
+    private final Type type;
+    private final T    value;
+    private final long version;
+    private final SerializedMapValueParameters<T> smvParams;
+
+    Operation(Type type, T value, long version, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+      this.type = type;
+      this.value = value;
+      this.version = version;
+      smvParams = type != Type.REMOVE ? createSerializedMapValueParameters(value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds) : null;
+    }
+
+    @Override
+    public Type getType() {
+      return type;
+    }
+
+    @Override
+    public T getValue() {
+      return value;
+    }
+
+    @Override
+    public boolean isVersioned() {
+      return this.version != LocalBufferedMap.NO_VERSION;
+    }
+
+    @Override
+    public int getCreateTimeInSecs() {
+      return smvParams.getCreateTime();
+    }
+
+    @Override
+    public int getCustomMaxTTISeconds() {
+      return smvParams.getCustomTTI();
+    }
+
+    @Override
+    public int getCustomMaxTTLSeconds() {
+      return smvParams.getCustomTTL();
+    }
+
+    @Override
+    public long getVersion() {
+      // Not equivalent to smv.getVersion()! that's the object version, this one is the mapping version.
+      return version;
+    }
+
+    SerializedMapValueParameters<T> getSerializedMapValueParams() {
+      return smvParams;
     }
   }
 
@@ -1797,5 +1867,62 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } finally {
       eventualConcurrentLock.unlock();
     }
+  }
+
+  @Override
+  public void drain(final Map<K, BufferedOperation<V>> buffer) {
+    throttleIfNecessary();
+    eventualConcurrentLock.lock();
+    try {
+      // for single serverMap
+      for (Entry<K, BufferedOperation<V>> e : buffer.entrySet()) {
+        BufferedOperation<V> operation = e.getValue();
+        MetaData metaData;
+        SerializedMapValue<V> smv = createSerializedMapValue(operation);
+        switch (operation.getType()) {
+          case PUT:
+            metaData = createPutSearchMetaData(e.getKey(), operation.getValue());
+            doLogicalPut(operation.isVersioned() ? operation.getVersion() : DEFAULT_VERSION, MutateType.UNLOCKED, null,
+                metaData, e.getKey(), smv);
+            break;
+          case PUT_IF_ABSENT:
+            if (!operation.isVersioned()) {
+              // putIfAbsent returns by default, so a buffered up putIfAbsent doesn't really work...
+              throw new UnsupportedOperationException("Can't do buffered putIfAbsent");
+            }
+            // "versioned" variant of putIfAbsent does not return
+            metaData = createMetaDataAndSetCommand(e.getKey(), operation.getValue(), SearchCommand.PUT_IF_ABSENT);
+            unlockedPutIfAbsentNoReturnVersioned(e.getKey(), smv, metaData, operation.getVersion());
+            break;
+          case REMOVE:
+            internalLogicalRemove(e.getKey(), operation.isVersioned() ? operation.getVersion() : DEFAULT_VERSION,
+                MutateType.UNLOCKED, null);
+            break;
+        }
+      }
+    } finally {
+      eventualConcurrentLock.unlock();
+    }
+  }
+
+  private <T> SerializedMapValue<T> createSerializedMapValue(BufferedOperation<T> bufferedOperation) {
+    if (bufferedOperation.getType() == BufferedOperation.Type.REMOVE) {
+      return null;
+    }
+    if (bufferedOperation instanceof Operation) {
+      return serializedClusterObjectFactory.createSerializedMapValue(
+          ((Operation<T>)bufferedOperation).getSerializedMapValueParams(), gid);
+    } else {
+      SerializedMapValueParameters<T> parameters = createSerializedMapValueParameters(bufferedOperation.getValue(),
+          bufferedOperation.getCreateTimeInSecs(), bufferedOperation.getCustomMaxTTISeconds(),
+          bufferedOperation.getCustomMaxTTLSeconds());
+      return serializedClusterObjectFactory.createSerializedMapValue(parameters, gid);
+    }
+  }
+
+  @Override
+  public BufferedOperation<V> createBufferedOperation(final BufferedOperation.Type type, final K key, final V value,
+                                                      final long version, final int createTimeInSecs, final int customMaxTTISeconds, final int customMaxTTLSeconds) {
+    return new Operation<V>(type, value, version, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 }
