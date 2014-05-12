@@ -23,7 +23,6 @@ import org.terracotta.toolkit.store.ToolkitConfigFields;
 import org.terracotta.toolkit.store.ToolkitConfigFields.Consistency;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.tc.abortable.AbortedOperationException;
@@ -1285,16 +1284,24 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public Map<K, VersionedValue<V>> getAllVersioned(final SetMultimap<ObjectID, K> mapIdToKeysMap) {
     try {
-      return ImmutableMap.copyOf(Maps.transformEntries((Map)tcObjectServerMap.getAllVersioned((SetMultimap) mapIdToKeysMap),
-          new Maps.EntryTransformer<Object, VersionedObject, VersionedValue<V>>() {
+      return Collections.unmodifiableMap(new HashMap<K, VersionedValue<V>>(
+          Maps.transformEntries((Map)tcObjectServerMap.getAllVersioned((SetMultimap) mapIdToKeysMap),
+              new Maps.EntryTransformer<Object, VersionedObject, VersionedValue<V>>() {
             @Override
             public VersionedValue<V> transformEntry(final Object key, final VersionedObject value) {
+              if (value == null) {
+                return null;
+              }
               V nonExpiredValue = checkAndGetNonExpiredValue((K)key,
                   value.getObject(), GetType.UNLOCKED, true);
-              return new VersionedValueImpl<V>(nonExpiredValue, value.getVersion());
+              if (nonExpiredValue == null) {
+                return null;
+              } else {
+                return new VersionedValueImpl<V>(nonExpiredValue, value.getVersion());
+              }
             }
           }
-      ));
+      )));
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }

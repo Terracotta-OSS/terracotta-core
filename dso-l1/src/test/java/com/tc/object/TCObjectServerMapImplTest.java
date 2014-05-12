@@ -52,6 +52,7 @@ public class TCObjectServerMapImplTest {
         Map<Object, Object> result = (Map<Object, Object>)invocation.getArguments()[1];
         result.put("foo", new CompoundResponse(new ObjectID(3), 1, 2, 3, 4, 5));
         result.put("bar", new CompoundResponse(new ObjectID(3), 1, 2, 3, 4, 4));
+        result.put("baz", new CompoundResponse(ObjectID.NULL_ID, 0, 0, 0, 0, 0));
         return null;
       }
     }).when(serverMapManager).getMappingForAllKeys(anyMap(), anyMap());
@@ -62,10 +63,12 @@ public class TCObjectServerMapImplTest {
     SetMultimap<ObjectID, Object> request = HashMultimap.create();
     request.put(objectID, "foo");
     request.put(new ObjectID(2), "bar");
+    request.put(objectID, "baz");
 
     Map<Object, VersionedObject> result = tcObjectServerMap.getAllVersioned(request);
 
     assertThat(result, hasEntry((Object) "foo", new VersionedObject(expirableMapEntry, 5)));
     assertThat(result, hasEntry((Object) "bar", new VersionedObject(expirableMapEntry, 4)));
+    assertThat(result, hasEntry((Object) "baz", null));
   }
 }

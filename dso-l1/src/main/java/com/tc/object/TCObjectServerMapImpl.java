@@ -766,7 +766,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
           // update the local cache of corresponding TCServerMap
           map.updateLocalCacheIfNecessary(key, data);
           if (versioned) {
-            rv.put(key, new VersionedObject(data, value.getVersion()));
+            rv.put(key, data == null ? null : new VersionedObject(data, value.getVersion()));
           } else {
             rv.put(key, data);
           }

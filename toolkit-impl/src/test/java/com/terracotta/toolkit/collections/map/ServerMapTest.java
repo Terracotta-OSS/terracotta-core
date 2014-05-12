@@ -8,6 +8,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
+import org.terracotta.toolkit.internal.store.ConfigFieldsInternal;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
@@ -24,6 +25,7 @@ import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.factory.impl.ToolkitCacheDistributedTypeFactory;
+import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
 import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
@@ -40,6 +42,7 @@ import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -76,8 +79,7 @@ public class ServerMapTest {
 
   @Test
   public void testCreateRemoveBufferedOperation() throws Exception {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
-    serverMap.__tc_managed(tcObjectServerMap);
+    ServerMap serverMap = getServerMap();
 
     BufferedOperation bo = serverMap.createBufferedOperation(BufferedOperation.Type.REMOVE, "foo", null, 1, 2, 3, 4);
     assertThat(bo.getType(), is(BufferedOperation.Type.REMOVE));
@@ -87,8 +89,7 @@ public class ServerMapTest {
 
   @Test
   public void testCreatePutIfAbsentBufferedOperation() throws Exception {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
-    serverMap.__tc_managed(tcObjectServerMap);
+    ServerMap serverMap = getServerMap();
 
     BufferedOperation<String> bo = serverMap.createBufferedOperation(BufferedOperation.Type.PUT_IF_ABSENT, "foo", "bar", 1, 2, 3, 4);
     assertThat(bo.getType(), is(BufferedOperation.Type.PUT_IF_ABSENT));
@@ -101,8 +102,7 @@ public class ServerMapTest {
 
   @Test
   public void testCreatePutBufferedOperation() throws Exception {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
-    serverMap.__tc_managed(tcObjectServerMap);
+    ServerMap serverMap = getServerMap();
 
     BufferedOperation<String> bo = serverMap.createBufferedOperation(BufferedOperation.Type.PUT, "foo", "bar", 4, 3, 2, 1);
     assertThat(bo.getType(), is(BufferedOperation.Type.PUT));
@@ -115,8 +115,7 @@ public class ServerMapTest {
 
   @Test
   public void testDrain() throws Exception {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
-    serverMap.__tc_managed(tcObjectServerMap);
+    ServerMap serverMap = getServerMap();
 
     Map<String, BufferedOperation<String>> operations = new HashMap<String, BufferedOperation<String>>();
     operations.put("foo", serverMap.createBufferedOperation(BufferedOperation.Type.PUT, "foo", "bar", 4, 3, 2, 1));
@@ -131,27 +130,37 @@ public class ServerMapTest {
 
   @Test
   public void testGetAllVersioned() throws Exception {
-    ServerMap serverMap = new ServerMap(configuration, "foo");
-    serverMap.__tc_managed(tcObjectServerMap);
+    ServerMap serverMap = getServerMap();
 
     SetMultimap<ObjectID, Object> request = HashMultimap.create();
     request.putAll(new ObjectID(1), Sets.<Object>newHashSet("a", "b"));
-    request.putAll(new ObjectID(2), Sets.<Object>newHashSet("c", "d"));
+    request.putAll(new ObjectID(2), Sets.<Object>newHashSet("c", "d", "e", "f"));
 
     Map<Object, Object> response = Maps.newHashMap();
     response.put("a", new VersionedObject(mockSerializedMapValue("1"), 1));
     response.put("b", new VersionedObject(mockSerializedMapValue("2"), 2));
     response.put("c", new VersionedObject(mockSerializedMapValue("3"), 3));
     response.put("d", new VersionedObject(mockSerializedMapValue("4"), 4));
+    response.put("e", null);
+    response.put("f", new VersionedObject(mockSerializedMapValue("5", true), 5));
 
     when(tcObjectServerMap.getAllVersioned(request)).thenReturn(response);
 
     Map<String, VersionedValue<String>> result = serverMap.getAllVersioned(request);
-    assertEquals(4, result.size());
+    assertEquals(6, result.size());
     assertThat(result, hasEntry("a", versionedValue("1", 1)));
     assertThat(result, hasEntry("b", versionedValue("2", 2)));
     assertThat(result, hasEntry("c", versionedValue("3", 3)));
     assertThat(result, hasEntry("d", versionedValue("4", 4)));
+    assertThat(result, hasEntry("e", null));
+    assertThat(result, hasEntry("f", null));
+  }
+
+  private ServerMap getServerMap() {
+    ServerMap serverMap = new ServerMap(configuration, "foo");
+    serverMap.__tc_managed(tcObjectServerMap);
+    serverMap.setLockStrategy(ConfigFieldsInternal.LOCK_STRATEGY.LONG_LOCK_STRATEGY);
+    return serverMap;
   }
 
   private static <T> VersionedValue<T> versionedValue(T value, long version) {
@@ -168,6 +177,14 @@ public class ServerMapTest {
     SerializedMapValue<String> smv = mock(SerializedMapValue.class);
     when(smv.getDeserializedValue(any(SerializationStrategy.class), anyBoolean(), any(L1ServerMapLocalCacheStore.class), any(), anyBoolean()))
         .thenReturn(value);
+    return smv;
+  }
+
+  private static SerializedMapValue<String> mockSerializedMapValue(String value, boolean expired) throws IOException, ClassNotFoundException {
+    SerializedMapValue<String> smv = mock(CustomLifespanSerializedMapValue.class);
+    when(smv.getDeserializedValue(any(SerializationStrategy.class), anyBoolean(), any(L1ServerMapLocalCacheStore.class), any(), anyBoolean()))
+        .thenReturn(value);
+    when(smv.isExpired(anyInt(), anyInt(), anyInt())).thenReturn(expired);
     return smv;
   }
 }
