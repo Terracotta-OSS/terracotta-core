@@ -17,7 +17,7 @@ public class ApplicationTsa extends Application {
     Set<Class<?>> s = new HashSet<Class<?>>();
     ServiceLoader<ApplicationTsaService> loader = ServiceLoader.load(ApplicationTsaService.class);
     for (ApplicationTsaService applicationTsaService : loader) {
-      s.addAll(applicationTsaService.getClasses());
+      s.addAll(applicationTsaService.getResourceClasses());
     }
     return s;
   }
